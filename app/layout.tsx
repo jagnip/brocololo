@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -17,8 +18,6 @@ export const metadata: Metadata = {
   description: "Recipes",
 };
 
-
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,7 +28,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col h-screen`}
       >
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <div className="mx-auto p-1">
+          <main className="min-h-screen">{children}</main>
+        </div>
       </body>
     </html>
   );
