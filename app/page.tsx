@@ -1,17 +1,8 @@
 import { getCategories, getRecipes } from "@/lib/db";
+import { CategoryType } from "@/types/category";
+import { RecipeType } from "@/types/recipe";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
-
-type RecipeType = {
-  id: number;
-  name: string;
-  photo: string;
-};
-
-type CategoryType = {
-  id: number;
-  name: string;
-};
 
 
 export default async function Page() {
