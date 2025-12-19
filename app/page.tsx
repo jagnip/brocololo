@@ -1,8 +1,7 @@
-import CategoriesHeader from "@/components/categories-header";
+import CategoriesHeader from "@/components/categories/categories-header";
 import RecipeGrid from "@/components/recipes/recipe-grid";
 import { getCategories, getRecipes } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-
 
 export default async function Page() {
   // async function revalidateAction(formData: FormData) {

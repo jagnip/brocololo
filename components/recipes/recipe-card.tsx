@@ -1,5 +1,6 @@
 import type { RecipeType } from "@/types/recipe";
-import { Card, CardDescription, CardHeader } from "../ui/card";
+import Image from "next/image";
+import { Card, CardHeader } from "../ui/card";
 import { Badge } from "../ui/badge";
 
 type RecipeCardProps = {
@@ -10,7 +11,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
   return (
     <Card>
       <CardHeader>
-        <img
+        <Image
           src={recipe.photo}
           alt={recipe.name}
           width={300}
