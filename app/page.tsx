@@ -1,26 +1,31 @@
 import CategoriesHeader from "@/components/categories/categories-header";
 import RecipeGrid from "@/components/recipes/recipe-grid";
+import { RecipeDialogWrapper } from "@/components/recipes/recipe-dialog-wrapper";
 import { getCategories, getRecipes } from "@/lib/db";
-import { revalidatePath } from "next/cache";
+import { Suspense } from "react";
 
-export default async function Page() {
-  // async function revalidateAction(formData: FormData) {
-  //   "use server";
-  //   revalidatePath("/");
-  // }
+type PageProps = {
+  searchParams: Promise<{ recipe?: string }>;
+};
 
+export default async function Page({ searchParams }: PageProps) {
   const categories = await getCategories();
   const recipes = await getRecipes();
+  const { recipe: recipeId } = await searchParams;
+
+  const selectedRecipe = recipeId
+    ? recipes.find((r: { id: number }) => r.id.toString() === recipeId)
+    : null;
 
   return (
-    <div>
+    <>
       <CategoriesHeader categories={categories} />
-      {/* <div>
-        <form>
-          <button formAction={revalidateAction}>Purge cache</button>
-        </form>
-      </div> */}
       <RecipeGrid recipes={recipes} />
-    </div>
+      {selectedRecipe && (
+        <Suspense fallback={null}>
+          <RecipeDialogWrapper recipe={selectedRecipe} />
+        </Suspense>
+      )}
+    </>
   );
 }
