@@ -3,7 +3,7 @@
 export async function getRecipes() {
   const url = `${RECIPES_URL}/recipes`;
   try {
-    const response = await fetch(url, { cache: "force-cache" });
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch recipes. Response status: ${response.status}`);
     }
@@ -19,7 +19,7 @@ export async function getRecipes() {
 export async function getCategories() {
   const url = `${RECIPES_URL}/categories`;
   try {
-    const response = await fetch(url, { cache: "force-cache" });
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch categories. Response status: ${response.status}`);
     }
