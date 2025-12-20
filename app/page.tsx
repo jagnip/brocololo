@@ -1,7 +1,7 @@
 import RecipeFilters from "@/components/recipes/recipe-filters";
 import RecipeGrid from "@/components/recipes/recipe-grid";
 import { RecipeDialogWrapper } from "@/components/recipes/recipe-dialog-wrapper";
-import { getRecipes, deriveCategoriesFromRecipes } from "@/lib/db";
+import { getRecipes, deriveCategoriesFromRecipes as getCategoriesFromRecipes } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -11,7 +11,7 @@ type PageProps = {
 
 export default async function Page({ searchParams }: PageProps) {
   const recipes = await getRecipes();
-  const categories = deriveCategoriesFromRecipes(recipes);
+  const categories = getCategoriesFromRecipes(recipes);
   const { recipe: recipeId, category: categoryId } = await searchParams;
 
   const filteredRecipes = categoryId

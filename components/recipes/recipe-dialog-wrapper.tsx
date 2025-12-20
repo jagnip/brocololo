@@ -14,7 +14,6 @@ export function RecipeDialogWrapper({ recipe }: RecipeDialogWrapperProps) {
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      // Preserve category param if it exists
       const categoryParam = searchParams.get("category");
       const url = categoryParam ? `/?category=${categoryParam}` : "/";
       router.replace(url, { scroll: false });

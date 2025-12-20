@@ -15,7 +15,6 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category");
 
-  // Build URL preserving category param if it exists
   const url = categoryParam
     ? `/?category=${categoryParam}&recipe=${recipe.id}`
     : `/?recipe=${recipe.id}`;
