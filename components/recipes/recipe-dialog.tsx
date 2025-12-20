@@ -2,22 +2,29 @@
 
 import type { RecipeType } from "@/types/recipe";
 import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Badge } from "../ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 
 type RecipeDialogProps = {
   recipe: RecipeType;
   open: boolean;
-  onOpenChange?: (open: boolean) => void;
 };
 
-export function RecipeDialog({
-  recipe,
-  open,
-  onOpenChange,
-}: RecipeDialogProps) {
+export function RecipeDialog({ recipe, open }: RecipeDialogProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      const categoryParam = searchParams.get("category");
+      const url = categoryParam ? `/?category=${categoryParam}` : "/";
+      router.replace(url, { scroll: false });
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl mb-4">{recipe.name}</DialogTitle>

@@ -1,7 +1,10 @@
 import RecipeFilters from "@/components/recipes/recipe-filters";
 import RecipeGrid from "@/components/recipes/recipe-grid";
-import { RecipeDialogWrapper } from "@/components/recipes/recipe-dialog-wrapper";
-import { getRecipes, deriveCategoriesFromRecipes as getCategoriesFromRecipes } from "@/lib/db";
+import { RecipeDialog } from "@/components/recipes/recipe-dialog";
+import {
+  getRecipes,
+  deriveCategoriesFromRecipes as getCategoriesFromRecipes,
+} from "@/lib/db";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -34,7 +37,7 @@ export default async function Page({ searchParams }: PageProps) {
       <RecipeGrid recipes={filteredRecipes} />
       {selectedRecipe && (
         <Suspense fallback={<div>Loading</div>}>
-          <RecipeDialogWrapper recipe={selectedRecipe} />
+          <RecipeDialog recipe={selectedRecipe} open={true} />
         </Suspense>
       )}
     </>
