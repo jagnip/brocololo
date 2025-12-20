@@ -14,7 +14,6 @@ export default async function Page({ searchParams }: PageProps) {
   const categories = deriveCategoriesFromRecipes(recipes);
   const { recipe: recipeId, category: categoryId } = await searchParams;
 
-  // Filter recipes based on category (categoryId is the category name)
   const filteredRecipes = categoryId
     ? recipes.filter((r: { category: string }) => r.category === categoryId)
     : recipes;
@@ -29,12 +28,12 @@ export default async function Page({ searchParams }: PageProps) {
 
   return (
     <>
-      <Suspense fallback={null}>
+      <Suspense fallback={<div>Loading...</div>}>
         <RecipeFilters categories={categories} />
       </Suspense>
       <RecipeGrid recipes={filteredRecipes} />
       {selectedRecipe && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<div>Loading</div>}>
           <RecipeDialogWrapper recipe={selectedRecipe} />
         </Suspense>
       )}
