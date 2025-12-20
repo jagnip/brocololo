@@ -1,21 +1,26 @@
 import RecipeFilters from "@/components/recipes/recipe-filters";
 import RecipeGrid from "@/components/recipes/recipe-grid";
 import { RecipeDialogWrapper } from "@/components/recipes/recipe-dialog-wrapper";
-import { getCategories, getRecipes } from "@/lib/db";
+import { getRecipes, deriveCategoriesFromRecipes } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 type PageProps = {
-  searchParams: Promise<{ recipe?: string }>;
+  searchParams: Promise<{ recipe?: string; category?: string }>;
 };
 
 export default async function Page({ searchParams }: PageProps) {
-  const categories = await getCategories();
   const recipes = await getRecipes();
-  const { recipe: recipeId } = await searchParams;
+  const categories = deriveCategoriesFromRecipes(recipes);
+  const { recipe: recipeId, category: categoryId } = await searchParams;
+
+  // Filter recipes based on category (categoryId is the category name)
+  const filteredRecipes = categoryId
+    ? recipes.filter((r: { category: string }) => r.category === categoryId)
+    : recipes;
 
   const selectedRecipe = recipeId
-    ? recipes.find((r: { id: number }) => r.id.toString() === recipeId)
+    ? filteredRecipes.find((r: { id: number }) => r.id.toString() === recipeId)
     : null;
 
   if (recipeId && !selectedRecipe) {
@@ -24,8 +29,10 @@ export default async function Page({ searchParams }: PageProps) {
 
   return (
     <>
-      <RecipeFilters categories={categories} />
-      <RecipeGrid recipes={recipes} />
+      <Suspense fallback={null}>
+        <RecipeFilters categories={categories} />
+      </Suspense>
+      <RecipeGrid recipes={filteredRecipes} />
       {selectedRecipe && (
         <Suspense fallback={null}>
           <RecipeDialogWrapper recipe={selectedRecipe} />

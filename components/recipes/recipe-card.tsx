@@ -1,6 +1,9 @@
+"use client";
+
 import type { RecipeType } from "@/types/recipe";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Card, CardHeader } from "../ui/card";
 import { Badge } from "../ui/badge";
 
@@ -9,8 +12,16 @@ type RecipeCardProps = {
 };
 
 export default function RecipeCard({ recipe }: RecipeCardProps) {
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams.get("category");
+
+  // Build URL preserving category param if it exists
+  const url = categoryParam
+    ? `/?category=${categoryParam}&recipe=${recipe.id}`
+    : `/?recipe=${recipe.id}`;
+
   return (
-    <Link href={`/?recipe=${recipe.id}`} scroll={false}>
+    <Link href={url} scroll={false}>
       <Card className="cursor-pointer hover:shadow-md transition-shadow">
         <CardHeader>
           <Image

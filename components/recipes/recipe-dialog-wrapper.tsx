@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { RecipeDialog } from "./recipe-dialog";
 import type { RecipeType } from "@/types/recipe";
 
@@ -10,10 +10,14 @@ type RecipeDialogWrapperProps = {
 
 export function RecipeDialogWrapper({ recipe }: RecipeDialogWrapperProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      router.replace("/", { scroll: false });
+      // Preserve category param if it exists
+      const categoryParam = searchParams.get("category");
+      const url = categoryParam ? `/?category=${categoryParam}` : "/";
+      router.replace(url, { scroll: false });
     }
   };
 
