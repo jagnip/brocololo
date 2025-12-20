@@ -34,18 +34,3 @@ export async function getCategories() {
     return [];
   }
 }
-
-export async function getRecipe(id: string | number) {
-  const url = `${RECIPES_URL}/recipes/${id}`;
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch recipe. Response status: ${response.status}`);
-    }
-    const result = await response.json();
-    return result;
-  } catch (error) {
-    console.error("Failed to fetch recipe", (error as Error).message);
-    return null;
-  }
-}

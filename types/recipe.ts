@@ -8,5 +8,6 @@ export type RecipeType = {
   ingredients: string;
   notes: string;
   portions: string;
+  category: string;
 };
 

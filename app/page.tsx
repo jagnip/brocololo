@@ -1,7 +1,8 @@
-import CategoriesHeader from "@/components/categories/categories-header";
+import RecipeFilters from "@/components/recipes/recipe-filters";
 import RecipeGrid from "@/components/recipes/recipe-grid";
 import { RecipeDialogWrapper } from "@/components/recipes/recipe-dialog-wrapper";
 import { getCategories, getRecipes } from "@/lib/db";
+import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 type PageProps = {
@@ -17,9 +18,13 @@ export default async function Page({ searchParams }: PageProps) {
     ? recipes.find((r: { id: number }) => r.id.toString() === recipeId)
     : null;
 
+  if (recipeId && !selectedRecipe) {
+    notFound();
+  }
+
   return (
     <>
-      <CategoriesHeader categories={categories} />
+      <RecipeFilters categories={categories} />
       <RecipeGrid recipes={recipes} />
       {selectedRecipe && (
         <Suspense fallback={null}>
