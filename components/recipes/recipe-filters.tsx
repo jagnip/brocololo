@@ -27,7 +27,6 @@ export default function RecipeFilters({ categories }: RecipeFiltersProps) {
   const buildUrl = (categoryName: string | null) => {
     if (!categoryName) return "/";
 
-    // Preserve recipe param if it exists
     const recipeParam = searchParams.get("recipe");
     return recipeParam
       ? `/?category=${encodeURIComponent(categoryName)}&recipe=${recipeParam}`
