@@ -33,12 +33,12 @@ export default async function Page({ searchParams }: PageProps) {
 
   return (
     <>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={null}>
         <RecipeFilters categories={categories} />
       </Suspense>
       <RecipeGrid recipes={filteredRecipes} />
       {selectedRecipe && (
-        <Suspense fallback={<div>Loading</div>}>
+        <Suspense fallback={null}>
           <RecipeDialog recipe={selectedRecipe} open={true} />
         </Suspense>
       )}
