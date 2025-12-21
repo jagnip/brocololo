@@ -1,10 +1,7 @@
 import RecipeFilters from "@/components/recipes/recipe-filters";
 import RecipeGrid from "@/components/recipes/recipe-grid";
 import { RecipeDialog } from "@/components/recipes/recipe-dialog";
-import {
-  getRecipes,
-  deriveCategoriesFromRecipes as getCategoriesFromRecipes,
-} from "@/lib/db";
+import { getRecipes, getCategories } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -12,9 +9,14 @@ type PageProps = {
   searchParams: Promise<{ recipe?: string; category?: string }>;
 };
 
+// Force dynamic rendering so force-cache works at request time, not build time
+export const dynamic = "force-dynamic";
+
 export default async function Page({ searchParams }: PageProps) {
-  const recipes = await getRecipes();
-  const categories = getCategoriesFromRecipes(recipes);
+  const [recipes, categories] = await Promise.all([
+    getRecipes(),
+    getCategories(),
+  ]);
   const { recipe: recipeId, category: categoryId } = await searchParams;
 
   const filteredRecipes = categoryId
