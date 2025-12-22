@@ -140,7 +140,7 @@ export const recipesData: RecipeType[] = [
   {
     id: 5,
     name: "Beef Tacos",
-    photo: "https://images.unsplash.com/photo-1565299585323-38174c0d7f16?w=800&h=600&fit=crop",
+    photo: "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=800&h=600&fit=crop",
     instructions: [
       "Heat a large skillet over medium-high heat. Add ground beef and cook until browned, about 8 minutes.",
       "Drain excess fat and add taco seasoning. Stir in 1/4 cup water and simmer for 5 minutes.",
