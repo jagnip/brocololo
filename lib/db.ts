@@ -21,6 +21,16 @@ export async function getRecipes() {
   }
 }
 
+export async function getRecipeById(recipeId: string, categoryId?: string): Promise<RecipeType | null> {
+  const recipes = await getRecipes();
+  
+  const filteredRecipes = categoryId
+    ? recipes.filter((r: RecipeType) => r.category === categoryId)
+    : recipes;
+
+  return filteredRecipes.find((r: RecipeType) => r.id.toString() === recipeId) || null;
+}
+
 export async function getCategories(): Promise<CategoryType[]> {
   const url = `${RECIPES_URL}/categories`;
   try {
