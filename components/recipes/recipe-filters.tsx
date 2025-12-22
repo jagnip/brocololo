@@ -15,7 +15,7 @@ export default async function RecipeFilters({
   const categories = await getCategories();
 
   const getLinkClassName = (categoryName: string | null) => {
-    const isActive = activeCategory === categoryName;
+    const isActive = (activeCategory ?? null) === categoryName;
 
     return cn(
       "px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
