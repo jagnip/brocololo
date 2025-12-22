@@ -1,17 +1,18 @@
-"use client";
-
 import type { CategoryType } from "@/types/category";
+import { getCategories } from "@/lib/db";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 type RecipeFiltersProps = {
-  categories: CategoryType[];
+  activeCategory?: string;
+  recipeId?: string;
 };
 
-export default function RecipeFilters({ categories }: RecipeFiltersProps) {
-  const searchParams = useSearchParams();
-  const activeCategory = searchParams.get("category");
+export default async function RecipeFilters({
+  activeCategory,
+  recipeId,
+}: RecipeFiltersProps) {
+  const categories = await getCategories();
 
   const getLinkClassName = (categoryName: string | null) => {
     const isActive = activeCategory === categoryName;
@@ -25,11 +26,12 @@ export default function RecipeFilters({ categories }: RecipeFiltersProps) {
   };
 
   const buildUrl = (categoryName: string | null) => {
-    if (!categoryName) return "/";
+    if (!categoryName) {
+      return recipeId ? `/?recipe=${recipeId}` : "/";
+    }
 
-    const recipeParam = searchParams.get("recipe");
-    return recipeParam
-      ? `/?category=${encodeURIComponent(categoryName)}&recipe=${recipeParam}`
+    return recipeId
+      ? `/?category=${encodeURIComponent(categoryName)}&recipe=${recipeId}`
       : `/?category=${encodeURIComponent(categoryName)}`;
   };
 

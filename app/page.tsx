@@ -1,6 +1,5 @@
 import RecipeFilters from "@/components/recipes/recipe-filters";
 import RecipeGrid from "@/components/recipes/recipe-grid";
-import { getCategories } from "@/lib/db";
 import { Suspense } from "react";
 
 type PageProps = {
@@ -10,12 +9,10 @@ type PageProps = {
 export default async function Page({ searchParams }: PageProps) {
   const { recipe: recipeId, category: categoryId } = await searchParams;
 
-  const categories = await getCategories();
-
   return (
     <>
       <Suspense fallback={null}>
-        <RecipeFilters categories={categories} />
+        <RecipeFilters activeCategory={categoryId} recipeId={recipeId} />
       </Suspense>
       <Suspense fallback={null}>
         <RecipeGrid categoryId={categoryId} recipeId={recipeId} />
