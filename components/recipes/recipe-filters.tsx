@@ -27,12 +27,14 @@ export default function RecipeFilters({
 
   const buildUrl = (categoryName: string | null) => {
     if (!categoryName) {
-      return recipeId ? `/?recipe=${recipeId}` : "/";
+      return recipeId ? `/recipes?recipe=${recipeId}` : "/recipes";
     }
 
     return recipeId
-      ? `/?category=${encodeURIComponent(categoryName)}&recipe=${recipeId}`
-      : `/?category=${encodeURIComponent(categoryName)}`;
+      ? `/recipes?category=${encodeURIComponent(
+          categoryName
+        )}&recipe=${recipeId}`
+      : `/recipes?category=${encodeURIComponent(categoryName)}`;
   };
 
   return (

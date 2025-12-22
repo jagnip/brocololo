@@ -18,7 +18,9 @@ export function RecipeDialog({ recipe, open }: RecipeDialogProps) {
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
       const categoryParam = searchParams.get("category");
-      const url = categoryParam ? `/?category=${categoryParam}` : "/";
+      const url = categoryParam
+        ? `/recipes?category=${categoryParam}`
+        : "/recipes";
       router.replace(url, { scroll: false });
     }
   };
@@ -82,9 +84,11 @@ export function RecipeDialog({ recipe, open }: RecipeDialogProps) {
               <div>
                 <h3 className="font-semibold mb-2">Instructions</h3>
                 <ol className="list-decimal list-inside space-y-1 text-sm">
-                  {recipe.instructions.map((instruction: string, index: number) => (
-                    <li key={index}>{instruction}</li>
-                  ))}
+                  {recipe.instructions.map(
+                    (instruction: string, index: number) => (
+                      <li key={index}>{instruction}</li>
+                    )
+                  )}
                 </ol>
               </div>
             )}
@@ -101,9 +105,11 @@ export function RecipeDialog({ recipe, open }: RecipeDialogProps) {
                   )}
                 </div>
                 <ul className="list-disc list-inside space-y-1 text-sm">
-                  {recipe.ingredients.map((ingredient: string, index: number) => (
-                    <li key={index}>{ingredient}</li>
-                  ))}
+                  {recipe.ingredients.map(
+                    (ingredient: string, index: number) => (
+                      <li key={index}>{ingredient}</li>
+                    )
+                  )}
                 </ul>
               </div>
             )}

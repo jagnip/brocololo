@@ -16,8 +16,8 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
   const categoryParam = searchParams.get("category");
 
   const url = categoryParam
-    ? `/?category=${categoryParam}&recipe=${recipe.id}`
-    : `/?recipe=${recipe.id}`;
+    ? `/recipes?category=${categoryParam}&recipe=${recipe.id}`
+    : `/recipes?recipe=${recipe.id}`;
 
   return (
     <Link href={url} scroll={false}>
