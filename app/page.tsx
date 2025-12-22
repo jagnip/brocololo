@@ -1,5 +1,8 @@
+import CategorySkeleton from "@/components/recipes/category-skeleton";
+import GridSkeleton from "@/components/recipes/grid-skeleton";
 import RecipeFilters from "@/components/recipes/recipe-filters";
 import RecipeGrid from "@/components/recipes/recipe-grid";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Suspense } from "react";
 
 type PageProps = {
@@ -11,10 +14,10 @@ export default async function Page({ searchParams }: PageProps) {
 
   return (
     <>
-      <Suspense fallback={null}>
+      <Suspense fallback={<CategorySkeleton />}>
         <RecipeFilters activeCategory={categoryId} recipeId={recipeId} />
       </Suspense>
-      <Suspense fallback={null}>
+      <Suspense fallback={<GridSkeleton />}>
         <RecipeGrid categoryId={categoryId} recipeId={recipeId} />
       </Suspense>
     </>
