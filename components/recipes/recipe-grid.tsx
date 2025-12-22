@@ -16,6 +16,17 @@ export default async function RecipeGrid({
 }: RecipeGridProps) {
   const recipes = await getRecipes();
 
+  console.log(recipes);
+
+  // const recipes = {
+  //   "1": {
+  //     id: 1,
+  //     name: "Bolognese",
+  //     photo: "https://cdn.jsdelivr.net/gh/faker-js/assets-person-portrait/female/512/47.jpg",
+  //     instructions: "Instructions 1",
+  //   },
+  // };
+
   const filteredRecipes = categoryId
     ? recipes.filter((r: RecipeType) => r.category === categoryId)
     : recipes;
