@@ -1,5 +1,6 @@
 import type { RecipeType } from "@/types/recipe";
-import { getRecipes, getRecipeById } from "@/lib/db";
+import { getRecipeById } from "@/lib/db";
+import { recipesData } from "@/lib/recipes-data";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import RecipeCard from "./recipe-card";
@@ -14,21 +15,10 @@ export default async function RecipeGrid({
   categoryId,
   recipeId,
 }: RecipeGridProps) {
-  const recipes = await getRecipes();
-
-  console.log(recipes);
-
-  // const recipes = {
-  //   "1": {
-  //     id: 1,
-  //     name: "Bolognese",
-  //     photo: "https://cdn.jsdelivr.net/gh/faker-js/assets-person-portrait/female/512/47.jpg",
-  //     instructions: "Instructions 1",
-  //   },
-  // };
+  const recipes = recipesData;
 
   const filteredRecipes = categoryId
-    ? recipes.filter((r: RecipeType) => r.category === categoryId)
+    ? recipes.filter((r: RecipeType) => r.category.includes(categoryId))
     : recipes;
 
   const selectedRecipe = recipeId

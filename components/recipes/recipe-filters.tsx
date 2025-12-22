@@ -1,5 +1,5 @@
 import type { CategoryType } from "@/types/category";
-import { getCategories } from "@/lib/db";
+import { categoriesData } from "@/lib/categories-data";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -8,11 +8,11 @@ type RecipeFiltersProps = {
   recipeId?: string;
 };
 
-export default async function RecipeFilters({
+export default function RecipeFilters({
   activeCategory,
   recipeId,
 }: RecipeFiltersProps) {
-  const categories = await getCategories();
+  const categories = categoriesData;
 
   const getLinkClassName = (categoryName: string | null) => {
     const isActive = (activeCategory ?? null) === categoryName;

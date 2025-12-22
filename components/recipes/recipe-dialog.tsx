@@ -52,66 +52,58 @@ export function RecipeDialog({ recipe, open }: RecipeDialogProps) {
             </div>
 
             {/* Nutrition Section */}
-            {recipe.nutrition && (
+            {recipe.nutrition && recipe.nutrition.length > 0 && (
               <div>
                 <h3 className="font-semibold mb-2">Nutrition</h3>
                 <div className="flex gap-2 flex-wrap">
-                  {recipe.nutrition
-                    .split(",")
-                    .map((item: string, index: number) => (
-                      <Badge key={index} variant="outline">
-                        {item.trim()}
-                      </Badge>
-                    ))}
+                  {recipe.nutrition.map((item: string, index: number) => (
+                    <Badge key={index} variant="outline">
+                      {item}
+                    </Badge>
+                  ))}
                 </div>
               </div>
             )}
 
             {/* Notes Section */}
-            {recipe.notes && (
+            {recipe.notes && recipe.notes.length > 0 && (
               <div>
                 <h3 className="font-semibold mb-2">Notes</h3>
                 <ul className="list-disc list-inside space-y-1 text-sm">
-                  {recipe.notes
-                    .split("\n")
-                    .map((note: string, index: number) => (
-                      <li key={index}>{note.trim()}</li>
-                    ))}
+                  {recipe.notes.map((note: string, index: number) => (
+                    <li key={index}>{note}</li>
+                  ))}
                 </ul>
               </div>
             )}
 
             {/* Instructions Section */}
-            {recipe.instructions && (
+            {recipe.instructions && recipe.instructions.length > 0 && (
               <div>
                 <h3 className="font-semibold mb-2">Instructions</h3>
                 <ol className="list-decimal list-inside space-y-1 text-sm">
-                  {recipe.instructions
-                    .split("\n")
-                    .map((instruction: string, index: number) => (
-                      <li key={index}>{instruction.trim()}</li>
-                    ))}
+                  {recipe.instructions.map((instruction: string, index: number) => (
+                    <li key={index}>{instruction}</li>
+                  ))}
                 </ol>
               </div>
             )}
 
             {/* Ingredients Section */}
-            {recipe.ingredients && (
+            {recipe.ingredients && recipe.ingredients.length > 0 && (
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-semibold">Ingredients</h3>
                   {recipe.portions && (
                     <span className="text-sm text-muted-foreground">
-                      {recipe.portions}
+                      {recipe.portions} portions
                     </span>
                   )}
                 </div>
                 <ul className="list-disc list-inside space-y-1 text-sm">
-                  {recipe.ingredients
-                    .split("\n")
-                    .map((ingredient: string, index: number) => (
-                      <li key={index}>{ingredient.trim()}</li>
-                    ))}
+                  {recipe.ingredients.map((ingredient: string, index: number) => (
+                    <li key={index}>{ingredient}</li>
+                  ))}
                 </ul>
               </div>
             )}
