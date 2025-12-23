@@ -14,8 +14,8 @@ export default function RecipeFilters({
 }: RecipeFiltersProps) {
   const categories = categoriesData;
 
-  const isFilterActive = (categorySlug: string ) => {
-    const isActive = (activeCategorySlug ?? null) === categorySlug;
+  const getFilterStyles = (categorySlug: string) => {
+    const isActive = activeCategorySlug === categorySlug;
 
     return cn(
       "px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -25,9 +25,9 @@ export default function RecipeFilters({
     );
   };
 
-  const buildUrl = (categorySlug: string | null) => {
-    if (!categorySlug) {
-      return "/recipes/all";
+  const buildUrl = (categorySlug: string) => {
+    if (categorySlug === "all") {
+      return "/recipes";
     }
     return `/recipes/${categorySlug}`;
   };
@@ -42,8 +42,8 @@ export default function RecipeFilters({
   return (
     <header className="flex flex-wrap gap-2 sticky top-0 z-10 bg-background py-4 px-4 w-full">
       <Link
-        href={buildUrl(null)}
-        className={isFilterActive(null)}
+        href={buildUrl("all")}
+        className={getFilterStyles("all")}
         scroll={false}
       >
         All
@@ -52,7 +52,7 @@ export default function RecipeFilters({
         <Link
           key={category.id}
           href={buildUrl(category.slug)}
-          className={isFilterActive(category.slug)}
+          className={getFilterStyles(category.slug)}
           scroll={false}
         >
           {category.name}
