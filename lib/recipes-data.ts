@@ -33,7 +33,7 @@ export const recipesData: RecipeType[] = [
       "Add a splash of red wine for extra depth of flavor."
     ],
     portions: 4,
-    category: ["Italian", "Main Course"]
+    categorySlugs: ["italian", "main-course"]
   },
   {
     id: 2,
@@ -68,7 +68,7 @@ export const recipesData: RecipeType[] = [
       "Serve with basmati rice and cucumber raita."
     ],
     portions: 4,
-    category: ["Indian", "Main Course"]
+    categorySlugs: ["indian", "main-course"]
   },
   {
     id: 3,
@@ -103,7 +103,7 @@ export const recipesData: RecipeType[] = [
       "Store in an airtight container for up to 1 week."
     ],
     portions: 24,
-    category: ["Dessert", "Baking"]
+    categorySlugs: ["dessert", "baking"]
   },
   {
     id: 4,
@@ -135,7 +135,7 @@ export const recipesData: RecipeType[] = [
       "The dressing can be made ahead and stored in the refrigerator."
     ],
     portions: 4,
-    category: ["Salad", "Vegetarian"]
+    categorySlugs: ["salad", "vegetarian"]
   },
   {
     id: 5,
@@ -169,7 +169,7 @@ export const recipesData: RecipeType[] = [
       "Customize with your favorite toppings like avocado or jalapeños."
     ],
     portions: 4,
-    category: ["Mexican", "Main Course"]
+    categorySlugs: ["mexican", "main-course"]
   },
   {
     id: 6,
@@ -204,7 +204,7 @@ export const recipesData: RecipeType[] = [
       "Add protein like tofu or chicken for a complete meal."
     ],
     portions: 4,
-    category: ["Asian", "Vegetarian", "Main Course"]
+    categorySlugs: ["asian", "vegetarian", "main-course"]
   },
   {
     id: 7,
@@ -236,7 +236,7 @@ export const recipesData: RecipeType[] = [
       "Fresh mozzarella works best for authentic flavor."
     ],
     portions: 4,
-    category: ["Italian", "Main Course"]
+    categorySlugs: ["italian", "main-course"]
   },
   {
     id: 8,
@@ -270,7 +270,7 @@ export const recipesData: RecipeType[] = [
       "Store in an airtight container for up to 5 days."
     ],
     portions: 16,
-    category: ["Dessert", "Baking"]
+    categorySlugs: ["dessert", "baking"]
   },
   {
     id: 9,
@@ -300,7 +300,7 @@ export const recipesData: RecipeType[] = [
       "Pair with roasted vegetables or a fresh salad."
     ],
     portions: 4,
-    category: ["Seafood", "Main Course"]
+    categorySlugs: ["seafood", "main-course"]
   },
   {
   id: 10,
@@ -336,7 +336,7 @@ export const recipesData: RecipeType[] = [
       "The soup can be made ahead and reheated before serving."
     ],
     portions: 4,
-    category: ["French", "Soup"]
+    categorySlugs: ["french", "soup"]
   }
 ];
 

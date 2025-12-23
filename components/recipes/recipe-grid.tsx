@@ -1,33 +1,22 @@
 import type { RecipeType } from "@/types/recipe";
-import { getRecipeById } from "@/lib/db";
 import { recipesData } from "@/lib/recipes-data";
-import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import RecipeCard from "./recipe-card";
-import { RecipeDialog } from "./recipe-dialog";
 
 type RecipeGridProps = {
-  categoryId?: string;
-  recipeId?: string;
+  activeCategorySlug?: string;
 };
 
 export default async function RecipeGrid({
-  categoryId,
-  recipeId,
+  activeCategorySlug,
 }: RecipeGridProps) {
   const recipes = recipesData;
 
-  const filteredRecipes = categoryId
-    ? recipes.filter((r: RecipeType) => r.category.includes(categoryId))
-    : recipes;
-
-  const selectedRecipe = recipeId
-    ? await getRecipeById(recipeId, categoryId)
-    : null;
-
-  if (recipeId && !selectedRecipe) {
-    notFound();
-  }
+  const filteredRecipes =
+    activeCategorySlug && activeCategorySlug !== "all"
+      ? recipes.filter((r: RecipeType) =>
+          r.categorySlugs.includes(activeCategorySlug)
+        )
+      : recipes;
 
   return (
     <>
@@ -36,11 +25,11 @@ export default async function RecipeGrid({
           <RecipeCard key={recipe.name} recipe={recipe} />
         ))}
       </div>
-      {selectedRecipe && (
+      {/* {selectedRecipe && (
         <Suspense fallback={null}>
           <RecipeDialog recipe={selectedRecipe} open={true} />
         </Suspense>
-      )}
+      )} */}
     </>
   );
 }

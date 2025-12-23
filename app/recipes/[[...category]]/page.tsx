@@ -3,16 +3,17 @@ import RecipeGrid from "@/components/recipes/recipe-grid";
 import { Suspense } from "react";
 
 type PageProps = {
-  searchParams: Promise<{ recipe?: string; category?: string }>;
+  params: Promise<{ category?: string }>;
 };
 
-export default async function Page({ searchParams }: PageProps) {
-  const { recipe: recipeId, category: categoryId } = await searchParams;
+export default async function Page({ params }: PageProps) {
+  const { category } = await params;
+  const categorySlug = category?.[0] ?? "all";
 
   return (
     <>
       <Suspense fallback={<GridSkeleton />}>
-        <RecipeGrid categoryId={categoryId} recipeId={recipeId} />
+        <RecipeGrid activeCategorySlug={categorySlug} />
       </Suspense>
     </>
   );
