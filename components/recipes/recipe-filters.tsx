@@ -14,7 +14,7 @@ export default function RecipeFilters({
 }: RecipeFiltersProps) {
   const categories = categoriesData;
 
-  const getLinkClassName = (categorySlug: string | null) => {
+  const isFilterActive = (categorySlug: string ) => {
     const isActive = (activeCategorySlug ?? null) === categorySlug;
 
     return cn(
@@ -43,7 +43,7 @@ export default function RecipeFilters({
     <header className="flex flex-wrap gap-2 sticky top-0 z-10 bg-background py-4 px-4 w-full">
       <Link
         href={buildUrl(null)}
-        className={getLinkClassName(null)}
+        className={isFilterActive(null)}
         scroll={false}
       >
         All
@@ -52,7 +52,7 @@ export default function RecipeFilters({
         <Link
           key={category.id}
           href={buildUrl(category.slug)}
-          className={getLinkClassName(category.slug)}
+          className={isFilterActive(category.slug)}
           scroll={false}
         >
           {category.name}
