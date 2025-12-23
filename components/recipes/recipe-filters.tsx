@@ -2,17 +2,27 @@ import type { CategoryType } from "@/types/category";
 import { categoriesData } from "@/lib/categories-data";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { notFound } from "next/navigation";
 
 type RecipeFiltersProps = {
   activeCategorySlug: string;
-  recipeId?: string;
 };
 
 export default function RecipeFilters({
   activeCategorySlug,
-  recipeId,
+
 }: RecipeFiltersProps) {
   const categories = categoriesData;
+
+    if (activeCategorySlug !== "all") {
+      const categoryExists = categories.some(
+        (cat) => cat.slug === activeCategorySlug
+      );
+
+      if (!categoryExists) {
+        notFound(); 
+      }
+    }
 
   const getFilterStyles = (categorySlug: string) => {
     const isActive = activeCategorySlug === categorySlug;
@@ -31,13 +41,6 @@ export default function RecipeFilters({
     }
     return `/recipes/${categorySlug}`;
   };
-
-  //   return recipeId
-  //     ? `/recipes?category=${encodeURIComponent(
-  //         categoryName
-  //       )}&recipe=${recipeId}`
-  //     : `/recipes?category=${encodeURIComponent(categoryName)}`;
-  // };
 
   return (
     <header className="flex flex-wrap gap-2 sticky top-0 z-10 bg-background py-4 px-4 w-full">
