@@ -3,17 +3,17 @@ import RecipeFilters from "@/components/recipes/recipe-filters";
 import { Suspense } from "react";
 
 type PageProps = {
-  params: Promise<{ category: string;}>;
+  params: Promise<{ category: string }>;
   children: React.ReactNode;
 };
 
 export default async function Layout({ params, children }: PageProps) {
-  const { category } = await params;
-console.log(category);
+  const { category: categorySlug } = await params;
+
   return (
     <>
       <Suspense fallback={<CategorySkeleton />}>
-        <RecipeFilters activeCategory={ category } />
+        <RecipeFilters activeCategorySlug={categorySlug} />
       </Suspense>
       {children}
     </>

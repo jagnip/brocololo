@@ -4,18 +4,18 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 type RecipeFiltersProps = {
-  activeCategory?: string;
+  activeCategorySlug: string;
   recipeId?: string;
 };
 
 export default function RecipeFilters({
-  activeCategory,
+  activeCategorySlug,
   recipeId,
 }: RecipeFiltersProps) {
   const categories = categoriesData;
 
-  const getLinkClassName = (categoryName: string | null) => {
-    const isActive = (activeCategory ?? null) === categoryName;
+  const getLinkClassName = (categorySlug: string | null) => {
+    const isActive = (activeCategorySlug ?? null) === categorySlug;
 
     return cn(
       "px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -25,17 +25,19 @@ export default function RecipeFilters({
     );
   };
 
-  const buildUrl = (categoryName: string | null) => {
-    if (!categoryName) {
-      return recipeId ? `/recipes?recipe=${recipeId}` : "/recipes";
+  const buildUrl = (categorySlug: string | null) => {
+    if (!categorySlug) {
+      return "/recipes/all";
     }
-
-    return recipeId
-      ? `/recipes?category=${encodeURIComponent(
-          categoryName
-        )}&recipe=${recipeId}`
-      : `/recipes?category=${encodeURIComponent(categoryName)}`;
+    return `/recipes/${categorySlug}`;
   };
+
+  //   return recipeId
+  //     ? `/recipes?category=${encodeURIComponent(
+  //         categoryName
+  //       )}&recipe=${recipeId}`
+  //     : `/recipes?category=${encodeURIComponent(categoryName)}`;
+  // };
 
   return (
     <header className="flex flex-wrap gap-2 sticky top-0 z-10 bg-background py-4 px-4 w-full">
@@ -49,8 +51,8 @@ export default function RecipeFilters({
       {categories.map((category: CategoryType) => (
         <Link
           key={category.id}
-          href={buildUrl(category.name)}
-          className={getLinkClassName(category.name)}
+          href={buildUrl(category.slug)}
+          className={getLinkClassName(category.slug)}
           scroll={false}
         >
           {category.name}
