@@ -4,6 +4,7 @@ export const recipesData: RecipeType[] = [
   {
     id: 1,
     name: "Classic Spaghetti Bolognese",
+    slug: "classic-spaghetti-bolognese",
     photo: "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=800&h=600&fit=crop",
     instructions: [
       "Heat olive oil in a large pan over medium heat. Add chopped onions and cook until translucent, about 5 minutes.",
@@ -38,6 +39,7 @@ export const recipesData: RecipeType[] = [
   {
     id: 2,
     name: "Chicken Tikka Masala",
+    slug: "chicken-tikka-masala",
     photo: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=800&h=600&fit=crop",
     instructions: [
       "Cut chicken into bite-sized pieces and marinate in yogurt, lemon juice, and spices for at least 2 hours.",
@@ -73,6 +75,7 @@ export const recipesData: RecipeType[] = [
   {
     id: 3,
     name: "Chocolate Chip Cookies",
+    slug: "chocolate-chip-cookies",
     photo: "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=800&h=600&fit=crop",
     instructions: [
       "Preheat oven to 180°C (350°F). Line baking sheets with parchment paper.",
@@ -108,6 +111,7 @@ export const recipesData: RecipeType[] = [
   {
     id: 4,
     name: "Caesar Salad",
+    slug: "caesar-salad",
     photo: "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=800&h=600&fit=crop",
     instructions: [
       "Wash and dry romaine lettuce thoroughly. Tear into bite-sized pieces.",
@@ -140,6 +144,7 @@ export const recipesData: RecipeType[] = [
   {
     id: 5,
     name: "Beef Tacos",
+    slug: "beef-tacos",
     photo: "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=800&h=600&fit=crop",
     instructions: [
       "Heat a large skillet over medium-high heat. Add ground beef and cook until browned, about 8 minutes.",
@@ -174,6 +179,7 @@ export const recipesData: RecipeType[] = [
   {
     id: 6,
     name: "Vegetable Stir Fry",
+    slug: "vegetable-stir-fry",
     photo: "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=800&h=600&fit=crop",
     instructions: [
       "Cut all vegetables into uniform pieces for even cooking.",
@@ -209,6 +215,7 @@ export const recipesData: RecipeType[] = [
   {
     id: 7,
     name: "Margherita Pizza",
+    slug: "margherita-pizza",
     photo: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800&h=600&fit=crop",
     instructions: [
       "Preheat oven to 250°C (480°F). If using a pizza stone, place it in the oven to heat.",
@@ -241,6 +248,7 @@ export const recipesData: RecipeType[] = [
   {
     id: 8,
     name: "Chocolate Brownies",
+    slug: "chocolate-brownies",
     photo: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=800&h=600&fit=crop",
     instructions: [
       "Preheat oven to 180°C (350°F). Grease and line a 20cm square baking pan.",
@@ -275,6 +283,7 @@ export const recipesData: RecipeType[] = [
   {
     id: 9,
     name: "Grilled Salmon",
+    slug: "grilled-salmon",
     photo: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&h=600&fit=crop",
     instructions: [
       "Preheat grill to medium-high heat. Clean and oil the grill grates.",
@@ -305,6 +314,7 @@ export const recipesData: RecipeType[] = [
   {
   id: 10,
     name: "French Onion Soup",
+    slug: "french-onion-soup",
     photo: "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800&h=600&fit=crop",
     instructions: [
       "Slice onions thinly. Heat butter and oil in a large pot over medium-low heat.",
