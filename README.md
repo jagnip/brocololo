@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Brocololo 🥗 *(WIP, name WIP too)*
 
-## Getting Started
+A cheerful recipe and meal planning app that simplifies cooking and shopping for families with different dietary needs — starting with Crohn’s and ulcerative colitis, and built to support more conditions in the future.
 
-First, run the development server:
+This project is a **work in progress** and being built with **Next.js 15**, **React 19**, **TypeScript**, **Prisma**, and **PostgreSQL**.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Features (Planned & In Progress)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- 🧠 **Smart ingredient & instruction parsing**  
+  Uses natural language processing to extract amounts, units, ingredients, and actions from plain text.
+  
+- 📏 **Scale recipes** up or down depending on servings
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- 🌍 **Switch between metric and US measurement systems**
 
-## Learn More
+- 🍽 **Adjust meals for IBD**  
+  Modify recipes based on **condition severity**, suggest **replacements** for sensitive ingredients (e.g. low-FODMAP swaps)
 
-To learn more about Next.js, take a look at the following resources:
+- 🧾 **Get nutritional values** of recipes  
+  Powered by a custom food and nutrition database, not a third-party API
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- 🛒 **Generate smart shopping lists**  
+  Based on your selected recipes and scaled servings
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- 🕒 **Plan meals by available time**  
+  Filter or generate meals based on how much hands-on cooking time you have
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Next.js 15**
+- **React 19**
+- **TypeScript**
+- **Prisma + PostgreSQL**
+- **React Query**
+- **Compromise (for NLP)**
+- **Zod** for schema validation
+- **Pluralize** to normalize ingredient names
