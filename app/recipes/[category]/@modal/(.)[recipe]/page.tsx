@@ -9,6 +9,5 @@ type PageProps = {
 export default async function RecipeModalPage({ params }: PageProps) {
   const { recipe: recipeSlug } = await params;
 
-    return <RecipeDialog recipeSlug={recipeSlug} />;
-
+  return <RecipeDialog recipeSlug={recipeSlug} />;
 }
