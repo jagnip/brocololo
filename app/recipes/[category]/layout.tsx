@@ -10,7 +10,6 @@ type PageProps = {
 
 export default async function Layout({ params, children, modal }: PageProps) {
   const { category: categorySlug } = await params;
- 
 
   return (
     <>

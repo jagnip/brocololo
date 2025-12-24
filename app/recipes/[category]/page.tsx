@@ -3,11 +3,10 @@ import RecipeGrid from "@/components/recipes/recipe-grid";
 import { Suspense } from "react";
 
 type PageProps = {
-  params: Promise<{ category?: string }>;
+  params: Promise<{ category: string }>;
 };
 
 export default async function Page({ params }: PageProps) {
-  const { category } = await params;
   const { category: categorySlug } = await params;
 
   return (
