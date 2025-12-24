@@ -40,11 +40,11 @@ export async function getCategories(): Promise<CategoryType[]> {
   }
 }
 
-export async function getRecipeById(recipeId: string, categoryId?: string): Promise<RecipeType | null> {
+export async function getRecipeById(recipeId: string, categorySlug?: string): Promise<RecipeType | null> {
   const recipes = recipesData;
   
-  const filteredRecipes = categoryId
-    ? recipes.filter((r: RecipeType) => r.category.includes(categoryId))
+  const filteredRecipes = categorySlug
+    ? recipes.filter((r: RecipeType) => r.categorySlugs.includes(categorySlug))
     : recipes;
 
   return filteredRecipes.find((r: RecipeType) => r.id.toString() === recipeId) || null;
