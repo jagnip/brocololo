@@ -7,7 +7,5 @@ type PageProps = {
 export default async function RecipePage({ params }: PageProps) {
   const { recipe: recipeSlug } = await params;
 
-  return (
-    <div>Recipe Page WIP</div>
-  );
+  return <RecipeDialog recipeSlug={recipeSlug} />;
 }
