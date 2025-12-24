@@ -10,19 +10,18 @@ type RecipeFiltersProps = {
 
 export default function RecipeFilters({
   activeCategorySlug,
-
 }: RecipeFiltersProps) {
   const categories = categoriesData;
 
-    if (activeCategorySlug !== "all") {
-      const categoryExists = categories.some(
-        (cat) => cat.slug === activeCategorySlug
-      );
+  if (activeCategorySlug !== "all") {
+    const categoryExists = categories.some(
+      (cat) => cat.slug === activeCategorySlug
+    );
 
-      if (!categoryExists) {
-        notFound(); 
-      }
+    if (!categoryExists) {
+      notFound();
     }
+  }
 
   const getFilterStyles = (categorySlug: string) => {
     const isActive = activeCategorySlug === categorySlug;
@@ -36,11 +35,9 @@ export default function RecipeFilters({
   };
 
   const buildUrl = (categorySlug: string) => {
-    if (categorySlug === "all") {
-      return "/recipes";
-    }
     return `/recipes/${categorySlug}`;
   };
+
 
   return (
     <header className="flex flex-wrap gap-2 sticky top-0 z-10 bg-background py-4 px-4 w-full">
