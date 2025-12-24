@@ -17,7 +17,7 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      router.push(`/recipes/${category}/${recipe.slug}`, { scroll: false });
+      router.push(`/recipes/${category}`, { scroll: false });
     }
   };
 
