@@ -21,5 +21,5 @@ export default async function RecipePage({ params }: PageProps) {
   //   }
 
   //   return <RecipeDialog recipe={recipe} />;
-  return <div>Recipe</div>;
+  return <div>Recipe page</div>;
 }
