@@ -2,19 +2,27 @@
 
 import type { RecipeType } from "@/types/recipe";
 import Image from "next/image";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { notFound, useParams, usePathname, useRouter } from "next/navigation";
 import { Badge } from "../ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { recipesData } from "@/lib/recipes-data";
 
 type RecipeDialogProps = {
-  recipe: RecipeType;
+  recipeSlug: string;
 };
 
-export default function RecipeDialog({ recipe }: RecipeDialogProps) {
+export default function RecipeDialog({ recipeSlug }: RecipeDialogProps) {
   const router = useRouter();
   const params = useParams();
   const pathname = usePathname();
   const category = params.category as string;
+  const recipe = recipesData.find((r) => r.slug === recipeSlug);
+
+  if (!recipe) {
+    router.push("/404");
+    return null;
+  }
+
   const isRecipeRoute = pathname?.includes(`/${category}/${recipe.slug}`);
 
   const handleOpenChange = (isOpen: boolean) => {

@@ -9,15 +9,6 @@ type PageProps = {
 export default async function RecipeModalPage({ params }: PageProps) {
   const { recipe: recipeSlug } = await params;
 
-  console.log('recipeSlug', recipeSlug);
-
-    const recipe = recipesData.find((r) => r.slug === recipeSlug);
-
-    if (!recipe) {
-      notFound();
-    }
-
-    return <RecipeDialog recipe={recipe} />;
-    // return <div>RECIPE <b>MODAL</b></div>;
+    return <RecipeDialog recipeSlug={recipeSlug} />;
 
 }
