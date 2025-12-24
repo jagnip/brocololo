@@ -2,7 +2,7 @@
 
 import type { RecipeType } from "@/types/recipe";
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { Badge } from "../ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 
@@ -13,13 +13,19 @@ type RecipeDialogProps = {
 export default function RecipeDialog({ recipe }: RecipeDialogProps) {
   const router = useRouter();
   const params = useParams();
+  const pathname = usePathname();
   const category = params.category as string;
+  const isRecipeRoute = pathname?.includes(`/${category}/${recipe.slug}`);
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
       router.push(`/recipes/${category}`, { scroll: false });
     }
   };
+
+  if (!isRecipeRoute) {
+    return null;
+  }
 
   return (
     <Dialog open={true} onOpenChange={handleOpenChange}>
