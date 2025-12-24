@@ -5,9 +5,10 @@ import { Suspense } from "react";
 type PageProps = {
   params: Promise<{ category: string }>;
   children: React.ReactNode;
+  modal: React.ReactNode;
 };
 
-export default async function Layout({ params, children }: PageProps) {
+export default async function Layout({ params, children, modal }: PageProps) {
   const { category: categorySlug } = await params;
  
 
@@ -17,6 +18,7 @@ export default async function Layout({ params, children }: PageProps) {
         <RecipeFilters activeCategorySlug={categorySlug} />
       </Suspense>
       {children}
+      {modal}
     </>
   );
 }
