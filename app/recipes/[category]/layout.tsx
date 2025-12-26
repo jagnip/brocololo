@@ -1,5 +1,5 @@
-import CategorySkeleton from "@/components/recipes/filters-skeleton";
-import RecipeFilters from "@/components/recipes/recipe-filters";
+import CategorySkeleton from "@/components/recipe-filters/filters-skeleton";
+import RecipeFilters from "@/components/recipe-filters/recipe-filters";
 import { Suspense } from "react";
 
 type PageProps = {
