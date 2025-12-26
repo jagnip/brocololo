@@ -1,5 +1,5 @@
 import GridSkeleton from "@/components/recipes/grid-skeleton";
-import RecipeGrid from "@/components/recipes/recipe-grid";
+import RecipeGridContainer from "@/components/recipes/recipe-grid-container";
 import { Suspense } from "react";
 
 type PageProps = {
@@ -12,7 +12,7 @@ export default async function Page({ params }: PageProps) {
   return (
     <>
       <Suspense fallback={<GridSkeleton />}>
-        <RecipeGrid activeCategorySlug={categorySlug} />
+        <RecipeGridContainer activeCategorySlug={categorySlug} />
       </Suspense>
     </>
   );
