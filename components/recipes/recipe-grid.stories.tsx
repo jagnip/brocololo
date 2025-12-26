@@ -1,18 +1,18 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import RecipeCard from "./recipe-card";
+import RecipeGrid from "./recipe-grid";
 import { storyRecipes } from "@/lib/stories-data";
 
 const meta = {
-  title: "Components/RecipeCard",
-  component: RecipeCard,
-} satisfies Meta<typeof RecipeCard>;
+  title: "Components/RecipeGrid",
+  component: RecipeGrid,
+} satisfies Meta<typeof RecipeGrid>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    recipe: storyRecipes[0],
-    url: "/recipes/italian/classic-spaghetti-bolognese",
+    recipes: storyRecipes,
+    activeCategorySlug: "all",
   },
 };
