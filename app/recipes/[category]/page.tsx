@@ -1,4 +1,4 @@
-import GridSkeleton from "@/components/skeletons/grid-skeleton";
+import GridSkeleton from "@/components/recipes/grid-skeleton";
 import RecipeGrid from "@/components/recipes/recipe-grid";
 import { Suspense } from "react";
 

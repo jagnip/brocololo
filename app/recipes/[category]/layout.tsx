@@ -1,4 +1,4 @@
-import CategorySkeleton from "@/components/skeletons/category-skeleton";
+import CategorySkeleton from "@/components/recipes/filters-skeleton";
 import RecipeFilters from "@/components/recipes/recipe-filters";
 import { Suspense } from "react";
 

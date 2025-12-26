@@ -1,5 +1,5 @@
-import CategorySkeleton from "@/components/skeletons/category-skeleton";
-import GridSkeleton from "@/components/skeletons/grid-skeleton";
+import CategorySkeleton from "@/components/recipes/filters-skeleton";
+import GridSkeleton from "@/components/recipes/grid-skeleton";
 
 export default function Loading() {
   return (
