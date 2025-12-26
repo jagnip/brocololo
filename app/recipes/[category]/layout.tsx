@@ -1,5 +1,5 @@
 import CategorySkeleton from "@/components/recipe-filters/filters-skeleton";
-import RecipeFilters from "@/components/recipe-filters/recipe-filters";
+import RecipeFiltersContainer from "@/components/recipe-filters/recipe-filters-container";
 import { Suspense } from "react";
 
 type PageProps = {
@@ -14,7 +14,7 @@ export default async function Layout({ params, children, modal }: PageProps) {
   return (
     <>
       <Suspense fallback={<CategorySkeleton />}>
-        <RecipeFilters activeCategorySlug={categorySlug} />
+        <RecipeFiltersContainer activeCategorySlug={categorySlug} />
       </Suspense>
       {children}
       {modal}

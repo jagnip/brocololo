@@ -1,28 +1,16 @@
 import type { CategoryType } from "@/types/category";
-import { categoriesData } from "@/lib/categories-data";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { notFound } from "next/navigation";
 
 type RecipeFiltersProps = {
+  categories: CategoryType[];
   activeCategorySlug: string;
 };
 
 export default function RecipeFilters({
+  categories,
   activeCategorySlug,
 }: RecipeFiltersProps) {
-  const categories = categoriesData;
-
-  if (activeCategorySlug !== "all") {
-    const categoryExists = categories.some(
-      (cat) => cat.slug === activeCategorySlug
-    );
-
-    if (!categoryExists) {
-      notFound();
-    }
-  }
-
   const getFilterStyles = (categorySlug: string) => {
     const isActive = activeCategorySlug === categorySlug;
 
@@ -37,7 +25,6 @@ export default function RecipeFilters({
   const buildUrl = (categorySlug: string) => {
     return `/recipes/${categorySlug}`;
   };
-
 
   return (
     <header className="flex flex-wrap gap-2 sticky top-0 z-10 bg-background py-4 px-4 w-full">
