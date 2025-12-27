@@ -13,14 +13,14 @@ export default function RecipeCard({ recipe, url }: RecipeCardProps) {
   return (
     <Link href={url} scroll={false}>
       <Card className="cursor-pointer hover:shadow-md transition-shadow">
+        <Image
+          src={recipe.photo}
+          alt={recipe.name}
+          width={300}
+          height={300}
+          className="w-full h-auto rounded-xl"
+        />
         <CardHeader>
-          <Image
-            src={recipe.photo}
-            alt={recipe.name}
-            width={300}
-            height={300}
-            className="w-full h-auto rounded-xl"
-          />
           {recipe.name} <Badge>{recipe["hands-on-time"]}</Badge>
         </CardHeader>
       </Card>
