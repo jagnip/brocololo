@@ -14,5 +14,3 @@ export const Default: Story = {
     activeCategorySlug: "all",
   },
 };
-
-

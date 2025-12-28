@@ -11,9 +11,7 @@ type RecipeDialogProps = {
   recipeSlug: string;
 };
 
-export default function RecipeDialog({
-  recipeSlug,
-}: RecipeDialogProps) {
+export default function RecipeDialog({ recipeSlug }: RecipeDialogProps) {
   const router = useRouter();
   const params = useParams();
   const pathname = usePathname();
