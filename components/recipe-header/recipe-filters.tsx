@@ -5,10 +5,7 @@ import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-
-
 export default function RecipeFilters( {categories}: {categories: CategoryType[]} ) {
-
 
   const activeCategory = useParams().category;
 
@@ -28,7 +25,7 @@ export default function RecipeFilters( {categories}: {categories: CategoryType[]
   };
 
   return (
-    <header className="flex flex-wrap gap-2 sticky top-0 z-10 bg-background py-4 px-4 w-full">
+    <div className="flex flex-wrap gap-2">
       <Link
         href={buildUrl("all")}
         className={getFilterStyles("all")}
@@ -46,6 +43,6 @@ export default function RecipeFilters( {categories}: {categories: CategoryType[]
           {category.name}
         </Link>
       ))}
-    </header>
+    </div>
   );
 }
