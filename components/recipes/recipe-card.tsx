@@ -1,16 +1,20 @@
+"use client";
+
 import type { RecipeType } from "@/types/recipe";
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardHeader } from "../ui/card";
 import { Badge } from "../ui/badge";
+import { useParams } from "next/navigation";
 
 type RecipeCardProps = {
   recipe: RecipeType;
   categorySlug: string;
 };
 
-export default function RecipeCard({ recipe, categorySlug }: RecipeCardProps) {
-  const url = `/recipes/${categorySlug}/${recipe.slug}`;
+export default function RecipeCard({ recipe }: RecipeCardProps) {
+  const activeCategory = useParams().category;
+  const url = `/recipes/${activeCategory}/${recipe.slug}`;
 
   return (
     <Link href={url} scroll={false}>

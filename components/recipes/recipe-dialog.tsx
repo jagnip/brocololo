@@ -1,6 +1,5 @@
 "use client";
 
-import type { RecipeType } from "@/types/recipe";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { recipesData } from "@/lib/recipes-data";
 import Image from "next/image";
