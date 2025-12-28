@@ -1,29 +1,19 @@
+"use client";
+
 import type { CategoryType } from "@/types/category";
-import { categoriesData } from "@/lib/categories-data";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-type RecipeFiltersProps = {
-  activeCategorySlug: string;
-};
 
-export default function RecipeFilters({
-  activeCategorySlug,
-}: RecipeFiltersProps) {
-  const categories = categoriesData;
 
-  if (activeCategorySlug !== "all") {
-    const categoryExists = categories.some(
-      (cat) => cat.slug === activeCategorySlug
-    );
+export default function RecipeFilters( {categories}: {categories: CategoryType[]} ) {
 
-    if (!categoryExists) {
-      notFound();
-    }
-  }
+
+  const activeCategory = useParams().category;
+
   const getFilterStyles = (categorySlug: string) => {
-    const isActive = activeCategorySlug === categorySlug;
+    const isActive = activeCategory === categorySlug;
 
     return cn(
       "px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
