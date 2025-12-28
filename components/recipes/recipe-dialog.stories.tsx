@@ -15,6 +15,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    recipeSlug: storyRecipes[0].slug,
+    recipe: storyRecipes[0].slug,
   },
 };

@@ -9,7 +9,6 @@ import { useParams } from "next/navigation";
 
 type RecipeCardProps = {
   recipe: RecipeType;
-  categorySlug: string;
 };
 
 export default function RecipeCard({ recipe }: RecipeCardProps) {
