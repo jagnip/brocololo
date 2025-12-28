@@ -15,7 +15,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    recipe: storyRecipes[0],
-    onOpenChange: () => {},
+    recipeSlug: storyRecipes[0].slug,
   },
 };

@@ -6,10 +6,12 @@ import { Badge } from "../ui/badge";
 
 type RecipeCardProps = {
   recipe: RecipeType;
-  url: string;
+  categorySlug: string;
 };
 
-export default function RecipeCard({ recipe, url }: RecipeCardProps) {
+export default function RecipeCard({ recipe, categorySlug }: RecipeCardProps) {
+  const url = `/recipes/${categorySlug}/${recipe.slug}`;
+
   return (
     <Link href={url} scroll={false}>
       <Card className="cursor-pointer hover:shadow-md transition-shadow">

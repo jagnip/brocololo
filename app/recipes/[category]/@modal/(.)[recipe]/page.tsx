@@ -1,4 +1,4 @@
-import RecipeDialogContainer from "@/components/recipes/recipe-dialog-container";
+import RecipeDialog from "@/components/recipes/recipe-dialog";
 
 type PageProps = {
   params: Promise<{ category: string; recipe: string }>;
@@ -7,5 +7,5 @@ type PageProps = {
 export default async function RecipeModalPage({ params }: PageProps) {
   const { recipe: recipeSlug } = await params;
 
-  return <RecipeDialogContainer recipeSlug={recipeSlug} />;
+  return <RecipeDialog recipeSlug={recipeSlug} />;
 }

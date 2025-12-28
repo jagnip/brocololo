@@ -13,6 +13,6 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     recipe: storyRecipes[0],
-    url: "/recipes/italian/classic-spaghetti-bolognese",
+    categorySlug: "italian",
   },
 };
