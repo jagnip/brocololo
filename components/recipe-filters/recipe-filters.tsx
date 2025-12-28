@@ -1,16 +1,27 @@
 import type { CategoryType } from "@/types/category";
+import { categoriesData } from "@/lib/categories-data";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 type RecipeFiltersProps = {
-  categories: CategoryType[];
   activeCategorySlug: string;
 };
 
 export default function RecipeFilters({
-  categories,
   activeCategorySlug,
 }: RecipeFiltersProps) {
+  const categories = categoriesData;
+
+  if (activeCategorySlug !== "all") {
+    const categoryExists = categories.some(
+      (cat) => cat.slug === activeCategorySlug
+    );
+
+    if (!categoryExists) {
+      notFound();
+    }
+  }
   const getFilterStyles = (categorySlug: string) => {
     const isActive = activeCategorySlug === categorySlug;
 
