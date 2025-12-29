@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, useParams } from "next/navigation";
-import { useTransition, useState } from "react";
+import { useTransition, useState, useEffect } from "react";
 import { Command, CommandInput } from "../ui/command";
 import Form from "next/form";
 
@@ -12,16 +12,20 @@ export default function RecipeSearch() {
   const activeCategory = params.category as string;
 
   const searchQuery = searchParams.get("q") || "";
-
+  const [inputValue, setInputValue] = useState(searchQuery);
   const [isPending, startTransition] = useTransition();
 
+  useEffect(() => {
+    setInputValue(searchQuery);
+  }, [searchQuery]);
+
   return (
-    <Form action="" className="flex items-center" key={activeCategory}>
+    <Form action="" className="flex items-center" >
       <Command className="rounded-lg border md:min-w-[450px]">
         <CommandInput
           placeholder="Search recipe..."
           className="h-9"
-          defaultValue={searchQuery}
+          value={inputValue}
           onValueChange={(value) => {
             const newSearchParams = new URLSearchParams(
               searchParams.toString()
