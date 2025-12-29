@@ -6,21 +6,32 @@ import { RecipeType } from "@/types/recipe";
 
 type PageProps = {
   params: Promise<{ category: string }>;
+  searchParams: Promise<{ q: string }>;
 };
 
-export default async function Page({ params }: PageProps) {
+export default async function Page({ params, searchParams }: PageProps) {
   const { category: activeCategory } = await params;
+  const { q: searchQuery } = await searchParams;
 
   //This gonna block Suspense streaming until the categories are loaded
   //Use use() from React from Clinet Server Insight lesson
   const recipes = recipesData;
 
-    const filteredRecipes =
-      activeCategory && activeCategory !== "all"
-        ? recipes.filter((r: RecipeType) =>
-            r.categorySlugs.includes(activeCategory as string)
-          )
-        : recipes;
+  // Filter by category
+  let filteredRecipes =
+    activeCategory && activeCategory !== "all"
+      ? recipes.filter((r: RecipeType) =>
+          r.categorySlugs.includes(activeCategory as string)
+        )
+      : recipes;
+
+  // Filter by search query
+  if (searchQuery) {
+    const searchLower = searchQuery.toLowerCase();
+    filteredRecipes = filteredRecipes.filter((r: RecipeType) => {
+      return r.name.toLowerCase().includes(searchLower);
+    });
+  }
 
   return (
     <>

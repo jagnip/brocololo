@@ -1,13 +1,17 @@
 "use client";
 
 import type { CategoryType } from "@/types/category";
-import { notFound, useParams } from "next/navigation";
+import { notFound, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-export default function RecipeFilters( {categories}: {categories: CategoryType[]} ) {
-
+export default function RecipeFilters({
+  categories,
+}: {
+  categories: CategoryType[];
+}) {
   const activeCategory = useParams().category;
+  const searchParams = useSearchParams();
 
   const getFilterStyles = (categorySlug: string) => {
     const isActive = activeCategory === categorySlug;
