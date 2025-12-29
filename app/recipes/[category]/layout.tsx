@@ -1,5 +1,4 @@
 import CategorySkeleton from "@/components/recipe-header/filters-skeleton";
-import RecipeFilters from "@/components/recipe-header/recipe-filters";
 import RecipeHeader from "@/components/recipe-header/recipe-header";
 import { categoriesData } from "@/lib/categories-data";
 import { notFound } from "next/navigation";
