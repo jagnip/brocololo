@@ -1,12 +1,12 @@
 import { Skeleton } from "../ui/skeleton";
 
-export default function CategorySkeleton() {
+export function FiltersSkeleton() {
   return (
-    <header className="flex flex-wrap gap-2 sticky top-0 z-10 bg-background py-4 px-4 w-full">
-      <Skeleton className="h-10 w-16 rounded-lg bg-muted" />
+    <div className="flex flex-wrap gap-2">
+      <Skeleton className="h-10 w-16 rounded-lg" />
       {Array.from({ length: 5 }).map((_, i) => (
-        <Skeleton key={i} className="h-10 w-32 rounded-lg bg-muted" />
+        <Skeleton key={i} className="h-10 w-32 rounded-lg" />
       ))}
-    </header>
+    </div>
   );
 }

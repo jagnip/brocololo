@@ -1,8 +1,6 @@
-import CategorySkeleton from "@/components/recipe-header/filters-skeleton";
 import RecipeHeader from "@/components/recipe-header";
 import { categoriesData } from "@/lib/categories-data";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 
 type PageProps = {
   params: Promise<{ category: string }>;
@@ -29,9 +27,8 @@ export default async function Layout({ params, children, modal }: PageProps) {
 
   return (
     <>
-      <Suspense fallback={<CategorySkeleton />}>
-        <RecipeHeader categories={categories} />
-      </Suspense>
+      <RecipeHeader categories={categories} />
+
       {children}
       {modal}
     </>
