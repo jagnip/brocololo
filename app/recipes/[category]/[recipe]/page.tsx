@@ -1,4 +1,4 @@
-import RecipeDialog from "@/components/recipes/recipe-dialog";
+import RecipeDialog from "@/components/recipes/dialog";
 import { recipesData } from "@/lib/recipes-data";
 import { notFound } from "next/navigation";
 

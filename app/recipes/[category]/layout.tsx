@@ -1,5 +1,5 @@
 import CategorySkeleton from "@/components/recipe-header/filters-skeleton";
-import RecipeHeader from "@/components/recipe-header/recipe-header";
+import RecipeHeader from "@/components/recipe-header";
 import { categoriesData } from "@/lib/categories-data";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";

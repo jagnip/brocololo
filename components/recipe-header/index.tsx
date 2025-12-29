@@ -1,8 +1,8 @@
 "use client";
 
 import type { CategoryType } from "@/types/category";
-import RecipeSearch from "./recipe-search";
-import RecipeFilters from "./recipe-filters";
+import RecipeSearch from "./search";
+import RecipeFilters from "./filters";
 
 export default function RecipeHeader({
   categories,

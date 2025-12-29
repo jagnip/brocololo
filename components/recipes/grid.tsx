@@ -1,5 +1,5 @@
 import type { RecipeType } from "@/types/recipe";
-import RecipeCard from "./recipe-card";
+import RecipeCard from "./card";
 
 export default async function RecipeGrid({ recipes }: { recipes: RecipeType[] }) {
 

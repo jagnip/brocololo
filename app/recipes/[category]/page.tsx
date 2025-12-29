@@ -1,5 +1,5 @@
-import GridSkeleton from "@/components/recipes/recipe-grid-skeleton";
-import RecipeGrid from "@/components/recipes/recipe-grid";
+import GridSkeleton from "@/components/recipes/grid-skeleton";
+import RecipeGrid from "@/components/recipes/grid";
 import { Suspense } from "react";
 import { recipesData } from "@/lib/recipes-data";
 import { RecipeType } from "@/types/recipe";
