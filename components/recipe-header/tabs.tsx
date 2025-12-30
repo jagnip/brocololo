@@ -1,16 +1,25 @@
-"use client";
-
 import type { CategoryType } from "@/types/category";
-import { notFound, useParams, useSearchParams } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { categoriesData } from "@/lib/categories-data";
 
 export default function RecipeTabs({
-  categories,
+  activeCategory,
 }: {
-  categories: CategoryType[];
+  activeCategory: string;
 }) {
-  const activeCategory = useParams().category;
+  const categories = categoriesData;
+
+  if (activeCategory !== "all") {
+    const categoryExists = categories.some(
+      (cat) => cat.slug === activeCategory
+    );
+
+    if (!categoryExists) {
+      notFound();
+    }
+  }
 
   const getFilterStyles = (categorySlug: string) => {
     const isActive = activeCategory === categorySlug;
