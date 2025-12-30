@@ -10,33 +10,14 @@ type PageProps = {
 };
 
 export default async function Page({ params, searchParams }: PageProps) {
-  const { category: activeCategory } = await params;
+  const { category: activeCategoryRaw } = await params;
   const { q: searchQuery } = await searchParams;
-
-  //This gonna block Suspense streaming until the categories are loaded
-  //Use use() from React from Clinet Server Insight lesson
-  const recipes = recipesData;
-
-  // Filter by category
-  let filteredRecipes =
-    activeCategory && activeCategory !== "all"
-      ? recipes.filter((r: RecipeType) =>
-          r.categorySlugs.includes(activeCategory as string)
-        )
-      : recipes;
-
-  // Filter by search query
-  if (searchQuery) {
-    const searchLower = searchQuery.toLowerCase();
-    filteredRecipes = filteredRecipes.filter((r: RecipeType) => {
-      return r.name.toLowerCase().includes(searchLower);
-    });
-  }
+  const activeCategory = activeCategoryRaw.toLowerCase();
 
   return (
     <>
       <Suspense fallback={<GridSkeleton />}>
-        <RecipeGrid recipes={filteredRecipes} />
+        <RecipeGrid activeCategory={activeCategory} searchQuery={searchQuery} />
       </Suspense>
     </>
   );

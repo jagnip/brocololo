@@ -3,9 +3,9 @@
 import type { CategoryType } from "@/types/category";
 import { Suspense } from "react";
 import RecipeSearch from "./search/index";
-import RecipeFilters from "./filters";
+import RecipeTabs from "./tabs";
 import SearchSkeleton from "./search/search-skeleton";
-import { FiltersSkeleton } from "./filters-skeleton";
+import { TabsSkeleton } from "./tabs-skeleton";
 
 export default function RecipeHeader({
   categories,
@@ -14,8 +14,8 @@ export default function RecipeHeader({
 }) {
   return (
     <header className="flex flex-wrap items-center justify-between sticky top-0 z-10 bg-background py-4 px-4 w-full">
-      <Suspense fallback={<FiltersSkeleton />}>
-        <RecipeFilters categories={categories} />
+      <Suspense fallback={<TabsSkeleton />}>
+        <RecipeTabs categories={categories} />
       </Suspense>
       <Suspense fallback={<SearchSkeleton />}>
         <RecipeSearch />

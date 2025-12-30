@@ -1,6 +1,6 @@
 import { Skeleton } from "../ui/skeleton";
 
-export function FiltersSkeleton() {
+export function TabsSkeleton() {
   return (
     <div className="flex flex-wrap gap-2">
       <Skeleton className="h-10 w-16 rounded-lg" />

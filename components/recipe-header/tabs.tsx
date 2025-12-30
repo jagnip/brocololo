@@ -5,13 +5,12 @@ import { notFound, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-export default function RecipeFilters({
+export default function RecipeTabs({
   categories,
 }: {
   categories: CategoryType[];
 }) {
   const activeCategory = useParams().category;
-  const searchParams = useSearchParams();
 
   const getFilterStyles = (categorySlug: string) => {
     const isActive = activeCategory === categorySlug;
