@@ -17,7 +17,7 @@ export default function Search() {
   return (
     <Form
       action=""
-      className="relative flex w-full flex-col gap-2 flex-1 min-w-[250px]"
+      className="relative flex w-full flex-col gap-2 flex-1 min-w-[250px] lg:max-w-[450px]"
       key={activeTab}
     >
       <div className="relative">
