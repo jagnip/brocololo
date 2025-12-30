@@ -1,10 +1,11 @@
 import { SearchIcon } from "lucide-react";
 import { LoaderIcon } from "lucide-react";
-import React from "react";
 import { useFormStatus } from "react-dom";
 
 export default function SearchStatus({ searching }: { searching?: boolean }) {
   const { pending } = useFormStatus();
+
+  //isSearching is true when the router is is transition, otherwise is pending when the form is submitting
   const isSearching = searching || pending;
 
   return (

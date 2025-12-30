@@ -25,14 +25,7 @@ export default function RecipeFilters({
   };
 
   const buildUrl = (categorySlug: string) => {
-    const searchQuery = searchParams.get("q");
-    const baseUrl = `/recipes/${categorySlug}`;
-
-    if (searchQuery) {
-      return `${baseUrl}?q=${encodeURIComponent(searchQuery)}`;
-    }
-
-    return baseUrl;
+    return `/recipes/${categorySlug}`;
   };
 
   return (
