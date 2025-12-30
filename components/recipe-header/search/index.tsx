@@ -1,6 +1,6 @@
 "use client";
 import Form from "next/form";
-import { useRouter, useSearchParams, useParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams, usePathname } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import SearchStatus from "./search-status";
 import { X } from "lucide-react";
@@ -9,7 +9,7 @@ export default function Search() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const params = useParams();
-  const activeTab = params.category as string;
+   const pathname = usePathname();
 
   const searchQuery = searchParams.get("q") || "";
   const [inputValue, setInputValue] = useState(searchQuery);
@@ -19,18 +19,13 @@ export default function Search() {
   }, [searchQuery]);
 
   const [isPending, startTransition] = useTransition();
-  
-    const handleClear = () => {
-      setInputValue("");
-      const newSearchParams = new URLSearchParams(searchParams.toString());
-      newSearchParams.delete("q");
-      const newUrl = newSearchParams.toString();
-      startTransition(() => {
-        router.push(newUrl ? `?${newUrl}` : "", {
-          scroll: false,
-        });
-      });
-    };
+
+const handleClear = () => {
+  setInputValue("");
+  startTransition(() => {
+    router.push(pathname, { scroll: false });
+  });
+};
 
   return (
     <Form
@@ -43,7 +38,7 @@ export default function Search() {
           id="search"
           name="q"
           value={inputValue}
-          className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent pl-10 pr-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+          className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent pl-10 pr-10 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive [&::-webkit-search-cancel-button]:hidden [&::-ms-clear]:hidden"
           placeholder="Search in recipes..."
           type="search"
           onChange={(e) => {
