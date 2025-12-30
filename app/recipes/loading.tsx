@@ -1,5 +1,5 @@
 import { FiltersSkeleton } from "@/components/recipe-header/filters-skeleton";
-import SearchSkeleton from "@/components/recipe-header/search-skeleton";
+import SearchSkeleton from "@/components/recipe-header/search/search-skeleton";
 import GridSkeleton from "@/components/recipes/grid-skeleton";
 
 export default function Loading() {

@@ -2,9 +2,9 @@
 
 import type { CategoryType } from "@/types/category";
 import { Suspense } from "react";
-import RecipeSearch from "./search";
+import RecipeSearch from "./search/index";
 import RecipeFilters from "./filters";
-import SearchSkeleton from "./search-skeleton";
+import SearchSkeleton from "./search/search-skeleton";
 import { FiltersSkeleton } from "./filters-skeleton";
 
 export default function RecipeHeader({
