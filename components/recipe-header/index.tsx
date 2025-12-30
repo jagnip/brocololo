@@ -13,12 +13,12 @@ export default function RecipeHeader({
   categories: CategoryType[];
 }) {
   return (
-    <header className="flex flex-wrap items-center gap-2 sticky top-0 z-10 bg-background py-4 px-4 w-full">
-      <Suspense fallback={<SearchSkeleton />}>
-        <RecipeSearch />
-      </Suspense>
+    <header className="flex flex-wrap items-center justify-between sticky top-0 z-10 bg-background py-4 px-4 w-full">
       <Suspense fallback={<FiltersSkeleton />}>
         <RecipeFilters categories={categories} />
+      </Suspense>
+      <Suspense fallback={<SearchSkeleton />}>
+        <RecipeSearch />
       </Suspense>
     </header>
   );
