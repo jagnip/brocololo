@@ -1,6 +1,6 @@
-import CategorySkeleton from "@/components/skeletons/category-skeleton";
-import RecipeFilters from "@/components/recipes/recipe-filters";
-import { Suspense } from "react";
+import RecipeHeader from "@/components/recipe-header";
+import { categoriesData } from "@/lib/categories-data";
+import { notFound } from "next/navigation";
 
 type PageProps = {
   params: Promise<{ category: string }>;
@@ -9,13 +9,26 @@ type PageProps = {
 };
 
 export default async function Layout({ params, children, modal }: PageProps) {
-  const { category: categorySlug } = await params;
+  const { category: activeCategory } = await params;
+
+  //This gonna block Suspense streaming until the categories are loaded
+  //Use use() from React from Clinet Server Insight lesson
+  const categories = categoriesData;
+
+  if (activeCategory !== "all") {
+    const categoryExists = categoriesData.some(
+      (cat) => cat.slug === activeCategory
+    );
+
+    if (!categoryExists) {
+      notFound();
+    }
+  }
 
   return (
     <>
-      <Suspense fallback={<CategorySkeleton />}>
-        <RecipeFilters activeCategorySlug={categorySlug} />
-      </Suspense>
+      <RecipeHeader categories={categories} />
+
       {children}
       {modal}
     </>

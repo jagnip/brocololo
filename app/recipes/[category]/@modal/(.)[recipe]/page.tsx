@@ -1,6 +1,6 @@
-import { notFound } from "next/navigation";
+import RecipeDialog from "@/components/recipes/dialog";
 import { recipesData } from "@/lib/recipes-data";
-import RecipeDialog from "@/components/recipes/recipe-dialog";
+import { notFound } from "next/navigation";
 
 type PageProps = {
   params: Promise<{ category: string; recipe: string }>;
@@ -9,5 +9,13 @@ type PageProps = {
 export default async function RecipeModalPage({ params }: PageProps) {
   const { recipe: recipeSlug } = await params;
 
-  return <RecipeDialog recipeSlug={recipeSlug} />;
+  //This gonna block Suspense streaming until the categories are loaded
+  //Use use() from React from Clinet Server Insight lesson
+  const recipe = recipesData.find((r) => r.slug === recipeSlug);
+
+  if (!recipe) {
+    notFound();
+  }
+
+  return <RecipeDialog recipe={recipe} />;
 }

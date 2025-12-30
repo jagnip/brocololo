@@ -3,7 +3,7 @@ import type { RecipeType } from "@/types/recipe";
 export const recipesData: RecipeType[] = [
   {
     id: 1,
-    name: "Classic Spaghetti Bolognese",
+    name: "Classic Spaghetti",
     slug: "classic-spaghetti-bolognese",
     photo: "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=800&h=600&fit=crop",
     instructions: [

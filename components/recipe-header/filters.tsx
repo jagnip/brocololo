@@ -1,30 +1,20 @@
+"use client";
+
 import type { CategoryType } from "@/types/category";
-import { categoriesData } from "@/lib/categories-data";
+import { notFound, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { notFound } from "next/navigation";
-
-type RecipeFiltersProps = {
-  activeCategorySlug: string;
-};
 
 export default function RecipeFilters({
-  activeCategorySlug,
-}: RecipeFiltersProps) {
-  const categories = categoriesData;
-
-  if (activeCategorySlug !== "all") {
-    const categoryExists = categories.some(
-      (cat) => cat.slug === activeCategorySlug
-    );
-
-    if (!categoryExists) {
-      notFound();
-    }
-  }
+  categories,
+}: {
+  categories: CategoryType[];
+}) {
+  const activeCategory = useParams().category;
+  const searchParams = useSearchParams();
 
   const getFilterStyles = (categorySlug: string) => {
-    const isActive = activeCategorySlug === categorySlug;
+    const isActive = activeCategory === categorySlug;
 
     return cn(
       "px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -38,9 +28,8 @@ export default function RecipeFilters({
     return `/recipes/${categorySlug}`;
   };
 
-
   return (
-    <header className="flex flex-wrap gap-2 sticky top-0 z-10 bg-background py-4 px-4 w-full">
+    <div className="flex flex-wrap gap-2">
       <Link
         href={buildUrl("all")}
         className={getFilterStyles("all")}
@@ -58,6 +47,6 @@ export default function RecipeFilters({
           {category.name}
         </Link>
       ))}
-    </header>
+    </div>
   );
 }
