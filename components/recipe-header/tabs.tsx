@@ -11,6 +11,8 @@ export default function RecipeTabs({
 }) {
   const categories = categoriesData;
 
+  console.log(activeCategory);
+
   if (activeCategory !== "all") {
     const categoryExists = categories.some(
       (cat) => cat.slug === activeCategory

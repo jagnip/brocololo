@@ -9,8 +9,7 @@ type PageProps = {
 export default async function RecipePage({ params }: PageProps) {
   const { recipe: recipeSlug } = await params;
 
-  //This gonna block Suspense streaming until the categories are loaded
-  //Use use() from React from Clinet Server Insight lesson
+  //Pass recipe slug and fetch in RecipeDialog component
   const recipe = recipesData.find((r) => r.slug === recipeSlug);
 
   if (!recipe) {
