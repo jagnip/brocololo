@@ -11,8 +11,6 @@ export default function RecipeTabs({
 }) {
   const categories = categoriesData;
 
-  console.log(activeCategory);
-
   if (activeCategory !== "all") {
     const categoryExists = categories.some(
       (cat) => cat.slug === activeCategory
@@ -41,7 +39,7 @@ export default function RecipeTabs({
   return (
     <div className="flex flex-wrap gap-2">
       <Link
-        href={buildUrl("all")}
+        href={buildUrl("")}
         className={getFilterStyles("all")}
         scroll={false}
       >

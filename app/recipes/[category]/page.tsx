@@ -1,8 +1,6 @@
 import GridSkeleton from "@/components/recipes/grid-skeleton";
 import RecipeGrid from "@/components/recipes/grid";
 import { Suspense } from "react";
-import { recipesData } from "@/lib/recipes-data";
-import { RecipeType } from "@/types/recipe";
 import RecipeHeader from "@/components/recipe-header";
 
 type PageProps = {
