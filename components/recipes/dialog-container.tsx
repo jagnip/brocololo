@@ -9,9 +9,6 @@ type RecipeDialogContainerProps = {
 export default function RecipeDialogContainer({
   recipeSlug,
 }: RecipeDialogContainerProps) {
-
-  console.log("Clicked on recipe (container): ", recipeSlug);
-
   const recipe = recipesData.find((r) => r.slug === recipeSlug);
 
   if (!recipe) {

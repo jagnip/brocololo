@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Badge } from "../ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
@@ -11,12 +11,9 @@ type RecipeDialogProps = {
 };
 
 export default function RecipeDialog({ recipe }: RecipeDialogProps) {
-  console.log("Clicked on recipe (dialog): ", recipe.name);
   const router = useRouter();
-  // const pathname = usePathname();
-  const category = useParams().category as string;
-
-  // const isRecipeRoute = pathname?.includes(`/${category}/${recipe.slug}`);
+  const params = useParams();
+  const category = params?.category as string | undefined;
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
@@ -24,11 +21,6 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
     }
   };
 
-  // if (!isRecipeRoute) {
-  //   return null;
-  // }
-
-  
   return (
     <Dialog open={true} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
