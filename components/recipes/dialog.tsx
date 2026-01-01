@@ -11,11 +11,12 @@ type RecipeDialogProps = {
 };
 
 export default function RecipeDialog({ recipe }: RecipeDialogProps) {
+  console.log("Clicked on recipe (dialog): ", recipe.name);
   const router = useRouter();
-  const pathname = usePathname();
+  // const pathname = usePathname();
   const category = useParams().category as string;
 
-  const isRecipeRoute = pathname?.includes(`/${category}/${recipe.slug}`);
+  // const isRecipeRoute = pathname?.includes(`/${category}/${recipe.slug}`);
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
@@ -23,9 +24,10 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
     }
   };
 
-  if (!isRecipeRoute) {
-    return null;
-  }
+  // if (!isRecipeRoute) {
+  //   return null;
+  // }
+
   
   return (
     <Dialog open={true} onOpenChange={handleOpenChange}>
