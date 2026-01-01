@@ -38,13 +38,6 @@ export default function RecipeTabs({
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Link
-        href={buildUrl("")}
-        className={getFilterStyles("all")}
-        scroll={false}
-      >
-        All
-      </Link>
       {categories.map((category: CategoryType) => (
         <Link
           key={category.id}
