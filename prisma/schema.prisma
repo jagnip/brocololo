@@ -28,6 +28,6 @@ model Recipe {
   notes        String[]
   portions     Int
   categories   Category[]
-
+  createdAt    DateTime   @default(now())
   @@map("recipes")
 }
