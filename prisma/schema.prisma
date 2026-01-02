@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated"
@@ -11,4 +5,29 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+model Category {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  slug    String   @unique
+  recipes Recipe[]
+
+  @@map("categories")
+}
+
+model Recipe {
+  id           String     @id @default(cuid())
+  name         String     @unique
+  slug         String     @unique
+  photo        String
+  instructions String[]
+  handsOnTime  Int        @map("hands_on_time")
+  nutrition    String[]
+  ingredients  String[]
+  notes        String[]
+  portions     Int
+  categories   Category[]
+
+  @@map("recipes")
 }
