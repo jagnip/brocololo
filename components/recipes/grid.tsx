@@ -14,12 +14,11 @@ export default async function RecipeGrid({
     const recipes = recipesData;
 
     // Filter by category
-    let filteredRecipes =
-      activeCategory && activeCategory !== "all"
-        ? recipes.filter((r: RecipeType) =>
-            r.categorySlugs.includes(activeCategory as string)
-          )
-        : recipes;
+  let filteredRecipes = activeCategory
+    ? recipes.filter((r: RecipeType) =>
+        r.categorySlugs.includes(activeCategory as string)
+      )
+    : recipes;
 
     // Filter by search query
     if (searchQuery) {

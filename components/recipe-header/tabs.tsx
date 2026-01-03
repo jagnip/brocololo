@@ -4,21 +4,17 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { categoriesData } from "@/lib/categories-data";
 
-export default function RecipeTabs({
+export default async function RecipeTabs({
   activeCategory,
 }: {
   activeCategory: string;
 }) {
   const categories = categoriesData;
 
-  if (activeCategory !== "all") {
-    const categoryExists = categories.some(
-      (cat) => cat.slug === activeCategory
-    );
+  const categoryExists = categories.some((cat) => cat.slug === activeCategory);
 
-    if (!categoryExists) {
-      notFound();
-    }
+  if (!categoryExists) {
+    notFound();
   }
 
   const getFilterStyles = (categorySlug: string) => {
