@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import RecipeHeader from "@/components/recipe-header";
 
 // TBD weird caching behavior, need to investigate
-export const dynamic = "force-dynamic";
+// export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{ category: string }>;

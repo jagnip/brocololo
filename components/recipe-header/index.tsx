@@ -14,7 +14,9 @@ export default function RecipeHeader({
       <Suspense fallback={<TabsSkeleton />}>
         <RecipeTabs activeCategory={activeCategory} />
       </Suspense>
-      <RecipeSearch />
+      <Suspense fallback={<SearchSkeleton />}>
+        <RecipeSearch />
+      </Suspense>
     </header>
   );
 }
