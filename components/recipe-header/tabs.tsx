@@ -2,14 +2,19 @@ import type { CategoryType } from "@/types/category";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { categoriesData } from "@/lib/categories-data";
+import { prisma } from "@/lib/db";
 
 export default async function RecipeTabs({
   activeCategory,
 }: {
   activeCategory: string;
 }) {
-  const categories = categoriesData;
+
+  const categories = await prisma.category.findMany({
+    orderBy: {
+      name: "asc",
+    },
+  });
 
   const categoryExists = categories.some((cat) => cat.slug === activeCategory);
 
