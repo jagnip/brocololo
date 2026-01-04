@@ -1,13 +1,17 @@
-"use client";
-
-import type { RecipeType } from "@/types/recipe";
+import { getRecipesByCategory } from "@/lib/db/recipes";
 import RecipeCard from "./card";
 
 type RecipeGridProps = {
-  recipes: RecipeType[];
+  activeCategory: string;
+  searchQuery?: string;
 };
 
-export default function RecipeGrid({ recipes }: RecipeGridProps) {
+export default async function RecipeGrid({
+  activeCategory,
+  searchQuery,
+}: RecipeGridProps) {
+  let recipes = await getRecipesByCategory(activeCategory);
+
   if (recipes.length === 0) {
     return (
       <p className="px-4 py-8 text-center text-muted-foreground">
