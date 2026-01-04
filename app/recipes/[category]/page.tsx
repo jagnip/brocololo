@@ -1,27 +1,28 @@
 import GridSkeleton from "@/components/recipes/grid-skeleton";
 import RecipeGrid from "@/components/recipes/grid";
+import { getRecipesByCategory } from "@/lib/db/recipes";
 import { Suspense } from "react";
-import RecipeHeader from "@/components/recipe-header";
-
-// TBD weird caching behavior, need to investigate
-// export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{ category: string }>;
-  searchParams: Promise<{ q: string }>;
 };
 
-export default async function Page({ params, searchParams }: PageProps) {
+export default async function Page({ params }: PageProps) {
   const { category: activeCategoryRaw } = await params;
-  const { q: searchQuery } = await searchParams;
   const activeCategory = activeCategoryRaw.toLowerCase();
 
   return (
-    <>
-
-      <Suspense fallback={<GridSkeleton />}>
-        <RecipeGrid activeCategory={activeCategory} searchQuery={searchQuery} />
-      </Suspense>
-    </>
+    <Suspense fallback={<GridSkeleton />}>
+      <RecipeGridWithData activeCategory={activeCategory} />
+    </Suspense>
   );
+}
+
+async function RecipeGridWithData({
+  activeCategory,
+}: {
+  activeCategory: string;
+}) {
+  const recipes = await getRecipesByCategory(activeCategory);
+  return <RecipeGrid recipes={recipes} />;
 }
