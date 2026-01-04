@@ -18,7 +18,7 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   return (
     <>
-      <RecipeHeader activeCategory={activeCategory} />
+
       <Suspense fallback={<GridSkeleton />}>
         <RecipeGrid activeCategory={activeCategory} searchQuery={searchQuery} />
       </Suspense>
