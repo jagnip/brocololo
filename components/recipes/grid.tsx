@@ -1,6 +1,6 @@
-import type { RecipeType } from "@/types/recipe";
+import { getRecipesByCategory } from "@/lib/db/recipes";
 import RecipeCard from "./card";
-import { recipesData } from "@/lib/recipes-data";
+import { prisma } from "@/lib/db";
 
 type RecipeGridProps = {
   activeCategory: string;
@@ -8,25 +8,19 @@ type RecipeGridProps = {
 };
 
 export default async function RecipeGrid({
-  activeCategory, searchQuery,
+  activeCategory,
+  searchQuery,
 }: RecipeGridProps) {
 
-    const recipes = recipesData;
+  let recipes = await getRecipesByCategory(activeCategory);
 
-    // Filter by category
-  let filteredRecipes = activeCategory
-    ? recipes.filter((r: RecipeType) =>
-        r.categorySlugs.includes(activeCategory as string)
-      )
-    : recipes;
-
-    // Filter by search query
-    if (searchQuery) {
-      const searchLower = searchQuery.toLowerCase();
-      filteredRecipes = filteredRecipes.filter((r: RecipeType) => {
-        return r.name.toLowerCase().includes(searchLower);
-      });
-    }
+  // Filter by search query
+  if (searchQuery) {
+    const searchLower = searchQuery.toLowerCase();
+    recipes = recipes.filter((r) => {
+      return r.name.toLowerCase().includes(searchLower);
+    });
+  }
 
   if (recipes.length === 0) {
     return (
@@ -39,7 +33,7 @@ export default async function RecipeGrid({
   return (
     <>
       <div className="px-4 pb-4 w-full grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-        {filteredRecipes.map((recipe: RecipeType) => (
+        {recipes.map((recipe) => (
           <RecipeCard key={recipe.name} recipe={recipe} />
         ))}
       </div>

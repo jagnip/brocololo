@@ -48,7 +48,7 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
           <div className="flex-1 space-y-6">
             {/* Time and Portion Badges */}
             <div className="flex gap-2 flex-wrap">
-              <Badge>{recipe["hands-on-time"]}</Badge>
+              <Badge>{recipe.handsOnTime}</Badge>
               {recipe.portions && <Badge>{recipe.portions}</Badge>}
             </div>
 

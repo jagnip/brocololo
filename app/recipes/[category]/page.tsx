@@ -3,6 +3,9 @@ import RecipeGrid from "@/components/recipes/grid";
 import { Suspense } from "react";
 import RecipeHeader from "@/components/recipe-header";
 
+// TBD weird caching behavior, need to investigate
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   params: Promise<{ category: string }>;
   searchParams: Promise<{ q: string }>;

@@ -26,7 +26,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
           className="w-full h-auto rounded-xl"
         />
         <CardHeader>
-          {recipe.name} <Badge>{recipe["hands-on-time"]}</Badge>
+          {recipe.name} <Badge>{recipe.handsOnTime}</Badge>
         </CardHeader>
       </Card>
     </Link>
