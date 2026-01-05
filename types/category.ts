@@ -1,5 +1,3 @@
-export type CategoryType = {
-  id: number;
-  name: string;
-  slug: string;
-};
+import { Prisma } from "@/src/generated/client";
+
+export type CategoryType = Prisma.CategoryGetPayload<{}>;

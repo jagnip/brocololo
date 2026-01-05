@@ -2,23 +2,20 @@ import type { CategoryType } from "@/types/category";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { categoriesData } from "@/lib/categories-data";
+import { getCategories } from "@/lib/db/categories";
 
-export default function RecipeTabs({
+export default async function RecipeTabs({
   activeCategory,
 }: {
   activeCategory: string;
 }) {
-  const categories = categoriesData;
 
-  if (activeCategory !== "all") {
-    const categoryExists = categories.some(
-      (cat) => cat.slug === activeCategory
-    );
+  const categories = await getCategories();
 
-    if (!categoryExists) {
-      notFound();
-    }
+  const categoryExists = categories.some((cat) => cat.slug === activeCategory);
+
+  if (!categoryExists) {
+    notFound();
   }
 
   const getFilterStyles = (categorySlug: string) => {

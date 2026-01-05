@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Category {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  slug    String   @unique
+  recipes Recipe[]
+
+  @@map("categories")
+}
+
+model Recipe {
+  id           String     @id @default(cuid())
+  name         String     @unique
+  slug         String     @unique
+  photo        String
+  instructions String[]
+  handsOnTime  Int        @map("hands_on_time")
+  nutrition    String[]
+  ingredients  String[]
+  notes        String[]
+  portions     Int
+  categories   Category[]
+  createdAt    DateTime   @default(now())
+  @@map("recipes")
+}

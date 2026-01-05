@@ -1,15 +1,16 @@
-import { recipesData } from "@/lib/recipes-data";
 import { notFound } from "next/navigation";
 import RecipeDialog from "./dialog";
+import { getRecipeBySlug } from "@/lib/db/recipes";
 
 type RecipeDialogContainerProps = {
   recipeSlug: string;
 };
 
-export default function RecipeDialogContainer({
+export default async function RecipeDialogContainer({
   recipeSlug,
 }: RecipeDialogContainerProps) {
-  const recipe = recipesData.find((r) => r.slug === recipeSlug);
+
+  const recipe = await getRecipeBySlug(recipeSlug);
 
   if (!recipe) {
     notFound();
