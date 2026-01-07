@@ -13,14 +13,8 @@ import {
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { CategoryType } from "@/types/category";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
 import { Button } from "../ui/button";
+import MultipleSelector from "../ui/multiselect";
 
 export default function CreateRecipeForm({
   categories,
@@ -30,7 +24,6 @@ export default function CreateRecipeForm({
   const formSchema = insertRecipeSchema;
 
   const form = useForm<InsertRecipeType>({
-
     //Resolver as any to avoid type error at compilation time due to coercion of number to string
     resolver: zodResolver(formSchema) as any,
     defaultValues: {
@@ -77,18 +70,20 @@ export default function CreateRecipeForm({
             <FormItem>
               <FormLabel>Category</FormLabel>
               <FormControl>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <MultipleSelector
+                  value={field.value || []} 
+                  onChange={field.onChange} 
+                  defaultOptions={categories.map((category) => ({
+                    value: category.id,
+                    label: category.name,
+                  }))}
+                  placeholder="Select categories"
+                  emptyIndicator={
+                    <p className="text-center text-lg leading-10 text-gray-600 dark:text-gray-400">
+                      No results found.
+                    </p>
+                  }
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
