@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { Button } from "../ui/button";
 
 export default function CreateRecipeForm({
   categories,
@@ -29,12 +30,15 @@ export default function CreateRecipeForm({
   const formSchema = insertRecipeSchema;
 
   const form = useForm<InsertRecipeType>({
-    resolver: zodResolver(formSchema),
+
+    //Resolver as any to avoid type error at compilation time due to coercion of number to string
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       name: "",
       categories: [],
-      slug: "",
-      photo: "",
+      slug: "slug-example",
+      photo:
+        "https://images.unsplash.com/photo-1544025162-d76694265947?w=800&h=600&fit=crop",
       handsOnTime: 0,
       portions: 0,
       nutrition: [],
@@ -202,6 +206,7 @@ export default function CreateRecipeForm({
             </FormItem>
           )}
         />
+        <Button type="submit">Submit</Button>
       </form>
     </Form>
   );
