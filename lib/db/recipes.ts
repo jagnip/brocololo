@@ -59,7 +59,7 @@ export async function getRecipesByCategory(
 }
 
 
-export async function createRecipe(data: InsertRecipeOutputType) {
+export async function createRecipe(data: InsertRecipeOutputType & { slug: string }) {
   const { categories, ...recipeData } = data;
   
   return await prisma.recipe.create({

@@ -35,7 +35,6 @@ export default function CreateRecipeForm({
     defaultValues: {
       name: "name",
       categories: [],
-      slug: "slug-example",
       photo:
         "https://images.unsplash.com/photo-1544025162-d76694265947?w=800&h=600&fit=crop",
       handsOnTime: 1,
@@ -109,20 +108,6 @@ export default function CreateRecipeForm({
                     </p>
                   }
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="slug"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Slug</FormLabel>
-              <FormControl>
-                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
