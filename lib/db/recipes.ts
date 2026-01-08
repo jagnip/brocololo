@@ -1,3 +1,4 @@
+import { InsertRecipeOutputType } from "../validations/recipe";
 import { prisma } from "./index";
 import type { RecipeType } from "@/types/recipe";
 
@@ -53,6 +54,20 @@ export async function getRecipesByCategory(
     },
     orderBy: {
       name: "asc",
+    },
+  });
+}
+
+
+export async function createRecipe(data: InsertRecipeOutputType) {
+  const { categories, ...recipeData } = data;
+  
+  return await prisma.recipe.create({
+    data: {
+      ...recipeData,
+      categories: {
+        connect: categories.map((categoryId) => ({ id: categoryId })),
+      },
     },
   });
 }

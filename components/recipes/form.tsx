@@ -19,6 +19,7 @@ import { Textarea } from "../ui/textarea";
 import { CategoryType } from "@/types/category";
 import { Button } from "../ui/button";
 import MultipleSelector from "../ui/multiselect";
+import { createRecipeAction } from "@/actions/recipe-actions";
 
 export default function CreateRecipeForm({
   categories,
@@ -48,8 +49,7 @@ export default function CreateRecipeForm({
   function onSubmit(formData: InsertRecipeInputType) {
     // zodResolver already transformed the data, so we can safely assert the type
     const transformed = formData as unknown as InsertRecipeOutputType;
-    console.log(transformed);
-    console.log(form.formState.errors);
+    createRecipeAction(transformed);
   }
 
   return (
