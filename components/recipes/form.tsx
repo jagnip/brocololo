@@ -4,6 +4,7 @@ import {
   InsertRecipeInputType,
   InsertRecipeOutputType,
 } from "@/lib/validations/recipe";
+import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -46,10 +47,15 @@ export default function CreateRecipeForm({
     },
   });
 
-  function onSubmit(formData: InsertRecipeInputType) {
+  async function onSubmit(formData: InsertRecipeInputType) {
     // zodResolver already transformed the data, so we can safely assert the type
     const transformed = formData as unknown as InsertRecipeOutputType;
-    createRecipeAction(transformed);
+    const result = await createRecipeAction(transformed);
+
+    console.log(result);
+    if (result?.type === "error") {
+      toast.error(result.message);
+    }
   }
 
   return (
