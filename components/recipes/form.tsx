@@ -1,5 +1,9 @@
 "use client";
-import { insertRecipeSchema, InsertRecipeType } from "@/lib/validations/recipe";
+import {
+  insertRecipeSchema,
+  InsertRecipeInputType,
+  InsertRecipeOutputType,
+} from "@/lib/validations/recipe";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -23,7 +27,7 @@ export default function CreateRecipeForm({
 }) {
   const formSchema = insertRecipeSchema;
 
-  const form = useForm<InsertRecipeType>({
+  const form = useForm<InsertRecipeInputType>({
     //Resolver as any to avoid type error at compilation time due to coercion of number to string
     resolver: zodResolver(formSchema) as any,
     defaultValues: {
@@ -34,15 +38,17 @@ export default function CreateRecipeForm({
         "https://images.unsplash.com/photo-1544025162-d76694265947?w=800&h=600&fit=crop",
       handsOnTime: 0,
       portions: 0,
-      nutrition: [],
-      ingredients: [],
-      instructions: [],
-      notes: [],
+      nutrition: "",
+      ingredients: "",
+      instructions: "",
+      notes: "",
     },
   });
 
-  function onSubmit(formData: InsertRecipeType) {
-    console.log(formData);
+  function onSubmit(formData: InsertRecipeInputType) {
+    // zodResolver already transformed the data, so we can safely assert the type
+    const transformed = formData as unknown as InsertRecipeOutputType;
+    console.log(transformed);
     console.log(form.formState.errors);
   }
 
@@ -71,8 +77,21 @@ export default function CreateRecipeForm({
               <FormLabel>Category</FormLabel>
               <FormControl>
                 <MultipleSelector
-                  value={field.value || []} 
-                  onChange={field.onChange} 
+                  value={
+                    // Transform string[] → Option[]
+                    field.value
+                      ? categories
+                          .filter((cat) => field.value.includes(cat.id))
+                          .map((cat) => ({
+                            value: cat.id,
+                            label: cat.name,
+                          }))
+                      : []
+                  }
+                  onChange={(options) => {
+                    // Transform Option[] → string[]
+                    field.onChange(options.map((option) => option.value));
+                  }}
                   defaultOptions={categories.map((category) => ({
                     value: category.id,
                     label: category.name,
@@ -125,7 +144,12 @@ export default function CreateRecipeForm({
             <FormItem>
               <FormLabel>Hands-on time</FormLabel>
               <FormControl>
-                <Input {...field} type="number" min={0} />
+                <Input
+                  {...field}
+                  type="number"
+                  min={0}
+                  value={field.value as number}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -139,7 +163,12 @@ export default function CreateRecipeForm({
             <FormItem>
               <FormLabel>Portions</FormLabel>
               <FormControl>
-                <Input {...field} type="number" min={0} />
+                <Input
+                  {...field}
+                  type="number"
+                  min={0}
+                  value={field.value as number}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
