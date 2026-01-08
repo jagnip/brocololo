@@ -1,8 +1,6 @@
 import CreateRecipeForm from "@/components/recipes/form";
 import { getCategories } from "@/lib/db/categories";
 
-export const dynamic = "force-dynamic";
-
 export default async function CreateRecipeFormContainer() {
   const categories = await getCategories();
 
