@@ -33,17 +33,17 @@ export default function CreateRecipeForm({
     //Resolver as any to avoid type error at compilation time due to coercion of number to string
     resolver: zodResolver(formSchema) as any,
     defaultValues: {
-      name: "",
+      name: "name",
       categories: [],
       slug: "slug-example",
       photo:
         "https://images.unsplash.com/photo-1544025162-d76694265947?w=800&h=600&fit=crop",
-      handsOnTime: 0,
-      portions: 0,
-      nutrition: "",
-      ingredients: "",
-      instructions: "",
-      notes: "",
+      handsOnTime: 1,
+      portions: 1,
+      nutrition: "nutrition",
+      ingredients: "ingredients",
+      instructions: "instructions",
+      notes: "notes",
     },
   });
 
