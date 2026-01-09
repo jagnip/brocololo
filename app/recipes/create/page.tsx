@@ -1,4 +1,4 @@
-import CreateRecipeFormContainer from "@/components/recipes/form-container";
+import CreateRecipeFormContainer from "@/components/recipes/form/form-container";
 
 export default async function CreateRecipeDialogPage() {
   return (
