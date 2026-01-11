@@ -101,8 +101,7 @@ export default function CreateRecipeForm({
             <FormItem>
               <FormLabel>Add photo</FormLabel>
               <FormControl>
-                {/* <Input {...field} type="url" /> */}
-                <ImageUploader />
+                <ImageUploader value={field.value} onChange={field.onChange} />
               </FormControl>
               <FormMessage />
             </FormItem>
