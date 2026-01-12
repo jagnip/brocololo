@@ -23,12 +23,14 @@ import MultipleSelector from "../../ui/multiselect";
 import { createRecipeAction } from "@/actions/recipe-actions";
 import { ImageUploader } from "./image-uploader";
 import { CategorySelector } from "./category-selector";
+import { RecipeType } from "@/types/recipe";
 
-export default function RecipeForm({
-  categories,
-}: {
+type RecipeFormProps = {
   categories: CategoryType[];
-}) {
+  recipe?: RecipeType;
+}
+
+export default function RecipeForm({ categories, recipe }: RecipeFormProps) {
   const formSchema = insertRecipeSchema;
 
   const form = useForm<InsertRecipeInputType>({

@@ -1,6 +1,6 @@
 import RecipeFormContainer from "@/components/recipes/form/form-container";
 
-export default async function CreateRecipeDialogPage() {
+export default async function CreateRecipePage() {
   return (
     <div className="max-w-xl mx-auto mt-10">
       <RecipeFormContainer />
