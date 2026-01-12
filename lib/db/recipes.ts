@@ -77,3 +77,20 @@ export async function createRecipe(data: InsertRecipeOutputType & { slug: string
     },
   });
 }
+
+export async function updateRecipe(
+  recipeId: string,
+  data: InsertRecipeOutputType & { slug: string }
+) {
+  const { categories, ...recipeData } = data;
+  
+  return await prisma.recipe.update({
+    where: { id: recipeId },
+    data: {
+      ...recipeData,
+      categories: {
+        set: categories.map((categoryId) => ({ id: categoryId })),
+      },
+    },
+  });
+}
