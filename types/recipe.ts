@@ -4,7 +4,9 @@ export type RecipeType = Prisma.RecipeGetPayload<{
   include: {
     categories: {
       select: {
+        id: true;
         slug: true;
+        name: true;
       };
     };
   };

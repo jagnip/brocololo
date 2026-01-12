@@ -7,7 +7,9 @@ export async function getRecipes(): Promise<RecipeType[]> {
     include: {
       categories: {
         select: {
+           id: true,     
           slug: true,
+          name: true,    
         },
       },
     },
@@ -25,8 +27,10 @@ export async function getRecipeBySlug(slug: string): Promise<RecipeType | null> 
     },
     include: {
       categories: {
-        select: {
+          select: {
+           id: true,     
           slug: true,
+          name: true,    
         },
       },
     },
@@ -47,8 +51,10 @@ export async function getRecipesByCategory(
     },
     include: {
       categories: {
-        select: {
+         select: {
+           id: true,     
           slug: true,
+          name: true,    
         },
       },
     },
