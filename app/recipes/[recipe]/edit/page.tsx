@@ -9,7 +9,7 @@ export default async function EditRecipePage({ params }: PageProps) {
 
   return (
     <div className="max-w-xl mx-auto mt-10">
-    <RecipeFormContainer />
+    <RecipeFormContainer recipeSlug={recipeSlug}/>
     </div>
   );
 }

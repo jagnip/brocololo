@@ -20,42 +20,49 @@ import { Textarea } from "../../ui/textarea";
 import { CategoryType } from "@/types/category";
 import { Button } from "../../ui/button";
 import MultipleSelector from "../../ui/multiselect";
-import { createRecipeAction } from "@/actions/recipe-actions";
+import {
+  createRecipeAction,
+  updateRecipeAction,
+} from "@/actions/recipe-actions";
 import { ImageUploader } from "./image-uploader";
 import { CategorySelector } from "./category-selector";
 import { RecipeType } from "@/types/recipe";
+import { recipeToFormData } from "@/lib/utils/recipe-transform";
 
 type RecipeFormProps = {
   categories: CategoryType[];
   recipe?: RecipeType;
-}
+};
 
 export default function RecipeForm({ categories, recipe }: RecipeFormProps) {
   const formSchema = insertRecipeSchema;
 
   const form = useForm<InsertRecipeInputType>({
-    //Resolver as any to avoid type error at compilation time due to coercion of number to string
     resolver: zodResolver(formSchema) as any,
-    defaultValues: {
-      name: "",
-      categories: [],
-      photo:
-        "",
-      handsOnTime: 1,
-      portions: 1,
-      nutrition: "",
-      ingredients: "",
-      instructions: "",
-      notes: "",
-    },
+    defaultValues: recipe
+      ? recipeToFormData(recipe)
+      : {
+          name: "",
+          categories: [],
+          photo: "",
+          handsOnTime: 1,
+          portions: 1,
+          nutrition: "",
+          ingredients: "",
+          instructions: "",
+          notes: "",
+        },
   });
 
   async function onSubmit(formData: InsertRecipeInputType) {
     // zodResolver already transformed the data, so we can safely assert the type
     const transformed = formData as unknown as InsertRecipeOutputType;
-    const result = await createRecipeAction(transformed);
 
-    console.log(result);
+    const result = recipe
+      ? await updateRecipeAction(recipe.id, transformed)
+      : await createRecipeAction(transformed);
+
+    // ⚠️ NOTE: Both actions redirect on success, so we only handle errors here
     if (result?.type === "error") {
       toast.error(result.message);
     }
@@ -203,7 +210,9 @@ export default function RecipeForm({ categories, recipe }: RecipeFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+        <Button type="submit">
+          {recipe ? "Update recipe" : "Create recipe"}
+        </Button>
       </form>
     </Form>
   );
