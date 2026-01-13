@@ -7,9 +7,14 @@ export async function getRecipes(): Promise<RecipeType[]> {
     include: {
       categories: {
         select: {
-           id: true,     
+          id: true,
           slug: true,
-          name: true,    
+          name: true,
+        },
+      },
+      ingredients: {
+        include: {
+          ingredient: true,
         },
       },
     },
@@ -27,39 +32,17 @@ export async function getRecipeBySlug(slug: string): Promise<RecipeType | null> 
     },
     include: {
       categories: {
-          select: {
-           id: true,     
+        select: {
+          id: true,
           slug: true,
-          name: true,    
+          name: true,
         },
       },
-    },
-  });
-}
-
-
-export async function getRecipesByCategory(
-  categorySlug: string
-): Promise<RecipeType[]> {
-  return await prisma.recipe.findMany({
-    where: {
-      categories: {
-        some: {
-          slug: categorySlug,
+      ingredients: {
+        include: {
+          ingredient: true,
         },
       },
-    },
-    include: {
-      categories: {
-         select: {
-           id: true,     
-          slug: true,
-          name: true,    
-        },
-      },
-    },
-    orderBy: {
-      name: "asc",
     },
   });
 }

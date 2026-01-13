@@ -9,5 +9,10 @@ export type RecipeType = Prisma.RecipeGetPayload<{
         name: true;
       };
     };
+    ingredients: {
+      include: {
+        ingredient: true; 
+      };
+    };
   };
 }>;
