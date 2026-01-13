@@ -102,11 +102,22 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
                   )}
                 </div>
                 <ul className="list-disc list-inside space-y-1 text-sm">
-                  {recipe.ingredients.map(
-                    (ingredient: string, index: number) => (
-                      <li key={index}>{ingredient}</li>
-                    )
-                  )}
+                  {recipe.ingredients.map((recipeIngredient) => (
+                    <li key={recipeIngredient.id}>
+                      {recipeIngredient.amount}{" "}
+                      {recipeIngredient.ingredient.name}
+                      {recipeIngredient.ingredient.supermarketUrl && (
+                        <a
+                          href={recipeIngredient.ingredient.supermarketUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-2 text-blue-600 hover:underline text-xs"
+                        >
+                          🛒
+                        </a>
+                      )}
+                    </li>
+                  ))}
                 </ul>
               </div>
             )}
