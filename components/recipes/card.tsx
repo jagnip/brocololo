@@ -17,7 +17,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
     <Link href={url} scroll={false}>
       <Card className="cursor-pointer hover:shadow-md transition-shadow">
         <Image
-          src={recipe.photo}
+          src={recipe.imageUrl}
           alt={recipe.name}
           width={300}
           height={300}

@@ -11,7 +11,7 @@ model Category {
   id      String   @id @default(cuid())
   name    String   @unique
   slug    String   @unique
-  recipes Recipe[]
+  recipes Recipe[] @relation("CategoryToRecipe")
 
   @@map("categories")
 }
@@ -20,14 +20,14 @@ model Recipe {
   id           String     @id @default(cuid())
   name         String     @unique
   slug         String     @unique
-  photo        String
+  imageUrl     String     @map("image_url")
   instructions String[]
   handsOnTime  Int        @map("hands_on_time")
   nutrition    String[]
   ingredients  String[]
   notes        String[]
-  portions     Int
-  categories   Category[]
-  createdAt    DateTime   @default(now())
+  servings     Int
+  categories   Category[] @relation("CategoryToRecipe")
+
   @@map("recipes")
 }

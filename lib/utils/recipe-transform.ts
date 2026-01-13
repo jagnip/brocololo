@@ -5,9 +5,9 @@ export function recipeToFormData(recipe: RecipeType): InsertRecipeInputType {
   return {
     name: recipe.name,
     categories: recipe.categories.map((cat) => cat.id),
-    photo: recipe.photo,
+    imageUrl: recipe.imageUrl,
     handsOnTime: recipe.handsOnTime,
-    portions: recipe.portions,
+    servings: recipe.servings,
     nutrition: recipe.nutrition.join("\n"),
     ingredients: recipe.ingredients.join("\n"),
     instructions: recipe.instructions.join("\n"),

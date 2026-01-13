@@ -605,14 +605,13 @@ export const RecipeScalarFieldEnum = {
   id: 'id',
   name: 'name',
   slug: 'slug',
-  photo: 'photo',
+  imageUrl: 'imageUrl',
   instructions: 'instructions',
   handsOnTime: 'handsOnTime',
   nutrition: 'nutrition',
   ingredients: 'ingredients',
   notes: 'notes',
-  portions: 'portions',
-  createdAt: 'createdAt'
+  servings: 'servings'
 } as const
 
 export type RecipeScalarFieldEnum = (typeof RecipeScalarFieldEnum)[keyof typeof RecipeScalarFieldEnum]
@@ -665,20 +664,6 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
-    
-
-
-/**
- * Reference to a field of type 'DateTime'
- */
-export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
-    
-
-
-/**
- * Reference to a field of type 'DateTime[]'
- */
-export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
     
 
 

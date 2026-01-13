@@ -44,9 +44,9 @@ export default function RecipeForm({ categories, recipe }: RecipeFormProps) {
       : {
           name: "",
           categories: [],
-          photo: "",
+          imageUrl: "",
           handsOnTime: 1,
-          portions: 1,
+          servings: 1,
           nutrition: "",
           ingredients: "",
           instructions: "",
@@ -105,7 +105,7 @@ export default function RecipeForm({ categories, recipe }: RecipeFormProps) {
 
         <FormField
           control={form.control}
-          name="photo"
+          name="imageUrl"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Add photo</FormLabel>
@@ -138,7 +138,7 @@ export default function RecipeForm({ categories, recipe }: RecipeFormProps) {
 
         <FormField
           control={form.control}
-          name="portions"
+          name="servings"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Portions</FormLabel>

@@ -33,7 +33,7 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
           <div className="shrink-0 md:w-1/2">
             <div className="overflow-hidden rounded-xl">
               <Image
-                src={recipe.photo}
+                src={recipe.imageUrl}
                 alt={recipe.name}
                 width={500}
                 height={500}
@@ -47,7 +47,7 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
             {/* Time and Portion Badges */}
             <div className="flex gap-2 flex-wrap">
               <Badge>{recipe.handsOnTime}</Badge>
-              {recipe.portions && <Badge>{recipe.portions}</Badge>}
+              {recipe.servings && <Badge>{recipe.servings}</Badge>}
             </div>
 
             {/* Nutrition Section */}
@@ -95,9 +95,9 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-semibold">Ingredients</h3>
-                  {recipe.portions && (
+                  {recipe.servings && (
                     <span className="text-sm text-muted-foreground">
-                      {recipe.portions} portions
+                      {recipe.servings} servings
                     </span>
                   )}
                 </div>
