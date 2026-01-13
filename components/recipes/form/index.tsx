@@ -28,13 +28,16 @@ import { ImageUploader } from "./image-uploader";
 import { CategorySelector } from "./category-selector";
 import { RecipeType } from "@/types/recipe";
 import { recipeToFormData } from "@/lib/utils/recipe-transform";
+import { IngredientType } from "@/types/ingredient";
+import { IngredientSelector } from "./ingredient-selector";
 
 type RecipeFormProps = {
   categories: CategoryType[];
+  ingredients: IngredientType[];
   recipe?: RecipeType;
 };
 
-export default function RecipeForm({ categories, recipe }: RecipeFormProps) {
+export default function RecipeForm({ categories, ingredients, recipe }: RecipeFormProps) {
   const formSchema = insertRecipeSchema;
 
   const form = useForm<InsertRecipeInputType>({
@@ -48,7 +51,7 @@ export default function RecipeForm({ categories, recipe }: RecipeFormProps) {
           handsOnTime: 1,
           servings: 1,
           nutrition: "",
-          ingredients: "",
+          ingredients: [],
           instructions: "",
           notes: "",
         },
@@ -190,7 +193,11 @@ export default function RecipeForm({ categories, recipe }: RecipeFormProps) {
             <FormItem>
               <FormLabel>Ingredients</FormLabel>
               <FormControl>
-                <Textarea {...field} />
+                <IngredientSelector
+                  ingredients={ingredients}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

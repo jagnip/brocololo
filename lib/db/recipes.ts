@@ -49,13 +49,33 @@ export async function getRecipeBySlug(slug: string): Promise<RecipeType | null> 
 
 
 export async function createRecipe(data: InsertRecipeOutputType & { slug: string }) {
-  const { categories, ...recipeData } = data;
+  const { categories, ingredients, ...recipeData } = data;
   
   return await prisma.recipe.create({
     data: {
       ...recipeData,
       categories: {
         connect: categories.map((categoryId) => ({ id: categoryId })),
+      },
+      ingredients: {
+        create: ingredients.map((ing) => ({
+          ingredientId: ing.ingredientId,
+          amount: ing.amount,
+        })),
+      },
+    },
+    include: {
+      categories: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+        },
+      },
+      ingredients: {
+        include: {
+          ingredient: true,
+        },
       },
     },
   });
@@ -65,7 +85,7 @@ export async function updateRecipe(
   recipeId: string,
   data: InsertRecipeOutputType & { slug: string }
 ) {
-  const { categories, ...recipeData } = data;
+  const { categories, ingredients, ...recipeData } = data;
   
   return await prisma.recipe.update({
     where: { id: recipeId },
@@ -73,6 +93,27 @@ export async function updateRecipe(
       ...recipeData,
       categories: {
         set: categories.map((categoryId) => ({ id: categoryId })),
+      },
+      ingredients: {
+        deleteMany: {}, 
+        create: ingredients.map((ing) => ({
+          ingredientId: ing.ingredientId,
+          amount: ing.amount,
+        })),
+      },
+    },
+    include: {
+      categories: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+        },
+      },
+      ingredients: {
+        include: {
+          ingredient: true,
+        },
       },
     },
   });
