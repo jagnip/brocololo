@@ -9,7 +9,6 @@ type RecipeDialogContainerProps = {
 export default async function RecipeDialogContainer({
   recipeSlug,
 }: RecipeDialogContainerProps) {
-
   const recipe = await getRecipeBySlug(recipeSlug);
 
   if (!recipe) {

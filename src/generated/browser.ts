@@ -27,3 +27,13 @@ export type Category = Prisma.CategoryModel
  * 
  */
 export type Recipe = Prisma.RecipeModel
+/**
+ * Model Ingredient
+ * 
+ */
+export type Ingredient = Prisma.IngredientModel
+/**
+ * Model RecipeIngredient
+ * 
+ */
+export type RecipeIngredient = Prisma.RecipeIngredientModel
