@@ -20,7 +20,7 @@ const config: runtime.GetPrismaClientConfig = {
   "clientVersion": "7.2.0",
   "engineVersion": "0c8ef2ce45c83248ab3df073180d5eda9e8be7a3",
   "activeProvider": "postgresql",
-  "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"../src/generated\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel Category {\n  id      String   @id @default(cuid())\n  name    String   @unique\n  slug    String   @unique\n  recipes Recipe[] @relation(\"CategoryToRecipe\")\n\n  @@map(\"categories\")\n}\n\nmodel Recipe {\n  id           String     @id @default(cuid())\n  name         String     @unique\n  slug         String     @unique\n  imageUrl     String     @map(\"image_url\")\n  instructions String[]\n  handsOnTime  Int        @map(\"hands_on_time\")\n  nutrition    String[]\n  ingredients  String[]\n  notes        String[]\n  servings     Int\n  categories   Category[] @relation(\"CategoryToRecipe\")\n\n  @@map(\"recipes\")\n}\n",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"../src/generated\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel Category {\n  id      String   @id @default(cuid())\n  name    String   @unique\n  slug    String   @unique\n  recipes Recipe[] @relation(\"category_recipes\")\n\n  @@map(\"categories\")\n}\n\nmodel Recipe {\n  id           String             @id @default(cuid())\n  name         String             @unique\n  slug         String             @unique\n  imageUrl     String             @map(\"image_url\")\n  instructions String[]\n  handsOnTime  Int                @map(\"hands_on_time\")\n  nutrition    String[]\n  notes        String[]\n  servings     Int\n  categories   Category[]         @relation(\"category_recipes\")\n  ingredients  RecipeIngredient[]\n\n  @@map(\"recipes\")\n}\n\nmodel Ingredient {\n  id             String             @id @default(cuid())\n  name           String             @unique\n  slug           String             @unique\n  supermarketUrl String?            @map(\"supermarket_url\")\n  recipes        RecipeIngredient[]\n\n  @@map(\"ingredients\")\n}\n\nmodel RecipeIngredient {\n  id           String     @id @default(cuid())\n  recipeId     String\n  ingredientId String\n  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)\n  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])\n  amount       String\n\n  @@map(\"recipe_ingredients\")\n}\n",
   "runtimeDataModel": {
     "models": {},
     "enums": {},
@@ -28,7 +28,7 @@ const config: runtime.GetPrismaClientConfig = {
   }
 }
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"Category\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"slug\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"recipes\",\"kind\":\"object\",\"type\":\"Recipe\",\"relationName\":\"CategoryToRecipe\"}],\"dbName\":\"categories\"},\"Recipe\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"slug\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"imageUrl\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"image_url\"},{\"name\":\"instructions\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"handsOnTime\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"hands_on_time\"},{\"name\":\"nutrition\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredients\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"notes\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"servings\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"categories\",\"kind\":\"object\",\"type\":\"Category\",\"relationName\":\"CategoryToRecipe\"}],\"dbName\":\"recipes\"}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Category\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"slug\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"recipes\",\"kind\":\"object\",\"type\":\"Recipe\",\"relationName\":\"category_recipes\"}],\"dbName\":\"categories\"},\"Recipe\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"slug\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"imageUrl\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"image_url\"},{\"name\":\"instructions\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"handsOnTime\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"hands_on_time\"},{\"name\":\"nutrition\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"notes\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"servings\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"categories\",\"kind\":\"object\",\"type\":\"Category\",\"relationName\":\"category_recipes\"},{\"name\":\"ingredients\",\"kind\":\"object\",\"type\":\"RecipeIngredient\",\"relationName\":\"RecipeToRecipeIngredient\"}],\"dbName\":\"recipes\"},\"Ingredient\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"slug\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"supermarketUrl\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"supermarket_url\"},{\"name\":\"recipes\",\"kind\":\"object\",\"type\":\"RecipeIngredient\",\"relationName\":\"IngredientToRecipeIngredient\"}],\"dbName\":\"ingredients\"},\"RecipeIngredient\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"recipeId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"ingredientId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"recipe\",\"kind\":\"object\",\"type\":\"Recipe\",\"relationName\":\"RecipeToRecipeIngredient\"},{\"name\":\"ingredient\",\"kind\":\"object\",\"type\":\"Ingredient\",\"relationName\":\"IngredientToRecipeIngredient\"},{\"name\":\"amount\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":\"recipe_ingredients\"}},\"enums\":{},\"types\":{}}")
 
 async function decodeBase64AsWasm(wasmBase64: string): Promise<WebAssembly.Module> {
   const { Buffer } = await import('node:buffer')
@@ -193,6 +193,26 @@ export interface PrismaClient<
     * ```
     */
   get recipe(): Prisma.RecipeDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.ingredient`: Exposes CRUD operations for the **Ingredient** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Ingredients
+    * const ingredients = await prisma.ingredient.findMany()
+    * ```
+    */
+  get ingredient(): Prisma.IngredientDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.recipeIngredient`: Exposes CRUD operations for the **RecipeIngredient** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RecipeIngredients
+    * const recipeIngredients = await prisma.recipeIngredient.findMany()
+    * ```
+    */
+  get recipeIngredient(): Prisma.RecipeIngredientDelegate<ExtArgs, { omit: OmitOpts }>;
 }
 
 export function getPrismaClientClass(): PrismaClientConstructor {

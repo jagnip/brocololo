@@ -1,7 +1,10 @@
-import 'dotenv/config';  
+import 'dotenv/config';
 import { prisma } from '../lib/db/index';
+import slugify from 'slugify';
 
 async function main() {
+  console.log('🌱 Seeding database...');
+
   // Create categories
   const breakfast = await prisma.category.upsert({
     where: { slug: 'breakfast' },
@@ -32,11 +35,35 @@ async function main() {
 
   console.log('✅ Created categories');
 
-  // Create recipes
-  const avocadoToast = await prisma.recipe.upsert({
-    where: { slug: 'avocado-toast' },
-    update: {},
-    create: {
+  // Helper function to get or create ingredient
+  async function getOrCreateIngredient(name: string, supermarketUrl?: string) {
+    const slug = slugify(name, { lower: true, strict: true, trim: true });
+    return await prisma.ingredient.upsert({
+      where: { slug },
+      update: {},
+      create: {
+        name,
+        slug,
+        supermarketUrl: supermarketUrl || null,
+      },
+    });
+  }
+
+  // Create ingredients
+  const bread = await getOrCreateIngredient('bread');
+  const avocado = await getOrCreateIngredient('avocado');
+  const salt = await getOrCreateIngredient('salt');
+  const pepper = await getOrCreateIngredient('pepper');
+  const lettuce = await getOrCreateIngredient('lettuce');
+  const tomato = await getOrCreateIngredient('tomato');
+  const chicken = await getOrCreateIngredient('chicken');
+  const rice = await getOrCreateIngredient('rice');
+
+  console.log('✅ Created ingredients');
+
+  // Create Recipe 1: Avocado Toast
+  await prisma.recipe.create({
+    data: {
       name: 'Avocado Toast',
       slug: 'avocado-toast',
       imageUrl: 'https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=800',
@@ -46,19 +73,10 @@ async function main() {
         'Toast the bread until golden brown',
         'Mash the avocado with a fork',
         'Spread avocado on toast',
-        'Season with salt, pepper, and red pepper flakes',
-        'Top with cherry tomatoes and serve',
-      ],
-      ingredients: [
-        '2 slices sourdough bread',
-        '1 ripe avocado',
-        'Salt and pepper to taste',
-        'Red pepper flakes',
-        'Cherry tomatoes, halved',
+        'Season with salt and pepper',
       ],
       notes: [
         'Use ripe but not mushy avocados',
-        'Add a squeeze of lemon for extra flavor',
       ],
       nutrition: [
         'Calories: 250',
@@ -69,90 +87,133 @@ async function main() {
       categories: {
         connect: [{ id: breakfast.id }],
       },
+      ingredients: {
+        create: [
+          {
+            ingredient: { connect: { id: bread.id } },
+            amount: '2 slices',
+          },
+          {
+            ingredient: { connect: { id: avocado.id } },
+            amount: '1 ripe',
+          },
+          {
+            ingredient: { connect: { id: salt.id } },
+            amount: 'to taste',
+          },
+          {
+            ingredient: { connect: { id: pepper.id } },
+            amount: 'to taste',
+          },
+        ],
+      },
     },
   });
 
-  const caesarSalad = await prisma.recipe.upsert({
-    where: { slug: 'caesar-salad' },
-    update: {},
-    create: {
-      name: 'Caesar Salad',
-      slug: 'caesar-salad',
+  // Create Recipe 2: Chicken Salad
+  await prisma.recipe.create({
+    data: {
+      name: 'Chicken Salad',
+      slug: 'chicken-salad',
       imageUrl: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=800',
       handsOnTime: 15,
       servings: 4,
       instructions: [
-        'Wash and dry romaine lettuce, then tear into bite-sized pieces',
-        'Make the dressing: mix mayonnaise, parmesan, lemon juice, and garlic',
-        'Toss lettuce with dressing',
-        'Top with croutons and additional parmesan',
-        'Serve immediately',
-      ],
-      ingredients: [
-        '1 head romaine lettuce',
-        '1/2 cup mayonnaise',
-        '1/4 cup grated parmesan',
-        '2 tbsp lemon juice',
-        '2 cloves garlic, minced',
-        '1 cup croutons',
+        'Cook and shred the chicken',
+        'Wash and chop the lettuce',
+        'Dice the tomatoes',
+        'Mix everything together',
+        'Season with salt and pepper',
       ],
       notes: [
-        'Make sure lettuce is completely dry for best results',
-        'Add grilled chicken for a complete meal',
+        'Best served fresh',
       ],
       nutrition: [
-        'Calories: 180',
-        'Protein: 5g',
-        'Carbs: 12g',
-        'Fat: 14g',
+        'Calories: 200',
+        'Protein: 25g',
+        'Carbs: 10g',
+        'Fat: 8g',
       ],
       categories: {
         connect: [{ id: lunch.id }],
       },
-    },
-  });
-
-  const grilledSalmon = await prisma.recipe.upsert({
-    where: { slug: 'grilled-salmon' },
-    update: {},
-    create: {
-      name: 'Grilled Salmon',
-      slug: 'grilled-salmon',
-      imageUrl: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800',
-      handsOnTime: 20,
-      servings: 4,
-      instructions: [
-        'Preheat grill to medium-high heat',
-        'Season salmon fillets with salt, pepper, and olive oil',
-        'Grill salmon skin-side down for 4-5 minutes',
-        'Flip and cook for another 3-4 minutes',
-        'Remove from grill and let rest for 2 minutes',
-        'Serve with lemon wedges',
-      ],
-      ingredients: [
-        '4 salmon fillets (150g each)',
-        '2 tbsp olive oil',
-        'Salt and pepper to taste',
-        '1 lemon, cut into wedges',
-        'Fresh dill for garnish',
-      ],
-      notes: [
-        'Don\'t overcook - salmon should be slightly pink in center',
-        'Grill marks add great flavor',
-      ],
-      nutrition: [
-        'Calories: 320',
-        'Protein: 35g',
-        'Carbs: 2g',
-        'Fat: 18g',
-      ],
-      categories: {
-        connect: [{ id: dinner.id }],
+      ingredients: {
+        create: [
+          {
+            ingredient: { connect: { id: chicken.id } },
+            amount: '300g',
+          },
+          {
+            ingredient: { connect: { id: lettuce.id } },
+            amount: '1 head',
+          },
+          {
+            ingredient: { connect: { id: tomato.id } },
+            amount: '2 medium',
+          },
+          {
+            ingredient: { connect: { id: salt.id } },
+            amount: 'to taste',
+          },
+          {
+            ingredient: { connect: { id: pepper.id } },
+            amount: 'to taste',
+          },
+        ],
       },
     },
   });
 
-  console.log('✅ Created recipes');
+  // Create Recipe 3: Chicken and Rice
+  await prisma.recipe.create({
+    data: {
+      name: 'Chicken and Rice',
+      slug: 'chicken-and-rice',
+      imageUrl: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800',
+      handsOnTime: 30,
+      servings: 4,
+      instructions: [
+        'Cook the rice according to package instructions',
+        'Season and cook the chicken',
+        'Serve chicken over rice',
+        'Season with salt and pepper',
+      ],
+      notes: [
+        'Great for meal prep',
+      ],
+      nutrition: [
+        'Calories: 400',
+        'Protein: 35g',
+        'Carbs: 45g',
+        'Fat: 10g',
+      ],
+      categories: {
+        connect: [{ id: dinner.id }],
+      },
+      ingredients: {
+        create: [
+          {
+            ingredient: { connect: { id: chicken.id } },
+            amount: '500g',
+          },
+          {
+            ingredient: { connect: { id: rice.id } },
+            amount: '2 cups',
+          },
+          {
+            ingredient: { connect: { id: salt.id } },
+            amount: 'to taste',
+          },
+          {
+            ingredient: { connect: { id: pepper.id } },
+            amount: 'to taste',
+          },
+        ],
+      },
+    },
+  });
+
+  console.log('✅ Created recipes with ingredients');
   console.log('🎉 Seeding completed!');
 }
 
