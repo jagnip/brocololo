@@ -5,13 +5,15 @@ import slugify from 'slugify';
 async function main() {
   console.log('🌱 Seeding database...');
 
-  // Clear existing data
+  // Clear existing data (order matters due to foreign keys)
   await prisma.recipeIngredient.deleteMany();
+  await prisma.ingredientUnit.deleteMany();
   await prisma.recipe.deleteMany();
   await prisma.ingredient.deleteMany();
+  await prisma.unit.deleteMany();
   await prisma.category.deleteMany();
 
-  // Create 3 categories
+  // Create categories
   const breakfast = await prisma.category.create({
     data: {
       name: 'Breakfast',
@@ -35,19 +37,29 @@ async function main() {
 
   console.log('✅ Created categories');
 
+  // Create units
+  const unitG = await prisma.unit.create({
+    data: { symbol: 'g' },
+  });
+
+  const unitSlice = await prisma.unit.create({
+    data: { symbol: 'slice' },
+  });
+
+  console.log('✅ Created units');
+
   const supermarketUrl = 'https://www.continente.pt/produto/lombos-de-bacalhau-12-meses-de-cura-msc-gourmet-ultracongelado-riberalves-riberalves-6364533.html';
 
-  // Create 3 ingredients with nutritional data per 100g
+  // Create ingredients with nutritional data per 100g
   const bread = await prisma.ingredient.create({
     data: {
       name: 'Whole Wheat Bread',
       slug: 'whole-wheat-bread',
       supermarketUrl: supermarketUrl,
-      // Nutritional values per 100g (realistic values)
-      calories: 247,    // kcal per 100g
-      proteins: 13.0,   // g per 100g
-      fats: 4.2,        // g per 100g
-      carbs: 41.0,      // g per 100g
+      calories: 247,
+      proteins: 13.0,
+      fats: 4.2,
+      carbs: 41.0,
     },
   });
 
@@ -56,7 +68,6 @@ async function main() {
       name: 'Chicken Breast',
       slug: 'chicken-breast',
       supermarketUrl: supermarketUrl,
-      // Nutritional values per 100g
       calories: 165,
       proteins: 31.0,
       fats: 3.6,
@@ -69,7 +80,6 @@ async function main() {
       name: 'White Rice',
       slug: 'white-rice',
       supermarketUrl: supermarketUrl,
-      // Nutritional values per 100g (cooked)
       calories: 130,
       proteins: 2.7,
       fats: 0.3,
@@ -78,6 +88,44 @@ async function main() {
   });
 
   console.log('✅ Created ingredients');
+
+  // Create unit conversions for each ingredient
+  // Bread: g, slice
+  await prisma.ingredientUnit.create({
+    data: {
+      ingredientId: bread.id,
+      unitId: unitG.id,
+      gramsPerUnit: 1,
+    },
+  });
+
+  await prisma.ingredientUnit.create({
+    data: {
+      ingredientId: bread.id,
+      unitId: unitSlice.id,
+      gramsPerUnit: 35, // 1 slice ≈ 35g
+    },
+  });
+
+  // Chicken: g
+  await prisma.ingredientUnit.create({
+    data: {
+      ingredientId: chicken.id,
+      unitId: unitG.id,
+      gramsPerUnit: 1,
+    },
+  });
+
+  // Rice: g
+  await prisma.ingredientUnit.create({
+    data: {
+      ingredientId: rice.id,
+      unitId: unitG.id,
+      gramsPerUnit: 1,
+    },
+  });
+
+  console.log('✅ Created unit conversions');
 
   // Recipe 1: Avocado Toast (using bread)
   await prisma.recipe.create({
@@ -102,8 +150,9 @@ async function main() {
       ingredients: {
         create: [
           {
-            ingredient: { connect: { id: bread.id } },
-            amount: 100, // 100g of bread (2 slices ≈ 100g)
+            ingredientId: bread.id,
+            unitId: unitSlice.id,
+            amount: 2, // 2 slices of bread
           },
         ],
       },
@@ -134,7 +183,8 @@ async function main() {
       ingredients: {
         create: [
           {
-            ingredient: { connect: { id: chicken.id } },
+            ingredientId: chicken.id,
+            unitId: unitG.id,
             amount: 300, // 300g of chicken breast
           },
         ],
@@ -165,11 +215,13 @@ async function main() {
       ingredients: {
         create: [
           {
-            ingredient: { connect: { id: chicken.id } },
+            ingredientId: chicken.id,
+            unitId: unitG.id,
             amount: 500, // 500g of chicken breast
           },
           {
-            ingredient: { connect: { id: rice.id } },
+            ingredientId: rice.id,
+            unitId: unitG.id,
             amount: 400, // 400g of cooked rice
           },
         ],

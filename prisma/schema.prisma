@@ -31,6 +31,7 @@ model Recipe {
   @@map("recipes")
 }
 
+
 model Ingredient {
   id            String   @id @default(cuid())
   name          String   @unique
@@ -41,18 +42,42 @@ model Ingredient {
   fats           Float
   carbs          Float
   recipes RecipeIngredient[]
+  unitConversions IngredientUnit[]
   
   @@map("ingredients")
+}
+
+model Unit {
+  id          String   @id @default(cuid())
+  symbol      String   @unique
+  
+  ingredientUnits IngredientUnit[]
+  recipeIngredients RecipeIngredient[]
+  
+  @@map("units")
+}
+
+model IngredientUnit {
+  ingredientId  String
+  unitId        String
+  gramsPerUnit  Float
+  
+  ingredient    Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  unit          Unit      @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  
+  @@id([ingredientId, unitId])
+  @@map("ingredient_units")
 }
 
 model RecipeIngredient {
   id          String   @id @default(cuid())
   recipeId    String
   ingredientId String
-  amount      Int  
+  amount      Float
+  unitId      String
   recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  ingredient  Ingredient @relation(fields: [ingredientId], references: [id])
+  ingredient  Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+  unit        Unit     @relation(fields: [unitId], references: [id], onDelete: Restrict)
 
   @@map("recipe_ingredients")
 }
-

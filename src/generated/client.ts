@@ -55,6 +55,16 @@ export type Recipe = Prisma.RecipeModel
  */
 export type Ingredient = Prisma.IngredientModel
 /**
+ * Model Unit
+ * 
+ */
+export type Unit = Prisma.UnitModel
+/**
+ * Model IngredientUnit
+ * 
+ */
+export type IngredientUnit = Prisma.IngredientUnitModel
+/**
  * Model RecipeIngredient
  * 
  */
