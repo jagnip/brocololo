@@ -23,7 +23,7 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
     }
   };
 
-    const nutrition = calculateNutritionPerPortion(recipe);
+  const nutrition = calculateNutritionPerPortion(recipe);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -104,8 +104,7 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
                 <ul className="list-disc list-inside space-y-1 text-sm">
                   {recipe.ingredients.map((recipeIngredient) => (
                     <li key={recipeIngredient.id}>
-                      {recipeIngredient.amount} {recipeIngredient.unit.symbol}{" "}
-              
+                      {recipeIngredient.amount} {recipeIngredient.unit.name}{" "}
                       {recipeIngredient.ingredient.name}
                       {recipeIngredient.ingredient.supermarketUrl && (
                         <a

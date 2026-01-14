@@ -39,11 +39,11 @@ async function main() {
 
   // Create units
   const unitG = await prisma.unit.create({
-    data: { symbol: 'g' },
+    data: { name: 'g' },
   });
 
   const unitSlice = await prisma.unit.create({
-    data: { symbol: 'slice' },
+    data: { name: 'slice' },
   });
 
   console.log('✅ Created units');

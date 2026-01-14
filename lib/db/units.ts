@@ -3,7 +3,7 @@ import { prisma } from "./index";
 export async function getUnits() {
   return await prisma.unit.findMany({
     orderBy: {
-      symbol: "asc",
+      name: "asc",
     },
   });
 }
@@ -18,7 +18,7 @@ export async function getIngredientUnits(ingredientId: string) {
     },
     orderBy: {
       unit: {
-        symbol: "asc",
+        name: "asc",
       },
     },
   });

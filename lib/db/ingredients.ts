@@ -5,7 +5,7 @@ export async function getIngredients() {
     include: {
       unitConversions: {
         include: { unit: true },
-        orderBy: { unit: { symbol: "asc" } },
+        orderBy: { unit: { name: "asc" } },
       },
     },
     orderBy: { name: "asc" },

@@ -49,7 +49,7 @@ model Ingredient {
 
 model Unit {
   id          String   @id @default(cuid())
-  symbol      String   @unique
+  name        String   @unique
   
   ingredientUnits IngredientUnit[]
   recipeIngredients RecipeIngredient[]

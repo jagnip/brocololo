@@ -114,7 +114,7 @@ export type IngredientScalarFieldEnum = (typeof IngredientScalarFieldEnum)[keyof
 
 export const UnitScalarFieldEnum = {
   id: 'id',
-  symbol: 'symbol'
+  name: 'name'
 } as const
 
 export type UnitScalarFieldEnum = (typeof UnitScalarFieldEnum)[keyof typeof UnitScalarFieldEnum]

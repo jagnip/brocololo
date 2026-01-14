@@ -69,7 +69,7 @@ export function IngredientSelector({
 
   const getDefaultUnitIdForIngredient = (ingredientId: string) => {
     const units = getUnitsForIngredient(ingredientId);
-    const gramUnit = units.find((u) => u.unit.symbol === "g");
+    const gramUnit = units.find((u) => u.unit.name === "g");
     return gramUnit?.unitId ?? units[0]?.unitId ?? "";
   };
 
@@ -118,7 +118,7 @@ export function IngredientSelector({
               <SelectContent>
                 {units.map((uc) => (
                   <SelectItem key={uc.unitId} value={uc.unitId}>
-                    {uc.unit.symbol}
+                    {uc.unit.name}
                   </SelectItem>
                 ))}
               </SelectContent>
