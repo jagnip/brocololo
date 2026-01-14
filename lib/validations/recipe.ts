@@ -2,7 +2,8 @@ import { z } from "zod";
 
 const recipeIngredientSchema = z.object({
   ingredientId: z.string().min(1, { message: "Ingredient is required" }),
-  amount: z.number().int().positive().min(1, { message: "Amount must be a positive number" }),
+  amount: z.number().positive().min(0.1, { message: "Amount must be a positive number" }),
+  unitId: z.string().min(1, { message: "Unit is required" }),
 });
 
 export const insertRecipeSchema = z.object({

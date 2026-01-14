@@ -16,9 +16,18 @@ export function calculateNutritionPerPortion(
   const total = recipe.ingredients.reduce(
     (acc, recipeIngredient) => {
       const ingredient = recipeIngredient.ingredient;
-      const grams = recipeIngredient.amount;
+      const unit = recipeIngredient.unit;
   
-      
+      const conversion = ingredient.unitConversions.find(
+        (uc) => uc.unitId === unit.id
+      );
+
+      if (!conversion) {
+        return acc;
+      }
+
+      const grams = recipeIngredient.amount * conversion.gramsPerUnit;
+
       const multiplier = grams / 100;
       
       return {

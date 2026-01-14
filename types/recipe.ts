@@ -11,7 +11,12 @@ export type RecipeType = Prisma.RecipeGetPayload<{
     };
     ingredients: {
       include: {
-        ingredient: true; 
+        ingredient: {
+          include: {
+            unitConversions: true; 
+          };
+        };
+        unit: true;
       };
     };
   };

@@ -12,11 +12,16 @@ export async function getRecipes(): Promise<RecipeType[]> {
           name: true,
         },
       },
-      ingredients: {
-        include: {
-          ingredient: true,
-        },
+ingredients: {
+  include: {
+    ingredient: {
+      include: {
+        unitConversions: true, 
       },
+    },
+    unit: true, 
+  },
+},
     },
     orderBy: {
       name: "asc",
@@ -38,11 +43,16 @@ export async function getRecipeBySlug(slug: string): Promise<RecipeType | null> 
           name: true,
         },
       },
-      ingredients: {
-        include: {
-          ingredient: true,
-        },
+     ingredients: {
+  include: {
+    ingredient: {
+      include: {
+        unitConversions: true,
       },
+    },
+    unit: true, 
+  },
+},
     },
   });
 }
@@ -61,6 +71,7 @@ export async function createRecipe(data: InsertRecipeOutputType & { slug: string
         create: ingredients.map((ing) => ({
           ingredientId: ing.ingredientId,
           amount: ing.amount,
+          unitId: ing.unitId,
         })),
       },
     },
@@ -75,6 +86,7 @@ export async function createRecipe(data: InsertRecipeOutputType & { slug: string
       ingredients: {
         include: {
           ingredient: true,
+          unit: true,
         },
       },
     },
@@ -99,6 +111,7 @@ export async function updateRecipe(
         create: ingredients.map((ing) => ({
           ingredientId: ing.ingredientId,
           amount: ing.amount,
+          unitId: ing.unitId,
         })),
       },
     },
@@ -113,6 +126,7 @@ export async function updateRecipe(
       ingredients: {
         include: {
           ingredient: true,
+          unit: true,
         },
       },
     },

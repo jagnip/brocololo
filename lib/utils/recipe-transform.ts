@@ -8,10 +8,11 @@ export function recipeToFormData(recipe: RecipeType): InsertRecipeInputType {
     imageUrl: recipe.imageUrl,
     handsOnTime: recipe.handsOnTime,
     servings: recipe.servings,
-    ingredients: recipe.ingredients.map((ri) => ({
-      ingredientId: ri.ingredient.id,
-      amount: ri.amount, // Now a number, not a string
-    })),
+   ingredients: recipe.ingredients.map((ri) => ({
+  ingredientId: ri.ingredient.id,
+  amount: ri.amount,
+  unitId: ri.unit.id,
+})),
     instructions: recipe.instructions.join("\n"),
     notes: recipe.notes.join("\n"),
   };
