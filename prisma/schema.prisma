@@ -23,7 +23,6 @@ model Recipe {
   imageUrl     String     @map("image_url")
   instructions String[]
   handsOnTime  Int        @map("hands_on_time")
-  nutrition    String[]
   notes        String[]
   servings     Int
   categories   Category[] @relation("category_recipes")
@@ -37,6 +36,10 @@ model Ingredient {
   name          String   @unique
   slug          String   @unique
   supermarketUrl String? @map("supermarket_url")
+  calories       Float
+  proteins       Float
+  fats           Float
+  carbs          Float
   recipes RecipeIngredient[]
   
   @@map("ingredients")
@@ -46,9 +49,10 @@ model RecipeIngredient {
   id          String   @id @default(cuid())
   recipeId    String
   ingredientId String
+  amount      Int  
   recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   ingredient  Ingredient @relation(fields: [ingredientId], references: [id])
-  amount      String   
+
   @@map("recipe_ingredients")
 }
 

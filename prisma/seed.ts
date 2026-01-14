@@ -5,29 +5,29 @@ import slugify from 'slugify';
 async function main() {
   console.log('🌱 Seeding database...');
 
-  // Create categories
-  const breakfast = await prisma.category.upsert({
-    where: { slug: 'breakfast' },
-    update: {},
-    create: {
+  // Clear existing data
+  await prisma.recipeIngredient.deleteMany();
+  await prisma.recipe.deleteMany();
+  await prisma.ingredient.deleteMany();
+  await prisma.category.deleteMany();
+
+  // Create 3 categories
+  const breakfast = await prisma.category.create({
+    data: {
       name: 'Breakfast',
       slug: 'breakfast',
     },
   });
 
-  const lunch = await prisma.category.upsert({
-    where: { slug: 'lunch' },
-    update: {},
-    create: {
+  const lunch = await prisma.category.create({
+    data: {
       name: 'Lunch',
       slug: 'lunch',
     },
   });
 
-  const dinner = await prisma.category.upsert({
-    where: { slug: 'dinner' },
-    update: {},
-    create: {
+  const dinner = await prisma.category.create({
+    data: {
       name: 'Dinner',
       slug: 'dinner',
     },
@@ -35,33 +35,51 @@ async function main() {
 
   console.log('✅ Created categories');
 
-  // Helper function to get or create ingredient
-  async function getOrCreateIngredient(name: string, supermarketUrl?: string) {
-    const slug = slugify(name, { lower: true, strict: true, trim: true });
-    return await prisma.ingredient.upsert({
-      where: { slug },
-      update: {},
-      create: {
-        name,
-        slug,
-        supermarketUrl: supermarketUrl || null,
-      },
-    });
-  }
+  const supermarketUrl = 'https://www.continente.pt/produto/lombos-de-bacalhau-12-meses-de-cura-msc-gourmet-ultracongelado-riberalves-riberalves-6364533.html';
 
-  // Create ingredients
-  const bread = await getOrCreateIngredient('bread');
-  const avocado = await getOrCreateIngredient('avocado');
-  const salt = await getOrCreateIngredient('salt');
-  const pepper = await getOrCreateIngredient('pepper');
-  const lettuce = await getOrCreateIngredient('lettuce');
-  const tomato = await getOrCreateIngredient('tomato');
-  const chicken = await getOrCreateIngredient('chicken');
-  const rice = await getOrCreateIngredient('rice');
+  // Create 3 ingredients with nutritional data per 100g
+  const bread = await prisma.ingredient.create({
+    data: {
+      name: 'Whole Wheat Bread',
+      slug: 'whole-wheat-bread',
+      supermarketUrl: supermarketUrl,
+      // Nutritional values per 100g (realistic values)
+      calories: 247,    // kcal per 100g
+      proteins: 13.0,   // g per 100g
+      fats: 4.2,        // g per 100g
+      carbs: 41.0,      // g per 100g
+    },
+  });
+
+  const chicken = await prisma.ingredient.create({
+    data: {
+      name: 'Chicken Breast',
+      slug: 'chicken-breast',
+      supermarketUrl: supermarketUrl,
+      // Nutritional values per 100g
+      calories: 165,
+      proteins: 31.0,
+      fats: 3.6,
+      carbs: 0.0,
+    },
+  });
+
+  const rice = await prisma.ingredient.create({
+    data: {
+      name: 'White Rice',
+      slug: 'white-rice',
+      supermarketUrl: supermarketUrl,
+      // Nutritional values per 100g (cooked)
+      calories: 130,
+      proteins: 2.7,
+      fats: 0.3,
+      carbs: 28.0,
+    },
+  });
 
   console.log('✅ Created ingredients');
 
-  // Create Recipe 1: Avocado Toast
+  // Recipe 1: Avocado Toast (using bread)
   await prisma.recipe.create({
     data: {
       name: 'Avocado Toast',
@@ -78,12 +96,6 @@ async function main() {
       notes: [
         'Use ripe but not mushy avocados',
       ],
-      nutrition: [
-        'Calories: 250',
-        'Protein: 8g',
-        'Carbs: 30g',
-        'Fat: 12g',
-      ],
       categories: {
         connect: [{ id: breakfast.id }],
       },
@@ -91,26 +103,14 @@ async function main() {
         create: [
           {
             ingredient: { connect: { id: bread.id } },
-            amount: '2 slices',
-          },
-          {
-            ingredient: { connect: { id: avocado.id } },
-            amount: '1 ripe',
-          },
-          {
-            ingredient: { connect: { id: salt.id } },
-            amount: 'to taste',
-          },
-          {
-            ingredient: { connect: { id: pepper.id } },
-            amount: 'to taste',
+            amount: 100, // 100g of bread (2 slices ≈ 100g)
           },
         ],
       },
     },
   });
 
-  // Create Recipe 2: Chicken Salad
+  // Recipe 2: Chicken Salad (using chicken)
   await prisma.recipe.create({
     data: {
       name: 'Chicken Salad',
@@ -128,12 +128,6 @@ async function main() {
       notes: [
         'Best served fresh',
       ],
-      nutrition: [
-        'Calories: 200',
-        'Protein: 25g',
-        'Carbs: 10g',
-        'Fat: 8g',
-      ],
       categories: {
         connect: [{ id: lunch.id }],
       },
@@ -141,30 +135,14 @@ async function main() {
         create: [
           {
             ingredient: { connect: { id: chicken.id } },
-            amount: '300g',
-          },
-          {
-            ingredient: { connect: { id: lettuce.id } },
-            amount: '1 head',
-          },
-          {
-            ingredient: { connect: { id: tomato.id } },
-            amount: '2 medium',
-          },
-          {
-            ingredient: { connect: { id: salt.id } },
-            amount: 'to taste',
-          },
-          {
-            ingredient: { connect: { id: pepper.id } },
-            amount: 'to taste',
+            amount: 300, // 300g of chicken breast
           },
         ],
       },
     },
   });
 
-  // Create Recipe 3: Chicken and Rice
+  // Recipe 3: Chicken and Rice (using chicken and rice)
   await prisma.recipe.create({
     data: {
       name: 'Chicken and Rice',
@@ -181,12 +159,6 @@ async function main() {
       notes: [
         'Great for meal prep',
       ],
-      nutrition: [
-        'Calories: 400',
-        'Protein: 35g',
-        'Carbs: 45g',
-        'Fat: 10g',
-      ],
       categories: {
         connect: [{ id: dinner.id }],
       },
@@ -194,19 +166,11 @@ async function main() {
         create: [
           {
             ingredient: { connect: { id: chicken.id } },
-            amount: '500g',
+            amount: 500, // 500g of chicken breast
           },
           {
             ingredient: { connect: { id: rice.id } },
-            amount: '2 cups',
-          },
-          {
-            ingredient: { connect: { id: salt.id } },
-            amount: 'to taste',
-          },
-          {
-            ingredient: { connect: { id: pepper.id } },
-            amount: 'to taste',
+            amount: 400, // 400g of cooked rice
           },
         ],
       },

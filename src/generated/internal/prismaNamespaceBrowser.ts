@@ -89,7 +89,6 @@ export const RecipeScalarFieldEnum = {
   imageUrl: 'imageUrl',
   instructions: 'instructions',
   handsOnTime: 'handsOnTime',
-  nutrition: 'nutrition',
   notes: 'notes',
   servings: 'servings'
 } as const
@@ -101,7 +100,11 @@ export const IngredientScalarFieldEnum = {
   id: 'id',
   name: 'name',
   slug: 'slug',
-  supermarketUrl: 'supermarketUrl'
+  supermarketUrl: 'supermarketUrl',
+  calories: 'calories',
+  proteins: 'proteins',
+  fats: 'fats',
+  carbs: 'carbs'
 } as const
 
 export type IngredientScalarFieldEnum = (typeof IngredientScalarFieldEnum)[keyof typeof IngredientScalarFieldEnum]

@@ -20,8 +20,24 @@ export type IngredientModel = runtime.Types.Result.DefaultSelection<Prisma.$Ingr
 
 export type AggregateIngredient = {
   _count: IngredientCountAggregateOutputType | null
+  _avg: IngredientAvgAggregateOutputType | null
+  _sum: IngredientSumAggregateOutputType | null
   _min: IngredientMinAggregateOutputType | null
   _max: IngredientMaxAggregateOutputType | null
+}
+
+export type IngredientAvgAggregateOutputType = {
+  calories: number | null
+  proteins: number | null
+  fats: number | null
+  carbs: number | null
+}
+
+export type IngredientSumAggregateOutputType = {
+  calories: number | null
+  proteins: number | null
+  fats: number | null
+  carbs: number | null
 }
 
 export type IngredientMinAggregateOutputType = {
@@ -29,6 +45,10 @@ export type IngredientMinAggregateOutputType = {
   name: string | null
   slug: string | null
   supermarketUrl: string | null
+  calories: number | null
+  proteins: number | null
+  fats: number | null
+  carbs: number | null
 }
 
 export type IngredientMaxAggregateOutputType = {
@@ -36,6 +56,10 @@ export type IngredientMaxAggregateOutputType = {
   name: string | null
   slug: string | null
   supermarketUrl: string | null
+  calories: number | null
+  proteins: number | null
+  fats: number | null
+  carbs: number | null
 }
 
 export type IngredientCountAggregateOutputType = {
@@ -43,15 +67,37 @@ export type IngredientCountAggregateOutputType = {
   name: number
   slug: number
   supermarketUrl: number
+  calories: number
+  proteins: number
+  fats: number
+  carbs: number
   _all: number
 }
 
+
+export type IngredientAvgAggregateInputType = {
+  calories?: true
+  proteins?: true
+  fats?: true
+  carbs?: true
+}
+
+export type IngredientSumAggregateInputType = {
+  calories?: true
+  proteins?: true
+  fats?: true
+  carbs?: true
+}
 
 export type IngredientMinAggregateInputType = {
   id?: true
   name?: true
   slug?: true
   supermarketUrl?: true
+  calories?: true
+  proteins?: true
+  fats?: true
+  carbs?: true
 }
 
 export type IngredientMaxAggregateInputType = {
@@ -59,6 +105,10 @@ export type IngredientMaxAggregateInputType = {
   name?: true
   slug?: true
   supermarketUrl?: true
+  calories?: true
+  proteins?: true
+  fats?: true
+  carbs?: true
 }
 
 export type IngredientCountAggregateInputType = {
@@ -66,6 +116,10 @@ export type IngredientCountAggregateInputType = {
   name?: true
   slug?: true
   supermarketUrl?: true
+  calories?: true
+  proteins?: true
+  fats?: true
+  carbs?: true
   _all?: true
 }
 
@@ -107,6 +161,18 @@ export type IngredientAggregateArgs<ExtArgs extends runtime.Types.Extensions.Int
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: IngredientAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: IngredientSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: IngredientMinAggregateInputType
@@ -137,6 +203,8 @@ export type IngredientGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   _count?: IngredientCountAggregateInputType | true
+  _avg?: IngredientAvgAggregateInputType
+  _sum?: IngredientSumAggregateInputType
   _min?: IngredientMinAggregateInputType
   _max?: IngredientMaxAggregateInputType
 }
@@ -146,7 +214,13 @@ export type IngredientGroupByOutputType = {
   name: string
   slug: string
   supermarketUrl: string | null
+  calories: number
+  proteins: number
+  fats: number
+  carbs: number
   _count: IngredientCountAggregateOutputType | null
+  _avg: IngredientAvgAggregateOutputType | null
+  _sum: IngredientSumAggregateOutputType | null
   _min: IngredientMinAggregateOutputType | null
   _max: IngredientMaxAggregateOutputType | null
 }
@@ -174,6 +248,10 @@ export type IngredientWhereInput = {
   name?: Prisma.StringFilter<"Ingredient"> | string
   slug?: Prisma.StringFilter<"Ingredient"> | string
   supermarketUrl?: Prisma.StringNullableFilter<"Ingredient"> | string | null
+  calories?: Prisma.FloatFilter<"Ingredient"> | number
+  proteins?: Prisma.FloatFilter<"Ingredient"> | number
+  fats?: Prisma.FloatFilter<"Ingredient"> | number
+  carbs?: Prisma.FloatFilter<"Ingredient"> | number
   recipes?: Prisma.RecipeIngredientListRelationFilter
 }
 
@@ -182,6 +260,10 @@ export type IngredientOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   slug?: Prisma.SortOrder
   supermarketUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  calories?: Prisma.SortOrder
+  proteins?: Prisma.SortOrder
+  fats?: Prisma.SortOrder
+  carbs?: Prisma.SortOrder
   recipes?: Prisma.RecipeIngredientOrderByRelationAggregateInput
 }
 
@@ -193,6 +275,10 @@ export type IngredientWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.IngredientWhereInput[]
   NOT?: Prisma.IngredientWhereInput | Prisma.IngredientWhereInput[]
   supermarketUrl?: Prisma.StringNullableFilter<"Ingredient"> | string | null
+  calories?: Prisma.FloatFilter<"Ingredient"> | number
+  proteins?: Prisma.FloatFilter<"Ingredient"> | number
+  fats?: Prisma.FloatFilter<"Ingredient"> | number
+  carbs?: Prisma.FloatFilter<"Ingredient"> | number
   recipes?: Prisma.RecipeIngredientListRelationFilter
 }, "id" | "name" | "slug">
 
@@ -201,9 +287,15 @@ export type IngredientOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   slug?: Prisma.SortOrder
   supermarketUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  calories?: Prisma.SortOrder
+  proteins?: Prisma.SortOrder
+  fats?: Prisma.SortOrder
+  carbs?: Prisma.SortOrder
   _count?: Prisma.IngredientCountOrderByAggregateInput
+  _avg?: Prisma.IngredientAvgOrderByAggregateInput
   _max?: Prisma.IngredientMaxOrderByAggregateInput
   _min?: Prisma.IngredientMinOrderByAggregateInput
+  _sum?: Prisma.IngredientSumOrderByAggregateInput
 }
 
 export type IngredientScalarWhereWithAggregatesInput = {
@@ -214,6 +306,10 @@ export type IngredientScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"Ingredient"> | string
   slug?: Prisma.StringWithAggregatesFilter<"Ingredient"> | string
   supermarketUrl?: Prisma.StringNullableWithAggregatesFilter<"Ingredient"> | string | null
+  calories?: Prisma.FloatWithAggregatesFilter<"Ingredient"> | number
+  proteins?: Prisma.FloatWithAggregatesFilter<"Ingredient"> | number
+  fats?: Prisma.FloatWithAggregatesFilter<"Ingredient"> | number
+  carbs?: Prisma.FloatWithAggregatesFilter<"Ingredient"> | number
 }
 
 export type IngredientCreateInput = {
@@ -221,6 +317,10 @@ export type IngredientCreateInput = {
   name: string
   slug: string
   supermarketUrl?: string | null
+  calories: number
+  proteins: number
+  fats: number
+  carbs: number
   recipes?: Prisma.RecipeIngredientCreateNestedManyWithoutIngredientInput
 }
 
@@ -229,6 +329,10 @@ export type IngredientUncheckedCreateInput = {
   name: string
   slug: string
   supermarketUrl?: string | null
+  calories: number
+  proteins: number
+  fats: number
+  carbs: number
   recipes?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutIngredientInput
 }
 
@@ -237,6 +341,10 @@ export type IngredientUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  calories?: Prisma.FloatFieldUpdateOperationsInput | number
+  proteins?: Prisma.FloatFieldUpdateOperationsInput | number
+  fats?: Prisma.FloatFieldUpdateOperationsInput | number
+  carbs?: Prisma.FloatFieldUpdateOperationsInput | number
   recipes?: Prisma.RecipeIngredientUpdateManyWithoutIngredientNestedInput
 }
 
@@ -245,6 +353,10 @@ export type IngredientUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  calories?: Prisma.FloatFieldUpdateOperationsInput | number
+  proteins?: Prisma.FloatFieldUpdateOperationsInput | number
+  fats?: Prisma.FloatFieldUpdateOperationsInput | number
+  carbs?: Prisma.FloatFieldUpdateOperationsInput | number
   recipes?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutIngredientNestedInput
 }
 
@@ -253,6 +365,10 @@ export type IngredientCreateManyInput = {
   name: string
   slug: string
   supermarketUrl?: string | null
+  calories: number
+  proteins: number
+  fats: number
+  carbs: number
 }
 
 export type IngredientUpdateManyMutationInput = {
@@ -260,6 +376,10 @@ export type IngredientUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  calories?: Prisma.FloatFieldUpdateOperationsInput | number
+  proteins?: Prisma.FloatFieldUpdateOperationsInput | number
+  fats?: Prisma.FloatFieldUpdateOperationsInput | number
+  carbs?: Prisma.FloatFieldUpdateOperationsInput | number
 }
 
 export type IngredientUncheckedUpdateManyInput = {
@@ -267,6 +387,10 @@ export type IngredientUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  calories?: Prisma.FloatFieldUpdateOperationsInput | number
+  proteins?: Prisma.FloatFieldUpdateOperationsInput | number
+  fats?: Prisma.FloatFieldUpdateOperationsInput | number
+  carbs?: Prisma.FloatFieldUpdateOperationsInput | number
 }
 
 export type IngredientCountOrderByAggregateInput = {
@@ -274,6 +398,17 @@ export type IngredientCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   slug?: Prisma.SortOrder
   supermarketUrl?: Prisma.SortOrder
+  calories?: Prisma.SortOrder
+  proteins?: Prisma.SortOrder
+  fats?: Prisma.SortOrder
+  carbs?: Prisma.SortOrder
+}
+
+export type IngredientAvgOrderByAggregateInput = {
+  calories?: Prisma.SortOrder
+  proteins?: Prisma.SortOrder
+  fats?: Prisma.SortOrder
+  carbs?: Prisma.SortOrder
 }
 
 export type IngredientMaxOrderByAggregateInput = {
@@ -281,6 +416,10 @@ export type IngredientMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   slug?: Prisma.SortOrder
   supermarketUrl?: Prisma.SortOrder
+  calories?: Prisma.SortOrder
+  proteins?: Prisma.SortOrder
+  fats?: Prisma.SortOrder
+  carbs?: Prisma.SortOrder
 }
 
 export type IngredientMinOrderByAggregateInput = {
@@ -288,6 +427,17 @@ export type IngredientMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   slug?: Prisma.SortOrder
   supermarketUrl?: Prisma.SortOrder
+  calories?: Prisma.SortOrder
+  proteins?: Prisma.SortOrder
+  fats?: Prisma.SortOrder
+  carbs?: Prisma.SortOrder
+}
+
+export type IngredientSumOrderByAggregateInput = {
+  calories?: Prisma.SortOrder
+  proteins?: Prisma.SortOrder
+  fats?: Prisma.SortOrder
+  carbs?: Prisma.SortOrder
 }
 
 export type IngredientScalarRelationFilter = {
@@ -297,6 +447,14 @@ export type IngredientScalarRelationFilter = {
 
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
+}
+
+export type FloatFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
 }
 
 export type IngredientCreateNestedOneWithoutRecipesInput = {
@@ -318,6 +476,10 @@ export type IngredientCreateWithoutRecipesInput = {
   name: string
   slug: string
   supermarketUrl?: string | null
+  calories: number
+  proteins: number
+  fats: number
+  carbs: number
 }
 
 export type IngredientUncheckedCreateWithoutRecipesInput = {
@@ -325,6 +487,10 @@ export type IngredientUncheckedCreateWithoutRecipesInput = {
   name: string
   slug: string
   supermarketUrl?: string | null
+  calories: number
+  proteins: number
+  fats: number
+  carbs: number
 }
 
 export type IngredientCreateOrConnectWithoutRecipesInput = {
@@ -348,6 +514,10 @@ export type IngredientUpdateWithoutRecipesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  calories?: Prisma.FloatFieldUpdateOperationsInput | number
+  proteins?: Prisma.FloatFieldUpdateOperationsInput | number
+  fats?: Prisma.FloatFieldUpdateOperationsInput | number
+  carbs?: Prisma.FloatFieldUpdateOperationsInput | number
 }
 
 export type IngredientUncheckedUpdateWithoutRecipesInput = {
@@ -355,6 +525,10 @@ export type IngredientUncheckedUpdateWithoutRecipesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  calories?: Prisma.FloatFieldUpdateOperationsInput | number
+  proteins?: Prisma.FloatFieldUpdateOperationsInput | number
+  fats?: Prisma.FloatFieldUpdateOperationsInput | number
+  carbs?: Prisma.FloatFieldUpdateOperationsInput | number
 }
 
 
@@ -393,6 +567,10 @@ export type IngredientSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   name?: boolean
   slug?: boolean
   supermarketUrl?: boolean
+  calories?: boolean
+  proteins?: boolean
+  fats?: boolean
+  carbs?: boolean
   recipes?: boolean | Prisma.Ingredient$recipesArgs<ExtArgs>
   _count?: boolean | Prisma.IngredientCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["ingredient"]>
@@ -402,6 +580,10 @@ export type IngredientSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   name?: boolean
   slug?: boolean
   supermarketUrl?: boolean
+  calories?: boolean
+  proteins?: boolean
+  fats?: boolean
+  carbs?: boolean
 }, ExtArgs["result"]["ingredient"]>
 
 export type IngredientSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -409,6 +591,10 @@ export type IngredientSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   name?: boolean
   slug?: boolean
   supermarketUrl?: boolean
+  calories?: boolean
+  proteins?: boolean
+  fats?: boolean
+  carbs?: boolean
 }, ExtArgs["result"]["ingredient"]>
 
 export type IngredientSelectScalar = {
@@ -416,9 +602,13 @@ export type IngredientSelectScalar = {
   name?: boolean
   slug?: boolean
   supermarketUrl?: boolean
+  calories?: boolean
+  proteins?: boolean
+  fats?: boolean
+  carbs?: boolean
 }
 
-export type IngredientOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "slug" | "supermarketUrl", ExtArgs["result"]["ingredient"]>
+export type IngredientOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "slug" | "supermarketUrl" | "calories" | "proteins" | "fats" | "carbs", ExtArgs["result"]["ingredient"]>
 export type IngredientInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   recipes?: boolean | Prisma.Ingredient$recipesArgs<ExtArgs>
   _count?: boolean | Prisma.IngredientCountOutputTypeDefaultArgs<ExtArgs>
@@ -436,6 +626,10 @@ export type $IngredientPayload<ExtArgs extends runtime.Types.Extensions.Internal
     name: string
     slug: string
     supermarketUrl: string | null
+    calories: number
+    proteins: number
+    fats: number
+    carbs: number
   }, ExtArgs["result"]["ingredient"]>
   composites: {}
 }
@@ -864,6 +1058,10 @@ export interface IngredientFieldRefs {
   readonly name: Prisma.FieldRef<"Ingredient", 'String'>
   readonly slug: Prisma.FieldRef<"Ingredient", 'String'>
   readonly supermarketUrl: Prisma.FieldRef<"Ingredient", 'String'>
+  readonly calories: Prisma.FieldRef<"Ingredient", 'Float'>
+  readonly proteins: Prisma.FieldRef<"Ingredient", 'Float'>
+  readonly fats: Prisma.FieldRef<"Ingredient", 'Float'>
+  readonly carbs: Prisma.FieldRef<"Ingredient", 'Float'>
 }
     
 
