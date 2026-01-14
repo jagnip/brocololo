@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Badge } from "../ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { RecipeType } from "@/types/recipe";
+import { calculateNutritionPerPortion } from "@/lib/utils/calculate-nutrition";
 
 type RecipeDialogProps = {
   recipe: RecipeType;
@@ -21,6 +22,8 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
       router.push(`/recipes`, { scroll: false });
     }
   };
+
+    const nutrition = calculateNutritionPerPortion(recipe);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -51,18 +54,15 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
             </div>
 
             {/* Nutrition Section */}
-            {recipe.nutrition && recipe.nutrition.length > 0 && (
-              <div>
-                <h3 className="font-semibold mb-2">Nutrition</h3>
-                <div className="flex gap-2 flex-wrap">
-                  {recipe.nutrition.map((item: string, index: number) => (
-                    <Badge key={index} variant="outline">
-                      {item}
-                    </Badge>
-                  ))}
-                </div>
+            <div>
+              <h3 className="font-semibold mb-2">Nutrition (per portion)</h3>
+              <div className="flex gap-2 flex-wrap">
+                <Badge variant="outline">{nutrition.calories} kcal</Badge>
+                <Badge variant="outline">{nutrition.protein}g protein</Badge>
+                <Badge variant="outline">{nutrition.fat}g fat</Badge>
+                <Badge variant="outline">{nutrition.carbs}g carbs</Badge>
               </div>
-            )}
+            </div>
 
             {/* Notes Section */}
             {recipe.notes && recipe.notes.length > 0 && (

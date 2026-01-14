@@ -16,7 +16,6 @@ import { cn } from "@/lib/utils/cn";
 import { IngredientType } from "@/types/ingredient";
 import { RecipeIngredientInputType } from "@/lib/validations/recipe";
 
-
 type IngredientSelectorProps = {
   ingredients: IngredientType[];
   value: RecipeIngredientInputType[];
@@ -31,7 +30,7 @@ export function IngredientSelector({
   const [openIndex, setOpenIndex] = React.useState<number | null>(null);
 
   const addIngredient = () => {
-    onChange([...value, { ingredientId: "", amount: "" }]);
+    onChange([...value, { ingredientId: "", amount: 0 }]);
   };
 
   const removeIngredient = (index: number) => {
@@ -44,7 +43,7 @@ export function IngredientSelector({
   const updateIngredient = (
     index: number,
     field: "ingredientId" | "amount",
-    newValue: string
+    newValue: string | number
   ) => {
     const updated = [...value];
     updated[index] = { ...updated[index], [field]: newValue };
@@ -61,11 +60,19 @@ export function IngredientSelector({
       {value.map((item, index) => (
         <div key={index} className="flex gap-2 items-start">
           <Input
-            placeholder="Amount (e.g., 2 slices)"
-            value={item.amount}
-            onChange={(e) => updateIngredient(index, "amount", e.target.value)}
+            type="number"
+            placeholder="Grams, e.g. 200"
+            value={item.amount === 0 ? "" : item.amount.toString()}
+            onChange={(e) => {
+              const numValue =
+                e.target.value === "" ? 0 : parseFloat(e.target.value);
+              updateIngredient(index, "amount", numValue);
+            }}
             className="flex-1"
+            min={0}
+            step={10}
           />
+          <span className="text-sm text-muted-foreground">grams</span>
           <div className="relative flex-1">
             <Button
               type="button"

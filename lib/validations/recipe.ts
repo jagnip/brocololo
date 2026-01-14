@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const recipeIngredientSchema = z.object({
   ingredientId: z.string().min(1, { message: "Ingredient is required" }),
-  amount: z.string().min(1, { message: "Amount is required" }),
+  amount: z.number().int().positive().min(1, { message: "Amount must be a positive number" }),
 });
 
 export const insertRecipeSchema = z.object({
@@ -11,7 +11,6 @@ export const insertRecipeSchema = z.object({
   imageUrl: z.url({ message: "Image must be a valid URL" }),
   handsOnTime: z.coerce.number().int().positive( { message: "Hands-on time must be a positive number" }),
   servings: z.coerce.number().int().positive( { message: "Portions must be a positive number" }),
-  nutrition: z.string().min(1, { message: "Nutrition is required" }).transform((val) => val.split("\n").map(line => line.trim()).filter(line => line !== "")),
   ingredients: z.array(recipeIngredientSchema).min(1, { message: "At least one ingredient is required" }),
   instructions: z.string().min(1, { message: "Instructions are required" }).transform((val) => val.split("\n").map(line => line.trim()).filter(line => line !== "")),
   notes: z.string().min(1, { message: "Notes are required" }).transform((val) => val.split("\n").map(line => line.trim()).filter(line => line !== "")),

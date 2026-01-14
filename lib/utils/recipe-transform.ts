@@ -8,10 +8,9 @@ export function recipeToFormData(recipe: RecipeType): InsertRecipeInputType {
     imageUrl: recipe.imageUrl,
     handsOnTime: recipe.handsOnTime,
     servings: recipe.servings,
-    nutrition: recipe.nutrition.join("\n"),
     ingredients: recipe.ingredients.map((ri) => ({
-    ingredientId: ri.ingredient.id,
-    amount: ri.amount,
+      ingredientId: ri.ingredient.id,
+      amount: ri.amount, // Now a number, not a string
     })),
     instructions: recipe.instructions.join("\n"),
     notes: recipe.notes.join("\n"),

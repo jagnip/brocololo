@@ -50,7 +50,6 @@ export default function RecipeForm({ categories, ingredients, recipe }: RecipeFo
           imageUrl: "",
           handsOnTime: 1,
           servings: 1,
-          nutrition: "",
           ingredients: [],
           instructions: "",
           notes: "",
@@ -164,20 +163,6 @@ export default function RecipeForm({ categories, ingredients, recipe }: RecipeFo
           render={({ field }) => (
             <FormItem>
               <FormLabel>Instructions</FormLabel>
-              <FormControl>
-                <Textarea {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="nutrition"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nutrition</FormLabel>
               <FormControl>
                 <Textarea {...field} />
               </FormControl>
