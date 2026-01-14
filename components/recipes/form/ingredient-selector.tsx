@@ -27,6 +27,8 @@ export function IngredientSelector({
   value,
   onChange,
 }: IngredientSelectorProps) {
+
+  //tracks which ingredient is currently open in the dropdown
   const [openIndex, setOpenIndex] = React.useState<number | null>(null);
 
   const addIngredient = () => {
@@ -45,8 +47,8 @@ export function IngredientSelector({
     field: "ingredientId" | "amount",
     newValue: string | number
   ) => {
-    const updated = [...value];
-    updated[index] = { ...updated[index], [field]: newValue };
+    const updated = [...value]; // shallow copy of current ingredient array { ingredientId: "abc", amount: 100 }
+    updated[index] = { ...updated[index], [field]: newValue }; // spreads existing, then overwrites given field
     onChange(updated);
   };
 
