@@ -4,6 +4,7 @@ const recipeIngredientSchema = z.object({
   ingredientId: z.string().min(1, { message: "Ingredient is required" }),
   amount: z.number().positive().min(0.1, { message: "Amount must be a positive number" }),
   unitId: z.string().min(1, { message: "Unit is required" }),
+   excludeFromNutrition: z.boolean().optional().default(false),
 });
 
 export const insertRecipeSchema = z.object({
