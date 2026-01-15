@@ -27,7 +27,7 @@ import {
 import { ImageUploader } from "./image-uploader";
 import { CategorySelector } from "./category-selector";
 import { RecipeType } from "@/types/recipe";
-import { recipeToFormData } from "@/lib/utils/recipe-transform";
+import { recipeToFormData } from "@/lib/utils";
 import { IngredientType } from "@/types/ingredient";
 import { IngredientSelector } from "./ingredient-selector";
 
@@ -63,6 +63,8 @@ export default function RecipeForm({ categories, ingredients, recipe }: RecipeFo
     const result = recipe
       ? await updateRecipeAction(recipe.id, transformed)
       : await createRecipeAction(transformed);
+
+      console.log(result);
 
     // ⚠️ NOTE: Both actions redirect on success, so we only handle errors here
     if (result?.type === "error") {

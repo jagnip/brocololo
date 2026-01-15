@@ -1,6 +1,29 @@
-// lib/utils/calculate-nutrition.ts
-
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
 import type { RecipeType } from "@/types/recipe";
+import type { InsertRecipeInputType } from "@/lib/validations/recipe";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+export function recipeToFormData(recipe: RecipeType): InsertRecipeInputType {
+  return {
+    name: recipe.name,
+    categories: recipe.categories.map((cat) => cat.id),
+    imageUrl: recipe.imageUrl,
+    handsOnTime: recipe.handsOnTime,
+    servings: recipe.servings,
+   ingredients: recipe.ingredients.map((ri) => ({
+  ingredientId: ri.ingredient.id,
+  amount: ri.amount,
+  unitId: ri.unit.id,
+  excludeFromNutrition: ri.excludeFromNutrition || false,
+})),
+    instructions: recipe.instructions.join("\n"),
+    notes: recipe.notes.join("\n"),
+  };
+}
 
 export type NutritionPerPortion = {
   calories: number;
@@ -15,6 +38,11 @@ export function calculateNutritionPerPortion(
 
   const total = recipe.ingredients.reduce(
     (acc, recipeIngredient) => {
+
+         if (recipeIngredient.excludeFromNutrition) {
+        return acc;
+      }
+      
       const ingredient = recipeIngredient.ingredient;
       const unit = recipeIngredient.unit;
   

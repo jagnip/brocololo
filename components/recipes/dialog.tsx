@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Badge } from "../ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { RecipeType } from "@/types/recipe";
-import { calculateNutritionPerPortion } from "@/lib/utils/calculate-nutrition";
+import { calculateNutritionPerPortion } from "@/lib/utils";
 
 type RecipeDialogProps = {
   recipe: RecipeType;
@@ -106,6 +106,11 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
                     <li key={recipeIngredient.id}>
                       {recipeIngredient.amount} {recipeIngredient.unit.name}{" "}
                       {recipeIngredient.ingredient.name}
+                      {recipeIngredient.excludeFromNutrition && (
+                        <span className="text-muted-foreground text-xs ml-1">
+                          (excluded)
+                        </span>
+                      )}
                       {recipeIngredient.ingredient.supermarketUrl && (
                         <a
                           href={recipeIngredient.ingredient.supermarketUrl}

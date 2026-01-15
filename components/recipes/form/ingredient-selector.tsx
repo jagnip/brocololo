@@ -12,7 +12,7 @@ import {
   CommandList,
 } from "../../ui/command";
 import { X, Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils/cn";
+import { cn } from "@/lib/utils";
 import { IngredientType } from "@/types/ingredient";
 import { RecipeIngredientInputType } from "@/lib/validations/recipe";
 import {
@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type IngredientSelectorProps = {
   ingredients: IngredientType[];
@@ -38,7 +39,10 @@ export function IngredientSelector({
   const [openIndex, setOpenIndex] = React.useState<number | null>(null);
 
   const addIngredient = () => {
-    onChange([...value, { ingredientId: "", amount: 0, unitId: "" }]);
+    onChange([
+      ...value,
+      { ingredientId: "", amount: 0, unitId: "", excludeFromNutrition: false },
+    ]);
   };
 
   const removeIngredient = (index: number) => {
@@ -85,7 +89,8 @@ export function IngredientSelector({
         const units = getUnitsForIngredient(item.ingredientId);
 
         return (
-          <div key={index} className="flex gap-2 items-start">
+          <div key={index} className="flex gap-2 items-center">
+            {/* Amount input */}
             <Input
               type="number"
               placeholder="Amount"
@@ -100,6 +105,7 @@ export function IngredientSelector({
               step={0.1}
             />
 
+            {/* Unit selector */}
             <Select
               key={`${item.ingredientId}-${index}`}
               value={item.unitId || undefined}
@@ -123,7 +129,7 @@ export function IngredientSelector({
                 ))}
               </SelectContent>
             </Select>
-
+            {/* Ingredient selector */}
             <div className="relative flex-1">
               <Button
                 type="button"
@@ -170,7 +176,19 @@ export function IngredientSelector({
                 </div>
               )}
             </div>
-
+            {/* Exclude from nutrition checkbox */}
+            <div className="flex gap-2">
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={item.excludeFromNutrition || false}
+                  onCheckedChange={(checked) =>
+                    updateIngredient(index, { excludeFromNutrition: !!checked })
+                  }
+                />
+                <span className="text-muted-foreground">Exclude</span>
+              </label>
+            </div>
+            {/* Remove ingredient button */}
             <Button
               type="button"
               variant="ghost"
