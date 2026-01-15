@@ -24,7 +24,11 @@ export const insertRecipeSchema = z.object({
   servings: z.coerce.number().int().positive( { message: "Portions must be a positive number" }),
   ingredients: z.array(recipeIngredientSchema).min(1, { message: "At least one ingredient is required" }),
   instructions: z.string().min(1, { message: "Instructions are required" }).transform((val) => val.split("\n").map(line => line.trim()).filter(line => line !== "")),
-  notes: z.string().min(1, { message: "Notes are required" }).transform((val) => val.split("\n").map(line => line.trim()).filter(line => line !== "")),
+  notes: z.string().transform((val) => {
+  if (!val || val.trim() === "") return [];
+  const lines = val.split("\n").map(line => line.trim()).filter(line => line !== "");
+  return lines;
+}),
 });
 
 export type InsertRecipeInputType = z.input<typeof insertRecipeSchema>;

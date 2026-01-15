@@ -23,7 +23,7 @@ model Recipe {
   imageUrl     String     @map("image_url")
   instructions String[]
   handsOnTime  Int        @map("hands_on_time")
-  notes        String[]
+  notes        String[] 
   servings     Int
   categories   Category[] @relation("category_recipes")
   ingredients RecipeIngredient[]
@@ -77,6 +77,7 @@ model RecipeIngredient {
   unitId      String @map("unit_id")
   excludeFromNutrition Boolean @default(false) @map("exclude_from_nutrition")
   additionalInfo String? @map("additional_info")
+
   recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   ingredient  Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
   unit        Unit     @relation(fields: [unitId], references: [id], onDelete: Restrict)

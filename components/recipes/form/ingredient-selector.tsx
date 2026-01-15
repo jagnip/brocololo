@@ -46,7 +46,7 @@ export function IngredientSelector({
         amount: null,
         unitId: "",
         excludeFromNutrition: false,
-        additionalInfo: "",
+        additionalInfo: null,
       },
     ]);
   };

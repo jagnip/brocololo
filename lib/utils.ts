@@ -23,7 +23,7 @@ export function recipeToFormData(recipe: RecipeType): InsertRecipeInputType {
   additionalInfo: ri.additionalInfo,
 })),
     instructions: recipe.instructions.join("\n"),
-    notes: recipe.notes.join("\n"),
+    notes: recipe.notes.join("\n")
   };
 }
 
