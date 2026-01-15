@@ -20,7 +20,7 @@ model Recipe {
   id           String     @id @default(cuid())
   name         String     @unique
   slug         String     @unique
-  imageUrl     String     @map("image_url")
+  imageUrl     String?     @map("image_url")
   instructions String[]
   handsOnTime  Int        @map("hands_on_time")
   notes        String[] 

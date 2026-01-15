@@ -197,7 +197,7 @@ export type RecipeGroupByOutputType = {
   id: string
   name: string
   slug: string
-  imageUrl: string
+  imageUrl: string | null
   instructions: string[]
   handsOnTime: number
   notes: string[]
@@ -231,7 +231,7 @@ export type RecipeWhereInput = {
   id?: Prisma.StringFilter<"Recipe"> | string
   name?: Prisma.StringFilter<"Recipe"> | string
   slug?: Prisma.StringFilter<"Recipe"> | string
-  imageUrl?: Prisma.StringFilter<"Recipe"> | string
+  imageUrl?: Prisma.StringNullableFilter<"Recipe"> | string | null
   instructions?: Prisma.StringNullableListFilter<"Recipe">
   handsOnTime?: Prisma.IntFilter<"Recipe"> | number
   notes?: Prisma.StringNullableListFilter<"Recipe">
@@ -244,7 +244,7 @@ export type RecipeOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   slug?: Prisma.SortOrder
-  imageUrl?: Prisma.SortOrder
+  imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   instructions?: Prisma.SortOrder
   handsOnTime?: Prisma.SortOrder
   notes?: Prisma.SortOrder
@@ -260,7 +260,7 @@ export type RecipeWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.RecipeWhereInput | Prisma.RecipeWhereInput[]
   OR?: Prisma.RecipeWhereInput[]
   NOT?: Prisma.RecipeWhereInput | Prisma.RecipeWhereInput[]
-  imageUrl?: Prisma.StringFilter<"Recipe"> | string
+  imageUrl?: Prisma.StringNullableFilter<"Recipe"> | string | null
   instructions?: Prisma.StringNullableListFilter<"Recipe">
   handsOnTime?: Prisma.IntFilter<"Recipe"> | number
   notes?: Prisma.StringNullableListFilter<"Recipe">
@@ -273,7 +273,7 @@ export type RecipeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   slug?: Prisma.SortOrder
-  imageUrl?: Prisma.SortOrder
+  imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   instructions?: Prisma.SortOrder
   handsOnTime?: Prisma.SortOrder
   notes?: Prisma.SortOrder
@@ -292,7 +292,7 @@ export type RecipeScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Recipe"> | string
   name?: Prisma.StringWithAggregatesFilter<"Recipe"> | string
   slug?: Prisma.StringWithAggregatesFilter<"Recipe"> | string
-  imageUrl?: Prisma.StringWithAggregatesFilter<"Recipe"> | string
+  imageUrl?: Prisma.StringNullableWithAggregatesFilter<"Recipe"> | string | null
   instructions?: Prisma.StringNullableListFilter<"Recipe">
   handsOnTime?: Prisma.IntWithAggregatesFilter<"Recipe"> | number
   notes?: Prisma.StringNullableListFilter<"Recipe">
@@ -303,7 +303,7 @@ export type RecipeCreateInput = {
   id?: string
   name: string
   slug: string
-  imageUrl: string
+  imageUrl?: string | null
   instructions?: Prisma.RecipeCreateinstructionsInput | string[]
   handsOnTime: number
   notes?: Prisma.RecipeCreatenotesInput | string[]
@@ -316,7 +316,7 @@ export type RecipeUncheckedCreateInput = {
   id?: string
   name: string
   slug: string
-  imageUrl: string
+  imageUrl?: string | null
   instructions?: Prisma.RecipeCreateinstructionsInput | string[]
   handsOnTime: number
   notes?: Prisma.RecipeCreatenotesInput | string[]
@@ -329,7 +329,7 @@ export type RecipeUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  imageUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   instructions?: Prisma.RecipeUpdateinstructionsInput | string[]
   handsOnTime?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.RecipeUpdatenotesInput | string[]
@@ -342,7 +342,7 @@ export type RecipeUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  imageUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   instructions?: Prisma.RecipeUpdateinstructionsInput | string[]
   handsOnTime?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.RecipeUpdatenotesInput | string[]
@@ -355,7 +355,7 @@ export type RecipeCreateManyInput = {
   id?: string
   name: string
   slug: string
-  imageUrl: string
+  imageUrl?: string | null
   instructions?: Prisma.RecipeCreateinstructionsInput | string[]
   handsOnTime: number
   notes?: Prisma.RecipeCreatenotesInput | string[]
@@ -366,7 +366,7 @@ export type RecipeUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  imageUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   instructions?: Prisma.RecipeUpdateinstructionsInput | string[]
   handsOnTime?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.RecipeUpdatenotesInput | string[]
@@ -377,7 +377,7 @@ export type RecipeUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  imageUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   instructions?: Prisma.RecipeUpdateinstructionsInput | string[]
   handsOnTime?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.RecipeUpdatenotesInput | string[]
@@ -492,6 +492,10 @@ export type RecipeCreatenotesInput = {
   set: string[]
 }
 
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
+}
+
 export type RecipeUpdateinstructionsInput = {
   set?: string[]
   push?: string | string[]
@@ -528,7 +532,7 @@ export type RecipeCreateWithoutCategoriesInput = {
   id?: string
   name: string
   slug: string
-  imageUrl: string
+  imageUrl?: string | null
   instructions?: Prisma.RecipeCreateinstructionsInput | string[]
   handsOnTime: number
   notes?: Prisma.RecipeCreatenotesInput | string[]
@@ -540,7 +544,7 @@ export type RecipeUncheckedCreateWithoutCategoriesInput = {
   id?: string
   name: string
   slug: string
-  imageUrl: string
+  imageUrl?: string | null
   instructions?: Prisma.RecipeCreateinstructionsInput | string[]
   handsOnTime: number
   notes?: Prisma.RecipeCreatenotesInput | string[]
@@ -576,7 +580,7 @@ export type RecipeScalarWhereInput = {
   id?: Prisma.StringFilter<"Recipe"> | string
   name?: Prisma.StringFilter<"Recipe"> | string
   slug?: Prisma.StringFilter<"Recipe"> | string
-  imageUrl?: Prisma.StringFilter<"Recipe"> | string
+  imageUrl?: Prisma.StringNullableFilter<"Recipe"> | string | null
   instructions?: Prisma.StringNullableListFilter<"Recipe">
   handsOnTime?: Prisma.IntFilter<"Recipe"> | number
   notes?: Prisma.StringNullableListFilter<"Recipe">
@@ -587,7 +591,7 @@ export type RecipeCreateWithoutIngredientsInput = {
   id?: string
   name: string
   slug: string
-  imageUrl: string
+  imageUrl?: string | null
   instructions?: Prisma.RecipeCreateinstructionsInput | string[]
   handsOnTime: number
   notes?: Prisma.RecipeCreatenotesInput | string[]
@@ -599,7 +603,7 @@ export type RecipeUncheckedCreateWithoutIngredientsInput = {
   id?: string
   name: string
   slug: string
-  imageUrl: string
+  imageUrl?: string | null
   instructions?: Prisma.RecipeCreateinstructionsInput | string[]
   handsOnTime: number
   notes?: Prisma.RecipeCreatenotesInput | string[]
@@ -627,7 +631,7 @@ export type RecipeUpdateWithoutIngredientsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  imageUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   instructions?: Prisma.RecipeUpdateinstructionsInput | string[]
   handsOnTime?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.RecipeUpdatenotesInput | string[]
@@ -639,7 +643,7 @@ export type RecipeUncheckedUpdateWithoutIngredientsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  imageUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   instructions?: Prisma.RecipeUpdateinstructionsInput | string[]
   handsOnTime?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.RecipeUpdatenotesInput | string[]
@@ -651,7 +655,7 @@ export type RecipeUpdateWithoutCategoriesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  imageUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   instructions?: Prisma.RecipeUpdateinstructionsInput | string[]
   handsOnTime?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.RecipeUpdatenotesInput | string[]
@@ -663,7 +667,7 @@ export type RecipeUncheckedUpdateWithoutCategoriesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  imageUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   instructions?: Prisma.RecipeUpdateinstructionsInput | string[]
   handsOnTime?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.RecipeUpdatenotesInput | string[]
@@ -675,7 +679,7 @@ export type RecipeUncheckedUpdateManyWithoutCategoriesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
-  imageUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   instructions?: Prisma.RecipeUpdateinstructionsInput | string[]
   handsOnTime?: Prisma.IntFieldUpdateOperationsInput | number
   notes?: Prisma.RecipeUpdatenotesInput | string[]
@@ -788,7 +792,7 @@ export type $RecipePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     id: string
     name: string
     slug: string
-    imageUrl: string
+    imageUrl: string | null
     instructions: string[]
     handsOnTime: number
     notes: string[]

@@ -35,13 +35,15 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
           {/* Image Section */}
           <div className="shrink-0 md:w-1/2">
             <div className="overflow-hidden rounded-xl">
-              <Image
-                src={recipe.imageUrl}
-                alt={recipe.name}
-                width={500}
-                height={500}
-                className="w-full h-auto rounded-xl"
-              />
+              {recipe.imageUrl && (
+                <Image
+                  src={recipe.imageUrl}
+                  alt={recipe.name}
+                  width={300}
+                  height={300}
+                  className="w-full h-auto rounded-xl"
+                />
+              )}
             </div>
           </div>
 

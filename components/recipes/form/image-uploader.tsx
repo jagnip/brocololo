@@ -7,8 +7,8 @@ export function ImageUploader({
   value,
   onChange,
 }: {
-  value?: string;
-  onChange: (url: string) => void;
+  value?: string | null;
+  onChange: (url: string | null) => void;
 }) {
   // All state managed in component
   const [fileName, setFileName] = useState<string>("");
@@ -82,7 +82,7 @@ export function ImageUploader({
   const clearFile = () => {
     setError("");
     setFileState(null);
-    onChange(""); // Clear form state
+    onChange(null); // Clear form state
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }

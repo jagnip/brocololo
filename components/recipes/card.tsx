@@ -16,13 +16,15 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
   return (
     <Link href={url} scroll={false}>
       <Card className="cursor-pointer hover:shadow-md transition-shadow">
-        <Image
-          src={recipe.imageUrl}
-          alt={recipe.name}
-          width={300}
-          height={300}
-          className="w-full h-auto rounded-xl"
-        />
+        {recipe.imageUrl && (
+          <Image
+            src={recipe.imageUrl}
+            alt={recipe.name}
+            width={300}
+            height={300}
+            className="w-full h-auto rounded-xl"
+          />
+        )}
         <CardHeader>
           {recipe.name} <Badge>{recipe.handsOnTime}</Badge>
         </CardHeader>

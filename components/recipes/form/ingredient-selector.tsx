@@ -200,7 +200,7 @@ export function IngredientSelector({
             <div className="flex gap-2">
               <label className="flex items-center gap-2 text-sm">
                 <Checkbox
-                  checked={item.excludeFromNutrition || false}
+                  checked={item.excludeFromNutrition ?? false}
                   onCheckedChange={(checked) =>
                     updateIngredient(index, { excludeFromNutrition: !!checked })
                   }

@@ -47,7 +47,7 @@ export default function RecipeForm({ categories, ingredients, recipe }: RecipeFo
       : {
           name: "",
           categories: [],
-          imageUrl: "",
+          imageUrl: null,
           handsOnTime: 1,
           servings: 1,
           ingredients: [],
