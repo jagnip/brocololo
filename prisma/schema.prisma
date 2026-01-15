@@ -58,9 +58,9 @@ model Unit {
 }
 
 model IngredientUnit {
-  ingredientId  String
-  unitId        String
-  gramsPerUnit  Float
+  ingredientId  String @map("ingredient_id")
+  unitId        String @map("unit_id")
+  gramsPerUnit  Float @map("grams_per_unit")
   
   ingredient    Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
   unit          Unit      @relation(fields: [unitId], references: [id], onDelete: Restrict)
@@ -71,10 +71,11 @@ model IngredientUnit {
 
 model RecipeIngredient {
   id          String   @id @default(cuid())
-  recipeId    String
-  ingredientId String
-  amount      Float
-  unitId      String
+  recipeId    String @map("recipe_id")
+  ingredientId String @map("ingredient_id")
+  amount      Float 
+  unitId      String @map("unit_id")
+  excludeFromNutrition Boolean @default(false) @map("exclude_from_nutrition")
   recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   ingredient  Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
   unit        Unit     @relation(fields: [unitId], references: [id], onDelete: Restrict)
