@@ -5,6 +5,15 @@ const recipeIngredientSchema = z.object({
   amount: z.number().positive().min(0.1, { message: "Amount must be a positive number" }),
   unitId: z.string().min(1, { message: "Unit is required" }),
   excludeFromNutrition: z.boolean().optional().default(false),
+   additionalInfo: z
+  .string()
+  .max(50, { message: "Additional info must be 50 characters or less" })
+  .optional()
+  .transform((val) => {
+    if (!val) return null;
+    const trimmed = val.trim();
+    return trimmed === "" ? null : trimmed.toLowerCase();
+  }),
 });
 
 export const insertRecipeSchema = z.object({
@@ -20,4 +29,5 @@ export const insertRecipeSchema = z.object({
 
 export type InsertRecipeInputType = z.input<typeof insertRecipeSchema>;
 export type InsertRecipeOutputType = z.infer<typeof insertRecipeSchema>;
+
 export type RecipeIngredientInputType = z.infer<typeof recipeIngredientSchema>;

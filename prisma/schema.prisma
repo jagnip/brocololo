@@ -76,6 +76,7 @@ model RecipeIngredient {
   amount      Float 
   unitId      String @map("unit_id")
   excludeFromNutrition Boolean @default(false) @map("exclude_from_nutrition")
+  additionalInfo String? @map("additional_info")
   recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   ingredient  Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
   unit        Unit     @relation(fields: [unitId], references: [id], onDelete: Restrict)

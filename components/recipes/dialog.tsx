@@ -105,7 +105,12 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
                   {recipe.ingredients.map((recipeIngredient) => (
                     <li key={recipeIngredient.id}>
                       {recipeIngredient.amount} {recipeIngredient.unit.name}{" "}
-                      {recipeIngredient.ingredient.name}
+                      {recipeIngredient.ingredient.name}{" "}
+                      {recipeIngredient.additionalInfo && (
+                        <span className="text-muted-foreground text-xs ml-1">
+                          ({recipeIngredient.additionalInfo})
+                        </span>
+                      )}
                       {recipeIngredient.excludeFromNutrition && (
                         <span className="text-muted-foreground text-xs ml-1">
                           (excluded)

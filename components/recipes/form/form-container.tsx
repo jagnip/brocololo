@@ -13,7 +13,7 @@ export default async function RecipeFormContainer({
   const recipe = recipeSlug ? await getRecipeBySlug(recipeSlug) : null;
 
   return (
-    <div className="max-w-xl mx-auto mt-10">
+    <div className="max-w-3xl mx-auto mt-10">
       <RecipeForm categories={categories} ingredients={ingredients} recipe={recipe ?? undefined} />
     </div>
   );

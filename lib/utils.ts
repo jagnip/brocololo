@@ -7,6 +7,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+//To transform recipefrom to edit recipe form 
 export function recipeToFormData(recipe: RecipeType): InsertRecipeInputType {
   return {
     name: recipe.name,
@@ -18,7 +19,8 @@ export function recipeToFormData(recipe: RecipeType): InsertRecipeInputType {
   ingredientId: ri.ingredient.id,
   amount: ri.amount,
   unitId: ri.unit.id,
-  excludeFromNutrition: ri.excludeFromNutrition || false,
+  excludeFromNutrition: ri.excludeFromNutrition,
+  additionalInfo: ri.additionalInfo ?? undefined,
 })),
     instructions: recipe.instructions.join("\n"),
     notes: recipe.notes.join("\n"),

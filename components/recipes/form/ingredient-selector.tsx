@@ -41,7 +41,13 @@ export function IngredientSelector({
   const addIngredient = () => {
     onChange([
       ...value,
-      { ingredientId: "", amount: 0, unitId: "", excludeFromNutrition: false },
+      {
+        ingredientId: "",
+        amount: 0,
+        unitId: "",
+        excludeFromNutrition: false,
+        additionalInfo: "",
+      },
     ]);
   };
 
@@ -129,6 +135,7 @@ export function IngredientSelector({
                 ))}
               </SelectContent>
             </Select>
+
             {/* Ingredient selector */}
             <div className="relative flex-1">
               <Button
@@ -176,6 +183,19 @@ export function IngredientSelector({
                 </div>
               )}
             </div>
+
+            {/* Additional info input */}
+            <Input
+              type="text"
+              placeholder="Additional info"
+              value={item.additionalInfo || ""}
+              onChange={(e) => {
+                updateIngredient(index, { additionalInfo: e.target.value });
+              }}
+              className="w-32"
+              maxLength={50}
+            />
+
             {/* Exclude from nutrition checkbox */}
             <div className="flex gap-2">
               <label className="flex items-center gap-2 text-sm">

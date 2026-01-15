@@ -8,7 +8,7 @@ export default async function EditRecipePage({ params }: PageProps) {
   const { recipe: recipeSlug } = await params;
 
   return (
-    <div className="max-w-xl mx-auto mt-10">
+    <div className="mx-auto mt-10">
     <RecipeFormContainer recipeSlug={recipeSlug}/>
     </div>
   );
