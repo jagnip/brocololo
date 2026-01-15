@@ -104,7 +104,11 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
                 <ul className="list-disc list-inside space-y-1 text-sm">
                   {recipe.ingredients.map((recipeIngredient) => (
                     <li key={recipeIngredient.id}>
-                      {recipeIngredient.amount} {recipeIngredient.unit.name}{" "}
+                      {recipeIngredient.amount && (
+                        <>
+                          {recipeIngredient.amount} {recipeIngredient.unit.name}{" "}
+                        </>
+                      )}{" "}
                       {recipeIngredient.ingredient.name}{" "}
                       {recipeIngredient.additionalInfo && (
                         <span className="text-muted-foreground text-xs ml-1">

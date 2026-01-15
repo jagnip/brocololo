@@ -195,7 +195,7 @@ export type RecipeIngredientGroupByOutputType = {
   id: string
   recipeId: string
   ingredientId: string
-  amount: number
+  amount: number | null
   unitId: string
   excludeFromNutrition: boolean
   additionalInfo: string | null
@@ -228,7 +228,7 @@ export type RecipeIngredientWhereInput = {
   id?: Prisma.StringFilter<"RecipeIngredient"> | string
   recipeId?: Prisma.StringFilter<"RecipeIngredient"> | string
   ingredientId?: Prisma.StringFilter<"RecipeIngredient"> | string
-  amount?: Prisma.FloatFilter<"RecipeIngredient"> | number
+  amount?: Prisma.FloatNullableFilter<"RecipeIngredient"> | number | null
   unitId?: Prisma.StringFilter<"RecipeIngredient"> | string
   excludeFromNutrition?: Prisma.BoolFilter<"RecipeIngredient"> | boolean
   additionalInfo?: Prisma.StringNullableFilter<"RecipeIngredient"> | string | null
@@ -241,7 +241,7 @@ export type RecipeIngredientOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   recipeId?: Prisma.SortOrder
   ingredientId?: Prisma.SortOrder
-  amount?: Prisma.SortOrder
+  amount?: Prisma.SortOrderInput | Prisma.SortOrder
   unitId?: Prisma.SortOrder
   excludeFromNutrition?: Prisma.SortOrder
   additionalInfo?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -257,7 +257,7 @@ export type RecipeIngredientWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.RecipeIngredientWhereInput | Prisma.RecipeIngredientWhereInput[]
   recipeId?: Prisma.StringFilter<"RecipeIngredient"> | string
   ingredientId?: Prisma.StringFilter<"RecipeIngredient"> | string
-  amount?: Prisma.FloatFilter<"RecipeIngredient"> | number
+  amount?: Prisma.FloatNullableFilter<"RecipeIngredient"> | number | null
   unitId?: Prisma.StringFilter<"RecipeIngredient"> | string
   excludeFromNutrition?: Prisma.BoolFilter<"RecipeIngredient"> | boolean
   additionalInfo?: Prisma.StringNullableFilter<"RecipeIngredient"> | string | null
@@ -270,7 +270,7 @@ export type RecipeIngredientOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   recipeId?: Prisma.SortOrder
   ingredientId?: Prisma.SortOrder
-  amount?: Prisma.SortOrder
+  amount?: Prisma.SortOrderInput | Prisma.SortOrder
   unitId?: Prisma.SortOrder
   excludeFromNutrition?: Prisma.SortOrder
   additionalInfo?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -288,7 +288,7 @@ export type RecipeIngredientScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"RecipeIngredient"> | string
   recipeId?: Prisma.StringWithAggregatesFilter<"RecipeIngredient"> | string
   ingredientId?: Prisma.StringWithAggregatesFilter<"RecipeIngredient"> | string
-  amount?: Prisma.FloatWithAggregatesFilter<"RecipeIngredient"> | number
+  amount?: Prisma.FloatNullableWithAggregatesFilter<"RecipeIngredient"> | number | null
   unitId?: Prisma.StringWithAggregatesFilter<"RecipeIngredient"> | string
   excludeFromNutrition?: Prisma.BoolWithAggregatesFilter<"RecipeIngredient"> | boolean
   additionalInfo?: Prisma.StringNullableWithAggregatesFilter<"RecipeIngredient"> | string | null
@@ -296,7 +296,7 @@ export type RecipeIngredientScalarWhereWithAggregatesInput = {
 
 export type RecipeIngredientCreateInput = {
   id?: string
-  amount: number
+  amount?: number | null
   excludeFromNutrition?: boolean
   additionalInfo?: string | null
   recipe: Prisma.RecipeCreateNestedOneWithoutIngredientsInput
@@ -308,7 +308,7 @@ export type RecipeIngredientUncheckedCreateInput = {
   id?: string
   recipeId: string
   ingredientId: string
-  amount: number
+  amount?: number | null
   unitId: string
   excludeFromNutrition?: boolean
   additionalInfo?: string | null
@@ -316,7 +316,7 @@ export type RecipeIngredientUncheckedCreateInput = {
 
 export type RecipeIngredientUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  amount?: Prisma.FloatFieldUpdateOperationsInput | number
+  amount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   excludeFromNutrition?: Prisma.BoolFieldUpdateOperationsInput | boolean
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recipe?: Prisma.RecipeUpdateOneRequiredWithoutIngredientsNestedInput
@@ -328,7 +328,7 @@ export type RecipeIngredientUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   recipeId?: Prisma.StringFieldUpdateOperationsInput | string
   ingredientId?: Prisma.StringFieldUpdateOperationsInput | string
-  amount?: Prisma.FloatFieldUpdateOperationsInput | number
+  amount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   unitId?: Prisma.StringFieldUpdateOperationsInput | string
   excludeFromNutrition?: Prisma.BoolFieldUpdateOperationsInput | boolean
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -338,7 +338,7 @@ export type RecipeIngredientCreateManyInput = {
   id?: string
   recipeId: string
   ingredientId: string
-  amount: number
+  amount?: number | null
   unitId: string
   excludeFromNutrition?: boolean
   additionalInfo?: string | null
@@ -346,7 +346,7 @@ export type RecipeIngredientCreateManyInput = {
 
 export type RecipeIngredientUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  amount?: Prisma.FloatFieldUpdateOperationsInput | number
+  amount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   excludeFromNutrition?: Prisma.BoolFieldUpdateOperationsInput | boolean
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
@@ -355,7 +355,7 @@ export type RecipeIngredientUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   recipeId?: Prisma.StringFieldUpdateOperationsInput | string
   ingredientId?: Prisma.StringFieldUpdateOperationsInput | string
-  amount?: Prisma.FloatFieldUpdateOperationsInput | number
+  amount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   unitId?: Prisma.StringFieldUpdateOperationsInput | string
   excludeFromNutrition?: Prisma.BoolFieldUpdateOperationsInput | boolean
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -535,13 +535,21 @@ export type RecipeIngredientUncheckedUpdateManyWithoutUnitNestedInput = {
   deleteMany?: Prisma.RecipeIngredientScalarWhereInput | Prisma.RecipeIngredientScalarWhereInput[]
 }
 
+export type NullableFloatFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
 }
 
 export type RecipeIngredientCreateWithoutRecipeInput = {
   id?: string
-  amount: number
+  amount?: number | null
   excludeFromNutrition?: boolean
   additionalInfo?: string | null
   ingredient: Prisma.IngredientCreateNestedOneWithoutRecipesInput
@@ -551,7 +559,7 @@ export type RecipeIngredientCreateWithoutRecipeInput = {
 export type RecipeIngredientUncheckedCreateWithoutRecipeInput = {
   id?: string
   ingredientId: string
-  amount: number
+  amount?: number | null
   unitId: string
   excludeFromNutrition?: boolean
   additionalInfo?: string | null
@@ -590,7 +598,7 @@ export type RecipeIngredientScalarWhereInput = {
   id?: Prisma.StringFilter<"RecipeIngredient"> | string
   recipeId?: Prisma.StringFilter<"RecipeIngredient"> | string
   ingredientId?: Prisma.StringFilter<"RecipeIngredient"> | string
-  amount?: Prisma.FloatFilter<"RecipeIngredient"> | number
+  amount?: Prisma.FloatNullableFilter<"RecipeIngredient"> | number | null
   unitId?: Prisma.StringFilter<"RecipeIngredient"> | string
   excludeFromNutrition?: Prisma.BoolFilter<"RecipeIngredient"> | boolean
   additionalInfo?: Prisma.StringNullableFilter<"RecipeIngredient"> | string | null
@@ -598,7 +606,7 @@ export type RecipeIngredientScalarWhereInput = {
 
 export type RecipeIngredientCreateWithoutIngredientInput = {
   id?: string
-  amount: number
+  amount?: number | null
   excludeFromNutrition?: boolean
   additionalInfo?: string | null
   recipe: Prisma.RecipeCreateNestedOneWithoutIngredientsInput
@@ -608,7 +616,7 @@ export type RecipeIngredientCreateWithoutIngredientInput = {
 export type RecipeIngredientUncheckedCreateWithoutIngredientInput = {
   id?: string
   recipeId: string
-  amount: number
+  amount?: number | null
   unitId: string
   excludeFromNutrition?: boolean
   additionalInfo?: string | null
@@ -642,7 +650,7 @@ export type RecipeIngredientUpdateManyWithWhereWithoutIngredientInput = {
 
 export type RecipeIngredientCreateWithoutUnitInput = {
   id?: string
-  amount: number
+  amount?: number | null
   excludeFromNutrition?: boolean
   additionalInfo?: string | null
   recipe: Prisma.RecipeCreateNestedOneWithoutIngredientsInput
@@ -653,7 +661,7 @@ export type RecipeIngredientUncheckedCreateWithoutUnitInput = {
   id?: string
   recipeId: string
   ingredientId: string
-  amount: number
+  amount?: number | null
   excludeFromNutrition?: boolean
   additionalInfo?: string | null
 }
@@ -687,7 +695,7 @@ export type RecipeIngredientUpdateManyWithWhereWithoutUnitInput = {
 export type RecipeIngredientCreateManyRecipeInput = {
   id?: string
   ingredientId: string
-  amount: number
+  amount?: number | null
   unitId: string
   excludeFromNutrition?: boolean
   additionalInfo?: string | null
@@ -695,7 +703,7 @@ export type RecipeIngredientCreateManyRecipeInput = {
 
 export type RecipeIngredientUpdateWithoutRecipeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  amount?: Prisma.FloatFieldUpdateOperationsInput | number
+  amount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   excludeFromNutrition?: Prisma.BoolFieldUpdateOperationsInput | boolean
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ingredient?: Prisma.IngredientUpdateOneRequiredWithoutRecipesNestedInput
@@ -705,7 +713,7 @@ export type RecipeIngredientUpdateWithoutRecipeInput = {
 export type RecipeIngredientUncheckedUpdateWithoutRecipeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   ingredientId?: Prisma.StringFieldUpdateOperationsInput | string
-  amount?: Prisma.FloatFieldUpdateOperationsInput | number
+  amount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   unitId?: Prisma.StringFieldUpdateOperationsInput | string
   excludeFromNutrition?: Prisma.BoolFieldUpdateOperationsInput | boolean
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -714,7 +722,7 @@ export type RecipeIngredientUncheckedUpdateWithoutRecipeInput = {
 export type RecipeIngredientUncheckedUpdateManyWithoutRecipeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   ingredientId?: Prisma.StringFieldUpdateOperationsInput | string
-  amount?: Prisma.FloatFieldUpdateOperationsInput | number
+  amount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   unitId?: Prisma.StringFieldUpdateOperationsInput | string
   excludeFromNutrition?: Prisma.BoolFieldUpdateOperationsInput | boolean
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -723,7 +731,7 @@ export type RecipeIngredientUncheckedUpdateManyWithoutRecipeInput = {
 export type RecipeIngredientCreateManyIngredientInput = {
   id?: string
   recipeId: string
-  amount: number
+  amount?: number | null
   unitId: string
   excludeFromNutrition?: boolean
   additionalInfo?: string | null
@@ -731,7 +739,7 @@ export type RecipeIngredientCreateManyIngredientInput = {
 
 export type RecipeIngredientUpdateWithoutIngredientInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  amount?: Prisma.FloatFieldUpdateOperationsInput | number
+  amount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   excludeFromNutrition?: Prisma.BoolFieldUpdateOperationsInput | boolean
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recipe?: Prisma.RecipeUpdateOneRequiredWithoutIngredientsNestedInput
@@ -741,7 +749,7 @@ export type RecipeIngredientUpdateWithoutIngredientInput = {
 export type RecipeIngredientUncheckedUpdateWithoutIngredientInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   recipeId?: Prisma.StringFieldUpdateOperationsInput | string
-  amount?: Prisma.FloatFieldUpdateOperationsInput | number
+  amount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   unitId?: Prisma.StringFieldUpdateOperationsInput | string
   excludeFromNutrition?: Prisma.BoolFieldUpdateOperationsInput | boolean
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -750,7 +758,7 @@ export type RecipeIngredientUncheckedUpdateWithoutIngredientInput = {
 export type RecipeIngredientUncheckedUpdateManyWithoutIngredientInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   recipeId?: Prisma.StringFieldUpdateOperationsInput | string
-  amount?: Prisma.FloatFieldUpdateOperationsInput | number
+  amount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   unitId?: Prisma.StringFieldUpdateOperationsInput | string
   excludeFromNutrition?: Prisma.BoolFieldUpdateOperationsInput | boolean
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -760,14 +768,14 @@ export type RecipeIngredientCreateManyUnitInput = {
   id?: string
   recipeId: string
   ingredientId: string
-  amount: number
+  amount?: number | null
   excludeFromNutrition?: boolean
   additionalInfo?: string | null
 }
 
 export type RecipeIngredientUpdateWithoutUnitInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  amount?: Prisma.FloatFieldUpdateOperationsInput | number
+  amount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   excludeFromNutrition?: Prisma.BoolFieldUpdateOperationsInput | boolean
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recipe?: Prisma.RecipeUpdateOneRequiredWithoutIngredientsNestedInput
@@ -778,7 +786,7 @@ export type RecipeIngredientUncheckedUpdateWithoutUnitInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   recipeId?: Prisma.StringFieldUpdateOperationsInput | string
   ingredientId?: Prisma.StringFieldUpdateOperationsInput | string
-  amount?: Prisma.FloatFieldUpdateOperationsInput | number
+  amount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   excludeFromNutrition?: Prisma.BoolFieldUpdateOperationsInput | boolean
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
@@ -787,7 +795,7 @@ export type RecipeIngredientUncheckedUpdateManyWithoutUnitInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   recipeId?: Prisma.StringFieldUpdateOperationsInput | string
   ingredientId?: Prisma.StringFieldUpdateOperationsInput | string
-  amount?: Prisma.FloatFieldUpdateOperationsInput | number
+  amount?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
   excludeFromNutrition?: Prisma.BoolFieldUpdateOperationsInput | boolean
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
@@ -871,7 +879,7 @@ export type $RecipeIngredientPayload<ExtArgs extends runtime.Types.Extensions.In
     id: string
     recipeId: string
     ingredientId: string
-    amount: number
+    amount: number | null
     unitId: string
     excludeFromNutrition: boolean
     additionalInfo: string | null

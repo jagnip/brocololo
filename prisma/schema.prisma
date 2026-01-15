@@ -73,7 +73,7 @@ model RecipeIngredient {
   id          String   @id @default(cuid())
   recipeId    String @map("recipe_id")
   ingredientId String @map("ingredient_id")
-  amount      Float 
+  amount      Float? 
   unitId      String @map("unit_id")
   excludeFromNutrition Boolean @default(false) @map("exclude_from_nutrition")
   additionalInfo String? @map("additional_info")

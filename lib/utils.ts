@@ -20,7 +20,7 @@ export function recipeToFormData(recipe: RecipeType): InsertRecipeInputType {
   amount: ri.amount,
   unitId: ri.unit.id,
   excludeFromNutrition: ri.excludeFromNutrition,
-  additionalInfo: ri.additionalInfo ?? undefined,
+  additionalInfo: ri.additionalInfo,
 })),
     instructions: recipe.instructions.join("\n"),
     notes: recipe.notes.join("\n"),
@@ -42,6 +42,10 @@ export function calculateNutritionPerPortion(
     (acc, recipeIngredient) => {
 
          if (recipeIngredient.excludeFromNutrition) {
+        return acc;
+      }
+
+          if (recipeIngredient.amount == null) {
         return acc;
       }
       

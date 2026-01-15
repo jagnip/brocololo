@@ -2,13 +2,13 @@ import { z } from "zod";
 
 const recipeIngredientSchema = z.object({
   ingredientId: z.string().min(1, { message: "Ingredient is required" }),
-  amount: z.number().positive().min(0.1, { message: "Amount must be a positive number" }),
+  amount: z.number().positive().min(0.01, { message: "Amount must be a positive number" }).nullish(),
   unitId: z.string().min(1, { message: "Unit is required" }),
   excludeFromNutrition: z.boolean().optional().default(false),
    additionalInfo: z
   .string()
   .max(50, { message: "Additional info must be 50 characters or less" })
-  .optional()
+  .nullish()
   .transform((val) => {
     if (!val) return null;
     const trimmed = val.trim();

@@ -43,7 +43,7 @@ export function IngredientSelector({
       ...value,
       {
         ingredientId: "",
-        amount: 0,
+        amount: null,
         unitId: "",
         excludeFromNutrition: false,
         additionalInfo: "",
@@ -100,10 +100,10 @@ export function IngredientSelector({
             <Input
               type="number"
               placeholder="Amount"
-              value={item.amount === 0 ? "" : item.amount.toString()}
+              value={item.amount == null ? "" : item.amount.toString()}
               onChange={(e) => {
                 const numValue =
-                  e.target.value === "" ? 0 : parseFloat(e.target.value);
+                  e.target.value === "" ? null : parseFloat(e.target.value);
                 updateIngredient(index, { amount: numValue });
               }}
               className="flex-1"
