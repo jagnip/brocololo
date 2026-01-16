@@ -6,6 +6,7 @@ import { Badge } from "../ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { RecipeType } from "@/types/recipe";
 import { calculateNutritionPerPortion } from "@/lib/utils";
+import { ImageGallery } from "./image-gallery";
 
 type RecipeDialogProps = {
   recipe: RecipeType;
@@ -35,15 +36,10 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
           {/* Image Section */}
           <div className="shrink-0 md:w-1/2">
             <div className="overflow-hidden rounded-xl">
-              {recipe.imageUrl && (
-                <Image
-                  src={recipe.imageUrl}
-                  alt={recipe.name}
-                  width={300}
-                  height={300}
-                  className="w-full h-auto rounded-xl"
-                />
-              )}
+              <ImageGallery
+                images={recipe.images || []}
+                recipeName={recipe.name}
+              />
             </div>
           </div>
 

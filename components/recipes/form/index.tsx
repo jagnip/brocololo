@@ -47,7 +47,7 @@ export default function RecipeForm({ categories, ingredients, recipe }: RecipeFo
       : {
           name: "",
           categories: [],
-          imageUrl: null,
+          images: [],
           handsOnTime: 1,
           servings: 1,
           ingredients: [],
@@ -109,12 +109,20 @@ export default function RecipeForm({ categories, ingredients, recipe }: RecipeFo
 
         <FormField
           control={form.control}
-          name="imageUrl"
+          name="images"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Add photo</FormLabel>
               <FormControl>
-                <ImageUploader value={field.value} onChange={field.onChange} />
+                <ImageUploader
+                  value={
+                    field.value?.map((img) => ({
+                      url: img.url,
+                      isCover: img.isCover ?? false, 
+                    })) || []
+                  }
+                  onChange={field.onChange}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -69,3 +69,8 @@ export type IngredientUnit = Prisma.IngredientUnitModel
  * 
  */
 export type RecipeIngredient = Prisma.RecipeIngredientModel
+/**
+ * Model RecipeImage
+ * 
+ */
+export type RecipeImage = Prisma.RecipeImageModel

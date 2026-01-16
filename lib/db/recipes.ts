@@ -12,16 +12,17 @@ export async function getRecipes(): Promise<RecipeType[]> {
           name: true,
         },
       },
-ingredients: {
-  include: {
-    ingredient: {
-      include: {
-        unitConversions: true, 
+      ingredients: {
+        include: {
+          ingredient: {
+            include: {
+              unitConversions: true, 
+            },
+          },
+          unit: true, 
+        },
       },
-    },
-    unit: true, 
-  },
-},
+      images: true,  
     },
     orderBy: {
       name: "asc",
@@ -43,23 +44,23 @@ export async function getRecipeBySlug(slug: string): Promise<RecipeType | null> 
           name: true,
         },
       },
-     ingredients: {
-  include: {
-    ingredient: {
-      include: {
-        unitConversions: true,
+      ingredients: {
+        include: {
+          ingredient: {
+            include: {
+              unitConversions: true,
+            },
+          },
+          unit: true, 
+        },
       },
-    },
-    unit: true, 
-  },
-},
+      images: true, 
     },
   });
 }
 
-
 export async function createRecipe(data: InsertRecipeOutputType & { slug: string }) {
-  const { categories, ingredients, ...recipeData } = data;
+  const { categories, ingredients, images, ...recipeData } = data;
   
   return await prisma.recipe.create({
     data: {
@@ -74,6 +75,12 @@ export async function createRecipe(data: InsertRecipeOutputType & { slug: string
           unitId: ing.unitId,
           excludeFromNutrition: ing.excludeFromNutrition,
           additionalInfo: ing.additionalInfo,
+        })),
+      },
+      images: {
+        create: images.map((img) => ({
+          url: img.url,
+          isCover: img.isCover,
         })),
       },
     },
@@ -91,6 +98,7 @@ export async function createRecipe(data: InsertRecipeOutputType & { slug: string
           unit: true,
         },
       },
+      images: true, 
     },
   });
 }
@@ -99,7 +107,7 @@ export async function updateRecipe(
   recipeId: string,
   data: InsertRecipeOutputType & { slug: string }
 ) {
-  const { categories, ingredients, ...recipeData } = data;
+  const { categories, ingredients, images, ...recipeData } = data;
   
   return await prisma.recipe.update({
     where: { id: recipeId },
@@ -118,6 +126,13 @@ export async function updateRecipe(
           additionalInfo: ing.additionalInfo,
         })),
       },
+      images: {
+        deleteMany: {},  
+        create: images.map((img) => ({
+          url: img.url,
+          isCover: img.isCover,
+        })),
+      },
     },
     include: {
       categories: {
@@ -133,6 +148,7 @@ export async function updateRecipe(
           unit: true,
         },
       },
+      images: true,
     },
   });
 }

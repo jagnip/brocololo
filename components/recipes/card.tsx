@@ -13,12 +13,14 @@ type RecipeCardProps = {
 export default function RecipeCard({ recipe }: RecipeCardProps) {
   const url = `/recipes/${recipe.slug}`;
 
+  const coverImage = recipe.images?.find((img) => img.isCover);
+
   return (
     <Link href={url} scroll={false}>
       <Card className="cursor-pointer hover:shadow-md transition-shadow">
-        {recipe.imageUrl && (
+        {coverImage && (
           <Image
-            src={recipe.imageUrl}
+            src={coverImage.url}
             alt={recipe.name}
             width={300}
             height={300}

@@ -12,7 +12,10 @@ export function recipeToFormData(recipe: RecipeType): InsertRecipeInputType {
   return {
     name: recipe.name,
     categories: recipe.categories.map((cat) => cat.id),
-    imageUrl: recipe.imageUrl,
+    images: recipe.images?.map((img) => ({
+      url: img.url,
+      isCover: img.isCover,
+    })) || [],
     handsOnTime: recipe.handsOnTime,
     servings: recipe.servings,
    ingredients: recipe.ingredients.map((ri) => ({

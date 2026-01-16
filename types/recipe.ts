@@ -19,5 +19,6 @@ export type RecipeType = Prisma.RecipeGetPayload<{
         unit: true;
       };
     };
+     images: true; 
   };
 }>;

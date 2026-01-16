@@ -16,10 +16,25 @@ const recipeIngredientSchema = z.object({
   }),
 });
 
+const recipeImageSchema = z.object({
+  url: z.url(),
+  isCover: z.boolean().default(false),
+});
+
 export const insertRecipeSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   categories: z.array(z.string()).min(1, { message: "Categories are required" }),
-  imageUrl: z.string().nullish(),
+    images: z
+    .array(recipeImageSchema)
+    .max(10, { message: "Maximum 10 images allowed" })
+     .transform((images) => {
+      // Automatically set first image as cover if images exist
+      if (images.length > 0 && !images.some((img) => img.isCover === true)) {
+        images[0].isCover = true;
+      }
+      return images;
+    })
+    .default([]),
   handsOnTime: z.coerce.number().int().positive( { message: "Hands-on time must be a positive number" }),
   servings: z.coerce.number().int().positive( { message: "Portions must be a positive number" }),
   ingredients: z.array(recipeIngredientSchema).min(1, { message: "At least one ingredient is required" }),

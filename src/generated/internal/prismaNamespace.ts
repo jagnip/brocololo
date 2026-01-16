@@ -389,7 +389,8 @@ export const ModelName = {
   Ingredient: 'Ingredient',
   Unit: 'Unit',
   IngredientUnit: 'IngredientUnit',
-  RecipeIngredient: 'RecipeIngredient'
+  RecipeIngredient: 'RecipeIngredient',
+  RecipeImage: 'RecipeImage'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -405,7 +406,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "category" | "recipe" | "ingredient" | "unit" | "ingredientUnit" | "recipeIngredient"
+    modelProps: "category" | "recipe" | "ingredient" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeImage"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -853,6 +854,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    RecipeImage: {
+      payload: Prisma.$RecipeImagePayload<ExtArgs>
+      fields: Prisma.RecipeImageFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RecipeImageFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeImagePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RecipeImageFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeImagePayload>
+        }
+        findFirst: {
+          args: Prisma.RecipeImageFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeImagePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RecipeImageFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeImagePayload>
+        }
+        findMany: {
+          args: Prisma.RecipeImageFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeImagePayload>[]
+        }
+        create: {
+          args: Prisma.RecipeImageCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeImagePayload>
+        }
+        createMany: {
+          args: Prisma.RecipeImageCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RecipeImageCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeImagePayload>[]
+        }
+        delete: {
+          args: Prisma.RecipeImageDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeImagePayload>
+        }
+        update: {
+          args: Prisma.RecipeImageUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeImagePayload>
+        }
+        deleteMany: {
+          args: Prisma.RecipeImageDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RecipeImageUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RecipeImageUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeImagePayload>[]
+        }
+        upsert: {
+          args: Prisma.RecipeImageUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeImagePayload>
+        }
+        aggregate: {
+          args: Prisma.RecipeImageAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRecipeImage>
+        }
+        groupBy: {
+          args: Prisma.RecipeImageGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RecipeImageGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RecipeImageCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RecipeImageCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -905,7 +980,6 @@ export const RecipeScalarFieldEnum = {
   id: 'id',
   name: 'name',
   slug: 'slug',
-  imageUrl: 'imageUrl',
   instructions: 'instructions',
   handsOnTime: 'handsOnTime',
   notes: 'notes',
@@ -950,13 +1024,24 @@ export const RecipeIngredientScalarFieldEnum = {
   id: 'id',
   recipeId: 'recipeId',
   ingredientId: 'ingredientId',
-  amount: 'amount',
   unitId: 'unitId',
+  amount: 'amount',
   excludeFromNutrition: 'excludeFromNutrition',
   additionalInfo: 'additionalInfo'
 } as const
 
 export type RecipeIngredientScalarFieldEnum = (typeof RecipeIngredientScalarFieldEnum)[keyof typeof RecipeIngredientScalarFieldEnum]
+
+
+export const RecipeImageScalarFieldEnum = {
+  id: 'id',
+  recipeId: 'recipeId',
+  url: 'url',
+  isCover: 'isCover',
+  createdAt: 'createdAt'
+} as const
+
+export type RecipeImageScalarFieldEnum = (typeof RecipeImageScalarFieldEnum)[keyof typeof RecipeImageScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1035,6 +1120,20 @@ export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMode
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
+ * Reference to a field of type 'DateTime'
+ */
+export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+    
+
+
+/**
+ * Reference to a field of type 'DateTime[]'
+ */
+export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
     
 
 /**
@@ -1138,6 +1237,7 @@ export type GlobalOmitConfig = {
   unit?: Prisma.UnitOmit
   ingredientUnit?: Prisma.IngredientUnitOmit
   recipeIngredient?: Prisma.RecipeIngredientOmit
+  recipeImage?: Prisma.RecipeImageOmit
 }
 
 /* Types for Logging */
