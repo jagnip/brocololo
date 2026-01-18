@@ -11,7 +11,8 @@ model Category {
   id      String   @id @default(cuid())
   name    String   @unique
   slug    String   @unique
-  recipes Recipe[]
+
+  recipes Recipe[] @relation("category_recipes")
 
   @@map("categories")
 }
@@ -20,14 +21,85 @@ model Recipe {
   id           String     @id @default(cuid())
   name         String     @unique
   slug         String     @unique
-  photo        String
   instructions String[]
   handsOnTime  Int        @map("hands_on_time")
-  nutrition    String[]
-  ingredients  String[]
-  notes        String[]
-  portions     Int
-  categories   Category[]
-  createdAt    DateTime   @default(now())
+  notes        String[] 
+  servings     Int
+  ingredients RecipeIngredient[]
+  images       RecipeImage[]
+
+  categories   Category[] @relation("category_recipes")
+
+  @@index([slug])
   @@map("recipes")
+}
+
+
+model Ingredient {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  slug          String   @unique
+  supermarketUrl String? @map("supermarket_url")
+  calories       Float
+  proteins       Float
+  fats           Float
+  carbs          Float
+  recipes RecipeIngredient[]
+  unitConversions IngredientUnit[]
+  
+  @@map("ingredients")
+}
+
+model Unit {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  
+  ingredientUnits IngredientUnit[]
+  recipeIngredients RecipeIngredient[]
+  
+  @@map("units")
+}
+
+model IngredientUnit {
+  ingredientId  String @map("ingredient_id")
+  unitId        String @map("unit_id")
+  gramsPerUnit  Float @map("grams_per_unit")
+  
+  ingredient    Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  unit          Unit      @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  
+  @@id([ingredientId, unitId])
+  @@map("ingredient_units")
+}
+
+model RecipeIngredient {
+  id          String   @id @default(cuid())
+  recipeId    String @map("recipe_id")
+  ingredientId String @map("ingredient_id")
+  unitId      String @map("unit_id")
+  amount      Float? 
+  excludeFromNutrition Boolean @default(false) @map("exclude_from_nutrition")
+  additionalInfo String? @map("additional_info")
+
+  recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient  Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+  unit        Unit     @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
+  @@index([recipeId])
+  @@index([ingredientId])  
+  @@index([unitId]) 
+  @@map("recipe_ingredients")
+}
+
+model RecipeImage {
+  id        String   @id @default(cuid())
+  recipeId  String   @map("recipe_id")
+  url       String
+  isCover   Boolean  @default(false) @map("is_cover")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  
+  @@index([recipeId])
+  @@map("recipe_images")
 }

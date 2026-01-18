@@ -9,7 +9,6 @@ export default async function RecipeTabs({
 }: {
   activeCategory: string;
 }) {
-
   const categories = await getCategories();
 
   const categoryExists = categories.some((cat) => cat.slug === activeCategory);

@@ -1,6 +1,93 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import type { RecipeType } from "@/types/recipe";
+import type { InsertRecipeInputType } from "@/lib/validations/recipe";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+
+//To transform recipefrom to edit recipe form 
+export function recipeToFormData(recipe: RecipeType): InsertRecipeInputType {
+  return {
+    name: recipe.name,
+    categories: recipe.categories.map((cat) => cat.id),
+    images: recipe.images?.map((img) => ({
+      url: img.url,
+      isCover: img.isCover,
+    })) || [],
+    handsOnTime: recipe.handsOnTime,
+    servings: recipe.servings,
+   ingredients: recipe.ingredients.map((ri) => ({
+  ingredientId: ri.ingredient.id,
+  amount: ri.amount,
+  unitId: ri.unit.id,
+  excludeFromNutrition: ri.excludeFromNutrition,
+  additionalInfo: ri.additionalInfo,
+})),
+    instructions: recipe.instructions.join("\n"),
+    notes: recipe.notes.join("\n")
+  };
+}
+
+export type NutritionPerPortion = {
+  calories: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+};
+
+export function calculateNutritionPerPortion(
+  recipe: RecipeType
+): NutritionPerPortion {
+
+  const total = recipe.ingredients.reduce(
+    (acc, recipeIngredient) => {
+
+         if (recipeIngredient.excludeFromNutrition) {
+        return acc;
+      }
+
+          if (recipeIngredient.amount == null) {
+        return acc;
+      }
+      
+      const ingredient = recipeIngredient.ingredient;
+      const unit = recipeIngredient.unit;
+  
+      const conversion = ingredient.unitConversions.find(
+        (uc) => uc.unitId === unit.id
+      );
+
+      if (!conversion) {
+        return acc;
+      }
+
+      const grams = recipeIngredient.amount * conversion.gramsPerUnit;
+
+      const multiplier = grams / 100;
+      
+      return {
+        calories: acc.calories + ingredient.calories * multiplier,
+        protein: acc.protein + ingredient.proteins * multiplier,
+        fat: acc.fat + ingredient.fats * multiplier,
+        carbs: acc.carbs + ingredient.carbs * multiplier,
+      };
+    },
+    { calories: 0, protein: 0, fat: 0, carbs: 0 }
+  );
+
+  const perPortion = {
+    calories: total.calories / recipe.servings,
+    protein: total.protein / recipe.servings,
+    fat: total.fat / recipe.servings,
+    carbs: total.carbs / recipe.servings,
+  };
+
+  return {
+    calories: Math.round(perPortion.calories * 10) / 10,
+    protein: Math.round(perPortion.protein * 10) / 10,
+    fat: Math.round(perPortion.fat * 10) / 10,
+    carbs: Math.round(perPortion.carbs * 10) / 10,
+  };
 }

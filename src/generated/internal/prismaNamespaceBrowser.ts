@@ -52,7 +52,12 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   Category: 'Category',
-  Recipe: 'Recipe'
+  Recipe: 'Recipe',
+  Ingredient: 'Ingredient',
+  Unit: 'Unit',
+  IngredientUnit: 'IngredientUnit',
+  RecipeIngredient: 'RecipeIngredient',
+  RecipeImage: 'RecipeImage'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -84,17 +89,68 @@ export const RecipeScalarFieldEnum = {
   id: 'id',
   name: 'name',
   slug: 'slug',
-  photo: 'photo',
   instructions: 'instructions',
   handsOnTime: 'handsOnTime',
-  nutrition: 'nutrition',
-  ingredients: 'ingredients',
   notes: 'notes',
-  portions: 'portions',
-  createdAt: 'createdAt'
+  servings: 'servings'
 } as const
 
 export type RecipeScalarFieldEnum = (typeof RecipeScalarFieldEnum)[keyof typeof RecipeScalarFieldEnum]
+
+
+export const IngredientScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  slug: 'slug',
+  supermarketUrl: 'supermarketUrl',
+  calories: 'calories',
+  proteins: 'proteins',
+  fats: 'fats',
+  carbs: 'carbs'
+} as const
+
+export type IngredientScalarFieldEnum = (typeof IngredientScalarFieldEnum)[keyof typeof IngredientScalarFieldEnum]
+
+
+export const UnitScalarFieldEnum = {
+  id: 'id',
+  name: 'name'
+} as const
+
+export type UnitScalarFieldEnum = (typeof UnitScalarFieldEnum)[keyof typeof UnitScalarFieldEnum]
+
+
+export const IngredientUnitScalarFieldEnum = {
+  ingredientId: 'ingredientId',
+  unitId: 'unitId',
+  gramsPerUnit: 'gramsPerUnit'
+} as const
+
+export type IngredientUnitScalarFieldEnum = (typeof IngredientUnitScalarFieldEnum)[keyof typeof IngredientUnitScalarFieldEnum]
+
+
+export const RecipeIngredientScalarFieldEnum = {
+  id: 'id',
+  recipeId: 'recipeId',
+  ingredientId: 'ingredientId',
+  unitId: 'unitId',
+  amount: 'amount',
+  excludeFromNutrition: 'excludeFromNutrition',
+  additionalInfo: 'additionalInfo'
+} as const
+
+export type RecipeIngredientScalarFieldEnum = (typeof RecipeIngredientScalarFieldEnum)[keyof typeof RecipeIngredientScalarFieldEnum]
+
+
+export const RecipeImageScalarFieldEnum = {
+  id: 'id',
+  recipeId: 'recipeId',
+  url: 'url',
+  isCover: 'isCover',
+  createdAt: 'createdAt'
+} as const
+
+export type RecipeImageScalarFieldEnum = (typeof RecipeImageScalarFieldEnum)[keyof typeof RecipeImageScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -111,4 +167,12 @@ export const QueryMode = {
 } as const
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 

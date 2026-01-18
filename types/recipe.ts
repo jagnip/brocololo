@@ -4,8 +4,21 @@ export type RecipeType = Prisma.RecipeGetPayload<{
   include: {
     categories: {
       select: {
+        id: true;
         slug: true;
+        name: true;
       };
     };
+    ingredients: {
+      include: {
+        ingredient: {
+          include: {
+            unitConversions: true; 
+          };
+        };
+        unit: true;
+      };
+    };
+     images: true; 
   };
 }>;

@@ -1,10 +1,12 @@
 "use client";
 
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Badge } from "../ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { RecipeType } from "@/types/recipe";
+import { calculateNutritionPerPortion } from "@/lib/utils";
+import { ImageGallery } from "./image-gallery";
 
 type RecipeDialogProps = {
   recipe: RecipeType;
@@ -12,17 +14,17 @@ type RecipeDialogProps = {
 
 export default function RecipeDialog({ recipe }: RecipeDialogProps) {
   const router = useRouter();
-  const params = useParams();
   const pathname = usePathname();
-  const category = params.category as string;
 
-  const isOpen = pathname === `/recipes/${category}/${recipe.slug}`;
+  const isOpen = pathname === `/recipes/${recipe.slug}`;
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      router.push(`/recipes/${category}`, { scroll: false });
+      router.push(`/recipes`, { scroll: false });
     }
   };
+
+  const nutrition = calculateNutritionPerPortion(recipe);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -34,12 +36,9 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
           {/* Image Section */}
           <div className="shrink-0 md:w-1/2">
             <div className="overflow-hidden rounded-xl">
-              <Image
-                src={recipe.photo}
-                alt={recipe.name}
-                width={500}
-                height={500}
-                className="w-full h-auto rounded-xl"
+              <ImageGallery
+                images={recipe.images || []}
+                recipeName={recipe.name}
               />
             </div>
           </div>
@@ -49,22 +48,19 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
             {/* Time and Portion Badges */}
             <div className="flex gap-2 flex-wrap">
               <Badge>{recipe.handsOnTime}</Badge>
-              {recipe.portions && <Badge>{recipe.portions}</Badge>}
+              {recipe.servings && <Badge>{recipe.servings}</Badge>}
             </div>
 
             {/* Nutrition Section */}
-            {recipe.nutrition && recipe.nutrition.length > 0 && (
-              <div>
-                <h3 className="font-semibold mb-2">Nutrition</h3>
-                <div className="flex gap-2 flex-wrap">
-                  {recipe.nutrition.map((item: string, index: number) => (
-                    <Badge key={index} variant="outline">
-                      {item}
-                    </Badge>
-                  ))}
-                </div>
+            <div>
+              <h3 className="font-semibold mb-2">Nutrition (per portion)</h3>
+              <div className="flex gap-2 flex-wrap">
+                <Badge variant="outline">{nutrition.calories} kcal</Badge>
+                <Badge variant="outline">{nutrition.protein}g protein</Badge>
+                <Badge variant="outline">{nutrition.fat}g fat</Badge>
+                <Badge variant="outline">{nutrition.carbs}g carbs</Badge>
               </div>
-            )}
+            </div>
 
             {/* Notes Section */}
             {recipe.notes && recipe.notes.length > 0 && (
@@ -97,18 +93,43 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-semibold">Ingredients</h3>
-                  {recipe.portions && (
+                  {recipe.servings && (
                     <span className="text-sm text-muted-foreground">
-                      {recipe.portions} portions
+                      {recipe.servings} servings
                     </span>
                   )}
                 </div>
                 <ul className="list-disc list-inside space-y-1 text-sm">
-                  {recipe.ingredients.map(
-                    (ingredient: string, index: number) => (
-                      <li key={index}>{ingredient}</li>
-                    )
-                  )}
+                  {recipe.ingredients.map((recipeIngredient) => (
+                    <li key={recipeIngredient.id}>
+                      {recipeIngredient.amount && (
+                        <>
+                          {recipeIngredient.amount} {recipeIngredient.unit.name}{" "}
+                        </>
+                      )}{" "}
+                      {recipeIngredient.ingredient.name}{" "}
+                      {recipeIngredient.additionalInfo && (
+                        <span className="text-muted-foreground text-xs ml-1">
+                          ({recipeIngredient.additionalInfo})
+                        </span>
+                      )}
+                      {recipeIngredient.excludeFromNutrition && (
+                        <span className="text-muted-foreground text-xs ml-1">
+                          (excluded)
+                        </span>
+                      )}
+                      {recipeIngredient.ingredient.supermarketUrl && (
+                        <a
+                          href={recipeIngredient.ingredient.supermarketUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-2 text-blue-600 hover:underline text-xs"
+                        >
+                          🛒
+                        </a>
+                      )}
+                    </li>
+                  ))}
                 </ul>
               </div>
             )}
