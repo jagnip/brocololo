@@ -38,7 +38,6 @@ export function ImageGallery({ images, recipeName }: ImageGalleryProps) {
         {/* Additional Images Grid */}
         {otherImages.length > 0 && (
           <div>
-            <h3 className="font-semibold mb-2 text-sm">Additional Images</h3>
             <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
               {otherImages.map((image, index) => (
                 <div
