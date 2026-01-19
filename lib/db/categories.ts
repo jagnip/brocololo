@@ -8,3 +8,16 @@ export async function getCategories(): Promise<Category[]> {
     },
   });
 }
+
+export async function getCategoriesByType(
+  type: "FLAVOUR" | "RECIPE_TYPE" | "PROTEIN"
+): Promise<Category[]> {
+  return await prisma.category.findMany({
+    where: {
+      type,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+}

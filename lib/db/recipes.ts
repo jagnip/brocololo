@@ -59,6 +59,50 @@ export async function getRecipeBySlug(slug: string): Promise<RecipeType | null> 
   });
 }
 
+export async function getRecipesByCategories(
+  categorySlugs: string[]
+): Promise<RecipeType[]> {
+  if (categorySlugs.length === 0) {
+    return getRecipes();
+  }
+
+  return await prisma.recipe.findMany({
+    where: {
+      categories: {
+        some: {
+          slug: {
+            in: categorySlugs,
+          },
+        },
+      },
+    },
+    include: {
+      categories: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          type: true,
+        },
+      },
+      ingredients: {
+        include: {
+          ingredient: {
+            include: {
+              unitConversions: true,
+            },
+          },
+          unit: true,
+        },
+      },
+      images: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+}
+
 export async function createRecipe(data: InsertRecipeOutputType & { slug: string }) {
   const { categories, ingredients, images, ...recipeData } = data;
   

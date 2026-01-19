@@ -1,3 +1,5 @@
+// prisma/seed.ts
+
 import 'dotenv/config';
 import { prisma } from '../lib/db/index';
 import slugify from 'slugify';
@@ -14,18 +16,94 @@ async function main() {
   await prisma.unit.deleteMany();
   await prisma.category.deleteMany();
 
-  // Create 2 categories
-  const vegetarian = await prisma.category.create({
+  // Create FLAVOUR categories
+  const sweet = await prisma.category.create({
     data: {
-      name: 'Vegetarian',
-      slug: 'vegetarian',
+      name: 'Sweet',
+      slug: 'sweet',
+      type: 'FLAVOUR',
     },
   });
 
-  const dessert = await prisma.category.create({
+  const savoury = await prisma.category.create({
     data: {
-      name: 'Dessert',
-      slug: 'dessert',
+      name: 'Savoury',
+      slug: 'savoury',
+      type: 'FLAVOUR',
+    },
+  });
+
+  // Create RECIPE_TYPE categories with parents:
+  const cake = await prisma.category.create({
+    data: {
+      name: 'Cake',
+      slug: 'cake',
+      type: 'RECIPE_TYPE',
+      parentId: sweet.id,  // Link to sweet
+    },
+  });
+
+  const cookies = await prisma.category.create({
+    data: {
+      name: 'Cookies',
+      slug: 'cookies',
+      type: 'RECIPE_TYPE',
+      parentId: sweet.id,  // Link to sweet
+    },
+  });
+
+  const pancakes = await prisma.category.create({
+    data: {
+      name: 'Pancakes',
+      slug: 'pancakes',
+      type: 'RECIPE_TYPE',
+      parentId: sweet.id,  // Link to sweet
+    },
+  });
+
+  const oats = await prisma.category.create({
+    data: {
+      name: 'Oats',
+      slug: 'oats',
+      type: 'RECIPE_TYPE',
+      parentId: sweet.id,  // Link to sweet
+    },
+  });
+
+  const wrap = await prisma.category.create({
+    data: {
+      name: 'Wrap',
+      slug: 'wrap',
+      type: 'RECIPE_TYPE',
+      parentId: savoury.id,  // Link to savoury
+    },
+  });
+
+  const sandwich = await prisma.category.create({
+    data: {
+      name: 'Sandwich',
+      slug: 'sandwich',
+      type: 'RECIPE_TYPE',
+      parentId: savoury.id,  // Link to savoury
+    },
+  });
+
+  const pasta = await prisma.category.create({
+    data: {
+      name: 'Pasta',
+      slug: 'pasta',
+      type: 'RECIPE_TYPE',
+      parentId: savoury.id,  // Link to savoury
+    },
+  });
+
+  // PROTEIN categories have no parent:
+  const chicken = await prisma.category.create({
+    data: {
+      name: 'Chicken',
+      slug: 'chicken',
+      type: 'PROTEIN',
+      // parentId: null (default)
     },
   });
 
@@ -56,7 +134,7 @@ async function main() {
 
   const supermarketUrl = 'https://www.continente.pt/produto/lombos-de-bacalhau-12-meses-de-cura-msc-gourmet-ultracongelado-riberalves-riberalves-6364533.html';
 
-  // Create 10 ingredients with nutritional data per 100g
+  // Create ingredients with nutritional data per 100g
   const tomato = await prisma.ingredient.create({
     data: {
       name: 'Tomato',
@@ -105,7 +183,7 @@ async function main() {
     },
   });
 
-  const pasta = await prisma.ingredient.create({
+  const pastaIngredient = await prisma.ingredient.create({
     data: {
       name: 'Pasta',
       slug: 'pasta',
@@ -177,6 +255,30 @@ async function main() {
     },
   });
 
+  const chickenIngredient = await prisma.ingredient.create({
+    data: {
+      name: 'Chicken Breast',
+      slug: 'chicken-breast',
+      supermarketUrl: supermarketUrl,
+      calories: 165,
+      proteins: 31.0,
+      fats: 3.6,
+      carbs: 0.0,
+    },
+  });
+
+  const rolledOats = await prisma.ingredient.create({
+    data: {
+      name: 'Rolled Oats',
+      slug: 'rolled-oats',
+      supermarketUrl: supermarketUrl,
+      calories: 389,
+      proteins: 16.9,
+      fats: 6.9,
+      carbs: 66.3,
+    },
+  });
+
   console.log('✅ Created ingredients');
 
   // Create unit conversions for ingredients
@@ -212,7 +314,7 @@ async function main() {
     data: {
       ingredientId: oliveOil.id,
       unitId: unitMl.id,
-      gramsPerUnit: 0.92, // 1ml ≈ 0.92g
+      gramsPerUnit: 0.92,
     },
   });
 
@@ -220,14 +322,14 @@ async function main() {
     data: {
       ingredientId: oliveOil.id,
       unitId: unitTbsp.id,
-      gramsPerUnit: 13.8, // 1 tbsp ≈ 15ml ≈ 13.8g
+      gramsPerUnit: 13.8,
     },
   });
 
   // Pasta: g
   await prisma.ingredientUnit.create({
     data: {
-      ingredientId: pasta.id,
+      ingredientId: pastaIngredient.id,
       unitId: unitG.id,
       gramsPerUnit: 1,
     },
@@ -246,7 +348,7 @@ async function main() {
     data: {
       ingredientId: flour.id,
       unitId: unitCup.id,
-      gramsPerUnit: 120, // 1 cup ≈ 120g
+      gramsPerUnit: 120,
     },
   });
 
@@ -263,7 +365,7 @@ async function main() {
     data: {
       ingredientId: sugar.id,
       unitId: unitCup.id,
-      gramsPerUnit: 200, // 1 cup ≈ 200g
+      gramsPerUnit: 200,
     },
   });
 
@@ -271,7 +373,7 @@ async function main() {
     data: {
       ingredientId: sugar.id,
       unitId: unitTbsp.id,
-      gramsPerUnit: 12.5, // 1 tbsp ≈ 12.5g
+      gramsPerUnit: 12.5,
     },
   });
 
@@ -288,11 +390,11 @@ async function main() {
     data: {
       ingredientId: butter.id,
       unitId: unitTbsp.id,
-      gramsPerUnit: 14.2, // 1 tbsp ≈ 14.2g
+      gramsPerUnit: 14.2,
     },
   });
 
-  // Eggs: g (per egg ≈ 50g)
+  // Eggs: g
   await prisma.ingredientUnit.create({
     data: {
       ingredientId: eggs.id,
@@ -306,7 +408,7 @@ async function main() {
     data: {
       ingredientId: milk.id,
       unitId: unitMl.id,
-      gramsPerUnit: 1.03, // 1ml ≈ 1.03g
+      gramsPerUnit: 1.03,
     },
   });
 
@@ -314,13 +416,39 @@ async function main() {
     data: {
       ingredientId: milk.id,
       unitId: unitCup.id,
-      gramsPerUnit: 240, // 1 cup ≈ 240ml ≈ 247g
+      gramsPerUnit: 240,
+    },
+  });
+
+  // Chicken: g
+  await prisma.ingredientUnit.create({
+    data: {
+      ingredientId: chickenIngredient.id,
+      unitId: unitG.id,
+      gramsPerUnit: 1,
+    },
+  });
+
+  // Rolled Oats: g, cup
+  await prisma.ingredientUnit.create({
+    data: {
+      ingredientId: rolledOats.id,
+      unitId: unitG.id,
+      gramsPerUnit: 1,
+    },
+  });
+
+  await prisma.ingredientUnit.create({
+    data: {
+      ingredientId: rolledOats.id,
+      unitId: unitCup.id,
+      gramsPerUnit: 100,
     },
   });
 
   console.log('✅ Created unit conversions');
 
-  // Recipe 1: Tomato Pasta (Vegetarian)
+  // Recipe 1: Tomato Pasta (Savoury, Pasta, no protein)
   const tomatoPasta = await prisma.recipe.create({
     data: {
       name: 'Tomato Pasta',
@@ -343,12 +471,15 @@ async function main() {
         'Reserve some pasta water to adjust sauce consistency',
       ],
       categories: {
-        connect: [{ id: vegetarian.id }],
+        connect: [
+          { id: savoury.id }, // FLAVOUR
+          { id: pasta.id },   // RECIPE_TYPE
+        ],
       },
       ingredients: {
         create: [
           {
-            ingredientId: pasta.id,
+            ingredientId: pastaIngredient.id,
             unitId: unitG.id,
             amount: 400,
           },
@@ -385,7 +516,7 @@ async function main() {
     },
   });
 
-  // Recipe 2: Chocolate Chip Cookies (Dessert)
+  // Recipe 2: Chocolate Chip Cookies (Sweet, Cookies, no protein)
   const chocolateCookies = await prisma.recipe.create({
     data: {
       name: 'Chocolate Chip Cookies',
@@ -407,7 +538,10 @@ async function main() {
         'For crispier cookies, bake a minute or two longer',
       ],
       categories: {
-        connect: [{ id: dessert.id }],
+        connect: [
+          { id: sweet.id },     // FLAVOUR
+          { id: cookies.id },   // RECIPE_TYPE
+        ],
       },
       ingredients: {
         create: [
@@ -444,8 +578,8 @@ async function main() {
     },
   });
 
-  // Recipe 3: Pancakes (Dessert - can also be breakfast, but using dessert category)
-  const pancakes = await prisma.recipe.create({
+  // Recipe 3: Classic Pancakes (Sweet, Pancakes, no protein)
+  const pancakesRecipe = await prisma.recipe.create({
     data: {
       name: 'Classic Pancakes',
       slug: 'classic-pancakes',
@@ -467,7 +601,10 @@ async function main() {
         'Let the batter rest for 5 minutes for fluffier pancakes',
       ],
       categories: {
-        connect: [{ id: dessert.id }],
+        connect: [
+          { id: sweet.id },       // FLAVOUR
+          { id: pancakes.id },   // RECIPE_TYPE
+        ],
       },
       ingredients: {
         create: [
@@ -502,6 +639,113 @@ async function main() {
         create: [
           {
             url: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800',
+            isCover: true,
+          },
+        ],
+      },
+    },
+  });
+
+  // Recipe 4: Overnight Oats (Sweet, Oats, no protein)
+  const overnightOats = await prisma.recipe.create({
+    data: {
+      name: 'Overnight Oats',
+      slug: 'overnight-oats',
+      handsOnTime: 5,
+      servings: 2,
+      instructions: [
+        'In a jar or bowl, combine rolled oats, milk, and yogurt',
+        'Add chia seeds, honey or maple syrup, and vanilla extract',
+        'Stir everything together until well combined',
+        'Cover and refrigerate overnight (at least 6 hours)',
+        'In the morning, stir the oats and add your favorite toppings',
+        'Serve cold or at room temperature',
+      ],
+      notes: [
+        'Make multiple jars at once for meal prep',
+        'Can be stored in the fridge for up to 5 days',
+        'Customize with your favorite fruits and nuts',
+      ],
+      categories: {
+        connect: [
+          { id: sweet.id },   // FLAVOUR
+          { id: oats.id },    // RECIPE_TYPE
+        ],
+      },
+      ingredients: {
+        create: [
+          {
+            ingredientId: rolledOats.id,
+            unitId: unitG.id,
+            amount: 100,
+          },
+          {
+            ingredientId: milk.id,
+            unitId: unitMl.id,
+            amount: 200,
+          },
+        ],
+      },
+      images: {
+        create: [
+          {
+            url: 'https://images.unsplash.com/photo-1575925510742-0d93b13c0c4a?w=800',
+            isCover: true,
+          },
+        ],
+      },
+    },
+  });
+
+  // Recipe 5: Chicken Wrap (Savoury, Wrap, Chicken protein)
+  const chickenWrap = await prisma.recipe.create({
+    data: {
+      name: 'Chicken Wrap',
+      slug: 'chicken-wrap',
+      handsOnTime: 15,
+      servings: 2,
+      instructions: [
+        'Season chicken breast with salt and pepper',
+        'Cook chicken in a pan over medium heat until cooked through',
+        'Slice chicken into strips',
+        'Warm tortilla wraps',
+        'Add chicken, vegetables, and sauce to wrap',
+        'Roll tightly and serve',
+      ],
+      notes: [
+        'Use fresh vegetables for best flavor',
+        'Warm the wrap slightly to make it more pliable',
+      ],
+      categories: {
+        connect: [
+          { id: savoury.id },  // FLAVOUR
+          { id: wrap.id },     // RECIPE_TYPE
+          { id: chicken.id },  // PROTEIN
+        ],
+      },
+      ingredients: {
+        create: [
+          {
+            ingredientId: chickenIngredient.id,
+            unitId: unitG.id,
+            amount: 200,
+          },
+          {
+            ingredientId: tomato.id,
+            unitId: unitG.id,
+            amount: 100,
+          },
+          {
+            ingredientId: onion.id,
+            unitId: unitG.id,
+            amount: 50,
+          },
+        ],
+      },
+      images: {
+        create: [
+          {
+            url: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=800',
             isCover: true,
           },
         ],
