@@ -19,6 +19,7 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
   const isOpen = pathname === `/recipes/${recipe.slug}`;
 
   const handleOpenChange = (isOpen: boolean) => {
+    console.log("Open change", isOpen);
     if (!isOpen) {
       router.push(`/recipes`, { scroll: false });
     }
@@ -26,9 +27,12 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
 
   const nutrition = calculateNutritionPerPortion(recipe);
 
+
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="max-w-4xl max-h-[90vh] overflow-y-auto"
+      >
         <DialogHeader>
           <DialogTitle className="text-2xl mb-4">{recipe.name}</DialogTitle>
         </DialogHeader>
@@ -36,10 +40,7 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
           {/* Image Section */}
           <div className="shrink-0 md:w-1/2">
             <div className="overflow-hidden rounded-xl">
-              <ImageGallery
-                images={recipe.images || []}
-                recipeName={recipe.name}
-              />
+              <ImageGallery images={recipe.images || []} />
             </div>
           </div>
 
