@@ -26,7 +26,6 @@ export const insertRecipeSchema = z.object({
   categories: z.array(z.string()).min(1, { message: "Categories are required" }),
     images: z
     .array(recipeImageSchema)
-    .max(10, { message: "Maximum 10 images allowed" })
      .transform((images) => {
       // Automatically set first image as cover if images exist
       if (images.length > 0 && !images.some((img) => img.isCover === true)) {
