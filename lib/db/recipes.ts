@@ -10,6 +10,7 @@ export async function getRecipes(): Promise<RecipeType[]> {
           id: true,
           slug: true,
           name: true,
+           type: true,
         },
       },
       ingredients: {
@@ -25,7 +26,7 @@ export async function getRecipes(): Promise<RecipeType[]> {
       images: true,  
     },
     orderBy: {
-      name: "asc",
+      handsOnTime: "asc",
     },
   });
 }
@@ -42,6 +43,7 @@ export async function getRecipeBySlug(slug: string): Promise<RecipeType | null> 
           id: true,
           slug: true,
           name: true,
+          type: true,
         },
       },
       ingredients: {
@@ -98,7 +100,7 @@ export async function getRecipesByCategories(
       images: true,
     },
     orderBy: {
-      name: "asc",
+      handsOnTime: "asc",
     },
   });
 }

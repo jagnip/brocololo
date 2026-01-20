@@ -93,6 +93,7 @@ export const RecipeScalarFieldEnum = {
   slug: 'slug',
   instructions: 'instructions',
   handsOnTime: 'handsOnTime',
+  totalTime: 'totalTime',
   notes: 'notes',
   servings: 'servings'
 } as const

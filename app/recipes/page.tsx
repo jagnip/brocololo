@@ -1,7 +1,7 @@
 import GridSkeleton from "@/components/recipes/grid-skeleton";
 import RecipeGrid from "@/components/recipes/grid";
 import { Suspense } from "react";
-import { RecipeTabsContainer } from "@/components/recipes/tabs/container";
+import { RecipeTabsContainer } from "@/components/recipes/tabs-container";
 
 
 export default async function Page({

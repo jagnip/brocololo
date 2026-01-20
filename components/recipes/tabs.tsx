@@ -3,30 +3,29 @@
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import type { CategoryType } from "@/types/category";
-import { Button } from "../../ui/button";
+import { Button } from "../ui/button";
 
 export function RecipeTabs({ categories }: { categories: CategoryType[] }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
-  const selectedCategories = searchParams.getAll("category");
+  const selectedCategory = searchParams.get("category") ?? "";
 
   const toggleCategory = (categorySlug: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    const currentCategories = params.getAll("category");
 
-    if (currentCategories.includes(categorySlug)) {
-      params.delete("category", categorySlug);
+    if (selectedCategory === categorySlug) {
+      params.delete("category"); 
     } else {
-      params.append("category", categorySlug);
+      params.set("category", categorySlug); 
     }
 
     router.push(`${pathname}?${params.toString()}`);
   };
 
   const getFilterStyles = (categorySlug: string) => {
-    const isActive = selectedCategories.includes(categorySlug);
+    const isActive = selectedCategory === categorySlug;
 
     return cn(
       "px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",

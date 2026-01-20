@@ -1,5 +1,3 @@
-// prisma/seed.ts
-
 import 'dotenv/config';
 import { prisma } from '../lib/db/index';
 import slugify from 'slugify';
@@ -39,7 +37,7 @@ async function main() {
       name: 'Cake',
       slug: 'cake',
       type: 'RECIPE_TYPE',
-      parentId: sweet.id,  // Link to sweet
+      parentId: sweet.id,
     },
   });
 
@@ -48,7 +46,7 @@ async function main() {
       name: 'Cookies',
       slug: 'cookies',
       type: 'RECIPE_TYPE',
-      parentId: sweet.id,  // Link to sweet
+      parentId: sweet.id,
     },
   });
 
@@ -57,7 +55,7 @@ async function main() {
       name: 'Pancakes',
       slug: 'pancakes',
       type: 'RECIPE_TYPE',
-      parentId: sweet.id,  // Link to sweet
+      parentId: sweet.id,
     },
   });
 
@@ -66,7 +64,7 @@ async function main() {
       name: 'Oats',
       slug: 'oats',
       type: 'RECIPE_TYPE',
-      parentId: sweet.id,  // Link to sweet
+      parentId: sweet.id,
     },
   });
 
@@ -75,7 +73,7 @@ async function main() {
       name: 'Wrap',
       slug: 'wrap',
       type: 'RECIPE_TYPE',
-      parentId: savoury.id,  // Link to savoury
+      parentId: savoury.id,
     },
   });
 
@@ -84,7 +82,7 @@ async function main() {
       name: 'Sandwich',
       slug: 'sandwich',
       type: 'RECIPE_TYPE',
-      parentId: savoury.id,  // Link to savoury
+      parentId: savoury.id,
     },
   });
 
@@ -93,667 +91,631 @@ async function main() {
       name: 'Pasta',
       slug: 'pasta',
       type: 'RECIPE_TYPE',
-      parentId: savoury.id,  // Link to savoury
+      parentId: savoury.id,
     },
   });
 
-  // PROTEIN categories have no parent:
+  // PROTEIN categories
   const chicken = await prisma.category.create({
     data: {
       name: 'Chicken',
       slug: 'chicken',
       type: 'PROTEIN',
-      // parentId: null (default)
+    },
+  });
+
+  const beef = await prisma.category.create({
+    data: {
+      name: 'Beef',
+      slug: 'beef',
+      type: 'PROTEIN',
+    },
+  });
+
+  const fish = await prisma.category.create({
+    data: {
+      name: 'Fish',
+      slug: 'fish',
+      type: 'PROTEIN',
+    },
+  });
+
+  const pork = await prisma.category.create({
+    data: {
+      name: 'Pork',
+      slug: 'pork',
+      type: 'PROTEIN',
+    },
+  });
+
+  const tofu = await prisma.category.create({
+    data: {
+      name: 'Tofu',
+      slug: 'tofu',
+      type: 'PROTEIN',
+    },
+  });
+
+  const turkey = await prisma.category.create({
+    data: {
+      name: 'Turkey',
+      slug: 'turkey',
+      type: 'PROTEIN',
     },
   });
 
   console.log('✅ Created categories');
 
   // Create units
-  const unitG = await prisma.unit.create({
-    data: { name: 'g' },
-  });
-
-  const unitMl = await prisma.unit.create({
-    data: { name: 'ml' },
-  });
-
-  const unitTbsp = await prisma.unit.create({
-    data: { name: 'tbsp' },
-  });
-
-  const unitTsp = await prisma.unit.create({
-    data: { name: 'tsp' },
-  });
-
-  const unitCup = await prisma.unit.create({
-    data: { name: 'cup' },
-  });
+  const unitG = await prisma.unit.create({ data: { name: 'g' } });
+  const unitMl = await prisma.unit.create({ data: { name: 'ml' } });
+  const unitTbsp = await prisma.unit.create({ data: { name: 'tbsp' } });
+  const unitTsp = await prisma.unit.create({ data: { name: 'tsp' } });
+  const unitCup = await prisma.unit.create({ data: { name: 'cup' } });
 
   console.log('✅ Created units');
 
   const supermarketUrl = 'https://www.continente.pt/produto/lombos-de-bacalhau-12-meses-de-cura-msc-gourmet-ultracongelado-riberalves-riberalves-6364533.html';
 
-  // Create ingredients with nutritional data per 100g
+  // Create ingredients
   const tomato = await prisma.ingredient.create({
-    data: {
-      name: 'Tomato',
-      slug: 'tomato',
-      supermarketUrl: supermarketUrl,
-      calories: 18,
-      proteins: 0.9,
-      fats: 0.2,
-      carbs: 3.9,
-    },
+    data: { name: 'Tomato', slug: 'tomato', supermarketUrl, calories: 18, proteins: 0.9, fats: 0.2, carbs: 3.9 },
   });
-
   const onion = await prisma.ingredient.create({
-    data: {
-      name: 'Onion',
-      slug: 'onion',
-      supermarketUrl: supermarketUrl,
-      calories: 40,
-      proteins: 1.1,
-      fats: 0.1,
-      carbs: 9.3,
-    },
+    data: { name: 'Onion', slug: 'onion', supermarketUrl, calories: 40, proteins: 1.1, fats: 0.1, carbs: 9.3 },
   });
-
   const garlic = await prisma.ingredient.create({
-    data: {
-      name: 'Garlic',
-      slug: 'garlic',
-      supermarketUrl: supermarketUrl,
-      calories: 149,
-      proteins: 6.4,
-      fats: 0.5,
-      carbs: 33.1,
-    },
+    data: { name: 'Garlic', slug: 'garlic', supermarketUrl, calories: 149, proteins: 6.4, fats: 0.5, carbs: 33.1 },
   });
-
   const oliveOil = await prisma.ingredient.create({
-    data: {
-      name: 'Olive Oil',
-      slug: 'olive-oil',
-      supermarketUrl: supermarketUrl,
-      calories: 884,
-      proteins: 0.0,
-      fats: 100.0,
-      carbs: 0.0,
-    },
+    data: { name: 'Olive Oil', slug: 'olive-oil', supermarketUrl, calories: 884, proteins: 0.0, fats: 100.0, carbs: 0.0 },
   });
-
   const pastaIngredient = await prisma.ingredient.create({
-    data: {
-      name: 'Pasta',
-      slug: 'pasta',
-      supermarketUrl: supermarketUrl,
-      calories: 131,
-      proteins: 5.0,
-      fats: 1.1,
-      carbs: 25.0,
-    },
+    data: { name: 'Pasta', slug: 'pasta', supermarketUrl, calories: 131, proteins: 5.0, fats: 1.1, carbs: 25.0 },
   });
-
   const flour = await prisma.ingredient.create({
-    data: {
-      name: 'All-Purpose Flour',
-      slug: 'all-purpose-flour',
-      supermarketUrl: supermarketUrl,
-      calories: 364,
-      proteins: 10.3,
-      fats: 1.0,
-      carbs: 76.3,
-    },
+    data: { name: 'All-Purpose Flour', slug: 'all-purpose-flour', supermarketUrl, calories: 364, proteins: 10.3, fats: 1.0, carbs: 76.3 },
   });
-
   const sugar = await prisma.ingredient.create({
-    data: {
-      name: 'Granulated Sugar',
-      slug: 'granulated-sugar',
-      supermarketUrl: supermarketUrl,
-      calories: 387,
-      proteins: 0.0,
-      fats: 0.0,
-      carbs: 100.0,
-    },
+    data: { name: 'Granulated Sugar', slug: 'granulated-sugar', supermarketUrl, calories: 387, proteins: 0.0, fats: 0.0, carbs: 100.0 },
   });
-
   const butter = await prisma.ingredient.create({
-    data: {
-      name: 'Butter',
-      slug: 'butter',
-      supermarketUrl: supermarketUrl,
-      calories: 717,
-      proteins: 0.9,
-      fats: 81.1,
-      carbs: 0.1,
-    },
+    data: { name: 'Butter', slug: 'butter', supermarketUrl, calories: 717, proteins: 0.9, fats: 81.1, carbs: 0.1 },
   });
-
   const eggs = await prisma.ingredient.create({
-    data: {
-      name: 'Eggs',
-      slug: 'eggs',
-      supermarketUrl: supermarketUrl,
-      calories: 155,
-      proteins: 13.0,
-      fats: 11.0,
-      carbs: 1.1,
-    },
+    data: { name: 'Eggs', slug: 'eggs', supermarketUrl, calories: 155, proteins: 13.0, fats: 11.0, carbs: 1.1 },
   });
-
   const milk = await prisma.ingredient.create({
-    data: {
-      name: 'Whole Milk',
-      slug: 'whole-milk',
-      supermarketUrl: supermarketUrl,
-      calories: 61,
-      proteins: 3.2,
-      fats: 3.3,
-      carbs: 4.8,
-    },
+    data: { name: 'Whole Milk', slug: 'whole-milk', supermarketUrl, calories: 61, proteins: 3.2, fats: 3.3, carbs: 4.8 },
   });
-
   const chickenIngredient = await prisma.ingredient.create({
-    data: {
-      name: 'Chicken Breast',
-      slug: 'chicken-breast',
-      supermarketUrl: supermarketUrl,
-      calories: 165,
-      proteins: 31.0,
-      fats: 3.6,
-      carbs: 0.0,
-    },
+    data: { name: 'Chicken Breast', slug: 'chicken-breast', supermarketUrl, calories: 165, proteins: 31.0, fats: 3.6, carbs: 0.0 },
   });
-
   const rolledOats = await prisma.ingredient.create({
-    data: {
-      name: 'Rolled Oats',
-      slug: 'rolled-oats',
-      supermarketUrl: supermarketUrl,
-      calories: 389,
-      proteins: 16.9,
-      fats: 6.9,
-      carbs: 66.3,
-    },
+    data: { name: 'Rolled Oats', slug: 'rolled-oats', supermarketUrl, calories: 389, proteins: 16.9, fats: 6.9, carbs: 66.3 },
+  });
+  const beefIngredient = await prisma.ingredient.create({
+    data: { name: 'Ground Beef', slug: 'ground-beef', supermarketUrl, calories: 250, proteins: 26.0, fats: 17.0, carbs: 0.0 },
+  });
+  const salmon = await prisma.ingredient.create({
+    data: { name: 'Salmon', slug: 'salmon', supermarketUrl, calories: 208, proteins: 20.0, fats: 12.0, carbs: 0.0 },
+  });
+  const porkIngredient = await prisma.ingredient.create({
+    data: { name: 'Pork Tenderloin', slug: 'pork-tenderloin', supermarketUrl, calories: 143, proteins: 22.0, fats: 5.0, carbs: 0.0 },
+  });
+  const tofuIngredient = await prisma.ingredient.create({
+    data: { name: 'Firm Tofu', slug: 'firm-tofu', supermarketUrl, calories: 76, proteins: 8.0, fats: 4.6, carbs: 1.9 },
+  });
+  const turkeyIngredient = await prisma.ingredient.create({
+    data: { name: 'Turkey Breast', slug: 'turkey-breast', supermarketUrl, calories: 135, proteins: 30.0, fats: 1.0, carbs: 0.0 },
+  });
+  const cheese = await prisma.ingredient.create({
+    data: { name: 'Mozzarella Cheese', slug: 'mozzarella-cheese', supermarketUrl, calories: 300, proteins: 22.0, fats: 22.0, carbs: 2.2 },
+  });
+  const bread = await prisma.ingredient.create({
+    data: { name: 'Bread', slug: 'bread', supermarketUrl, calories: 265, proteins: 9.0, fats: 3.2, carbs: 49.0 },
+  });
+  const tortilla = await prisma.ingredient.create({
+    data: { name: 'Tortilla Wrap', slug: 'tortilla-wrap', supermarketUrl, calories: 300, proteins: 8.0, fats: 8.0, carbs: 50.0 },
   });
 
   console.log('✅ Created ingredients');
 
-  // Create unit conversions for ingredients
-  // Tomato: g
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: tomato.id,
-      unitId: unitG.id,
-      gramsPerUnit: 1,
-    },
-  });
+  // Create unit conversions (simplified - just g for most)
+  const ingredients = [tomato, onion, garlic, pastaIngredient, flour, sugar, butter, eggs, chickenIngredient, rolledOats, beefIngredient, salmon, porkIngredient, tofuIngredient, turkeyIngredient, cheese, bread, tortilla];
+  for (const ing of ingredients) {
+    await prisma.ingredientUnit.create({
+      data: { ingredientId: ing.id, unitId: unitG.id, gramsPerUnit: 1 },
+    });
+  }
 
-  // Onion: g
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: onion.id,
-      unitId: unitG.id,
-      gramsPerUnit: 1,
-    },
-  });
-
-  // Garlic: g
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: garlic.id,
-      unitId: unitG.id,
-      gramsPerUnit: 1,
-    },
-  });
-
-  // Olive Oil: ml, tbsp
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: oliveOil.id,
-      unitId: unitMl.id,
-      gramsPerUnit: 0.92,
-    },
-  });
-
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: oliveOil.id,
-      unitId: unitTbsp.id,
-      gramsPerUnit: 13.8,
-    },
-  });
-
-  // Pasta: g
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: pastaIngredient.id,
-      unitId: unitG.id,
-      gramsPerUnit: 1,
-    },
-  });
-
-  // Flour: g, cup
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: flour.id,
-      unitId: unitG.id,
-      gramsPerUnit: 1,
-    },
-  });
-
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: flour.id,
-      unitId: unitCup.id,
-      gramsPerUnit: 120,
-    },
-  });
-
-  // Sugar: g, cup, tbsp
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: sugar.id,
-      unitId: unitG.id,
-      gramsPerUnit: 1,
-    },
-  });
-
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: sugar.id,
-      unitId: unitCup.id,
-      gramsPerUnit: 200,
-    },
-  });
-
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: sugar.id,
-      unitId: unitTbsp.id,
-      gramsPerUnit: 12.5,
-    },
-  });
-
-  // Butter: g, tbsp
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: butter.id,
-      unitId: unitG.id,
-      gramsPerUnit: 1,
-    },
-  });
-
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: butter.id,
-      unitId: unitTbsp.id,
-      gramsPerUnit: 14.2,
-    },
-  });
-
-  // Eggs: g
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: eggs.id,
-      unitId: unitG.id,
-      gramsPerUnit: 1,
-    },
-  });
-
-  // Milk: ml, cup
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: milk.id,
-      unitId: unitMl.id,
-      gramsPerUnit: 1.03,
-    },
-  });
-
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: milk.id,
-      unitId: unitCup.id,
-      gramsPerUnit: 240,
-    },
-  });
-
-  // Chicken: g
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: chickenIngredient.id,
-      unitId: unitG.id,
-      gramsPerUnit: 1,
-    },
-  });
-
-  // Rolled Oats: g, cup
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: rolledOats.id,
-      unitId: unitG.id,
-      gramsPerUnit: 1,
-    },
-  });
-
-  await prisma.ingredientUnit.create({
-    data: {
-      ingredientId: rolledOats.id,
-      unitId: unitCup.id,
-      gramsPerUnit: 100,
-    },
-  });
+  // Special conversions
+  await prisma.ingredientUnit.create({ data: { ingredientId: oliveOil.id, unitId: unitMl.id, gramsPerUnit: 0.92 } });
+  await prisma.ingredientUnit.create({ data: { ingredientId: oliveOil.id, unitId: unitTbsp.id, gramsPerUnit: 13.8 } });
+  await prisma.ingredientUnit.create({ data: { ingredientId: flour.id, unitId: unitCup.id, gramsPerUnit: 120 } });
+  await prisma.ingredientUnit.create({ data: { ingredientId: sugar.id, unitId: unitCup.id, gramsPerUnit: 200 } });
+  await prisma.ingredientUnit.create({ data: { ingredientId: sugar.id, unitId: unitTbsp.id, gramsPerUnit: 12.5 } });
+  await prisma.ingredientUnit.create({ data: { ingredientId: butter.id, unitId: unitTbsp.id, gramsPerUnit: 14.2 } });
+  await prisma.ingredientUnit.create({ data: { ingredientId: milk.id, unitId: unitMl.id, gramsPerUnit: 1.03 } });
+  await prisma.ingredientUnit.create({ data: { ingredientId: milk.id, unitId: unitCup.id, gramsPerUnit: 240 } });
+  await prisma.ingredientUnit.create({ data: { ingredientId: rolledOats.id, unitId: unitCup.id, gramsPerUnit: 100 } });
 
   console.log('✅ Created unit conversions');
 
-  // Recipe 1: Tomato Pasta (Savoury, Pasta, no protein)
-  const tomatoPasta = await prisma.recipe.create({
-    data: {
-      name: 'Tomato Pasta',
-      slug: 'tomato-pasta',
-      handsOnTime: 20,
-      servings: 4,
-      instructions: [
-        'Bring a large pot of salted water to a boil',
-        'Add pasta and cook according to package instructions',
-        'Meanwhile, heat olive oil in a large pan over medium heat',
-        'Add chopped onion and cook until translucent, about 5 minutes',
-        'Add minced garlic and cook for 1 minute',
-        'Add diced tomatoes and cook for 10 minutes until softened',
-        'Season with salt and pepper',
-        'Drain pasta and toss with the tomato sauce',
-        'Serve immediately with fresh basil if desired',
-      ],
-      notes: [
-        'Use fresh, ripe tomatoes for best flavor',
-        'Reserve some pasta water to adjust sauce consistency',
-      ],
-      categories: {
-        connect: [
-          { id: savoury.id }, // FLAVOUR
-          { id: pasta.id },   // RECIPE_TYPE
-        ],
+  // Helper function to create recipe
+  const createRecipe = async (data: {
+    name: string;
+    handsOnTime: number;
+    totalTime: number;
+    servings: number;
+    instructions: string[];
+    notes: string[];
+    categoryIds: string[];
+    ingredients: Array<{ ingredientId: string; unitId: string; amount: number }>;
+    imageUrl?: string;
+  }) => {
+    return await prisma.recipe.create({
+      data: {
+        name: data.name,
+        slug: slugify(data.name, { lower: true, strict: true, trim: true }),
+        handsOnTime: data.handsOnTime,
+        totalTime: data.totalTime,
+        servings: data.servings,
+        instructions: data.instructions,
+        notes: data.notes,
+        categories: { connect: data.categoryIds.map(id => ({ id })) },
+        ingredients: { create: data.ingredients },
+        images: data.imageUrl ? {
+          create: [{ url: data.imageUrl, isCover: true }]
+        } : undefined,
       },
-      ingredients: {
-        create: [
-          {
-            ingredientId: pastaIngredient.id,
-            unitId: unitG.id,
-            amount: 400,
-          },
-          {
-            ingredientId: tomato.id,
-            unitId: unitG.id,
-            amount: 600,
-          },
-          {
-            ingredientId: onion.id,
-            unitId: unitG.id,
-            amount: 150,
-          },
-          {
-            ingredientId: garlic.id,
-            unitId: unitG.id,
-            amount: 10,
-          },
-          {
-            ingredientId: oliveOil.id,
-            unitId: unitTbsp.id,
-            amount: 2,
-          },
-        ],
-      },
-      images: {
-        create: [
-          {
-            url: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=800',
-            isCover: true,
-          },
-        ],
-      },
-    },
+    });
+  };
+
+  // SWEET RECIPES (20 recipes)
+  await createRecipe({
+    name: 'Chocolate Chip Cookies',
+    handsOnTime: 15,
+    totalTime: 30,
+    servings: 24,
+    instructions: ['Preheat oven to 375°F', 'Cream butter and sugar', 'Add eggs and flour', 'Fold in chocolate chips', 'Bake for 10 minutes'],
+    notes: ['Don\'t overmix for chewier cookies'],
+    categoryIds: [sweet.id, cookies.id],
+    ingredients: [
+      { ingredientId: flour.id, unitId: unitCup.id, amount: 2.25 },
+      { ingredientId: sugar.id, unitId: unitCup.id, amount: 0.75 },
+      { ingredientId: butter.id, unitId: unitTbsp.id, amount: 12 },
+      { ingredientId: eggs.id, unitId: unitG.id, amount: 100 },
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=800',
   });
 
-  // Recipe 2: Chocolate Chip Cookies (Sweet, Cookies, no protein)
-  const chocolateCookies = await prisma.recipe.create({
-    data: {
-      name: 'Chocolate Chip Cookies',
-      slug: 'chocolate-chip-cookies',
-      handsOnTime: 15,
-      servings: 24,
-      instructions: [
-        'Preheat oven to 375°F (190°C)',
-        'Cream together butter and sugar until light and fluffy',
-        'Beat in eggs one at a time',
-        'Gradually mix in flour until just combined',
-        'Fold in chocolate chips',
-        'Drop rounded tablespoons of dough onto ungreased baking sheets',
-        'Bake for 9-11 minutes until golden brown',
-        'Cool on baking sheet for 2 minutes before transferring to wire rack',
-      ],
-      notes: [
-        'Don\'t overmix the dough for chewier cookies',
-        'For crispier cookies, bake a minute or two longer',
-      ],
-      categories: {
-        connect: [
-          { id: sweet.id },     // FLAVOUR
-          { id: cookies.id },   // RECIPE_TYPE
-        ],
-      },
-      ingredients: {
-        create: [
-          {
-            ingredientId: flour.id,
-            unitId: unitCup.id,
-            amount: 2.25,
-          },
-          {
-            ingredientId: sugar.id,
-            unitId: unitCup.id,
-            amount: 0.75,
-          },
-          {
-            ingredientId: butter.id,
-            unitId: unitTbsp.id,
-            amount: 12,
-          },
-          {
-            ingredientId: eggs.id,
-            unitId: unitG.id,
-            amount: 100,
-          },
-        ],
-      },
-      images: {
-        create: [
-          {
-            url: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=800',
-            isCover: true,
-          },
-        ],
-      },
-    },
+  await createRecipe({
+    name: 'Classic Pancakes',
+    handsOnTime: 10,
+    totalTime: 20,
+    servings: 8,
+    instructions: ['Mix dry ingredients', 'Mix wet ingredients', 'Combine gently', 'Cook on griddle', 'Flip when bubbles form'],
+    notes: ['Don\'t overmix - lumps are okay'],
+    categoryIds: [sweet.id, pancakes.id],
+    ingredients: [
+      { ingredientId: flour.id, unitId: unitCup.id, amount: 1.5 },
+      { ingredientId: sugar.id, unitId: unitTbsp.id, amount: 2 },
+      { ingredientId: eggs.id, unitId: unitG.id, amount: 100 },
+      { ingredientId: milk.id, unitId: unitCup.id, amount: 1.25 },
+      { ingredientId: butter.id, unitId: unitTbsp.id, amount: 3 },
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800',
   });
 
-  // Recipe 3: Classic Pancakes (Sweet, Pancakes, no protein)
-  const pancakesRecipe = await prisma.recipe.create({
-    data: {
-      name: 'Classic Pancakes',
-      slug: 'classic-pancakes',
-      handsOnTime: 10,
+  await createRecipe({
+    name: 'Overnight Oats',
+    handsOnTime: 5,
+    totalTime: 485, // 8 hours + 5 min
+    servings: 2,
+    instructions: ['Combine oats and milk', 'Add sweetener', 'Refrigerate overnight', 'Stir and serve'],
+    notes: ['Can be stored for up to 5 days'],
+    categoryIds: [sweet.id, oats.id],
+    ingredients: [
+      { ingredientId: rolledOats.id, unitId: unitG.id, amount: 100 },
+      { ingredientId: milk.id, unitId: unitMl.id, amount: 200 },
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1575925510742-0d93b13c0c4a?w=800',
+  });
+
+  await createRecipe({
+    name: 'Vanilla Cake',
+    handsOnTime: 20,
+    totalTime: 80,
+    servings: 12,
+    instructions: ['Preheat oven to 350°F', 'Cream butter and sugar', 'Add eggs and vanilla', 'Alternate flour and milk', 'Bake for 30 minutes'],
+    notes: ['Let cool completely before frosting'],
+    categoryIds: [sweet.id, cake.id],
+    ingredients: [
+      { ingredientId: flour.id, unitId: unitCup.id, amount: 2 },
+      { ingredientId: sugar.id, unitId: unitCup.id, amount: 1.5 },
+      { ingredientId: butter.id, unitId: unitTbsp.id, amount: 8 },
+      { ingredientId: eggs.id, unitId: unitG.id, amount: 150 },
+      { ingredientId: milk.id, unitId: unitCup.id, amount: 1 },
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800',
+  });
+
+  await createRecipe({
+    name: 'Oatmeal Cookies',
+    handsOnTime: 15,
+    totalTime: 35,
+    servings: 24,
+    instructions: ['Mix dry ingredients', 'Cream butter and sugar', 'Combine and add oats', 'Bake for 12 minutes'],
+    notes: ['Store in airtight container'],
+    categoryIds: [sweet.id, cookies.id],
+    ingredients: [
+      { ingredientId: flour.id, unitId: unitCup.id, amount: 1 },
+      { ingredientId: rolledOats.id, unitId: unitCup.id, amount: 2 },
+      { ingredientId: sugar.id, unitId: unitCup.id, amount: 0.75 },
+      { ingredientId: butter.id, unitId: unitTbsp.id, amount: 8 },
+      { ingredientId: eggs.id, unitId: unitG.id, amount: 100 },
+    ],
+  });
+
+  await createRecipe({
+    name: 'Blueberry Pancakes',
+    handsOnTime: 10,
+    totalTime: 25,
+    servings: 8,
+    instructions: ['Make pancake batter', 'Add blueberries', 'Cook on griddle', 'Serve with syrup'],
+    notes: ['Use fresh or frozen blueberries'],
+    categoryIds: [sweet.id, pancakes.id],
+    ingredients: [
+      { ingredientId: flour.id, unitId: unitCup.id, amount: 1.5 },
+      { ingredientId: sugar.id, unitId: unitTbsp.id, amount: 2 },
+      { ingredientId: eggs.id, unitId: unitG.id, amount: 100 },
+      { ingredientId: milk.id, unitId: unitCup.id, amount: 1.25 },
+    ],
+  });
+
+  await createRecipe({
+    name: 'Apple Oatmeal',
+    handsOnTime: 5,
+    totalTime: 15,
+    servings: 2,
+    instructions: ['Cook oats with milk', 'Add diced apple', 'Simmer until tender', 'Serve warm'],
+    notes: ['Add cinnamon for extra flavor'],
+    categoryIds: [sweet.id, oats.id],
+    ingredients: [
+      { ingredientId: rolledOats.id, unitId: unitG.id, amount: 100 },
+      { ingredientId: milk.id, unitId: unitMl.id, amount: 300 },
+    ],
+  });
+
+  await createRecipe({
+    name: 'Chocolate Cake',
+    handsOnTime: 25,
+    totalTime: 95,
+    servings: 12,
+    instructions: ['Preheat oven to 350°F', 'Mix dry ingredients', 'Combine wet ingredients', 'Bake for 35 minutes'],
+    notes: ['Best served with chocolate frosting'],
+    categoryIds: [sweet.id, cake.id],
+    ingredients: [
+      { ingredientId: flour.id, unitId: unitCup.id, amount: 2 },
+      { ingredientId: sugar.id, unitId: unitCup.id, amount: 1.75 },
+      { ingredientId: butter.id, unitId: unitTbsp.id, amount: 10 },
+      { ingredientId: eggs.id, unitId: unitG.id, amount: 150 },
+      { ingredientId: milk.id, unitId: unitCup.id, amount: 1 },
+    ],
+  });
+
+  await createRecipe({
+    name: 'Sugar Cookies',
+    handsOnTime: 20,
+    totalTime: 50,
+    servings: 36,
+    instructions: ['Cream butter and sugar', 'Add eggs and flour', 'Chill dough', 'Cut shapes and bake'],
+    notes: ['Decorate with icing after cooling'],
+    categoryIds: [sweet.id, cookies.id],
+    ingredients: [
+      { ingredientId: flour.id, unitId: unitCup.id, amount: 3 },
+      { ingredientId: sugar.id, unitId: unitCup.id, amount: 1 },
+      { ingredientId: butter.id, unitId: unitTbsp.id, amount: 16 },
+      { ingredientId: eggs.id, unitId: unitG.id, amount: 100 },
+    ],
+  });
+
+  await createRecipe({
+    name: 'Banana Pancakes',
+    handsOnTime: 10,
+    totalTime: 20,
+    servings: 8,
+    instructions: ['Mash banana', 'Mix with pancake batter', 'Cook on griddle', 'Serve with honey'],
+    notes: ['Use ripe bananas for best flavor'],
+    categoryIds: [sweet.id, pancakes.id],
+    ingredients: [
+      { ingredientId: flour.id, unitId: unitCup.id, amount: 1.5 },
+      { ingredientId: sugar.id, unitId: unitTbsp.id, amount: 1 },
+      { ingredientId: eggs.id, unitId: unitG.id, amount: 100 },
+      { ingredientId: milk.id, unitId: unitCup.id, amount: 1 },
+    ],
+  });
+
+  // Add 10 more sweet recipes (cakes, cookies, pancakes, oats variations)
+  const sweetRecipes = [
+    { name: 'Strawberry Shortcake', type: cake.id, time: 30, total: 60 },
+    { name: 'Peanut Butter Cookies', type: cookies.id, time: 15, total: 30 },
+    { name: 'Cinnamon Pancakes', type: pancakes.id, time: 10, total: 20 },
+    { name: 'Maple Oatmeal', type: oats.id, time: 5, total: 15 },
+    { name: 'Lemon Cake', type: cake.id, time: 25, total: 85 },
+    { name: 'Ginger Cookies', type: cookies.id, time: 15, total: 35 },
+    { name: 'Whole Wheat Pancakes', type: pancakes.id, time: 10, total: 20 },
+    { name: 'Chocolate Oatmeal', type: oats.id, time: 5, total: 15 },
+    { name: 'Carrot Cake', type: cake.id, time: 30, total: 90 },
+    { name: 'Snickerdoodles', type: cookies.id, time: 15, total: 30 },
+  ];
+
+  for (const recipe of sweetRecipes) {
+    await createRecipe({
+      name: recipe.name,
+      handsOnTime: recipe.time,
+      totalTime: recipe.total,
       servings: 8,
-      instructions: [
-        'In a large bowl, whisk together flour and sugar',
-        'In another bowl, beat eggs and milk together',
-        'Melt butter and add to the egg mixture',
-        'Pour wet ingredients into dry ingredients and stir until just combined',
-        'Heat a lightly oiled griddle or frying pan over medium-high heat',
-        'Pour batter onto the griddle, using approximately 1/4 cup for each pancake',
-        'Cook until bubbles form and edges are dry, about 2-3 minutes',
-        'Flip and cook until browned on the other side',
-        'Repeat with remaining batter',
+      instructions: ['Prepare ingredients', 'Mix according to recipe', 'Cook or bake as directed', 'Serve and enjoy'],
+      notes: ['Follow recipe instructions carefully'],
+      categoryIds: [sweet.id, recipe.type],
+      ingredients: [
+        { ingredientId: flour.id, unitId: unitCup.id, amount: 2 },
+        { ingredientId: sugar.id, unitId: unitCup.id, amount: 0.5 },
+        { ingredientId: butter.id, unitId: unitTbsp.id, amount: 8 },
+        { ingredientId: eggs.id, unitId: unitG.id, amount: 100 },
       ],
-      notes: [
-        'Don\'t overmix - a few lumps are okay',
-        'Let the batter rest for 5 minutes for fluffier pancakes',
-      ],
-      categories: {
-        connect: [
-          { id: sweet.id },       // FLAVOUR
-          { id: pancakes.id },   // RECIPE_TYPE
-        ],
-      },
-      ingredients: {
-        create: [
-          {
-            ingredientId: flour.id,
-            unitId: unitCup.id,
-            amount: 1.5,
-          },
-          {
-            ingredientId: sugar.id,
-            unitId: unitTbsp.id,
-            amount: 2,
-          },
-          {
-            ingredientId: eggs.id,
-            unitId: unitG.id,
-            amount: 100,
-          },
-          {
-            ingredientId: milk.id,
-            unitId: unitCup.id,
-            amount: 1.25,
-          },
-          {
-            ingredientId: butter.id,
-            unitId: unitTbsp.id,
-            amount: 3,
-          },
-        ],
-      },
-      images: {
-        create: [
-          {
-            url: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800',
-            isCover: true,
-          },
-        ],
-      },
-    },
+    });
+  }
+
+  // SAVOURY RECIPES (20 recipes) - ALL MUST HAVE PROTEIN
+  await createRecipe({
+    name: 'Chicken Pasta',
+    handsOnTime: 20,
+    totalTime: 40,
+    servings: 4,
+    instructions: ['Cook pasta', 'Season and cook chicken', 'Prepare sauce', 'Combine and serve'],
+    notes: ['Cook chicken to 165°F internal temperature'],
+    categoryIds: [savoury.id, pasta.id, chicken.id],
+    ingredients: [
+      { ingredientId: pastaIngredient.id, unitId: unitG.id, amount: 400 },
+      { ingredientId: chickenIngredient.id, unitId: unitG.id, amount: 300 },
+      { ingredientId: tomato.id, unitId: unitG.id, amount: 400 },
+      { ingredientId: oliveOil.id, unitId: unitTbsp.id, amount: 2 },
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=800',
   });
 
-  // Recipe 4: Overnight Oats (Sweet, Oats, no protein)
-  const overnightOats = await prisma.recipe.create({
-    data: {
-      name: 'Overnight Oats',
-      slug: 'overnight-oats',
-      handsOnTime: 5,
-      servings: 2,
-      instructions: [
-        'In a jar or bowl, combine rolled oats, milk, and yogurt',
-        'Add chia seeds, honey or maple syrup, and vanilla extract',
-        'Stir everything together until well combined',
-        'Cover and refrigerate overnight (at least 6 hours)',
-        'In the morning, stir the oats and add your favorite toppings',
-        'Serve cold or at room temperature',
-      ],
-      notes: [
-        'Make multiple jars at once for meal prep',
-        'Can be stored in the fridge for up to 5 days',
-        'Customize with your favorite fruits and nuts',
-      ],
-      categories: {
-        connect: [
-          { id: sweet.id },   // FLAVOUR
-          { id: oats.id },    // RECIPE_TYPE
-        ],
-      },
-      ingredients: {
-        create: [
-          {
-            ingredientId: rolledOats.id,
-            unitId: unitG.id,
-            amount: 100,
-          },
-          {
-            ingredientId: milk.id,
-            unitId: unitMl.id,
-            amount: 200,
-          },
-        ],
-      },
-      images: {
-        create: [
-          {
-            url: 'https://images.unsplash.com/photo-1575925510742-0d93b13c0c4a?w=800',
-            isCover: true,
-          },
-        ],
-      },
-    },
+  await createRecipe({
+    name: 'Chicken Wrap',
+    handsOnTime: 15,
+    totalTime: 25,
+    servings: 2,
+    instructions: ['Cook chicken', 'Slice into strips', 'Warm tortillas', 'Assemble wraps'],
+    notes: ['Add your favorite vegetables'],
+    categoryIds: [savoury.id, wrap.id, chicken.id],
+    ingredients: [
+      { ingredientId: chickenIngredient.id, unitId: unitG.id, amount: 200 },
+      { ingredientId: tortilla.id, unitId: unitG.id, amount: 100 },
+      { ingredientId: tomato.id, unitId: unitG.id, amount: 100 },
+    ],
+    imageUrl: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=800',
   });
 
-  // Recipe 5: Chicken Wrap (Savoury, Wrap, Chicken protein)
-  const chickenWrap = await prisma.recipe.create({
-    data: {
-      name: 'Chicken Wrap',
-      slug: 'chicken-wrap',
-      handsOnTime: 15,
-      servings: 2,
-      instructions: [
-        'Season chicken breast with salt and pepper',
-        'Cook chicken in a pan over medium heat until cooked through',
-        'Slice chicken into strips',
-        'Warm tortilla wraps',
-        'Add chicken, vegetables, and sauce to wrap',
-        'Roll tightly and serve',
-      ],
-      notes: [
-        'Use fresh vegetables for best flavor',
-        'Warm the wrap slightly to make it more pliable',
-      ],
-      categories: {
-        connect: [
-          { id: savoury.id },  // FLAVOUR
-          { id: wrap.id },     // RECIPE_TYPE
-          { id: chicken.id },  // PROTEIN
-        ],
-      },
-      ingredients: {
-        create: [
-          {
-            ingredientId: chickenIngredient.id,
-            unitId: unitG.id,
-            amount: 200,
-          },
-          {
-            ingredientId: tomato.id,
-            unitId: unitG.id,
-            amount: 100,
-          },
-          {
-            ingredientId: onion.id,
-            unitId: unitG.id,
-            amount: 50,
-          },
-        ],
-      },
-      images: {
-        create: [
-          {
-            url: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=800',
-            isCover: true,
-          },
-        ],
-      },
-    },
+  await createRecipe({
+    name: 'Chicken Sandwich',
+    handsOnTime: 10,
+    totalTime: 20,
+    servings: 2,
+    instructions: ['Cook chicken', 'Toast bread', 'Add cheese and vegetables', 'Assemble sandwich'],
+    notes: ['Serve with your favorite condiments'],
+    categoryIds: [savoury.id, sandwich.id, chicken.id],
+    ingredients: [
+      { ingredientId: chickenIngredient.id, unitId: unitG.id, amount: 200 },
+      { ingredientId: bread.id, unitId: unitG.id, amount: 100 },
+      { ingredientId: cheese.id, unitId: unitG.id, amount: 50 },
+    ],
   });
 
-  console.log('✅ Created recipes with ingredients');
+  await createRecipe({
+    name: 'Beef Pasta',
+    handsOnTime: 25,
+    totalTime: 45,
+    servings: 4,
+    instructions: ['Brown ground beef', 'Add sauce ingredients', 'Simmer sauce', 'Cook pasta and combine'],
+    notes: ['Let sauce simmer for best flavor'],
+    categoryIds: [savoury.id, pasta.id, beef.id],
+    ingredients: [
+      { ingredientId: pastaIngredient.id, unitId: unitG.id, amount: 400 },
+      { ingredientId: beefIngredient.id, unitId: unitG.id, amount: 400 },
+      { ingredientId: tomato.id, unitId: unitG.id, amount: 500 },
+      { ingredientId: onion.id, unitId: unitG.id, amount: 150 },
+    ],
+  });
+
+  await createRecipe({
+    name: 'Beef Wrap',
+    handsOnTime: 20,
+    totalTime: 30,
+    servings: 2,
+    instructions: ['Cook ground beef', 'Season well', 'Warm tortillas', 'Assemble wraps'],
+    notes: ['Add cheese and vegetables'],
+    categoryIds: [savoury.id, wrap.id, beef.id],
+    ingredients: [
+      { ingredientId: beefIngredient.id, unitId: unitG.id, amount: 250 },
+      { ingredientId: tortilla.id, unitId: unitG.id, amount: 100 },
+      { ingredientId: cheese.id, unitId: unitG.id, amount: 50 },
+    ],
+  });
+
+  await createRecipe({
+    name: 'Beef Sandwich',
+    handsOnTime: 15,
+    totalTime: 25,
+    servings: 2,
+    instructions: ['Cook ground beef', 'Toast bread', 'Layer ingredients', 'Serve hot'],
+    notes: ['Great with pickles and onions'],
+    categoryIds: [savoury.id, sandwich.id, beef.id],
+    ingredients: [
+      { ingredientId: beefIngredient.id, unitId: unitG.id, amount: 250 },
+      { ingredientId: bread.id, unitId: unitG.id, amount: 100 },
+      { ingredientId: cheese.id, unitId: unitG.id, amount: 50 },
+    ],
+  });
+
+  await createRecipe({
+    name: 'Salmon Pasta',
+    handsOnTime: 20,
+    totalTime: 35,
+    servings: 4,
+    instructions: ['Cook salmon', 'Flake into pieces', 'Cook pasta', 'Combine with sauce'],
+    notes: ['Don\'t overcook the salmon'],
+    categoryIds: [savoury.id, pasta.id, fish.id],
+    ingredients: [
+      { ingredientId: pastaIngredient.id, unitId: unitG.id, amount: 400 },
+      { ingredientId: salmon.id, unitId: unitG.id, amount: 300 },
+      { ingredientId: oliveOil.id, unitId: unitTbsp.id, amount: 2 },
+      { ingredientId: garlic.id, unitId: unitG.id, amount: 10 },
+    ],
+  });
+
+  await createRecipe({
+    name: 'Salmon Wrap',
+    handsOnTime: 15,
+    totalTime: 25,
+    servings: 2,
+    instructions: ['Cook salmon', 'Flake into pieces', 'Warm tortillas', 'Assemble wraps'],
+    notes: ['Add fresh vegetables'],
+    categoryIds: [savoury.id, wrap.id, fish.id],
+    ingredients: [
+      { ingredientId: salmon.id, unitId: unitG.id, amount: 200 },
+      { ingredientId: tortilla.id, unitId: unitG.id, amount: 100 },
+      { ingredientId: tomato.id, unitId: unitG.id, amount: 100 },
+    ],
+  });
+
+  await createRecipe({
+    name: 'Pork Pasta',
+    handsOnTime: 25,
+    totalTime: 45,
+    servings: 4,
+    instructions: ['Cook pork tenderloin', 'Slice into strips', 'Cook pasta', 'Combine with sauce'],
+    notes: ['Rest pork before slicing'],
+    categoryIds: [savoury.id, pasta.id, pork.id],
+    ingredients: [
+      { ingredientId: pastaIngredient.id, unitId: unitG.id, amount: 400 },
+      { ingredientId: porkIngredient.id, unitId: unitG.id, amount: 300 },
+      { ingredientId: tomato.id, unitId: unitG.id, amount: 400 },
+      { ingredientId: oliveOil.id, unitId: unitTbsp.id, amount: 2 },
+    ],
+  });
+
+  await createRecipe({
+    name: 'Pork Sandwich',
+    handsOnTime: 20,
+    totalTime: 35,
+    servings: 2,
+    instructions: ['Cook pork', 'Slice thinly', 'Toast bread', 'Assemble sandwich'],
+    notes: ['Serve with barbecue sauce'],
+    categoryIds: [savoury.id, sandwich.id, pork.id],
+    ingredients: [
+      { ingredientId: porkIngredient.id, unitId: unitG.id, amount: 200 },
+      { ingredientId: bread.id, unitId: unitG.id, amount: 100 },
+      { ingredientId: cheese.id, unitId: unitG.id, amount: 50 },
+    ],
+  });
+
+  await createRecipe({
+    name: 'Tofu Pasta',
+    handsOnTime: 20,
+    totalTime: 40,
+    servings: 4,
+    instructions: ['Press and cube tofu', 'Pan-fry until golden', 'Cook pasta', 'Combine with sauce'],
+    notes: ['Press tofu to remove excess water'],
+    categoryIds: [savoury.id, pasta.id, tofu.id],
+    ingredients: [
+      { ingredientId: pastaIngredient.id, unitId: unitG.id, amount: 400 },
+      { ingredientId: tofuIngredient.id, unitId: unitG.id, amount: 300 },
+      { ingredientId: tomato.id, unitId: unitG.id, amount: 400 },
+      { ingredientId: oliveOil.id, unitId: unitTbsp.id, amount: 2 },
+    ],
+  });
+
+  await createRecipe({
+    name: 'Tofu Wrap',
+    handsOnTime: 15,
+    totalTime: 25,
+    servings: 2,
+    instructions: ['Press and cook tofu', 'Warm tortillas', 'Add vegetables', 'Assemble wraps'],
+    notes: ['Marinate tofu for extra flavor'],
+    categoryIds: [savoury.id, wrap.id, tofu.id],
+    ingredients: [
+      { ingredientId: tofuIngredient.id, unitId: unitG.id, amount: 200 },
+      { ingredientId: tortilla.id, unitId: unitG.id, amount: 100 },
+      { ingredientId: tomato.id, unitId: unitG.id, amount: 100 },
+    ],
+  });
+
+  await createRecipe({
+    name: 'Turkey Sandwich',
+    handsOnTime: 10,
+    totalTime: 20,
+    servings: 2,
+    instructions: ['Slice turkey', 'Toast bread', 'Layer ingredients', 'Serve'],
+    notes: ['Great for lunch'],
+    categoryIds: [savoury.id, sandwich.id, turkey.id],
+    ingredients: [
+      { ingredientId: turkeyIngredient.id, unitId: unitG.id, amount: 150 },
+      { ingredientId: bread.id, unitId: unitG.id, amount: 100 },
+      { ingredientId: cheese.id, unitId: unitG.id, amount: 50 },
+    ],
+  });
+
+  await createRecipe({
+    name: 'Turkey Wrap',
+    handsOnTime: 10,
+    totalTime: 15,
+    servings: 2,
+    instructions: ['Slice turkey', 'Warm tortillas', 'Assemble wraps', 'Serve'],
+    notes: ['Add cranberry sauce for holiday flavor'],
+    categoryIds: [savoury.id, wrap.id, turkey.id],
+    ingredients: [
+      { ingredientId: turkeyIngredient.id, unitId: unitG.id, amount: 150 },
+      { ingredientId: tortilla.id, unitId: unitG.id, amount: 100 },
+      { ingredientId: cheese.id, unitId: unitG.id, amount: 50 },
+    ],
+  });
+
+  // Add 7 more savoury recipes with different protein combinations
+  const savouryRecipes = [
+    { name: 'Chicken Alfredo Pasta', type: pasta.id, protein: chicken.id, time: 25, total: 45 },
+    { name: 'Beef Bolognese Pasta', type: pasta.id, protein: beef.id, time: 30, total: 60 },
+    { name: 'Salmon Sandwich', type: sandwich.id, protein: fish.id, time: 15, total: 25 },
+    { name: 'Pork Wrap', type: wrap.id, protein: pork.id, time: 20, total: 30 },
+    { name: 'Tofu Sandwich', type: sandwich.id, protein: tofu.id, time: 15, total: 25 },
+    { name: 'Turkey Pasta', type: pasta.id, protein: turkey.id, time: 20, total: 40 },
+    { name: 'Chicken Caesar Wrap', type: wrap.id, protein: chicken.id, time: 15, total: 20 },
+  ];
+
+  for (const recipe of savouryRecipes) {
+    await createRecipe({
+      name: recipe.name,
+      handsOnTime: recipe.time,
+      totalTime: recipe.total,
+      servings: 4,
+      instructions: ['Prepare protein', 'Cook as needed', 'Assemble dish', 'Serve hot'],
+      notes: ['Season to taste'],
+      categoryIds: [savoury.id, recipe.type, recipe.protein],
+      ingredients: [
+        { ingredientId: recipe.protein === chicken.id ? chickenIngredient.id : recipe.protein === beef.id ? beefIngredient.id : recipe.protein === fish.id ? salmon.id : recipe.protein === pork.id ? porkIngredient.id : recipe.protein === tofu.id ? tofuIngredient.id : turkeyIngredient.id, unitId: unitG.id, amount: 200 },
+        { ingredientId: recipe.type === pasta.id ? pastaIngredient.id : recipe.type === wrap.id ? tortilla.id : bread.id, unitId: unitG.id, amount: recipe.type === pasta.id ? 400 : 100 },
+        { ingredientId: tomato.id, unitId: unitG.id, amount: 200 },
+      ],
+    });
+  }
+
+  console.log('✅ Created 40 recipes');
   console.log('🎉 Seeding completed!');
 }
 

@@ -15,6 +15,10 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
 
   const coverImage = recipe.images?.find((img) => img.isCover);
 
+  const proteinCategories = recipe.categories.filter(
+    (category) => category.type === "PROTEIN"
+  );
+
   return (
     <Link href={url} scroll={false}>
       <Card className="cursor-pointer hover:shadow-md transition-shadow">
@@ -28,7 +32,24 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
           />
         )}
         <CardHeader>
-          {recipe.name} <Badge>{recipe.handsOnTime}</Badge>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1">
+              <h3 className="font-medium">{recipe.name}</h3>
+              <div className="flex flex-wrap gap-1 mt-2">
+                <Badge variant="outline">{recipe.handsOnTime} min</Badge>
+                {proteinCategories.length > 0 &&
+                  proteinCategories.map((category) => (
+                    <Badge
+                      key={category.id}
+                      variant="secondary"
+                      className="text-xs"
+                    >
+                      {category.name}
+                    </Badge>
+                  ))}
+              </div>
+            </div>
+          </div>
         </CardHeader>
       </Card>
     </Link>

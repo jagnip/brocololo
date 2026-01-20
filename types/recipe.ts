@@ -7,6 +7,7 @@ export type RecipeType = Prisma.RecipeGetPayload<{
         id: true;
         slug: true;
         name: true;
+         type: true;
       };
     };
     ingredients: {

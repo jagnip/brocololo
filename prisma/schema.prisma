@@ -35,6 +35,7 @@ model Recipe {
   slug         String     @unique
   instructions String[]
   handsOnTime  Int        @map("hands_on_time")
+    totalTime    Int        @map("total_time")
   notes        String[] 
   servings     Int
   ingredients RecipeIngredient[]
