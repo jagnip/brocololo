@@ -4,6 +4,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import type { CategoryType } from "@/types/category";
 import { Button } from "../ui/button";
+import { SearchInput } from "./search";
 
 export function RecipeTabs({ categories }: { categories: CategoryType[] }) {
   const searchParams = useSearchParams();
@@ -46,6 +47,7 @@ export function RecipeTabs({ categories }: { categories: CategoryType[] }) {
           {category.name}
         </Button>
       ))}
+      <SearchInput />
     </div>
   );
 }

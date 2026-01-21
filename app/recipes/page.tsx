@@ -5,9 +5,9 @@ import { RecipeTabsContainer } from "@/components/recipes/tabs-container";
 
 
 export default async function Page({
-  searchParams,
+  searchParams, 
 }: {
-  searchParams: Promise<{ category?: string | string[] }>;
+  searchParams: Promise<{ category?: string | string[]; q?: string }>;
 }) {
   const params = await searchParams;
 
@@ -15,7 +15,7 @@ export default async function Page({
     <>
       <RecipeTabsContainer />
       <Suspense fallback={<GridSkeleton />}>
-        <RecipeGrid categorySlugs={params.category} />
+        <RecipeGrid categorySlugs={params.category} search={params.q} />
       </Suspense>
     </>
   );
