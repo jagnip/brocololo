@@ -2,35 +2,6 @@ import { InsertRecipeOutputType } from "../validations/recipe";
 import { prisma } from "./index";
 import type { RecipeType } from "@/types/recipe";
 
-export async function getRecipes(): Promise<RecipeType[]> {
-  return await prisma.recipe.findMany({
-    include: {
-      categories: {
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-        },
-      },
-      ingredients: {
-        include: {
-          ingredient: {
-            include: {
-              unitConversions: true, 
-            },
-          },
-          unit: true, 
-        },
-      },
-      images: true,  
-    },
-    orderBy: {
-      name: "asc",
-    },
-  });
-}
-
-
 export async function getRecipeBySlug(slug: string): Promise<RecipeType | null> {
   return await prisma.recipe.findUnique({
     where: {
@@ -42,6 +13,7 @@ export async function getRecipeBySlug(slug: string): Promise<RecipeType | null> 
           id: true,
           slug: true,
           name: true,
+          type: true,
         },
       },
       ingredients: {
@@ -55,6 +27,43 @@ export async function getRecipeBySlug(slug: string): Promise<RecipeType | null> 
         },
       },
       images: true, 
+    },
+  });
+}
+
+export async function getRecipes(
+  categorySlugs: string[],
+  q?: string
+): Promise<RecipeType[]> {
+
+  return prisma.recipe.findMany({
+    where: {
+      ...(categorySlugs.length > 0 ? { categories: { some: { slug: { in: categorySlugs } } } } : {}),
+      ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
+    },
+    include: {
+      categories: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          type: true,
+        },
+      },
+      ingredients: {
+        include: {
+          ingredient: {
+            include: {
+              unitConversions: true,
+            },
+          },
+          unit: true,
+        },
+      },
+      images: true,
+    },
+    orderBy: {
+      handsOnTime: "asc",
     },
   });
 }

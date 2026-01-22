@@ -7,14 +7,26 @@ datasource db {
   provider = "postgresql"
 }
 
-model Category {
-  id      String   @id @default(cuid())
-  name    String   @unique
-  slug    String   @unique
+enum CategoryType {
+  FLAVOUR
+  RECIPE_TYPE
+  PROTEIN
+}
 
-  recipes Recipe[] @relation("category_recipes")
+model Category {
+  id      String       @id @default(cuid())
+  name    String       @unique
+  slug    String       @unique
+  type    CategoryType
+  parentId String?     @map("parent_id")  
+  
+  parent   Category?   @relation("category_children", fields: [parentId], references: [id], onDelete: Cascade)
+  children Category[]  @relation("category_children")
+  recipes Recipe[]     @relation("category_recipes")
 
   @@map("categories")
+  @@index([type])
+  @@index([parentId])  
 }
 
 model Recipe {
@@ -23,6 +35,7 @@ model Recipe {
   slug         String     @unique
   instructions String[]
   handsOnTime  Int        @map("hands_on_time")
+    totalTime    Int        @map("total_time")
   notes        String[] 
   servings     Int
   ingredients RecipeIngredient[]

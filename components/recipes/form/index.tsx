@@ -49,6 +49,7 @@ export default function RecipeForm({ categories, ingredients, recipe }: RecipeFo
           categories: [],
           images: [],
           handsOnTime: 1,
+          totalTime: 1,
           servings: 1,
           ingredients: [],
           instructions: "",
@@ -64,9 +65,7 @@ export default function RecipeForm({ categories, ingredients, recipe }: RecipeFo
       ? await updateRecipeAction(recipe.id, transformed)
       : await createRecipeAction(transformed);
 
-      console.log(result);
-
-    // ⚠️ NOTE: Both actions redirect on success, so we only handle errors here
+    // Both actions redirect on success, so we only handle errors here
     if (result?.type === "error") {
       toast.error(result.message);
     }
@@ -118,7 +117,7 @@ export default function RecipeForm({ categories, ingredients, recipe }: RecipeFo
                   value={
                     field.value?.map((img) => ({
                       url: img.url,
-                      isCover: img.isCover ?? false, 
+                      isCover: img.isCover ?? false,
                     })) || []
                   }
                   onChange={field.onChange}
@@ -135,6 +134,25 @@ export default function RecipeForm({ categories, ingredients, recipe }: RecipeFo
           render={({ field }) => (
             <FormItem>
               <FormLabel>Hands-on time</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  type="number"
+                  min={0}
+                  value={field.value as number}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="totalTime"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Total time</FormLabel>
               <FormControl>
                 <Input
                   {...field}

@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Badge } from "../ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
@@ -15,13 +15,15 @@ type RecipeDialogProps = {
 export default function RecipeDialog({ recipe }: RecipeDialogProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+const queryString = searchParams.toString();
 
   const isOpen = pathname === `/recipes/${recipe.slug}`;
 
   const handleOpenChange = (isOpen: boolean) => {
     console.log("Open change", isOpen);
     if (!isOpen) {
-      router.push(`/recipes`, { scroll: false });
+      router.push(`/recipes/${queryString ? `?${queryString}` : ""}`, { scroll: false });
     }
   };
 
@@ -48,8 +50,8 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
           <div className="flex-1 space-y-6">
             {/* Time and Portion Badges */}
             <div className="flex gap-2 flex-wrap">
-              <Badge>{recipe.handsOnTime}</Badge>
-              {recipe.servings && <Badge>{recipe.servings}</Badge>}
+              <Badge>Hands-on time: {recipe.handsOnTime} minutes</Badge>
+              <Badge>Total time: {recipe.totalTime} minutes</Badge>
             </div>
 
             {/* Nutrition Section */}

@@ -970,7 +970,9 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 export const CategoryScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  slug: 'slug'
+  slug: 'slug',
+  type: 'type',
+  parentId: 'parentId'
 } as const
 
 export type CategoryScalarFieldEnum = (typeof CategoryScalarFieldEnum)[keyof typeof CategoryScalarFieldEnum]
@@ -982,6 +984,7 @@ export const RecipeScalarFieldEnum = {
   slug: 'slug',
   instructions: 'instructions',
   handsOnTime: 'handsOnTime',
+  totalTime: 'totalTime',
   notes: 'notes',
   servings: 'servings'
 } as const
@@ -1085,6 +1088,20 @@ export type StringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 
  * Reference to a field of type 'String[]'
  */
 export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'String[]'>
+    
+
+
+/**
+ * Reference to a field of type 'CategoryType'
+ */
+export type EnumCategoryTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CategoryType'>
+    
+
+
+/**
+ * Reference to a field of type 'CategoryType[]'
+ */
+export type ListEnumCategoryTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CategoryType[]'>
     
 
 
