@@ -5,8 +5,11 @@ import Image from "next/image";
 import { Badge } from "../ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { RecipeType } from "@/types/recipe";
-import { calculateNutritionPerPortion } from "@/lib/utils";
+import { calculateNutritionPerServing } from "@/lib/utils";
 import { ImageGallery } from "./image-gallery";
+import { useEffect, useState } from "react";
+import { Button } from "../ui/button";
+import { Minus, Plus } from "lucide-react";
 
 type RecipeDialogProps = {
   recipe: RecipeType;
@@ -16,9 +19,17 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-const queryString = searchParams.toString();
+  const queryString = searchParams.toString();
+  const [currentServings, setCurrentServings] = useState(recipe.servings);
 
   const isOpen = pathname === `/recipes/${recipe.slug}`;
+
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentServings(recipe.servings);
+    }
+  }, [isOpen, recipe.servings]);
+  
 
   const handleOpenChange = (isOpen: boolean) => {
     console.log("Open change", isOpen);
@@ -27,7 +38,8 @@ const queryString = searchParams.toString();
     }
   };
 
-  const nutrition = calculateNutritionPerPortion(recipe);
+  const nutrition = calculateNutritionPerServing(recipe);
+   const scalingFactor = currentServings / recipe.servings;
 
 
   return (
@@ -96,18 +108,36 @@ const queryString = searchParams.toString();
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-semibold">Ingredients</h3>
-                  {recipe.servings && (
-                    <span className="text-sm text-muted-foreground">
-                      {recipe.servings} servings
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon-sm"
+                      onClick={() => setCurrentServings(currentServings - 1)}
+                      disabled={currentServings === 1}
+                      aria-label="Decrease servings"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm font-medium min-w-12 text-center">
+                      {currentServings} {currentServings === 1 ? "serving" : "servings"}
                     </span>
-                  )}
+                    <Button
+                      variant="outline"
+                      size="icon-sm"
+                      onClick={() => setCurrentServings(currentServings + 1)}
+                      aria-label="Increase servings"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 <ul className="list-disc list-inside space-y-1 text-sm">
                   {recipe.ingredients.map((recipeIngredient) => (
+
                     <li key={recipeIngredient.id}>
                       {recipeIngredient.amount && (
                         <>
-                          {recipeIngredient.amount} {recipeIngredient.unit.name}{" "}
+                          {recipeIngredient.amount * scalingFactor} {recipeIngredient.unit.name}{" "}
                         </>
                       )}{" "}
                       {recipeIngredient.ingredient.name}{" "}

@@ -39,7 +39,7 @@ export type NutritionPerPortion = {
   carbs: number;
 };
 
-export function calculateNutritionPerPortion(
+export function calculateNutritionPerServing(
   recipe: RecipeType
 ): NutritionPerPortion {
 
