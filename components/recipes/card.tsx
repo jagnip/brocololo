@@ -5,13 +5,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { Card, CardHeader } from "../ui/card";
 import { Badge } from "../ui/badge";
+import { useSearchParams } from "next/navigation";
 
 type RecipeCardProps = {
   recipe: RecipeType;
 };
 
 export default function RecipeCard({ recipe }: RecipeCardProps) {
-  const url = `/recipes/${recipe.slug}`;
+  const searchParams = useSearchParams();
+  const queryString = searchParams.toString();
+
+  const url = `/recipes/${recipe.slug}${queryString ? `?${queryString}` : ""}`;
 
   const coverImage = recipe.images?.find((img) => img.isCover);
 
