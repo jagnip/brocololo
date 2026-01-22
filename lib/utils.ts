@@ -17,9 +17,11 @@ export function recipeToFormData(recipe: RecipeType): InsertRecipeInputType {
       isCover: img.isCover,
     })) || [],
     handsOnTime: recipe.handsOnTime,
+      totalTime: recipe.totalTime,
     servings: recipe.servings,
    ingredients: recipe.ingredients.map((ri) => ({
   ingredientId: ri.ingredient.id,
+
   amount: ri.amount,
   unitId: ri.unit.id,
   excludeFromNutrition: ri.excludeFromNutrition,
