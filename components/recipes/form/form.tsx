@@ -51,6 +51,7 @@ export default function RecipeForm({ categories, ingredients, recipe }: RecipeFo
           handsOnTime: 1,
           totalTime: 1,
           servings: 1,
+          servingMultiplierForNelson: 1,
           ingredients: [],
           instructions: "",
           notes: "",
@@ -181,6 +182,26 @@ export default function RecipeForm({ categories, ingredients, recipe }: RecipeFo
                 />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+                <FormField
+          control={form.control}
+          name="servingMultiplierForNelson"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nelson's serving multiplier</FormLabel>
+              <FormControl>
+              <Input
+                  {...field}
+                  type="number"
+                  min={1}
+                  value={field.value as number}
+                />
+              </FormControl>
+              <FormMessage />
+          
             </FormItem>
           )}
         />

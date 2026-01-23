@@ -986,7 +986,8 @@ export const RecipeScalarFieldEnum = {
   handsOnTime: 'handsOnTime',
   totalTime: 'totalTime',
   notes: 'notes',
-  servings: 'servings'
+  servings: 'servings',
+  servingMultiplierForNelson: 'servingMultiplierForNelson'
 } as const
 
 export type RecipeScalarFieldEnum = (typeof RecipeScalarFieldEnum)[keyof typeof RecipeScalarFieldEnum]

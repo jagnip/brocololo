@@ -37,6 +37,7 @@ export const insertRecipeSchema = z.object({
   handsOnTime: z.coerce.number().int().positive( { message: "Hands-on time must be a positive number" }),
   totalTime: z.coerce.number().int().positive( { message: "Total time must be a positive number" }),
   servings: z.coerce.number().int().positive( { message: "Portions must be a positive number" }),
+  servingMultiplierForNelson: z.coerce.number().min(1),
   ingredients: z.array(recipeIngredientSchema).min(1, { message: "At least one ingredient is required" }),
   instructions: z.string().min(1, { message: "Instructions are required" }).transform((val) => val.split("\n").map(line => line.trim()).filter(line => line !== "")),
   notes: z.string().transform((val) => {

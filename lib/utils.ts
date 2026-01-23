@@ -19,9 +19,9 @@ export function recipeToFormData(recipe: RecipeType): InsertRecipeInputType {
     handsOnTime: recipe.handsOnTime,
       totalTime: recipe.totalTime,
     servings: recipe.servings,
+    servingMultiplierForNelson: recipe.servingMultiplierForNelson,
    ingredients: recipe.ingredients.map((ri) => ({
   ingredientId: ri.ingredient.id,
-
   amount: ri.amount,
   unitId: ri.unit.id,
   excludeFromNutrition: ri.excludeFromNutrition,
@@ -91,5 +91,57 @@ export function calculateNutritionPerServing(
     protein: Math.round(perPortion.protein * 10) / 10,
     fat: Math.round(perPortion.fat * 10) / 10,
     carbs: Math.round(perPortion.carbs * 10) / 10,
+  };
+}
+
+
+
+export type ScalingCalculation = {
+  scalingFactor: number;
+  jagodaServings: number;
+  nelsonServings: number;
+  totalServings: number;
+  jagodaPortionFactor: number; 
+  nelsonPortionFactor: number;  
+};
+
+export function calculateScalingFactor(
+  currentServings: number,
+  recipeServings: number,
+  nelsonMultiplier: number
+): ScalingCalculation {
+
+    if (currentServings === 1) {
+    return {
+      scalingFactor: 1 / recipeServings,
+      jagodaServings: 1,
+      nelsonServings: 0,
+      totalServings: 1,
+      jagodaPortionFactor: 1,
+      nelsonPortionFactor: 0,
+    };
+  }
+  
+  // Split current servings in half, then apply multipliers
+  const servingsPerPerson = currentServings / 2;
+  const jagodaServings = servingsPerPerson * 1; // Always 1x
+  const nelsonServings = servingsPerPerson * nelsonMultiplier;
+  const totalServings = jagodaServings + nelsonServings;
+  
+  // Total parts = 1 (Jagoda) + multiplier (Nelson)
+  const totalParts = 1 + nelsonMultiplier;
+  const jagodaPortionFactor = 1 / totalParts;
+  const nelsonPortionFactor = nelsonMultiplier / totalParts;
+  
+  // Scale ingredients based on total servings worth vs original recipe servings
+  const scalingFactor = totalServings / recipeServings;
+
+  return {
+    scalingFactor,
+    jagodaServings,
+    nelsonServings,
+    totalServings,
+    jagodaPortionFactor,
+    nelsonPortionFactor,
   };
 }

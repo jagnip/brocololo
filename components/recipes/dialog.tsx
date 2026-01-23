@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Badge } from "../ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { RecipeType } from "@/types/recipe";
-import { calculateNutritionPerServing } from "@/lib/utils";
+import { calculateNutritionPerServing, calculateScalingFactor } from "@/lib/utils";
 import { ImageGallery } from "./image-gallery";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
@@ -39,7 +39,19 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
   };
 
   const nutrition = calculateNutritionPerServing(recipe);
-   const scalingFactor = currentServings / recipe.servings;
+
+  const { 
+    scalingFactor, 
+    jagodaServings, 
+    nelsonServings, 
+    totalServings,
+    jagodaPortionFactor,
+    nelsonPortionFactor
+  } = calculateScalingFactor(
+    currentServings,
+    recipe.servings,
+    recipe.servingMultiplierForNelson
+  );
 
 
   return (
@@ -131,6 +143,11 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
                     </Button>
                   </div>
                 </div>
+<div className="text-xs text-muted-foreground mb-2 p-2 bg-muted rounded">
+                    <div>Jagoda: {(jagodaPortionFactor).toFixed(1)}</div>
+                    <div>Nelson: {(nelsonPortionFactor).toFixed(1)} ({recipe.servingMultiplierForNelson}x)</div>
+                  </div>
+        
                 <ul className="list-disc list-inside space-y-1 text-sm">
                   {recipe.ingredients.map((recipeIngredient) => (
 

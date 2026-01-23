@@ -452,14 +452,6 @@ export type IngredientScalarRelationFilter = {
   isNot?: Prisma.IngredientWhereInput
 }
 
-export type FloatFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type IngredientCreateNestedOneWithoutUnitConversionsInput = {
   create?: Prisma.XOR<Prisma.IngredientCreateWithoutUnitConversionsInput, Prisma.IngredientUncheckedCreateWithoutUnitConversionsInput>
   connectOrCreate?: Prisma.IngredientCreateOrConnectWithoutUnitConversionsInput
