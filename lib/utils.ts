@@ -40,7 +40,7 @@ export type NutritionPerPortion = {
 };
 
 export function calculateNutritionPerServing(
-  recipe: RecipeType
+  recipe: RecipeType,
 ): NutritionPerPortion {
 
   const total = recipe.ingredients.reduce(
@@ -94,18 +94,30 @@ export function calculateNutritionPerServing(
   };
 }
 
+export function scaleNutritionByCalories(
+  baseNutrition: NutritionPerPortion,
+  targetCalories: number
+): NutritionPerPortion {
+
+  const scalingFactor = targetCalories / baseNutrition.calories;
+
+  return {
+    calories: Math.round(baseNutrition.calories * scalingFactor * 10) / 10,
+    protein: Math.round(baseNutrition.protein * scalingFactor * 10) / 10,
+    fat: Math.round(baseNutrition.fat * scalingFactor * 10) / 10,
+    carbs: Math.round(baseNutrition.carbs * scalingFactor * 10) / 10,
+  };
+}
 
 
 export type ScalingCalculation = {
-  scalingFactor: number;
-  jagodaServings: number;
-  nelsonServings: number;
-  totalServings: number;
+  servingScalingFactor: number;
   jagodaPortionFactor: number; 
   nelsonPortionFactor: number;  
 };
 
-export function calculateScalingFactor(
+
+export function calculateServingScalingFactor(
   currentServings: number,
   recipeServings: number,
   nelsonMultiplier: number
@@ -113,10 +125,7 @@ export function calculateScalingFactor(
 
     if (currentServings === 1) {
     return {
-      scalingFactor: 1 / recipeServings,
-      jagodaServings: 1,
-      nelsonServings: 0,
-      totalServings: 1,
+      servingScalingFactor: 1 / recipeServings,
       jagodaPortionFactor: 1,
       nelsonPortionFactor: 0,
     };
@@ -134,13 +143,10 @@ export function calculateScalingFactor(
   const nelsonPortionFactor = nelsonMultiplier / totalParts;
   
   // Scale ingredients based on total servings worth vs original recipe servings
-  const scalingFactor = totalServings / recipeServings;
+  const servingScalingFactor = totalServings / recipeServings;
 
   return {
-    scalingFactor,
-    jagodaServings,
-    nelsonServings,
-    totalServings,
+    servingScalingFactor,
     jagodaPortionFactor,
     nelsonPortionFactor,
   };
