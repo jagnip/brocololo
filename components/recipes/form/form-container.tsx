@@ -1,5 +1,5 @@
 import { getCategories } from "@/lib/db/categories";
-import RecipeForm from "@/components/recipes/form/index";
+import RecipeForm from "@/components/recipes/form/form";
 import { getRecipeBySlug } from "@/lib/db/recipes";
 import { getIngredients } from "@/lib/db/ingredients";
 

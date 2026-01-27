@@ -5,8 +5,16 @@ import Image from "next/image";
 import { Badge } from "../ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { RecipeType } from "@/types/recipe";
-import { calculateNutritionPerPortion } from "@/lib/utils";
+import {
+  calculateNutritionPerServing,
+  calculateServingScalingFactor,
+  scaleNutritionByCalories,
+} from "@/lib/utils";
 import { ImageGallery } from "./image-gallery";
+import { useEffect, useState } from "react";
+import { Button } from "../ui/button";
+import { Minus, Plus } from "lucide-react";
+import { Input } from "../ui/input";
 
 type RecipeDialogProps = {
   recipe: RecipeType;
@@ -16,25 +24,63 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-const queryString = searchParams.toString();
+  const queryString = searchParams.toString();
+  const [currentServings, setCurrentServings] = useState(recipe.servings);
+  const [targetCaloriesPerPortion, setTargetCaloriesPerPortion] = useState<
+    number | null
+  >(null);
 
   const isOpen = pathname === `/recipes/${recipe.slug}`;
+
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentServings(recipe.servings);
+    }
+  }, [isOpen, recipe.servings]);
 
   const handleOpenChange = (isOpen: boolean) => {
     console.log("Open change", isOpen);
     if (!isOpen) {
-      router.push(`/recipes/${queryString ? `?${queryString}` : ""}`, { scroll: false });
+      router.push(`/recipes/${queryString ? `?${queryString}` : ""}`, {
+        scroll: false,
+      });
     }
   };
 
-  const nutrition = calculateNutritionPerPortion(recipe);
+  const baseNutrition = calculateNutritionPerServing(recipe);
 
+  // Scale nutrition if target calories is set
+  const scaledNutrition = scaleNutritionByCalories(
+    baseNutrition,
+    targetCaloriesPerPortion ?? baseNutrition.calories,
+  );
+
+  // Calculate calorie scaling factor for ingredient scaling
+  const calorieScalingFactor =
+    targetCaloriesPerPortion && baseNutrition.calories > 0
+      ? targetCaloriesPerPortion / baseNutrition.calories
+      : 1;
+
+  const handleCaloriesChange = (caloriesString: string) => {
+    const calories = parseFloat(caloriesString);
+
+    if (isNaN(calories) || calories <= 0) {
+      setTargetCaloriesPerPortion(null);
+    } else {
+      setTargetCaloriesPerPortion(calories);
+    }
+  };
+
+  const { servingScalingFactor, jagodaPortionFactor, nelsonPortionFactor } =
+    calculateServingScalingFactor(
+      currentServings,
+      recipe.servings,
+      recipe.servingMultiplierForNelson,
+    );
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent
-        className="max-w-4xl max-h-[90vh] overflow-y-auto"
-      >
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl mb-4">{recipe.name}</DialogTitle>
         </DialogHeader>
@@ -58,10 +104,24 @@ const queryString = searchParams.toString();
             <div>
               <h3 className="font-semibold mb-2">Nutrition (per portion)</h3>
               <div className="flex gap-2 flex-wrap">
-                <Badge variant="outline">{nutrition.calories} kcal</Badge>
-                <Badge variant="outline">{nutrition.protein}g protein</Badge>
-                <Badge variant="outline">{nutrition.fat}g fat</Badge>
-                <Badge variant="outline">{nutrition.carbs}g carbs</Badge>
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="number"
+                    min="1"
+                    step="10"
+                    value={targetCaloriesPerPortion?.toString() ?? ""}
+                    onChange={(e) => handleCaloriesChange(e.target.value)}
+                    placeholder={scaledNutrition.calories.toString()}
+                    className="w-20 h-7 text-xs"
+                    aria-label="Calories per portion"
+                  />
+                  calories
+                </div>
+                <Badge variant="outline">
+                  {scaledNutrition.protein}g protein
+                </Badge>
+                <Badge variant="outline">{scaledNutrition.fat}g fat</Badge>
+                <Badge variant="outline">{scaledNutrition.carbs}g carbs</Badge>
               </div>
             </div>
 
@@ -85,7 +145,7 @@ const queryString = searchParams.toString();
                   {recipe.instructions.map(
                     (instruction: string, index: number) => (
                       <li key={index}>{instruction}</li>
-                    )
+                    ),
                   )}
                 </ol>
               </div>
@@ -96,18 +156,49 @@ const queryString = searchParams.toString();
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-semibold">Ingredients</h3>
-                  {recipe.servings && (
-                    <span className="text-sm text-muted-foreground">
-                      {recipe.servings} servings
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon-sm"
+                      onClick={() => setCurrentServings(currentServings - 1)}
+                      disabled={currentServings === 1}
+                      aria-label="Decrease servings"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm font-medium min-w-12 text-center">
+                      {currentServings}{" "}
+                      {currentServings === 1 ? "serving" : "servings"}
                     </span>
-                  )}
+                    <Button
+                      variant="outline"
+                      size="icon-sm"
+                      onClick={() => setCurrentServings(currentServings + 1)}
+                      aria-label="Increase servings"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
+                <div className="text-xs text-muted-foreground mb-2 p-2 bg-muted rounded">
+                  <div>Jagoda: {jagodaPortionFactor.toFixed(1)}</div>
+                  <div>
+                    Nelson: {nelsonPortionFactor.toFixed(1)} (
+                    {recipe.servingMultiplierForNelson}x)
+                  </div>
+                </div>
+
                 <ul className="list-disc list-inside space-y-1 text-sm">
                   {recipe.ingredients.map((recipeIngredient) => (
                     <li key={recipeIngredient.id}>
                       {recipeIngredient.amount && (
                         <>
-                          {recipeIngredient.amount} {recipeIngredient.unit.name}{" "}
+                          {(
+                            recipeIngredient.amount *
+                            servingScalingFactor *
+                            calorieScalingFactor
+                          ).toFixed(1)}{" "}
+                          {recipeIngredient.unit.name}{" "}
                         </>
                       )}{" "}
                       {recipeIngredient.ingredient.name}{" "}

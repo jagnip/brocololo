@@ -19,9 +19,9 @@ export function recipeToFormData(recipe: RecipeType): InsertRecipeInputType {
     handsOnTime: recipe.handsOnTime,
       totalTime: recipe.totalTime,
     servings: recipe.servings,
+    servingMultiplierForNelson: recipe.servingMultiplierForNelson,
    ingredients: recipe.ingredients.map((ri) => ({
   ingredientId: ri.ingredient.id,
-
   amount: ri.amount,
   unitId: ri.unit.id,
   excludeFromNutrition: ri.excludeFromNutrition,
@@ -39,8 +39,8 @@ export type NutritionPerPortion = {
   carbs: number;
 };
 
-export function calculateNutritionPerPortion(
-  recipe: RecipeType
+export function calculateNutritionPerServing(
+  recipe: RecipeType,
 ): NutritionPerPortion {
 
   const total = recipe.ingredients.reduce(
@@ -91,5 +91,63 @@ export function calculateNutritionPerPortion(
     protein: Math.round(perPortion.protein * 10) / 10,
     fat: Math.round(perPortion.fat * 10) / 10,
     carbs: Math.round(perPortion.carbs * 10) / 10,
+  };
+}
+
+export function scaleNutritionByCalories(
+  baseNutrition: NutritionPerPortion,
+  targetCalories: number
+): NutritionPerPortion {
+
+  const scalingFactor = targetCalories / baseNutrition.calories;
+
+  return {
+    calories: Math.round(baseNutrition.calories * scalingFactor * 10) / 10,
+    protein: Math.round(baseNutrition.protein * scalingFactor * 10) / 10,
+    fat: Math.round(baseNutrition.fat * scalingFactor * 10) / 10,
+    carbs: Math.round(baseNutrition.carbs * scalingFactor * 10) / 10,
+  };
+}
+
+
+export type ScalingCalculation = {
+  servingScalingFactor: number;
+  jagodaPortionFactor: number; 
+  nelsonPortionFactor: number;  
+};
+
+
+export function calculateServingScalingFactor(
+  currentServings: number,
+  recipeServings: number,
+  nelsonMultiplier: number
+): ScalingCalculation {
+
+    if (currentServings === 1) {
+    return {
+      servingScalingFactor: 1 / recipeServings,
+      jagodaPortionFactor: 1,
+      nelsonPortionFactor: 0,
+    };
+  }
+  
+  // Split current servings in half, then apply multipliers
+  const servingsPerPerson = currentServings / 2;
+  const jagodaServings = servingsPerPerson * 1; // Always 1x
+  const nelsonServings = servingsPerPerson * nelsonMultiplier;
+  const totalServings = jagodaServings + nelsonServings;
+  
+  // Total parts = 1 (Jagoda) + multiplier (Nelson)
+  const totalParts = 1 + nelsonMultiplier;
+  const jagodaPortionFactor = 1 / totalParts;
+  const nelsonPortionFactor = nelsonMultiplier / totalParts;
+  
+  // Scale ingredients based on total servings worth vs original recipe servings
+  const servingScalingFactor = totalServings / recipeServings;
+
+  return {
+    servingScalingFactor,
+    jagodaPortionFactor,
+    nelsonPortionFactor,
   };
 }

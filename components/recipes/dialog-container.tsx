@@ -15,5 +15,5 @@ export default async function RecipeDialogContainer({
     notFound();
   }
 
-  return <RecipeDialog recipe={recipe} />;
+  return <RecipeDialog key={recipe.slug} recipe={recipe} />;
 }
