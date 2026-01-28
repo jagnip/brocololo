@@ -1,7 +1,9 @@
+import { PlannerCriteriaForm } from "@/components/planner/form";
+
 export default function PlannerPage() {
   return (
-    <div className="flex min-h-[50vh] items-center justify-center px-4">
-      <p className="text-muted-foreground text-lg">Coming soon</p>
+    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+      <PlannerCriteriaForm />
     </div>
   );
 }
