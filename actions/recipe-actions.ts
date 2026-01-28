@@ -1,14 +1,19 @@
 "use server";
 
-import { createRecipe, updateRecipe } from "@/lib/db/recipes";
-import { InsertRecipeOutputType } from "@/lib/validations/recipe";
+import { createRecipe, deleteRecipe, updateRecipe } from "@/lib/db/recipes";
+import {
+  CreateRecipePayload,
+  UpdateRecipePayload,
+} from "@/lib/validations/recipe";
 import { redirect } from "next/navigation";
 import slugify from "slugify";
 import { Prisma } from "@/src/generated/client";
+import { ROUTES } from "@/lib/constants";
+import { appendRedirectToastToPath } from "@/lib/messages";
 
 export const createRecipeAction = async (
 
-  formData: InsertRecipeOutputType
+  formData: CreateRecipePayload
 ) => {
 
     let recipe;
@@ -39,13 +44,13 @@ export const createRecipeAction = async (
     };
   }
 
-  redirect(`/recipes/${recipe.slug}`);
+  redirect(appendRedirectToastToPath(`/recipes/${recipe.slug}`, "recipeCreated"));
 };
 
 
 export const updateRecipeAction = async (
   recipeId: string,
-  formData: InsertRecipeOutputType
+  formData: UpdateRecipePayload
 ) => {
   let recipe;
 
@@ -75,5 +80,29 @@ export const updateRecipeAction = async (
     };
   }
 
-  redirect(`/recipes/${recipe.slug}`);
+  redirect(appendRedirectToastToPath(`/recipes/${recipe.slug}`, "recipeUpdated"));
+};
+
+export const deleteRecipeAction = async (recipeId: string) => {
+  try {
+    await deleteRecipe(recipeId);
+  } catch (error) {
+    console.error("Error deleting recipe", error);
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2025") {
+        return {
+          type: "error",
+          message: "Recipe was not found (it may already be deleted).",
+        };
+      }
+    }
+
+    return {
+      type: "error",
+      message: "Failed to delete recipe",
+    };
+  }
+
+  redirect(ROUTES.recipes);
 };

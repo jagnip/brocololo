@@ -29,46 +29,108 @@ model Category {
   @@index([parentId])  
 }
 
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+}
+
+model Plan {
+  id        String     @id @default(cuid())
+  startDate DateTime   @map("start_date")
+  endDate   DateTime   @map("end_date")
+  createdAt DateTime   @default(now()) @map("created_at")
+  slots     PlanSlot[]
+
+  @@map("plans")
+}
+
+model PlanSlot {
+  id        String   @id @default(cuid())
+  planId    String   @map("plan_id")
+  date      DateTime @db.Date
+  mealType  MealType @map("meal_type")
+  recipeId  String?  @map("recipe_id")
+  used      Boolean  @default(false)
+
+  plan         Plan                  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  recipe       Recipe?               @relation("recipe_plan_slots", fields: [recipeId], references: [id], onDelete: Cascade)
+  alternatives PlanSlotAlternative[]
+
+  @@index([planId])
+  @@index([recipeId])
+  @@map("plan_slots")
+}
+
+model PlanSlotAlternative {
+  id         String @id @default(cuid())
+  planSlotId String @map("plan_slot_id")
+  recipeId   String @map("recipe_id")
+  rank       Int
+
+  planSlot PlanSlot @relation(fields: [planSlotId], references: [id], onDelete: Cascade)
+  recipe   Recipe   @relation("recipe_alternatives", fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([planSlotId])
+  @@index([recipeId])
+  @@map("plan_slot_alternatives")
+}
+
 model Recipe {
   id           String     @id @default(cuid())
   name         String     @unique
   slug         String     @unique
-  instructions String[]
   handsOnTime  Int        @map("hands_on_time")
   totalTime    Int        @map("total_time")
   notes        String[] 
   servings     Int
   servingMultiplierForNelson Float @map("serving_multiplier_for_nelson") @default(1)
   ingredients RecipeIngredient[]
+  ingredientGroups RecipeIngredientGroup[]
+  instructions RecipeInstruction[]
   images       RecipeImage[]
+  lastUsedInPlanner DateTime? @map("last_used_in_planner")
+  excludeFromPlanner Boolean @default(false) @map("exclude_from_planner")
 
   categories   Category[] @relation("category_recipes")
+  planSlots    PlanSlot[] @relation("recipe_plan_slots")
+  alternatives PlanSlotAlternative[] @relation("recipe_alternatives")
 
   @@index([slug])
   @@map("recipes")
 }
 
-
 model Ingredient {
-  id            String   @id @default(cuid())
-  name          String   @unique
-  slug          String   @unique
-  supermarketUrl String? @map("supermarket_url")
-  calories       Float
-  proteins       Float
-  fats           Float
-  carbs          Float
-  recipes RecipeIngredient[]
+  id              String   @id @default(cuid())
+  name            String   @unique
+  slug            String   @unique
+  icon            String?
+  supermarketUrl  String?  @map("supermarket_url")
+  calories        Float
+  proteins        Float
+  fats            Float
+  carbs           Float
+  categoryId      String   @map("category_id")
+  defaultUnitId   String?  @map("default_unit_id")
+
+  category        IngredientCategory @relation(fields: [categoryId], references: [id])
+  defaultUnit     Unit?              @relation("ingredient_default_unit", fields: [defaultUnitId], references: [id], onDelete: Restrict)
+  recipes         RecipeIngredient[]
   unitConversions IngredientUnit[]
-  
+
+  @@index([categoryId])
+  @@index([defaultUnitId])
   @@map("ingredients")
 }
 
 model Unit {
   id          String   @id @default(cuid())
   name        String   @unique
+  // Optional plural label supports irregular forms (e.g. piece -> pieces).
+  namePlural  String?  @map("name_plural")
   
   ingredientUnits IngredientUnit[]
+  defaultForIngredients Ingredient[] @relation("ingredient_default_unit")
   recipeIngredients RecipeIngredient[]
   
   @@map("units")
@@ -89,20 +151,82 @@ model IngredientUnit {
 model RecipeIngredient {
   id          String   @id @default(cuid())
   recipeId    String @map("recipe_id")
+  groupId     String? @map("group_id")
+  position    Int
   ingredientId String @map("ingredient_id")
-  unitId      String @map("unit_id")
+  unitId      String? @map("unit_id")
   amount      Float? 
-  excludeFromNutrition Boolean @default(false) @map("exclude_from_nutrition")
+  nutritionTarget NutritionTarget @default(BOTH) @map("nutrition_target")
   additionalInfo String? @map("additional_info")
 
   recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  group       RecipeIngredientGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
   ingredient  Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
-  unit        Unit     @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  unit        Unit?    @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  instructionsLinks RecipeInstructionIngredient[]
 
   @@index([recipeId])
+  @@index([recipeId, groupId])
   @@index([ingredientId])  
   @@index([unitId]) 
   @@map("recipe_ingredients")
+}
+
+enum NutritionTarget {
+  BOTH
+  PRIMARY_ONLY
+  SECONDARY_ONLY
+}
+
+model RecipeIngredientGroup {
+  id        String @id @default(cuid())
+  recipeId  String @map("recipe_id")
+  name      String
+  position  Int
+
+  recipe      Recipe             @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredients RecipeIngredient[]
+
+  @@index([recipeId])
+  @@unique([recipeId, position])
+  @@map("recipe_ingredient_groups")
+}
+
+model RecipeInstruction {
+  id        String @id @default(cuid())
+  recipeId  String @map("recipe_id")
+  position  Int
+  text      String
+
+  recipe      Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredients RecipeInstructionIngredient[]
+
+  @@index([recipeId])
+  @@unique([recipeId, position])
+  @@map("recipe_instructions")
+}
+
+model RecipeInstructionIngredient {
+  instructionId      String @map("instruction_id")
+  recipeIngredientId String @map("recipe_ingredient_id")
+
+  instruction      RecipeInstruction @relation(fields: [instructionId], references: [id], onDelete: Cascade)
+  recipeIngredient RecipeIngredient  @relation(fields: [recipeIngredientId], references: [id], onDelete: Cascade)
+
+  @@id([instructionId, recipeIngredientId])
+  @@index([recipeIngredientId])
+  @@map("recipe_instruction_ingredients")
+}
+
+model IngredientCategory {
+  id        String       @id @default(cuid())
+  name      String       @unique
+  slug      String       @unique
+  sortOrder Int          @default(0) @map("sort_order")
+
+  ingredients Ingredient[]
+
+  @@map("ingredient_categories")
 }
 
 model RecipeImage {
@@ -117,3 +241,4 @@ model RecipeImage {
   @@index([recipeId])
   @@map("recipe_images")
 }
+

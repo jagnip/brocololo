@@ -7,19 +7,72 @@ export type RecipeType = Prisma.RecipeGetPayload<{
         id: true;
         slug: true;
         name: true;
-         type: true;
+        type: true;
+      };
+    };
+    ingredientGroups: {
+      orderBy: {
+        position: "asc";
       };
     };
     ingredients: {
+      orderBy: [
+        {
+          position: "asc";
+        },
+        {
+          id: "asc";
+        },
+      ];
       include: {
+        group: true;
         ingredient: {
           include: {
-            unitConversions: true; 
+            unitConversions: {
+              include: {
+                unit: {
+                  select: {
+                    id: true;
+                    name: true;
+                  };
+                };
+              };
+            };
           };
         };
         unit: true;
       };
     };
-     images: true; 
+    instructions: {
+      orderBy: {
+        position: "asc";
+      };
+      include: {
+        ingredients: {
+          include: {
+            recipeIngredient: {
+              include: {
+                ingredient: {
+                  include: {
+                    unitConversions: {
+                      include: {
+                        unit: {
+                          select: {
+                            id: true;
+                            name: true;
+                          };
+                        };
+                      };
+                    };
+                  };
+                };
+                unit: true;
+              };
+            };
+          };
+        };
+      };
+    };
+    images: true;
   };
 }>;

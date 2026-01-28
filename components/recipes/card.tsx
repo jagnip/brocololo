@@ -20,7 +20,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
   const coverImage = recipe.images?.find((img) => img.isCover);
 
   const proteinCategories = recipe.categories.filter(
-    (category) => category.type === "PROTEIN"
+    (category) => category.type === "PROTEIN",
   );
 
   return (

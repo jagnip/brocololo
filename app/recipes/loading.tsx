@@ -1,11 +1,6 @@
-import GridSkeleton from "@/components/recipes/grid-skeleton";
-import { TabsSkeleton } from "@/components/recipes/tabs-skeleton";
+import { RecipesPageSkeleton } from "@/components/recipes/recipes-page-skeleton";
 
 export default function Loading() {
-  return (
-    <>
-      <TabsSkeleton />
-      <GridSkeleton />
-    </>
-  );
+  // Reuse the same combined skeleton used by page Suspense.
+  return <RecipesPageSkeleton />;
 }

@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { Toaster } from "sonner";
+import { AppSidebarContainer } from "@/components/app-sidebar-container";
+import { RedirectToast } from "@/components/redirect-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,6 +21,9 @@ export const metadata: Metadata = {
   description: "Recipes",
 };
 
+// Avoid build-time prerender DB access; render pages on demand.
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -26,9 +32,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <main className="min-h-screen">{children}</main>
+        <AppSidebarContainer>{children}</AppSidebarContainer>
+        <Suspense fallback={null}>
+          <RedirectToast />
+        </Suspense>
         <Toaster />
       </body>
     </html>

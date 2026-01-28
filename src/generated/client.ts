@@ -45,6 +45,21 @@ export { Prisma }
  */
 export type Category = Prisma.CategoryModel
 /**
+ * Model Plan
+ * 
+ */
+export type Plan = Prisma.PlanModel
+/**
+ * Model PlanSlot
+ * 
+ */
+export type PlanSlot = Prisma.PlanSlotModel
+/**
+ * Model PlanSlotAlternative
+ * 
+ */
+export type PlanSlotAlternative = Prisma.PlanSlotAlternativeModel
+/**
  * Model Recipe
  * 
  */
@@ -69,6 +84,26 @@ export type IngredientUnit = Prisma.IngredientUnitModel
  * 
  */
 export type RecipeIngredient = Prisma.RecipeIngredientModel
+/**
+ * Model RecipeIngredientGroup
+ * 
+ */
+export type RecipeIngredientGroup = Prisma.RecipeIngredientGroupModel
+/**
+ * Model RecipeInstruction
+ * 
+ */
+export type RecipeInstruction = Prisma.RecipeInstructionModel
+/**
+ * Model RecipeInstructionIngredient
+ * 
+ */
+export type RecipeInstructionIngredient = Prisma.RecipeInstructionIngredientModel
+/**
+ * Model IngredientCategory
+ * 
+ */
+export type IngredientCategory = Prisma.IngredientCategoryModel
 /**
  * Model RecipeImage
  * 

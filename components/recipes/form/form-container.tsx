@@ -1,20 +1,29 @@
 import { getCategories } from "@/lib/db/categories";
-import RecipeForm from "@/components/recipes/form/form";
+import RecipeForm from "@/components/recipes/form/recipe-form";
 import { getRecipeBySlug } from "@/lib/db/recipes";
 import { getIngredients } from "@/lib/db/ingredients";
+import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
 
 export default async function RecipeFormContainer({
   recipeSlug,
 }: {
   recipeSlug?: string;
 }) {
-  const categories = await getCategories();
-  const ingredients = await getIngredients();
-  const recipe = recipeSlug ? await getRecipeBySlug(recipeSlug) : null;
+  const [categories, ingredients, ingredientFormDependencies, recipe] = await Promise.all([
+    getCategories(),
+    getIngredients(),
+    getIngredientFormDependencies(),
+    recipeSlug ? getRecipeBySlug(recipeSlug) : null,
+  ]);
 
   return (
     <div className="max-w-3xl mx-auto mt-10">
-      <RecipeForm categories={categories} ingredients={ingredients} recipe={recipe ?? undefined} />
+      <RecipeForm
+        categories={categories}
+        ingredients={ingredients}
+        ingredientFormDependencies={ingredientFormDependencies}
+        recipe={recipe ?? undefined}
+      />
     </div>
   );
 }

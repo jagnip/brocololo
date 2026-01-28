@@ -2,14 +2,67 @@
 
 import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+type SelectClearContextValue = {
+  value?: string;
+  disabled: boolean;
+  onValueChange?: (nextValue: string) => void;
+  allowInlineClear: boolean;
+};
+
+const SelectClearContext = React.createContext<SelectClearContextValue | null>(null);
+
+export function shouldShowSelectClearButton(params: {
+  value?: string;
+  disabled?: boolean;
+  onValueChange?: (nextValue: string) => void;
+  allowInlineClear?: boolean;
+}) {
+  // Consumers can opt out of clear UI for non-clearable select instances.
+  return Boolean(
+    (params.allowInlineClear ?? true) &&
+      params.value &&
+      !params.disabled &&
+      params.onValueChange,
+  );
+}
+
+type SelectInlineClearEvent = {
+  preventDefault: () => void;
+  stopPropagation: () => void;
+};
+
+// Keep clear interaction in one place so behavior stays stable across refactors.
+export function handleSelectInlineClear(params: {
+  event: SelectInlineClearEvent;
+  onValueChange?: (nextValue: string) => void;
+}) {
+  params.event.preventDefault();
+  params.event.stopPropagation();
+  params.onValueChange?.("");
+}
+
 function Select({
+  allowInlineClear = true,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />;
+}: React.ComponentProps<typeof SelectPrimitive.Root> & {
+  allowInlineClear?: boolean;
+}) {
+  return (
+    <SelectClearContext.Provider
+      value={{
+        value: props.value,
+        disabled: Boolean(props.disabled),
+        onValueChange: props.onValueChange,
+        allowInlineClear,
+      }}
+    >
+      <SelectPrimitive.Root data-slot="select" {...props} />
+    </SelectClearContext.Provider>
+  );
 }
 
 function SelectGroup({
@@ -32,6 +85,14 @@ function SelectTrigger({
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
   size?: "sm" | "default";
 }) {
+  const clearContext = React.useContext(SelectClearContext);
+  const showClearButton = shouldShowSelectClearButton({
+    value: clearContext?.value,
+    disabled: clearContext?.disabled ?? props.disabled,
+    onValueChange: clearContext?.onValueChange,
+    allowInlineClear: clearContext?.allowInlineClear,
+  });
+
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
@@ -43,9 +104,27 @@ function SelectTrigger({
       {...props}
     >
       {children}
-      <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="size-4 opacity-50" />
-      </SelectPrimitive.Icon>
+      <span className="ml-auto inline-flex items-center gap-1">
+        {showClearButton ? (
+          <span
+            role="button"
+            aria-label="Clear selection"
+            className="inline-flex cursor-pointer items-center justify-center rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
+            onPointerDown={(event) => {
+              // Use a non-button element to avoid nesting interactive button elements.
+              handleSelectInlineClear({
+                event,
+                onValueChange: clearContext?.onValueChange,
+              });
+            }}
+          >
+            <X className="size-3.5" />
+          </span>
+        ) : null}
+        <SelectPrimitive.Icon asChild>
+          <ChevronDownIcon className="size-4 opacity-50" />
+        </SelectPrimitive.Icon>
+      </span>
     </SelectPrimitive.Trigger>
   );
 }

@@ -1,20 +1,36 @@
 import { getRecipes } from "@/lib/db/recipes";
 import RecipeCard from "./card";
 
-export default async function RecipeGrid({
-  categorySlugs, search
-}: {
+export type RecipeGridProps = {
   categorySlugs?: string | string[];
   search?: string;
-}) {
-  // Normalize categorySlugs to array
-const slugs = Array.isArray(categorySlugs)
-  ? categorySlugs
-  : categorySlugs
-  ? [categorySlugs]
-  : [];
+  proteinSlug?: string;
+  typeSlug?: string;
+  timeFilter?: string;
+};
 
-  const recipes = await getRecipes(slugs, search);
+export default async function RecipeGrid({
+  categorySlugs,
+  search,
+  proteinSlug,
+  typeSlug,
+  timeFilter,
+}: RecipeGridProps) {
+  // Normalize category slug input to array for DB helper compatibility.
+  const slugs = Array.isArray(categorySlugs)
+    ? categorySlugs
+    : categorySlugs
+      ? [categorySlugs]
+      : [];
+
+  // Keep time filter resilient to invalid URL values.
+  const handsOnTimeMax =
+    timeFilter === "lte20" ? 20 : timeFilter === "lte30" ? 30 : undefined;
+  const recipes = await getRecipes(slugs, search, undefined, {
+    proteinSlug,
+    typeSlug,
+    handsOnTimeMax,
+  });
 
   return (
     <div className="px-4 pb-4 w-full grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">

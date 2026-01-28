@@ -16,13 +16,13 @@ export function useImageUpload(
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Constants
-  const maxSize = 5 * 1024 * 1024; // 5MB
+  const maxSize = 8 * 1024 * 1024; // 8MB
   const acceptType = "image/*";
 
   // Validation
   const validateFile = (file: File): string | null => {
     if (file.size > maxSize) {
-      return `File size must be less than 5MB`;
+      return `File size must be less than 8MB`;
     }
     if (!file.type.startsWith("image/")) {
       return `File must be an image`;

@@ -1,13 +1,7 @@
-type LayoutProps = {
-  children: React.ReactNode;
-  modal: React.ReactNode;
-};
-
-export default function Layout({ children, modal }: LayoutProps) {
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
-      {modal}
     </>
   );
 }
