@@ -14,12 +14,19 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   plannerCriteriaSchema,
+  type PlannerCriteria,
   type PlannerCriteriaInput,
 } from "@/lib/validations/planner";
 import { toast } from "sonner";
 import { getDefaultDateRange, WeekPicker } from "./date-range-picker";
+import { PlanView } from "./plan-view";
+import { useState } from "react";
+import { Plan } from "@/types/planner";
+import { generatePlan } from "@/actions/planner-actions";
 
 export function PlannerCriteriaForm() {
+  const [plan, setPlan] = useState<Plan | null>(null);
+  
   const form = useForm<PlannerCriteriaInput>({
     resolver: zodResolver(plannerCriteriaSchema) as any,
     defaultValues: {
@@ -29,13 +36,21 @@ export function PlannerCriteriaForm() {
       dinnerHandsOnMax: 25,
     },
   });
+  
+async function onSubmit(values: PlannerCriteriaInput) {
+  const result = await generatePlan(new Date(values.dateRange.start), new Date(values.dateRange.end));
 
-  function onSubmit(values: PlannerCriteriaInput) {
-    console.log("Planner criteria:", values);
-    toast.success("Saved planner criteria (not yet used by algorithm)");
+  if (result.type === "error") {
+    toast.error(result.message);
+    return;
   }
 
+  setPlan(result.plan);
+  toast.success("Plan generated");
+}
+
   return (
+    <>
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
@@ -121,5 +136,7 @@ export function PlannerCriteriaForm() {
         </Button>
       </form>
     </Form>
+    {plan !== null && <PlanView plan={plan} />}
+    </>
   );
 }

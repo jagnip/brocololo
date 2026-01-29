@@ -152,3 +152,25 @@ export function calculateServingScalingFactor(
   };
 }
 
+export function getDaysInRange(start: Date, end: Date): Date[] {
+  const days: Date[] = [];
+  const current = new Date(start);
+  current.setHours(0, 0, 0, 0);
+  const endDate = new Date(end);
+  endDate.setHours(0, 0, 0, 0);
+
+  while (current <= endDate) {
+    days.push(new Date(current));
+    current.setDate(current.getDate() + 1);
+  }
+
+  return days;
+}
+
+export function formatDayLabel(date: Date): string {
+  return date.toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "short",
+  });
+}
