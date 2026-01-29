@@ -3,11 +3,10 @@ type LayoutProps = {
   modal: React.ReactNode;
 };
 
-export default function Layout({ children, modal }: LayoutProps) {
+export default function Layout({ children }: LayoutProps) {
   return (
     <>
       {children}
-      {modal}
     </>
   );
 }
