@@ -110,6 +110,9 @@ export default function RecipePage({ recipe }: RecipePageProps) {
           <div className="flex gap-2 flex-wrap">
             <Badge>Hands-on time: {recipe.handsOnTime} minutes</Badge>
             <Badge>Total time: {recipe.totalTime} minutes</Badge>
+            {recipe.excludeFromPlanner && (
+              <Badge variant="outline">Excluded from meal planner</Badge>
+            )}
           </div>
 
           {/* Nutrition Section */}

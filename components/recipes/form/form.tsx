@@ -30,6 +30,8 @@ import { RecipeType } from "@/types/recipe";
 import { recipeToFormData } from "@/lib/utils";
 import { IngredientType } from "@/types/ingredient";
 import { IngredientSelector } from "./ingredient-selector";
+import { Checkbox } from "@/components/ui/checkbox";
+
 
 type RecipeFormProps = {
   categories: CategoryType[];
@@ -55,6 +57,7 @@ export default function RecipeForm({ categories, ingredients, recipe }: RecipeFo
           ingredients: [],
           instructions: "",
           notes: "",
+          excludeFromPlanner: false,
         },
   });
 
@@ -186,14 +189,14 @@ export default function RecipeForm({ categories, ingredients, recipe }: RecipeFo
           )}
         />
 
-                <FormField
+        <FormField
           control={form.control}
           name="servingMultiplierForNelson"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Nelson's serving multiplier</FormLabel>
               <FormControl>
-              <Input
+                <Input
                   {...field}
                   type="number"
                   min={1}
@@ -201,7 +204,6 @@ export default function RecipeForm({ categories, ingredients, recipe }: RecipeFo
                 />
               </FormControl>
               <FormMessage />
-          
             </FormItem>
           )}
         />
@@ -231,6 +233,23 @@ export default function RecipeForm({ categories, ingredients, recipe }: RecipeFo
                   ingredients={ingredients}
                   value={field.value}
                   onChange={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="excludeFromPlanner"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Exlude from meal planner</FormLabel>
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
                 />
               </FormControl>
               <FormMessage />

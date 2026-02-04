@@ -48,6 +48,8 @@ export type RecipeMinAggregateOutputType = {
   totalTime: number | null
   servings: number | null
   servingMultiplierForNelson: number | null
+  lastUsedInPlanner: Date | null
+  excludeFromPlanner: boolean | null
 }
 
 export type RecipeMaxAggregateOutputType = {
@@ -58,6 +60,8 @@ export type RecipeMaxAggregateOutputType = {
   totalTime: number | null
   servings: number | null
   servingMultiplierForNelson: number | null
+  lastUsedInPlanner: Date | null
+  excludeFromPlanner: boolean | null
 }
 
 export type RecipeCountAggregateOutputType = {
@@ -70,6 +74,8 @@ export type RecipeCountAggregateOutputType = {
   notes: number
   servings: number
   servingMultiplierForNelson: number
+  lastUsedInPlanner: number
+  excludeFromPlanner: number
   _all: number
 }
 
@@ -96,6 +102,8 @@ export type RecipeMinAggregateInputType = {
   totalTime?: true
   servings?: true
   servingMultiplierForNelson?: true
+  lastUsedInPlanner?: true
+  excludeFromPlanner?: true
 }
 
 export type RecipeMaxAggregateInputType = {
@@ -106,6 +114,8 @@ export type RecipeMaxAggregateInputType = {
   totalTime?: true
   servings?: true
   servingMultiplierForNelson?: true
+  lastUsedInPlanner?: true
+  excludeFromPlanner?: true
 }
 
 export type RecipeCountAggregateInputType = {
@@ -118,6 +128,8 @@ export type RecipeCountAggregateInputType = {
   notes?: true
   servings?: true
   servingMultiplierForNelson?: true
+  lastUsedInPlanner?: true
+  excludeFromPlanner?: true
   _all?: true
 }
 
@@ -217,6 +229,8 @@ export type RecipeGroupByOutputType = {
   notes: string[]
   servings: number
   servingMultiplierForNelson: number
+  lastUsedInPlanner: Date | null
+  excludeFromPlanner: boolean
   _count: RecipeCountAggregateOutputType | null
   _avg: RecipeAvgAggregateOutputType | null
   _sum: RecipeSumAggregateOutputType | null
@@ -252,6 +266,8 @@ export type RecipeWhereInput = {
   notes?: Prisma.StringNullableListFilter<"Recipe">
   servings?: Prisma.IntFilter<"Recipe"> | number
   servingMultiplierForNelson?: Prisma.FloatFilter<"Recipe"> | number
+  lastUsedInPlanner?: Prisma.DateTimeNullableFilter<"Recipe"> | Date | string | null
+  excludeFromPlanner?: Prisma.BoolFilter<"Recipe"> | boolean
   ingredients?: Prisma.RecipeIngredientListRelationFilter
   images?: Prisma.RecipeImageListRelationFilter
   categories?: Prisma.CategoryListRelationFilter
@@ -267,6 +283,8 @@ export type RecipeOrderByWithRelationInput = {
   notes?: Prisma.SortOrder
   servings?: Prisma.SortOrder
   servingMultiplierForNelson?: Prisma.SortOrder
+  lastUsedInPlanner?: Prisma.SortOrderInput | Prisma.SortOrder
+  excludeFromPlanner?: Prisma.SortOrder
   ingredients?: Prisma.RecipeIngredientOrderByRelationAggregateInput
   images?: Prisma.RecipeImageOrderByRelationAggregateInput
   categories?: Prisma.CategoryOrderByRelationAggregateInput
@@ -285,6 +303,8 @@ export type RecipeWhereUniqueInput = Prisma.AtLeast<{
   notes?: Prisma.StringNullableListFilter<"Recipe">
   servings?: Prisma.IntFilter<"Recipe"> | number
   servingMultiplierForNelson?: Prisma.FloatFilter<"Recipe"> | number
+  lastUsedInPlanner?: Prisma.DateTimeNullableFilter<"Recipe"> | Date | string | null
+  excludeFromPlanner?: Prisma.BoolFilter<"Recipe"> | boolean
   ingredients?: Prisma.RecipeIngredientListRelationFilter
   images?: Prisma.RecipeImageListRelationFilter
   categories?: Prisma.CategoryListRelationFilter
@@ -300,6 +320,8 @@ export type RecipeOrderByWithAggregationInput = {
   notes?: Prisma.SortOrder
   servings?: Prisma.SortOrder
   servingMultiplierForNelson?: Prisma.SortOrder
+  lastUsedInPlanner?: Prisma.SortOrderInput | Prisma.SortOrder
+  excludeFromPlanner?: Prisma.SortOrder
   _count?: Prisma.RecipeCountOrderByAggregateInput
   _avg?: Prisma.RecipeAvgOrderByAggregateInput
   _max?: Prisma.RecipeMaxOrderByAggregateInput
@@ -320,6 +342,8 @@ export type RecipeScalarWhereWithAggregatesInput = {
   notes?: Prisma.StringNullableListFilter<"Recipe">
   servings?: Prisma.IntWithAggregatesFilter<"Recipe"> | number
   servingMultiplierForNelson?: Prisma.FloatWithAggregatesFilter<"Recipe"> | number
+  lastUsedInPlanner?: Prisma.DateTimeNullableWithAggregatesFilter<"Recipe"> | Date | string | null
+  excludeFromPlanner?: Prisma.BoolWithAggregatesFilter<"Recipe"> | boolean
 }
 
 export type RecipeCreateInput = {
@@ -332,6 +356,8 @@ export type RecipeCreateInput = {
   notes?: Prisma.RecipeCreatenotesInput | string[]
   servings: number
   servingMultiplierForNelson?: number
+  lastUsedInPlanner?: Date | string | null
+  excludeFromPlanner?: boolean
   ingredients?: Prisma.RecipeIngredientCreateNestedManyWithoutRecipeInput
   images?: Prisma.RecipeImageCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryCreateNestedManyWithoutRecipesInput
@@ -347,6 +373,8 @@ export type RecipeUncheckedCreateInput = {
   notes?: Prisma.RecipeCreatenotesInput | string[]
   servings: number
   servingMultiplierForNelson?: number
+  lastUsedInPlanner?: Date | string | null
+  excludeFromPlanner?: boolean
   ingredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutRecipeInput
   images?: Prisma.RecipeImageUncheckedCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutRecipesInput
@@ -362,6 +390,8 @@ export type RecipeUpdateInput = {
   notes?: Prisma.RecipeUpdatenotesInput | string[]
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   servingMultiplierForNelson?: Prisma.FloatFieldUpdateOperationsInput | number
+  lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUpdateManyWithoutRecipeNestedInput
   images?: Prisma.RecipeImageUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUpdateManyWithoutRecipesNestedInput
@@ -377,6 +407,8 @@ export type RecipeUncheckedUpdateInput = {
   notes?: Prisma.RecipeUpdatenotesInput | string[]
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   servingMultiplierForNelson?: Prisma.FloatFieldUpdateOperationsInput | number
+  lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutRecipeNestedInput
   images?: Prisma.RecipeImageUncheckedUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutRecipesNestedInput
@@ -392,6 +424,8 @@ export type RecipeCreateManyInput = {
   notes?: Prisma.RecipeCreatenotesInput | string[]
   servings: number
   servingMultiplierForNelson?: number
+  lastUsedInPlanner?: Date | string | null
+  excludeFromPlanner?: boolean
 }
 
 export type RecipeUpdateManyMutationInput = {
@@ -404,6 +438,8 @@ export type RecipeUpdateManyMutationInput = {
   notes?: Prisma.RecipeUpdatenotesInput | string[]
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   servingMultiplierForNelson?: Prisma.FloatFieldUpdateOperationsInput | number
+  lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type RecipeUncheckedUpdateManyInput = {
@@ -416,6 +452,8 @@ export type RecipeUncheckedUpdateManyInput = {
   notes?: Prisma.RecipeUpdatenotesInput | string[]
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   servingMultiplierForNelson?: Prisma.FloatFieldUpdateOperationsInput | number
+  lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type RecipeListRelationFilter = {
@@ -446,6 +484,8 @@ export type RecipeCountOrderByAggregateInput = {
   notes?: Prisma.SortOrder
   servings?: Prisma.SortOrder
   servingMultiplierForNelson?: Prisma.SortOrder
+  lastUsedInPlanner?: Prisma.SortOrder
+  excludeFromPlanner?: Prisma.SortOrder
 }
 
 export type RecipeAvgOrderByAggregateInput = {
@@ -463,6 +503,8 @@ export type RecipeMaxOrderByAggregateInput = {
   totalTime?: Prisma.SortOrder
   servings?: Prisma.SortOrder
   servingMultiplierForNelson?: Prisma.SortOrder
+  lastUsedInPlanner?: Prisma.SortOrder
+  excludeFromPlanner?: Prisma.SortOrder
 }
 
 export type RecipeMinOrderByAggregateInput = {
@@ -473,6 +515,8 @@ export type RecipeMinOrderByAggregateInput = {
   totalTime?: Prisma.SortOrder
   servings?: Prisma.SortOrder
   servingMultiplierForNelson?: Prisma.SortOrder
+  lastUsedInPlanner?: Prisma.SortOrder
+  excludeFromPlanner?: Prisma.SortOrder
 }
 
 export type RecipeSumOrderByAggregateInput = {
@@ -559,6 +603,14 @@ export type FloatFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
+}
+
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
+}
+
 export type RecipeCreateNestedOneWithoutIngredientsInput = {
   create?: Prisma.XOR<Prisma.RecipeCreateWithoutIngredientsInput, Prisma.RecipeUncheckedCreateWithoutIngredientsInput>
   connectOrCreate?: Prisma.RecipeCreateOrConnectWithoutIngredientsInput
@@ -597,6 +649,8 @@ export type RecipeCreateWithoutCategoriesInput = {
   notes?: Prisma.RecipeCreatenotesInput | string[]
   servings: number
   servingMultiplierForNelson?: number
+  lastUsedInPlanner?: Date | string | null
+  excludeFromPlanner?: boolean
   ingredients?: Prisma.RecipeIngredientCreateNestedManyWithoutRecipeInput
   images?: Prisma.RecipeImageCreateNestedManyWithoutRecipeInput
 }
@@ -611,6 +665,8 @@ export type RecipeUncheckedCreateWithoutCategoriesInput = {
   notes?: Prisma.RecipeCreatenotesInput | string[]
   servings: number
   servingMultiplierForNelson?: number
+  lastUsedInPlanner?: Date | string | null
+  excludeFromPlanner?: boolean
   ingredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutRecipeInput
   images?: Prisma.RecipeImageUncheckedCreateNestedManyWithoutRecipeInput
 }
@@ -649,6 +705,8 @@ export type RecipeScalarWhereInput = {
   notes?: Prisma.StringNullableListFilter<"Recipe">
   servings?: Prisma.IntFilter<"Recipe"> | number
   servingMultiplierForNelson?: Prisma.FloatFilter<"Recipe"> | number
+  lastUsedInPlanner?: Prisma.DateTimeNullableFilter<"Recipe"> | Date | string | null
+  excludeFromPlanner?: Prisma.BoolFilter<"Recipe"> | boolean
 }
 
 export type RecipeCreateWithoutIngredientsInput = {
@@ -661,6 +719,8 @@ export type RecipeCreateWithoutIngredientsInput = {
   notes?: Prisma.RecipeCreatenotesInput | string[]
   servings: number
   servingMultiplierForNelson?: number
+  lastUsedInPlanner?: Date | string | null
+  excludeFromPlanner?: boolean
   images?: Prisma.RecipeImageCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryCreateNestedManyWithoutRecipesInput
 }
@@ -675,6 +735,8 @@ export type RecipeUncheckedCreateWithoutIngredientsInput = {
   notes?: Prisma.RecipeCreatenotesInput | string[]
   servings: number
   servingMultiplierForNelson?: number
+  lastUsedInPlanner?: Date | string | null
+  excludeFromPlanner?: boolean
   images?: Prisma.RecipeImageUncheckedCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutRecipesInput
 }
@@ -705,6 +767,8 @@ export type RecipeUpdateWithoutIngredientsInput = {
   notes?: Prisma.RecipeUpdatenotesInput | string[]
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   servingMultiplierForNelson?: Prisma.FloatFieldUpdateOperationsInput | number
+  lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   images?: Prisma.RecipeImageUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUpdateManyWithoutRecipesNestedInput
 }
@@ -719,6 +783,8 @@ export type RecipeUncheckedUpdateWithoutIngredientsInput = {
   notes?: Prisma.RecipeUpdatenotesInput | string[]
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   servingMultiplierForNelson?: Prisma.FloatFieldUpdateOperationsInput | number
+  lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   images?: Prisma.RecipeImageUncheckedUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutRecipesNestedInput
 }
@@ -733,6 +799,8 @@ export type RecipeCreateWithoutImagesInput = {
   notes?: Prisma.RecipeCreatenotesInput | string[]
   servings: number
   servingMultiplierForNelson?: number
+  lastUsedInPlanner?: Date | string | null
+  excludeFromPlanner?: boolean
   ingredients?: Prisma.RecipeIngredientCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryCreateNestedManyWithoutRecipesInput
 }
@@ -747,6 +815,8 @@ export type RecipeUncheckedCreateWithoutImagesInput = {
   notes?: Prisma.RecipeCreatenotesInput | string[]
   servings: number
   servingMultiplierForNelson?: number
+  lastUsedInPlanner?: Date | string | null
+  excludeFromPlanner?: boolean
   ingredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutRecipesInput
 }
@@ -777,6 +847,8 @@ export type RecipeUpdateWithoutImagesInput = {
   notes?: Prisma.RecipeUpdatenotesInput | string[]
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   servingMultiplierForNelson?: Prisma.FloatFieldUpdateOperationsInput | number
+  lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUpdateManyWithoutRecipesNestedInput
 }
@@ -791,6 +863,8 @@ export type RecipeUncheckedUpdateWithoutImagesInput = {
   notes?: Prisma.RecipeUpdatenotesInput | string[]
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   servingMultiplierForNelson?: Prisma.FloatFieldUpdateOperationsInput | number
+  lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutRecipesNestedInput
 }
@@ -805,6 +879,8 @@ export type RecipeUpdateWithoutCategoriesInput = {
   notes?: Prisma.RecipeUpdatenotesInput | string[]
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   servingMultiplierForNelson?: Prisma.FloatFieldUpdateOperationsInput | number
+  lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUpdateManyWithoutRecipeNestedInput
   images?: Prisma.RecipeImageUpdateManyWithoutRecipeNestedInput
 }
@@ -819,6 +895,8 @@ export type RecipeUncheckedUpdateWithoutCategoriesInput = {
   notes?: Prisma.RecipeUpdatenotesInput | string[]
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   servingMultiplierForNelson?: Prisma.FloatFieldUpdateOperationsInput | number
+  lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutRecipeNestedInput
   images?: Prisma.RecipeImageUncheckedUpdateManyWithoutRecipeNestedInput
 }
@@ -833,6 +911,8 @@ export type RecipeUncheckedUpdateManyWithoutCategoriesInput = {
   notes?: Prisma.RecipeUpdatenotesInput | string[]
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   servingMultiplierForNelson?: Prisma.FloatFieldUpdateOperationsInput | number
+  lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 
@@ -894,6 +974,8 @@ export type RecipeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   notes?: boolean
   servings?: boolean
   servingMultiplierForNelson?: boolean
+  lastUsedInPlanner?: boolean
+  excludeFromPlanner?: boolean
   ingredients?: boolean | Prisma.Recipe$ingredientsArgs<ExtArgs>
   images?: boolean | Prisma.Recipe$imagesArgs<ExtArgs>
   categories?: boolean | Prisma.Recipe$categoriesArgs<ExtArgs>
@@ -910,6 +992,8 @@ export type RecipeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   notes?: boolean
   servings?: boolean
   servingMultiplierForNelson?: boolean
+  lastUsedInPlanner?: boolean
+  excludeFromPlanner?: boolean
 }, ExtArgs["result"]["recipe"]>
 
 export type RecipeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -922,6 +1006,8 @@ export type RecipeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   notes?: boolean
   servings?: boolean
   servingMultiplierForNelson?: boolean
+  lastUsedInPlanner?: boolean
+  excludeFromPlanner?: boolean
 }, ExtArgs["result"]["recipe"]>
 
 export type RecipeSelectScalar = {
@@ -934,9 +1020,11 @@ export type RecipeSelectScalar = {
   notes?: boolean
   servings?: boolean
   servingMultiplierForNelson?: boolean
+  lastUsedInPlanner?: boolean
+  excludeFromPlanner?: boolean
 }
 
-export type RecipeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "slug" | "instructions" | "handsOnTime" | "totalTime" | "notes" | "servings" | "servingMultiplierForNelson", ExtArgs["result"]["recipe"]>
+export type RecipeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "slug" | "instructions" | "handsOnTime" | "totalTime" | "notes" | "servings" | "servingMultiplierForNelson" | "lastUsedInPlanner" | "excludeFromPlanner", ExtArgs["result"]["recipe"]>
 export type RecipeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   ingredients?: boolean | Prisma.Recipe$ingredientsArgs<ExtArgs>
   images?: boolean | Prisma.Recipe$imagesArgs<ExtArgs>
@@ -963,6 +1051,8 @@ export type $RecipePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     notes: string[]
     servings: number
     servingMultiplierForNelson: number
+    lastUsedInPlanner: Date | null
+    excludeFromPlanner: boolean
   }, ExtArgs["result"]["recipe"]>
   composites: {}
 }
@@ -1398,6 +1488,8 @@ export interface RecipeFieldRefs {
   readonly notes: Prisma.FieldRef<"Recipe", 'String[]'>
   readonly servings: Prisma.FieldRef<"Recipe", 'Int'>
   readonly servingMultiplierForNelson: Prisma.FieldRef<"Recipe", 'Float'>
+  readonly lastUsedInPlanner: Prisma.FieldRef<"Recipe", 'DateTime'>
+  readonly excludeFromPlanner: Prisma.FieldRef<"Recipe", 'Boolean'>
 }
     
 

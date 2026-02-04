@@ -45,6 +45,7 @@ export const insertRecipeSchema = z.object({
   const lines = val.split("\n").map(line => line.trim()).filter(line => line !== "");
   return lines;
 }),
+excludeFromPlanner: z.boolean().default(false),
 });
 
 export type InsertRecipeInputType = z.input<typeof insertRecipeSchema>;

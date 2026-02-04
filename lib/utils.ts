@@ -17,18 +17,19 @@ export function recipeToFormData(recipe: RecipeType): InsertRecipeInputType {
       isCover: img.isCover,
     })) || [],
     handsOnTime: recipe.handsOnTime,
-      totalTime: recipe.totalTime,
+    totalTime: recipe.totalTime,
     servings: recipe.servings,
     servingMultiplierForNelson: recipe.servingMultiplierForNelson,
-   ingredients: recipe.ingredients.map((ri) => ({
-  ingredientId: ri.ingredient.id,
-  amount: ri.amount,
-  unitId: ri.unit.id,
-  excludeFromNutrition: ri.excludeFromNutrition,
-  additionalInfo: ri.additionalInfo,
-})),
+    ingredients: recipe.ingredients.map((ri) => ({
+      ingredientId: ri.ingredient.id,
+      amount: ri.amount,
+      unitId: ri.unit.id,
+      excludeFromNutrition: ri.excludeFromNutrition,
+      additionalInfo: ri.additionalInfo,
+    })),
     instructions: recipe.instructions.join("\n"),
-    notes: recipe.notes.join("\n")
+    notes: recipe.notes.join("\n"),
+    excludeFromPlanner: recipe.excludeFromPlanner,
   };
 }
 

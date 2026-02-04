@@ -543,10 +543,6 @@ export type NullableFloatFieldUpdateOperationsInput = {
   divide?: number
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type RecipeIngredientCreateWithoutRecipeInput = {
   id?: string
   amount?: number | null
