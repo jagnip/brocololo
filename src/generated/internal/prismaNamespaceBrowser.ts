@@ -52,6 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   Category: 'Category',
+  Plan: 'Plan',
+  PlanSlot: 'PlanSlot',
   Recipe: 'Recipe',
   Ingredient: 'Ingredient',
   Unit: 'Unit',
@@ -85,6 +87,27 @@ export const CategoryScalarFieldEnum = {
 } as const
 
 export type CategoryScalarFieldEnum = (typeof CategoryScalarFieldEnum)[keyof typeof CategoryScalarFieldEnum]
+
+
+export const PlanScalarFieldEnum = {
+  id: 'id',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  createdAt: 'createdAt'
+} as const
+
+export type PlanScalarFieldEnum = (typeof PlanScalarFieldEnum)[keyof typeof PlanScalarFieldEnum]
+
+
+export const PlanSlotScalarFieldEnum = {
+  id: 'id',
+  planId: 'planId',
+  date: 'date',
+  mealType: 'mealType',
+  recipeId: 'recipeId'
+} as const
+
+export type PlanSlotScalarFieldEnum = (typeof PlanSlotScalarFieldEnum)[keyof typeof PlanSlotScalarFieldEnum]
 
 
 export const RecipeScalarFieldEnum = {

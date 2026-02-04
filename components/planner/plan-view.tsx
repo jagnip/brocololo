@@ -1,8 +1,8 @@
 import RecipeCard from "@/components/recipes/card";
 import { formatDayLabel } from "@/lib/utils";
-import { Plan } from "@/types/planner";
+import { PlanDaysType } from "@/types/planner";
 
-export function PlanView({ plan }: { plan: Plan }) {
+export function PlanView({ plan }: { plan: PlanDaysType }) {
   if (plan.length === 0) {
     return null;
   }

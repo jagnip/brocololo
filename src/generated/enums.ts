@@ -16,3 +16,12 @@ export const CategoryType = {
 } as const
 
 export type CategoryType = (typeof CategoryType)[keyof typeof CategoryType]
+
+
+export const MealType = {
+  BREAKFAST: 'BREAKFAST',
+  LUNCH: 'LUNCH',
+  DINNER: 'DINNER'
+} as const
+
+export type MealType = (typeof MealType)[keyof typeof MealType]

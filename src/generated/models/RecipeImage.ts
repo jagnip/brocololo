@@ -359,10 +359,6 @@ export type RecipeImageUncheckedUpdateManyWithoutRecipeNestedInput = {
   deleteMany?: Prisma.RecipeImageScalarWhereInput | Prisma.RecipeImageScalarWhereInput[]
 }
 
-export type DateTimeFieldUpdateOperationsInput = {
-  set?: Date | string
-}
-
 export type RecipeImageCreateWithoutRecipeInput = {
   id?: string
   url: string

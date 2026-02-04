@@ -9,6 +9,8 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/Category'
+export type * from './models/Plan'
+export type * from './models/PlanSlot'
 export type * from './models/Recipe'
 export type * from './models/Ingredient'
 export type * from './models/Unit'

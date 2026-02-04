@@ -45,6 +45,16 @@ export { Prisma }
  */
 export type Category = Prisma.CategoryModel
 /**
+ * Model Plan
+ * 
+ */
+export type Plan = Prisma.PlanModel
+/**
+ * Model PlanSlot
+ * 
+ */
+export type PlanSlot = Prisma.PlanSlotModel
+/**
  * Model Recipe
  * 
  */
