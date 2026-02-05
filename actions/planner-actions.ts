@@ -2,11 +2,16 @@
 
 import { getRecipes } from "@/lib/db/recipes";
 import { getDaysInRange } from "@/lib/utils";
-import { PlanDaysType } from "@/types/planner";
+import { PlanInputType } from "@/types/planner";
 import { createPlan } from "@/lib/db/planner";
+import { MealType } from "@/src/generated/enums";
+import { MEAL_TYPES } from "@/lib/constants";
+
+
+
 
 export async function generatePlan(start: Date, end: Date): Promise<
-  | { type: "success"; plan: PlanDaysType }
+  | { type: "success"; plan: PlanInputType }
   | { type: "error"; message: string }
 > {
   try {
@@ -17,12 +22,20 @@ export async function generatePlan(start: Date, end: Date): Promise<
     }
 
     const days = getDaysInRange(start, end);
-    const plan: PlanDaysType = days.map((date) => ({
-      date: new Date(date),
-      breakfast: recipes[Math.floor(Math.random() * recipes.length)]!,
-      lunch: recipes[Math.floor(Math.random() * recipes.length)]!,
-      dinner: recipes[Math.floor(Math.random() * recipes.length)]!,
-    }));
+
+
+    const plan: PlanInputType = [];
+
+    for (const date of days) {
+      for (const mealType of MEAL_TYPES) {
+        const recipe = recipes[Math.floor(Math.random() * recipes.length)]!;
+        plan.push({
+          date: new Date(date),
+          mealType,
+          recipe,
+        });
+      }
+    }
 
     return { type: "success", plan };
   } catch (error) {
@@ -31,7 +44,7 @@ export async function generatePlan(start: Date, end: Date): Promise<
   }
 }
 
-export async function savePlan(plan: PlanDaysType): Promise<
+export async function savePlan(plan: PlanInputType): Promise<
   | { type: "success"; planId: string }
   | { type: "error"; message: string }
 > {
@@ -39,17 +52,12 @@ export async function savePlan(plan: PlanDaysType): Promise<
     return { type: "error", message: "No plan to save." };
   }
 
-  const startDate = new Date(plan[0]!.date);
-  const endDate = new Date(plan[plan.length - 1]!.date);
-
-  const slots = plan.flatMap((day) => [
-    { date: new Date(day.date), mealType: "BREAKFAST" as const, recipeId: day.breakfast.id },
-    { date: new Date(day.date), mealType: "LUNCH" as const, recipeId: day.lunch.id },
-    { date: new Date(day.date), mealType: "DINNER" as const, recipeId: day.dinner.id },
-  ]);
+  const dates = plan.map((s) => s.date.getTime());
+  const startDate = new Date(Math.min(...dates));
+  const endDate = new Date(Math.max(...dates));
 
   try {
-    const created = await createPlan(startDate, endDate, slots);
+    const created = await createPlan(startDate, endDate, plan);
     return { type: "success", planId: created.id };
   } catch (error) {
     console.error("Error saving plan", error);

@@ -1,4 +1,4 @@
-import { PlannerCriteriaForm } from "@/components/planner/form";
+import { PlannerCriteriaForm } from "@/components/planner/planner-form";
 
 export default function PlannerPage() {
   return (

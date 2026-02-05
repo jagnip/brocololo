@@ -21,11 +21,11 @@ import { toast } from "sonner";
 import { getDefaultDateRange, WeekPicker } from "./date-range-picker";
 import { PlanView } from "./plan-view";
 import { useState } from "react";
-import { PlanDaysType } from "@/types/planner";
+import { PlanInputType } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
 
 export function PlannerCriteriaForm() {
-  const [plan, setPlan] = useState<PlanDaysType | null>(null);
+  const [plan, setPlan] = useState<PlanInputType | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const form = useForm<PlannerCriteriaInput>({
@@ -53,7 +53,7 @@ export function PlannerCriteriaForm() {
     toast.success("Plan generated");
   }
 
-  async function handleSavePlan(plan: PlanDaysType) {
+  async function handleSavePlan(plan: PlanInputType) {
     setIsSaving(true);
     const result = await savePlan(plan);
     setIsSaving(false);

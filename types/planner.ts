@@ -1,18 +1,27 @@
 import type { RecipeType } from "@/types/recipe";
-import { Prisma } from "@/src/generated/client";
+import { MealType, Prisma } from "@/src/generated/client";
 
-export type PlanDayType = {
+export type DayMealsType = {
   date: Date;
-  breakfast: RecipeType;
-  lunch: RecipeType;
-  dinner: RecipeType;
+  breakfast: SlotInputType;
+  lunch: SlotInputType;
+  dinner: SlotInputType;
 };
 
-export type PlanDaysType = PlanDayType[];
+//Input Types
+export type SlotInputType = {
+  date: Date;
+  mealType: MealType;
+  recipe: RecipeType;
+};
 
+
+export type PlanInputType = SlotInputType[];
+// export type SlotInputType = Pick<PlanSlotType, "date" | "mealType" | "recipeId">;
+
+//DB
 export type PlanSlotType = Prisma.PlanSlotGetPayload<{}>;
-
 export type PlanType = Prisma.PlanGetPayload<{}>;
 
-export type SlotInputType = Pick<PlanSlotType, "date" | "mealType" | "recipeId">;
 
+   
