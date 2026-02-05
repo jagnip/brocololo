@@ -24,7 +24,7 @@ import { useState } from "react";
 import { PlanInputType } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
 
-export function PlannerCriteriaForm() {
+export function PlannerForm() {
   const [plan, setPlan] = useState<PlanInputType | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -41,7 +41,7 @@ export function PlannerCriteriaForm() {
   async function onSubmit(values: PlannerCriteriaInput) {
     const result = await generatePlan(
       new Date(values.dateRange.start),
-      new Date(values.dateRange.end),
+      new Date(values.dateRange.end)
     );
 
     if (result.type === "error") {
