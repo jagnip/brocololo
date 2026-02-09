@@ -41,7 +41,7 @@ export function PlannerForm() {
   async function onSubmit(values: PlannerCriteriaInput) {
     const result = await generatePlan(
       new Date(values.dateRange.start),
-      new Date(values.dateRange.end)
+      new Date(values.dateRange.end),
     );
 
     if (result.type === "error") {

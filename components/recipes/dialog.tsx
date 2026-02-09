@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { Minus, Plus } from "lucide-react";
 import { Input } from "../ui/input";
+import { ROUTES } from "@/lib/constants";
 
 type RecipeDialogProps = {
   recipe: RecipeType;
@@ -41,7 +42,7 @@ export default function RecipeDialog({ recipe }: RecipeDialogProps) {
   const handleOpenChange = (isOpen: boolean) => {
     console.log("Open change", isOpen);
     if (!isOpen) {
-      router.push(`/recipes/${queryString ? `?${queryString}` : ""}`, {
+      router.push(`${ROUTES.recipes}/${queryString ? `?${queryString}` : ""}`, {
         scroll: false,
       });
     }

@@ -2,7 +2,6 @@ import RecipeCard from "@/components/recipes/card";
 import { formatDayLabel, getMealsForDate, groupSlotsByDate } from "@/lib/utils";
 import { PlanInputType } from "@/types/planner";
 
-
 export function PlanView({ plan }: { plan: PlanInputType }) {
   if (plan.length === 0) {
     return null;
@@ -17,7 +16,7 @@ export function PlanView({ plan }: { plan: PlanInputType }) {
       {sortedDates.map((dateKey) => {
         const { date, breakfast, lunch, dinner } = getMealsForDate(
           slotsByDate,
-          dateKey
+          dateKey,
         );
 
         return (

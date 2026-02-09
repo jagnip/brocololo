@@ -5,7 +5,9 @@ import { getDaysInRange } from "@/lib/utils";
 import { PlanInputType } from "@/types/planner";
 import { createPlan } from "@/lib/db/planner";
 import { MealType } from "@/src/generated/enums";
-import { MEAL_TYPES } from "@/lib/constants";
+import { MEAL_TYPES, ROUTES } from "@/lib/constants";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 
 
@@ -56,11 +58,16 @@ export async function savePlan(plan: PlanInputType): Promise<
   const startDate = new Date(Math.min(...dates));
   const endDate = new Date(Math.max(...dates));
 
+  let planId: string;
   try {
     const created = await createPlan(startDate, endDate, plan);
-    return { type: "success", planId: created.id };
+    planId = created.id;
+    // return { type: "success", planId: created.id };
   } catch (error) {
     console.error("Error saving plan", error);
     return { type: "error", message: "Failed to save plan." };
   }
+
+  revalidatePath("/"); // refreshes sidebar data
+  redirect(ROUTES.planView(planId));
 }

@@ -21,7 +21,7 @@ import {
   BreadcrumbSeparator,
 } from "../ui/breadcrumb";
 import { useSearchParams } from "next/navigation";
-import { FLAVOUR_BREADCRUMB_LABELS } from "@/lib/constants";
+import { FLAVOUR_BREADCRUMB_LABELS, ROUTES } from "@/lib/constants";
 
 type RecipePageProps = {
   recipe: RecipeType;
@@ -78,13 +78,13 @@ export default function RecipePage({ recipe }: RecipePageProps) {
       <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/recipes">Recipes</BreadcrumbLink>
+            <BreadcrumbLink href={ROUTES.recipes}>Recipes</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           {flavourLabel && (
             <>
               <BreadcrumbItem>
-                <BreadcrumbLink href={`/recipes?category=${categorySlug}`}>
+                <BreadcrumbLink href={`${ROUTES.recipes}?category=${categorySlug}`}>
                   {flavourLabel}
                 </BreadcrumbLink>
               </BreadcrumbItem>

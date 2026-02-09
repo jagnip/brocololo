@@ -21,6 +21,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import type { CategoryType } from "@/types/category";
+import { ROUTES } from "@/lib/constants";
 
 type PlanSummary = {
   id: string;
@@ -49,8 +50,8 @@ export function AppSidebar({
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const isRecipes = pathname.startsWith("/recipes");
-  const isPlanner = pathname.startsWith("/planner");
+  const isRecipes = pathname.startsWith(ROUTES.recipes);
+  const isPlanner = pathname.startsWith(ROUTES.plan);
   const selectedCategory = searchParams.get("category") ?? "";
 
   const toggleCategory = (categorySlug: string) => {
@@ -60,7 +61,7 @@ export function AppSidebar({
     } else {
       params.set("category", categorySlug);
     }
-    router.push(`/recipes?${params.toString()}`);
+    router.push(`${ROUTES.recipes}?${params.toString()}`);
   };
 
   return (
@@ -73,7 +74,7 @@ export function AppSidebar({
               isActive={isRecipes}
               tooltip="Recipes"
             >
-              <Link href="/recipes">
+              <Link href={ROUTES.recipes}>
                 <CookingPot />
                 <span>Recipes</span>
               </Link>
@@ -85,7 +86,7 @@ export function AppSidebar({
               isActive={isPlanner}
               tooltip="Planner"
             >
-              <Link href="/planner">
+              <Link href={ROUTES.plan}>
                 <UtensilsCrossed />
                 <span>Planner</span>
               </Link>
@@ -126,10 +127,10 @@ export function AppSidebar({
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === "/planner/new"}
+                    isActive={pathname === ROUTES.planCreate}
                     tooltip="New plan"
                   >
-                    <Link href="/planner/new">
+                    <Link href={ROUTES.planCreate}>
                       <CalendarPlus />
                       <span>New plan</span>
                     </Link>
@@ -141,10 +142,10 @@ export function AppSidebar({
                     <SidebarMenuItem key={plan.id}>
                       <SidebarMenuButton
                         asChild
-                        isActive={pathname === `/planner/${plan.id}`}
+                        isActive={pathname === ROUTES.planView(plan.id)}
                         tooltip={label}
                       >
-                        <Link href={`/planner/${plan.id}`}>
+                        <Link href={ROUTES.planView(plan.id)}>
                           <CalendarDays />
                           <span>{label}</span>
                         </Link>

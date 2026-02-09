@@ -10,3 +10,13 @@ export const MEAL_TYPES: MealType[] = [
   MealType.LUNCH,
   MealType.DINNER,
 ];
+
+export const ROUTES = {
+  recipes: "/recipes",
+  recipeCreate: "/recipes/create",
+  recipe: (slug: string) => `/recipes/${slug}`,
+  recipeEdit: (slug: string) => `/recipes/${slug}/edit`,
+  plan: "/plan",
+  planCreate: "/plan/create",
+  planView: (planId: string) => `/plan/${planId}`,
+} as const;

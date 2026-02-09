@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/searchfield"
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
+import { ROUTES } from "@/lib/constants";
 
 export function SearchInput() {
 
@@ -35,7 +36,7 @@ const DEBOUNCE_MS = 1300;
       } else {
         params.delete("q");
       }
-      router.push(`/recipes?${params.toString()}`);
+      router.push(`${ROUTES.recipes}?${params.toString()}`);
       timeoutRef.current = null;
     }, DEBOUNCE_MS);
 

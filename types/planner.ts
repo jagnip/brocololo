@@ -20,8 +20,8 @@ export type PlanInputType = SlotInputType[];
 // export type SlotInputType = Pick<PlanSlotType, "date" | "mealType" | "recipeId">;
 
 //DB
-export type PlanSlotType = Prisma.PlanSlotGetPayload<{}>;
-export type PlanType = Prisma.PlanGetPayload<{}>;
+// export type PlanSlotType = Prisma.PlanSlotGetPayload<{}>;
+// export type PlanType = Prisma.PlanGetPayload<{}>;
 
 
    
