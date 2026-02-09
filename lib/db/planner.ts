@@ -1,6 +1,12 @@
 import { SlotInputType } from "@/types/planner";
 import { prisma } from "./index";
 
+export async function getPlans() {
+  return prisma.plan.findMany({
+    orderBy: { createdAt: "desc" },
+    select: { id: true, startDate: true, endDate: true },
+  });
+}
 export async function createPlan(
   startDate: Date,
   endDate: Date,
