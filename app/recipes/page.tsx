@@ -13,7 +13,6 @@ export default async function Page({
 
   return (
     <>
-      <RecipeTabsContainer />
       <Suspense fallback={<GridSkeleton />}>
         <RecipeGrid categorySlugs={params.category} search={params.q} />
       </Suspense>
