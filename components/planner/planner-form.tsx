@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
@@ -14,31 +14,30 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   plannerCriteriaSchema,
-  type PlannerCriteria,
-  type PlannerCriteriaInput,
+  type PlannerCriteriaInputType,
 } from "@/lib/validations/planner";
 import { toast } from "sonner";
 import { getDefaultDateRange, WeekPicker } from "./date-range-picker";
 import { PlanView } from "./plan-view";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PlanInputType } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
+import { getDaysInRange, formatDayLabel } from "@/lib/utils";
+import { HANDS_ON_DEFAULTS } from "@/lib/constants";
 
 export function PlannerForm() {
   const [plan, setPlan] = useState<PlanInputType | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const form = useForm<PlannerCriteriaInput>({
+  const form = useForm<PlannerCriteriaInputType>({
     resolver: zodResolver(plannerCriteriaSchema) as any,
     defaultValues: {
       dateRange: getDefaultDateRange(),
-      breakfastHandsOnMax: 15,
-      lunchHandsOnMax: 15,
-      dinnerHandsOnMax: 25,
+      handsOnTime: [],
     },
   });
 
-  async function onSubmit(values: PlannerCriteriaInput) {
+  async function onSubmit(values: PlannerCriteriaInputType) {
     const result = await generatePlan(
       new Date(values.dateRange.start),
       new Date(values.dateRange.end),
@@ -64,6 +63,32 @@ export function PlannerForm() {
     toast.success("Plan saved");
   }
 
+  const { fields, replace } = useFieldArray({
+    control: form.control,
+    name: "handsOnTime",
+  });
+
+  const dateRange = form.watch("dateRange");
+
+  useEffect(() => {
+    if (!dateRange?.start || !dateRange?.end) return;
+    const days = getDaysInRange(
+      new Date(dateRange.start),
+      new Date(dateRange.end),
+    );
+    replace(
+      days.map((d) => {
+        const defaults = HANDS_ON_DEFAULTS[d.getDay()];
+        return {
+          date: d.toLocaleDateString("en-CA"),
+          breakfastMax: defaults.breakfast,
+          lunchMax: defaults.lunch,
+          dinnerMax: defaults.dinner,
+        };
+      }),
+    );
+  }, [dateRange?.start, dateRange?.end]);
+
   return (
     <>
       <Form {...form}>
@@ -83,70 +108,101 @@ export function PlannerForm() {
               </FormItem>
             )}
           />
-          <section className="flex flex-col gap-4 items-start rounded-lg ">
-            <h2 className="text-sm font-medium">Breakfast</h2>
-            <FormField
-              control={form.control}
-              name="breakfastHandsOnMax"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Hands-on time max (min)</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="number"
-                      min={1}
-                      value={field.value as number}
+          {fields.length > 0 && (
+            <div className="flex flex-col gap-4 mt-4">
+              {fields.map((fieldItem, index) => (
+                <div key={fieldItem.id} className="flex flex-col gap-1">
+                  <span className="text-sm font-medium">
+                    {formatDayLabel(new Date(fieldItem.date))}
+                  </span>
+                  <div className="flex gap-2">
+                    <FormField
+                      control={form.control}
+                      name={`handsOnTime.${index}.breakfastMax`}
+                      render={({ field: { value, ...field } }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel className="text-xs text-muted-foreground">
+                            Breakfast
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="number"
+                              min={1}
+                              placeholder="∞"
+                              value={(value as number | null) ?? ""}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value === ""
+                                    ? null
+                                    : Number(e.target.value),
+                                )
+                              }
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </section>
-          <section className="flex flex-col gap-4 items-start rounded-lg ">
-            <h2 className="text-sm font-medium">Lunch</h2>
-            <FormField
-              control={form.control}
-              name="lunchHandsOnMax"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Hands-on time max (min)</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="number"
-                      min={1}
-                      value={field.value as number}
+                    <FormField
+                      control={form.control}
+                      name={`handsOnTime.${index}.lunchMax`}
+                      render={({ field: { value, ...field } }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel className="text-xs text-muted-foreground">
+                            Lunch
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="number"
+                              min={1}
+                              placeholder="∞"
+                              value={(value as number | null) ?? ""}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value === ""
+                                    ? null
+                                    : Number(e.target.value),
+                                )
+                              }
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </section>
-          <section className="flex flex-col gap-4 items-start rounded-lg ">
-            <h2 className="text-sm font-medium">Dinner</h2>
-            <FormField
-              control={form.control}
-              name="dinnerHandsOnMax"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Hands-on time max (min)</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="number"
-                      min={1}
-                      value={field.value as number}
+                    <FormField
+                      control={form.control}
+                      name={`handsOnTime.${index}.dinnerMax`}
+                      render={({ field: { value, ...field } }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel className="text-xs text-muted-foreground">
+                            Dinner
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="number"
+                              min={1}
+                              placeholder="∞"
+                              value={(value as number | null) ?? ""}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value === ""
+                                    ? null
+                                    : Number(e.target.value),
+                                )
+                              }
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </section>
-          <Button type="submit" className="w-max">
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <Button type="submit" className="w-max mt-4">
             Find meals
           </Button>
         </form>

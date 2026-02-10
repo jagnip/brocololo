@@ -1,5 +1,4 @@
- import { z } from "zod";
-
+import { z } from "zod";
 
 const dateRangeSchema = z
   .object({
@@ -11,24 +10,24 @@ const dateRangeSchema = z
     end: new Date(data.end),
   }));
 
-export const plannerCriteriaSchema = z.object({
-  dateRange: dateRangeSchema,
-  breakfastHandsOnMax: z
-    .coerce
-    .number()
-    .int()
-    .positive({ message: "Breakfast hands-on time must be a positive number" }),
-  lunchHandsOnMax: z
-    .coerce
-    .number()
-    .int()
-    .positive({ message: "Lunch hands-on time must be a positive number" }),
-  dinnerHandsOnMax: z
-    .coerce
-    .number()
-    .int()
-    .positive({ message: "Dinner hands-on time must be a positive number" }),
+const handsOnMaxField = z.coerce
+  .number()
+  .int()
+  .positive()
+  .nullable();
+
+const dayHandsOnSchema = z.object({
+  date: z.string(),
+  breakfastMax: handsOnMaxField,
+  lunchMax: handsOnMaxField,
+  dinnerMax: handsOnMaxField,
 });
 
-export type PlannerCriteriaInput = z.input<typeof plannerCriteriaSchema>;
-export type PlannerCriteria = z.infer<typeof plannerCriteriaSchema>;
+export const plannerCriteriaSchema = z.object({
+  dateRange: dateRangeSchema,
+  handsOnTime: z.array(dayHandsOnSchema).min(1, "Select at least one day"),
+});
+
+export type DayHandsOnType = z.infer<typeof dayHandsOnSchema>;
+export type PlannerCriteriaInputType = z.input<typeof plannerCriteriaSchema>;
+export type PlannerCriteriaOutputType = z.infer<typeof plannerCriteriaSchema>;
