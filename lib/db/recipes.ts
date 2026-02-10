@@ -33,13 +33,17 @@ export async function getRecipeBySlug(slug: string): Promise<RecipeType | null> 
 
 export async function getRecipes(
   categorySlugs: string[],
-  q?: string
+  q?: string,
+  excludeFromPlanner?: boolean
 ): Promise<RecipeType[]> {
 
   return prisma.recipe.findMany({
     where: {
       ...(categorySlugs.length > 0 ? { categories: { some: { slug: { in: categorySlugs } } } } : {}),
       ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
+         ...(excludeFromPlanner !== undefined
+        ? { excludeFromPlanner }
+        : {}),
     },
     include: {
       categories: {
@@ -67,6 +71,7 @@ export async function getRecipes(
     },
   });
 }
+
 
 export async function createRecipe(data: InsertRecipeOutputType & { slug: string }) {
   const { categories, ingredients, images, ...recipeData } = data;

@@ -8,29 +8,34 @@ import { MealType } from "@/src/generated/enums";
 import { MEAL_TYPES, ROUTES } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-
-
-
+import { filterByFlavour, filterExcluded } from "@/lib/planner/filters";
 
 export async function generatePlan(start: Date, end: Date): Promise<
   | { type: "success"; plan: PlanInputType }
   | { type: "error"; message: string }
 > {
   try {
-    const recipes = await getRecipes([], undefined);
+    const recipes = await getRecipes([], undefined, false);
 
     if (recipes.length === 0) {
       return { type: "error", message: "No recipes available to plan." };
     }
 
     const days = getDaysInRange(start, end);
-
-
     const plan: PlanInputType = [];
 
     for (const date of days) {
       for (const mealType of MEAL_TYPES) {
-        const recipe = recipes[Math.floor(Math.random() * recipes.length)]!;
+        const candidates = filterByFlavour(recipes, mealType);
+
+        if (candidates.length === 0) {
+          return {
+            type: "error",
+            message: `No ${mealType.toLowerCase()} recipes available.`,
+          };
+        }
+
+        const recipe = candidates[Math.floor(Math.random() * candidates.length)]!;
         plan.push({
           date: new Date(date),
           mealType,
