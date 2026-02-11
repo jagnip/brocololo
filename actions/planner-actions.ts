@@ -8,9 +8,21 @@ import { MealType } from "@/src/generated/enums";
 import { MEAL_TYPES, ROUTES } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { filterByFlavour, filterExcluded } from "@/lib/planner/filters";
+import { filterByFlavour, filterExcluded, filterByHandsOnTime } from "@/lib/planner/filters";
+import { DayHandsOnType } from "@/lib/validations/planner";
 
-export async function generatePlan(start: Date, end: Date): Promise<
+function getMaxHandsPerMeal(dayLimits: DayHandsOnType | undefined, mealType: MealType): number | null {
+  if (!dayLimits) return null;
+  if (mealType === MealType.BREAKFAST) return dayLimits.breakfastMax;
+  if (mealType === MealType.LUNCH) return dayLimits.lunchMax;
+  return dayLimits.dinnerMax;
+}
+
+export async function generatePlan(
+  start: Date,
+  end: Date,
+  handsOnTime: DayHandsOnType[]
+): Promise<
   | { type: "success"; plan: PlanInputType }
   | { type: "error"; message: string }
 > {
@@ -25,13 +37,17 @@ export async function generatePlan(start: Date, end: Date): Promise<
     const plan: PlanInputType = [];
 
     for (const date of days) {
+      const dateStr = date.toLocaleDateString("en-CA");
+      const dayLimits = handsOnTime.find((d) => d.date === dateStr);
+
       for (const mealType of MEAL_TYPES) {
-        const candidates = filterByFlavour(recipes, mealType);
+        let candidates = filterByFlavour(recipes, mealType);
+        candidates = filterByHandsOnTime(candidates, getMaxHandsPerMeal(dayLimits, mealType));
 
         if (candidates.length === 0) {
           return {
             type: "error",
-            message: `No ${mealType.toLowerCase()} recipes available.`,
+            message: `No recipes available for ${mealType.toLowerCase()} on ${dateStr}.`,
           };
         }
 

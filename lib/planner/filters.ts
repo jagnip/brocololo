@@ -13,3 +13,11 @@ export function filterByFlavour(recipes: RecipeType[], mealType: MealType): Reci
 export function filterExcluded(recipes: RecipeType[]): RecipeType[] {
   return recipes.filter((recipe) => !recipe.excludeFromPlanner);
 }
+
+export function filterByHandsOnTime(
+  recipes: RecipeType[],
+  maxHandsOnTime: number | null
+): RecipeType[] {
+  if (maxHandsOnTime === null) return recipes; // no limit
+  return recipes.filter((recipe) => recipe.handsOnTime <= maxHandsOnTime);
+}

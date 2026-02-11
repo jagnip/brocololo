@@ -22,6 +22,7 @@ import { PlanView } from "./plan-view";
 import { useEffect, useState } from "react";
 import { PlanInputType } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
+import type { DayHandsOnType } from "@/lib/validations/planner";
 import { getDaysInRange, formatDayLabel } from "@/lib/utils";
 import { HANDS_ON_DEFAULTS } from "@/lib/constants";
 
@@ -41,6 +42,7 @@ export function PlannerForm() {
     const result = await generatePlan(
       new Date(values.dateRange.start),
       new Date(values.dateRange.end),
+      values.handsOnTime as DayHandsOnType[],
     );
 
     if (result.type === "error") {
