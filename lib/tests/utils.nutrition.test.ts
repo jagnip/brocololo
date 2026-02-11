@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateNutritionPerServing, NutritionPerPortion, scaleNutritionByCalories } from '../utils';
+import { calculateNutritionPerServing, NutritionPerPortion, scaleNutritionByCalories } from '../recipes/helpers';
 import {
   createMockRecipe,
   createComplexMockRecipe,

@@ -9,7 +9,7 @@ import {
   calculateNutritionPerServing,
   calculateServingScalingFactor,
   scaleNutritionByCalories,
-} from "@/lib/utils";
+} from "@/lib/recipes/helpers";
 import { ImageGallery } from "./image-gallery";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateServingScalingFactor } from '../utils';
+import { calculateServingScalingFactor } from '../recipes/helpers';
 import { createMockIngredient, createMockIngredientUnit, createMockRecipe, createMockUnit } from './test-helpers';
 
 /**
