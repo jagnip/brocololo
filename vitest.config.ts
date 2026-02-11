@@ -15,6 +15,11 @@ export default defineConfig({
   test: {
     projects: [
        {
+        resolve: {
+          alias: {
+            '@': path.resolve(dirname),
+          },
+        },
         test: {
           name: 'unit',
           include: ['**/*.{test,spec}.{ts,tsx}'],

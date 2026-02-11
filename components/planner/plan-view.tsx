@@ -1,5 +1,5 @@
 import RecipeCard from "@/components/recipes/card";
-import { formatDayLabel, getMealsForDate, groupSlotsByDate } from "@/lib/utils";
+import { formatDayLabel, getMealsForDate, groupSlotsByDate } from "@/lib/planner/helpers";
 import { PlanInputType } from "@/types/planner";
 
 export function PlanView({ plan }: { plan: PlanInputType }) {

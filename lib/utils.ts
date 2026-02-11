@@ -2,8 +2,6 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import type { RecipeType } from "@/types/recipe";
 import type { InsertRecipeInputType } from "@/lib/validations/recipe";
-import { DayMealsType, PlanInputType, SlotInputType } from "@/types/planner";
-import { MealType } from "@/src/generated/enums";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -155,48 +153,3 @@ export function calculateServingScalingFactor(
   };
 }
 
-export function getDaysInRange(start: Date, end: Date): Date[] {
-  const days: Date[] = [];
-  const current = new Date(start);
-  current.setHours(0, 0, 0, 0);
-  const endDate = new Date(end);
-  endDate.setHours(0, 0, 0, 0);
-
-  while (current <= endDate) {
-    days.push(new Date(current));
-    current.setDate(current.getDate() + 1);
-  }
-
-  return days;
-}
-
-export function formatDayLabel(date: Date): string {
-  return date.toLocaleDateString("en-GB", {
-    weekday: "long",
-    day: "numeric",
-    month: "short",
-  });
-}
-
-export function groupSlotsByDate(plan: PlanInputType): Map<string, SlotInputType[]> {
-  const slotsByDate = new Map<string, SlotInputType[]>();
-  for (const slot of plan) {
-    const date = slot.date.toISOString().slice(0, 10); // "YYYY-MM-DD"
-    const slots = slotsByDate.get(date) ?? [];
-    slotsByDate.set(date, [...slots, slot]);
-  }
-  return slotsByDate;
-}
-
-export function getMealsForDate(
-  slotsByDate: Map<string, SlotInputType[]>,
-  dateKey: string
-): DayMealsType {
-  const slots = slotsByDate.get(dateKey)!;
-  return {
-    date: slots[0].date,
-    breakfast: slots.find((s) => s.mealType === MealType.BREAKFAST)!,
-    lunch: slots.find((s) => s.mealType === MealType.LUNCH)!,
-    dinner: slots.find((s) => s.mealType === MealType.DINNER)!,
-  };
-}

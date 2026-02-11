@@ -23,7 +23,7 @@ import { useEffect, useState } from "react";
 import { PlanInputType } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
 import type { DayHandsOnType } from "@/lib/validations/planner";
-import { getDaysInRange, formatDayLabel } from "@/lib/utils";
+import { getDaysInRange, formatDayLabel } from "@/lib/planner/helpers";
 import { HANDS_ON_DEFAULTS } from "@/lib/constants";
 
 export function PlannerForm() {
@@ -82,7 +82,7 @@ export function PlannerForm() {
       days.map((d) => {
         const defaults = HANDS_ON_DEFAULTS[d.getDay()];
         return {
-          date: d.toLocaleDateString("en-CA"),
+          date: d.toLocaleDateString("en-GB"),
           breakfastMax: defaults.breakfast,
           lunchMax: defaults.lunch,
           dinnerMax: defaults.dinner,

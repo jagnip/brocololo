@@ -163,6 +163,8 @@ export function createMockRecipe(overrides?: Partial<RecipeType>): RecipeType {
     notes: [],
     servings: 4,
     servingMultiplierForNelson: 1.5,
+    lastUsedInPlanner: null,
+    excludeFromPlanner: false,
     categories: [createMockCategory()],
     images: [],
     ingredients: [
@@ -360,6 +362,8 @@ export function createMinimalRecipe(): RecipeType {
     notes: [],
     servings: 1,
     servingMultiplierForNelson: 1,
+    lastUsedInPlanner: null,
+    excludeFromPlanner: false,
     categories: [],
     images: [],
     ingredients: [],
