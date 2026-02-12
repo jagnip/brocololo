@@ -258,7 +258,7 @@ export function PlannerForm({ ingredients }: PlannerFormProps) {
               {isSaving ? "Saving…" : "Save plan"}
             </Button>
           </div>
-          <PlanView plan={plan} />
+          <PlanView plan={plan} fridgeIngredientIds={(form.watch("fridgeIngredientIds") ?? []) as string[]} />
         </>
       )}
     </>

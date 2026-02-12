@@ -47,3 +47,11 @@ export const PROTEIN_TARGETS: Record<string, number> = {
   "red-meat": 0.05,
   vegetarian: 0.10,
 };
+
+// Card accent colors by protein group key (used in planner view)
+export const PROTEIN_COLORS: Record<string, string> = {
+  chicken: "border-l-blue-400",
+  fish: "border-l-cyan-400",
+  "red-meat": "border-l-red-400",
+  vegetarian: "border-l-green-400",
+};
