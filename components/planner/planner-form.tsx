@@ -25,8 +25,14 @@ import { generatePlan, savePlan } from "@/actions/planner-actions";
 import type { DayHandsOnType } from "@/lib/validations/planner";
 import { getDaysInRange, formatDayLabel } from "@/lib/planner/helpers";
 import { HANDS_ON_DEFAULTS } from "@/lib/constants";
+import { IngredientType } from "@/types/ingredient";
+import MultipleSelector from "@/components/ui/multiselect";
 
-export function PlannerForm() {
+type PlannerFormProps = {
+  ingredients: IngredientType[];
+};
+
+export function PlannerForm({ ingredients }: PlannerFormProps) {
   const [plan, setPlan] = useState<PlanInputType | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -35,6 +41,7 @@ export function PlannerForm() {
     defaultValues: {
       dateRange: getDefaultDateRange(),
       handsOnTime: [],
+      fridgeIngredientIds: [],
     },
   });
 
@@ -43,6 +50,7 @@ export function PlannerForm() {
       new Date(values.dateRange.start),
       new Date(values.dateRange.end),
       values.handsOnTime as DayHandsOnType[],
+      (values.fridgeIngredientIds ?? []) as string[],
     );
 
     if (result.type === "error") {
@@ -204,6 +212,35 @@ export function PlannerForm() {
               ))}
             </div>
           )}
+          <FormField
+            control={form.control}
+            name="fridgeIngredientIds"
+            render={({ field }) => (
+              <FormItem className="mt-4">
+                <FormLabel>Fridge ingredients</FormLabel>
+                <FormControl>
+                  <MultipleSelector
+                    value={
+                      ingredients
+                        .filter((ing) => (field.value as string[])?.includes(ing.id))
+                        .map((ing) => ({ value: ing.id, label: ing.name }))
+                    }
+                    onChange={(options) => field.onChange(options.map((o) => o.value))}
+                    defaultOptions={ingredients.map((ing) => ({
+                      value: ing.id,
+                      label: ing.name,
+                    }))}
+                    placeholder="Select ingredients in your fridge"
+                    emptyIndicator={
+                      <p className="text-center text-sm text-muted-foreground">
+                        No ingredients found.
+                      </p>
+                    }
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
           <Button type="submit" className="w-max mt-4">
             Find meals
           </Button>

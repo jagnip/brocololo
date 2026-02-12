@@ -3,10 +3,11 @@ import {
   scoreLastUsed,
   scoreAlreadyInPlan,
   scoreProteinBalance,
+  scoreFridgeIngredients,
   pickBestCandidate,
   type ScoringContext,
 } from "../planner/scoring";
-import { createMockRecipe, createMockCategory } from "./test-helpers";
+import { createMockRecipe, createMockCategory, createComplexMockRecipe } from "./test-helpers";
 
 function createCtx(
   overrides?: Partial<ScoringContext>
@@ -15,6 +16,7 @@ function createCtx(
     assignedSlots: [],
     currentSlot: { date: new Date("2026-02-10"), mealType: "DINNER" },
     maxDaysSinceLastUsedCandidate: 30,
+    fridgeIngredientIds: [],
     ...overrides,
   };
 }
@@ -400,5 +402,63 @@ describe("scoreProteinBalance", () => {
     const tofuScore = scoreProteinBalance(tofuRecipe(), ctx);
     expect(tofuScore).toBeCloseTo(0.60);
     expect(tofuScore).toBeLessThanOrEqual(1);
+  });
+});
+
+// ============================================================================
+// scoreFridgeIngredients
+// ============================================================================
+
+describe("scoreFridgeIngredients", () => {
+  it("returns 0.5 (neutral) when no fridge ingredients provided", () => {
+    const recipe = createMockRecipe();
+    const ctx = createCtx({ fridgeIngredientIds: [] });
+
+    expect(scoreFridgeIngredients(recipe, ctx)).toBe(0.5);
+  });
+
+  it("returns 0.5 when recipe has no ingredients", () => {
+    const recipe = createMockRecipe({ ingredients: [] });
+    const ctx = createCtx({ fridgeIngredientIds: ["ing-1"] });
+
+    expect(scoreFridgeIngredients(recipe, ctx)).toBe(0.5);
+  });
+
+  it("returns 1 when all recipe ingredients are in the fridge", () => {
+    const recipe = createMockRecipe(); // default has ingredientId "ingredient-1"
+    const ctx = createCtx({ fridgeIngredientIds: ["ingredient-1"] });
+
+    expect(scoreFridgeIngredients(recipe, ctx)).toBe(1);
+  });
+
+  it("returns 0 when no recipe ingredients are in the fridge", () => {
+    const recipe = createMockRecipe(); // has ingredient-1
+    const ctx = createCtx({ fridgeIngredientIds: ["other-ingredient"] });
+
+    expect(scoreFridgeIngredients(recipe, ctx)).toBe(0);
+  });
+
+  it("returns the proportion of matching ingredients", () => {
+    // createComplexMockRecipe has 2 ingredients: ing-chicken + ing-rice
+    const recipe = createComplexMockRecipe();
+    const ctx = createCtx({ fridgeIngredientIds: ["ing-chicken"] });
+
+    expect(scoreFridgeIngredients(recipe, ctx)).toBe(0.5); // 1 out of 2
+  });
+
+  it("returns correct proportion with multiple fridge matches", () => {
+    const recipe = createComplexMockRecipe(); // ing-chicken + ing-rice
+    const ctx = createCtx({ fridgeIngredientIds: ["ing-chicken", "ing-rice"] });
+
+    expect(scoreFridgeIngredients(recipe, ctx)).toBe(1); // 2 out of 2
+  });
+
+  it("ignores fridge ingredients not used by the recipe", () => {
+    const recipe = createMockRecipe(); // has ingredient-1
+    const ctx = createCtx({
+      fridgeIngredientIds: ["ingredient-1", "extra-1", "extra-2"],
+    });
+
+    expect(scoreFridgeIngredients(recipe, ctx)).toBe(1); // 1 out of 1 recipe ingredients match
   });
 });

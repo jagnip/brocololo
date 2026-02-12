@@ -9,6 +9,7 @@ export type ScoringContext = {
   assignedSlots: SlotInputType[];
   currentSlot: { date: Date; mealType: MealType };
   maxDaysSinceLastUsedCandidate: number; // max days since last used recipe in this pool of candidates
+  fridgeIngredientIds: string[]; // ingredient IDs the user has in their fridge
 };
 
 type Scorer = {
@@ -20,7 +21,8 @@ type Scorer = {
 const scorers: Scorer[] = [
   { name: "lastUsed", fn: scoreLastUsed, weight: 2 },
   { name: "alreadyInPlan", fn: scoreAlreadyInPlan, weight: 3 },
-  { name: "proteinBalance", fn: scoreProteinBalance, weight: 2 }
+  { name: "proteinBalance", fn: scoreProteinBalance, weight: 2 },
+  { name: "fridgeIngredients", fn: scoreFridgeIngredients, weight: 3 },
 ];
 
 // Returns raw score for Last used
@@ -96,4 +98,15 @@ export function scoreProteinBalance(recipe: RecipeType, ctx: ScoringContext): nu
 
   // Clamp to 0–1: shift gap from [-1, 1] range to [0, 1]
   return Math.max(0, Math.min(1, 0.5 + gap));
+}
+
+// Scores how many of the recipe's ingredients the user already has in the fridge
+export function scoreFridgeIngredients(recipe: RecipeType, ctx: ScoringContext): number {
+  if (ctx.fridgeIngredientIds.length === 0) return 0.5; // no fridge input — neutral
+  const recipeIngredientIds = recipe.ingredients.map((ri) => ri.ingredientId);
+  if (recipeIngredientIds.length === 0) return 0.5; // no ingredients — neutral
+  const matches = recipeIngredientIds.filter(
+    (id) => ctx.fridgeIngredientIds.includes(id)
+  ).length;
+  return matches / recipeIngredientIds.length;
 }

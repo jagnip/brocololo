@@ -17,7 +17,8 @@ import { pickBestCandidate } from "@/lib/planner/scoring";
 export async function generatePlan(
   start: Date,
   end: Date,
-  allDaysHandsOnLimits: DayHandsOnType[]
+  allDaysHandsOnLimits: DayHandsOnType[],
+  fridgeIngredientIds: string[],
 ): Promise<
   | { type: "success"; plan: PlanInputType }
   | { type: "error"; message: string }
@@ -52,6 +53,7 @@ export async function generatePlan(
             assignedSlots: plan,
             currentSlot: { date: day, mealType },
             maxDaysSinceLastUsedCandidate: maxDaysSinceLastUsedCandidate,
+            fridgeIngredientIds,
           });
           
         plan.push({

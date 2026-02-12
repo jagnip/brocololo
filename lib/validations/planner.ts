@@ -26,6 +26,7 @@ const dayHandsOnSchema = z.object({
 export const plannerCriteriaSchema = z.object({
   dateRange: dateRangeSchema,
   handsOnTime: z.array(dayHandsOnSchema).min(1, "Select at least one day"),
+  fridgeIngredientIds: z.array(z.string()).default([]),
 });
 
 export type DayHandsOnType = z.infer<typeof dayHandsOnSchema>;
