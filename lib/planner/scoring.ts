@@ -5,6 +5,8 @@ import { differenceInDays } from "date-fns";
 import { getProteinKey } from "./helpers";
 import { PROTEIN_TARGETS } from "../constants";
 
+//pickBestCandidate runs all scorers against all candidates for one slot at a time
+
 export type ScoringContext = {
   assignedSlots: SlotInputType[];
   currentSlot: { date: Date; mealType: MealType };
@@ -119,5 +121,5 @@ export function scoreFridgeIngredients(recipe: RecipeType, ctx: ScoringContext):
   const matches = recipeIngredientIds.filter(
     (id) => remainingFridgeIds.includes(id)
   ).length;
-  return matches / recipeIngredientIds.length;
+  return matches / remainingFridgeIds.length; //higher score = more remaining fridge ingredients match in the recipe
 }
