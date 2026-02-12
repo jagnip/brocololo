@@ -31,3 +31,19 @@ export const HANDS_ON_DEFAULTS: Record<number, { breakfast: number | null; lunch
   5: { breakfast: 15, lunch: 15, dinner: 25 },  // Friday
   6: { breakfast: 30, lunch: 30, dinner: 45 },  // Saturday
 };
+
+//Add more categories that you want to group here
+export const PROTEIN_GROUP_MAP: Record<string, string> = {
+  beef: "red-meat",
+  pork: "red-meat",
+  eggs: "vegetarian",
+  tofu: "vegetarian",
+};
+
+//Sum should be 1.0, add categories or groups here
+export const PROTEIN_TARGETS: Record<string, number> = {
+  chicken: 0.65,
+  fish: 0.20,
+  "red-meat": 0.05,
+  vegetarian: 0.10,
+};

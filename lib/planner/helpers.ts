@@ -3,6 +3,7 @@ import { MealType } from "@/src/generated/enums";
 import { DayHandsOnType } from "@/lib/validations/planner";
 import { differenceInDays } from "date-fns";
 import { RecipeType } from "@/types/recipe";
+import { PROTEIN_GROUP_MAP } from "../constants";
 
 export function getDaysInRange(start: Date, end: Date): Date[] {
   const days: Date[] = [];
@@ -63,4 +64,12 @@ export function getMaxDaysSinceLastUsedCandidate(candidates: RecipeType[], slotD
     const days = differenceInDays(slotDate, r.lastUsedInPlanner);
     return Math.max(max, days);
   }, 0);
+}
+
+// Resolves a recipe's protein category slug to its scoring group key
+// e.g. "beef" → "red-meat", "chicken" → "chicken"
+export function getProteinKey(recipe: RecipeType): string | null {
+  const proteinCat = recipe.categories.find((c) => c.type === "PROTEIN");
+  if (!proteinCat) return null;
+  return PROTEIN_GROUP_MAP[proteinCat.slug] ?? proteinCat.slug;
 }

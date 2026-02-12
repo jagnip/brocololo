@@ -49,7 +49,7 @@ export async function generatePlan(
           const maxDaysSinceLastUsedCandidate = getMaxDaysSinceLastUsedCandidate(candidates, day); // Get the max recency gap among candidates so the recency scorer can normalise to 0–1 
 
           const recipe = pickBestCandidate(candidates, { // Pick the best candidate for the current slot based on the scoring context
-            slotsAssignedSoFar: plan,
+            assignedSlots: plan,
             currentSlot: { date: day, mealType },
             maxDaysSinceLastUsedCandidate: maxDaysSinceLastUsedCandidate,
           });

@@ -2,9 +2,11 @@ import { RecipeType } from "@/types/recipe";
 import { SlotInputType } from "@/types/planner";
 import { MealType } from "@/src/generated/enums";
 import { differenceInDays } from "date-fns";
+import { getProteinKey } from "./helpers";
+import { PROTEIN_TARGETS } from "../constants";
 
 export type ScoringContext = {
-  slotsAssignedSoFar: SlotInputType[];
+  assignedSlots: SlotInputType[];
   currentSlot: { date: Date; mealType: MealType };
   maxDaysSinceLastUsedCandidate: number; // max days since last used recipe in this pool of candidates
 };
@@ -18,6 +20,7 @@ type Scorer = {
 const scorers: Scorer[] = [
   { name: "lastUsed", fn: scoreLastUsed, weight: 2 },
   { name: "alreadyInPlan", fn: scoreAlreadyInPlan, weight: 3 },
+  { name: "proteinBalance", fn: scoreProteinBalance, weight: 2 }
 ];
 
 // Returns raw score for Last used
@@ -30,43 +33,12 @@ export function scoreLastUsed(recipe: RecipeType, ctx: ScoringContext): number {
 
 // Returns raw score for Already in plan
 export function scoreAlreadyInPlan(recipe: RecipeType, ctx: ScoringContext): number {
-  const timesUsed = ctx.slotsAssignedSoFar.filter(
+  const timesUsed = ctx.assignedSlots.filter(
     (s) => s.recipe.id === recipe.id
   ).length;
   if (timesUsed === 0) return 1; // if the recipe has never been used in a plan, return 1
   return Math.max(1 - timesUsed * 0.5, 0); // normalize the score to 0-1
 }
-
-// export function pickBestCandidate(
-//   candidates: RecipeType[],
-//   ctx: ScoringContext
-// ): RecipeType {
-//   let best = candidates[0]!;
-//   let bestScore = -Infinity;
-
-
-//   for (const candidate of candidates) {
-//     const scores = scorers.map(({ name, fn, weight }) => {
-//       const raw = fn(candidate, ctx); // before adding weights 
-//       return { name, raw, weighted: raw * weight };
-//     });
-
-//     const total = scores.reduce((sum, s) => sum + s.weighted, 0);
-
-//     console.log(
-//       `${candidate.name}: ${scores.map((s) => `${s.name}=${s.raw.toFixed(2)}(raw)×${s.weighted.toFixed(2)}(weighted)`).join(", ")} → total=${total.toFixed(2)}`
-//     );
-
-//     if (total > bestScore) {
-//       bestScore = total;
-//       best = candidate;
-//     }
-//   }
-
-//   console.log(`→ Winner: ${best.name} (score=${bestScore.toFixed(2)})\n`);
-
-//   return best;
-// }
 
 export function pickBestCandidate(
   candidates: RecipeType[],
@@ -89,4 +61,39 @@ export function pickBestCandidate(
   }
 
   return bestCandidate;
+}
+
+// Scores how well this recipe's protein fits the target distribution
+export function scoreProteinBalance(recipe: RecipeType, ctx: ScoringContext): number {
+  const proteinKey = getProteinKey(recipe); // Resolves a recipe's protein category slug to its scoring group key e.g. "beef" → "red-meat", "chicken" → "chicken"
+  if (!proteinKey) return 0.5; // no protein category — neutral score, it can go up to 1 (underreprenseted - if we want more) or down to 0 (overrepresented - if we want less)
+
+  // Count only savoury slots (lunch + dinner) assigned so far
+  const assignedSavourySlots = ctx.assignedSlots.filter(
+    (s) => s.mealType === MealType.LUNCH || s.mealType === MealType.DINNER
+  );
+
+  // If no savoury slots assigned yet, score by target ratio directly
+  if (assignedSavourySlots.length === 0) {
+    return PROTEIN_TARGETS[proteinKey] ?? 0;
+  }
+
+  // Count how many assigned savoury slots use each protein key so far
+  const proteinSlotsCounts: Record<string, number> = {};
+  for (const slot of assignedSavourySlots) {
+    const key = getProteinKey(slot.recipe);
+    if (key) {
+      proteinSlotsCounts[key] = (proteinSlotsCounts[key] ?? 0) + 1;
+    }
+  }
+
+  const totalSavourySlotsCount = assignedSavourySlots.length;
+  const currentRatio = (proteinSlotsCounts[proteinKey] ?? 0) / totalSavourySlotsCount;
+  const targetRatio = PROTEIN_TARGETS[proteinKey] ?? 0;
+
+  // gap > 0 means underrepresented, gap < 0 means overrepresented
+  const gap = targetRatio - currentRatio;
+
+  // Clamp to 0–1: shift gap from [-1, 1] range to [0, 1]
+  return Math.max(0, Math.min(1, 0.5 + gap));
 }
