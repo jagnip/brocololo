@@ -101,12 +101,23 @@ export function scoreProteinBalance(recipe: RecipeType, ctx: ScoringContext): nu
 }
 
 // Scores how many of the recipe's ingredients the user already has in the fridge
+// Ingredients already consumed by assigned recipes are removed from the pool
 export function scoreFridgeIngredients(recipe: RecipeType, ctx: ScoringContext): number {
   if (ctx.fridgeIngredientIds.length === 0) return 0.5; // no fridge input — neutral
+
+  // Subtract ingredients already consumed by assigned recipes
+  const usedIngredientIds = new Set(
+    ctx.assignedSlots.flatMap((s) => s.recipe.ingredients.map((ri) => ri.ingredientId))
+  );
+  const remainingFridgeIds = ctx.fridgeIngredientIds.filter((id) => !usedIngredientIds.has(id));
+
+  if (remainingFridgeIds.length === 0) return 0.5; // all fridge ingredients already used — neutral
+
   const recipeIngredientIds = recipe.ingredients.map((ri) => ri.ingredientId);
   if (recipeIngredientIds.length === 0) return 0.5; // no ingredients — neutral
+
   const matches = recipeIngredientIds.filter(
-    (id) => ctx.fridgeIngredientIds.includes(id)
+    (id) => remainingFridgeIds.includes(id)
   ).length;
   return matches / recipeIngredientIds.length;
 }

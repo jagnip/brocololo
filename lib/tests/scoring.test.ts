@@ -461,4 +461,51 @@ describe("scoreFridgeIngredients", () => {
 
     expect(scoreFridgeIngredients(recipe, ctx)).toBe(1); // 1 out of 1 recipe ingredients match
   });
+
+  it("excludes fridge ingredients already consumed by assigned recipes", () => {
+    // Assigned recipe already uses ingredient-1
+    const assignedRecipe = createMockRecipe({ id: "assigned" }); // has ingredient-1
+    const candidate = createMockRecipe({ id: "candidate" }); // also has ingredient-1
+
+    const ctx = createCtx({
+      fridgeIngredientIds: ["ingredient-1"],
+      assignedSlots: [
+        { date: new Date("2026-02-09"), mealType: "LUNCH", recipe: assignedRecipe },
+      ],
+    });
+
+    // ingredient-1 already consumed → no remaining fridge matches → neutral
+    expect(scoreFridgeIngredients(candidate, ctx)).toBe(0.5);
+  });
+
+  it("still scores unconsumed fridge ingredients after some are used", () => {
+    // Assigned recipe uses ing-chicken, but ing-rice is still available
+    const assignedRecipe = createMockRecipe({ id: "assigned" }); // has ingredient-1
+    const candidate = createComplexMockRecipe(); // has ing-chicken + ing-rice
+
+    const ctx = createCtx({
+      fridgeIngredientIds: ["ingredient-1", "ing-rice"],
+      assignedSlots: [
+        { date: new Date("2026-02-09"), mealType: "LUNCH", recipe: assignedRecipe },
+      ],
+    });
+
+    // ingredient-1 consumed, ing-rice remains → 1 match out of 2 recipe ingredients
+    expect(scoreFridgeIngredients(candidate, ctx)).toBe(0.5);
+  });
+
+  it("returns 0.5 when all fridge ingredients are consumed", () => {
+    const assignedRecipe = createMockRecipe({ id: "assigned" }); // has ingredient-1
+    const candidate = createMockRecipe({ id: "candidate" });
+
+    const ctx = createCtx({
+      fridgeIngredientIds: ["ingredient-1"],
+      assignedSlots: [
+        { date: new Date("2026-02-09"), mealType: "LUNCH", recipe: assignedRecipe },
+      ],
+    });
+
+    // All fridge ingredients consumed → neutral
+    expect(scoreFridgeIngredients(candidate, ctx)).toBe(0.5);
+  });
 });
