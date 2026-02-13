@@ -23,13 +23,19 @@ const dayHandsOnSchema = z.object({
   dinnerMax: handsOnMaxField,
 });
 
+const rollingRecipeSchema = z.object({
+  recipeId: z.string(),
+  meals: z.coerce.number().int().min(1),
+});
+
 export const plannerCriteriaSchema = z.object({
   dateRange: dateRangeSchema,
   handsOnTime: z.array(dayHandsOnSchema).min(1, "Select at least one day"),
   fridgeIngredientIds: z.array(z.string()).default([]),
-  rollingRecipeIds: z.array(z.string()).default([]),
+  rollingRecipes: z.array(rollingRecipeSchema).default([]),
 });
 
+export type RollingRecipeType = z.infer<typeof rollingRecipeSchema>;
 export type DayHandsOnType = z.infer<typeof dayHandsOnSchema>;
 export type PlannerCriteriaInputType = z.input<typeof plannerCriteriaSchema>;
 export type PlannerCriteriaOutputType = z.infer<typeof plannerCriteriaSchema>;

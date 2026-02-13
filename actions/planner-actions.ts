@@ -9,7 +9,7 @@ import { MEAL_TYPES, ROUTES } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { filterByFlavour, filterExcluded, filterByHandsOnTime } from "@/lib/planner/filters";
-import { DayHandsOnType } from "@/lib/validations/planner";
+import { DayHandsOnType, RollingRecipeType } from "@/lib/validations/planner";
 import { pickBestCandidate } from "@/lib/planner/scoring";
 
 
@@ -19,7 +19,7 @@ export async function generatePlan(
   end: Date,
   allDaysHandsOnLimits: DayHandsOnType[],
   fridgeIngredientIds: string[],
-  rollingRecipeIds: string[],
+  rollingRecipes: RollingRecipeType[],
 ): Promise<
   | { type: "success"; plan: PlanInputType; warnings: string[] }
   | { type: "error"; message: string }
@@ -59,22 +59,25 @@ export async function generatePlan(
             currentSlot: { date: day, mealType },
             maxDaysSinceLastUsedCandidate: maxDaysSinceLastUsedCandidate,
             fridgeIngredientIds,
-            rollingRecipeIds,
+            rollingRecipeIds: rollingRecipes.map((r) => r.recipeId),
           });
           
         plan.push({ date: new Date(day), mealType, recipe });
 
         // Batch cooking: carry forward extra portions to same meal type on following days
-        carryForwardBatchPortions(recipe, mealType, days.indexOf(day), days, plan, filledSlots);
+        // Rolling recipes use user-specified meal count; non-rolling use recipe.servings
+        const rollingEntry = rollingRecipes.find((r) => r.recipeId === recipe.id);
+        const overrideMeals = rollingEntry ? rollingEntry.meals : undefined;
+        carryForwardBatchPortions(recipe, mealType, days.indexOf(day), days, plan, filledSlots, overrideMeals);
       }
     }
 
     // Check for unplaced rolling recipes and generate warnings
     const placedRecipeIds = new Set(plan.map((s) => s.recipe.id));
     const warnings: string[] = [];
-    for (const id of rollingRecipeIds) {
-      if (!placedRecipeIds.has(id)) {
-        const name = recipes.find((r) => r.id === id)?.name ?? id;
+    for (const r of rollingRecipes) {
+      if (!placedRecipeIds.has(r.recipeId)) {
+        const name = recipes.find((rec) => rec.id === r.recipeId)?.name ?? r.recipeId;
         warnings.push(`Could not place "${name}" — no compatible slot available.`);
       }
     }

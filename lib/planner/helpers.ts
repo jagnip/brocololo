@@ -75,10 +75,12 @@ export function carryForwardBatchPortions(
   days: Date[],
   plan: PlanInputType,
   filledSlots: Set<string>,
+  overrideMeals?: number, // if provided, use this instead of recipe.servings
 ): void {
-  if (recipe.servings <= 2) return;
+  const totalMeals = overrideMeals ?? Math.floor(recipe.servings / 2);
+  const extraMeals = totalMeals - 1;
+  if (extraMeals <= 0) return;
 
-  const extraMeals = Math.floor(recipe.servings / 2) - 1;
   let placed = 0;
 
   for (let i = 1; placed < extraMeals; i++) {

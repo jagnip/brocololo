@@ -22,7 +22,7 @@ import { PlanView } from "./plan-view";
 import { useEffect, useState } from "react";
 import { PlanInputType } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
-import type { DayHandsOnType } from "@/lib/validations/planner";
+import type { DayHandsOnType, RollingRecipeType } from "@/lib/validations/planner";
 import { getDaysInRange, formatDayLabel } from "@/lib/planner/helpers";
 import { HANDS_ON_DEFAULTS } from "@/lib/constants";
 import { IngredientType } from "@/types/ingredient";
@@ -44,7 +44,7 @@ export function PlannerForm({ ingredients, recipes }: PlannerFormProps) {
       dateRange: getDefaultDateRange(),
       handsOnTime: [],
       fridgeIngredientIds: [],
-      rollingRecipeIds: [],
+      rollingRecipes: [],
     },
   });
 
@@ -54,7 +54,7 @@ export function PlannerForm({ ingredients, recipes }: PlannerFormProps) {
       new Date(values.dateRange.end),
       values.handsOnTime as DayHandsOnType[],
       (values.fridgeIngredientIds ?? []) as string[],
-      (values.rollingRecipeIds ?? []) as string[],
+      (values.rollingRecipes ?? []) as RollingRecipeType[],
     );
 
     if (result.type === "error") {
@@ -223,32 +223,80 @@ export function PlannerForm({ ingredients, recipes }: PlannerFormProps) {
           )}
           <FormField
             control={form.control}
-            name="rollingRecipeIds"
-            render={({ field }) => (
-              <FormItem className="mt-4">
-                <FormLabel>Rolling recipes</FormLabel>
-                <FormControl>
-                  <MultipleSelector
-                    value={
-                      recipes
-                        .filter((r) => (field.value as string[])?.includes(r.id))
-                        .map((r) => ({ value: r.id, label: r.name }))
-                    }
-                    onChange={(options) => field.onChange(options.map((o) => o.value))}
-                    defaultOptions={recipes.map((r) => ({
-                      value: r.id,
-                      label: r.name,
-                    }))}
-                    placeholder="Select recipes to include in plan"
-                    emptyIndicator={
-                      <p className="text-center text-sm text-muted-foreground">
-                        No recipes found.
-                      </p>
-                    }
-                  />
-                </FormControl>
-              </FormItem>
-            )}
+            name="rollingRecipes"
+            render={({ field }) => {
+              const selected = (field.value ?? []) as RollingRecipeType[];
+              return (
+                <FormItem className="mt-4">
+                  <FormLabel>Rolling recipes</FormLabel>
+                  <FormControl>
+                    <MultipleSelector
+                      value={selected.map((r) => {
+                        const recipe = recipes.find((rec) => rec.id === r.recipeId);
+                        return { value: r.recipeId, label: recipe?.name ?? r.recipeId };
+                      })}
+                      onChange={(options) => {
+                        const updated = options.map((o) => {
+                          const existing = selected.find((r) => r.recipeId === o.value);
+                          if (existing) return existing;
+                          const recipe = recipes.find((r) => r.id === o.value);
+                          const defaultMeals = recipe && recipe.servings > 2
+                            ? Math.floor(recipe.servings / 2)
+                            : 1;
+                          return { recipeId: o.value, meals: defaultMeals };
+                        });
+                        field.onChange(updated);
+                      }}
+                      defaultOptions={recipes.map((r) => ({
+                        value: r.id,
+                        label: r.name,
+                      }))}
+                      placeholder="Select recipes to include in plan"
+                      emptyIndicator={
+                        <p className="text-center text-sm text-muted-foreground">
+                          No recipes found.
+                        </p>
+                      }
+                    />
+                  </FormControl>
+                  {selected
+                    .filter((r) => {
+                      const recipe = recipes.find((rec) => rec.id === r.recipeId);
+                      return recipe && recipe.servings > 2;
+                    })
+                    .map((r) => {
+                      const recipe = recipes.find((rec) => rec.id === r.recipeId)!;
+                      const maxMeals = Math.floor(recipe.servings / 2);
+                      return (
+                        <div key={r.recipeId} className="flex items-center gap-2 mt-2">
+                          <span className="text-sm truncate flex-1">{recipe.name}</span>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={maxMeals}
+                            className="w-20"
+                            value={r.meals}
+                            onChange={(e) => {
+                              const newMeals = Math.min(
+                                Math.max(Number(e.target.value) || 1, 1),
+                                maxMeals,
+                              );
+                              field.onChange(
+                                selected.map((s) =>
+                                  s.recipeId === r.recipeId ? { ...s, meals: newMeals } : s
+                                )
+                              );
+                            }}
+                          />
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            meals (max {maxMeals})
+                          </span>
+                        </div>
+                      );
+                    })}
+                </FormItem>
+              );
+            }}
           />
           <FormField
             control={form.control}
