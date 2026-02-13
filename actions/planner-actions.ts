@@ -1,17 +1,16 @@
 "use server";
 
 import { getRecipes } from "@/lib/db/recipes";
-import { getDaysInRange as getDaysToPlan, getMaxDaysSinceLastUsedCandidate, getMealHandsOnLimit, carryForwardBatchPortions } from "@/lib/planner/helpers";
+import { getDaysInRange as getDaysToPlan, getMaxDaysSinceLastUsedCandidate, getMealHandsOnLimit, markBatchSlots } from "@/lib/planner/helpers";
 import { PlanInputType } from "@/types/planner";
+import { RecipeType } from "@/types/recipe";
 import { createPlan } from "@/lib/db/planner";
-import { MealType } from "@/src/generated/enums";
 import { MEAL_TYPES, ROUTES } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { filterByFlavour, filterExcluded, filterByHandsOnTime } from "@/lib/planner/filters";
 import { DayHandsOnType, RollingRecipeType } from "@/lib/validations/planner";
 import { pickBestCandidate } from "@/lib/planner/scoring";
-
 
 
 export async function generatePlan(
@@ -33,7 +32,7 @@ export async function generatePlan(
 
     const days = getDaysToPlan(start, end); //get all days between start and end dates
     const plan: PlanInputType = []; //initialize empty plan
-    const filledSlots = new Set<string>(); // track slots filled by batch carry-forward
+    const batchFilledSlots = new Map<string, RecipeType>(); // track batch carry-forward: slotKey → forced recipe
 
     for (const day of days) { //for the given day 
       const dateStr = day.toLocaleDateString("en-GB");
@@ -41,10 +40,11 @@ export async function generatePlan(
 
       for (const mealType of MEAL_TYPES) { // for the given meal type in the given day
         const slotKey = `${day.toISOString()}-${mealType}`;
-        if (filledSlots.has(slotKey)) continue; // already filled by batch carry-forward
+        const batchRecipe = batchFilledSlots.get(slotKey); // check if this slot is claimed by a batch carry-forward
 
-        let candidates = filterByFlavour(recipes, mealType); //filter sweet recipes for breakfast and savoury recipes for lunch and dinner
-        candidates = filterByHandsOnTime(candidates, getMealHandsOnLimit(dayHandsOnLimits, mealType)); //filter recipes that have hands on time less than the limit for the given meal type on the given day (from the form)
+        // Always run scoring to compute alternatives (even for batch slots)
+        let candidates = filterByFlavour(recipes, mealType);
+        candidates = filterByHandsOnTime(candidates, getMealHandsOnLimit(dayHandsOnLimits, mealType));
 
         if (candidates.length === 0) {
           return {
@@ -52,23 +52,30 @@ export async function generatePlan(
             message: `No recipes available for ${mealType.toLowerCase()} on ${dateStr}.`,
           };
         }
-          const maxDaysSinceLastUsedCandidate = getMaxDaysSinceLastUsedCandidate(candidates, day); // Get the max recency gap among candidates so the recency scorer can normalise to 0–1 
 
-          const recipe = pickBestCandidate(candidates, { // Pick the best candidate for the current slot based on the scoring context
-            assignedSlots: plan,
-            currentSlot: { date: day, mealType },
-            maxDaysSinceLastUsedCandidate: maxDaysSinceLastUsedCandidate,
-            fridgeIngredientIds,
-            rollingRecipeIds: rollingRecipes.map((r) => r.recipeId),
-          });
-          
-        plan.push({ date: new Date(day), mealType, recipe });
+        const maxDaysSinceLastUsedCandidate = getMaxDaysSinceLastUsedCandidate(candidates, day);
+        const ctx = {
+          assignedSlots: plan,
+          currentSlot: { date: day, mealType },
+          maxDaysSinceLastUsedCandidate,
+          fridgeIngredientIds,
+          rollingRecipeIds: rollingRecipes.map((r) => r.recipeId),
+        };
+        const { winner, alternatives } = pickBestCandidate(candidates, ctx);
 
-        // Batch cooking: carry forward extra portions to same meal type on following days
-        // Rolling recipes use user-specified meal count; non-rolling use recipe.servings
-        const rollingEntry = rollingRecipes.find((r) => r.recipeId === recipe.id);
-        const overrideMeals = rollingEntry ? rollingEntry.meals : undefined;
-        carryForwardBatchPortions(recipe, mealType, days.indexOf(day), days, plan, filledSlots, overrideMeals);
+        if (batchRecipe) {
+          // Batch carry-forward slot: use forced recipe, alternatives from scoring (excluding the batch recipe)
+          const alts = [winner, ...alternatives].filter((r) => r.id !== batchRecipe.id).slice(0, 10);
+          plan.push({ date: new Date(day), mealType, recipe: batchRecipe, alternatives: alts });
+        } else {
+          // Normal slot: use scoring winner
+          plan.push({ date: new Date(day), mealType, recipe: winner, alternatives });
+
+          // Mark batch carry-forward slots for this recipe
+          const rollingEntry = rollingRecipes.find((r) => r.recipeId === winner.id);
+          const overrideMeals = rollingEntry ? rollingEntry.meals : undefined;
+          markBatchSlots(winner, mealType, days.indexOf(day), days, batchFilledSlots, overrideMeals);
+        }
       }
     }
 
