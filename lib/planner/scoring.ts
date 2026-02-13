@@ -12,6 +12,7 @@ export type ScoringContext = {
   currentSlot: { date: Date; mealType: MealType };
   maxDaysSinceLastUsedCandidate: number; // max days since last used recipe in this pool of candidates
   fridgeIngredientIds: string[]; // ingredient IDs the user has in their fridge
+  rollingRecipeIds: string[]; // recipe IDs the user wants included in the plan
 };
 
 type Scorer = {
@@ -25,6 +26,7 @@ const scorers: Scorer[] = [
   { name: "alreadyInPlan", fn: scoreAlreadyInPlan, weight: 3 },
   { name: "proteinBalance", fn: scoreProteinBalance, weight: 2 },
   { name: "fridgeIngredients", fn: scoreFridgeIngredients, weight: 3 },
+  { name: "rollingRecipe", fn: scoreRollingRecipe, weight: 10 },
 ];
 
 // Returns raw score for Last used
@@ -122,4 +124,15 @@ export function scoreFridgeIngredients(recipe: RecipeType, ctx: ScoringContext):
     (id) => remainingFridgeIds.includes(id)
   ).length;
   return matches / remainingFridgeIds.length; //higher score = more remaining fridge ingredients match in the recipe
+}
+
+// Gives a massive boost to rolling recipes that haven't been placed yet
+export function scoreRollingRecipe(recipe: RecipeType, ctx: ScoringContext): number {
+  if (!ctx.rollingRecipeIds.includes(recipe.id)) return 0.5; // not a rolling recipe — neutral
+
+  // Check if this rolling recipe is already placed in the plan
+  const alreadyPlaced = ctx.assignedSlots.some((s) => s.recipe.id === recipe.id);
+  if (alreadyPlaced) return 0.5; // already placed — drop to neutral, let other scorers decide
+
+  return 1; // not yet placed — full boost
 }

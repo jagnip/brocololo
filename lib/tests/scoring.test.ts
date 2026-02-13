@@ -17,6 +17,7 @@ function createCtx(
     currentSlot: { date: new Date("2026-02-10"), mealType: "DINNER" },
     maxDaysSinceLastUsedCandidate: 30,
     fridgeIngredientIds: [],
+    rollingRecipeIds: [],
     ...overrides,
   };
 }
@@ -443,7 +444,7 @@ describe("scoreFridgeIngredients", () => {
     const recipe = createComplexMockRecipe();
     const ctx = createCtx({ fridgeIngredientIds: ["ing-chicken"] });
 
-    expect(scoreFridgeIngredients(recipe, ctx)).toBe(0.5); // 1 out of 2
+    expect(scoreFridgeIngredients(recipe, ctx)).toBe(1); // 1 match out of 1 fridge ingredient
   });
 
   it("returns correct proportion with multiple fridge matches", () => {
@@ -459,7 +460,7 @@ describe("scoreFridgeIngredients", () => {
       fridgeIngredientIds: ["ingredient-1", "extra-1", "extra-2"],
     });
 
-    expect(scoreFridgeIngredients(recipe, ctx)).toBe(1); // 1 out of 1 recipe ingredients match
+    expect(scoreFridgeIngredients(recipe, ctx)).toBeCloseTo(1 / 3); // 1 match out of 3 fridge ingredients
   });
 
   it("excludes fridge ingredients already consumed by assigned recipes", () => {
@@ -490,8 +491,8 @@ describe("scoreFridgeIngredients", () => {
       ],
     });
 
-    // ingredient-1 consumed, ing-rice remains → 1 match out of 2 recipe ingredients
-    expect(scoreFridgeIngredients(candidate, ctx)).toBe(0.5);
+    // ingredient-1 consumed, ing-rice remains → 1 match out of 1 remaining fridge ingredient
+    expect(scoreFridgeIngredients(candidate, ctx)).toBe(1);
   });
 
   it("returns 0.5 when all fridge ingredients are consumed", () => {

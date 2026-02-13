@@ -19,8 +19,9 @@ export async function generatePlan(
   end: Date,
   allDaysHandsOnLimits: DayHandsOnType[],
   fridgeIngredientIds: string[],
+  rollingRecipeIds: string[],
 ): Promise<
-  | { type: "success"; plan: PlanInputType }
+  | { type: "success"; plan: PlanInputType; warnings: string[] }
   | { type: "error"; message: string }
 > {
   try {
@@ -54,6 +55,7 @@ export async function generatePlan(
             currentSlot: { date: day, mealType },
             maxDaysSinceLastUsedCandidate: maxDaysSinceLastUsedCandidate,
             fridgeIngredientIds,
+            rollingRecipeIds,
           });
           
         plan.push({
@@ -64,7 +66,17 @@ export async function generatePlan(
       }
     }
 
-    return { type: "success", plan };
+    // Check for unplaced rolling recipes and generate warnings
+    const placedRecipeIds = new Set(plan.map((s) => s.recipe.id));
+    const warnings: string[] = [];
+    for (const id of rollingRecipeIds) {
+      if (!placedRecipeIds.has(id)) {
+        const name = recipes.find((r) => r.id === id)?.name ?? id;
+        warnings.push(`Could not place "${name}" — no compatible slot available.`);
+      }
+    }
+
+    return { type: "success", plan, warnings };
   } catch (error) {
     console.error("Error generating plan", error);
     return { type: "error", message: "Failed to generate plan." };

@@ -15,6 +15,7 @@ function createCtx(
     currentSlot: { date: new Date("2026-02-10"), mealType: "DINNER" },
     maxDaysSinceLastUsedCandidate: 30,
     fridgeIngredientIds: [],
+    rollingRecipeIds: [],
     ...overrides,
   };
 }

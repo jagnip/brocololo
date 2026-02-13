@@ -26,13 +26,15 @@ import type { DayHandsOnType } from "@/lib/validations/planner";
 import { getDaysInRange, formatDayLabel } from "@/lib/planner/helpers";
 import { HANDS_ON_DEFAULTS } from "@/lib/constants";
 import { IngredientType } from "@/types/ingredient";
+import { RecipeType } from "@/types/recipe";
 import MultipleSelector from "@/components/ui/multiselect";
 
 type PlannerFormProps = {
   ingredients: IngredientType[];
+  recipes: RecipeType[];
 };
 
-export function PlannerForm({ ingredients }: PlannerFormProps) {
+export function PlannerForm({ ingredients, recipes }: PlannerFormProps) {
   const [plan, setPlan] = useState<PlanInputType | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -42,6 +44,7 @@ export function PlannerForm({ ingredients }: PlannerFormProps) {
       dateRange: getDefaultDateRange(),
       handsOnTime: [],
       fridgeIngredientIds: [],
+      rollingRecipeIds: [],
     },
   });
 
@@ -51,11 +54,17 @@ export function PlannerForm({ ingredients }: PlannerFormProps) {
       new Date(values.dateRange.end),
       values.handsOnTime as DayHandsOnType[],
       (values.fridgeIngredientIds ?? []) as string[],
+      (values.rollingRecipeIds ?? []) as string[],
     );
 
     if (result.type === "error") {
       toast.error(result.message);
       return;
+    }
+
+    // Show warnings for rolling recipes that couldn't be placed
+    if (result.warnings.length > 0) {
+      result.warnings.forEach((w) => toast.warning(w));
     }
 
     setPlan(result.plan);
@@ -212,6 +221,35 @@ export function PlannerForm({ ingredients }: PlannerFormProps) {
               ))}
             </div>
           )}
+          <FormField
+            control={form.control}
+            name="rollingRecipeIds"
+            render={({ field }) => (
+              <FormItem className="mt-4">
+                <FormLabel>Rolling recipes</FormLabel>
+                <FormControl>
+                  <MultipleSelector
+                    value={
+                      recipes
+                        .filter((r) => (field.value as string[])?.includes(r.id))
+                        .map((r) => ({ value: r.id, label: r.name }))
+                    }
+                    onChange={(options) => field.onChange(options.map((o) => o.value))}
+                    defaultOptions={recipes.map((r) => ({
+                      value: r.id,
+                      label: r.name,
+                    }))}
+                    placeholder="Select recipes to include in plan"
+                    emptyIndicator={
+                      <p className="text-center text-sm text-muted-foreground">
+                        No recipes found.
+                      </p>
+                    }
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="fridgeIngredientIds"

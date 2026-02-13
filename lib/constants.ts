@@ -38,6 +38,8 @@ export const PROTEIN_GROUP_MAP: Record<string, string> = {
   pork: "red-meat",
   eggs: "vegetarian",
   tofu: "vegetarian",
+  turkey: "poultry",
+  chicken: "poultry",
 };
 
 //Sum should be 1.0, add categories or groups here
@@ -54,4 +56,5 @@ export const PROTEIN_COLORS: Record<string, string> = {
   fish: "border-l-cyan-400",
   "red-meat": "border-l-red-400",
   vegetarian: "border-l-green-400",
+  poultry: "border-l-purple-400",
 };
