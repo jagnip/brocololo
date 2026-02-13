@@ -66,6 +66,34 @@ export function getMaxDaysSinceLastUsedCandidate(candidates: RecipeType[], slotD
   }, 0);
 }
 
+// Carries forward extra portions from a batch recipe (servings > 2) to the same meal type
+// on following days. Skips slots that are already filled, continues trying remaining days.
+export function carryForwardBatchPortions(
+  recipe: RecipeType,
+  mealType: MealType,
+  dayIndex: number,
+  days: Date[],
+  plan: PlanInputType,
+  filledSlots: Set<string>,
+): void {
+  if (recipe.servings <= 2) return;
+
+  const extraMeals = Math.floor(recipe.servings / 2) - 1;
+  let placed = 0;
+
+  for (let i = 1; placed < extraMeals; i++) {
+    const futureDay = days[dayIndex + i];
+    if (!futureDay) break; // plan ends, waste remaining portions
+
+    const futureSlotKey = `${futureDay.toISOString()}-${mealType}`;
+    if (filledSlots.has(futureSlotKey)) continue; // slot taken, skip to next day
+
+    plan.push({ date: new Date(futureDay), mealType, recipe });
+    filledSlots.add(futureSlotKey);
+    placed++;
+  }
+}
+
 // Resolves a recipe's protein category slug to its scoring group key
 // e.g. "beef" → "red-meat", "chicken" → "chicken"
 export function getProteinKey(recipe: RecipeType): string | null {

@@ -1,7 +1,7 @@
 "use server";
 
 import { getRecipes } from "@/lib/db/recipes";
-import { getDaysInRange as getDaysToPlan, getMaxDaysSinceLastUsedCandidate, getMealHandsOnLimit } from "@/lib/planner/helpers";
+import { getDaysInRange as getDaysToPlan, getMaxDaysSinceLastUsedCandidate, getMealHandsOnLimit, carryForwardBatchPortions } from "@/lib/planner/helpers";
 import { PlanInputType } from "@/types/planner";
 import { createPlan } from "@/lib/db/planner";
 import { MealType } from "@/src/generated/enums";
@@ -33,12 +33,16 @@ export async function generatePlan(
 
     const days = getDaysToPlan(start, end); //get all days between start and end dates
     const plan: PlanInputType = []; //initialize empty plan
+    const filledSlots = new Set<string>(); // track slots filled by batch carry-forward
 
     for (const day of days) { //for the given day 
       const dateStr = day.toLocaleDateString("en-GB");
       const dayHandsOnLimits = allDaysHandsOnLimits.find((d) => d.date === dateStr); //get hands on limits for the current day
 
       for (const mealType of MEAL_TYPES) { // for the given meal type in the given day
+        const slotKey = `${day.toISOString()}-${mealType}`;
+        if (filledSlots.has(slotKey)) continue; // already filled by batch carry-forward
+
         let candidates = filterByFlavour(recipes, mealType); //filter sweet recipes for breakfast and savoury recipes for lunch and dinner
         candidates = filterByHandsOnTime(candidates, getMealHandsOnLimit(dayHandsOnLimits, mealType)); //filter recipes that have hands on time less than the limit for the given meal type on the given day (from the form)
 
@@ -58,11 +62,10 @@ export async function generatePlan(
             rollingRecipeIds,
           });
           
-        plan.push({
-          date: new Date(day),
-          mealType,
-          recipe,
-        });
+        plan.push({ date: new Date(day), mealType, recipe });
+
+        // Batch cooking: carry forward extra portions to same meal type on following days
+        carryForwardBatchPortions(recipe, mealType, days.indexOf(day), days, plan, filledSlots);
       }
     }
 

@@ -44,7 +44,7 @@ export const PROTEIN_GROUP_MAP: Record<string, string> = {
 
 //Sum should be 1.0, add categories or groups here
 export const PROTEIN_TARGETS: Record<string, number> = {
-  chicken: 0.65,
+  poultry: 0.65,
   fish: 0.20,
   "red-meat": 0.05,
   vegetarian: 0.10,
@@ -52,9 +52,8 @@ export const PROTEIN_TARGETS: Record<string, number> = {
 
 // Card accent colors by protein group key (used in planner view)
 export const PROTEIN_COLORS: Record<string, string> = {
-  chicken: "border-l-blue-400",
+  poultry: "border-l-blue-400",
   fish: "border-l-cyan-400",
   "red-meat": "border-l-red-400",
   vegetarian: "border-l-green-400",
-  poultry: "border-l-purple-400",
 };
