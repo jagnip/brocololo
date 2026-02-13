@@ -66,15 +66,15 @@ export function getMaxDaysSinceLastUsedCandidate(candidates: RecipeType[], slotD
   }, 0);
 }
 
-// Carries forward extra portions from a batch recipe (servings > 2) to the same meal type
-// on following days. Skips slots that are already filled, continues trying remaining days.
-export function carryForwardBatchPortions(
+// Marks future slots as claimed by a batch recipe (servings > 2).
+// Uses a Map so generatePlan knows which recipe was carried forward into each slot.
+// Does NOT push to plan — generatePlan handles that so it can compute alternatives.
+export function markBatchSlots(
   recipe: RecipeType,
   mealType: MealType,
   dayIndex: number,
   days: Date[],
-  plan: PlanInputType,
-  filledSlots: Set<string>,
+  batchFilledSlots: Map<string, RecipeType>,
   overrideMeals?: number, // if provided, use this instead of recipe.servings
 ): void {
   const totalMeals = overrideMeals ?? Math.floor(recipe.servings / 2);
@@ -88,10 +88,9 @@ export function carryForwardBatchPortions(
     if (!futureDay) break; // plan ends, waste remaining portions
 
     const futureSlotKey = `${futureDay.toISOString()}-${mealType}`;
-    if (filledSlots.has(futureSlotKey)) continue; // slot taken, skip to next day
+    if (batchFilledSlots.has(futureSlotKey)) continue; // slot taken, skip to next day
 
-    plan.push({ date: new Date(futureDay), mealType, recipe });
-    filledSlots.add(futureSlotKey);
+    batchFilledSlots.set(futureSlotKey, recipe);
     placed++;
   }
 }

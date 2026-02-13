@@ -1,13 +1,15 @@
-import RecipeCard from "@/components/recipes/card";
+"use client";
+
 import {
   formatDayLabel,
   getMealsForDate,
   groupSlotsByDate,
   getProteinKey,
 } from "@/lib/planner/helpers";
-import { PlanInputType } from "@/types/planner";
+import { PlanInputType, SlotInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PROTEIN_COLORS } from "@/lib/constants";
+import { PlannerSlotCard } from "./planner-slot-card";
 
 function getFridgeMatchIngredients(
   recipe: RecipeType,
@@ -25,18 +27,38 @@ function getProteinAccentColor(recipe: RecipeType): string | undefined {
   return PROTEIN_COLORS[key];
 }
 
+function getSlotKey(slot: SlotInputType): string {
+  return `${slot.date.toISOString()}-${slot.mealType}`;
+}
+
 type PlanViewProps = {
   plan: PlanInputType;
   fridgeIngredientIds?: string[];
+  onShuffle?: (slotKey: string) => void;
 };
 
-export function PlanView({ plan, fridgeIngredientIds = [] }: PlanViewProps) {
+export function PlanView({ plan, fridgeIngredientIds = [], onShuffle }: PlanViewProps) {
   if (plan.length === 0) {
     return null;
   }
 
   const slotsByDate = groupSlotsByDate(plan);
   const sortedDates = Array.from(slotsByDate.keys()).sort();
+
+  function renderSlot(slot: SlotInputType) {
+    const slotKey = getSlotKey(slot);
+    return (
+      <PlannerSlotCard
+        slot={slot}
+        fridgeMatchIngredients={getFridgeMatchIngredients(
+          slot.recipe,
+          fridgeIngredientIds,
+        )}
+        proteinColor={getProteinAccentColor(slot.recipe)}
+        onShuffle={onShuffle ? () => onShuffle(slotKey) : undefined}
+      />
+    );
+  }
 
   return (
     <section className="mt-8 space-y-8">
@@ -56,40 +78,19 @@ export function PlanView({ plan, fridgeIngredientIds = [] }: PlanViewProps) {
                   <p className="mb-2 text-sm text-muted-foreground">
                     Breakfast
                   </p>
-                  <RecipeCard
-                    recipe={breakfast.recipe}
-                    fridgeMatchIngredients={getFridgeMatchIngredients(
-                      breakfast.recipe,
-                      fridgeIngredientIds,
-                    )}
-                    proteinColor={getProteinAccentColor(breakfast.recipe)}
-                  />
+                  {renderSlot(breakfast)}
                 </div>
               )}
               {lunch && (
                 <div>
                   <p className="mb-2 text-sm text-muted-foreground">Lunch</p>
-                  <RecipeCard
-                    recipe={lunch.recipe}
-                    fridgeMatchIngredients={getFridgeMatchIngredients(
-                      lunch.recipe,
-                      fridgeIngredientIds,
-                    )}
-                    proteinColor={getProteinAccentColor(lunch.recipe)}
-                  />
+                  {renderSlot(lunch)}
                 </div>
               )}
               {dinner && (
                 <div>
                   <p className="mb-2 text-sm text-muted-foreground">Dinner</p>
-                  <RecipeCard
-                    recipe={dinner.recipe}
-                    fridgeMatchIngredients={getFridgeMatchIngredients(
-                      dinner.recipe,
-                      fridgeIngredientIds,
-                    )}
-                    proteinColor={getProteinAccentColor(dinner.recipe)}
-                  />
+                  {renderSlot(dinner)}
                 </div>
               )}
             </div>

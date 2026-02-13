@@ -19,8 +19,8 @@ import {
 import { toast } from "sonner";
 import { getDefaultDateRange, WeekPicker } from "./date-range-picker";
 import { PlanView } from "./plan-view";
-import { useEffect, useState } from "react";
-import { PlanInputType } from "@/types/planner";
+import { useCallback, useEffect, useState } from "react";
+import { PlanInputType, SlotInputType } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
 import type { DayHandsOnType, RollingRecipeType } from "@/lib/validations/planner";
 import { getDaysInRange, formatDayLabel } from "@/lib/planner/helpers";
@@ -70,6 +70,25 @@ export function PlannerForm({ ingredients, recipes }: PlannerFormProps) {
     setPlan(result.plan);
     toast.success("Plan generated");
   }
+
+  // Shuffle: rotate recipe and alternatives for a given slot
+  const handleShuffle = useCallback((slotKey: string) => {
+    setPlan((prev) => {
+      if (!prev) return prev;
+      return prev.map((slot) => {
+        const key = `${slot.date.toISOString()}-${slot.mealType}`;
+        if (key !== slotKey || slot.alternatives.length === 0) return slot;
+
+        // Rotate: current recipe goes to end of alternatives, first alternative becomes recipe
+        const [nextRecipe, ...restAlternatives] = slot.alternatives;
+        return {
+          ...slot,
+          recipe: nextRecipe,
+          alternatives: [...restAlternatives, slot.recipe],
+        };
+      });
+    });
+  }, []);
 
   async function handleSavePlan(plan: PlanInputType) {
     setIsSaving(true);
@@ -344,7 +363,7 @@ export function PlannerForm({ ingredients, recipes }: PlannerFormProps) {
               {isSaving ? "Saving…" : "Save plan"}
             </Button>
           </div>
-          <PlanView plan={plan} fridgeIngredientIds={(form.watch("fridgeIngredientIds") ?? []) as string[]} />
+          <PlanView plan={plan} fridgeIngredientIds={(form.watch("fridgeIngredientIds") ?? []) as string[]} onShuffle={handleShuffle} />
         </>
       )}
     </>

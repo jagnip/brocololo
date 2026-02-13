@@ -6,19 +6,12 @@ import Link from "next/link";
 import { Card, CardHeader } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { useSearchParams } from "next/navigation";
-import { cn } from "@/lib/utils";
 
 type RecipeCardProps = {
   recipe: RecipeType;
-  fridgeMatchIngredients?: string[];
-  proteinColor?: string;
 };
 
-export default function RecipeCard({
-  recipe,
-  fridgeMatchIngredients,
-  proteinColor: accentColor,
-}: RecipeCardProps) {
+export default function RecipeCard({ recipe }: RecipeCardProps) {
   const searchParams = useSearchParams();
   const queryString = searchParams.toString();
 
@@ -32,12 +25,7 @@ export default function RecipeCard({
 
   return (
     <Link href={url} scroll={false}>
-      <Card
-        className={cn(
-          "cursor-pointer hover:shadow-md transition-shadow",
-          accentColor && `border-l-4 ${accentColor}`,
-        )}
-      >
+      <Card className="cursor-pointer hover:shadow-md transition-shadow">
         {coverImage && (
           <Image
             src={coverImage.url}
@@ -61,16 +49,6 @@ export default function RecipeCard({
                       className="text-xs"
                     >
                       {category.name}
-                    </Badge>
-                  ))}
-                {fridgeMatchIngredients &&
-                  fridgeMatchIngredients.length > 0 &&
-                  fridgeMatchIngredients.map((name) => (
-                    <Badge
-                      key={name}
-                      className="bg-green-100 text-green-800 border-green-200 text-xs"
-                    >
-                      {name}
                     </Badge>
                   ))}
               </div>

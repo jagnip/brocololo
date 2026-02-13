@@ -12,7 +12,7 @@ function createCtx(
 ): ScoringContext {
   return {
     assignedSlots: [],
-    currentSlot: { date: new Date("2026-02-10"), mealType: "DINNER" },
+    currentSlot: { date: new Date("2026-02-10"), mealType: "DINNER", alternatives: [] },
     maxDaysSinceLastUsedCandidate: 30,
     fridgeIngredientIds: [],
     rollingRecipeIds: [],
@@ -99,6 +99,7 @@ describe("scoreAlreadyInPlan", () => {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
           recipe: createMockRecipe({ id: "recipe-A" }),
+          alternatives: [],
         },
       ],
     });
@@ -114,11 +115,13 @@ describe("scoreAlreadyInPlan", () => {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
           recipe: createMockRecipe({ id: "recipe-A" }),
+          alternatives: [],
         },
         {
           date: new Date("2026-02-09"),
           mealType: "DINNER",
           recipe: createMockRecipe({ id: "recipe-A" }),
+          alternatives: [],
         },
       ],
     });
@@ -134,16 +137,19 @@ describe("scoreAlreadyInPlan", () => {
           date: new Date("2026-02-08"),
           mealType: "DINNER",
           recipe: createMockRecipe({ id: "recipe-A" }),
+          alternatives: [],
         },
         {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
           recipe: createMockRecipe({ id: "recipe-A" }),
+          alternatives: [],
         },
         {
           date: new Date("2026-02-09"),
           mealType: "DINNER",
           recipe: createMockRecipe({ id: "recipe-A" }),
+          alternatives: [],
         },
       ],
     });
@@ -159,11 +165,13 @@ describe("scoreAlreadyInPlan", () => {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
           recipe: createMockRecipe({ id: "recipe-B" }),
+          alternatives: [],
         },
         {
           date: new Date("2026-02-09"),
           mealType: "DINNER",
           recipe: createMockRecipe({ id: "recipe-C" }),
+          alternatives: [],
         },
       ],
     });
@@ -194,7 +202,7 @@ describe("pickBestCandidate", () => {
     });
 
     const result = pickBestCandidate([recentlyUsed, neverUsed], ctx);
-    expect(result.id).toBe("never-used");
+    expect(result.winner.id).toBe("never-used");
   });
 
   it("prefers an unused recipe over one already in the plan", () => {
@@ -215,6 +223,7 @@ describe("pickBestCandidate", () => {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
           recipe: createMockRecipe({ id: "already-picked" }),
+          alternatives: [],
         },
       ],
     });
@@ -222,7 +231,7 @@ describe("pickBestCandidate", () => {
     // fresh: lastUsed=21/21=1.0 * 2 + alreadyInPlan=1.0 * 3 = 5.0
     // alreadyPicked: lastUsed=1.0 * 2 + alreadyInPlan=0.5 * 3 = 3.5
     const result = pickBestCandidate([fresh, alreadyPicked], ctx);
-    expect(result.id).toBe("fresh");
+    expect(result.winner.id).toBe("fresh");
   });
 
   it("returns the only candidate when there is one", () => {
@@ -230,6 +239,6 @@ describe("pickBestCandidate", () => {
     const ctx = createCtx();
 
     const result = pickBestCandidate([only], ctx);
-    expect(result.id).toBe("only-one");
+    expect(result.winner.id).toBe("only-one");
   });
 });

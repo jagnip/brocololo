@@ -46,27 +46,27 @@ export function scoreAlreadyInPlan(recipe: RecipeType, ctx: ScoringContext): num
   return Math.max(1 - timesUsed * 0.5, 0); // normalize the score to 0-1
 }
 
+const MAX_ALTERNATIVES = 10;
+
 export function pickBestCandidate(
   candidates: RecipeType[],
   ctx: ScoringContext
-): RecipeType {
-  let bestCandidate = candidates[0]!;
-  let bestScore = -Infinity;
-
-  for (const candidate of candidates) {
-    // Loop through all scorers: compute each raw score (0–1), multiply by its weight, and sum into a total
-    const totalScore = scorers.reduce(
-      (sum, { fn, weight }) => sum + fn(candidate, ctx) * weight, // calculate the row score and weight it
+): { winner: RecipeType; alternatives: RecipeType[] } {
+  // Score all candidates and sort by total score descending
+  const scored = candidates.map((candidate) => ({
+    recipe: candidate,
+    score: scorers.reduce(
+      (sum, { fn, weight }) => sum + fn(candidate, ctx) * weight,
       0
-    );
+    ),
+  }));
 
-    if (totalScore > bestScore) {
-      bestScore = totalScore;
-      bestCandidate = candidate;
-    }
-  }
+  scored.sort((a, b) => b.score - a.score);
 
-  return bestCandidate;
+  return {
+    winner: scored[0]!.recipe,
+    alternatives: scored.slice(1, MAX_ALTERNATIVES + 1).map((s) => s.recipe),
+  };
 }
 
 // Scores how well this recipe's protein fits the target distribution
