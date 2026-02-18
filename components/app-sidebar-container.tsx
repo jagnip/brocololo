@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import {
   SidebarProvider,
   SidebarInset,
@@ -19,7 +20,9 @@ export async function AppSidebarContainer({
 
   return (
     <SidebarProvider>
-      <AppSidebar categories={categories} plans={plans} />
+      <Suspense>
+        <AppSidebar categories={categories} plans={plans} />
+      </Suspense>
       <SidebarInset>
         <header className="flex h-12 items-center gap-2 px-4 border-b">
           <SidebarTrigger />
