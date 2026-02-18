@@ -34,10 +34,12 @@ function getSlotKey(slot: SlotInputType): string {
 type PlanViewProps = {
   plan: PlanInputType;
   fridgeIngredientIds?: string[];
+  recipes?: RecipeType[];
   onShuffle?: (slotKey: string) => void;
+  onReplace?: (slotKey: string, recipe: RecipeType) => void;
 };
 
-export function PlanView({ plan, fridgeIngredientIds = [], onShuffle }: PlanViewProps) {
+export function PlanView({ plan, fridgeIngredientIds = [], recipes, onShuffle, onReplace }: PlanViewProps) {
   if (plan.length === 0) {
     return null;
   }
@@ -56,6 +58,8 @@ export function PlanView({ plan, fridgeIngredientIds = [], onShuffle }: PlanView
         )}
         proteinColor={getProteinAccentColor(slot.recipe)}
         onShuffle={onShuffle ? () => onShuffle(slotKey) : undefined}
+        onReplace={onReplace ? (recipe) => onReplace(slotKey, recipe) : undefined}
+        recipes={recipes}
       />
     );
   }

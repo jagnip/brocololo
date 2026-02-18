@@ -1,7 +1,7 @@
 "use client";
 
-import type { RecipeType } from "@/types/recipe";
 import type { SlotInputType } from "@/types/planner";
+import type { RecipeType } from "@/types/recipe";
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -9,12 +9,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Shuffle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RecipeReplacePopover } from "./recipe-replace-popover";
 
 type PlannerSlotCardProps = {
   slot: SlotInputType;
   fridgeMatchIngredients?: string[];
   proteinColor?: string;
   onShuffle?: () => void;
+  onReplace?: (recipe: RecipeType) => void;
+  recipes?: RecipeType[];
 };
 
 export function PlannerSlotCard({
@@ -22,6 +25,8 @@ export function PlannerSlotCard({
   fridgeMatchIngredients,
   proteinColor: accentColor,
   onShuffle,
+  onReplace,
+  recipes,
 }: PlannerSlotCardProps) {
   const { recipe } = slot;
   const coverImage = recipe.images?.find((img) => img.isCover);
@@ -29,6 +34,7 @@ export function PlannerSlotCard({
     (category) => category.type === "PROTEIN",
   );
   const canShuffle = onShuffle && slot.alternatives.length > 0;
+  const canReplace = onReplace && recipes && recipes.length > 0;
 
   return (
     <Card
@@ -78,17 +84,26 @@ export function PlannerSlotCard({
           </div>
         </div>
       </CardHeader>
-      {canShuffle && (
-        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button
-            type="button"
-            variant="secondary"
-            size="icon"
-            className="h-8 w-8 rounded-full shadow-sm"
-            onClick={onShuffle}
-          >
-            <Shuffle className="h-4 w-4" />
-          </Button>
+      {(canShuffle || canReplace) && (
+        <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {canShuffle && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 rounded-full shadow-sm"
+              onClick={onShuffle}
+            >
+              <Shuffle className="h-4 w-4" />
+            </Button>
+          )}
+          {canReplace && (
+            <RecipeReplacePopover
+              currentRecipeId={recipe.id}
+              recipes={recipes}
+              onReplace={onReplace}
+            />
+          )}
         </div>
       )}
     </Card>

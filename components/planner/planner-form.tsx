@@ -90,6 +90,21 @@ export function PlannerForm({ ingredients, recipes }: PlannerFormProps) {
     });
   }, []);
 
+  const handleReplace = useCallback((slotKey: string, newRecipe: RecipeType) => {
+    setPlan((prev) => {
+      if (!prev) return prev;
+      return prev.map((slot) => {
+        const key = `${slot.date.toISOString()}-${slot.mealType}`;
+        if (key !== slotKey) return slot;
+        return {
+          ...slot,
+          recipe: newRecipe,
+          alternatives: slot.alternatives.filter((r) => r.id !== newRecipe.id),
+        };
+      });
+    });
+  }, []);
+
   async function handleSavePlan(plan: PlanInputType) {
     setIsSaving(true);
     const result = await savePlan(plan);
@@ -363,7 +378,13 @@ export function PlannerForm({ ingredients, recipes }: PlannerFormProps) {
               {isSaving ? "Saving…" : "Save plan"}
             </Button>
           </div>
-          <PlanView plan={plan} fridgeIngredientIds={(form.watch("fridgeIngredientIds") ?? []) as string[]} onShuffle={handleShuffle} />
+          <PlanView
+            plan={plan}
+            fridgeIngredientIds={(form.watch("fridgeIngredientIds") ?? []) as string[]}
+            recipes={recipes}
+            onShuffle={handleShuffle}
+            onReplace={handleReplace}
+          />
         </>
       )}
     </>

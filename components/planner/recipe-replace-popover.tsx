@@ -1,0 +1,73 @@
+"use client";
+
+import { useState } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
+import { Button } from "@/components/ui/button";
+import { ArrowLeftRight } from "lucide-react";
+import { RecipeType } from "@/types/recipe";
+
+type RecipeReplacePopoverProps = {
+  currentRecipeId: string;
+  recipes: RecipeType[];
+  onReplace: (recipe: RecipeType) => void;
+};
+
+export function RecipeReplacePopover({
+  currentRecipeId,
+  recipes,
+  onReplace,
+}: RecipeReplacePopoverProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="secondary"
+          size="icon"
+          className="h-8 w-8 rounded-full shadow-sm"
+        >
+          <ArrowLeftRight className="h-4 w-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-0" side="right" align="start" sideOffset={8}>
+        <Command shouldFilter>
+          <CommandInput placeholder="Search recipes..." />
+          <CommandList className="max-h-56">
+            <CommandEmpty>No recipes found.</CommandEmpty>
+            <CommandGroup>
+              {recipes
+                .filter((r) => r.id !== currentRecipeId)
+                .map((recipe) => (
+                  <CommandItem
+                    key={recipe.id}
+                    value={recipe.name}
+                    onSelect={() => {
+                      onReplace(recipe);
+                      setOpen(false);
+                    }}
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-sm">{recipe.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {recipe.handsOnTime} min
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
