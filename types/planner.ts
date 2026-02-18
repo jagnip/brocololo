@@ -12,8 +12,8 @@ export type DayMealsType = {
 export type SlotInputType = {
   date: Date;
   mealType: MealType;
-  recipe: RecipeType;
-  alternatives: RecipeType[]; // top candidates in score order for shuffle
+  recipe: RecipeType | null;
+  alternatives: RecipeType[];
 };
 
 

@@ -80,7 +80,7 @@ export async function generatePlan(
     }
 
     // Check for unplaced rolling recipes and generate warnings
-    const placedRecipeIds = new Set(plan.map((s) => s.recipe.id));
+    const placedRecipeIds = new Set(plan.filter((s) => s.recipe).map((s) => s.recipe!.id));
     const warnings: string[] = [];
     for (const r of rollingRecipes) {
       if (!placedRecipeIds.has(r.recipeId)) {
@@ -100,17 +100,19 @@ export async function savePlan(plan: PlanInputType): Promise<
   | { type: "success"; planId: string }
   | { type: "error"; message: string }
 > {
-  if (plan.length === 0) {
+  const filledSlots = plan.filter((s) => s.recipe !== null);
+
+  if (filledSlots.length === 0) {
     return { type: "error", message: "No plan to save." };
   }
 
-  const dates = plan.map((s) => s.date.getTime());
+  const dates = filledSlots.map((s) => s.date.getTime());
   const startDate = new Date(Math.min(...dates));
   const endDate = new Date(Math.max(...dates));
 
   let planId: string;
   try {
-    const created = await createPlan(startDate, endDate, plan);
+    const created = await createPlan(startDate, endDate, filledSlots);
     planId = created.id;
     // return { type: "success", planId: created.id };
   } catch (error) {

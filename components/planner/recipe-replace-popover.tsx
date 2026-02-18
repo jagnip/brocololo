@@ -11,7 +11,7 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight, Plus } from "lucide-react";
 import { RecipeType } from "@/types/recipe";
 
 type RecipeReplacePopoverProps = {
@@ -26,6 +26,7 @@ export function RecipeReplacePopover({
   onReplace,
 }: RecipeReplacePopoverProps) {
   const [open, setOpen] = useState(false);
+  const isEmpty = !currentRecipeId;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -36,7 +37,7 @@ export function RecipeReplacePopover({
           size="icon"
           className="h-8 w-8 rounded-full shadow-sm"
         >
-          <ArrowLeftRight className="h-4 w-4" />
+          {isEmpty ? <Plus className="h-4 w-4" /> : <ArrowLeftRight className="h-4 w-4" />}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0" side="right" align="start" sideOffset={8}>

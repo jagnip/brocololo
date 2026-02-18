@@ -56,7 +56,7 @@ export async function createPlan(
   slots: SlotInputType[]
 ) {
   const now = new Date();
-  const uniqueRecipeIds = [...new Set(slots.map((s) => s.recipe.id))];
+  const uniqueRecipeIds = [...new Set(slots.map((s) => s.recipe!.id))];
 
   const plan = await prisma.plan.create({
     data: {
@@ -66,7 +66,7 @@ export async function createPlan(
         create: slots.map((s) => ({
           date: s.date,
           mealType: s.mealType,
-          recipeId: s.recipe.id,
+          recipeId: s.recipe!.id,
         })),
       },
     },

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Shuffle } from "lucide-react";
+import { Shuffle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RecipeReplacePopover } from "./recipe-replace-popover";
 
@@ -17,6 +17,7 @@ type PlannerSlotCardProps = {
   proteinColor?: string;
   onShuffle?: () => void;
   onReplace?: (recipe: RecipeType) => void;
+  onRemove?: () => void;
   recipes?: RecipeType[];
 };
 
@@ -26,9 +27,26 @@ export function PlannerSlotCard({
   proteinColor: accentColor,
   onShuffle,
   onReplace,
+  onRemove,
   recipes,
 }: PlannerSlotCardProps) {
   const { recipe } = slot;
+
+  if (!recipe) {
+    const canAdd = onReplace && recipes && recipes.length > 0;
+    return (
+      <Card className="relative flex items-center justify-center min-h-[120px] border-dashed">
+        {canAdd && (
+          <RecipeReplacePopover
+            currentRecipeId=""
+            recipes={recipes}
+            onReplace={onReplace}
+          />
+        )}
+      </Card>
+    );
+  }
+
   const coverImage = recipe.images?.find((img) => img.isCover);
   const proteinCategories = recipe.categories.filter(
     (category) => category.type === "PROTEIN",
@@ -84,7 +102,7 @@ export function PlannerSlotCard({
           </div>
         </div>
       </CardHeader>
-      {(canShuffle || canReplace) && (
+      {(canShuffle || canReplace || onRemove) && (
         <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {canShuffle && (
             <Button
@@ -103,6 +121,17 @@ export function PlannerSlotCard({
               recipes={recipes}
               onReplace={onReplace}
             />
+          )}
+          {onRemove && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 rounded-full shadow-sm"
+              onClick={onRemove}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           )}
         </div>
       )}

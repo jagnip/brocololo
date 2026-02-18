@@ -77,7 +77,7 @@ export function PlannerForm({ ingredients, recipes }: PlannerFormProps) {
       if (!prev) return prev;
       return prev.map((slot) => {
         const key = `${slot.date.toISOString()}-${slot.mealType}`;
-        if (key !== slotKey || slot.alternatives.length === 0) return slot;
+        if (key !== slotKey || !slot.recipe || slot.alternatives.length === 0) return slot;
 
         // Rotate: current recipe goes to end of alternatives, first alternative becomes recipe
         const [nextRecipe, ...restAlternatives] = slot.alternatives;
@@ -86,6 +86,17 @@ export function PlannerForm({ ingredients, recipes }: PlannerFormProps) {
           recipe: nextRecipe,
           alternatives: [...restAlternatives, slot.recipe],
         };
+      });
+    });
+  }, []);
+
+  const handleRemove = useCallback((slotKey: string) => {
+    setPlan((prev) => {
+      if (!prev) return prev;
+      return prev.map((slot) => {
+        const key = `${slot.date.toISOString()}-${slot.mealType}`;
+        if (key !== slotKey) return slot;
+        return { ...slot, recipe: null };
       });
     });
   }, []);
@@ -384,6 +395,7 @@ export function PlannerForm({ ingredients, recipes }: PlannerFormProps) {
             recipes={recipes}
             onShuffle={handleShuffle}
             onReplace={handleReplace}
+            onRemove={handleRemove}
           />
         </>
       )}

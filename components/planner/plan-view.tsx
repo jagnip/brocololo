@@ -37,9 +37,10 @@ type PlanViewProps = {
   recipes?: RecipeType[];
   onShuffle?: (slotKey: string) => void;
   onReplace?: (slotKey: string, recipe: RecipeType) => void;
+  onRemove?: (slotKey: string) => void;
 };
 
-export function PlanView({ plan, fridgeIngredientIds = [], recipes, onShuffle, onReplace }: PlanViewProps) {
+export function PlanView({ plan, fridgeIngredientIds = [], recipes, onShuffle, onReplace, onRemove }: PlanViewProps) {
   if (plan.length === 0) {
     return null;
   }
@@ -52,13 +53,13 @@ export function PlanView({ plan, fridgeIngredientIds = [], recipes, onShuffle, o
     return (
       <PlannerSlotCard
         slot={slot}
-        fridgeMatchIngredients={getFridgeMatchIngredients(
-          slot.recipe,
-          fridgeIngredientIds,
-        )}
-        proteinColor={getProteinAccentColor(slot.recipe)}
+        fridgeMatchIngredients={
+          slot.recipe ? getFridgeMatchIngredients(slot.recipe, fridgeIngredientIds) : []
+        }
+        proteinColor={slot.recipe ? getProteinAccentColor(slot.recipe) : undefined}
         onShuffle={onShuffle ? () => onShuffle(slotKey) : undefined}
         onReplace={onReplace ? (recipe) => onReplace(slotKey, recipe) : undefined}
+        onRemove={onRemove ? () => onRemove(slotKey) : undefined}
         recipes={recipes}
       />
     );

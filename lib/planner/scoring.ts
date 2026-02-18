@@ -40,7 +40,7 @@ export function scoreLastUsed(recipe: RecipeType, ctx: ScoringContext): number {
 // Returns raw score for Already in plan
 export function scoreAlreadyInPlan(recipe: RecipeType, ctx: ScoringContext): number {
   const timesUsed = ctx.assignedSlots.filter(
-    (s) => s.recipe.id === recipe.id
+    (s) => s.recipe?.id === recipe.id
   ).length;
   if (timesUsed === 0) return 1; // if the recipe has never been used in a plan, return 1
   return Math.max(1 - timesUsed * 0.5, 0); // normalize the score to 0-1
@@ -87,6 +87,7 @@ export function scoreProteinBalance(recipe: RecipeType, ctx: ScoringContext): nu
   // Count how many assigned savoury slots use each protein key so far
   const proteinSlotsCounts: Record<string, number> = {};
   for (const slot of assignedSavourySlots) {
+    if (!slot.recipe) continue;
     const key = getProteinKey(slot.recipe);
     if (key) {
       proteinSlotsCounts[key] = (proteinSlotsCounts[key] ?? 0) + 1;
@@ -111,7 +112,7 @@ export function scoreFridgeIngredients(recipe: RecipeType, ctx: ScoringContext):
 
   // Subtract ingredients already consumed by assigned recipes
   const usedIngredientIds = new Set(
-    ctx.assignedSlots.flatMap((s) => s.recipe.ingredients.map((ri) => ri.ingredientId))
+    ctx.assignedSlots.flatMap((s) => s.recipe?.ingredients.map((ri) => ri.ingredientId) ?? [])
   );
   const remainingFridgeIds = ctx.fridgeIngredientIds.filter((id) => !usedIngredientIds.has(id));
 
@@ -131,7 +132,7 @@ export function scoreRollingRecipe(recipe: RecipeType, ctx: ScoringContext): num
   if (!ctx.rollingRecipeIds.includes(recipe.id)) return 0.5; // not a rolling recipe — neutral
 
   // Check if this rolling recipe is already placed in the plan
-  const alreadyPlaced = ctx.assignedSlots.some((s) => s.recipe.id === recipe.id);
+  const alreadyPlaced = ctx.assignedSlots.some((s) => s.recipe?.id === recipe.id);
   if (alreadyPlaced) return 0.5; // already placed — drop to neutral, let other scorers decide
 
   return 1; // not yet placed — full boost
