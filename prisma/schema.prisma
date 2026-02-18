@@ -50,14 +50,29 @@ model PlanSlot {
   planId    String   @map("plan_id")
   date      DateTime @db.Date
   mealType  MealType @map("meal_type")
-  recipeId  String   @map("recipe_id")
+  recipeId  String?  @map("recipe_id")
 
-  plan   Plan   @relation(fields: [planId], references: [id], onDelete: Cascade)
-  recipe Recipe @relation("recipe_plan_slots", fields: [recipeId], references: [id], onDelete: Cascade)
+  plan         Plan                  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  recipe       Recipe?               @relation("recipe_plan_slots", fields: [recipeId], references: [id], onDelete: Cascade)
+  alternatives PlanSlotAlternative[]
 
   @@index([planId])
   @@index([recipeId])
   @@map("plan_slots")
+}
+
+model PlanSlotAlternative {
+  id         String @id @default(cuid())
+  planSlotId String @map("plan_slot_id")
+  recipeId   String @map("recipe_id")
+  rank       Int
+
+  planSlot PlanSlot @relation(fields: [planSlotId], references: [id], onDelete: Cascade)
+  recipe   Recipe   @relation("recipe_alternatives", fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([planSlotId])
+  @@index([recipeId])
+  @@map("plan_slot_alternatives")
 }
 
 
@@ -77,7 +92,8 @@ model Recipe {
   excludeFromPlanner Boolean @default(false) @map("exclude_from_planner")
 
   categories   Category[] @relation("category_recipes")
-  planSlots PlanSlot[] @relation("recipe_plan_slots")
+  planSlots    PlanSlot[] @relation("recipe_plan_slots")
+  alternatives PlanSlotAlternative[] @relation("recipe_alternatives")
 
   @@index([slug])
   @@map("recipes")

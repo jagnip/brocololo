@@ -152,7 +152,7 @@ export type PlanSlotGroupByOutputType = {
   planId: string
   date: Date
   mealType: $Enums.MealType
-  recipeId: string
+  recipeId: string | null
   _count: PlanSlotCountAggregateOutputType | null
   _min: PlanSlotMinAggregateOutputType | null
   _max: PlanSlotMaxAggregateOutputType | null
@@ -181,9 +181,10 @@ export type PlanSlotWhereInput = {
   planId?: Prisma.StringFilter<"PlanSlot"> | string
   date?: Prisma.DateTimeFilter<"PlanSlot"> | Date | string
   mealType?: Prisma.EnumMealTypeFilter<"PlanSlot"> | $Enums.MealType
-  recipeId?: Prisma.StringFilter<"PlanSlot"> | string
+  recipeId?: Prisma.StringNullableFilter<"PlanSlot"> | string | null
   plan?: Prisma.XOR<Prisma.PlanScalarRelationFilter, Prisma.PlanWhereInput>
-  recipe?: Prisma.XOR<Prisma.RecipeScalarRelationFilter, Prisma.RecipeWhereInput>
+  recipe?: Prisma.XOR<Prisma.RecipeNullableScalarRelationFilter, Prisma.RecipeWhereInput> | null
+  alternatives?: Prisma.PlanSlotAlternativeListRelationFilter
 }
 
 export type PlanSlotOrderByWithRelationInput = {
@@ -191,9 +192,10 @@ export type PlanSlotOrderByWithRelationInput = {
   planId?: Prisma.SortOrder
   date?: Prisma.SortOrder
   mealType?: Prisma.SortOrder
-  recipeId?: Prisma.SortOrder
+  recipeId?: Prisma.SortOrderInput | Prisma.SortOrder
   plan?: Prisma.PlanOrderByWithRelationInput
   recipe?: Prisma.RecipeOrderByWithRelationInput
+  alternatives?: Prisma.PlanSlotAlternativeOrderByRelationAggregateInput
 }
 
 export type PlanSlotWhereUniqueInput = Prisma.AtLeast<{
@@ -204,9 +206,10 @@ export type PlanSlotWhereUniqueInput = Prisma.AtLeast<{
   planId?: Prisma.StringFilter<"PlanSlot"> | string
   date?: Prisma.DateTimeFilter<"PlanSlot"> | Date | string
   mealType?: Prisma.EnumMealTypeFilter<"PlanSlot"> | $Enums.MealType
-  recipeId?: Prisma.StringFilter<"PlanSlot"> | string
+  recipeId?: Prisma.StringNullableFilter<"PlanSlot"> | string | null
   plan?: Prisma.XOR<Prisma.PlanScalarRelationFilter, Prisma.PlanWhereInput>
-  recipe?: Prisma.XOR<Prisma.RecipeScalarRelationFilter, Prisma.RecipeWhereInput>
+  recipe?: Prisma.XOR<Prisma.RecipeNullableScalarRelationFilter, Prisma.RecipeWhereInput> | null
+  alternatives?: Prisma.PlanSlotAlternativeListRelationFilter
 }, "id">
 
 export type PlanSlotOrderByWithAggregationInput = {
@@ -214,7 +217,7 @@ export type PlanSlotOrderByWithAggregationInput = {
   planId?: Prisma.SortOrder
   date?: Prisma.SortOrder
   mealType?: Prisma.SortOrder
-  recipeId?: Prisma.SortOrder
+  recipeId?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.PlanSlotCountOrderByAggregateInput
   _max?: Prisma.PlanSlotMaxOrderByAggregateInput
   _min?: Prisma.PlanSlotMinOrderByAggregateInput
@@ -228,7 +231,7 @@ export type PlanSlotScalarWhereWithAggregatesInput = {
   planId?: Prisma.StringWithAggregatesFilter<"PlanSlot"> | string
   date?: Prisma.DateTimeWithAggregatesFilter<"PlanSlot"> | Date | string
   mealType?: Prisma.EnumMealTypeWithAggregatesFilter<"PlanSlot"> | $Enums.MealType
-  recipeId?: Prisma.StringWithAggregatesFilter<"PlanSlot"> | string
+  recipeId?: Prisma.StringNullableWithAggregatesFilter<"PlanSlot"> | string | null
 }
 
 export type PlanSlotCreateInput = {
@@ -236,7 +239,8 @@ export type PlanSlotCreateInput = {
   date: Date | string
   mealType: $Enums.MealType
   plan: Prisma.PlanCreateNestedOneWithoutSlotsInput
-  recipe: Prisma.RecipeCreateNestedOneWithoutPlanSlotsInput
+  recipe?: Prisma.RecipeCreateNestedOneWithoutPlanSlotsInput
+  alternatives?: Prisma.PlanSlotAlternativeCreateNestedManyWithoutPlanSlotInput
 }
 
 export type PlanSlotUncheckedCreateInput = {
@@ -244,7 +248,8 @@ export type PlanSlotUncheckedCreateInput = {
   planId: string
   date: Date | string
   mealType: $Enums.MealType
-  recipeId: string
+  recipeId?: string | null
+  alternatives?: Prisma.PlanSlotAlternativeUncheckedCreateNestedManyWithoutPlanSlotInput
 }
 
 export type PlanSlotUpdateInput = {
@@ -252,7 +257,8 @@ export type PlanSlotUpdateInput = {
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumMealTypeFieldUpdateOperationsInput | $Enums.MealType
   plan?: Prisma.PlanUpdateOneRequiredWithoutSlotsNestedInput
-  recipe?: Prisma.RecipeUpdateOneRequiredWithoutPlanSlotsNestedInput
+  recipe?: Prisma.RecipeUpdateOneWithoutPlanSlotsNestedInput
+  alternatives?: Prisma.PlanSlotAlternativeUpdateManyWithoutPlanSlotNestedInput
 }
 
 export type PlanSlotUncheckedUpdateInput = {
@@ -260,7 +266,8 @@ export type PlanSlotUncheckedUpdateInput = {
   planId?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumMealTypeFieldUpdateOperationsInput | $Enums.MealType
-  recipeId?: Prisma.StringFieldUpdateOperationsInput | string
+  recipeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatives?: Prisma.PlanSlotAlternativeUncheckedUpdateManyWithoutPlanSlotNestedInput
 }
 
 export type PlanSlotCreateManyInput = {
@@ -268,7 +275,7 @@ export type PlanSlotCreateManyInput = {
   planId: string
   date: Date | string
   mealType: $Enums.MealType
-  recipeId: string
+  recipeId?: string | null
 }
 
 export type PlanSlotUpdateManyMutationInput = {
@@ -282,7 +289,7 @@ export type PlanSlotUncheckedUpdateManyInput = {
   planId?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumMealTypeFieldUpdateOperationsInput | $Enums.MealType
-  recipeId?: Prisma.StringFieldUpdateOperationsInput | string
+  recipeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type PlanSlotListRelationFilter = {
@@ -317,6 +324,11 @@ export type PlanSlotMinOrderByAggregateInput = {
   date?: Prisma.SortOrder
   mealType?: Prisma.SortOrder
   recipeId?: Prisma.SortOrder
+}
+
+export type PlanSlotScalarRelationFilter = {
+  is?: Prisma.PlanSlotWhereInput
+  isNot?: Prisma.PlanSlotWhereInput
 }
 
 export type PlanSlotCreateNestedManyWithoutPlanInput = {
@@ -365,6 +377,20 @@ export type EnumMealTypeFieldUpdateOperationsInput = {
   set?: $Enums.MealType
 }
 
+export type PlanSlotCreateNestedOneWithoutAlternativesInput = {
+  create?: Prisma.XOR<Prisma.PlanSlotCreateWithoutAlternativesInput, Prisma.PlanSlotUncheckedCreateWithoutAlternativesInput>
+  connectOrCreate?: Prisma.PlanSlotCreateOrConnectWithoutAlternativesInput
+  connect?: Prisma.PlanSlotWhereUniqueInput
+}
+
+export type PlanSlotUpdateOneRequiredWithoutAlternativesNestedInput = {
+  create?: Prisma.XOR<Prisma.PlanSlotCreateWithoutAlternativesInput, Prisma.PlanSlotUncheckedCreateWithoutAlternativesInput>
+  connectOrCreate?: Prisma.PlanSlotCreateOrConnectWithoutAlternativesInput
+  upsert?: Prisma.PlanSlotUpsertWithoutAlternativesInput
+  connect?: Prisma.PlanSlotWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PlanSlotUpdateToOneWithWhereWithoutAlternativesInput, Prisma.PlanSlotUpdateWithoutAlternativesInput>, Prisma.PlanSlotUncheckedUpdateWithoutAlternativesInput>
+}
+
 export type PlanSlotCreateNestedManyWithoutRecipeInput = {
   create?: Prisma.XOR<Prisma.PlanSlotCreateWithoutRecipeInput, Prisma.PlanSlotUncheckedCreateWithoutRecipeInput> | Prisma.PlanSlotCreateWithoutRecipeInput[] | Prisma.PlanSlotUncheckedCreateWithoutRecipeInput[]
   connectOrCreate?: Prisma.PlanSlotCreateOrConnectWithoutRecipeInput | Prisma.PlanSlotCreateOrConnectWithoutRecipeInput[]
@@ -411,14 +437,16 @@ export type PlanSlotCreateWithoutPlanInput = {
   id?: string
   date: Date | string
   mealType: $Enums.MealType
-  recipe: Prisma.RecipeCreateNestedOneWithoutPlanSlotsInput
+  recipe?: Prisma.RecipeCreateNestedOneWithoutPlanSlotsInput
+  alternatives?: Prisma.PlanSlotAlternativeCreateNestedManyWithoutPlanSlotInput
 }
 
 export type PlanSlotUncheckedCreateWithoutPlanInput = {
   id?: string
   date: Date | string
   mealType: $Enums.MealType
-  recipeId: string
+  recipeId?: string | null
+  alternatives?: Prisma.PlanSlotAlternativeUncheckedCreateNestedManyWithoutPlanSlotInput
 }
 
 export type PlanSlotCreateOrConnectWithoutPlanInput = {
@@ -455,7 +483,55 @@ export type PlanSlotScalarWhereInput = {
   planId?: Prisma.StringFilter<"PlanSlot"> | string
   date?: Prisma.DateTimeFilter<"PlanSlot"> | Date | string
   mealType?: Prisma.EnumMealTypeFilter<"PlanSlot"> | $Enums.MealType
-  recipeId?: Prisma.StringFilter<"PlanSlot"> | string
+  recipeId?: Prisma.StringNullableFilter<"PlanSlot"> | string | null
+}
+
+export type PlanSlotCreateWithoutAlternativesInput = {
+  id?: string
+  date: Date | string
+  mealType: $Enums.MealType
+  plan: Prisma.PlanCreateNestedOneWithoutSlotsInput
+  recipe?: Prisma.RecipeCreateNestedOneWithoutPlanSlotsInput
+}
+
+export type PlanSlotUncheckedCreateWithoutAlternativesInput = {
+  id?: string
+  planId: string
+  date: Date | string
+  mealType: $Enums.MealType
+  recipeId?: string | null
+}
+
+export type PlanSlotCreateOrConnectWithoutAlternativesInput = {
+  where: Prisma.PlanSlotWhereUniqueInput
+  create: Prisma.XOR<Prisma.PlanSlotCreateWithoutAlternativesInput, Prisma.PlanSlotUncheckedCreateWithoutAlternativesInput>
+}
+
+export type PlanSlotUpsertWithoutAlternativesInput = {
+  update: Prisma.XOR<Prisma.PlanSlotUpdateWithoutAlternativesInput, Prisma.PlanSlotUncheckedUpdateWithoutAlternativesInput>
+  create: Prisma.XOR<Prisma.PlanSlotCreateWithoutAlternativesInput, Prisma.PlanSlotUncheckedCreateWithoutAlternativesInput>
+  where?: Prisma.PlanSlotWhereInput
+}
+
+export type PlanSlotUpdateToOneWithWhereWithoutAlternativesInput = {
+  where?: Prisma.PlanSlotWhereInput
+  data: Prisma.XOR<Prisma.PlanSlotUpdateWithoutAlternativesInput, Prisma.PlanSlotUncheckedUpdateWithoutAlternativesInput>
+}
+
+export type PlanSlotUpdateWithoutAlternativesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mealType?: Prisma.EnumMealTypeFieldUpdateOperationsInput | $Enums.MealType
+  plan?: Prisma.PlanUpdateOneRequiredWithoutSlotsNestedInput
+  recipe?: Prisma.RecipeUpdateOneWithoutPlanSlotsNestedInput
+}
+
+export type PlanSlotUncheckedUpdateWithoutAlternativesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  planId?: Prisma.StringFieldUpdateOperationsInput | string
+  date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mealType?: Prisma.EnumMealTypeFieldUpdateOperationsInput | $Enums.MealType
+  recipeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type PlanSlotCreateWithoutRecipeInput = {
@@ -463,6 +539,7 @@ export type PlanSlotCreateWithoutRecipeInput = {
   date: Date | string
   mealType: $Enums.MealType
   plan: Prisma.PlanCreateNestedOneWithoutSlotsInput
+  alternatives?: Prisma.PlanSlotAlternativeCreateNestedManyWithoutPlanSlotInput
 }
 
 export type PlanSlotUncheckedCreateWithoutRecipeInput = {
@@ -470,6 +547,7 @@ export type PlanSlotUncheckedCreateWithoutRecipeInput = {
   planId: string
   date: Date | string
   mealType: $Enums.MealType
+  alternatives?: Prisma.PlanSlotAlternativeUncheckedCreateNestedManyWithoutPlanSlotInput
 }
 
 export type PlanSlotCreateOrConnectWithoutRecipeInput = {
@@ -502,28 +580,30 @@ export type PlanSlotCreateManyPlanInput = {
   id?: string
   date: Date | string
   mealType: $Enums.MealType
-  recipeId: string
+  recipeId?: string | null
 }
 
 export type PlanSlotUpdateWithoutPlanInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumMealTypeFieldUpdateOperationsInput | $Enums.MealType
-  recipe?: Prisma.RecipeUpdateOneRequiredWithoutPlanSlotsNestedInput
+  recipe?: Prisma.RecipeUpdateOneWithoutPlanSlotsNestedInput
+  alternatives?: Prisma.PlanSlotAlternativeUpdateManyWithoutPlanSlotNestedInput
 }
 
 export type PlanSlotUncheckedUpdateWithoutPlanInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumMealTypeFieldUpdateOperationsInput | $Enums.MealType
-  recipeId?: Prisma.StringFieldUpdateOperationsInput | string
+  recipeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  alternatives?: Prisma.PlanSlotAlternativeUncheckedUpdateManyWithoutPlanSlotNestedInput
 }
 
 export type PlanSlotUncheckedUpdateManyWithoutPlanInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumMealTypeFieldUpdateOperationsInput | $Enums.MealType
-  recipeId?: Prisma.StringFieldUpdateOperationsInput | string
+  recipeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type PlanSlotCreateManyRecipeInput = {
@@ -538,6 +618,7 @@ export type PlanSlotUpdateWithoutRecipeInput = {
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumMealTypeFieldUpdateOperationsInput | $Enums.MealType
   plan?: Prisma.PlanUpdateOneRequiredWithoutSlotsNestedInput
+  alternatives?: Prisma.PlanSlotAlternativeUpdateManyWithoutPlanSlotNestedInput
 }
 
 export type PlanSlotUncheckedUpdateWithoutRecipeInput = {
@@ -545,6 +626,7 @@ export type PlanSlotUncheckedUpdateWithoutRecipeInput = {
   planId?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumMealTypeFieldUpdateOperationsInput | $Enums.MealType
+  alternatives?: Prisma.PlanSlotAlternativeUncheckedUpdateManyWithoutPlanSlotNestedInput
 }
 
 export type PlanSlotUncheckedUpdateManyWithoutRecipeInput = {
@@ -555,6 +637,35 @@ export type PlanSlotUncheckedUpdateManyWithoutRecipeInput = {
 }
 
 
+/**
+ * Count Type PlanSlotCountOutputType
+ */
+
+export type PlanSlotCountOutputType = {
+  alternatives: number
+}
+
+export type PlanSlotCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  alternatives?: boolean | PlanSlotCountOutputTypeCountAlternativesArgs
+}
+
+/**
+ * PlanSlotCountOutputType without action
+ */
+export type PlanSlotCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PlanSlotCountOutputType
+   */
+  select?: Prisma.PlanSlotCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * PlanSlotCountOutputType without action
+ */
+export type PlanSlotCountOutputTypeCountAlternativesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PlanSlotAlternativeWhereInput
+}
+
 
 export type PlanSlotSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -563,7 +674,9 @@ export type PlanSlotSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   mealType?: boolean
   recipeId?: boolean
   plan?: boolean | Prisma.PlanDefaultArgs<ExtArgs>
-  recipe?: boolean | Prisma.RecipeDefaultArgs<ExtArgs>
+  recipe?: boolean | Prisma.PlanSlot$recipeArgs<ExtArgs>
+  alternatives?: boolean | Prisma.PlanSlot$alternativesArgs<ExtArgs>
+  _count?: boolean | Prisma.PlanSlotCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["planSlot"]>
 
 export type PlanSlotSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -573,7 +686,7 @@ export type PlanSlotSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   mealType?: boolean
   recipeId?: boolean
   plan?: boolean | Prisma.PlanDefaultArgs<ExtArgs>
-  recipe?: boolean | Prisma.RecipeDefaultArgs<ExtArgs>
+  recipe?: boolean | Prisma.PlanSlot$recipeArgs<ExtArgs>
 }, ExtArgs["result"]["planSlot"]>
 
 export type PlanSlotSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -583,7 +696,7 @@ export type PlanSlotSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   mealType?: boolean
   recipeId?: boolean
   plan?: boolean | Prisma.PlanDefaultArgs<ExtArgs>
-  recipe?: boolean | Prisma.RecipeDefaultArgs<ExtArgs>
+  recipe?: boolean | Prisma.PlanSlot$recipeArgs<ExtArgs>
 }, ExtArgs["result"]["planSlot"]>
 
 export type PlanSlotSelectScalar = {
@@ -597,29 +710,32 @@ export type PlanSlotSelectScalar = {
 export type PlanSlotOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "planId" | "date" | "mealType" | "recipeId", ExtArgs["result"]["planSlot"]>
 export type PlanSlotInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   plan?: boolean | Prisma.PlanDefaultArgs<ExtArgs>
-  recipe?: boolean | Prisma.RecipeDefaultArgs<ExtArgs>
+  recipe?: boolean | Prisma.PlanSlot$recipeArgs<ExtArgs>
+  alternatives?: boolean | Prisma.PlanSlot$alternativesArgs<ExtArgs>
+  _count?: boolean | Prisma.PlanSlotCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type PlanSlotIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   plan?: boolean | Prisma.PlanDefaultArgs<ExtArgs>
-  recipe?: boolean | Prisma.RecipeDefaultArgs<ExtArgs>
+  recipe?: boolean | Prisma.PlanSlot$recipeArgs<ExtArgs>
 }
 export type PlanSlotIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   plan?: boolean | Prisma.PlanDefaultArgs<ExtArgs>
-  recipe?: boolean | Prisma.RecipeDefaultArgs<ExtArgs>
+  recipe?: boolean | Prisma.PlanSlot$recipeArgs<ExtArgs>
 }
 
 export type $PlanSlotPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "PlanSlot"
   objects: {
     plan: Prisma.$PlanPayload<ExtArgs>
-    recipe: Prisma.$RecipePayload<ExtArgs>
+    recipe: Prisma.$RecipePayload<ExtArgs> | null
+    alternatives: Prisma.$PlanSlotAlternativePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     planId: string
     date: Date
     mealType: $Enums.MealType
-    recipeId: string
+    recipeId: string | null
   }, ExtArgs["result"]["planSlot"]>
   composites: {}
 }
@@ -1015,7 +1131,8 @@ readonly fields: PlanSlotFieldRefs;
 export interface Prisma__PlanSlotClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   plan<T extends Prisma.PlanDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PlanDefaultArgs<ExtArgs>>): Prisma.Prisma__PlanClient<runtime.Types.Result.GetResult<Prisma.$PlanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  recipe<T extends Prisma.RecipeDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RecipeDefaultArgs<ExtArgs>>): Prisma.Prisma__RecipeClient<runtime.Types.Result.GetResult<Prisma.$RecipePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  recipe<T extends Prisma.PlanSlot$recipeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PlanSlot$recipeArgs<ExtArgs>>): Prisma.Prisma__RecipeClient<runtime.Types.Result.GetResult<Prisma.$RecipePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  alternatives<T extends Prisma.PlanSlot$alternativesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PlanSlot$alternativesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlanSlotAlternativePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1443,6 +1560,49 @@ export type PlanSlotDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Limit how many PlanSlots to delete.
    */
   limit?: number
+}
+
+/**
+ * PlanSlot.recipe
+ */
+export type PlanSlot$recipeArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Recipe
+   */
+  select?: Prisma.RecipeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Recipe
+   */
+  omit?: Prisma.RecipeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RecipeInclude<ExtArgs> | null
+  where?: Prisma.RecipeWhereInput
+}
+
+/**
+ * PlanSlot.alternatives
+ */
+export type PlanSlot$alternativesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PlanSlotAlternative
+   */
+  select?: Prisma.PlanSlotAlternativeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PlanSlotAlternative
+   */
+  omit?: Prisma.PlanSlotAlternativeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PlanSlotAlternativeInclude<ExtArgs> | null
+  where?: Prisma.PlanSlotAlternativeWhereInput
+  orderBy?: Prisma.PlanSlotAlternativeOrderByWithRelationInput | Prisma.PlanSlotAlternativeOrderByWithRelationInput[]
+  cursor?: Prisma.PlanSlotAlternativeWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PlanSlotAlternativeScalarFieldEnum | Prisma.PlanSlotAlternativeScalarFieldEnum[]
 }
 
 /**

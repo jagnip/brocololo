@@ -1,6 +1,19 @@
 import { SlotInputType } from "@/types/planner";
 import { prisma } from "./index";
 
+const recipeInclude = {
+  categories: {
+    select: { id: true, slug: true, name: true, type: true },
+  },
+  ingredients: {
+    include: {
+      ingredient: { include: { unitConversions: true } },
+      unit: true,
+    },
+  },
+  images: true,
+} as const;
+
 export async function getPlans() {
   return prisma.plan.findMany({
     orderBy: { createdAt: "desc" },
@@ -22,18 +35,11 @@ export async function getPlanById(planId: string) {
     include: {
       slots: {
         include: {
-          recipe: {
+          recipe: { include: recipeInclude },
+          alternatives: {
+            orderBy: { rank: "asc" },
             include: {
-              categories: {
-                select: { id: true, slug: true, name: true, type: true },
-              },
-              ingredients: {
-                include: {
-                  ingredient: { include: { unitConversions: true } },
-                  unit: true,
-                },
-              },
-              images: true,
+              recipe: { include: recipeInclude },
             },
           },
         },
@@ -47,6 +53,7 @@ export async function getPlanById(planId: string) {
     date: slot.date,
     mealType: slot.mealType,
     recipe: slot.recipe,
+    alternatives: slot.alternatives.map((a) => a.recipe),
   }));
 }
 
@@ -56,7 +63,9 @@ export async function createPlan(
   slots: SlotInputType[]
 ) {
   const now = new Date();
-  const uniqueRecipeIds = [...new Set(slots.map((s) => s.recipe!.id))];
+  const uniqueRecipeIds = [
+    ...new Set(slots.filter((s) => s.recipe).map((s) => s.recipe!.id)),
+  ];
 
   const plan = await prisma.plan.create({
     data: {
@@ -66,17 +75,71 @@ export async function createPlan(
         create: slots.map((s) => ({
           date: s.date,
           mealType: s.mealType,
-          recipeId: s.recipe!.id,
+          recipeId: s.recipe?.id ?? null,
+          alternatives: {
+            create: s.alternatives.map((alt, index) => ({
+              recipeId: alt.id,
+              rank: index,
+            })),
+          },
         })),
       },
     },
     include: { slots: true },
   });
 
-  await prisma.recipe.updateMany({
-    where: { id: { in: uniqueRecipeIds } },
-    data: { lastUsedInPlanner: now },
+  if (uniqueRecipeIds.length > 0) {
+    await prisma.recipe.updateMany({
+      where: { id: { in: uniqueRecipeIds } },
+      data: { lastUsedInPlanner: now },
+    });
+  }
+
+  return plan;
+}
+
+export async function updatePlan(planId: string, slots: SlotInputType[]) {
+  const now = new Date();
+  const uniqueRecipeIds = [
+    ...new Set(slots.filter((s) => s.recipe).map((s) => s.recipe!.id)),
+  ];
+
+  const dates = slots.map((s) => s.date.getTime());
+  const startDate = new Date(Math.min(...dates));
+  const endDate = new Date(Math.max(...dates));
+
+  const plan = await prisma.$transaction(async (tx) => {
+    await tx.planSlot.deleteMany({ where: { planId } });
+
+    return tx.plan.update({
+      where: { id: planId },
+      data: {
+        startDate,
+        endDate,
+        slots: {
+          create: slots.map((s) => ({
+            date: s.date,
+            mealType: s.mealType,
+            recipeId: s.recipe?.id ?? null,
+            alternatives: {
+              create: s.alternatives.map((alt, index) => ({
+                recipeId: alt.id,
+                rank: index,
+              })),
+            },
+          })),
+        },
+      },
+      include: { slots: true },
+    });
   });
+
+  if (uniqueRecipeIds.length > 0) {
+    await prisma.recipe.updateMany({
+      where: { id: { in: uniqueRecipeIds } },
+      data: { lastUsedInPlanner: now },
+    });
+  }
 
   return plan;
 }

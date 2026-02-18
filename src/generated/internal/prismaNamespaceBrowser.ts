@@ -54,6 +54,7 @@ export const ModelName = {
   Category: 'Category',
   Plan: 'Plan',
   PlanSlot: 'PlanSlot',
+  PlanSlotAlternative: 'PlanSlotAlternative',
   Recipe: 'Recipe',
   Ingredient: 'Ingredient',
   Unit: 'Unit',
@@ -108,6 +109,16 @@ export const PlanSlotScalarFieldEnum = {
 } as const
 
 export type PlanSlotScalarFieldEnum = (typeof PlanSlotScalarFieldEnum)[keyof typeof PlanSlotScalarFieldEnum]
+
+
+export const PlanSlotAlternativeScalarFieldEnum = {
+  id: 'id',
+  planSlotId: 'planSlotId',
+  recipeId: 'recipeId',
+  rank: 'rank'
+} as const
+
+export type PlanSlotAlternativeScalarFieldEnum = (typeof PlanSlotAlternativeScalarFieldEnum)[keyof typeof PlanSlotAlternativeScalarFieldEnum]
 
 
 export const RecipeScalarFieldEnum = {

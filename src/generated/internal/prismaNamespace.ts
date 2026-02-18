@@ -387,6 +387,7 @@ export const ModelName = {
   Category: 'Category',
   Plan: 'Plan',
   PlanSlot: 'PlanSlot',
+  PlanSlotAlternative: 'PlanSlotAlternative',
   Recipe: 'Recipe',
   Ingredient: 'Ingredient',
   Unit: 'Unit',
@@ -408,7 +409,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "category" | "plan" | "planSlot" | "recipe" | "ingredient" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeImage"
+    modelProps: "category" | "plan" | "planSlot" | "planSlotAlternative" | "recipe" | "ingredient" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeImage"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -631,6 +632,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.PlanSlotCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.PlanSlotCountAggregateOutputType> | number
+        }
+      }
+    }
+    PlanSlotAlternative: {
+      payload: Prisma.$PlanSlotAlternativePayload<ExtArgs>
+      fields: Prisma.PlanSlotAlternativeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PlanSlotAlternativeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAlternativePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PlanSlotAlternativeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAlternativePayload>
+        }
+        findFirst: {
+          args: Prisma.PlanSlotAlternativeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAlternativePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PlanSlotAlternativeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAlternativePayload>
+        }
+        findMany: {
+          args: Prisma.PlanSlotAlternativeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAlternativePayload>[]
+        }
+        create: {
+          args: Prisma.PlanSlotAlternativeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAlternativePayload>
+        }
+        createMany: {
+          args: Prisma.PlanSlotAlternativeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PlanSlotAlternativeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAlternativePayload>[]
+        }
+        delete: {
+          args: Prisma.PlanSlotAlternativeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAlternativePayload>
+        }
+        update: {
+          args: Prisma.PlanSlotAlternativeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAlternativePayload>
+        }
+        deleteMany: {
+          args: Prisma.PlanSlotAlternativeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PlanSlotAlternativeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PlanSlotAlternativeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAlternativePayload>[]
+        }
+        upsert: {
+          args: Prisma.PlanSlotAlternativeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAlternativePayload>
+        }
+        aggregate: {
+          args: Prisma.PlanSlotAlternativeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePlanSlotAlternative>
+        }
+        groupBy: {
+          args: Prisma.PlanSlotAlternativeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlanSlotAlternativeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PlanSlotAlternativeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlanSlotAlternativeCountAggregateOutputType> | number
         }
       }
     }
@@ -1149,6 +1224,16 @@ export const PlanSlotScalarFieldEnum = {
 export type PlanSlotScalarFieldEnum = (typeof PlanSlotScalarFieldEnum)[keyof typeof PlanSlotScalarFieldEnum]
 
 
+export const PlanSlotAlternativeScalarFieldEnum = {
+  id: 'id',
+  planSlotId: 'planSlotId',
+  recipeId: 'recipeId',
+  rank: 'rank'
+} as const
+
+export type PlanSlotAlternativeScalarFieldEnum = (typeof PlanSlotAlternativeScalarFieldEnum)[keyof typeof PlanSlotAlternativeScalarFieldEnum]
+
+
 export const RecipeScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -1439,6 +1524,7 @@ export type GlobalOmitConfig = {
   category?: Prisma.CategoryOmit
   plan?: Prisma.PlanOmit
   planSlot?: Prisma.PlanSlotOmit
+  planSlotAlternative?: Prisma.PlanSlotAlternativeOmit
   recipe?: Prisma.RecipeOmit
   ingredient?: Prisma.IngredientOmit
   unit?: Prisma.UnitOmit

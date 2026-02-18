@@ -55,6 +55,11 @@ export type Plan = Prisma.PlanModel
  */
 export type PlanSlot = Prisma.PlanSlotModel
 /**
+ * Model PlanSlotAlternative
+ * 
+ */
+export type PlanSlotAlternative = Prisma.PlanSlotAlternativeModel
+/**
  * Model Recipe
  * 
  */

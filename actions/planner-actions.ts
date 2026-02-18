@@ -4,7 +4,7 @@ import { getRecipes } from "@/lib/db/recipes";
 import { getDaysInRange as getDaysToPlan, getMaxDaysSinceLastUsedCandidate, getMealHandsOnLimit, markBatchSlots } from "@/lib/planner/helpers";
 import { PlanInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
-import { createPlan } from "@/lib/db/planner";
+import { createPlan, updatePlan } from "@/lib/db/planner";
 import { MEAL_TYPES, ROUTES } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -100,19 +100,17 @@ export async function savePlan(plan: PlanInputType): Promise<
   | { type: "success"; planId: string }
   | { type: "error"; message: string }
 > {
-  const filledSlots = plan.filter((s) => s.recipe !== null);
-
-  if (filledSlots.length === 0) {
+  if (plan.length === 0) {
     return { type: "error", message: "No plan to save." };
   }
 
-  const dates = filledSlots.map((s) => s.date.getTime());
+  const dates = plan.map((s) => s.date.getTime());
   const startDate = new Date(Math.min(...dates));
   const endDate = new Date(Math.max(...dates));
 
   let planId: string;
   try {
-    const created = await createPlan(startDate, endDate, filledSlots);
+    const created = await createPlan(startDate, endDate, plan);
     planId = created.id;
     // return { type: "success", planId: created.id };
   } catch (error) {
@@ -122,4 +120,23 @@ export async function savePlan(plan: PlanInputType): Promise<
 
   revalidatePath("/"); // refreshes sidebar data
   redirect(ROUTES.planView(planId));
+}
+
+export async function updateSavedPlan(
+  planId: string,
+  plan: PlanInputType,
+): Promise<{ type: "success" } | { type: "error"; message: string }> {
+  if (plan.length === 0) {
+    return { type: "error", message: "No meals in plan." };
+  }
+
+  try {
+    await updatePlan(planId, plan);
+  } catch (error) {
+    console.error("Error updating plan", error);
+    return { type: "error", message: "Failed to update plan." };
+  }
+
+  revalidatePath("/");
+  return { type: "success" };
 }

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getPlanById } from "@/lib/db/planner";
-import { PlanView } from "@/components/planner/plan-view";
+import { getRecipes } from "@/lib/db/recipes";
+import { PlanEditor } from "@/components/planner/plan-editor";
 
 export default async function PlanPage({
   params,
@@ -8,7 +9,10 @@ export default async function PlanPage({
   params: Promise<{ planId: string }>;
 }) {
   const { planId } = await params;
-  const plan = await getPlanById(planId);
+  const [plan, recipes] = await Promise.all([
+    getPlanById(planId),
+    getRecipes([], undefined, false),
+  ]);
 
   if (!plan) {
     notFound();
@@ -16,7 +20,7 @@ export default async function PlanPage({
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-      <PlanView plan={plan} />
+      <PlanEditor planId={planId} initialPlan={plan} recipes={recipes} />
     </div>
   );
 }
