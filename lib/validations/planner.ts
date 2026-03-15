@@ -5,10 +5,17 @@ const dateRangeSchema = z
     start: z.string().min(1, "Start date is required"),
     end: z.string().min(1, "End date is required"),
   })
-  .transform((data) => ({
-    start: new Date(data.start),
-    end: new Date(data.end),
-  }));
+  .refine(
+    ({ start, end }) => {
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+      return !Number.isNaN(startDate.getTime()) && !Number.isNaN(endDate.getTime());
+    },
+    {
+      message: "Invalid date range",
+      path: ["start"],
+    },
+  );
 
 const timeLimitField = z.coerce
   .number()

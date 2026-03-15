@@ -8,10 +8,15 @@ import type { RecipeType } from '@/types/recipe';
 /**
  * Creates a mock Unit (from units table)
  */
-export function createMockUnit(overrides?: Partial<{ id: string; name: string }>) {
+export function createMockUnit(overrides?: Partial<{
+  id: string;
+  name: string;
+  namePlural: string | null;
+}>) {
   return {
     id: 'unit-1',
     name: 'grams',
+    namePlural: null,
     ...overrides,
   };
 }
@@ -31,7 +36,8 @@ export function createMockIngredientUnit(
     ingredientId,
     unitId,
     gramsPerUnit,
-    unit: { id: unitId, name: unitName ?? unitId },
+    // Match RecipeType unit shape used in production code.
+    unit: { id: unitId, name: unitName ?? unitId, namePlural: null },
   };
 }
 
@@ -50,11 +56,12 @@ export function createMockIngredient(overrides?: Partial<{
   carbs: number;
   supermarketUrl: string | null;
   categoryId: string;
+  defaultUnitId: string | null;
   unitConversions: Array<{
     ingredientId: string;
     unitId: string;
     gramsPerUnit: number;
-    unit: { id: string; name: string };
+    unit: { id: string; name: string; namePlural: string | null };
   }>;
 }>) {
   const defaultId = 'ingredient-1';
@@ -71,6 +78,8 @@ export function createMockIngredient(overrides?: Partial<{
     carbs: 0, 
     supermarketUrl: null,
     categoryId: 'category-1',
+    // Keep fixtures aligned with IngredientType, which now requires defaultUnitId.
+    defaultUnitId,
     unitConversions: [
       createMockIngredientUnit(defaultId, defaultUnitId, 1), // 1 gram = 1 gram
     ],
@@ -95,7 +104,7 @@ export function createMockRecipeIngredient(overrides?: Partial<{
   group: { id: string; recipeId: string; name: string; position: number } | null;
   ingredient: ReturnType<typeof createMockIngredient>;
   unit: ReturnType<typeof createMockUnit> | null;
-}>) {
+}>): RecipeType["ingredients"][number] {
   const defaultIngredient = createMockIngredient();
   const defaultUnit = createMockUnit({ id: 'unit-grams', name: 'grams' });
 
@@ -107,7 +116,7 @@ export function createMockRecipeIngredient(overrides?: Partial<{
     ingredientId: defaultIngredient.id,
     unitId: defaultUnit.id,
     amount: 400, // 400g
-    nutritionTarget: 'BOTH',
+    nutritionTarget: 'BOTH' as const,
     additionalInfo: null,
     group: null,
     ingredient: defaultIngredient,

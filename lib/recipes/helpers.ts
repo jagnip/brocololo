@@ -484,6 +484,8 @@ type SwapReadyIngredient = Pick<
   | "fats"
   | "carbs"
   | "categoryId"
+  // Include default unit metadata so swap candidates match full recipe ingredient shape.
+  | "defaultUnitId"
   | "unitConversions"
 >;
 
@@ -541,7 +543,11 @@ export function resolveSwappedRecipeIngredient(
     ingredient: replacement,
     amount: convertedAmount,
     unitId: replacementGramsConversion.unitId,
-    unit: replacementGramsConversion.unit,
+    unit: {
+      ...replacementGramsConversion.unit,
+      // Normalize optional plural field to match RecipeType's nullable (not undefined) contract.
+      namePlural: replacementGramsConversion.unit.namePlural ?? null,
+    },
   };
 }
 

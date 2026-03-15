@@ -15,6 +15,11 @@ export function getRangeGroupAvailability(days: Date[]): {
   hasWeekdays: boolean;
   hasWeekend: boolean;
 } {
+  const initialAvailability: { hasWeekdays: boolean; hasWeekend: boolean } = {
+    hasWeekdays: false,
+    hasWeekend: false,
+  };
+
   // Evaluate both groups from actual selected dates.
   return days.reduce(
     (acc, date) => {
@@ -25,7 +30,7 @@ export function getRangeGroupAvailability(days: Date[]): {
       }
       return acc;
     },
-    { hasWeekdays: false, hasWeekend: false },
+    initialAvailability,
   );
 }
 
