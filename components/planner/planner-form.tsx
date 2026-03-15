@@ -96,7 +96,8 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
         new Date(values.dateRange.start),
         new Date(values.dateRange.end),
         values.dailyTimeLimits as DayTimeLimitsType[],
-        (values.fridgeIngredientIds ?? []) as string[],
+        values.fridgeIngredientIds ?? [],
+        // Coerced numeric fields are validated by Zod; cast input shape for server action typing.
         (values.rollingRecipes ?? []) as RollingRecipeType[],
       );
 
