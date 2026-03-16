@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { Info } from "lucide-react";
+import { ArrowLeftRight, Info } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 import { IngredientIcon } from "../ingredient-icon";
 import { useEffect, useRef, useState } from "react";
@@ -42,6 +42,8 @@ type IngredientItemProps = {
   servingScalingFactor: number;
   calorieScalingFactor: number;
   onAmountEdit: (ratio: number, activeCalorieScalingFactor: number) => void;
+  showApplyScaleAction: boolean;
+  onApplyScaleToAll: () => void;
   onIngredientChange: (ingredientId: string) => void;
 };
 
@@ -53,6 +55,8 @@ export function IngredientItem({
   servingScalingFactor,
   calorieScalingFactor,
   onAmountEdit,
+  showApplyScaleAction,
+  onApplyScaleToAll,
   onIngredientChange,
 }: IngredientItemProps) {
   const { ingredient } = recipeIngredient;
@@ -309,6 +313,20 @@ export function IngredientItem({
             </Command>
           </PopoverContent>
         </Popover>
+        {showApplyScaleAction && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="ml-1 h-6 w-6 p-0"
+            // One-click action: apply this row's ratio to every ingredient row.
+            onClick={onApplyScaleToAll}
+            aria-label={`Scale all ingredients based on ${ingredient.name}`}
+            title="Apply this amount change to all ingredients"
+          >
+            <ArrowLeftRight className="h-3.5 w-3.5" />
+          </Button>
+        )}
         <Popover>
           <PopoverTrigger asChild>
             <button

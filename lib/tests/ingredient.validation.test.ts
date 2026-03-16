@@ -13,6 +13,8 @@ const baseIngredientInput = {
   fats: 0.3,
   carbs: 22.8,
   categoryId: "cat-produce",
+  // Keep tests aligned with current schema: default unit is required.
+  defaultUnitId: gramsUnitId,
   unitConversions: [{ unitId: gramsUnitId, gramsPerUnit: 1 }],
 };
 

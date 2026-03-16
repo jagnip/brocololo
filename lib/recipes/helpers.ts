@@ -524,6 +524,47 @@ export function computeManualScaleRatio(
   return currentCalorieScalingFactor * currentManualScaleRatio * editRatio;
 }
 
+const SCALE_EPSILON = 1e-6;
+
+/**
+ * Snap tiny floating-point noise back to an exact identity scale.
+ */
+function normalizeScaleValue(scale: number): number {
+  return Math.abs(scale - 1) <= SCALE_EPSILON ? 1 : scale;
+}
+
+/**
+ * Returns true when a scale is materially different from identity.
+ */
+export function isScaleModified(scale: number): boolean {
+  return normalizeScaleValue(scale) !== 1;
+}
+
+/**
+ * Updates a row-local scale using the latest user edit ratio.
+ * The edit ratio comes from currentDisplayedAmount / newlyTypedAmount.
+ */
+export function applyEditRatioToLocalScale(
+  currentLocalScale: number,
+  editRatio: number,
+  activeCalorieScalingFactor = 1,
+): number {
+  return normalizeScaleValue(
+    currentLocalScale * editRatio * activeCalorieScalingFactor,
+  );
+}
+
+/**
+ * Promotes a row-local edit into a global one-time scale for all rows.
+ * This keeps scaling anchored to base amounts and clears row-level deltas.
+ */
+export function computeGlobalScaleFromEditedRow(
+  currentGlobalScale: number,
+  editedRowLocalScale: number,
+): number {
+  return normalizeScaleValue(currentGlobalScale * editedRowLocalScale);
+}
+
 export type IngredientSwapMap = Record<string, string>;
 
 type SwapReadyIngredient = Pick<

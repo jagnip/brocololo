@@ -5,12 +5,14 @@ import { RecipeType } from "@/types/recipe";
 import { IngredientType } from "@/types/ingredient";
 import {
   buildEffectiveRecipeForSimulation,
+  computeGlobalScaleFromEditedRow,
+  applyEditRatioToLocalScale,
   calculateNutritionPerServing,
   calculateServingScalingFactor,
-  computeManualScaleRatio,
   formatInstructionIngredientBadge,
   getPrimaryCalorieScalingFactorForTarget,
   getIngredientDisplay,
+  isScaleModified,
   IngredientSwapMap,
 } from "@/lib/recipes/helpers";
 import { ImageGallery } from "./image-gallery";
@@ -42,7 +44,10 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
   const [targetCaloriesPerPortion, setTargetCaloriesPerPortion] = useState<
     number | null
   >(null);
-  const [manualScaleRatio, setManualScaleRatio] = useState(1);
+  const [globalScaleRatio, setGlobalScaleRatio] = useState(1);
+  const [localScaleByIngredientId, setLocalScaleByIngredientId] = useState<
+    Record<string, number>
+  >({});
   const [swapsByRecipeIngredientId, setSwapsByRecipeIngredientId] =
     useState<IngredientSwapMap>({});
   const [selectedUnits, setSelectedUnits] = useState<Record<string, string | null>>(
@@ -58,7 +63,8 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
   useEffect(() => {
     setCurrentServings(recipe.servings);
     setSelectedUnits({});
-    setManualScaleRatio(1);
+    setGlobalScaleRatio(1);
+    setLocalScaleByIngredientId({});
     setSwapsByRecipeIngredientId({});
   }, [recipe.id, recipe.servings]);
 
@@ -110,17 +116,21 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
         if (ingredientRow.amount == null) {
           return ingredientRow;
         }
+        // Compose base-anchored global + per-row local scales for nutrition math.
+        const rowScaleRatio =
+          localScaleByIngredientId[ingredientRow.id] ?? 1;
         const calorieFactor = getPrimaryCalorieScalingFactorForTarget(
           ingredientRow.nutritionTarget,
           calorieScalingFactor,
         );
         return {
           ...ingredientRow,
-          amount: ingredientRow.amount * manualScaleRatio * calorieFactor,
+          amount:
+            ingredientRow.amount * globalScaleRatio * rowScaleRatio * calorieFactor,
         };
       }),
     }),
-    [calorieScalingFactor, effectiveRecipe, manualScaleRatio],
+    [calorieScalingFactor, effectiveRecipe, globalScaleRatio, localScaleByIngredientId],
   );
 
   const jagodaNutrition = calculateNutritionPerServing(
@@ -138,34 +148,56 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
     if (isNaN(calories) || calories <= 0) {
       setTargetCaloriesPerPortion(null);
     } else {
-      // Setting a calorie target resets any manual ingredient edits
-      setManualScaleRatio(1);
+      // Keep calorie target mode deterministic by clearing row/global edits.
+      setGlobalScaleRatio(1);
+      setLocalScaleByIngredientId({});
       setTargetCaloriesPerPortion(calories);
     }
   };
 
   const handleServingsChange = (newServings: number) => {
     setCurrentServings(newServings);
-    setManualScaleRatio(1);
+    // Serving changes restart from base amounts to avoid compounded state.
+    setGlobalScaleRatio(1);
+    setLocalScaleByIngredientId({});
   };
 
   const handleIngredientEdit = (
+    recipeIngredientId: string,
     ratio: number,
     activeCalorieScalingFactor: number,
   ) => {
-    // Absorb current calorie scaling into the manual ratio before clearing it,
-    // so non-edited ingredients don't jump when the calorie target disappears
-    const newManualScale = computeManualScaleRatio(
-      ratio,
-      activeCalorieScalingFactor,
-      manualScaleRatio,
-    );
-    setManualScaleRatio(newManualScale);
+    // Default behavior: edit only the touched row, not the entire recipe.
+    setLocalScaleByIngredientId((prev) => {
+      const currentLocalScale = prev[recipeIngredientId] ?? 1;
+      const nextLocalScale = applyEditRatioToLocalScale(
+        currentLocalScale,
+        ratio,
+        activeCalorieScalingFactor,
+      );
+      const next = { ...prev };
+      if (isScaleModified(nextLocalScale)) {
+        next[recipeIngredientId] = nextLocalScale;
+      } else {
+        delete next[recipeIngredientId];
+      }
+      return next;
+    });
     setTargetCaloriesPerPortion(null);
   };
 
+  const handleApplyScaleToAll = (recipeIngredientId: string) => {
+    // One-time global apply: use the clicked row as source-of-truth, then clear row deltas.
+    setGlobalScaleRatio((prevGlobalScale) => {
+      const rowLocalScale = localScaleByIngredientId[recipeIngredientId] ?? 1;
+      return computeGlobalScaleFromEditedRow(prevGlobalScale, rowLocalScale);
+    });
+    setLocalScaleByIngredientId({});
+  };
+
   const handleReset = () => {
-    setManualScaleRatio(1);
+    setGlobalScaleRatio(1);
+    setLocalScaleByIngredientId({});
     setTargetCaloriesPerPortion(null);
     setSwapsByRecipeIngredientId({});
     setSelectedUnits({});
@@ -200,6 +232,12 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
       delete next[recipeIngredientId];
       return next;
     });
+    // Clear row-local edits for swapped rows to avoid stale ratio assumptions.
+    setLocalScaleByIngredientId((prev) => {
+      const next = { ...prev };
+      delete next[recipeIngredientId];
+      return next;
+    });
   };
 
   const { servingScalingFactor, jagodaPortionFactor, nelsonPortionFactor } =
@@ -209,15 +247,20 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
       recipe.servingMultiplierForNelson,
     );
 
-  const getIngredientDisplayScalingFactor = (
+  const getIngredientCalorieFactor = (
     nutritionTarget: "BOTH" | "PRIMARY_ONLY" | "SECONDARY_ONLY",
+  ) => getPrimaryCalorieScalingFactorForTarget(nutritionTarget, calorieScalingFactor);
+
+  const getIngredientDisplayScalingFactor = (
+    recipeIngredientId: string,
   ) =>
     servingScalingFactor *
-    manualScaleRatio *
-    getPrimaryCalorieScalingFactorForTarget(nutritionTarget, calorieScalingFactor);
+    globalScaleRatio *
+    (localScaleByIngredientId[recipeIngredientId] ?? 1);
 
   const hasActiveScaling =
-    manualScaleRatio !== 1 ||
+    globalScaleRatio !== 1 ||
+    Object.keys(localScaleByIngredientId).length > 0 ||
     targetCaloriesPerPortion !== null ||
     Object.keys(swapsByRecipeIngredientId).length > 0;
 
@@ -422,9 +465,9 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
                             selectedUnitId,
                             recipeIngredient.ingredient.unitConversions,
                             getIngredientDisplayScalingFactor(
-                              recipeIngredient.nutritionTarget,
+                              recipeIngredient.id,
                             ),
-                            1,
+                            getIngredientCalorieFactor(recipeIngredient.nutritionTarget),
                           );
 
                           return (
@@ -522,13 +565,24 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
                           }))
                         }
                         servingScalingFactor={getIngredientDisplayScalingFactor(
+                          recipeIngredient.id,
+                        )}
+                        calorieScalingFactor={getIngredientCalorieFactor(
                           recipeIngredient.nutritionTarget,
                         )}
-                        calorieScalingFactor={getPrimaryCalorieScalingFactorForTarget(
-                          recipeIngredient.nutritionTarget,
-                          calorieScalingFactor,
+                        onAmountEdit={(ratio, activeCalorieScalingFactor) =>
+                          handleIngredientEdit(
+                            recipeIngredient.id,
+                            ratio,
+                            activeCalorieScalingFactor,
+                          )
+                        }
+                        showApplyScaleAction={isScaleModified(
+                          localScaleByIngredientId[recipeIngredient.id] ?? 1,
                         )}
-                        onAmountEdit={handleIngredientEdit}
+                        onApplyScaleToAll={() =>
+                          handleApplyScaleToAll(recipeIngredient.id)
+                        }
                         onIngredientChange={(ingredientId) =>
                           handleIngredientChange(recipeIngredient.id, ingredientId)
                         }
@@ -561,13 +615,24 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
                           }))
                         }
                         servingScalingFactor={getIngredientDisplayScalingFactor(
+                          recipeIngredient.id,
+                        )}
+                        calorieScalingFactor={getIngredientCalorieFactor(
                           recipeIngredient.nutritionTarget,
                         )}
-                        calorieScalingFactor={getPrimaryCalorieScalingFactorForTarget(
-                          recipeIngredient.nutritionTarget,
-                          calorieScalingFactor,
+                        onAmountEdit={(ratio, activeCalorieScalingFactor) =>
+                          handleIngredientEdit(
+                            recipeIngredient.id,
+                            ratio,
+                            activeCalorieScalingFactor,
+                          )
+                        }
+                        showApplyScaleAction={isScaleModified(
+                          localScaleByIngredientId[recipeIngredient.id] ?? 1,
                         )}
-                        onAmountEdit={handleIngredientEdit}
+                        onApplyScaleToAll={() =>
+                          handleApplyScaleToAll(recipeIngredient.id)
+                        }
                         onIngredientChange={(ingredientId) =>
                           handleIngredientChange(recipeIngredient.id, ingredientId)
                         }
