@@ -304,6 +304,7 @@ export type NutritionPerPortion = {
 
 export type NutritionRole = "primary" | "secondary";
 export type NutritionTarget = "BOTH" | "PRIMARY_ONLY" | "SECONDARY_ONLY";
+export type InstructionPersonFilter = "jagoda" | "nelson" | null;
 
 export function resolveNutritionRole(input: "jagoda" | "nelson" | NutritionRole): NutritionRole {
   return input === "jagoda" ? "primary" : input === "nelson" ? "secondary" : input;
@@ -318,6 +319,43 @@ export function getPrimaryCalorieScalingFactorForTarget(
     return 1;
   }
   return primaryCalorieScalingFactor;
+}
+
+/**
+ * Determines whether an instruction ingredient badge should be visible
+ * for the selected person filter.
+ */
+export function isInstructionIngredientVisibleForPerson(
+  nutritionTarget: NutritionTarget,
+  selectedPerson: InstructionPersonFilter,
+): boolean {
+  // No filter selected => keep existing "show all badges" behavior.
+  if (selectedPerson == null) {
+    return true;
+  }
+  if (nutritionTarget === "BOTH") {
+    return true;
+  }
+  if (selectedPerson === "jagoda") {
+    return nutritionTarget === "PRIMARY_ONLY";
+  }
+  return nutritionTarget === "SECONDARY_ONLY";
+}
+
+/**
+ * Returns per-person portion factor used for BOTH-target instruction badges.
+ */
+export function getInstructionIngredientPersonFactor(
+  nutritionTarget: NutritionTarget,
+  selectedPerson: InstructionPersonFilter,
+  jagodaPortionFactor: number,
+  nelsonPortionFactor: number,
+): number {
+  // No person selected => preserve existing total recipe-row amount display.
+  if (selectedPerson == null || nutritionTarget !== "BOTH") {
+    return 1;
+  }
+  return selectedPerson === "jagoda" ? jagodaPortionFactor : nelsonPortionFactor;
 }
 
 function getIngredientNutritionTarget(

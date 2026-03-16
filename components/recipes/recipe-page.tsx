@@ -13,6 +13,8 @@ import {
   getPrimaryCalorieScalingFactorForTarget,
   getIngredientDisplay,
   isScaleModified,
+  isInstructionIngredientVisibleForPerson,
+  getInstructionIngredientPersonFactor,
   IngredientSwapMap,
 } from "@/lib/recipes/helpers";
 import { ImageGallery } from "./image-gallery";
@@ -53,6 +55,9 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
   const [selectedUnits, setSelectedUnits] = useState<Record<string, string | null>>(
     {},
   );
+  const [selectedInstructionPerson, setSelectedInstructionPerson] = useState<
+    "jagoda" | "nelson" | null
+  >(null);
   const searchParams = useSearchParams();
   const categorySlug = searchParams.get("category");
   const flavourLabel =
@@ -66,6 +71,8 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
     setGlobalScaleRatio(1);
     setLocalScaleByIngredientId({});
     setSwapsByRecipeIngredientId({});
+    // Reset person instruction filter when navigating to another recipe.
+    setSelectedInstructionPerson(null);
   }, [recipe.id, recipe.servings]);
 
   const effectiveRecipe = useMemo(
@@ -437,7 +444,37 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
           {/* Instructions Section */}
           {recipe.instructions && recipe.instructions.length > 0 && (
             <div>
-              <h3 className="font-semibold mb-2">Instructions</h3>
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-semibold">Instructions</h3>
+                {/* Keep this local, lightweight segmented control consistent with existing button-group patterns. */}
+                <div
+                  className="flex items-center gap-1"
+                  role="radiogroup"
+                  aria-label="Instruction person filter"
+                >
+                  {(["jagoda", "nelson"] as const).map((person) => {
+                    const isSelected = selectedInstructionPerson === person;
+                    const label = person === "jagoda" ? "Jagoda" : "Nelson";
+                    return (
+                      <Button
+                        key={person}
+                        type="button"
+                        size="sm"
+                        role="radio"
+                        aria-checked={isSelected}
+                        variant={isSelected ? "default" : "outline"}
+                        onClick={() =>
+                          setSelectedInstructionPerson((prev) =>
+                            prev === person ? null : person,
+                          )
+                        }
+                      >
+                        {label}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
               <ol className="list-decimal list-inside space-y-2 text-sm">
                 {recipe.instructions.map((instruction) => (
                   <li key={instruction.id}>
@@ -454,19 +491,33 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
                             effectiveRecipeIngredientById.get(
                               link.recipeIngredient.id,
                             ) ?? link.recipeIngredient;
+                          // Filter instruction badges by selected person, but keep step text visible.
+                          if (
+                            !isInstructionIngredientVisibleForPerson(
+                              recipeIngredient.nutritionTarget,
+                              selectedInstructionPerson,
+                            )
+                          ) {
+                            return null;
+                          }
                           const selectedUnitId =
                             selectedUnits[recipeIngredient.id] ||
                             recipeIngredient.unit?.id ||
                             null;
+                          const personFactor = getInstructionIngredientPersonFactor(
+                            recipeIngredient.nutritionTarget,
+                            selectedInstructionPerson,
+                            jagodaPortionFactor,
+                            nelsonPortionFactor,
+                          );
                           const display = getIngredientDisplay(
                             recipeIngredient.amount,
                             recipeIngredient.unit?.id ?? null,
                             recipeIngredient.unit?.name ?? null,
                             selectedUnitId,
                             recipeIngredient.ingredient.unitConversions,
-                            getIngredientDisplayScalingFactor(
-                              recipeIngredient.id,
-                            ),
+                            getIngredientDisplayScalingFactor(recipeIngredient.id) *
+                              personFactor,
                             getIngredientCalorieFactor(recipeIngredient.nutritionTarget),
                           );
 

@@ -51,7 +51,80 @@ function createRecipeFixture(): { recipe: RecipeType; ingredients: IngredientTyp
     images: [],
     ingredientGroups: [],
     notes: [],
-    instructions: [],
+    instructions: [
+      {
+        id: "step-1",
+        recipeId: "recipe-1",
+        position: 0,
+        text: "Prepare both bowls",
+        ingredients: [
+          {
+            id: "step-link-shared",
+            recipeInstructionId: "step-1",
+            recipeIngredientId: "ri-shared-protein",
+            recipeIngredient: {
+              id: "ri-shared-protein",
+              recipeId: "recipe-1",
+              groupId: null,
+              position: 0,
+              ingredientId: sharedProtein.id,
+              unitId: "unit-grams",
+              amount: 300,
+              nutritionTarget: "BOTH",
+              additionalInfo: null,
+              group: null,
+              ingredient: sharedProtein,
+              unit: gramsUnit,
+            },
+          },
+          {
+            id: "step-link-jagoda",
+            recipeInstructionId: "step-1",
+            recipeIngredientId: "ri-side-veg-jagoda",
+            recipeIngredient: {
+              id: "ri-side-veg-jagoda",
+              recipeId: "recipe-1",
+              groupId: null,
+              position: 1,
+              ingredientId: sideVegJagoda.id,
+              unitId: "unit-grams",
+              amount: 100,
+              nutritionTarget: "PRIMARY_ONLY",
+              additionalInfo: null,
+              group: null,
+              ingredient: sideVegJagoda,
+              unit: gramsUnit,
+            },
+          },
+          {
+            id: "step-link-nelson",
+            recipeInstructionId: "step-1",
+            recipeIngredientId: "ri-side-sauce-nelson",
+            recipeIngredient: {
+              id: "ri-side-sauce-nelson",
+              recipeId: "recipe-1",
+              groupId: null,
+              position: 2,
+              ingredientId: sideSauceNelson.id,
+              unitId: "unit-grams",
+              amount: 100,
+              nutritionTarget: "SECONDARY_ONLY",
+              additionalInfo: null,
+              group: null,
+              ingredient: sideSauceNelson,
+              unit: gramsUnit,
+            },
+          },
+        ],
+      },
+      {
+        id: "step-2",
+        recipeId: "recipe-1",
+        position: 1,
+        text: "Finish and serve",
+        ingredients: [],
+      },
+    ],
     ingredients: [
       {
         id: "ri-shared-protein",
@@ -102,6 +175,29 @@ function createRecipeFixture(): { recipe: RecipeType; ingredients: IngredientTyp
     recipe,
     ingredients: [sharedProtein, sideVegJagoda, sideSauceNelson],
   };
+}
+
+function expectInstructionBadgesVisibleForNoFilter(): void {
+  const instructionSectionText = getNormalizedInstructionsSectionText();
+  // Default mode shows full amounts for all linked instruction ingredients.
+  expect(instructionSectionText).toContain("300 grams Shared Protein");
+  expect(instructionSectionText).toContain("100 grams Side Veg Jagoda");
+  expect(instructionSectionText).toContain("100 grams Side Sauce Nelson");
+}
+
+function expectInstructionStepTextToRemainVisible(): void {
+  expect(screen.getByText("Prepare both bowls")).toBeInTheDocument();
+  expect(screen.getByText("Finish and serve")).toBeInTheDocument();
+}
+
+function getNormalizedInstructionsSectionText(): string {
+  const heading = screen.getByRole("heading", { name: "Instructions" });
+  // Heading lives in an inner header row; step list is on its parent section node.
+  const section = heading.closest("div")?.parentElement;
+  if (!section) {
+    throw new Error("Instructions section container not found");
+  }
+  return section.textContent?.replace(/\s+/g, " ").trim() ?? "";
 }
 
 function buildScaledRecipe(
@@ -251,5 +347,74 @@ describe("RecipePage nutrition integration", () => {
     expect(screen.getByLabelText("Amount of Side Veg Jagoda")).toHaveValue(100);
     expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(100);
     expectNutritionToMatchScaledRecipe(recipe);
+  });
+
+  it("shows all instruction ingredient badges when no person is selected", () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+
+    expectInstructionBadgesVisibleForNoFilter();
+    expectInstructionStepTextToRemainVisible();
+  });
+
+  it("filters instruction ingredient badges for Jagoda and splits BOTH amounts", async () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+
+    await userEvent.click(screen.getByRole("radio", { name: "Jagoda" }));
+    const instructionSectionText = getNormalizedInstructionsSectionText();
+
+    // Jagoda sees PRIMARY_ONLY + Jagoda share of BOTH (1/3 of 300 = 100).
+    expect(instructionSectionText).toContain("100 grams Shared Protein");
+    expect(instructionSectionText).toContain("100 grams Side Veg Jagoda");
+    expect(instructionSectionText).not.toContain("Side Sauce Nelson");
+    expectInstructionStepTextToRemainVisible();
+  });
+
+  it("filters instruction ingredient badges for Nelson and splits BOTH amounts", async () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+
+    await userEvent.click(screen.getByRole("radio", { name: "Nelson" }));
+    const instructionSectionText = getNormalizedInstructionsSectionText();
+
+    // Nelson sees SECONDARY_ONLY + Nelson share of BOTH (2/3 of 300 = 200).
+    expect(instructionSectionText).toContain("200 grams Shared Protein");
+    expect(instructionSectionText).toContain("100 grams Side Sauce Nelson");
+    expect(instructionSectionText).not.toContain("Side Veg Jagoda");
+    expectInstructionStepTextToRemainVisible();
+  });
+
+  it("toggles selected person off when clicking the same segment again", async () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+
+    const jagodaButton = screen.getByRole("radio", { name: "Jagoda" });
+    await userEvent.click(jagodaButton);
+    expect(getNormalizedInstructionsSectionText()).not.toContain("Side Sauce Nelson");
+
+    // Clicking selected segment again clears filter and restores all badges.
+    await userEvent.click(jagodaButton);
+    expectInstructionBadgesVisibleForNoFilter();
+    expectInstructionStepTextToRemainVisible();
+  });
+
+  it("combines person filter with global scaling for instruction badges", async () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+
+    // 300 -> 600 globally for shared ingredient when applying 2x from Jagoda row.
+    await setIngredientAmount("Side Veg Jagoda", "200");
+    await userEvent.click(
+      screen.getByLabelText("Scale all ingredients based on Side Veg Jagoda"),
+    );
+    await userEvent.click(screen.getByRole("radio", { name: "Nelson" }));
+    const instructionSectionText = getNormalizedInstructionsSectionText();
+
+    // Nelson share of scaled BOTH amount: 600 * 2/3 = 400.
+    expect(instructionSectionText).toContain("400 grams Shared Protein");
+    expect(instructionSectionText).toContain("200 grams Side Sauce Nelson");
+    expect(instructionSectionText).not.toContain("Side Veg Jagoda");
+    expectInstructionStepTextToRemainVisible();
   });
 });
