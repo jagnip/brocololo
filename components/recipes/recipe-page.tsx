@@ -434,6 +434,7 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
                             >
                               {formatInstructionIngredientBadge({
                                 rawAmount: display.rawAmount,
+                                rawAmountInGrams: display.rawAmountInGrams,
                                 displayAmount: display.displayAmount,
                                 displayUnitName: display.displayUnitName,
                                 displayUnitNamePlural: display.displayUnitNamePlural,
