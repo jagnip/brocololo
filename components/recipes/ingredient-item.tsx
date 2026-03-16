@@ -7,6 +7,8 @@ import {
   getUnitDisplayName,
   getIngredientDisplay,
   getIngredientNutritionPer100g,
+  isGramUnit,
+  scaleIngredientNutritionForGrams,
 } from "@/lib/recipes/helpers";
 import {
   Select,
@@ -15,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { Info } from "lucide-react";
+import { ArrowLeftRight, Info } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 import { IngredientIcon } from "../ingredient-icon";
 import { useEffect, useRef, useState } from "react";
@@ -40,6 +42,8 @@ type IngredientItemProps = {
   servingScalingFactor: number;
   calorieScalingFactor: number;
   onAmountEdit: (ratio: number, activeCalorieScalingFactor: number) => void;
+  showApplyScaleAction: boolean;
+  onApplyScaleToAll: () => void;
   onIngredientChange: (ingredientId: string) => void;
 };
 
@@ -51,11 +55,21 @@ export function IngredientItem({
   servingScalingFactor,
   calorieScalingFactor,
   onAmountEdit,
+  showApplyScaleAction,
+  onApplyScaleToAll,
   onIngredientChange,
 }: IngredientItemProps) {
   const { ingredient } = recipeIngredient;
 
-  const { displayAmount, rawAmount, availableUnits } =
+  const {
+    displayAmount,
+    rawAmount,
+    rawAmountInGrams,
+    selectedUnitGramsPerUnit,
+    displayUnitName,
+    displayUnitNamePlural,
+    availableUnits,
+  } =
     getIngredientDisplay(
       recipeIngredient.amount,
       recipeIngredient.unit?.id ?? null,
@@ -85,6 +99,41 @@ export function IngredientItem({
   };
 
   const nutrition = getIngredientNutritionPer100g(ingredient);
+  // Build macro snapshots for selected unit and currently selected amount.
+  const showPerOneSelectedUnitColumn =
+    selectedUnitGramsPerUnit != null && !isGramUnit(displayUnitName);
+  const oneSelectedUnitNutrition =
+    !showPerOneSelectedUnitColumn
+      ? null
+      : scaleIngredientNutritionForGrams(nutrition, selectedUnitGramsPerUnit);
+  const selectedAmountNutrition =
+    rawAmountInGrams == null
+      ? null
+      : scaleIngredientNutritionForGrams(nutrition, rawAmountInGrams);
+  const oneUnitHeader = displayUnitName && showPerOneSelectedUnitColumn
+    ? `Per 1 ${displayUnitName} (${formatIngredientAmount(
+        selectedUnitGramsPerUnit ?? 0,
+        1,
+      )}g)`
+    : null;
+  const selectedAmountText =
+    rawAmount == null
+      ? null
+      : rawAmount > 0 && rawAmount < 0.1
+        ? "<0.1"
+        : formatIngredientAmount(rawAmount, 1);
+  const selectedUnitLabel = getUnitDisplayName({
+    amount: rawAmount,
+    unitName: displayUnitName,
+    unitNamePlural: displayUnitNamePlural,
+  });
+  const selectedAmountHeader =
+    selectedAmountText && selectedUnitLabel && rawAmountInGrams != null
+      ? `Per ${selectedAmountText} ${selectedUnitLabel} (${formatIngredientAmount(
+          rawAmountInGrams,
+          1,
+        )}g)`
+      : null;
 
   const [isEditing, setIsEditing] = useState(false);
   const [swapOpen, setSwapOpen] = useState(false);
@@ -264,6 +313,20 @@ export function IngredientItem({
             </Command>
           </PopoverContent>
         </Popover>
+        {showApplyScaleAction && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="ml-1 h-6 w-6 p-0"
+            // One-click action: apply this row's ratio to every ingredient row.
+            onClick={onApplyScaleToAll}
+            aria-label={`Scale all ingredients based on ${ingredient.name}`}
+            title="Apply this amount change to all ingredients"
+          >
+            <ArrowLeftRight className="h-3.5 w-3.5" />
+          </Button>
+        )}
         <Popover>
           <PopoverTrigger asChild>
             <button
@@ -273,17 +336,77 @@ export function IngredientItem({
               <Info className="h-3.5 w-3.5" />
             </button>
           </PopoverTrigger>
-          <PopoverContent className="w-48 p-3">
-            <p className="font-medium text-xs mb-1">Per 100g</p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs">
-              <span className="text-muted-foreground">Calories</span>
-              <span>{nutrition.calories}</span>
-              <span className="text-muted-foreground">Protein</span>
-              <span>{nutrition.protein}g</span>
-              <span className="text-muted-foreground">Fat</span>
-              <span>{nutrition.fat}g</span>
-              <span className="text-muted-foreground">Carbs</span>
-              <span>{nutrition.carbs}g</span>
+          <PopoverContent className="w-120 p-3">
+            <div className="overflow-x-auto">
+              {/* Keep layout table-like so the three macro perspectives are easy to compare. */}
+              <table className="w-full table-fixed text-xs">
+                <thead>
+                  <tr className="text-left align-top">
+                    <th className="w-20 font-medium text-muted-foreground pr-2">
+                      Macro
+                    </th>
+                    <th className="font-medium pr-3">Per 100g</th>
+                    {oneUnitHeader && (
+                      <th className="font-medium pr-3">{oneUnitHeader}</th>
+                    )}
+                    {selectedAmountHeader && (
+                      <th className="font-medium">{selectedAmountHeader}</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="text-muted-foreground pr-2">Calories</td>
+                    <td className="pr-3">{formatIngredientAmount(nutrition.calories, 1)} kcal</td>
+                    {oneSelectedUnitNutrition && (
+                      <td className="pr-3">
+                        {formatIngredientAmount(oneSelectedUnitNutrition.calories, 1)} kcal
+                      </td>
+                    )}
+                    {selectedAmountNutrition && (
+                      <td>
+                        {formatIngredientAmount(selectedAmountNutrition.calories, 1)} kcal
+                      </td>
+                    )}
+                  </tr>
+                  <tr>
+                    <td className="text-muted-foreground pr-2">Protein</td>
+                    <td className="pr-3">{formatIngredientAmount(nutrition.protein, 1)}g</td>
+                    {oneSelectedUnitNutrition && (
+                      <td className="pr-3">
+                        {formatIngredientAmount(oneSelectedUnitNutrition.protein, 1)}g
+                      </td>
+                    )}
+                    {selectedAmountNutrition && (
+                      <td>{formatIngredientAmount(selectedAmountNutrition.protein, 1)}g</td>
+                    )}
+                  </tr>
+                  <tr>
+                    <td className="text-muted-foreground pr-2">Fat</td>
+                    <td className="pr-3">{formatIngredientAmount(nutrition.fat, 1)}g</td>
+                    {oneSelectedUnitNutrition && (
+                      <td className="pr-3">
+                        {formatIngredientAmount(oneSelectedUnitNutrition.fat, 1)}g
+                      </td>
+                    )}
+                    {selectedAmountNutrition && (
+                      <td>{formatIngredientAmount(selectedAmountNutrition.fat, 1)}g</td>
+                    )}
+                  </tr>
+                  <tr>
+                    <td className="text-muted-foreground pr-2">Carbs</td>
+                    <td className="pr-3">{formatIngredientAmount(nutrition.carbs, 1)}g</td>
+                    {oneSelectedUnitNutrition && (
+                      <td className="pr-3">
+                        {formatIngredientAmount(oneSelectedUnitNutrition.carbs, 1)}g
+                      </td>
+                    )}
+                    {selectedAmountNutrition && (
+                      <td>{formatIngredientAmount(selectedAmountNutrition.carbs, 1)}g</td>
+                    )}
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </PopoverContent>
         </Popover>

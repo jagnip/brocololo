@@ -257,8 +257,10 @@ describe("getIngredientDisplay", () => {
         1,
       );
 
-      expect(result.displayAmount).toBe("2.0");
+      expect(result.displayAmount).toBe("2");
       expect(result.displayUnitName).toBe("tbsp");
+      expect(result.rawAmountInGrams).toBe(30);
+      expect(result.selectedUnitGramsPerUnit).toBe(15);
     });
 
     /**
@@ -297,8 +299,10 @@ describe("getIngredientDisplay", () => {
         1,
       );
 
-      expect(result.displayAmount).toBe("30.0");
+      expect(result.displayAmount).toBe("30");
       expect(result.displayUnitName).toBe("g");
+      expect(result.rawAmountInGrams).toBe(30);
+      expect(result.selectedUnitGramsPerUnit).toBe(1);
     });
 
     /**
@@ -318,7 +322,9 @@ describe("getIngredientDisplay", () => {
       );
 
       expect(result.displayAmount).toBeNull();
-      expect(result.displayUnitName).toBe("tbsp");
+      expect(result.displayUnitName).toBe("");
+      expect(result.rawAmountInGrams).toBeNull();
+      expect(result.selectedUnitGramsPerUnit).toBeNull();
     });
 
     /**
@@ -339,8 +345,10 @@ describe("getIngredientDisplay", () => {
         1,
       );
 
-      expect(result.displayAmount).toBe("2.0");
+      expect(result.displayAmount).toBe("2");
       expect(result.displayUnitName).toBe("tbsp");
+      expect(result.rawAmountInGrams).toBe(30);
+      expect(result.selectedUnitGramsPerUnit).toBe(15);
     });
   });
 
@@ -365,7 +373,8 @@ describe("getIngredientDisplay", () => {
         1,
       );
 
-      expect(result.displayAmount).toBe("4.0");
+      expect(result.displayAmount).toBe("4");
+      expect(result.rawAmountInGrams).toBe(60);
     });
 
     /**
@@ -384,7 +393,8 @@ describe("getIngredientDisplay", () => {
         1.5,
       );
 
-      expect(result.displayAmount).toBe("3.0");
+      expect(result.displayAmount).toBe("3");
+      expect(result.rawAmountInGrams).toBe(45);
     });
 
     /**
@@ -404,8 +414,9 @@ describe("getIngredientDisplay", () => {
         1.5,
       );
 
-      expect(result.displayAmount).toBe("90.0");
+      expect(result.displayAmount).toBe("90");
       expect(result.displayUnitName).toBe("g");
+      expect(result.rawAmountInGrams).toBe(90);
     });
 
     /**
@@ -425,8 +436,9 @@ describe("getIngredientDisplay", () => {
         1,
       );
 
-      expect(result.displayAmount).toBe("50.0");
+      expect(result.displayAmount).toBe("50");
       expect(result.canConvert).toBe(false);
+      expect(result.rawAmountInGrams).toBe(50);
     });
   });
 

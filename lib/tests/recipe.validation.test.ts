@@ -7,6 +7,7 @@ import {
   formatIngredientAmount,
   formatInstructionIngredientBadge,
   getIngredientDisplay,
+  scaleIngredientNutritionForGrams,
 } from "../recipes/helpers";
 
 const baseRecipeInput = {
@@ -313,6 +314,7 @@ describe("formatInstructionIngredientBadge", () => {
   it("shows less-than floor for tiny non-zero amounts", () => {
     const label = formatInstructionIngredientBadge({
       rawAmount: 0.04,
+      rawAmountInGrams: 0.04,
       displayAmount: "0.0",
       displayUnitName: "g",
       ingredientName: "salt",
@@ -325,6 +327,7 @@ describe("formatInstructionIngredientBadge", () => {
   it("shows ingredient name only when amount is null", () => {
     const label = formatInstructionIngredientBadge({
       rawAmount: null,
+      rawAmountInGrams: null,
       displayAmount: null,
       displayUnitName: "g",
       ingredientName: "salt",
@@ -337,6 +340,7 @@ describe("formatInstructionIngredientBadge", () => {
   it("omits trailing .0 for whole numbers", () => {
     const label = formatInstructionIngredientBadge({
       rawAmount: 50,
+      rawAmountInGrams: 50,
       displayAmount: "50.0",
       displayUnitName: "g",
       ingredientName: "carrot",
@@ -344,6 +348,59 @@ describe("formatInstructionIngredientBadge", () => {
     });
 
     expect(label).toBe("50 g carrot");
+  });
+
+  it("appends grams in parentheses for non-gram units", () => {
+    const label = formatInstructionIngredientBadge({
+      rawAmount: 0.4,
+      rawAmountInGrams: 0.1,
+      displayAmount: "0.4",
+      displayUnitName: "tsp",
+      ingredientName: "garlic powder",
+      additionalInfo: null,
+    });
+
+    expect(label).toBe("0.4 tsp (0.1g) garlic powder");
+  });
+
+  it("does not append duplicate grams when display unit is gram", () => {
+    const label = formatInstructionIngredientBadge({
+      rawAmount: 80,
+      rawAmountInGrams: 80,
+      displayAmount: "80",
+      displayUnitName: "g",
+      ingredientName: "rice",
+      additionalInfo: null,
+    });
+
+    expect(label).toBe("80 g rice");
+  });
+
+  it("hides piece/pieces unit token in badges", () => {
+    const label = formatInstructionIngredientBadge({
+      rawAmount: 6,
+      rawAmountInGrams: 600,
+      displayAmount: "6",
+      displayUnitName: "piece",
+      displayUnitNamePlural: "pieces",
+      ingredientName: "Egg (L)",
+      additionalInfo: null,
+    });
+
+    expect(label).toBe("6 (600g) Egg (L)");
+  });
+
+  it("shows less-than floor for tiny gram parenthetical", () => {
+    const label = formatInstructionIngredientBadge({
+      rawAmount: 0.4,
+      rawAmountInGrams: 0.04,
+      displayAmount: "0.4",
+      displayUnitName: "tsp",
+      ingredientName: "chili powder",
+      additionalInfo: null,
+    });
+
+    expect(label).toBe("0.4 tsp (<0.1g) chili powder");
   });
 });
 
@@ -378,6 +435,8 @@ describe("getIngredientDisplay amount formatting", () => {
     );
 
     expect(display.displayAmount).toBe("50");
+    expect(display.rawAmountInGrams).toBe(50);
+    expect(display.selectedUnitGramsPerUnit).toBe(1);
   });
 
   it("keeps decimal amounts in display labels", () => {
@@ -392,6 +451,8 @@ describe("getIngredientDisplay amount formatting", () => {
     );
 
     expect(display.displayAmount).toBe("50.5");
+    expect(display.rawAmountInGrams).toBe(50.5);
+    expect(display.selectedUnitGramsPerUnit).toBe(1);
   });
 
   it("returns name-only display data when unit is not selected", () => {
@@ -407,6 +468,52 @@ describe("getIngredientDisplay amount formatting", () => {
 
     expect(display.displayAmount).toBeNull();
     expect(display.rawAmount).toBeNull();
+    expect(display.rawAmountInGrams).toBeNull();
+    expect(display.selectedUnitGramsPerUnit).toBeNull();
     expect(display.displayUnitName).toBe("");
+  });
+});
+
+describe("scaleIngredientNutritionForGrams", () => {
+  const per100g = {
+    calories: 80,
+    protein: 20,
+    fat: 10,
+    carbs: 5,
+  };
+
+  it("returns the same nutrition values for 100g", () => {
+    const result = scaleIngredientNutritionForGrams(per100g, 100);
+    expect(result).toEqual(per100g);
+  });
+
+  it("scales nutrition proportionally for one selected unit grams", () => {
+    const result = scaleIngredientNutritionForGrams(per100g, 160);
+    expect(result).toEqual({
+      calories: 128,
+      protein: 32,
+      fat: 16,
+      carbs: 8,
+    });
+  });
+
+  it("scales nutrition proportionally for selected amount grams", () => {
+    const result = scaleIngredientNutritionForGrams(per100g, 300);
+    expect(result).toEqual({
+      calories: 240,
+      protein: 60,
+      fat: 30,
+      carbs: 15,
+    });
+  });
+
+  it("supports tiny gram amounts with rounding", () => {
+    const result = scaleIngredientNutritionForGrams(per100g, 0.1);
+    expect(result).toEqual({
+      calories: 0.1,
+      protein: 0,
+      fat: 0,
+      carbs: 0,
+    });
   });
 });

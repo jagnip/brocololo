@@ -209,6 +209,47 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
     expect(calculateNutritionPerServing(recipe, "primary").calories).toBeCloseTo(200, 1);
     expect(calculateNutritionPerServing(recipe, "secondary").calories).toBeCloseTo(0, 1);
   });
+
+  it("returns zeroes when servings are invalid", () => {
+    const recipe = createChickenSandwichRecipe();
+    const invalidRecipe = { ...recipe, servings: 0 };
+
+    expect(calculateNutritionPerServing(invalidRecipe, "primary")).toEqual({
+      calories: 0,
+      protein: 0,
+      fat: 0,
+      carbs: 0,
+    });
+    expect(calculateNutritionPerServing(invalidRecipe, "secondary")).toEqual({
+      calories: 0,
+      protein: 0,
+      fat: 0,
+      carbs: 0,
+    });
+  });
+
+  it("supports odd servings and keeps split invariants for shared rows", () => {
+    const recipe = createChickenSandwichRecipe();
+    const oddServingsRecipe = { ...recipe, servings: 3 };
+
+    const jagoda = calculateNutritionPerServing(oddServingsRecipe, "primary");
+    const nelson = calculateNutritionPerServing(oddServingsRecipe, "secondary");
+
+    // Base shared split remains 1:2 even when mealCount is fractional (3/2).
+    expect(nelson.calories / jagoda.calories).toBeCloseTo(2, 2);
+    expect(nelson.protein / jagoda.protein).toBeCloseTo(2, 2);
+  });
+
+  it("keeps shared nutrition entirely on primary when Nelson multiplier is zero", () => {
+    const recipe = createChickenSandwichRecipe();
+    const noNelsonPortionRecipe = { ...recipe, servingMultiplierForNelson: 0 };
+
+    const jagoda = calculateNutritionPerServing(noNelsonPortionRecipe, "primary");
+    const nelson = calculateNutritionPerServing(noNelsonPortionRecipe, "secondary");
+
+    expect(jagoda.calories).toBeGreaterThan(0);
+    expect(nelson.calories).toBe(0);
+  });
 });
 
 describe("Option A primary calorie scaling helper", () => {

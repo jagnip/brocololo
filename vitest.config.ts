@@ -23,9 +23,29 @@ export default defineConfig({
         test: {
           name: 'unit',
           include: ['**/*.{test,spec}.{ts,tsx}'],
-          exclude: ['**/node_modules/**', '**/.next/**', '**/.storybook/**'],
+          exclude: [
+            '**/node_modules/**',
+            '**/.next/**',
+            '**/.storybook/**',
+            '**/components/**/*.test.tsx',
+          ],
           globals: true, // Enables describe, it, expect without imports
           environment: 'node',
+        },
+      },
+      {
+        resolve: {
+          alias: {
+            '@': path.resolve(dirname),
+          },
+        },
+        test: {
+          name: 'component',
+          include: ['**/components/**/*.test.tsx'],
+          exclude: ['**/node_modules/**', '**/.next/**', '**/.storybook/**'],
+          globals: true,
+          environment: 'jsdom',
+          setupFiles: ['lib/tests/setup.component.tsx'],
         },
       },
       // {

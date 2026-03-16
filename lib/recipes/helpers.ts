@@ -12,6 +12,8 @@ export type UnitConversionWithName = {
 export type IngredientDisplayResult = {
   displayAmount: string | null;
   rawAmount: number | null;
+  rawAmountInGrams: number | null;
+  selectedUnitGramsPerUnit: number | null;
   displayUnitName: string;
   displayUnitNamePlural: string | null;
   canConvert: boolean;
@@ -71,6 +73,20 @@ export function formatIngredientLabel(input: {
   return input.additionalInfo ? `${base} (${input.additionalInfo})` : base;
 }
 
+function normalizeUnitToken(unitName: string | null | undefined): string {
+  return (unitName ?? "").trim().toLowerCase();
+}
+
+export function isPieceUnit(unitName: string | null | undefined): boolean {
+  const normalized = normalizeUnitToken(unitName);
+  return normalized === "piece" || normalized === "pieces";
+}
+
+export function isGramUnit(unitName: string | null | undefined): boolean {
+  const normalized = normalizeUnitToken(unitName);
+  return normalized === "g" || normalized === "gram" || normalized === "grams";
+}
+
 /**
  * Convert an amount from one unit to another using their grams-per-unit rates.
  * E.g., 2 tbsp (15g/tbsp) → cups (240g/cup) = 2 * (15 / 240) = 0.125 cups
@@ -100,6 +116,8 @@ export function getIngredientDisplay(
     return {
       displayAmount: null,
       rawAmount: null,
+      rawAmountInGrams: null,
+      selectedUnitGramsPerUnit: null,
       displayUnitName: "",
       displayUnitNamePlural: null,
       canConvert: false,
@@ -144,9 +162,17 @@ export function getIngredientDisplay(
     displayUnitNamePlural = originalSelected?.unit.namePlural ?? null;
   }
 
+  // Keep explicit grams metadata so UI can display selected-amount nutrition
+  // without repeating conversion math at call sites.
+  const displayConversion = selectedConversion ?? originalConversion ?? null;
+  const rawAmountInGrams =
+    displayConversion == null ? null : scaled * displayConversion.gramsPerUnit;
+
   return {
     displayAmount: formatIngredientAmount(scaled, 1),
     rawAmount: scaled,
+    rawAmountInGrams,
+    selectedUnitGramsPerUnit: displayConversion?.gramsPerUnit ?? null,
     displayUnitName,
     displayUnitNamePlural,
     canConvert,
@@ -214,6 +240,7 @@ export function recipeToFormData(recipe: RecipeType): UpdateRecipeFormValues {
 
 export function formatInstructionIngredientBadge(input: {
   rawAmount: number | null;
+  rawAmountInGrams?: number | null;
   displayAmount: string | null;
   displayUnitName: string;
   displayUnitNamePlural?: string | null;
@@ -222,6 +249,7 @@ export function formatInstructionIngredientBadge(input: {
 }): string {
   const {
     rawAmount,
+    rawAmountInGrams,
     displayAmount,
     displayUnitName,
     displayUnitNamePlural,
@@ -242,16 +270,29 @@ export function formatInstructionIngredientBadge(input: {
       : displayAmount != null
         ? formatIngredientAmount(Number(displayAmount), 1)
         : formatIngredientAmount(rawAmount, 1);
-  return formatIngredientLabel({
-    amountText,
-    unitName: getUnitDisplayName({
-      amount: rawAmount,
-      unitName: displayUnitName,
-      unitNamePlural: displayUnitNamePlural ?? null,
-    }),
-    ingredientName,
-    additionalInfo,
+  const resolvedUnitName = getUnitDisplayName({
+    amount: rawAmount,
+    unitName: displayUnitName,
+    unitNamePlural: displayUnitNamePlural ?? null,
   });
+  const shouldHideUnit = isPieceUnit(resolvedUnitName);
+  const shouldShowGrams =
+    rawAmountInGrams != null && !isGramUnit(resolvedUnitName);
+  const gramsText = shouldShowGrams
+    ? rawAmountInGrams > 0 && rawAmountInGrams < 0.1
+      ? "<0.1g"
+      : `${formatIngredientAmount(rawAmountInGrams, 1)}g`
+    : null;
+
+  const base = [
+    amountText,
+    shouldHideUnit ? null : resolvedUnitName,
+    gramsText ? `(${gramsText})` : null,
+    ingredientName,
+  ]
+    .filter((token): token is string => Boolean(token))
+    .join(" ");
+  return additionalInfo ? `${base} (${additionalInfo})` : base;
 }
 
 export type NutritionPerPortion = {
@@ -263,6 +304,7 @@ export type NutritionPerPortion = {
 
 export type NutritionRole = "primary" | "secondary";
 export type NutritionTarget = "BOTH" | "PRIMARY_ONLY" | "SECONDARY_ONLY";
+export type InstructionPersonFilter = "jagoda" | "nelson" | null;
 
 export function resolveNutritionRole(input: "jagoda" | "nelson" | NutritionRole): NutritionRole {
   return input === "jagoda" ? "primary" : input === "nelson" ? "secondary" : input;
@@ -277,6 +319,43 @@ export function getPrimaryCalorieScalingFactorForTarget(
     return 1;
   }
   return primaryCalorieScalingFactor;
+}
+
+/**
+ * Determines whether an instruction ingredient badge should be visible
+ * for the selected person filter.
+ */
+export function isInstructionIngredientVisibleForPerson(
+  nutritionTarget: NutritionTarget,
+  selectedPerson: InstructionPersonFilter,
+): boolean {
+  // No filter selected => keep existing "show all badges" behavior.
+  if (selectedPerson == null) {
+    return true;
+  }
+  if (nutritionTarget === "BOTH") {
+    return true;
+  }
+  if (selectedPerson === "jagoda") {
+    return nutritionTarget === "PRIMARY_ONLY";
+  }
+  return nutritionTarget === "SECONDARY_ONLY";
+}
+
+/**
+ * Returns per-person portion factor used for BOTH-target instruction badges.
+ */
+export function getInstructionIngredientPersonFactor(
+  nutritionTarget: NutritionTarget,
+  selectedPerson: InstructionPersonFilter,
+  jagodaPortionFactor: number,
+  nelsonPortionFactor: number,
+): number {
+  // No person selected => preserve existing total recipe-row amount display.
+  if (selectedPerson == null || nutritionTarget !== "BOTH") {
+    return 1;
+  }
+  return selectedPerson === "jagoda" ? jagodaPortionFactor : nelsonPortionFactor;
 }
 
 function getIngredientNutritionTarget(
@@ -418,6 +497,19 @@ export function getIngredientNutritionPer100g(
   };
 }
 
+export function scaleIngredientNutritionForGrams(
+  nutritionPer100g: NutritionPerPortion,
+  grams: number,
+): NutritionPerPortion {
+  const multiplier = grams / 100;
+  return {
+    calories: Math.round(nutritionPer100g.calories * multiplier * 10) / 10,
+    protein: Math.round(nutritionPer100g.protein * multiplier * 10) / 10,
+    fat: Math.round(nutritionPer100g.fat * multiplier * 10) / 10,
+    carbs: Math.round(nutritionPer100g.carbs * multiplier * 10) / 10,
+  };
+}
+
 export function calculateServingScalingFactor(
   currentServings: number,
   recipeServings: number,
@@ -468,6 +560,47 @@ export function computeManualScaleRatio(
   currentManualScaleRatio: number,
 ): number {
   return currentCalorieScalingFactor * currentManualScaleRatio * editRatio;
+}
+
+const SCALE_EPSILON = 1e-6;
+
+/**
+ * Snap tiny floating-point noise back to an exact identity scale.
+ */
+function normalizeScaleValue(scale: number): number {
+  return Math.abs(scale - 1) <= SCALE_EPSILON ? 1 : scale;
+}
+
+/**
+ * Returns true when a scale is materially different from identity.
+ */
+export function isScaleModified(scale: number): boolean {
+  return normalizeScaleValue(scale) !== 1;
+}
+
+/**
+ * Updates a row-local scale using the latest user edit ratio.
+ * The edit ratio comes from currentDisplayedAmount / newlyTypedAmount.
+ */
+export function applyEditRatioToLocalScale(
+  currentLocalScale: number,
+  editRatio: number,
+  activeCalorieScalingFactor = 1,
+): number {
+  return normalizeScaleValue(
+    currentLocalScale * editRatio * activeCalorieScalingFactor,
+  );
+}
+
+/**
+ * Promotes a row-local edit into a global one-time scale for all rows.
+ * This keeps scaling anchored to base amounts and clears row-level deltas.
+ */
+export function computeGlobalScaleFromEditedRow(
+  currentGlobalScale: number,
+  editedRowLocalScale: number,
+): number {
+  return normalizeScaleValue(currentGlobalScale * editedRowLocalScale);
 }
 
 export type IngredientSwapMap = Record<string, string>;
