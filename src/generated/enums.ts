@@ -18,13 +18,31 @@ export const CategoryType = {
 export type CategoryType = (typeof CategoryType)[keyof typeof CategoryType]
 
 
-export const MealType = {
+export const PlannerMealType = {
   BREAKFAST: 'BREAKFAST',
   LUNCH: 'LUNCH',
   DINNER: 'DINNER'
 } as const
 
-export type MealType = (typeof MealType)[keyof typeof MealType]
+export type PlannerMealType = (typeof PlannerMealType)[keyof typeof PlannerMealType]
+
+
+export const LogMealType = {
+  BREAKFAST: 'BREAKFAST',
+  LUNCH: 'LUNCH',
+  SNACK: 'SNACK',
+  DINNER: 'DINNER'
+} as const
+
+export type LogMealType = (typeof LogMealType)[keyof typeof LogMealType]
+
+
+export const LogPerson = {
+  PRIMARY: 'PRIMARY',
+  SECONDARY: 'SECONDARY'
+} as const
+
+export type LogPerson = (typeof LogPerson)[keyof typeof LogPerson]
 
 
 export const NutritionTarget = {

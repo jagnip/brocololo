@@ -1,5 +1,5 @@
 import { DayMealsType, PlanInputType, SlotInputType } from "@/types/planner";
-import { MealType } from "@/src/generated/enums";
+import { PlannerMealType } from "@/src/generated/enums";
 import { DayTimeLimitsType } from "@/lib/validations/planner";
 import { differenceInDays } from "date-fns";
 import { RecipeType } from "@/types/recipe";
@@ -45,27 +45,27 @@ export function getMealsForDate(
   const slots = slotsByDate.get(dateKey)!;
   return {
     date: slots[0].date,
-    breakfast: slots.find((s) => s.mealType === MealType.BREAKFAST)!,
-    lunch: slots.find((s) => s.mealType === MealType.LUNCH)!,
-    dinner: slots.find((s) => s.mealType === MealType.DINNER)!,
+    breakfast: slots.find((s) => s.mealType === PlannerMealType.BREAKFAST)!,
+    lunch: slots.find((s) => s.mealType === PlannerMealType.LUNCH)!,
+    dinner: slots.find((s) => s.mealType === PlannerMealType.DINNER)!,
   };
 }
 
 export function getMealTimeLimit(
   dayLimits: DayTimeLimitsType | undefined,
-  mealType: MealType,
+  mealType: PlannerMealType,
   type: "handsOn" | "total",
 ): number | null {
   if (!dayLimits) return null;
 
   if (type === "handsOn") {
-    if (mealType === MealType.BREAKFAST) return dayLimits.breakfastHandsOnMax;
-    if (mealType === MealType.LUNCH) return dayLimits.lunchHandsOnMax;
+    if (mealType === PlannerMealType.BREAKFAST) return dayLimits.breakfastHandsOnMax;
+    if (mealType === PlannerMealType.LUNCH) return dayLimits.lunchHandsOnMax;
     return dayLimits.dinnerHandsOnMax;
   }
 
-  if (mealType === MealType.BREAKFAST) return dayLimits.breakfastTotalMax;
-  if (mealType === MealType.LUNCH) return dayLimits.lunchTotalMax;
+  if (mealType === PlannerMealType.BREAKFAST) return dayLimits.breakfastTotalMax;
+  if (mealType === PlannerMealType.LUNCH) return dayLimits.lunchTotalMax;
   return dayLimits.dinnerTotalMax;
 }
 
@@ -82,7 +82,7 @@ export function getMaxDaysSinceLastUsedCandidate(candidates: RecipeType[], slotD
 // Does NOT push to plan — generatePlan handles that so it can compute alternatives.
 export function markBatchSlots(
   recipe: RecipeType,
-  mealType: MealType,
+  mealType: PlannerMealType,
   dayIndex: number,
   days: Date[],
   batchFilledSlots: Map<string, RecipeType>,

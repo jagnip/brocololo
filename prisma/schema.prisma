@@ -29,10 +29,22 @@ model Category {
   @@index([parentId])  
 }
 
-enum MealType {
+enum PlannerMealType {
   BREAKFAST
   LUNCH
   DINNER
+}
+
+enum LogMealType {
+  BREAKFAST
+  LUNCH
+  SNACK
+  DINNER
+}
+
+enum LogPerson {
+  PRIMARY
+  SECONDARY
 }
 
 model Plan {
@@ -41,6 +53,7 @@ model Plan {
   endDate   DateTime   @map("end_date")
   createdAt DateTime   @default(now()) @map("created_at")
   slots     PlanSlot[]
+  log       Log?
 
   @@map("plans")
 }
@@ -49,7 +62,7 @@ model PlanSlot {
   id        String   @id @default(cuid())
   planId    String   @map("plan_id")
   date      DateTime @db.Date
-  mealType  MealType @map("meal_type")
+  mealType  PlannerMealType @map("meal_type")
   recipeId  String?  @map("recipe_id")
   used      Boolean  @default(false)
 
@@ -95,6 +108,7 @@ model Recipe {
   categories   Category[] @relation("category_recipes")
   planSlots    PlanSlot[] @relation("recipe_plan_slots")
   alternatives PlanSlotAlternative[] @relation("recipe_alternatives")
+  logEntryRecipes LogEntryRecipe[]
 
   @@index([slug])
   @@map("recipes")
@@ -117,6 +131,7 @@ model Ingredient {
   defaultUnit     Unit?              @relation("ingredient_default_unit", fields: [defaultUnitId], references: [id], onDelete: Restrict)
   recipes         RecipeIngredient[]
   unitConversions IngredientUnit[]
+  logIngredients  LogIngredient[]
 
   @@index([categoryId])
   @@index([defaultUnitId])
@@ -132,6 +147,7 @@ model Unit {
   ingredientUnits IngredientUnit[]
   defaultForIngredients Ingredient[] @relation("ingredient_default_unit")
   recipeIngredients RecipeIngredient[]
+  logIngredients LogIngredient[]
   
   @@map("units")
 }
@@ -240,5 +256,67 @@ model RecipeImage {
   
   @@index([recipeId])
   @@map("recipe_images")
+}
+
+model Log {
+  id        String   @id @default(cuid())
+  planId    String   @unique @map("plan_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  plan    Plan       @relation(fields: [planId], references: [id], onDelete: Cascade)
+  entries LogEntry[]
+
+  @@map("logs")
+}
+
+model LogEntry {
+  id        String      @id @default(cuid())
+  logId     String      @map("log_id")
+  date      DateTime    @db.Date
+  mealType  LogMealType @map("meal_type")
+  person    LogPerson
+
+  log         Log              @relation(fields: [logId], references: [id], onDelete: Cascade)
+  recipes     LogEntryRecipe[]
+  ingredients LogIngredient[]
+
+  @@unique([logId, date, mealType, person])
+  @@index([logId])
+  @@map("log_entries")
+}
+
+model LogEntryRecipe {
+  id             String   @id @default(cuid())
+  entryId        String   @map("entry_id")
+  sourceRecipeId String?  @map("source_recipe_id")
+  position       Int      @default(0)
+
+  entry        LogEntry        @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  sourceRecipe Recipe?         @relation(fields: [sourceRecipeId], references: [id], onDelete: SetNull)
+  ingredients  LogIngredient[]
+
+  @@index([entryId])
+  @@index([sourceRecipeId])
+  @@map("log_entry_recipes")
+}
+
+model LogIngredient {
+  id            String   @id @default(cuid())
+  entryId       String   @map("entry_id")
+  entryRecipeId String?  @map("entry_recipe_id")
+  ingredientId  String?  @map("ingredient_id")
+  amount        Float?
+  unitId        String?  @map("unit_id")
+
+  entry       LogEntry        @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  entryRecipe LogEntryRecipe? @relation(fields: [entryRecipeId], references: [id], onDelete: SetNull)
+  ingredient  Ingredient?     @relation(fields: [ingredientId], references: [id], onDelete: SetNull)
+  unit        Unit?           @relation(fields: [unitId], references: [id], onDelete: SetNull)
+
+  @@index([entryId])
+  @@index([entryRecipeId])
+  @@index([ingredientId])
+  @@index([unitId])
+  @@map("log_ingredients")
 }
 

@@ -169,6 +169,7 @@ export type UnitWhereInput = {
   ingredientUnits?: Prisma.IngredientUnitListRelationFilter
   defaultForIngredients?: Prisma.IngredientListRelationFilter
   recipeIngredients?: Prisma.RecipeIngredientListRelationFilter
+  logIngredients?: Prisma.LogIngredientListRelationFilter
 }
 
 export type UnitOrderByWithRelationInput = {
@@ -178,6 +179,7 @@ export type UnitOrderByWithRelationInput = {
   ingredientUnits?: Prisma.IngredientUnitOrderByRelationAggregateInput
   defaultForIngredients?: Prisma.IngredientOrderByRelationAggregateInput
   recipeIngredients?: Prisma.RecipeIngredientOrderByRelationAggregateInput
+  logIngredients?: Prisma.LogIngredientOrderByRelationAggregateInput
 }
 
 export type UnitWhereUniqueInput = Prisma.AtLeast<{
@@ -190,6 +192,7 @@ export type UnitWhereUniqueInput = Prisma.AtLeast<{
   ingredientUnits?: Prisma.IngredientUnitListRelationFilter
   defaultForIngredients?: Prisma.IngredientListRelationFilter
   recipeIngredients?: Prisma.RecipeIngredientListRelationFilter
+  logIngredients?: Prisma.LogIngredientListRelationFilter
 }, "id" | "name">
 
 export type UnitOrderByWithAggregationInput = {
@@ -217,6 +220,7 @@ export type UnitCreateInput = {
   ingredientUnits?: Prisma.IngredientUnitCreateNestedManyWithoutUnitInput
   defaultForIngredients?: Prisma.IngredientCreateNestedManyWithoutDefaultUnitInput
   recipeIngredients?: Prisma.RecipeIngredientCreateNestedManyWithoutUnitInput
+  logIngredients?: Prisma.LogIngredientCreateNestedManyWithoutUnitInput
 }
 
 export type UnitUncheckedCreateInput = {
@@ -226,6 +230,7 @@ export type UnitUncheckedCreateInput = {
   ingredientUnits?: Prisma.IngredientUnitUncheckedCreateNestedManyWithoutUnitInput
   defaultForIngredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutDefaultUnitInput
   recipeIngredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutUnitInput
+  logIngredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutUnitInput
 }
 
 export type UnitUpdateInput = {
@@ -235,6 +240,7 @@ export type UnitUpdateInput = {
   ingredientUnits?: Prisma.IngredientUnitUpdateManyWithoutUnitNestedInput
   defaultForIngredients?: Prisma.IngredientUpdateManyWithoutDefaultUnitNestedInput
   recipeIngredients?: Prisma.RecipeIngredientUpdateManyWithoutUnitNestedInput
+  logIngredients?: Prisma.LogIngredientUpdateManyWithoutUnitNestedInput
 }
 
 export type UnitUncheckedUpdateInput = {
@@ -244,6 +250,7 @@ export type UnitUncheckedUpdateInput = {
   ingredientUnits?: Prisma.IngredientUnitUncheckedUpdateManyWithoutUnitNestedInput
   defaultForIngredients?: Prisma.IngredientUncheckedUpdateManyWithoutDefaultUnitNestedInput
   recipeIngredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutUnitNestedInput
+  logIngredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutUnitNestedInput
 }
 
 export type UnitCreateManyInput = {
@@ -338,12 +345,29 @@ export type UnitUpdateOneWithoutRecipeIngredientsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UnitUpdateToOneWithWhereWithoutRecipeIngredientsInput, Prisma.UnitUpdateWithoutRecipeIngredientsInput>, Prisma.UnitUncheckedUpdateWithoutRecipeIngredientsInput>
 }
 
+export type UnitCreateNestedOneWithoutLogIngredientsInput = {
+  create?: Prisma.XOR<Prisma.UnitCreateWithoutLogIngredientsInput, Prisma.UnitUncheckedCreateWithoutLogIngredientsInput>
+  connectOrCreate?: Prisma.UnitCreateOrConnectWithoutLogIngredientsInput
+  connect?: Prisma.UnitWhereUniqueInput
+}
+
+export type UnitUpdateOneWithoutLogIngredientsNestedInput = {
+  create?: Prisma.XOR<Prisma.UnitCreateWithoutLogIngredientsInput, Prisma.UnitUncheckedCreateWithoutLogIngredientsInput>
+  connectOrCreate?: Prisma.UnitCreateOrConnectWithoutLogIngredientsInput
+  upsert?: Prisma.UnitUpsertWithoutLogIngredientsInput
+  disconnect?: Prisma.UnitWhereInput | boolean
+  delete?: Prisma.UnitWhereInput | boolean
+  connect?: Prisma.UnitWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UnitUpdateToOneWithWhereWithoutLogIngredientsInput, Prisma.UnitUpdateWithoutLogIngredientsInput>, Prisma.UnitUncheckedUpdateWithoutLogIngredientsInput>
+}
+
 export type UnitCreateWithoutDefaultForIngredientsInput = {
   id?: string
   name: string
   namePlural?: string | null
   ingredientUnits?: Prisma.IngredientUnitCreateNestedManyWithoutUnitInput
   recipeIngredients?: Prisma.RecipeIngredientCreateNestedManyWithoutUnitInput
+  logIngredients?: Prisma.LogIngredientCreateNestedManyWithoutUnitInput
 }
 
 export type UnitUncheckedCreateWithoutDefaultForIngredientsInput = {
@@ -352,6 +376,7 @@ export type UnitUncheckedCreateWithoutDefaultForIngredientsInput = {
   namePlural?: string | null
   ingredientUnits?: Prisma.IngredientUnitUncheckedCreateNestedManyWithoutUnitInput
   recipeIngredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutUnitInput
+  logIngredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutUnitInput
 }
 
 export type UnitCreateOrConnectWithoutDefaultForIngredientsInput = {
@@ -376,6 +401,7 @@ export type UnitUpdateWithoutDefaultForIngredientsInput = {
   namePlural?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ingredientUnits?: Prisma.IngredientUnitUpdateManyWithoutUnitNestedInput
   recipeIngredients?: Prisma.RecipeIngredientUpdateManyWithoutUnitNestedInput
+  logIngredients?: Prisma.LogIngredientUpdateManyWithoutUnitNestedInput
 }
 
 export type UnitUncheckedUpdateWithoutDefaultForIngredientsInput = {
@@ -384,6 +410,7 @@ export type UnitUncheckedUpdateWithoutDefaultForIngredientsInput = {
   namePlural?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ingredientUnits?: Prisma.IngredientUnitUncheckedUpdateManyWithoutUnitNestedInput
   recipeIngredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutUnitNestedInput
+  logIngredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutUnitNestedInput
 }
 
 export type UnitCreateWithoutIngredientUnitsInput = {
@@ -392,6 +419,7 @@ export type UnitCreateWithoutIngredientUnitsInput = {
   namePlural?: string | null
   defaultForIngredients?: Prisma.IngredientCreateNestedManyWithoutDefaultUnitInput
   recipeIngredients?: Prisma.RecipeIngredientCreateNestedManyWithoutUnitInput
+  logIngredients?: Prisma.LogIngredientCreateNestedManyWithoutUnitInput
 }
 
 export type UnitUncheckedCreateWithoutIngredientUnitsInput = {
@@ -400,6 +428,7 @@ export type UnitUncheckedCreateWithoutIngredientUnitsInput = {
   namePlural?: string | null
   defaultForIngredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutDefaultUnitInput
   recipeIngredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutUnitInput
+  logIngredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutUnitInput
 }
 
 export type UnitCreateOrConnectWithoutIngredientUnitsInput = {
@@ -424,6 +453,7 @@ export type UnitUpdateWithoutIngredientUnitsInput = {
   namePlural?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   defaultForIngredients?: Prisma.IngredientUpdateManyWithoutDefaultUnitNestedInput
   recipeIngredients?: Prisma.RecipeIngredientUpdateManyWithoutUnitNestedInput
+  logIngredients?: Prisma.LogIngredientUpdateManyWithoutUnitNestedInput
 }
 
 export type UnitUncheckedUpdateWithoutIngredientUnitsInput = {
@@ -432,6 +462,7 @@ export type UnitUncheckedUpdateWithoutIngredientUnitsInput = {
   namePlural?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   defaultForIngredients?: Prisma.IngredientUncheckedUpdateManyWithoutDefaultUnitNestedInput
   recipeIngredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutUnitNestedInput
+  logIngredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutUnitNestedInput
 }
 
 export type UnitCreateWithoutRecipeIngredientsInput = {
@@ -440,6 +471,7 @@ export type UnitCreateWithoutRecipeIngredientsInput = {
   namePlural?: string | null
   ingredientUnits?: Prisma.IngredientUnitCreateNestedManyWithoutUnitInput
   defaultForIngredients?: Prisma.IngredientCreateNestedManyWithoutDefaultUnitInput
+  logIngredients?: Prisma.LogIngredientCreateNestedManyWithoutUnitInput
 }
 
 export type UnitUncheckedCreateWithoutRecipeIngredientsInput = {
@@ -448,6 +480,7 @@ export type UnitUncheckedCreateWithoutRecipeIngredientsInput = {
   namePlural?: string | null
   ingredientUnits?: Prisma.IngredientUnitUncheckedCreateNestedManyWithoutUnitInput
   defaultForIngredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutDefaultUnitInput
+  logIngredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutUnitInput
 }
 
 export type UnitCreateOrConnectWithoutRecipeIngredientsInput = {
@@ -472,6 +505,7 @@ export type UnitUpdateWithoutRecipeIngredientsInput = {
   namePlural?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ingredientUnits?: Prisma.IngredientUnitUpdateManyWithoutUnitNestedInput
   defaultForIngredients?: Prisma.IngredientUpdateManyWithoutDefaultUnitNestedInput
+  logIngredients?: Prisma.LogIngredientUpdateManyWithoutUnitNestedInput
 }
 
 export type UnitUncheckedUpdateWithoutRecipeIngredientsInput = {
@@ -480,6 +514,59 @@ export type UnitUncheckedUpdateWithoutRecipeIngredientsInput = {
   namePlural?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ingredientUnits?: Prisma.IngredientUnitUncheckedUpdateManyWithoutUnitNestedInput
   defaultForIngredients?: Prisma.IngredientUncheckedUpdateManyWithoutDefaultUnitNestedInput
+  logIngredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutUnitNestedInput
+}
+
+export type UnitCreateWithoutLogIngredientsInput = {
+  id?: string
+  name: string
+  namePlural?: string | null
+  ingredientUnits?: Prisma.IngredientUnitCreateNestedManyWithoutUnitInput
+  defaultForIngredients?: Prisma.IngredientCreateNestedManyWithoutDefaultUnitInput
+  recipeIngredients?: Prisma.RecipeIngredientCreateNestedManyWithoutUnitInput
+}
+
+export type UnitUncheckedCreateWithoutLogIngredientsInput = {
+  id?: string
+  name: string
+  namePlural?: string | null
+  ingredientUnits?: Prisma.IngredientUnitUncheckedCreateNestedManyWithoutUnitInput
+  defaultForIngredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutDefaultUnitInput
+  recipeIngredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutUnitInput
+}
+
+export type UnitCreateOrConnectWithoutLogIngredientsInput = {
+  where: Prisma.UnitWhereUniqueInput
+  create: Prisma.XOR<Prisma.UnitCreateWithoutLogIngredientsInput, Prisma.UnitUncheckedCreateWithoutLogIngredientsInput>
+}
+
+export type UnitUpsertWithoutLogIngredientsInput = {
+  update: Prisma.XOR<Prisma.UnitUpdateWithoutLogIngredientsInput, Prisma.UnitUncheckedUpdateWithoutLogIngredientsInput>
+  create: Prisma.XOR<Prisma.UnitCreateWithoutLogIngredientsInput, Prisma.UnitUncheckedCreateWithoutLogIngredientsInput>
+  where?: Prisma.UnitWhereInput
+}
+
+export type UnitUpdateToOneWithWhereWithoutLogIngredientsInput = {
+  where?: Prisma.UnitWhereInput
+  data: Prisma.XOR<Prisma.UnitUpdateWithoutLogIngredientsInput, Prisma.UnitUncheckedUpdateWithoutLogIngredientsInput>
+}
+
+export type UnitUpdateWithoutLogIngredientsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  namePlural?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ingredientUnits?: Prisma.IngredientUnitUpdateManyWithoutUnitNestedInput
+  defaultForIngredients?: Prisma.IngredientUpdateManyWithoutDefaultUnitNestedInput
+  recipeIngredients?: Prisma.RecipeIngredientUpdateManyWithoutUnitNestedInput
+}
+
+export type UnitUncheckedUpdateWithoutLogIngredientsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  namePlural?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ingredientUnits?: Prisma.IngredientUnitUncheckedUpdateManyWithoutUnitNestedInput
+  defaultForIngredients?: Prisma.IngredientUncheckedUpdateManyWithoutDefaultUnitNestedInput
+  recipeIngredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutUnitNestedInput
 }
 
 
@@ -491,12 +578,14 @@ export type UnitCountOutputType = {
   ingredientUnits: number
   defaultForIngredients: number
   recipeIngredients: number
+  logIngredients: number
 }
 
 export type UnitCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   ingredientUnits?: boolean | UnitCountOutputTypeCountIngredientUnitsArgs
   defaultForIngredients?: boolean | UnitCountOutputTypeCountDefaultForIngredientsArgs
   recipeIngredients?: boolean | UnitCountOutputTypeCountRecipeIngredientsArgs
+  logIngredients?: boolean | UnitCountOutputTypeCountLogIngredientsArgs
 }
 
 /**
@@ -530,6 +619,13 @@ export type UnitCountOutputTypeCountRecipeIngredientsArgs<ExtArgs extends runtim
   where?: Prisma.RecipeIngredientWhereInput
 }
 
+/**
+ * UnitCountOutputType without action
+ */
+export type UnitCountOutputTypeCountLogIngredientsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.LogIngredientWhereInput
+}
+
 
 export type UnitSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -538,6 +634,7 @@ export type UnitSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   ingredientUnits?: boolean | Prisma.Unit$ingredientUnitsArgs<ExtArgs>
   defaultForIngredients?: boolean | Prisma.Unit$defaultForIngredientsArgs<ExtArgs>
   recipeIngredients?: boolean | Prisma.Unit$recipeIngredientsArgs<ExtArgs>
+  logIngredients?: boolean | Prisma.Unit$logIngredientsArgs<ExtArgs>
   _count?: boolean | Prisma.UnitCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["unit"]>
 
@@ -564,6 +661,7 @@ export type UnitInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   ingredientUnits?: boolean | Prisma.Unit$ingredientUnitsArgs<ExtArgs>
   defaultForIngredients?: boolean | Prisma.Unit$defaultForIngredientsArgs<ExtArgs>
   recipeIngredients?: boolean | Prisma.Unit$recipeIngredientsArgs<ExtArgs>
+  logIngredients?: boolean | Prisma.Unit$logIngredientsArgs<ExtArgs>
   _count?: boolean | Prisma.UnitCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UnitIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -575,6 +673,7 @@ export type $UnitPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     ingredientUnits: Prisma.$IngredientUnitPayload<ExtArgs>[]
     defaultForIngredients: Prisma.$IngredientPayload<ExtArgs>[]
     recipeIngredients: Prisma.$RecipeIngredientPayload<ExtArgs>[]
+    logIngredients: Prisma.$LogIngredientPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -977,6 +1076,7 @@ export interface Prisma__UnitClient<T, Null = never, ExtArgs extends runtime.Typ
   ingredientUnits<T extends Prisma.Unit$ingredientUnitsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Unit$ingredientUnitsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IngredientUnitPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   defaultForIngredients<T extends Prisma.Unit$defaultForIngredientsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Unit$defaultForIngredientsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IngredientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   recipeIngredients<T extends Prisma.Unit$recipeIngredientsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Unit$recipeIngredientsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecipeIngredientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  logIngredients<T extends Prisma.Unit$logIngredientsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Unit$logIngredientsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LogIngredientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1466,6 +1566,30 @@ export type Unit$recipeIngredientsArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.RecipeIngredientScalarFieldEnum | Prisma.RecipeIngredientScalarFieldEnum[]
+}
+
+/**
+ * Unit.logIngredients
+ */
+export type Unit$logIngredientsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the LogIngredient
+   */
+  select?: Prisma.LogIngredientSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the LogIngredient
+   */
+  omit?: Prisma.LogIngredientOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LogIngredientInclude<ExtArgs> | null
+  where?: Prisma.LogIngredientWhereInput
+  orderBy?: Prisma.LogIngredientOrderByWithRelationInput | Prisma.LogIngredientOrderByWithRelationInput[]
+  cursor?: Prisma.LogIngredientWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.LogIngredientScalarFieldEnum | Prisma.LogIngredientScalarFieldEnum[]
 }
 
 /**
