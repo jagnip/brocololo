@@ -121,7 +121,7 @@ describe('getIngredientDisplay rawAmount', () => {
     const result = getIngredientDisplay(
       100, 'unit-grams', 'grams', 'unit-grams', [gramsUnit], 1 / 3, 1,
     );
-    expect(result.displayAmount).toBe('33.3');
+    expect(result.displayAmount).toBe('33.33');
     expect(result.rawAmount).toBeCloseTo(33.333, 2);
   });
 

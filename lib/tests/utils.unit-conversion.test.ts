@@ -266,7 +266,7 @@ describe("getIngredientDisplay", () => {
     /**
      * HAPPY PATH: Unit changed from tbsp to cup
      *
-     * 2 tbsp → cups = 2 * (15 / 240) = 0.125 → "0.1"
+     * 2 tbsp → cups = 2 * (15 / 240) = 0.125 → "0.13"
      */
     it("should convert amount when a different unit is selected", () => {
       const result = getIngredientDisplay(
@@ -279,7 +279,7 @@ describe("getIngredientDisplay", () => {
         1,
       );
 
-      expect(result.displayAmount).toBe("0.1");
+      expect(result.displayAmount).toBe("0.13");
       expect(result.displayUnitName).toBe("cup");
     });
 

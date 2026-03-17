@@ -668,7 +668,8 @@ export function IngredientSelector({
             }}
             className={INGREDIENT_ROW_LAYOUT_CLASSES.amountInput}
             min={0}
-            step={0.1}
+            // Allow arbitrary decimal precision (e.g. 0.75) in ingredient amounts.
+            step="any"
             disabled={isAmountDisabled}
           />
 

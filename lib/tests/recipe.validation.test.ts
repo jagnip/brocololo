@@ -406,11 +406,15 @@ describe("formatInstructionIngredientBadge", () => {
 
 describe("formatIngredientAmount", () => {
   it("returns whole numbers without decimal suffix", () => {
-    expect(formatIngredientAmount(50, 1)).toBe("50");
+    expect(formatIngredientAmount(50, 2)).toBe("50");
   });
 
-  it("keeps one decimal when there is a meaningful fraction", () => {
-    expect(formatIngredientAmount(50.5, 1)).toBe("50.5");
+  it("keeps meaningful decimal digits up to two places", () => {
+    expect(formatIngredientAmount(50.5, 2)).toBe("50.5");
+  });
+
+  it("supports two-decimal ingredient amounts", () => {
+    expect(formatIngredientAmount(0.75, 2)).toBe("0.75");
   });
 });
 
