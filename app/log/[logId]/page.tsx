@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { LogPerson } from "@/src/generated/enums";
 import { getLogById } from "@/lib/db/logs";
 import { LogPersonSelect } from "@/components/log/log-person-select";
+import { buildLogDays } from "@/lib/log/view-model";
+import { LogDayView } from "@/components/log/log-day-view";
 
 type LogDetailPageProps = {
   params: Promise<{ logId: string }>;
@@ -23,6 +25,7 @@ export default async function LogDetailPage({
 
   const log = await getLogById(logId, person);
   if (!log) notFound();
+  const days = buildLogDays(log.entries);
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
@@ -31,9 +34,7 @@ export default async function LogDetailPage({
         <LogPersonSelect value={person} />
       </header>
 
-      <pre className="rounded-lg border p-4 text-xs overflow-auto bg-muted/20">
-        {JSON.stringify(log, null, 2)}
-      </pre>
+      <LogDayView days={days} />
     </div>
   );
 }

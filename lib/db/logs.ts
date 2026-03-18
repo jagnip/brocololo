@@ -49,6 +49,11 @@ export async function getLogById(logId: string, person: LogPerson) {
                   id: true,
                   name: true,
                   slug: true,
+                  images: {
+                    where: { isCover: true },
+                    select: { url: true },
+                    take: 1,
+                  },
                 },
               },
             },
@@ -57,11 +62,22 @@ export async function getLogById(logId: string, person: LogPerson) {
             orderBy: { id: "asc" },
             select: {
               id: true,
+              entryRecipeId: true,
               amount: true,
               ingredient: {
                 select: {
                   id: true,
                   name: true,
+                  calories: true,
+                  proteins: true,
+                  fats: true,
+                  carbs: true,
+                  unitConversions: {
+                    select: {
+                      unitId: true,
+                      gramsPerUnit: true,
+                    },
+                  },
                 },
               },
               unit: {
