@@ -24,6 +24,8 @@ export const ROUTES = {
   planView: (planId: string) => `/plan/${planId}`,
   groceries: "/groceries",
   groceriesView: (planId: string) => `/groceries/${planId}`,
+  log: "/log",
+  logView: (logId: string) => `/log/${logId}`,
 } as const;
 
 

@@ -19,12 +19,10 @@ export function getPersonIngredientAmountPerMeal(params: {
 
   if (amount == null) return null;
 
-  // Convert recipe-level saved amount into one-meal baseline first.
   const mealCount = recipeServings / 2;
   if (!Number.isFinite(mealCount) || mealCount <= 0) return null;
   const perMealAmount = amount / mealCount;
 
-  // Person-specific rows are saved only in that person's log entry.
   if (nutritionTarget === "PRIMARY_ONLY") {
     return person === "primary" ? perMealAmount : null;
   }
@@ -32,7 +30,6 @@ export function getPersonIngredientAmountPerMeal(params: {
     return person === "secondary" ? perMealAmount : null;
   }
 
-  // BOTH rows are split by the 1 : multiplier ratio.
   const totalParts = 1 + servingMultiplierForNelson;
   if (!Number.isFinite(totalParts) || totalParts <= 0) return null;
   const factor =

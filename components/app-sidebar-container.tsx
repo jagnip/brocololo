@@ -8,14 +8,16 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { AppSidebarSkeleton } from "@/components/app-sidebar-skeleton";
 import { getCategoriesByType } from "@/lib/db/categories";
 import { getPlans } from "@/lib/db/planner";
+import { getLogs } from "@/lib/db/logs";
 
 async function AppSidebarData() {
-  const [categories, plans] = await Promise.all([
+  const [categories, plans, logs] = await Promise.all([
     getCategoriesByType("FLAVOUR"),
     getPlans(),
+    getLogs(),
   ]);
 
-  return <AppSidebar categories={categories} plans={plans} />;
+  return <AppSidebar categories={categories} plans={plans} logs={logs} />;
 }
 
 export function AppSidebarContainer({

@@ -216,10 +216,9 @@ export async function createPlan(
       include: { slots: true },
     });
 
-    // Create baseline log once, atomically with plan creation.
     await createBaselineLogTx(tx, createdPlan.id, slots);
     return createdPlan;
-  });
+  }, { timeout: 30000 });
 
   if (uniqueRecipeIds.length > 0) {
     await prisma.recipe.updateMany({
@@ -258,7 +257,6 @@ async function createBaselineLogTx(
   ];
 
   for (const { person, role } of people) {
-    // Snack exists in log domain even when planner has no snack slots.
     for (const dayDate of uniqueDaysByKey.values()) {
       await tx.logEntry.create({
         data: {
@@ -302,7 +300,6 @@ async function createBaselineLogTx(
             servingMultiplierForNelson: slot.recipe!.servingMultiplierForNelson,
           });
 
-          // Skip rows that don't belong to this person.
           if (personAmount == null) return null;
 
           return {
@@ -323,7 +320,6 @@ async function createBaselineLogTx(
 }
 
 export async function updatePlan(planId: string, slots: SlotSaveData[]) {
-  // Planner updates intentionally do not rewrite logs.
   const now = new Date();
   const uniqueRecipeIds = [
     ...new Set(slots.filter((s) => s.recipeId).map((s) => s.recipeId!)),

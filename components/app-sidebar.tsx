@@ -31,6 +31,16 @@ type PlanSummary = {
   endDate: Date;
 };
 
+type LogSummary = {
+  id: string;
+  createdAt: Date;
+  plan: {
+    id: string;
+    startDate: Date;
+    endDate: Date;
+  };
+};
+
 function formatDateRange(start: Date, end: Date): string {
   const options: Intl.DateTimeFormatOptions = {
     month: "short",
@@ -44,9 +54,11 @@ function formatDateRange(start: Date, end: Date): string {
 export function AppSidebar({
   categories,
   plans,
+  logs,
 }: {
   categories: CategoryType[];
   plans: PlanSummary[];
+  logs: LogSummary[];
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -56,6 +68,7 @@ export function AppSidebar({
   const isIngredients = pathname.startsWith(ROUTES.ingredients);
   const isPlanner = pathname.startsWith(ROUTES.plan);
   const isGroceries = pathname.startsWith(ROUTES.groceries);
+  const isLog = pathname.startsWith(ROUTES.log);
 
   const selectedCategory = searchParams.get("category") ?? "";
 
@@ -98,6 +111,14 @@ export function AppSidebar({
               <Link href={ROUTES.ingredients}>
                 <Apple />
                 <span>Ingredients</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={isLog} tooltip="Log">
+              <Link href={ROUTES.log}>
+                <CalendarDays />
+                <span>Log</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -205,7 +226,34 @@ export function AppSidebar({
             </SidebarGroupContent>
           </SidebarGroup>
         )}
-        
+
+        {isLog && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Log</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {logs.map((log) => {
+                  const label = formatDateRange(log.plan.startDate, log.plan.endDate);
+                  return (
+                    <SidebarMenuItem key={log.id}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={pathname === ROUTES.logView(log.id)}
+                        tooltip={label}
+                      >
+                        <Link href={ROUTES.logView(log.id)}>
+                          <CalendarDays />
+                          <span>{label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
       </SidebarContent>
     </Sidebar>
   );
