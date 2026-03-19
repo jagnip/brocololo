@@ -1,5 +1,6 @@
 import { SlotInputType, SlotSaveData } from "@/types/planner";
 import { getPersonIngredientAmountPerMeal } from "@/lib/log/helpers";
+import { FIXED_SNACK_RECIPE_ID } from "@/lib/constants";
 import {
   LogMealType,
   LogPerson,
@@ -242,6 +243,28 @@ async function createBaselineLogTx(
   planId: string,
   slots: SlotInputType[],
 ) {
+  // Snack is a fixed baseline recipe that should always be prefilled for new plans.
+  const fixedSnackRecipe = await tx.recipe.findUnique({
+    where: { id: FIXED_SNACK_RECIPE_ID },
+    select: {
+      id: true,
+      servings: true,
+      servingMultiplierForNelson: true,
+      ingredients: {
+        select: {
+          ingredientId: true,
+          amount: true,
+          nutritionTarget: true,
+          unitId: true,
+        },
+      },
+    },
+  });
+
+  if (!fixedSnackRecipe) {
+    throw new Error("FIXED_SNACK_RECIPE_NOT_FOUND");
+  }
+
   const log = await tx.log.create({
     data: { planId },
     select: { id: true },
@@ -259,14 +282,50 @@ async function createBaselineLogTx(
 
   for (const { person, role } of people) {
     for (const dayDate of uniqueDaysByKey.values()) {
-      await tx.logEntry.create({
+      const snackEntry = await tx.logEntry.create({
         data: {
           logId: log.id,
           date: dayDate,
           mealType: LogMealType.SNACK,
           person,
         },
+        select: { id: true },
       });
+
+      const snackEntryRecipe = await tx.logEntryRecipe.create({
+        data: {
+          entryId: snackEntry.id,
+          sourceRecipeId: fixedSnackRecipe.id,
+          position: 0,
+        },
+        select: { id: true },
+      });
+
+      const snackRows = fixedSnackRecipe.ingredients
+        .map((ri) => {
+          const personAmount = getPersonIngredientAmountPerMeal({
+            amount: ri.amount,
+            nutritionTarget: ri.nutritionTarget,
+            person: role,
+            recipeServings: fixedSnackRecipe.servings,
+            servingMultiplierForNelson: fixedSnackRecipe.servingMultiplierForNelson,
+          });
+
+          if (personAmount == null) return null;
+
+          return {
+            entryId: snackEntry.id,
+            entryRecipeId: snackEntryRecipe.id,
+            ingredientId: ri.ingredientId,
+            amount: personAmount,
+            unitId: ri.unitId ?? null,
+          };
+        })
+        .filter((row): row is NonNullable<typeof row> => row !== null);
+
+      if (snackRows.length > 0) {
+        await tx.logIngredient.createMany({ data: snackRows });
+      }
     }
 
     for (const slot of slots) {

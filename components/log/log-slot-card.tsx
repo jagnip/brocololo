@@ -1,5 +1,4 @@
 import { Card } from "@/components/ui/card";
-import { LogMealType } from "@/src/generated/enums";
 import type { LogSlotData } from "@/lib/log/view-model";
 import { LogRecipeCard } from "./log-recipe-card";
 
@@ -9,8 +8,7 @@ type LogSlotCardProps = {
 };
 
 export function LogSlotCard({ slot, onRecipeClick }: LogSlotCardProps) {
-  // Snack remains intentionally empty for this step.
-  if (slot.mealType === LogMealType.SNACK || slot.recipes.length === 0) {
+  if (slot.recipes.length === 0) {
     return (
       <Card className="p-4 border-dashed min-h-[120px] flex items-center">
         <p className="text-sm text-muted-foreground">{slot.label}: empty</p>

@@ -6,7 +6,7 @@ import { LogDayView } from "./log-day-view";
 import type { LogDayData } from "@/lib/log/view-model";
 
 describe("LogDayView", () => {
-  it("renders all four slots and keeps snack empty", () => {
+  it("renders all four slots and shows snack recipe when present", () => {
     const days: LogDayData[] = [
       {
         date: new Date("2026-03-17T00:00:00.000Z"),
@@ -47,7 +47,18 @@ describe("LogDayView", () => {
           {
             mealType: LogMealType.SNACK,
             label: "Snack",
-            recipes: [],
+            recipes: [
+              {
+                id: "r-snack",
+                title: "Yogurt with frozen fruits and nuts",
+                slug: "yogurt-with-frozen-fruits-and-nuts",
+                imageUrl: null,
+                calories: 280,
+                proteins: 18,
+                fats: 10,
+                carbs: 26,
+              },
+            ],
           },
           {
             mealType: LogMealType.DINNER,
@@ -80,7 +91,9 @@ describe("LogDayView", () => {
     expect(screen.getByText("Chicken Bowl")).toBeInTheDocument();
     expect(screen.getByText("Salmon Rice")).toBeInTheDocument();
 
-    expect(screen.getByText("Snack: empty")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /yogurt with frozen fruits and nuts/i }),
+    ).toBeInTheDocument();
   });
 
   it("opens ingredient editor dialog when recipe card is clicked", async () => {
@@ -145,6 +158,7 @@ describe("LogDayView", () => {
           {
             id: "ingredient-1",
             name: "Oats",
+            brand: null,
             defaultUnitId: "unit-g",
             calories: 380,
             proteins: 13,

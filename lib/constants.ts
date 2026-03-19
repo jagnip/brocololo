@@ -11,6 +11,9 @@ export const MEAL_TYPES: PlannerMealType[] = [
   PlannerMealType.DINNER,
 ];
 
+// Fixed recipe automatically attached to snack log entries created from a new plan.
+export const FIXED_SNACK_RECIPE_ID = "cmmxcnazf000ruqttm9nnn158";
+
 export const ROUTES = {
   recipes: "/recipes",
   recipeCreate: "/recipes/create",

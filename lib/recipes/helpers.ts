@@ -609,6 +609,8 @@ type SwapReadyIngredient = Pick<
   IngredientType,
   | "id"
   | "name"
+  // Keep brand in swap payload so it matches the full recipe ingredient type.
+  | "brand"
   | "slug"
   | "icon"
   | "supermarketUrl"
