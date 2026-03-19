@@ -157,6 +157,7 @@ export async function getPlanForGroceries(planId: string) {
                       id: true,
                       name: true,
                       icon: true,
+                      supermarketUrl: true,
                       unitConversions: true,
                       category: { select: { name: true, sortOrder: true } },
                     },

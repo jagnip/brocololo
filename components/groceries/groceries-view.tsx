@@ -30,7 +30,18 @@ export function GroceriesView({ ingredients }: { ingredients: GroceryItem[] }) {
                     icon={item.ingredientIcon}
                     name={item.ingredientName}
                   />
-                  <span className="font-medium">{item.ingredientName}</span>
+                  {item.supermarketUrl ? (
+                    <a
+                      href={item.supermarketUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-blue-600 hover:underline"
+                    >
+                      {item.ingredientName}
+                    </a>
+                  ) : (
+                    <span className="font-medium">{item.ingredientName}</span>
+                  )}
                   <span className="text-sm text-muted-foreground">
                     ({item.recipeNames.join(", ")})
                   </span>

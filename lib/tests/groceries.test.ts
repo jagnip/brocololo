@@ -27,6 +27,7 @@ function createSlot(
             id: "ing-chicken",
             name: "Chicken Breast",
             icon: "chicken-breast.svg",
+            supermarketUrl: null,
             unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
             category: { name: "Meat & Poultry", sortOrder: 3 },
           },
@@ -64,6 +65,7 @@ describe("transformPlanToGroceryItems", () => {
       {
         ingredientName: "Chicken Breast",
         ingredientIcon: "chicken-breast.svg",
+        supermarketUrl: null,
         amount: 200,
         unitName: "grams",
         recipeNames: ["Test Recipe"],
@@ -100,6 +102,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-chicken",
               name: "Chicken",
               icon: "chicken.svg",
+              supermarketUrl: null,
               unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
               category: { name: "Meat & Poultry", sortOrder: 3 },
             },
@@ -118,6 +121,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-chicken",
               name: "Chicken",
               icon: "chicken.svg",
+              supermarketUrl: null,
               unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
               category: { name: "Meat & Poultry", sortOrder: 3 },
             },
@@ -150,6 +154,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-tomato",
               name: "Tomato",
               icon: "tomato.svg",
+              supermarketUrl: null,
               unitConversions: [],
               category: { name: "Produce", sortOrder: 1 },
             },
@@ -168,6 +173,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-tomato",
               name: "Tomato",
               icon: "tomato.svg",
+              supermarketUrl: null,
               unitConversions: [],
               category: { name: "Produce", sortOrder: 1 },
             },
@@ -199,6 +205,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-tomato",
               name: "Tomato",
               icon: "tomato.svg",
+              supermarketUrl: null,
               unitConversions: [
                 { unitId: "unit-pieces", gramsPerUnit: 150 },
                 { unitId: "unit-grams", gramsPerUnit: 1 },
@@ -220,6 +227,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-tomato",
               name: "Tomato",
               icon: "tomato.svg",
+              supermarketUrl: null,
               unitConversions: [
                 { unitId: "unit-pieces", gramsPerUnit: 150 },
                 { unitId: "unit-grams", gramsPerUnit: 1 },
@@ -257,6 +265,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-oil",
               name: "Olive Oil",
               icon: "oil.svg",
+              supermarketUrl: null,
               unitConversions: [{ unitId: "unit-ml", gramsPerUnit: 0.92 }],
               category: { name: "Oils & Vinegars", sortOrder: 7 },
             },
@@ -275,6 +284,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-oil",
               name: "Olive Oil",
               icon: "oil.svg",
+              supermarketUrl: null,
               unitConversions: [{ unitId: "unit-ml", gramsPerUnit: 0.92 }],
               category: { name: "Oils & Vinegars", sortOrder: 7 },
             },
@@ -305,7 +315,7 @@ describe("transformPlanToGroceryItems", () => {
         name: "Recipe A",
         ingredients: [
           {
-            ingredient: { id: "ing-salt", name: "Salt", icon: null, unitConversions: [], category: { name: "Seasonings", sortOrder: 8 } },
+            ingredient: { id: "ing-salt", name: "Salt", icon: null, supermarketUrl: null, unitConversions: [], category: { name: "Seasonings", sortOrder: 8 } },
             unit: { id: "unit-taste", name: "to taste" },
             amount: null,
           },
@@ -327,7 +337,7 @@ describe("transformPlanToGroceryItems", () => {
         name: "Recipe A",
         ingredients: [
           {
-            ingredient: { id: "ing-salt", name: "Salt", icon: null, unitConversions: [], category: { name: "Seasonings", sortOrder: 8 } },
+            ingredient: { id: "ing-salt", name: "Salt", icon: null, supermarketUrl: null, unitConversions: [], category: { name: "Seasonings", sortOrder: 8 } },
             unit: { id: "unit-taste", name: "to taste" },
             amount: null,
           },
@@ -337,7 +347,7 @@ describe("transformPlanToGroceryItems", () => {
         name: "Recipe B",
         ingredients: [
           {
-            ingredient: { id: "ing-salt", name: "Salt", icon: null, unitConversions: [], category: { name: "Seasonings", sortOrder: 8 } },
+            ingredient: { id: "ing-salt", name: "Salt", icon: null, supermarketUrl: null, unitConversions: [], category: { name: "Seasonings", sortOrder: 8 } },
             unit: { id: "unit-taste", name: "to taste" },
             amount: null,
           },
@@ -362,6 +372,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-salt",
               name: "Salt",
               icon: null,
+              supermarketUrl: null,
               unitConversions: [],
               category: { name: "Seasonings", sortOrder: 8 },
             },
@@ -392,6 +403,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-chicken",
               name: "Chicken",
               icon: "chicken.svg",
+              supermarketUrl: null,
               unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
               category: { name: "Meat & Poultry", sortOrder: 3 },
             },
@@ -403,6 +415,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-rice",
               name: "Rice",
               icon: "rice.svg",
+              supermarketUrl: null,
               unitConversions: [{ unitId: "unit-cups", gramsPerUnit: 185 }],
               category: { name: "Grains & Pasta", sortOrder: 5 },
             },
@@ -431,17 +444,17 @@ describe("transformPlanToGroceryItems", () => {
         servingMultiplierForNelson: 1,
         ingredients: [
           {
-            ingredient: { id: "ing-z", name: "Zucchini", icon: "zucchini.svg", unitConversions: [], category: { name: "Produce", sortOrder: 1 } },
+            ingredient: { id: "ing-z", name: "Zucchini", icon: "zucchini.svg", supermarketUrl: null, unitConversions: [], category: { name: "Produce", sortOrder: 1 } },
             unit: { id: "unit-pieces", name: "pieces" },
             amount: 1,
           },
           {
-            ingredient: { id: "ing-a", name: "Avocado", icon: "avocado.svg", unitConversions: [], category: { name: "Produce", sortOrder: 1 } },
+            ingredient: { id: "ing-a", name: "Avocado", icon: "avocado.svg", supermarketUrl: null, unitConversions: [], category: { name: "Produce", sortOrder: 1 } },
             unit: { id: "unit-pieces", name: "pieces" },
             amount: 2,
           },
           {
-            ingredient: { id: "ing-m", name: "Mango", icon: null, unitConversions: [], category: { name: "Produce", sortOrder: 1 } },
+            ingredient: { id: "ing-m", name: "Mango", icon: null, supermarketUrl: null, unitConversions: [], category: { name: "Produce", sortOrder: 1 } },
             unit: { id: "unit-pieces", name: "pieces" },
             amount: 3,
           },
@@ -470,6 +483,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-rice",
               name: "Rice",
               icon: "rice.svg",
+              supermarketUrl: null,
               unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
               category: { name: "Grains & Pasta", sortOrder: 5 },
             },
@@ -497,6 +511,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-pasta",
               name: "Pasta",
               icon: "spaghetti.svg",
+              supermarketUrl: null,
               unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
               category: { name: "Grains & Pasta", sortOrder: 5 },
             },
@@ -522,6 +537,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-chicken",
               name: "Chicken",
               icon: "chicken.svg",
+              supermarketUrl: null,
               unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
               category: { name: "Meat & Poultry", sortOrder: 3 },
             },
@@ -533,6 +549,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-soy",
               name: "Soy Sauce",
               icon: "soy-sauce.svg",
+              supermarketUrl: null,
               unitConversions: [{ unitId: "unit-ml", gramsPerUnit: 1.1 }],
               category: { name: "Sauces & Condiments", sortOrder: 6 },
             },
@@ -544,6 +561,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-rice",
               name: "Rice",
               icon: "rice.svg",
+              supermarketUrl: null,
               unitConversions: [{ unitId: "unit-cups", gramsPerUnit: 185 }],
               category: { name: "Grains & Pasta", sortOrder: 5 },
             },
@@ -577,6 +595,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-tomato",
               name: "Tomato",
               icon: "tomato.svg",
+              supermarketUrl: null,
               unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
               category: { name: "Produce", sortOrder: 1 },
             },
@@ -603,6 +622,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-tofu",
               name: "Firm Tofu",
               icon: null,
+              supermarketUrl: null,
               unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
               category: { name: "Produce", sortOrder: 1 },
             },
@@ -630,6 +650,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-butter",
               name: "Butter",
               icon: "butter.svg",
+              supermarketUrl: null,
               unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
               category: { name: "Dairy & Eggs", sortOrder: 2 },
             },
@@ -648,6 +669,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-butter",
               name: "Butter",
               icon: "butter.svg",
+              supermarketUrl: null,
               unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
               category: { name: "Dairy & Eggs", sortOrder: 2 },
             },
@@ -677,6 +699,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-flour",
               name: "Flour",
               icon: "flour.svg",
+              supermarketUrl: null,
               unitConversions: [
                 { unitId: "unit-cups", gramsPerUnit: 120 },
                 { unitId: "unit-grams", gramsPerUnit: 1 },
@@ -698,6 +721,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-flour",
               name: "Flour",
               icon: "flour.svg",
+              supermarketUrl: null,
               unitConversions: [
                 { unitId: "unit-cups", gramsPerUnit: 120 },
                 { unitId: "unit-grams", gramsPerUnit: 1 },
@@ -730,6 +754,7 @@ describe("transformPlanToGroceryItems", () => {
               id: "ing-salt",
               name: "Salt",
               icon: null,
+              supermarketUrl: null,
               unitConversions: [],
               category: { name: "Seasonings", sortOrder: 8 },
             },
@@ -744,6 +769,107 @@ describe("transformPlanToGroceryItems", () => {
 
     expect(result[0].ingredientIcon).toBeNull();
     expect(result[0].amount).toBeNull();
+  });
+
+  // ── Supermarket URL threading ──────────────────────────────────────────
+
+  it("preserves supermarketUrl through the pipeline", () => {
+    const slots = [
+      createSlot({
+        servings: 2,
+        servingMultiplierForNelson: 1,
+        ingredients: [
+          {
+            ingredient: {
+              id: "ing-chicken",
+              name: "Chicken",
+              icon: "chicken.svg",
+              supermarketUrl: "https://continente.pt/chicken",
+              unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
+              category: { name: "Meat & Poultry", sortOrder: 3 },
+            },
+            unit: { id: "unit-grams", name: "grams" },
+            amount: 400,
+          },
+        ],
+      }),
+    ];
+
+    const result = transformPlanToGroceryItems(slots);
+    expect(result[0].supermarketUrl).toBe("https://continente.pt/chicken");
+  });
+
+  it("preserves supermarketUrl when aggregating across recipes", () => {
+    const slots = [
+      createSlot({
+        name: "Recipe A",
+        servings: 2,
+        servingMultiplierForNelson: 1,
+        ingredients: [
+          {
+            ingredient: {
+              id: "ing-butter",
+              name: "Butter",
+              icon: "butter.svg",
+              supermarketUrl: "https://continente.pt/butter",
+              unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
+              category: { name: "Dairy & Eggs", sortOrder: 2 },
+            },
+            unit: { id: "unit-grams", name: "grams" },
+            amount: 50,
+          },
+        ],
+      }),
+      createSlot({
+        name: "Recipe B",
+        servings: 2,
+        servingMultiplierForNelson: 1,
+        ingredients: [
+          {
+            ingredient: {
+              id: "ing-butter",
+              name: "Butter",
+              icon: "butter.svg",
+              supermarketUrl: "https://continente.pt/butter",
+              unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
+              category: { name: "Dairy & Eggs", sortOrder: 2 },
+            },
+            unit: { id: "unit-grams", name: "grams" },
+            amount: 30,
+          },
+        ],
+      }),
+    ];
+
+    const result = transformPlanToGroceryItems(slots);
+    expect(result).toHaveLength(1);
+    expect(result[0].supermarketUrl).toBe("https://continente.pt/butter");
+  });
+
+  it("returns null supermarketUrl when ingredient has none", () => {
+    const slots = [
+      createSlot({
+        servings: 2,
+        servingMultiplierForNelson: 1,
+        ingredients: [
+          {
+            ingredient: {
+              id: "ing-salt",
+              name: "Salt",
+              icon: null,
+              supermarketUrl: null,
+              unitConversions: [],
+              category: { name: "Seasonings", sortOrder: 8 },
+            },
+            unit: { id: "unit-taste", name: "to taste" },
+            amount: null,
+          },
+        ],
+      }),
+    ];
+
+    const result = transformPlanToGroceryItems(slots);
+    expect(result[0].supermarketUrl).toBeNull();
   });
 });
 
