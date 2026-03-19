@@ -1856,6 +1856,7 @@ export const IngredientScalarFieldEnum = {
   name: 'name',
   slug: 'slug',
   icon: 'icon',
+  brand: 'brand',
   supermarketUrl: 'supermarketUrl',
   calories: 'calories',
   proteins: 'proteins',

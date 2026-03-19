@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Pencil, Plus } from "lucide-react";
 import { SearchInput } from "@/components/search";
 import { IngredientIcon } from "@/components/ingredient-icon";
+import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import { getIngredientsPage } from "@/lib/db/ingredients";
 import { ROUTES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
@@ -69,7 +70,9 @@ export async function IngredientsPageContainer({
                   <IngredientIcon icon={ingredient.icon} name={ingredient.name} />
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="truncate font-medium">{ingredient.name}</p>
+                      <p className="truncate font-medium">
+                        {getIngredientDisplayName(ingredient.name, ingredient.brand)}
+                      </p>
                       <Link
                         href={ROUTES.ingredientEdit(ingredient.slug)}
                         aria-label={`Edit ${ingredient.name}`}

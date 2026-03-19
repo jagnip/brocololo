@@ -23,11 +23,13 @@ import {
 } from "@/components/ui/select";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
+import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
 
 export type LogIngredientOption = {
   id: string;
   name: string;
+  brand: string | null;
   defaultUnitId: string | null;
   calories: number;
   proteins: number;
@@ -142,7 +144,7 @@ export function EditLogIngredientsDialog({
   const ingredientSelectOptions = useMemo(
     () => ingredientOptions.map((ingredient) => ({
       value: ingredient.id,
-      label: ingredient.name,
+      label: getIngredientDisplayName(ingredient.name, ingredient.brand),
     })),
     [ingredientOptions],
   );

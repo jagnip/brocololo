@@ -45,6 +45,7 @@ export default async function LogDetailPage({
         ingredientOptions={ingredients.map((ingredient) => ({
           id: ingredient.id,
           name: ingredient.name,
+          brand: ingredient.brand,
           defaultUnitId: ingredient.defaultUnitId,
           calories: ingredient.calories,
           proteins: ingredient.proteins,

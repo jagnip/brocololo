@@ -21,6 +21,7 @@ import {
   SearchableSelectOption,
 } from "@/components/ui/searchable-select";
 import { IngredientIcon } from "@/components/ingredient-icon";
+import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
 import {
   getDefaultUnitIdForIngredient as resolveDefaultUnitIdForIngredient,
@@ -315,8 +316,10 @@ export function IngredientSelector({
     () =>
       ingredients.map((ingredient) => ({
         value: ingredient.id,
-        label: ingredient.name,
+        label: getIngredientDisplayName(ingredient.name, ingredient.brand),
         icon: ingredient.icon,
+        // Keep raw name as search text so brand doesn't interfere with name-only searches.
+        searchText: ingredient.brand ? ingredient.name : undefined,
       })),
     [ingredients],
   );

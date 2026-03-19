@@ -4,6 +4,7 @@ import { ROUTES } from "@/lib/constants";
 import {
   createIngredient,
   deleteIngredient,
+  findAvailableSlug,
   getGramsUnit,
   getIngredientDeleteUsages,
   updateIngredient,
@@ -25,10 +26,10 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/lib/db/ingredients", () => ({
-  // Only delete-related functions are needed for this test file.
   getIngredientDeleteUsages: vi.fn(),
   deleteIngredient: vi.fn(),
   createIngredient: vi.fn(),
+  findAvailableSlug: vi.fn(),
   getGramsUnit: vi.fn(),
   updateIngredient: vi.fn(),
 }));
@@ -46,6 +47,7 @@ function makeKnownPrismaError(code: string) {
 function makeValidIngredientFormValues(): IngredientFormValues {
   return {
     name: "Chicken Breast",
+    brand: null,
     icon: null,
     supermarketUrl: null,
     calories: 100,
@@ -66,6 +68,7 @@ function makeIngredientRecord() {
   return {
     id: "ingredient-1",
     name: "Chicken Breast",
+    brand: null,
     slug: "chicken-breast",
     icon: null,
     supermarketUrl: null,
@@ -98,6 +101,7 @@ describe("inline ingredient save actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getGramsUnit).mockResolvedValue({ id: "unit-g", name: "g" });
+    vi.mocked(findAvailableSlug).mockResolvedValue("chicken-breast");
   });
 
   it("creates ingredient inline and returns success payload", async () => {
@@ -155,6 +159,7 @@ describe("page ingredient save actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getGramsUnit).mockResolvedValue({ id: "unit-g", name: "g" });
+    vi.mocked(findAvailableSlug).mockResolvedValue("chicken-breast");
   });
 
   it("redirects after successful create in page flow", async () => {

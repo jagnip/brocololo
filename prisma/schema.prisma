@@ -116,9 +116,10 @@ model Recipe {
 
 model Ingredient {
   id              String   @id @default(cuid())
-  name            String   @unique
+  name            String
   slug            String   @unique
   icon            String?
+  brand           String?
   supermarketUrl  String?  @map("supermarket_url")
   calories        Float
   proteins        Float

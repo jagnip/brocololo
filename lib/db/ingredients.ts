@@ -1,3 +1,4 @@
+import slugify from "slugify";
 import { prisma } from "./index";
 import type { IngredientPayload } from "@/lib/validations/ingredient";
 
@@ -31,13 +32,14 @@ export async function getIngredientsPage({
       ? pageSize
       : 25;
 
-  // Apply case-insensitive search when query is present.
-  const where = q?.trim()
+  // Apply case-insensitive search across name and brand when query is present.
+  const trimmedQuery = q?.trim();
+  const where = trimmedQuery
     ? {
-        name: {
-          contains: q.trim(),
-          mode: "insensitive" as const,
-        },
+        OR: [
+          { name: { contains: trimmedQuery, mode: "insensitive" as const } },
+          { brand: { contains: trimmedQuery, mode: "insensitive" as const } },
+        ],
       }
     : undefined;
 
@@ -332,6 +334,33 @@ export async function updateIngredient(
     });
     return { ingredient, fallbackStats };
   });
+}
+
+/**
+ * Generates a unique slug from a name, appending a random suffix
+ * if the base slug is already taken by another ingredient.
+ */
+export async function findAvailableSlug(
+  name: string,
+  excludeIngredientId?: string,
+): Promise<string> {
+  const baseSlug = slugify(name, { lower: true, strict: true, trim: true });
+
+  const collision = await prisma.ingredient.findFirst({
+    where: {
+      slug: baseSlug,
+      ...(excludeIngredientId ? { id: { not: excludeIngredientId } } : {}),
+    },
+    select: { id: true },
+  });
+
+  if (!collision) {
+    return baseSlug;
+  }
+
+  // Append random suffix to resolve collision.
+  const suffix = crypto.randomUUID().slice(0, 6);
+  return `${baseSlug}-${suffix}`;
 }
 
 export async function deleteIngredient(ingredientId: string) {
