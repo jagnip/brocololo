@@ -12,6 +12,7 @@ type LogRecipeCardProps = {
   proteins: number;
   fats: number;
   carbs: number;
+  onClick?: () => void;
 };
 
 export function LogRecipeCard({
@@ -22,9 +23,25 @@ export function LogRecipeCard({
   proteins,
   fats,
   carbs,
+  onClick,
 }: LogRecipeCardProps) {
   return (
-    <Card>
+    <Card
+      className={onClick ? "cursor-pointer hover:shadow-sm transition-shadow" : undefined}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+    >
       {imageUrl && (
         <Image
           src={imageUrl}
@@ -35,7 +52,7 @@ export function LogRecipeCard({
         />
       )}
       <CardHeader>
-        {slug ? (
+        {slug && !onClick ? (
           <Link href={ROUTES.recipe(slug)} className="hover:underline">
             <CardTitle>{title}</CardTitle>
           </Link>

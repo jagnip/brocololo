@@ -1,5 +1,6 @@
 import { LogPerson } from "@/src/generated/client";
 import { prisma } from "./index";
+import type { UpdateLogRecipeIngredientsInput } from "@/lib/validations/log";
 
 export async function getLogs() {
   return prisma.log.findMany({
@@ -91,5 +92,89 @@ export async function getLogById(logId: string, person: LogPerson) {
         },
       },
     },
+  });
+}
+
+export async function updateLogRecipeIngredients(
+  input: UpdateLogRecipeIngredientsInput,
+) {
+  await prisma.$transaction(async (tx) => {
+    const entry = await tx.logEntry.findFirst({
+      where: {
+        id: input.entryId,
+        logId: input.logId,
+        person: input.person,
+      },
+      select: { id: true },
+    });
+
+    if (!entry) {
+      throw new Error("LOG_ENTRY_NOT_FOUND");
+    }
+
+    const entryRecipe = await tx.logEntryRecipe.findFirst({
+      where: {
+        id: input.entryRecipeId,
+        entryId: input.entryId,
+      },
+      select: { id: true },
+    });
+
+    if (!entryRecipe) {
+      throw new Error("ENTRY_RECIPE_NOT_FOUND");
+    }
+
+    const ingredientIds = [
+      ...new Set(input.ingredients.map((row) => row.ingredientId)),
+    ];
+    const ingredients = await tx.ingredient.findMany({
+      where: { id: { in: ingredientIds } },
+      select: {
+        id: true,
+        unitConversions: {
+          select: {
+            unitId: true,
+          },
+        },
+      },
+    });
+
+    const ingredientById = new Map(
+      ingredients.map((ingredient) => [ingredient.id, ingredient]),
+    );
+
+    for (const row of input.ingredients) {
+      const ingredient = ingredientById.get(row.ingredientId);
+      if (!ingredient) {
+        throw new Error("INGREDIENT_NOT_FOUND");
+      }
+
+      const supportsUnit = ingredient.unitConversions.some(
+        (conversion) => conversion.unitId === row.unitId,
+      );
+
+      if (!supportsUnit) {
+        throw new Error("UNIT_NOT_ALLOWED_FOR_INGREDIENT");
+      }
+    }
+
+    await tx.logIngredient.deleteMany({
+      where: {
+        entryId: input.entryId,
+        entryRecipeId: input.entryRecipeId,
+      },
+    });
+
+    if (input.ingredients.length > 0) {
+      await tx.logIngredient.createMany({
+        data: input.ingredients.map((row) => ({
+          entryId: input.entryId,
+          entryRecipeId: input.entryRecipeId,
+          ingredientId: row.ingredientId,
+          amount: row.amount,
+          unitId: row.unitId,
+        })),
+      });
+    }
   });
 }

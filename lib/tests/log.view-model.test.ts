@@ -14,7 +14,7 @@ describe("buildLogDays", () => {
         recipes: [
           {
             id: "entry-recipe-lunch",
-            sourceRecipe: { name: "Chicken Bowl", slug: "chicken-bowl" },
+            sourceRecipe: { name: "Chicken Bowl", slug: "chicken-bowl", images: [] },
           },
         ],
         ingredients: [
@@ -23,6 +23,8 @@ describe("buildLogDays", () => {
             amount: 100,
             unit: gramsUnit,
             ingredient: {
+              id: "ing-lunch",
+              name: "Lunch ingredient",
               calories: 200,
               proteins: 20,
               fats: 10,
@@ -39,7 +41,7 @@ describe("buildLogDays", () => {
         recipes: [
           {
             id: "entry-recipe-breakfast",
-            sourceRecipe: { name: "Oatmeal", slug: "oatmeal" },
+            sourceRecipe: { name: "Oatmeal", slug: "oatmeal", images: [] },
           },
         ],
         ingredients: [
@@ -48,6 +50,8 @@ describe("buildLogDays", () => {
             amount: 50,
             unit: gramsUnit,
             ingredient: {
+              id: "ing-breakfast",
+              name: "Breakfast ingredient",
               calories: 350,
               proteins: 12,
               fats: 7,
@@ -84,7 +88,7 @@ describe("buildLogDays", () => {
         recipes: [
           {
             id: "entry-recipe-a",
-            sourceRecipe: { name: "Recipe A", slug: "recipe-a" },
+            sourceRecipe: { name: "Recipe A", slug: "recipe-a", images: [] },
           },
           {
             id: "entry-recipe-b",
@@ -97,6 +101,8 @@ describe("buildLogDays", () => {
             amount: 100,
             unit: gramsUnit,
             ingredient: {
+              id: "ing-a",
+              name: "Ingredient A",
               calories: 100,
               proteins: 10,
               fats: 5,
@@ -109,6 +115,8 @@ describe("buildLogDays", () => {
             amount: 50,
             unit: gramsUnit,
             ingredient: {
+              id: "ing-b",
+              name: "Ingredient B",
               calories: 200,
               proteins: 30,
               fats: 20,
@@ -121,6 +129,8 @@ describe("buildLogDays", () => {
             amount: 20,
             unit: gramsUnit,
             ingredient: {
+              id: "ing-null",
+              name: "Ingredient Null",
               calories: 999,
               proteins: 999,
               fats: 999,

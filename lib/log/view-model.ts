@@ -5,6 +5,8 @@ type LogIngredientRow = {
   amount: number | null;
   unit: { id: string; name: string } | null;
   ingredient: {
+    id: string;
+    name: string;
     calories: number;
     proteins: number;
     fats: number;
@@ -37,6 +39,7 @@ type LogEntryRow = {
 
 export type LogRecipeCardData = {
   id: string;
+  entryId?: string;
   title: string;
   slug: string | null;
   imageUrl: string | null;
@@ -44,6 +47,13 @@ export type LogRecipeCardData = {
   proteins: number;
   fats: number;
   carbs: number;
+  ingredients?: Array<{
+    ingredientId: string | null;
+    ingredientName: string | null;
+    unitId: string | null;
+    unitName: string | null;
+    amount: number | null;
+  }>;
 };
 
 export type LogSlotData = {
@@ -160,10 +170,18 @@ export function buildLogDays(entries: LogEntryRow[]): LogDayData[] {
 
       return {
         id: recipe.id,
+        entryId: entry.id,
         title: recipe.sourceRecipe?.name ?? "Recipe removed",
         slug: recipe.sourceRecipe?.slug ?? null,
         imageUrl: recipe.sourceRecipe?.images?.[0]?.url ?? null,
         ...macros,
+        ingredients: linkedIngredients.map((ingredient) => ({
+          ingredientId: ingredient.ingredient?.id ?? null,
+          ingredientName: ingredient.ingredient?.name ?? null,
+          unitId: ingredient.unit?.id ?? null,
+          unitName: ingredient.unit?.name ?? null,
+          amount: ingredient.amount ?? null,
+        })),
       };
     });
 

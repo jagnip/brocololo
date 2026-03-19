@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { LogPerson } from "@/src/generated/enums";
 import { getLogById } from "@/lib/db/logs";
+import { getIngredients } from "@/lib/db/ingredients";
 import { LogPersonSelect } from "@/components/log/log-person-select";
 import { buildLogDays } from "@/lib/log/view-model";
 import { LogDayView } from "@/components/log/log-day-view";
@@ -23,7 +24,10 @@ export default async function LogDetailPage({
   const { person: rawPerson } = await searchParams;
   const person = parsePerson(rawPerson);
 
-  const log = await getLogById(logId, person);
+  const [log, ingredients] = await Promise.all([
+    getLogById(logId, person),
+    getIngredients(),
+  ]);
   if (!log) notFound();
   const days = buildLogDays(log.entries);
 
@@ -34,7 +38,26 @@ export default async function LogDetailPage({
         <LogPersonSelect value={person} />
       </header>
 
-      <LogDayView days={days} />
+      <LogDayView
+        days={days}
+        logId={logId}
+        person={person}
+        ingredientOptions={ingredients.map((ingredient) => ({
+          id: ingredient.id,
+          name: ingredient.name,
+          defaultUnitId: ingredient.defaultUnitId,
+          calories: ingredient.calories,
+          proteins: ingredient.proteins,
+          fats: ingredient.fats,
+          carbs: ingredient.carbs,
+          unitConversions: ingredient.unitConversions.map((conversion) => ({
+            unitId: conversion.unitId,
+            gramsPerUnit: conversion.gramsPerUnit,
+            unitName: conversion.unit.name,
+            unitNamePlural: conversion.unit.namePlural ?? null,
+          })),
+        }))}
+      />
     </div>
   );
 }

@@ -5,9 +5,10 @@ import { LogRecipeCard } from "./log-recipe-card";
 
 type LogSlotCardProps = {
   slot: LogSlotData;
+  onRecipeClick?: (recipe: LogSlotData["recipes"][number]) => void;
 };
 
-export function LogSlotCard({ slot }: LogSlotCardProps) {
+export function LogSlotCard({ slot, onRecipeClick }: LogSlotCardProps) {
   // Snack remains intentionally empty for this step.
   if (slot.mealType === LogMealType.SNACK || slot.recipes.length === 0) {
     return (
@@ -29,6 +30,7 @@ export function LogSlotCard({ slot }: LogSlotCardProps) {
           proteins={recipe.proteins}
           fats={recipe.fats}
           carbs={recipe.carbs}
+          onClick={onRecipeClick ? () => onRecipeClick(recipe) : undefined}
         />
       ))}
     </div>
