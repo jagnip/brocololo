@@ -223,7 +223,8 @@ export function EditLogIngredientsDialog({
         </section>
 
         <section className="px-6 py-4 border-b space-y-3 flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-          <div className="grid grid-cols-[minmax(0,1fr)_104px_104px_44px] gap-2 px-2 text-xs tracking-wide uppercase text-muted-foreground font-semibold">
+          {/* Mobile uses a stacked row layout, so keep column labels desktop-only. */}
+          <div className="hidden sm:grid sm:grid-cols-[minmax(240px,1fr)_104px_104px_44px] gap-2 px-2 text-xs tracking-wide uppercase text-muted-foreground font-semibold">
             <span>Ingredient</span>
             <span>Amount</span>
             <span>Unit</span>
@@ -238,10 +239,14 @@ export function EditLogIngredientsDialog({
               const availableUnits = selectedIngredient?.unitConversions ?? [];
 
               return (
-                <div key={row.key} className="grid grid-cols-[minmax(0,1fr)_104px_104px_44px] gap-2">
-                  <div className="min-w-0">
+                <div
+                  key={row.key}
+                  className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_44px] sm:grid-cols-[minmax(240px,1fr)_104px_104px_44px] gap-2"
+                >
+                  {/* On mobile the ingredient selector gets its own row for readability. */}
+                  <div className="min-w-0 col-span-3 sm:col-span-1">
                     <SearchableSelect
-                      className="min-w-0"
+                      className="min-w-0 sm:min-w-[240px]"
                       options={ingredientSelectOptions}
                       value={row.ingredientId}
                       onValueChange={(nextValue) => {
