@@ -175,6 +175,7 @@ export type PlanWhereInput = {
   endDate?: Prisma.DateTimeFilter<"Plan"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Plan"> | Date | string
   slots?: Prisma.PlanSlotListRelationFilter
+  log?: Prisma.XOR<Prisma.LogNullableScalarRelationFilter, Prisma.LogWhereInput> | null
 }
 
 export type PlanOrderByWithRelationInput = {
@@ -183,6 +184,7 @@ export type PlanOrderByWithRelationInput = {
   endDate?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   slots?: Prisma.PlanSlotOrderByRelationAggregateInput
+  log?: Prisma.LogOrderByWithRelationInput
 }
 
 export type PlanWhereUniqueInput = Prisma.AtLeast<{
@@ -194,6 +196,7 @@ export type PlanWhereUniqueInput = Prisma.AtLeast<{
   endDate?: Prisma.DateTimeFilter<"Plan"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Plan"> | Date | string
   slots?: Prisma.PlanSlotListRelationFilter
+  log?: Prisma.XOR<Prisma.LogNullableScalarRelationFilter, Prisma.LogWhereInput> | null
 }, "id">
 
 export type PlanOrderByWithAggregationInput = {
@@ -222,6 +225,7 @@ export type PlanCreateInput = {
   endDate: Date | string
   createdAt?: Date | string
   slots?: Prisma.PlanSlotCreateNestedManyWithoutPlanInput
+  log?: Prisma.LogCreateNestedOneWithoutPlanInput
 }
 
 export type PlanUncheckedCreateInput = {
@@ -230,6 +234,7 @@ export type PlanUncheckedCreateInput = {
   endDate: Date | string
   createdAt?: Date | string
   slots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutPlanInput
+  log?: Prisma.LogUncheckedCreateNestedOneWithoutPlanInput
 }
 
 export type PlanUpdateInput = {
@@ -238,6 +243,7 @@ export type PlanUpdateInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   slots?: Prisma.PlanSlotUpdateManyWithoutPlanNestedInput
+  log?: Prisma.LogUpdateOneWithoutPlanNestedInput
 }
 
 export type PlanUncheckedUpdateInput = {
@@ -246,6 +252,7 @@ export type PlanUncheckedUpdateInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   slots?: Prisma.PlanSlotUncheckedUpdateManyWithoutPlanNestedInput
+  log?: Prisma.LogUncheckedUpdateOneWithoutPlanNestedInput
 }
 
 export type PlanCreateManyInput = {
@@ -313,11 +320,26 @@ export type PlanUpdateOneRequiredWithoutSlotsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.PlanUpdateToOneWithWhereWithoutSlotsInput, Prisma.PlanUpdateWithoutSlotsInput>, Prisma.PlanUncheckedUpdateWithoutSlotsInput>
 }
 
+export type PlanCreateNestedOneWithoutLogInput = {
+  create?: Prisma.XOR<Prisma.PlanCreateWithoutLogInput, Prisma.PlanUncheckedCreateWithoutLogInput>
+  connectOrCreate?: Prisma.PlanCreateOrConnectWithoutLogInput
+  connect?: Prisma.PlanWhereUniqueInput
+}
+
+export type PlanUpdateOneRequiredWithoutLogNestedInput = {
+  create?: Prisma.XOR<Prisma.PlanCreateWithoutLogInput, Prisma.PlanUncheckedCreateWithoutLogInput>
+  connectOrCreate?: Prisma.PlanCreateOrConnectWithoutLogInput
+  upsert?: Prisma.PlanUpsertWithoutLogInput
+  connect?: Prisma.PlanWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PlanUpdateToOneWithWhereWithoutLogInput, Prisma.PlanUpdateWithoutLogInput>, Prisma.PlanUncheckedUpdateWithoutLogInput>
+}
+
 export type PlanCreateWithoutSlotsInput = {
   id?: string
   startDate: Date | string
   endDate: Date | string
   createdAt?: Date | string
+  log?: Prisma.LogCreateNestedOneWithoutPlanInput
 }
 
 export type PlanUncheckedCreateWithoutSlotsInput = {
@@ -325,6 +347,7 @@ export type PlanUncheckedCreateWithoutSlotsInput = {
   startDate: Date | string
   endDate: Date | string
   createdAt?: Date | string
+  log?: Prisma.LogUncheckedCreateNestedOneWithoutPlanInput
 }
 
 export type PlanCreateOrConnectWithoutSlotsInput = {
@@ -348,6 +371,7 @@ export type PlanUpdateWithoutSlotsInput = {
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  log?: Prisma.LogUpdateOneWithoutPlanNestedInput
 }
 
 export type PlanUncheckedUpdateWithoutSlotsInput = {
@@ -355,6 +379,55 @@ export type PlanUncheckedUpdateWithoutSlotsInput = {
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  log?: Prisma.LogUncheckedUpdateOneWithoutPlanNestedInput
+}
+
+export type PlanCreateWithoutLogInput = {
+  id?: string
+  startDate: Date | string
+  endDate: Date | string
+  createdAt?: Date | string
+  slots?: Prisma.PlanSlotCreateNestedManyWithoutPlanInput
+}
+
+export type PlanUncheckedCreateWithoutLogInput = {
+  id?: string
+  startDate: Date | string
+  endDate: Date | string
+  createdAt?: Date | string
+  slots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutPlanInput
+}
+
+export type PlanCreateOrConnectWithoutLogInput = {
+  where: Prisma.PlanWhereUniqueInput
+  create: Prisma.XOR<Prisma.PlanCreateWithoutLogInput, Prisma.PlanUncheckedCreateWithoutLogInput>
+}
+
+export type PlanUpsertWithoutLogInput = {
+  update: Prisma.XOR<Prisma.PlanUpdateWithoutLogInput, Prisma.PlanUncheckedUpdateWithoutLogInput>
+  create: Prisma.XOR<Prisma.PlanCreateWithoutLogInput, Prisma.PlanUncheckedCreateWithoutLogInput>
+  where?: Prisma.PlanWhereInput
+}
+
+export type PlanUpdateToOneWithWhereWithoutLogInput = {
+  where?: Prisma.PlanWhereInput
+  data: Prisma.XOR<Prisma.PlanUpdateWithoutLogInput, Prisma.PlanUncheckedUpdateWithoutLogInput>
+}
+
+export type PlanUpdateWithoutLogInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  slots?: Prisma.PlanSlotUpdateManyWithoutPlanNestedInput
+}
+
+export type PlanUncheckedUpdateWithoutLogInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  slots?: Prisma.PlanSlotUncheckedUpdateManyWithoutPlanNestedInput
 }
 
 
@@ -394,6 +467,7 @@ export type PlanSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   endDate?: boolean
   createdAt?: boolean
   slots?: boolean | Prisma.Plan$slotsArgs<ExtArgs>
+  log?: boolean | Prisma.Plan$logArgs<ExtArgs>
   _count?: boolean | Prisma.PlanCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["plan"]>
 
@@ -421,6 +495,7 @@ export type PlanSelectScalar = {
 export type PlanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "startDate" | "endDate" | "createdAt", ExtArgs["result"]["plan"]>
 export type PlanInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   slots?: boolean | Prisma.Plan$slotsArgs<ExtArgs>
+  log?: boolean | Prisma.Plan$logArgs<ExtArgs>
   _count?: boolean | Prisma.PlanCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type PlanIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -430,6 +505,7 @@ export type $PlanPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name: "Plan"
   objects: {
     slots: Prisma.$PlanSlotPayload<ExtArgs>[]
+    log: Prisma.$LogPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -831,6 +907,7 @@ readonly fields: PlanFieldRefs;
 export interface Prisma__PlanClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   slots<T extends Prisma.Plan$slotsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Plan$slotsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlanSlotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  log<T extends Prisma.Plan$logArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Plan$logArgs<ExtArgs>>): Prisma.Prisma__LogClient<runtime.Types.Result.GetResult<Prisma.$LogPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1273,6 +1350,25 @@ export type Plan$slotsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
   take?: number
   skip?: number
   distinct?: Prisma.PlanSlotScalarFieldEnum | Prisma.PlanSlotScalarFieldEnum[]
+}
+
+/**
+ * Plan.log
+ */
+export type Plan$logArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Log
+   */
+  select?: Prisma.LogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Log
+   */
+  omit?: Prisma.LogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.LogInclude<ExtArgs> | null
+  where?: Prisma.LogWhereInput
 }
 
 /**

@@ -1,5 +1,5 @@
 import type { RecipeType } from "@/types/recipe";
-import { MealType, Prisma } from "@/src/generated/client";
+import { PlannerMealType, Prisma } from "@/src/generated/client";
 
 export type DayMealsType = {
   date: Date;
@@ -11,7 +11,7 @@ export type DayMealsType = {
 //Input Types
 export type SlotInputType = {
   date: Date;
-  mealType: MealType;
+  mealType: PlannerMealType;
   recipe: RecipeType | null;
   alternatives: RecipeType[];
   used: boolean;
@@ -22,7 +22,7 @@ export type PlanInputType = SlotInputType[];
 
 export type SlotSaveData = {
   date: Date;
-  mealType: MealType;
+  mealType: PlannerMealType;
   recipeId: string | null;
   alternativeRecipeIds: string[];
   used: boolean;

@@ -127,7 +127,7 @@ export default function RecipeForm({
       null;
     const ingredientName = ingredient?.name ?? "Select ingredient";
     // Keep amount labels consistent with recipe page formatting (no trailing .0).
-    const amountLabel = row.amount == null ? null : formatIngredientAmount(row.amount, 1);
+    const amountLabel = row.amount == null ? null : formatIngredientAmount(row.amount, 2);
     const unitName = getUnitDisplayName({
       amount: row.amount,
       unitName: selectedUnit?.name ?? "",

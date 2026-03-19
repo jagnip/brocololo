@@ -397,7 +397,11 @@ export const ModelName = {
   RecipeInstruction: 'RecipeInstruction',
   RecipeInstructionIngredient: 'RecipeInstructionIngredient',
   IngredientCategory: 'IngredientCategory',
-  RecipeImage: 'RecipeImage'
+  RecipeImage: 'RecipeImage',
+  Log: 'Log',
+  LogEntry: 'LogEntry',
+  LogEntryRecipe: 'LogEntryRecipe',
+  LogIngredient: 'LogIngredient'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -413,7 +417,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "category" | "plan" | "planSlot" | "planSlotAlternative" | "recipe" | "ingredient" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage"
+    modelProps: "category" | "plan" | "planSlot" | "planSlotAlternative" | "recipe" | "ingredient" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage" | "log" | "logEntry" | "logEntryRecipe" | "logIngredient"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1453,6 +1457,302 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Log: {
+      payload: Prisma.$LogPayload<ExtArgs>
+      fields: Prisma.LogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.LogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.LogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogPayload>
+        }
+        findFirst: {
+          args: Prisma.LogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.LogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogPayload>
+        }
+        findMany: {
+          args: Prisma.LogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogPayload>[]
+        }
+        create: {
+          args: Prisma.LogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogPayload>
+        }
+        createMany: {
+          args: Prisma.LogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.LogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogPayload>[]
+        }
+        delete: {
+          args: Prisma.LogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogPayload>
+        }
+        update: {
+          args: Prisma.LogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogPayload>
+        }
+        deleteMany: {
+          args: Prisma.LogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.LogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.LogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogPayload>[]
+        }
+        upsert: {
+          args: Prisma.LogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogPayload>
+        }
+        aggregate: {
+          args: Prisma.LogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLog>
+        }
+        groupBy: {
+          args: Prisma.LogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.LogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LogCountAggregateOutputType> | number
+        }
+      }
+    }
+    LogEntry: {
+      payload: Prisma.$LogEntryPayload<ExtArgs>
+      fields: Prisma.LogEntryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.LogEntryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.LogEntryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryPayload>
+        }
+        findFirst: {
+          args: Prisma.LogEntryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.LogEntryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryPayload>
+        }
+        findMany: {
+          args: Prisma.LogEntryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryPayload>[]
+        }
+        create: {
+          args: Prisma.LogEntryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryPayload>
+        }
+        createMany: {
+          args: Prisma.LogEntryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.LogEntryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryPayload>[]
+        }
+        delete: {
+          args: Prisma.LogEntryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryPayload>
+        }
+        update: {
+          args: Prisma.LogEntryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryPayload>
+        }
+        deleteMany: {
+          args: Prisma.LogEntryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.LogEntryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.LogEntryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryPayload>[]
+        }
+        upsert: {
+          args: Prisma.LogEntryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryPayload>
+        }
+        aggregate: {
+          args: Prisma.LogEntryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLogEntry>
+        }
+        groupBy: {
+          args: Prisma.LogEntryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LogEntryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.LogEntryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LogEntryCountAggregateOutputType> | number
+        }
+      }
+    }
+    LogEntryRecipe: {
+      payload: Prisma.$LogEntryRecipePayload<ExtArgs>
+      fields: Prisma.LogEntryRecipeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.LogEntryRecipeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryRecipePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.LogEntryRecipeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryRecipePayload>
+        }
+        findFirst: {
+          args: Prisma.LogEntryRecipeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryRecipePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.LogEntryRecipeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryRecipePayload>
+        }
+        findMany: {
+          args: Prisma.LogEntryRecipeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryRecipePayload>[]
+        }
+        create: {
+          args: Prisma.LogEntryRecipeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryRecipePayload>
+        }
+        createMany: {
+          args: Prisma.LogEntryRecipeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.LogEntryRecipeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryRecipePayload>[]
+        }
+        delete: {
+          args: Prisma.LogEntryRecipeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryRecipePayload>
+        }
+        update: {
+          args: Prisma.LogEntryRecipeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryRecipePayload>
+        }
+        deleteMany: {
+          args: Prisma.LogEntryRecipeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.LogEntryRecipeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.LogEntryRecipeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryRecipePayload>[]
+        }
+        upsert: {
+          args: Prisma.LogEntryRecipeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogEntryRecipePayload>
+        }
+        aggregate: {
+          args: Prisma.LogEntryRecipeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLogEntryRecipe>
+        }
+        groupBy: {
+          args: Prisma.LogEntryRecipeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LogEntryRecipeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.LogEntryRecipeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LogEntryRecipeCountAggregateOutputType> | number
+        }
+      }
+    }
+    LogIngredient: {
+      payload: Prisma.$LogIngredientPayload<ExtArgs>
+      fields: Prisma.LogIngredientFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.LogIngredientFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogIngredientPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.LogIngredientFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogIngredientPayload>
+        }
+        findFirst: {
+          args: Prisma.LogIngredientFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogIngredientPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.LogIngredientFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogIngredientPayload>
+        }
+        findMany: {
+          args: Prisma.LogIngredientFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogIngredientPayload>[]
+        }
+        create: {
+          args: Prisma.LogIngredientCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogIngredientPayload>
+        }
+        createMany: {
+          args: Prisma.LogIngredientCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.LogIngredientCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogIngredientPayload>[]
+        }
+        delete: {
+          args: Prisma.LogIngredientDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogIngredientPayload>
+        }
+        update: {
+          args: Prisma.LogIngredientUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogIngredientPayload>
+        }
+        deleteMany: {
+          args: Prisma.LogIngredientDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.LogIngredientUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.LogIngredientUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogIngredientPayload>[]
+        }
+        upsert: {
+          args: Prisma.LogIngredientUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LogIngredientPayload>
+        }
+        aggregate: {
+          args: Prisma.LogIngredientAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLogIngredient>
+        }
+        groupBy: {
+          args: Prisma.LogIngredientGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LogIngredientGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.LogIngredientCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.LogIngredientCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1556,6 +1856,7 @@ export const IngredientScalarFieldEnum = {
   name: 'name',
   slug: 'slug',
   icon: 'icon',
+  brand: 'brand',
   supermarketUrl: 'supermarketUrl',
   calories: 'calories',
   proteins: 'proteins',
@@ -1650,6 +1951,48 @@ export const RecipeImageScalarFieldEnum = {
 export type RecipeImageScalarFieldEnum = (typeof RecipeImageScalarFieldEnum)[keyof typeof RecipeImageScalarFieldEnum]
 
 
+export const LogScalarFieldEnum = {
+  id: 'id',
+  planId: 'planId',
+  createdAt: 'createdAt'
+} as const
+
+export type LogScalarFieldEnum = (typeof LogScalarFieldEnum)[keyof typeof LogScalarFieldEnum]
+
+
+export const LogEntryScalarFieldEnum = {
+  id: 'id',
+  logId: 'logId',
+  date: 'date',
+  mealType: 'mealType',
+  person: 'person'
+} as const
+
+export type LogEntryScalarFieldEnum = (typeof LogEntryScalarFieldEnum)[keyof typeof LogEntryScalarFieldEnum]
+
+
+export const LogEntryRecipeScalarFieldEnum = {
+  id: 'id',
+  entryId: 'entryId',
+  sourceRecipeId: 'sourceRecipeId',
+  position: 'position'
+} as const
+
+export type LogEntryRecipeScalarFieldEnum = (typeof LogEntryRecipeScalarFieldEnum)[keyof typeof LogEntryRecipeScalarFieldEnum]
+
+
+export const LogIngredientScalarFieldEnum = {
+  id: 'id',
+  entryId: 'entryId',
+  entryRecipeId: 'entryRecipeId',
+  ingredientId: 'ingredientId',
+  amount: 'amount',
+  unitId: 'unitId'
+} as const
+
+export type LogIngredientScalarFieldEnum = (typeof LogIngredientScalarFieldEnum)[keyof typeof LogIngredientScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1723,16 +2066,16 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
- * Reference to a field of type 'MealType'
+ * Reference to a field of type 'PlannerMealType'
  */
-export type EnumMealTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MealType'>
+export type EnumPlannerMealTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlannerMealType'>
     
 
 
 /**
- * Reference to a field of type 'MealType[]'
+ * Reference to a field of type 'PlannerMealType[]'
  */
-export type ListEnumMealTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MealType[]'>
+export type ListEnumPlannerMealTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlannerMealType[]'>
     
 
 
@@ -1782,6 +2125,34 @@ export type EnumNutritionTargetFieldRefInput<$PrismaModel> = FieldRefInputType<$
  * Reference to a field of type 'NutritionTarget[]'
  */
 export type ListEnumNutritionTargetFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NutritionTarget[]'>
+    
+
+
+/**
+ * Reference to a field of type 'LogMealType'
+ */
+export type EnumLogMealTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LogMealType'>
+    
+
+
+/**
+ * Reference to a field of type 'LogMealType[]'
+ */
+export type ListEnumLogMealTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LogMealType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'LogPerson'
+ */
+export type EnumLogPersonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LogPerson'>
+    
+
+
+/**
+ * Reference to a field of type 'LogPerson[]'
+ */
+export type ListEnumLogPersonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LogPerson[]'>
     
 
 /**
@@ -1893,6 +2264,10 @@ export type GlobalOmitConfig = {
   recipeInstructionIngredient?: Prisma.RecipeInstructionIngredientOmit
   ingredientCategory?: Prisma.IngredientCategoryOmit
   recipeImage?: Prisma.RecipeImageOmit
+  log?: Prisma.LogOmit
+  logEntry?: Prisma.LogEntryOmit
+  logEntryRecipe?: Prisma.LogEntryRecipeOmit
+  logIngredient?: Prisma.LogIngredientOmit
 }
 
 /* Types for Logging */

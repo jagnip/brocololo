@@ -109,3 +109,23 @@ export type IngredientCategory = Prisma.IngredientCategoryModel
  * 
  */
 export type RecipeImage = Prisma.RecipeImageModel
+/**
+ * Model Log
+ * 
+ */
+export type Log = Prisma.LogModel
+/**
+ * Model LogEntry
+ * 
+ */
+export type LogEntry = Prisma.LogEntryModel
+/**
+ * Model LogEntryRecipe
+ * 
+ */
+export type LogEntryRecipe = Prisma.LogEntryRecipeModel
+/**
+ * Model LogIngredient
+ * 
+ */
+export type LogIngredient = Prisma.LogIngredientModel

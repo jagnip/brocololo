@@ -61,6 +61,7 @@ type IngredientFormProps = {
   ingredient?: {
     id: string;
     name: string;
+    brand: string | null;
     icon: string | null;
     supermarketUrl: string | null;
     calories: number;
@@ -138,6 +139,7 @@ export default function IngredientForm({
     defaultValues: ingredient
       ? {
           name: ingredient.name,
+          brand: ingredient.brand,
           icon: ingredient.icon,
           supermarketUrl: ingredient.supermarketUrl,
           calories: ingredient.calories,
@@ -154,6 +156,7 @@ export default function IngredientForm({
       : {
           // Prefill from selector create flow when provided.
           name: initialName ?? "",
+          brand: null,
           icon: null,
           supermarketUrl: null,
           // Keep targeted nutrition fields empty so placeholders guide first input.
@@ -291,6 +294,24 @@ export default function IngredientForm({
               <FormLabel>Name</FormLabel>
               <FormControl>
                 <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="brand"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Brand (optional)</FormLabel>
+              <FormControl>
+                <Input
+                  value={field.value ?? ""}
+                  onChange={(event) => field.onChange(event.target.value)}
+                  placeholder="e.g. Lidl, Tesco..."
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

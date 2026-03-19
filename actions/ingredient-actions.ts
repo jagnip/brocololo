@@ -1,12 +1,12 @@
 "use server";
 
-import slugify from "slugify";
 import { redirect } from "next/navigation";
 import { Prisma } from "@/src/generated/client";
 import { ROUTES } from "@/lib/constants";
 import {
   createIngredient,
   deleteIngredient,
+  findAvailableSlug,
   getGramsUnit,
   getIngredientDeleteUsages,
   updateIngredient,
@@ -87,11 +87,7 @@ async function saveIngredient(
     }),
   };
 
-  const slug = slugify(parsed.data.name, {
-    lower: true,
-    strict: true,
-    trim: true,
-  });
+  const slug = await findAvailableSlug(parsed.data.name, params.ingredientId);
 
   let ingredient: IngredientType;
   let conversionFallback: IngredientActionSuccess["conversionFallback"];
@@ -125,7 +121,7 @@ async function saveIngredient(
       if (error.code === "P2002") {
         return {
           type: "error",
-          message: "An ingredient with this name already exists",
+          message: "An ingredient with this slug already exists. Try a different name.",
         };
       }
     }

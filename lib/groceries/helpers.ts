@@ -11,6 +11,7 @@ export type PlanSlotData = {
         id: string;
         name: string;
         icon: string | null;
+        supermarketUrl: string | null;
         unitConversions: Array<{ unitId: string; gramsPerUnit: number }>;
         category: { name: string; sortOrder: number };
       };
@@ -24,6 +25,7 @@ type ScaledIngredient = {
   ingredientId: string;
   ingredientName: string;
   ingredientIcon: string | null;
+  supermarketUrl: string | null;
   unitId: string | null;
   unitName: string | null;
   amount: number | null;
@@ -58,6 +60,7 @@ function scaleIngredients(slots: PlanSlotData[]): ScaledIngredient[] {
         ingredientId: ri.ingredient.id,
         ingredientName: ri.ingredient.name,
         ingredientIcon: ri.ingredient.icon,
+        supermarketUrl: ri.ingredient.supermarketUrl,
         unitId: unit?.id ?? null,
         unitName: unit?.name ?? null,
         // Unitless items are always non-quantified in grocery output.
@@ -99,6 +102,7 @@ function aggregateIngredients(items: ScaledIngredient[]): GroceryItem[] {
       result.push({
         ingredientName: nullItems[0].ingredientName,
         ingredientIcon: nullItems[0].ingredientIcon,
+        supermarketUrl: nullItems[0].supermarketUrl,
         amount: null,
         unitName: nullItems[0].unitName,
         recipeNames: [...new Set(nullItems.map((i) => i.recipeName))],
@@ -126,6 +130,7 @@ function aggregateIngredients(items: ScaledIngredient[]): GroceryItem[] {
       result.push({
         ingredientName: unitGroup[0].ingredientName,
         ingredientIcon: unitGroup[0].ingredientIcon,
+        supermarketUrl: unitGroup[0].supermarketUrl,
         amount: unitGroup.reduce((sum, i) => sum + i.amount!, 0),
         unitName: unitGroup[0].unitName,
         recipeNames: [...new Set(unitGroup.map((i) => i.recipeName))],
@@ -144,6 +149,7 @@ function aggregateIngredients(items: ScaledIngredient[]): GroceryItem[] {
         result.push({
           ingredientName: quantifiedItems[0].ingredientName,
           ingredientIcon: quantifiedItems[0].ingredientIcon,
+          supermarketUrl: quantifiedItems[0].supermarketUrl,
           amount: totalGrams,
           unitName: "g",
           recipeNames: [...new Set(quantifiedItems.map((i) => i.recipeName))],
@@ -156,6 +162,7 @@ function aggregateIngredients(items: ScaledIngredient[]): GroceryItem[] {
           result.push({
             ingredientName: unitGroup[0].ingredientName,
             ingredientIcon: unitGroup[0].ingredientIcon,
+            supermarketUrl: unitGroup[0].supermarketUrl,
             amount: unitGroup.reduce((sum, i) => sum + i.amount!, 0),
             unitName: unitGroup[0].unitName,
             recipeNames: [...new Set(unitGroup.map((i) => i.recipeName))],

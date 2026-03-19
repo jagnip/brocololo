@@ -1,4 +1,12 @@
 import { SlotInputType, SlotSaveData } from "@/types/planner";
+import { getPersonIngredientAmountPerMeal } from "@/lib/log/helpers";
+import { FIXED_SNACK_RECIPE_ID } from "@/lib/constants";
+import {
+  LogMealType,
+  LogPerson,
+  PlannerMealType,
+  Prisma,
+} from "@/src/generated/client";
 import { prisma } from "./index";
 
 const recipeInclude = {
@@ -150,6 +158,7 @@ export async function getPlanForGroceries(planId: string) {
                       id: true,
                       name: true,
                       icon: true,
+                      supermarketUrl: true,
                       unitConversions: true,
                       category: { select: { name: true, sortOrder: true } },
                     },
@@ -186,27 +195,32 @@ export async function createPlan(
     ...new Set(slots.filter((s) => s.recipe).map((s) => s.recipe!.id)),
   ];
 
-  const plan = await prisma.plan.create({
-    data: {
-      startDate,
-      endDate,
-      slots: {
-        create: slots.map((s) => ({
-          date: s.date,
-          mealType: s.mealType,
-          recipeId: s.recipe?.id ?? null,
-          used: s.used,
-          alternatives: {
-            create: s.alternatives.map((alt, index) => ({
-              recipeId: alt.id,
-              rank: index,
-            })),
-          },
-        })),
+  const plan = await prisma.$transaction(async (tx) => {
+    const createdPlan = await tx.plan.create({
+      data: {
+        startDate,
+        endDate,
+        slots: {
+          create: slots.map((s) => ({
+            date: s.date,
+            mealType: s.mealType,
+            recipeId: s.recipe?.id ?? null,
+            used: s.used,
+            alternatives: {
+              create: s.alternatives.map((alt, index) => ({
+                recipeId: alt.id,
+                rank: index,
+              })),
+            },
+          })),
+        },
       },
-    },
-    include: { slots: true },
-  });
+      include: { slots: true },
+    });
+
+    await createBaselineLogTx(tx, createdPlan.id, slots);
+    return createdPlan;
+  }, { timeout: 30000 });
 
   if (uniqueRecipeIds.length > 0) {
     await prisma.recipe.updateMany({
@@ -216,6 +230,153 @@ export async function createPlan(
   }
 
   return plan;
+}
+
+function toLogMealType(mealType: PlannerMealType): LogMealType {
+  if (mealType === PlannerMealType.BREAKFAST) return LogMealType.BREAKFAST;
+  if (mealType === PlannerMealType.LUNCH) return LogMealType.LUNCH;
+  return LogMealType.DINNER;
+}
+
+async function createBaselineLogTx(
+  tx: Prisma.TransactionClient,
+  planId: string,
+  slots: SlotInputType[],
+) {
+  // Snack is a fixed baseline recipe that should always be prefilled for new plans.
+  const fixedSnackRecipe = await tx.recipe.findUnique({
+    where: { id: FIXED_SNACK_RECIPE_ID },
+    select: {
+      id: true,
+      servings: true,
+      servingMultiplierForNelson: true,
+      ingredients: {
+        select: {
+          ingredientId: true,
+          amount: true,
+          nutritionTarget: true,
+          unitId: true,
+        },
+      },
+    },
+  });
+
+  if (!fixedSnackRecipe) {
+    throw new Error("FIXED_SNACK_RECIPE_NOT_FOUND");
+  }
+
+  const log = await tx.log.create({
+    data: { planId },
+    select: { id: true },
+  });
+
+  const uniqueDaysByKey = new Map<string, Date>();
+  for (const slot of slots) {
+    const key = slot.date.toISOString().slice(0, 10);
+    if (!uniqueDaysByKey.has(key)) uniqueDaysByKey.set(key, new Date(slot.date));
+  }
+  const people: Array<{ person: LogPerson; role: "primary" | "secondary" }> = [
+    { person: LogPerson.PRIMARY, role: "primary" },
+    { person: LogPerson.SECONDARY, role: "secondary" },
+  ];
+
+  for (const { person, role } of people) {
+    for (const dayDate of uniqueDaysByKey.values()) {
+      const snackEntry = await tx.logEntry.create({
+        data: {
+          logId: log.id,
+          date: dayDate,
+          mealType: LogMealType.SNACK,
+          person,
+        },
+        select: { id: true },
+      });
+
+      const snackEntryRecipe = await tx.logEntryRecipe.create({
+        data: {
+          entryId: snackEntry.id,
+          sourceRecipeId: fixedSnackRecipe.id,
+          position: 0,
+        },
+        select: { id: true },
+      });
+
+      const snackRows = fixedSnackRecipe.ingredients
+        .map((ri) => {
+          const personAmount = getPersonIngredientAmountPerMeal({
+            amount: ri.amount,
+            nutritionTarget: ri.nutritionTarget,
+            person: role,
+            recipeServings: fixedSnackRecipe.servings,
+            servingMultiplierForNelson: fixedSnackRecipe.servingMultiplierForNelson,
+          });
+
+          if (personAmount == null) return null;
+
+          return {
+            entryId: snackEntry.id,
+            entryRecipeId: snackEntryRecipe.id,
+            ingredientId: ri.ingredientId,
+            amount: personAmount,
+            unitId: ri.unitId ?? null,
+          };
+        })
+        .filter((row): row is NonNullable<typeof row> => row !== null);
+
+      if (snackRows.length > 0) {
+        await tx.logIngredient.createMany({ data: snackRows });
+      }
+    }
+
+    for (const slot of slots) {
+      const entry = await tx.logEntry.create({
+        data: {
+          logId: log.id,
+          date: slot.date,
+          mealType: toLogMealType(slot.mealType),
+          person,
+        },
+        select: { id: true },
+      });
+
+      if (!slot.recipe) continue;
+
+      const entryRecipe = await tx.logEntryRecipe.create({
+        data: {
+          entryId: entry.id,
+          sourceRecipeId: slot.recipe.id,
+          position: 0,
+        },
+        select: { id: true },
+      });
+
+      const rows = slot.recipe.ingredients
+        .map((ri) => {
+          const personAmount = getPersonIngredientAmountPerMeal({
+            amount: ri.amount,
+            nutritionTarget: ri.nutritionTarget,
+            person: role,
+            recipeServings: slot.recipe!.servings,
+            servingMultiplierForNelson: slot.recipe!.servingMultiplierForNelson,
+          });
+
+          if (personAmount == null) return null;
+
+          return {
+            entryId: entry.id,
+            entryRecipeId: entryRecipe.id,
+            ingredientId: ri.ingredientId,
+            amount: personAmount,
+            unitId: ri.unitId ?? null,
+          };
+        })
+        .filter((row): row is NonNullable<typeof row> => row !== null);
+
+      if (rows.length > 0) {
+        await tx.logIngredient.createMany({ data: rows });
+      }
+    }
+  }
 }
 
 export async function updatePlan(planId: string, slots: SlotSaveData[]) {

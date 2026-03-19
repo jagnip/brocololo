@@ -1,15 +1,18 @@
-import { MealType } from "@/src/generated/enums";
+import { PlannerMealType } from "@/src/generated/enums";
 
 export const FLAVOUR_BREADCRUMB_LABELS: Record<string, string> = {
   sweet: "Sweet",
   savoury: "Savoury",
 };
 
-export const MEAL_TYPES: MealType[] = [
-  MealType.BREAKFAST,
-  MealType.LUNCH,
-  MealType.DINNER,
+export const MEAL_TYPES: PlannerMealType[] = [
+  PlannerMealType.BREAKFAST,
+  PlannerMealType.LUNCH,
+  PlannerMealType.DINNER,
 ];
+
+// Fixed recipe automatically attached to snack log entries created from a new plan.
+export const FIXED_SNACK_RECIPE_ID = "cmmxcnazf000ruqttm9nnn158";
 
 export const ROUTES = {
   recipes: "/recipes",
@@ -24,6 +27,8 @@ export const ROUTES = {
   planView: (planId: string) => `/plan/${planId}`,
   groceries: "/groceries",
   groceriesView: (planId: string) => `/groceries/${planId}`,
+  log: "/log",
+  logView: (logId: string) => `/log/${logId}`,
 } as const;
 
 

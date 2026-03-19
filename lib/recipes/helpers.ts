@@ -26,7 +26,7 @@ export type IngredientDisplayResult = {
  */
 export function formatIngredientAmount(
   amount: number,
-  maxFractionDigits = 1,
+  maxFractionDigits = 2,
 ): string {
   const rounded = Number(amount.toFixed(maxFractionDigits));
   // Normalize -0 into 0 so UI labels never show a negative zero.
@@ -169,7 +169,7 @@ export function getIngredientDisplay(
     displayConversion == null ? null : scaled * displayConversion.gramsPerUnit;
 
   return {
-    displayAmount: formatIngredientAmount(scaled, 1),
+    displayAmount: formatIngredientAmount(scaled, 2),
     rawAmount: scaled,
     rawAmountInGrams,
     selectedUnitGramsPerUnit: displayConversion?.gramsPerUnit ?? null,
@@ -268,8 +268,8 @@ export function formatInstructionIngredientBadge(input: {
     rawAmount > 0 && rawAmount < 0.1
       ? "<0.1"
       : displayAmount != null
-        ? formatIngredientAmount(Number(displayAmount), 1)
-        : formatIngredientAmount(rawAmount, 1);
+        ? formatIngredientAmount(Number(displayAmount), 2)
+        : formatIngredientAmount(rawAmount, 2);
   const resolvedUnitName = getUnitDisplayName({
     amount: rawAmount,
     unitName: displayUnitName,
@@ -281,7 +281,7 @@ export function formatInstructionIngredientBadge(input: {
   const gramsText = shouldShowGrams
     ? rawAmountInGrams > 0 && rawAmountInGrams < 0.1
       ? "<0.1g"
-      : `${formatIngredientAmount(rawAmountInGrams, 1)}g`
+      : `${formatIngredientAmount(rawAmountInGrams, 2)}g`
     : null;
 
   const base = [
@@ -609,6 +609,8 @@ type SwapReadyIngredient = Pick<
   IngredientType,
   | "id"
   | "name"
+  // Keep brand in swap payload so it matches the full recipe ingredient type.
+  | "brand"
   | "slug"
   | "icon"
   | "supermarketUrl"

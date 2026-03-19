@@ -6,6 +6,7 @@ const cupUnitId = "unit-cup";
 
 const baseIngredientInput = {
   name: "  Banana  ",
+  brand: null,
   icon: " banana.svg ",
   supermarketUrl: "https://example.com/banana",
   calories: 89,
@@ -155,5 +156,48 @@ describe("makeIngredientSchema", () => {
     expect(parsed.proteins).toBe(0);
     expect(parsed.fats).toBe(0);
     expect(parsed.carbs).toBe(0);
+  });
+
+  it("accepts null brand", () => {
+    const schema = makeIngredientSchema(gramsUnitId);
+    const result = schema.safeParse({ ...baseIngredientInput, brand: null });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.brand).toBeNull();
+    }
+  });
+
+  it("accepts a valid brand string", () => {
+    const schema = makeIngredientSchema(gramsUnitId);
+    const result = schema.safeParse({ ...baseIngredientInput, brand: "Lidl" });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.brand).toBe("Lidl");
+    }
+  });
+
+  it("trims brand whitespace and normalizes empty to null", () => {
+    const schema = makeIngredientSchema(gramsUnitId);
+
+    const parsed = schema.parse({ ...baseIngredientInput, brand: "  Lidl  " });
+    expect(parsed.brand).toBe("Lidl");
+
+    const parsedEmpty = schema.parse({ ...baseIngredientInput, brand: "   " });
+    expect(parsedEmpty.brand).toBeNull();
+
+    const parsedBlank = schema.parse({ ...baseIngredientInput, brand: "" });
+    expect(parsedBlank.brand).toBeNull();
+  });
+
+  it("rejects brand longer than 100 characters", () => {
+    const schema = makeIngredientSchema(gramsUnitId);
+    const result = schema.safeParse({
+      ...baseIngredientInput,
+      brand: "A".repeat(101),
+    });
+
+    expect(result.success).toBe(false);
   });
 });

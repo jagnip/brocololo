@@ -1,6 +1,6 @@
 import { RecipeType } from "@/types/recipe";
 import { SlotInputType } from "@/types/planner";
-import { MealType } from "@/src/generated/enums";
+import { PlannerMealType } from "@/src/generated/enums";
 import { differenceInDays } from "date-fns";
 import { getProteinKey } from "./helpers";
 import { PROTEIN_TARGETS } from "../constants";
@@ -9,7 +9,7 @@ import { PROTEIN_TARGETS } from "../constants";
 
 export type ScoringContext = {
   assignedSlots: SlotInputType[];
-  currentSlot: { date: Date; mealType: MealType };
+  currentSlot: { date: Date; mealType: PlannerMealType };
   maxDaysSinceLastUsedCandidate: number; // max days since last used recipe in this pool of candidates
   fridgeIngredientIds: string[]; // ingredient IDs the user has in their fridge
   rollingRecipeIds: string[]; // recipe IDs the user wants included in the plan
@@ -76,7 +76,9 @@ export function scoreProteinBalance(recipe: RecipeType, ctx: ScoringContext): nu
 
   // Count only savoury slots (lunch + dinner) assigned so far
   const assignedSavourySlots = ctx.assignedSlots.filter(
-    (s) => s.mealType === MealType.LUNCH || s.mealType === MealType.DINNER
+    (s) =>
+      s.mealType === PlannerMealType.LUNCH ||
+      s.mealType === PlannerMealType.DINNER
   );
 
   // If no savoury slots assigned yet, score by target ratio directly

@@ -23,6 +23,15 @@ const ingredientBaseSchema = z.object({
     .string()
     .trim()
     .min(1, { message: "Name is required" }),
+  brand: z
+    .string()
+    .max(100, { message: "Brand name is too long" })
+    .nullish()
+    .transform((value) => {
+      if (!value) return null;
+      const trimmed = value.trim();
+      return trimmed === "" ? null : trimmed;
+    }),
   icon: z
     .string()
     .max(200, { message: "Icon filename is too long" })

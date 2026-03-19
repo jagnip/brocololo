@@ -1,8 +1,8 @@
-import { MealType } from "@/src/generated/enums";
+import { PlannerMealType } from "@/src/generated/enums";
 import { RecipeType } from "@/types/recipe";
 
-export function filterByFlavour(recipes: RecipeType[], mealType: MealType): RecipeType[] {
-  const requiredFlavour = mealType === MealType.BREAKFAST ? "sweet" : "savoury";
+export function filterByFlavour(recipes: RecipeType[], mealType: PlannerMealType): RecipeType[] {
+  const requiredFlavour = mealType === PlannerMealType.BREAKFAST ? "sweet" : "savoury";
   return recipes.filter((recipe) =>
     recipe.categories.some(
       (cat) => cat.type === "FLAVOUR" && cat.slug === requiredFlavour

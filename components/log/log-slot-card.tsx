@@ -1,0 +1,36 @@
+import { Card } from "@/components/ui/card";
+import type { LogSlotData } from "@/lib/log/view-model";
+import { LogRecipeCard } from "./log-recipe-card";
+
+type LogSlotCardProps = {
+  slot: LogSlotData;
+  onRecipeClick?: (recipe: LogSlotData["recipes"][number]) => void;
+};
+
+export function LogSlotCard({ slot, onRecipeClick }: LogSlotCardProps) {
+  if (slot.recipes.length === 0) {
+    return (
+      <Card className="p-4 border-dashed min-h-[120px] flex items-center">
+        <p className="text-sm text-muted-foreground">{slot.label}: empty</p>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {slot.recipes.map((recipe) => (
+        <LogRecipeCard
+          key={recipe.id}
+          title={recipe.title}
+          slug={recipe.slug}
+          imageUrl={recipe.imageUrl}
+          calories={recipe.calories}
+          proteins={recipe.proteins}
+          fats={recipe.fats}
+          carbs={recipe.carbs}
+          onClick={onRecipeClick ? () => onRecipeClick(recipe) : undefined}
+        />
+      ))}
+    </div>
+  );
+}

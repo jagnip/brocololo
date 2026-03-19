@@ -113,7 +113,7 @@ export function IngredientItem({
   const oneUnitHeader = displayUnitName && showPerOneSelectedUnitColumn
     ? `Per 1 ${displayUnitName} (${formatIngredientAmount(
         selectedUnitGramsPerUnit ?? 0,
-        1,
+        2,
       )}g)`
     : null;
   const selectedAmountText =
@@ -121,7 +121,7 @@ export function IngredientItem({
       ? null
       : rawAmount > 0 && rawAmount < 0.1
         ? "<0.1"
-        : formatIngredientAmount(rawAmount, 1);
+        : formatIngredientAmount(rawAmount, 2);
   const selectedUnitLabel = getUnitDisplayName({
     amount: rawAmount,
     unitName: displayUnitName,
@@ -131,7 +131,7 @@ export function IngredientItem({
     selectedAmountText && selectedUnitLabel && rawAmountInGrams != null
       ? `Per ${selectedAmountText} ${selectedUnitLabel} (${formatIngredientAmount(
           rawAmountInGrams,
-          1,
+          2,
         )}g)`
       : null;
 
@@ -152,7 +152,7 @@ export function IngredientItem({
   const handleFocus = () => {
     committedRef.current = false;
     // Mirror non-edit display format so the input doesn't jump from 50 -> 50.0.
-    const displayed = rawAmount == null ? "" : formatIngredientAmount(rawAmount, 1);
+    const displayed = rawAmount == null ? "" : formatIngredientAmount(rawAmount, 2);
     setIsEditing(true);
     setEditValue(displayed);
     initialEditValueRef.current = displayed;
@@ -357,52 +357,52 @@ export function IngredientItem({
                 <tbody>
                   <tr>
                     <td className="text-muted-foreground pr-2">Calories</td>
-                    <td className="pr-3">{formatIngredientAmount(nutrition.calories, 1)} kcal</td>
+                    <td className="pr-3">{formatIngredientAmount(nutrition.calories, 2)} kcal</td>
                     {oneSelectedUnitNutrition && (
                       <td className="pr-3">
-                        {formatIngredientAmount(oneSelectedUnitNutrition.calories, 1)} kcal
+                        {formatIngredientAmount(oneSelectedUnitNutrition.calories, 2)} kcal
                       </td>
                     )}
                     {selectedAmountNutrition && (
                       <td>
-                        {formatIngredientAmount(selectedAmountNutrition.calories, 1)} kcal
+                        {formatIngredientAmount(selectedAmountNutrition.calories, 2)} kcal
                       </td>
                     )}
                   </tr>
                   <tr>
                     <td className="text-muted-foreground pr-2">Protein</td>
-                    <td className="pr-3">{formatIngredientAmount(nutrition.protein, 1)}g</td>
+                    <td className="pr-3">{formatIngredientAmount(nutrition.protein, 2)}g</td>
                     {oneSelectedUnitNutrition && (
                       <td className="pr-3">
-                        {formatIngredientAmount(oneSelectedUnitNutrition.protein, 1)}g
+                        {formatIngredientAmount(oneSelectedUnitNutrition.protein, 2)}g
                       </td>
                     )}
                     {selectedAmountNutrition && (
-                      <td>{formatIngredientAmount(selectedAmountNutrition.protein, 1)}g</td>
+                      <td>{formatIngredientAmount(selectedAmountNutrition.protein, 2)}g</td>
                     )}
                   </tr>
                   <tr>
                     <td className="text-muted-foreground pr-2">Fat</td>
-                    <td className="pr-3">{formatIngredientAmount(nutrition.fat, 1)}g</td>
+                    <td className="pr-3">{formatIngredientAmount(nutrition.fat, 2)}g</td>
                     {oneSelectedUnitNutrition && (
                       <td className="pr-3">
-                        {formatIngredientAmount(oneSelectedUnitNutrition.fat, 1)}g
+                        {formatIngredientAmount(oneSelectedUnitNutrition.fat, 2)}g
                       </td>
                     )}
                     {selectedAmountNutrition && (
-                      <td>{formatIngredientAmount(selectedAmountNutrition.fat, 1)}g</td>
+                      <td>{formatIngredientAmount(selectedAmountNutrition.fat, 2)}g</td>
                     )}
                   </tr>
                   <tr>
                     <td className="text-muted-foreground pr-2">Carbs</td>
-                    <td className="pr-3">{formatIngredientAmount(nutrition.carbs, 1)}g</td>
+                    <td className="pr-3">{formatIngredientAmount(nutrition.carbs, 2)}g</td>
                     {oneSelectedUnitNutrition && (
                       <td className="pr-3">
-                        {formatIngredientAmount(oneSelectedUnitNutrition.carbs, 1)}g
+                        {formatIngredientAmount(oneSelectedUnitNutrition.carbs, 2)}g
                       </td>
                     )}
                     {selectedAmountNutrition && (
-                      <td>{formatIngredientAmount(selectedAmountNutrition.carbs, 1)}g</td>
+                      <td>{formatIngredientAmount(selectedAmountNutrition.carbs, 2)}g</td>
                     )}
                   </tr>
                 </tbody>

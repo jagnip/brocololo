@@ -3,6 +3,7 @@ import { PlanSlotData } from "@/lib/groceries/helpers";
 export type GroceryItem = {
   ingredientName: string;
   ingredientIcon: string | null;
+  supermarketUrl: string | null;
   amount: number | null;
   unitName: string | null;
   recipeNames: string[];
