@@ -14,7 +14,12 @@ describe("buildLogDays", () => {
         recipes: [
           {
             id: "entry-recipe-lunch",
-            sourceRecipe: { name: "Chicken Bowl", slug: "chicken-bowl", images: [] },
+            sourceRecipe: {
+              id: "recipe-lunch",
+              name: "Chicken Bowl",
+              slug: "chicken-bowl",
+              images: [],
+            },
           },
         ],
         ingredients: [
@@ -41,7 +46,12 @@ describe("buildLogDays", () => {
         recipes: [
           {
             id: "entry-recipe-breakfast",
-            sourceRecipe: { name: "Oatmeal", slug: "oatmeal", images: [] },
+            sourceRecipe: {
+              id: "recipe-breakfast",
+              name: "Oatmeal",
+              slug: "oatmeal",
+              images: [],
+            },
           },
         ],
         ingredients: [
@@ -88,7 +98,12 @@ describe("buildLogDays", () => {
         recipes: [
           {
             id: "entry-recipe-a",
-            sourceRecipe: { name: "Recipe A", slug: "recipe-a", images: [] },
+            sourceRecipe: {
+              id: "recipe-a",
+              name: "Recipe A",
+              slug: "recipe-a",
+              images: [],
+            },
           },
           {
             id: "entry-recipe-b",
@@ -146,6 +161,7 @@ describe("buildLogDays", () => {
     expect(breakfastRecipes).toHaveLength(2);
 
     expect(breakfastRecipes[0]).toMatchObject({
+      cardKind: "recipe",
       title: "Recipe A",
       calories: 100,
       proteins: 10,
@@ -154,11 +170,50 @@ describe("buildLogDays", () => {
     });
 
     expect(breakfastRecipes[1]).toMatchObject({
+      cardKind: "removed",
       title: "Recipe removed",
       calories: 100,
       proteins: 15,
       fats: 10,
       carbs: 5,
+    });
+  });
+
+  it("creates custom card from ingredients without entryRecipeId", () => {
+    const days = buildLogDays([
+      {
+        id: "entry-snack",
+        date: new Date("2026-03-19T00:00:00.000Z"),
+        mealType: LogMealType.SNACK,
+        recipes: [],
+        ingredients: [
+          {
+            entryRecipeId: null,
+            amount: 100,
+            unit: gramsUnit,
+            ingredient: {
+              id: "ing-custom",
+              name: "Yogurt",
+              calories: 120,
+              proteins: 8,
+              fats: 4,
+              carbs: 10,
+              unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
+            },
+          },
+        ],
+      },
+    ]);
+
+    const snackRecipes = days[0]?.slots[2]?.recipes ?? [];
+    expect(snackRecipes).toHaveLength(1);
+    expect(snackRecipes[0]).toMatchObject({
+      cardKind: "custom",
+      title: "Custom snack",
+      calories: 120,
+      proteins: 8,
+      fats: 4,
+      carbs: 10,
     });
   });
 });

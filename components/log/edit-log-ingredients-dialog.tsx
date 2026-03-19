@@ -203,7 +203,7 @@ export function EditLogIngredientsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[min(1600px,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-[min(1400px,calc(100vw-3rem))] sm:max-w-[1400px] max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col">
         <DialogHeader className="px-6 py-5 border-b">
           <DialogTitle className="text-4xl sm:text-4xl">{title}</DialogTitle>
           <DialogDescription className="sr-only">

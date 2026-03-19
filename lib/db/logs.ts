@@ -2,6 +2,7 @@ import { LogPerson, Prisma } from "@/src/generated/client";
 import { prisma } from "./index";
 import type {
   ParsedAddRecipeToLogInput,
+  UpsertLogSlotInput,
   UpdateLogRecipeIngredientsInput,
 } from "@/lib/validations/log";
 
@@ -141,6 +142,62 @@ export async function updateLogRecipeIngredients(
         data: input.ingredients.map((row) => ({
           entryId: input.entryId,
           entryRecipeId: input.entryRecipeId,
+          ingredientId: row.ingredientId,
+          amount: row.amount,
+          unitId: row.unitId,
+        })),
+      });
+    }
+  });
+}
+
+export async function upsertLogSlot(input: UpsertLogSlotInput) {
+  await prisma.$transaction(async (tx) => {
+    const entry = await tx.logEntry.findFirst({
+      where: {
+        id: input.entryId,
+        logId: input.logId,
+        person: input.person,
+      },
+      select: { id: true },
+    });
+
+    if (!entry) {
+      throw new Error("LOG_ENTRY_NOT_FOUND");
+    }
+
+    await assertIngredientRowsHaveSupportedUnits(tx, input.ingredients);
+
+    await tx.logIngredient.deleteMany({
+      where: {
+        entryId: input.entryId,
+      },
+    });
+
+    await tx.logEntryRecipe.deleteMany({
+      where: {
+        entryId: input.entryId,
+      },
+    });
+
+    let nextEntryRecipeId: string | null = null;
+    if (input.recipeId) {
+      const createdRecipe = await tx.logEntryRecipe.create({
+        data: {
+          entryId: input.entryId,
+          sourceRecipeId: input.recipeId,
+          position: 0,
+        },
+        select: { id: true },
+      });
+      nextEntryRecipeId = createdRecipe.id;
+    }
+
+    if (input.ingredients.length > 0) {
+      await tx.logIngredient.createMany({
+        data: input.ingredients.map((row) => ({
+          entryId: input.entryId,
+          entryRecipeId: nextEntryRecipeId,
           ingredientId: row.ingredientId,
           amount: row.amount,
           unitId: row.unitId,

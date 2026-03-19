@@ -2,10 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { ROUTES } from "@/lib/constants";
-import { replaceMealSlotWithRecipe, updateLogRecipeIngredients } from "@/lib/db/logs";
+import {
+  replaceMealSlotWithRecipe,
+  updateLogRecipeIngredients,
+  upsertLogSlot,
+} from "@/lib/db/logs";
 import {
   addRecipeToLogSchema,
   type AddRecipeToLogInput,
+  upsertLogSlotSchema,
+  type UpsertLogSlotInput,
   updateLogRecipeIngredientsSchema,
   type UpdateLogRecipeIngredientsInput,
 } from "@/lib/validations/log";
@@ -55,5 +61,28 @@ export async function addRecipeToLogAction(input: AddRecipeToLogInput) {
     };
   }
 
+  return { type: "success" as const };
+}
+
+export async function upsertLogSlotAction(input: UpsertLogSlotInput) {
+  const parsed = upsertLogSlotSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      type: "error" as const,
+      message: parsed.error.issues[0]?.message ?? "Invalid slot data",
+    };
+  }
+
+  try {
+    await upsertLogSlot(parsed.data);
+  } catch (error) {
+    console.error("Error updating log slot", error);
+    return {
+      type: "error" as const,
+      message: "Failed to update log slot",
+    };
+  }
+
+  revalidatePath(ROUTES.logView(parsed.data.logId));
   return { type: "success" as const };
 }

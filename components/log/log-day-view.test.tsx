@@ -18,6 +18,10 @@ describe("LogDayView", () => {
             recipes: [
               {
                 id: "r1",
+                entryRecipeId: "r1",
+                sourceRecipeId: "recipe-oatmeal",
+                mealLabel: "Breakfast",
+                cardKind: "recipe",
                 title: "Oatmeal",
                 slug: "oatmeal",
                 imageUrl: null,
@@ -34,6 +38,10 @@ describe("LogDayView", () => {
             recipes: [
               {
                 id: "r2",
+                entryRecipeId: "r2",
+                sourceRecipeId: "recipe-chicken-bowl",
+                mealLabel: "Lunch",
+                cardKind: "recipe",
                 title: "Chicken Bowl",
                 slug: "chicken-bowl",
                 imageUrl: null,
@@ -50,6 +58,10 @@ describe("LogDayView", () => {
             recipes: [
               {
                 id: "r-snack",
+                entryRecipeId: "r-snack",
+                sourceRecipeId: "recipe-yogurt",
+                mealLabel: "Snack",
+                cardKind: "recipe",
                 title: "Yogurt with frozen fruits and nuts",
                 slug: "yogurt-with-frozen-fruits-and-nuts",
                 imageUrl: null,
@@ -66,6 +78,10 @@ describe("LogDayView", () => {
             recipes: [
               {
                 id: "r3",
+                entryRecipeId: "r3",
+                sourceRecipeId: "recipe-salmon-rice",
+                mealLabel: "Dinner",
+                cardKind: "recipe",
                 title: "Salmon Rice",
                 slug: "salmon-rice",
                 imageUrl: null,
@@ -94,6 +110,7 @@ describe("LogDayView", () => {
     expect(screen.getByText("115.0g protein")).toBeInTheDocument();
     expect(screen.getByText("57.0g fat")).toBeInTheDocument();
     expect(screen.getByText("164.0g carbs")).toBeInTheDocument();
+    expect(screen.queryByText("Snack: empty")).not.toBeInTheDocument();
 
     expect(
       screen.getByRole("button", { name: /yogurt with frozen fruits and nuts/i }),
@@ -115,6 +132,10 @@ describe("LogDayView", () => {
               {
                 id: "entry-recipe-1",
                 entryId: "entry-1",
+                entryRecipeId: "entry-recipe-1",
+                sourceRecipeId: "recipe-oatmeal",
+                mealLabel: "Breakfast",
+                cardKind: "recipe",
                 title: "Oatmeal",
                 slug: "oatmeal",
                 imageUrl: null,
@@ -184,6 +205,96 @@ describe("LogDayView", () => {
     await user.click(screen.getByRole("button", { name: /oatmeal/i }));
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText("Breakfast")).toBeInTheDocument();
+    expect(screen.getByText("Recipe (optional)")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /add ingredient/i })).toBeInTheDocument();
+  });
+
+  it("renders empty slot with add entry CTA", () => {
+    const days: LogDayData[] = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        dateKey: "2026-03-17",
+        slots: [
+          {
+            mealType: LogMealType.BREAKFAST,
+            label: "Breakfast",
+            recipes: [],
+          },
+          {
+            mealType: LogMealType.LUNCH,
+            label: "Lunch",
+            recipes: [],
+          },
+          {
+            mealType: LogMealType.SNACK,
+            label: "Snack",
+            recipes: [],
+          },
+          {
+            mealType: LogMealType.DINNER,
+            label: "Dinner",
+            recipes: [],
+          },
+        ],
+      },
+    ];
+
+    render(<LogDayView days={days} />);
+
+    expect(screen.getByText("Add snack entry")).toBeInTheDocument();
+    expect(screen.getByText("Click to choose recipe or add ingredients")).toBeInTheDocument();
+  });
+
+  it("opens ingredient editor dialog when empty slot card is clicked", async () => {
+    const user = userEvent.setup();
+    const days: LogDayData[] = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        dateKey: "2026-03-17",
+        slots: [
+          {
+            entryId: "entry-breakfast",
+            mealType: LogMealType.BREAKFAST,
+            label: "Breakfast",
+            recipes: [],
+          },
+          {
+            entryId: "entry-lunch",
+            mealType: LogMealType.LUNCH,
+            label: "Lunch",
+            recipes: [],
+          },
+          {
+            entryId: "entry-snack",
+            mealType: LogMealType.SNACK,
+            label: "Snack",
+            recipes: [],
+          },
+          {
+            entryId: "entry-dinner",
+            mealType: LogMealType.DINNER,
+            label: "Dinner",
+            recipes: [],
+          },
+        ],
+      },
+    ];
+
+    render(
+      <LogDayView
+        days={days}
+        logId="log-1"
+        person="PRIMARY"
+        recipeOptions={[{ id: "recipe-1", name: "Banana pancakes", initialRows: [] }]}
+        ingredientOptions={[]}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /add snack entry/i }));
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText("Snack")).toBeInTheDocument();
+    expect(screen.getByText("Recipe (optional)")).toBeInTheDocument();
   });
 });

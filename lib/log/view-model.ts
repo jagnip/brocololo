@@ -22,6 +22,7 @@ type LogRecipeRow = {
   id: string;
   sourceRecipe:
     | {
+        id: string;
         name: string | null;
         slug: string | null;
         images: Array<{ url: string }>;
@@ -40,6 +41,10 @@ type LogEntryRow = {
 export type LogRecipeCardData = {
   id: string;
   entryId?: string;
+  entryRecipeId: string | null;
+  sourceRecipeId: string | null;
+  mealLabel: LogSlotData["label"];
+  cardKind: "recipe" | "custom" | "removed";
   title: string;
   slug: string | null;
   imageUrl: string | null;
@@ -57,6 +62,7 @@ export type LogRecipeCardData = {
 };
 
 export type LogSlotData = {
+  entryId?: string;
   mealType: LogMealType;
   label: "Breakfast" | "Lunch" | "Snack" | "Dinner";
   recipes: LogRecipeCardData[];
@@ -124,21 +130,25 @@ function toRecipeMacros(ingredients: LogIngredientRow[]): {
 function createEmptySlots(): Record<LogMealType, LogSlotData> {
   return {
     [LogMealType.BREAKFAST]: {
+      entryId: undefined,
       mealType: LogMealType.BREAKFAST,
       label: LOG_MEAL_LABELS[LogMealType.BREAKFAST],
       recipes: [],
     },
     [LogMealType.LUNCH]: {
+      entryId: undefined,
       mealType: LogMealType.LUNCH,
       label: LOG_MEAL_LABELS[LogMealType.LUNCH],
       recipes: [],
     },
     [LogMealType.SNACK]: {
+      entryId: undefined,
       mealType: LogMealType.SNACK,
       label: LOG_MEAL_LABELS[LogMealType.SNACK],
       recipes: [],
     },
     [LogMealType.DINNER]: {
+      entryId: undefined,
       mealType: LogMealType.DINNER,
       label: LOG_MEAL_LABELS[LogMealType.DINNER],
       recipes: [],
@@ -171,6 +181,10 @@ export function buildLogDays(entries: LogEntryRow[]): LogDayData[] {
       return {
         id: recipe.id,
         entryId: entry.id,
+        entryRecipeId: recipe.id,
+        sourceRecipeId: recipe.sourceRecipe?.id ?? null,
+        mealLabel: LOG_MEAL_LABELS[entry.mealType],
+        cardKind: recipe.sourceRecipe ? "recipe" : "removed",
         title: recipe.sourceRecipe?.name ?? "Recipe removed",
         slug: recipe.sourceRecipe?.slug ?? null,
         imageUrl: recipe.sourceRecipe?.images?.[0]?.url ?? null,
@@ -185,7 +199,34 @@ export function buildLogDays(entries: LogEntryRow[]): LogDayData[] {
       };
     });
 
+    const customIngredients = entry.ingredients.filter(
+      (ingredient) => ingredient.entryRecipeId == null,
+    );
+    if (customIngredients.length > 0) {
+      const customMacros = toRecipeMacros(customIngredients);
+      recipeCards.unshift({
+        id: `custom-${entry.id}`,
+        entryId: entry.id,
+        entryRecipeId: null,
+        sourceRecipeId: null,
+        mealLabel: LOG_MEAL_LABELS[entry.mealType],
+        cardKind: "custom",
+        title: `Custom ${LOG_MEAL_LABELS[entry.mealType].toLowerCase()}`,
+        slug: null,
+        imageUrl: null,
+        ...customMacros,
+        ingredients: customIngredients.map((ingredient) => ({
+          ingredientId: ingredient.ingredient?.id ?? null,
+          ingredientName: ingredient.ingredient?.name ?? null,
+          unitId: ingredient.unit?.id ?? null,
+          unitName: ingredient.unit?.name ?? null,
+          amount: ingredient.amount ?? null,
+        })),
+      });
+    }
+
     day.slots[entry.mealType] = {
+      entryId: entry.id,
       mealType: entry.mealType,
       label: LOG_MEAL_LABELS[entry.mealType],
       recipes: recipeCards,

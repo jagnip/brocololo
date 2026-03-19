@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import type { LogDayData } from "@/lib/log/view-model";
 import { LogSlotCard } from "./log-slot-card";
@@ -11,12 +12,13 @@ import {
   type EditableIngredientRow,
   type LogIngredientOption,
 } from "./edit-log-ingredients-dialog";
-import { updateLogRecipeIngredientsAction } from "@/actions/log-actions";
+import { upsertLogSlotAction } from "@/actions/log-actions";
 
 type SelectedRecipeState = {
   entryId: string;
-  entryRecipeId: string;
-  title: string;
+  entryRecipeId: string | null;
+  mealLabel: string;
+  selectedRecipeId: string | null;
   subtitle: string;
   initialRows: EditableIngredientRow[];
 };
@@ -104,6 +106,11 @@ type LogDayViewProps = {
   days: LogDayData[];
   logId?: string;
   person?: "PRIMARY" | "SECONDARY";
+  recipeOptions?: Array<{
+    id: string;
+    name: string;
+    initialRows: EditableIngredientRow[];
+  }>;
   ingredientOptions?: LogIngredientOption[];
 };
 
@@ -111,6 +118,7 @@ export function LogDayView({
   days,
   logId,
   person,
+  recipeOptions = [],
   ingredientOptions = [],
 }: LogDayViewProps) {
   const [localDays, setLocalDays] = useState(days);
@@ -151,6 +159,21 @@ export function LogDayView({
                   <p className="text-sm text-muted-foreground">{slot.label}</p>
                   <LogSlotCard
                     slot={slot}
+                    onEmptyClick={() => {
+                      if (!slot.entryId) {
+                        toast.error("Cannot edit this slot yet");
+                        return;
+                      }
+
+                      setSelectedRecipe({
+                        entryId: slot.entryId,
+                        entryRecipeId: null,
+                        mealLabel: slot.label,
+                        selectedRecipeId: null,
+                        subtitle: `${formatDayLabel(day.date)}`,
+                        initialRows: [],
+                      });
+                    }}
                     onRecipeClick={(recipe) => {
                       if (!recipe.entryId) {
                         toast.error("Cannot edit this recipe yet");
@@ -159,9 +182,10 @@ export function LogDayView({
 
                       setSelectedRecipe({
                         entryId: recipe.entryId,
-                        entryRecipeId: recipe.id,
-                        title: recipe.title,
-                        subtitle: `${slot.label} • ${formatDayLabel(day.date)}`,
+                        entryRecipeId: recipe.entryRecipeId,
+                        mealLabel: slot.label,
+                        selectedRecipeId: recipe.sourceRecipeId,
+                        subtitle: `${formatDayLabel(day.date)}`,
                         initialRows:
                           recipe.ingredients?.map((ingredient) => ({
                             ingredientId: ingredient.ingredientId,
@@ -181,11 +205,58 @@ export function LogDayView({
       {selectedRecipe ? (
         <EditLogIngredientsDialog
           open
-          title={selectedRecipe.title}
+          title={selectedRecipe.mealLabel}
           subtitle={selectedRecipe.subtitle}
           initialRows={selectedRecipe.initialRows}
           ingredientOptions={ingredientOptions}
           isSaving={isSaving}
+          contextControls={
+            <div className="space-y-2">
+              <p className="text-xs tracking-wide uppercase text-muted-foreground font-semibold">
+                Recipe (optional)
+              </p>
+              <SearchableSelect
+                options={recipeOptions.map((recipe) => ({
+                  value: recipe.id,
+                  label: recipe.name,
+                }))}
+                value={selectedRecipe.selectedRecipeId}
+                onValueChange={(nextRecipeId) => {
+                  setSelectedRecipe((prev) => {
+                    if (!prev) {
+                      return prev;
+                    }
+
+                    if (!nextRecipeId) {
+                      return {
+                        ...prev,
+                        selectedRecipeId: null,
+                        initialRows: [],
+                      };
+                    }
+
+                    const selectedOption = recipeOptions.find(
+                      (recipeOption) => recipeOption.id === nextRecipeId,
+                    );
+
+                    return {
+                      ...prev,
+                      selectedRecipeId: nextRecipeId,
+                      initialRows: selectedOption?.initialRows ?? [],
+                    };
+                  });
+                }}
+                placeholder="Select a recipe..."
+                searchPlaceholder="Search recipe..."
+                emptyLabel="No recipe found."
+                allowClear
+                clearLabel="Clear recipe"
+              />
+              <p className="text-xs text-muted-foreground">
+                Clearing recipe removes current ingredients for this person.
+              </p>
+            </div>
+          }
           onOpenChange={(open) => {
             if (!open) {
               setSelectedRecipe(null);
@@ -206,11 +277,11 @@ export function LogDayView({
             );
 
             startSavingTransition(async () => {
-              const result = await updateLogRecipeIngredientsAction({
+              const result = await upsertLogSlotAction({
                 logId,
                 person,
                 entryId: selectedRecipe.entryId,
-                entryRecipeId: selectedRecipe.entryRecipeId,
+                recipeId: selectedRecipe.selectedRecipeId,
                 ingredients: completeRows,
               });
 
@@ -222,28 +293,85 @@ export function LogDayView({
               const nextMacros = toRecipeMacros(rows, ingredientOptions);
               const nextIngredients = toRecipeIngredients(rows, ingredientOptions);
 
-              setLocalDays((prev) =>
-                prev.map((day) => ({
-                  ...day,
-                  slots: day.slots.map((slot) => ({
-                    ...slot,
-                    recipes: slot.recipes.map((recipe) => {
-                      if (
-                        recipe.id !== selectedRecipe.entryRecipeId ||
-                        recipe.entryId !== selectedRecipe.entryId
-                      ) {
-                        return recipe;
-                      }
+              setLocalDays((prev) => {
+                const selectedRecipeOption = recipeOptions.find(
+                  (recipeOption) => recipeOption.id === selectedRecipe.selectedRecipeId,
+                );
 
-                      return {
-                        ...recipe,
-                        ...nextMacros,
-                        ingredients: nextIngredients,
-                      };
-                    }),
-                  })),
-                })),
-              );
+                return prev.map((day) => ({
+                  ...day,
+                  slots: day.slots.map((slot) => {
+                    if (slot.entryId !== selectedRecipe.entryId) {
+                      return slot;
+                    }
+
+                    const existingIndex = slot.recipes.findIndex(
+                      (recipe) => recipe.entryId === selectedRecipe.entryId,
+                    );
+                    const existingRecipe = existingIndex >= 0 ? slot.recipes[existingIndex] : null;
+
+                    const nextRecipeCard = {
+                      ...(existingRecipe ?? {
+                        id: `temp-${selectedRecipe.entryId}`,
+                        entryId: selectedRecipe.entryId,
+                        entryRecipeId: null,
+                        sourceRecipeId: null,
+                        mealLabel: slot.label,
+                        cardKind: "custom" as const,
+                        title: `Custom ${slot.label.toLowerCase()}`,
+                        slug: null,
+                        imageUrl: null,
+                        calories: 0,
+                        proteins: 0,
+                        fats: 0,
+                        carbs: 0,
+                        ingredients: [],
+                      }),
+                      id:
+                        selectedRecipe.selectedRecipeId == null
+                          ? `custom-${selectedRecipe.entryId}`
+                          : (existingRecipe?.id ?? `temp-${selectedRecipe.entryId}`),
+                      entryRecipeId:
+                        selectedRecipe.selectedRecipeId == null
+                          ? null
+                          : (existingRecipe?.entryRecipeId ?? selectedRecipe.entryRecipeId),
+                      sourceRecipeId: selectedRecipe.selectedRecipeId,
+                      cardKind:
+                        selectedRecipe.selectedRecipeId == null
+                          ? ("custom" as const)
+                          : ("recipe" as const),
+                      title:
+                        selectedRecipe.selectedRecipeId == null
+                          ? `Custom ${slot.label.toLowerCase()}`
+                          : selectedRecipeOption?.name ??
+                            existingRecipe?.title ??
+                            `Custom ${slot.label.toLowerCase()}`,
+                      slug: null,
+                      imageUrl: null,
+                      ...nextMacros,
+                      ingredients: nextIngredients,
+                    };
+
+                    const nextRecipes = [...slot.recipes];
+                    if (selectedRecipe.selectedRecipeId == null && nextIngredients.length === 0) {
+                      if (existingIndex >= 0) {
+                        nextRecipes.splice(existingIndex, 1);
+                      }
+                    } else {
+                      if (existingIndex >= 0) {
+                        nextRecipes[existingIndex] = nextRecipeCard;
+                      } else {
+                        nextRecipes.unshift(nextRecipeCard);
+                      }
+                    }
+
+                    return {
+                      ...slot,
+                      recipes: nextRecipes,
+                    };
+                  }),
+                }));
+              });
 
               setSelectedRecipe(null);
               toast.success("Ingredients updated");
