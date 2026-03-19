@@ -329,12 +329,17 @@ export function IngredientItem({
         )}
         <Popover>
           <PopoverTrigger asChild>
-            <button
-              className="ml-1 inline-flex items-center text-muted-foreground hover:text-foreground"
-              aria-label={`Nutrition info for ${ingredient.name}`}
+            {/* Mobile-friendly touch target: use labeled button instead of tiny icon-only trigger. */}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="ml-1 h-8 px-3 text-xs"
+              aria-label={`Nutrition details for ${ingredient.name}`}
             >
               <Info className="h-3.5 w-3.5" />
-            </button>
+              <span>Nutrition details</span>
+            </Button>
           </PopoverTrigger>
           <PopoverContent className="w-120 p-3">
             <div className="overflow-x-auto">

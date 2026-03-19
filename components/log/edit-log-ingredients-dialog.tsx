@@ -25,6 +25,8 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
+import { CreateIngredientDialog } from "@/components/recipes/form/create-ingredient-dialog";
+import type { IngredientType } from "@/types/ingredient";
 
 export type LogIngredientOption = {
   id: string;
@@ -51,12 +53,25 @@ export type EditableIngredientRow = {
 
 type DialogRow = EditableIngredientRow & { key: string };
 
+type IngredientFormDependencies = {
+  categories: Array<{ id: string; name: string }>;
+  units: Array<{ id: string; name: string; namePlural: string | null }>;
+  gramsUnitId: string;
+  iconOptions: string[];
+};
+
+type CreateIngredientState = {
+  rowKey: string;
+  initialName: string;
+};
+
 type EditLogIngredientsDialogProps = {
   open: boolean;
   title: string;
   subtitle: string;
   initialRows: EditableIngredientRow[];
   ingredientOptions: LogIngredientOption[];
+  ingredientFormDependencies?: IngredientFormDependencies;
   isSaving: boolean;
   contextControls?: ReactNode;
   saveLabel?: string;
@@ -116,12 +131,33 @@ function getMacrosFromRows(
   };
 }
 
+function mapIngredientToLogOption(ingredient: IngredientType): LogIngredientOption {
+  // Keep the integration boundary explicit between IngredientType and log dialog options.
+  return {
+    id: ingredient.id,
+    name: ingredient.name,
+    brand: ingredient.brand,
+    defaultUnitId: ingredient.defaultUnitId,
+    calories: ingredient.calories,
+    proteins: ingredient.proteins,
+    fats: ingredient.fats,
+    carbs: ingredient.carbs,
+    unitConversions: ingredient.unitConversions.map((conversion) => ({
+      unitId: conversion.unitId,
+      gramsPerUnit: conversion.gramsPerUnit,
+      unitName: conversion.unit.name,
+      unitNamePlural: conversion.unit.namePlural ?? null,
+    })),
+  };
+}
+
 export function EditLogIngredientsDialog({
   open,
   title,
   subtitle,
   initialRows,
   ingredientOptions,
+  ingredientFormDependencies,
   isSaving,
   contextControls,
   saveLabel = "Save",
@@ -134,6 +170,13 @@ export function EditLogIngredientsDialog({
       key: toRowKey(),
     })),
   );
+  const [localIngredientOptions, setLocalIngredientOptions] = useState(ingredientOptions);
+  const [createIngredientState, setCreateIngredientState] =
+    useState<CreateIngredientState | null>(null);
+
+  useEffect(() => {
+    setLocalIngredientOptions(ingredientOptions);
+  }, [ingredientOptions]);
 
   useEffect(() => {
     if (!open) {
@@ -149,21 +192,21 @@ export function EditLogIngredientsDialog({
   }, [initialRows, open]);
 
   const ingredientById = useMemo(
-    () => new Map(ingredientOptions.map((ingredient) => [ingredient.id, ingredient])),
-    [ingredientOptions],
+    () => new Map(localIngredientOptions.map((ingredient) => [ingredient.id, ingredient])),
+    [localIngredientOptions],
   );
 
-  const macros = useMemo(() => getMacrosFromRows(rows, ingredientOptions), [
-    ingredientOptions,
+  const macros = useMemo(() => getMacrosFromRows(rows, localIngredientOptions), [
+    localIngredientOptions,
     rows,
   ]);
 
   const ingredientSelectOptions = useMemo(
-    () => ingredientOptions.map((ingredient) => ({
+    () => localIngredientOptions.map((ingredient) => ({
       value: ingredient.id,
       label: getIngredientDisplayName(ingredient.name, ingredient.brand),
     })),
-    [ingredientOptions],
+    [localIngredientOptions],
   );
 
   const handleAddRow = () => {
@@ -203,7 +246,7 @@ export function EditLogIngredientsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[min(1600px,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col">
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-[min(1000px,calc(100vw-3rem))] sm:max-w-[1000px] lg:w-[min(1200px,calc(100vw-4rem))] lg:max-w-[1200px] xl:w-[min(1400px,calc(100vw-5rem))] xl:max-w-[1400px] 2xl:w-[min(1600px,calc(100vw-6rem))] 2xl:max-w-[1600px] max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col">
         <DialogHeader className="px-6 py-5 border-b">
           <DialogTitle className="text-4xl sm:text-4xl">{title}</DialogTitle>
           <DialogDescription className="sr-only">
@@ -223,7 +266,8 @@ export function EditLogIngredientsDialog({
         </section>
 
         <section className="px-6 py-4 border-b space-y-3 flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-          <div className="grid grid-cols-[minmax(0,1fr)_104px_104px_44px] gap-2 px-2 text-xs tracking-wide uppercase text-muted-foreground font-semibold">
+          {/* Mobile uses a stacked row layout, so keep column labels desktop-only. */}
+          <div className="hidden sm:grid sm:grid-cols-[minmax(240px,1fr)_104px_104px_44px] gap-2 px-2 text-xs tracking-wide uppercase text-muted-foreground font-semibold">
             <span>Ingredient</span>
             <span>Amount</span>
             <span>Unit</span>
@@ -238,10 +282,14 @@ export function EditLogIngredientsDialog({
               const availableUnits = selectedIngredient?.unitConversions ?? [];
 
               return (
-                <div key={row.key} className="grid grid-cols-[minmax(0,1fr)_104px_104px_44px] gap-2">
-                  <div className="min-w-0">
+                <div
+                  key={row.key}
+                  className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_44px] sm:grid-cols-[minmax(240px,1fr)_104px_104px_44px] gap-2"
+                >
+                  {/* On mobile the ingredient selector gets its own row for readability. */}
+                  <div className="min-w-0 col-span-3 sm:col-span-1">
                     <SearchableSelect
-                      className="min-w-0"
+                      className="min-w-0 sm:min-w-[240px]"
                       options={ingredientSelectOptions}
                       value={row.ingredientId}
                       onValueChange={(nextValue) => {
@@ -278,6 +326,12 @@ export function EditLogIngredientsDialog({
                       placeholder="Select ingredient..."
                       searchPlaceholder="Search ingredient..."
                       emptyLabel="No ingredient found."
+                      onCreateOption={(searchTerm) => {
+                        setCreateIngredientState({
+                          rowKey: row.key,
+                          initialName: searchTerm,
+                        });
+                      }}
                       allowClear
                       clearLabel="Clear ingredient"
                     />
@@ -351,15 +405,78 @@ export function EditLogIngredientsDialog({
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={isSaving}
+            disabled={isSaving || Boolean(createIngredientState)}
           >
             Cancel
           </Button>
-          <Button type="button" onClick={handleSave} disabled={isSaving}>
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving || Boolean(createIngredientState)}
+          >
             {isSaving ? "Saving..." : saveLabel}
           </Button>
         </DialogFooter>
       </DialogContent>
+      {ingredientFormDependencies ? (
+        <CreateIngredientDialog
+          open={Boolean(createIngredientState)}
+          initialName={createIngredientState?.initialName}
+          onOpenChange={(open) => {
+            if (!open) {
+              setCreateIngredientState(null);
+            }
+          }}
+          onCreated={(createdIngredient) => {
+            const mappedIngredient = mapIngredientToLogOption(createdIngredient);
+            setLocalIngredientOptions((prev) =>
+              prev.some((item) => item.id === mappedIngredient.id)
+                ? prev
+                : [...prev, mappedIngredient],
+            );
+
+            const rowKey = createIngredientState?.rowKey;
+            if (!rowKey) {
+              toast.error("Could not apply created ingredient to row");
+              setCreateIngredientState(null);
+              return;
+            }
+
+            const defaultUnitId = getDefaultUnitIdForIngredient({
+              defaultUnitId: mappedIngredient.defaultUnitId,
+              unitConversions: mappedIngredient.unitConversions.map((unit) => ({
+                unitId: unit.unitId,
+                unit: { name: unit.unitName },
+              })),
+            });
+
+            const rowExists = rows.some((item) => item.key === rowKey);
+            if (!rowExists) {
+              toast.error("Could not apply created ingredient to row");
+              setCreateIngredientState(null);
+              return;
+            }
+
+            setRows((prev) =>
+              prev.map((item) =>
+                item.key === rowKey
+                  ? {
+                      ...item,
+                      ingredientId: mappedIngredient.id,
+                      unitId: defaultUnitId,
+                    }
+                  : item,
+              ),
+            );
+            setCreateIngredientState(null);
+            toast.success("Ingredient created and selected");
+          }}
+          categories={ingredientFormDependencies.categories}
+          units={ingredientFormDependencies.units}
+          gramsUnitId={ingredientFormDependencies.gramsUnitId}
+          iconOptions={ingredientFormDependencies.iconOptions}
+        />
+      ) : null}
     </Dialog>
   );
 }

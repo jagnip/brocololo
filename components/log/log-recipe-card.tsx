@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 
 type LogRecipeCardProps = {
+  cardKind?: "recipe" | "custom" | "removed";
   title: string;
   slug: string | null;
   imageUrl: string | null;
@@ -16,6 +17,7 @@ type LogRecipeCardProps = {
 };
 
 export function LogRecipeCard({
+  cardKind = "recipe",
   title,
   slug,
   imageUrl,
@@ -52,6 +54,9 @@ export function LogRecipeCard({
         />
       )}
       <CardHeader>
+        {cardKind === "custom" ? (
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">No recipe</p>
+        ) : null}
         {slug && !onClick ? (
           <Link href={ROUTES.recipe(slug)} className="hover:underline">
             <CardTitle>{title}</CardTitle>

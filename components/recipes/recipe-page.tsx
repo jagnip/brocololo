@@ -56,6 +56,12 @@ import {
 type RecipePageProps = {
   recipe: RecipeType;
   ingredients: IngredientType[];
+  ingredientFormDependencies: {
+    categories: Array<{ id: string; name: string }>;
+    units: Array<{ id: string; name: string; namePlural: string | null }>;
+    gramsUnitId: string;
+    iconOptions: string[];
+  };
 };
 
 const LOG_MEAL_OPTIONS = [
@@ -69,7 +75,11 @@ function toDateInputValue(date: Date) {
   return date.toLocaleDateString("en-CA");
 }
 
-export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
+export default function RecipePage({
+  recipe,
+  ingredients,
+  ingredientFormDependencies,
+}: RecipePageProps) {
   const [currentServings, setCurrentServings] = useState(recipe.servings);
   const [targetCaloriesPerPortion, setTargetCaloriesPerPortion] = useState<
     number | null
@@ -825,6 +835,7 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
           subtitle={`${selectedMealLabel} • ${logDate}`}
           initialRows={addToLogInitialRows}
           ingredientOptions={ingredientOptionsForLogDialog}
+          ingredientFormDependencies={ingredientFormDependencies}
           isSaving={isAddingToLog}
           saveLabel="Add to log"
           contextControls={

@@ -21,6 +21,16 @@ export type UpdateLogRecipeIngredientsInput = z.infer<
   typeof updateLogRecipeIngredientsSchema
 >;
 
+export const upsertLogSlotSchema = z.object({
+  logId: z.string().min(1),
+  person: z.enum([LogPerson.PRIMARY, LogPerson.SECONDARY]),
+  entryId: z.string().min(1),
+  recipeId: z.string().min(1).nullable(),
+  ingredients: z.array(logIngredientEditorRowSchema).max(200),
+});
+
+export type UpsertLogSlotInput = z.infer<typeof upsertLogSlotSchema>;
+
 export const addRecipeToLogSchema = z.object({
   recipeId: z.string().min(1),
   person: z.enum([LogPerson.PRIMARY, LogPerson.SECONDARY]),
