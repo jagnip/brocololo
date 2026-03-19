@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LogPerson } from "@/src/generated/enums";
+import { LogMealType, LogPerson } from "@/src/generated/enums";
 
 export const logIngredientEditorRowSchema = z.object({
   ingredientId: z.string().min(1, { message: "Ingredient is required" }),
@@ -20,3 +20,19 @@ export const updateLogRecipeIngredientsSchema = z.object({
 export type UpdateLogRecipeIngredientsInput = z.infer<
   typeof updateLogRecipeIngredientsSchema
 >;
+
+export const addRecipeToLogSchema = z.object({
+  recipeId: z.string().min(1),
+  person: z.enum([LogPerson.PRIMARY, LogPerson.SECONDARY]),
+  date: z.coerce.date(),
+  mealType: z.enum([
+    LogMealType.BREAKFAST,
+    LogMealType.LUNCH,
+    LogMealType.SNACK,
+    LogMealType.DINNER,
+  ]),
+  ingredients: z.array(logIngredientEditorRowSchema).max(200),
+});
+
+export type AddRecipeToLogInput = z.input<typeof addRecipeToLogSchema>;
+export type ParsedAddRecipeToLogInput = z.infer<typeof addRecipeToLogSchema>;

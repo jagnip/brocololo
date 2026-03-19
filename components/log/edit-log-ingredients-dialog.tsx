@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,8 @@ type EditLogIngredientsDialogProps = {
   initialRows: EditableIngredientRow[];
   ingredientOptions: LogIngredientOption[];
   isSaving: boolean;
+  contextControls?: ReactNode;
+  saveLabel?: string;
   onOpenChange: (open: boolean) => void;
   onSave: (rows: EditableIngredientRow[]) => Promise<void>;
 };
@@ -121,6 +123,8 @@ export function EditLogIngredientsDialog({
   initialRows,
   ingredientOptions,
   isSaving,
+  contextControls,
+  saveLabel = "Save",
   onOpenChange,
   onSave,
 }: EditLogIngredientsDialogProps) {
@@ -130,6 +134,19 @@ export function EditLogIngredientsDialog({
       key: toRowKey(),
     })),
   );
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setRows(
+      initialRows.map((row) => ({
+        ...row,
+        key: toRowKey(),
+      })),
+    );
+  }, [initialRows, open]);
 
   const ingredientById = useMemo(
     () => new Map(ingredientOptions.map((ingredient) => [ingredient.id, ingredient])),
@@ -193,6 +210,7 @@ export function EditLogIngredientsDialog({
             Edit ingredients for this log recipe.
           </DialogDescription>
           <p className="text-muted-foreground text-sm mt-1">{subtitle}</p>
+          {contextControls ? <div className="mt-4">{contextControls}</div> : null}
         </DialogHeader>
 
         <section className="px-6 py-4 border-b">
@@ -338,7 +356,7 @@ export function EditLogIngredientsDialog({
             Cancel
           </Button>
           <Button type="button" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? "Saving..." : "Save"}
+            {isSaving ? "Saving..." : saveLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

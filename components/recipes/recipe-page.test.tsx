@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import RecipePage from "./recipe-page";
 import {
@@ -13,6 +13,11 @@ import {
 } from "@/lib/tests/test-helpers";
 import type { RecipeType } from "@/types/recipe";
 import type { IngredientType } from "@/types/ingredient";
+import { vi } from "vitest";
+
+vi.mock("@/actions/log-actions", () => ({
+  addRecipeToLogAction: vi.fn(),
+}));
 
 function createRecipeFixture(): { recipe: RecipeType; ingredients: IngredientType[] } {
   const gramsUnit = createMockUnit({ id: "unit-grams", name: "grams" });
@@ -250,6 +255,45 @@ async function setIngredientAmount(ingredientName: string, value: string): Promi
 }
 
 describe("RecipePage nutrition integration", () => {
+  it("opens add to log dialog with Jagoda and today's date defaults", async () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    const user = userEvent.setup();
+    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+
+    await user.click(screen.getByRole("button", { name: "Add to log" }));
+
+    const dialog = screen.getByRole("dialog");
+    const today = new Date().toLocaleDateString("en-CA");
+
+    expect(within(dialog).getByText(`Add ${recipe.name} to log`)).toBeInTheDocument();
+    expect(within(dialog).getByText("Person")).toBeInTheDocument();
+    expect(within(dialog).getByText("Jagoda")).toBeInTheDocument();
+    expect(within(dialog).getByDisplayValue(today)).toBeInTheDocument();
+  });
+
+  it("resets add to log defaults on reopen", async () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    const user = userEvent.setup();
+    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+
+    await user.click(screen.getByRole("button", { name: "Add to log" }));
+    const firstDialog = screen.getByRole("dialog");
+    const dateInput = within(firstDialog).getByDisplayValue(
+      new Date().toLocaleDateString("en-CA"),
+    );
+    await user.clear(dateInput);
+    await user.type(dateInput, "2026-03-15");
+    await user.click(within(firstDialog).getByRole("button", { name: "Cancel" }));
+
+    await user.click(screen.getByRole("button", { name: "Add to log" }));
+    const secondDialog = screen.getByRole("dialog");
+    expect(within(secondDialog).getByText(`Add ${recipe.name} to log`)).toBeInTheDocument();
+    expect(
+      within(secondDialog).getByDisplayValue(new Date().toLocaleDateString("en-CA")),
+    ).toBeInTheDocument();
+    expect(within(secondDialog).getByText("Jagoda")).toBeInTheDocument();
+  });
+
   it("updates only edited row nutrition by default and shows apply-all icon", async () => {
     const { recipe, ingredients } = createRecipeFixture();
     render(<RecipePage recipe={recipe} ingredients={ingredients} />);

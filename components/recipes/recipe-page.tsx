@@ -18,7 +18,7 @@ import {
   IngredientSwapMap,
 } from "@/lib/recipes/helpers";
 import { ImageGallery } from "./image-gallery";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { Button } from "../ui/button";
 import { Minus, Pencil, Plus, RotateCcw } from "lucide-react";
 import { IngredientItem } from "./ingredient-item";
@@ -35,11 +35,39 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FLAVOUR_BREADCRUMB_LABELS, ROUTES } from "@/lib/constants";
 import { parseMarkdownLinks } from "@/lib/recipes/text-formatting";
+import { toast } from "sonner";
+import { addRecipeToLogAction } from "@/actions/log-actions";
+import {
+  EditLogIngredientsDialog,
+  type EditableIngredientRow,
+  type LogIngredientOption,
+} from "@/components/log/edit-log-ingredients-dialog";
+import { getPersonIngredientAmountPerMeal } from "@/lib/log/helpers";
+import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
+import { LogMealType, LogPerson } from "@/src/generated/enums";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 type RecipePageProps = {
   recipe: RecipeType;
   ingredients: IngredientType[];
 };
+
+const LOG_MEAL_OPTIONS = [
+  { value: LogMealType.BREAKFAST, label: "Breakfast" },
+  { value: LogMealType.LUNCH, label: "Lunch" },
+  { value: LogMealType.SNACK, label: "Snack" },
+  { value: LogMealType.DINNER, label: "Dinner" },
+] as const;
+
+function toDateInputValue(date: Date) {
+  return date.toLocaleDateString("en-CA");
+}
 
 export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
   const [currentServings, setCurrentServings] = useState(recipe.servings);
@@ -58,6 +86,15 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
   const [selectedInstructionPerson, setSelectedInstructionPerson] = useState<
     "jagoda" | "nelson" | null
   >(null);
+  const [isAddToLogOpen, setIsAddToLogOpen] = useState(false);
+  const [isAddingToLog, startAddToLogTransition] = useTransition();
+  const [logPerson, setLogPerson] = useState<"PRIMARY" | "SECONDARY">(
+    LogPerson.PRIMARY,
+  );
+  const [logDate, setLogDate] = useState(() => toDateInputValue(new Date()));
+  const [logMealType, setLogMealType] = useState<
+    "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER"
+  >(LogMealType.DINNER);
   const searchParams = useSearchParams();
   const categorySlug = searchParams.get("category");
   const flavourLabel =
@@ -73,6 +110,10 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
     setSwapsByRecipeIngredientId({});
     // Reset person instruction filter when navigating to another recipe.
     setSelectedInstructionPerson(null);
+    setIsAddToLogOpen(false);
+    setLogPerson(LogPerson.PRIMARY);
+    setLogDate(toDateInputValue(new Date()));
+    setLogMealType(LogMealType.DINNER);
   }, [recipe.id, recipe.servings]);
 
   const effectiveRecipe = useMemo(
@@ -271,6 +312,78 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
     targetCaloriesPerPortion !== null ||
     Object.keys(swapsByRecipeIngredientId).length > 0;
 
+  const ingredientOptionsForLogDialog = useMemo<LogIngredientOption[]>(
+    () =>
+      ingredients.map((ingredient) => ({
+        id: ingredient.id,
+        name: ingredient.name,
+        brand: ingredient.brand,
+        defaultUnitId: ingredient.defaultUnitId,
+        calories: ingredient.calories,
+        proteins: ingredient.proteins,
+        fats: ingredient.fats,
+        carbs: ingredient.carbs,
+        unitConversions: ingredient.unitConversions.map((conversion) => ({
+          unitId: conversion.unitId,
+          gramsPerUnit: conversion.gramsPerUnit,
+          unitName: conversion.unit.name,
+          unitNamePlural: conversion.unit.namePlural ?? null,
+        })),
+      })),
+    [ingredients],
+  );
+
+  const addToLogInitialRows = useMemo<EditableIngredientRow[]>(() => {
+    const selectedPerson = logPerson === LogPerson.PRIMARY ? "primary" : "secondary";
+    const rows: EditableIngredientRow[] = [];
+
+    for (const recipeIngredient of recipeForScaledNutrition.ingredients) {
+      if (recipeIngredient.amount == null) {
+        continue;
+      }
+
+      const scaledAmount = recipeIngredient.amount * servingScalingFactor;
+      const amountForPerson = getPersonIngredientAmountPerMeal({
+        amount: scaledAmount,
+        nutritionTarget: recipeIngredient.nutritionTarget,
+        person: selectedPerson,
+        recipeServings: currentServings,
+        servingMultiplierForNelson: recipe.servingMultiplierForNelson,
+      });
+      if (amountForPerson == null || amountForPerson <= 0) {
+        continue;
+      }
+
+      const defaultUnitId = getDefaultUnitIdForIngredient({
+        defaultUnitId: recipeIngredient.ingredient.defaultUnitId,
+        unitConversions: recipeIngredient.ingredient.unitConversions,
+      });
+
+      rows.push({
+        ingredientId: recipeIngredient.ingredient.id,
+        unitId: recipeIngredient.unit?.id ?? defaultUnitId,
+        amount: Math.round(amountForPerson * 1000) / 1000,
+      });
+    }
+
+    return rows;
+  }, [
+    currentServings,
+    logPerson,
+    recipe.servingMultiplierForNelson,
+    recipeForScaledNutrition.ingredients,
+    servingScalingFactor,
+  ]);
+
+  const handleOpenAddToLogDialog = () => {
+    setLogPerson(LogPerson.PRIMARY);
+    setLogDate(toDateInputValue(new Date()));
+    setLogMealType(LogMealType.DINNER);
+    setIsAddToLogOpen(true);
+  };
+  const selectedMealLabel =
+    LOG_MEAL_OPTIONS.find((option) => option.value === logMealType)?.label ?? "Dinner";
+
   const orderedIngredientGroups = useMemo(
     () =>
       [...recipe.ingredientGroups].sort((a, b) => a.position - b.position),
@@ -324,6 +437,14 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
     <div className="max-w-4xl mx-auto">
       <div className="mb-4 flex items-center gap-2">
         <h1 className="text-2xl font-semibold">{recipe.name}</h1>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleOpenAddToLogDialog}
+        >
+          Add to log
+        </Button>
         {/* Quick access to recipe editing from the detail page. */}
         <Button
           asChild
@@ -697,6 +818,110 @@ export default function RecipePage({ recipe, ingredients }: RecipePageProps) {
           )}
         </div>
       </div>
+      {isAddToLogOpen ? (
+        <EditLogIngredientsDialog
+          open={isAddToLogOpen}
+          title={`Add ${recipe.name} to log`}
+          subtitle={`${selectedMealLabel} • ${logDate}`}
+          initialRows={addToLogInitialRows}
+          ingredientOptions={ingredientOptionsForLogDialog}
+          isSaving={isAddingToLog}
+          saveLabel="Add to log"
+          contextControls={
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <p className="text-xs tracking-wide uppercase text-muted-foreground font-semibold">
+                  Person
+                </p>
+                <Select
+                  value={logPerson}
+                  onValueChange={(nextValue) =>
+                    setLogPerson(nextValue as "PRIMARY" | "SECONDARY")
+                  }
+                  disabled={isAddingToLog}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={LogPerson.PRIMARY}>Jagoda</SelectItem>
+                    <SelectItem value={LogPerson.SECONDARY}>Nelson</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <p className="text-xs tracking-wide uppercase text-muted-foreground font-semibold">
+                  Date
+                </p>
+                <Input
+                  type="date"
+                  value={logDate}
+                  max="9999-12-31"
+                  onChange={(event) => setLogDate(event.target.value)}
+                  disabled={isAddingToLog}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <p className="text-xs tracking-wide uppercase text-muted-foreground font-semibold">
+                  Meal occasion
+                </p>
+                <Select
+                  value={logMealType}
+                  onValueChange={(nextValue) =>
+                    setLogMealType(nextValue as "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER")
+                  }
+                  disabled={isAddingToLog}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LOG_MEAL_OPTIONS.map((meal) => (
+                      <SelectItem key={meal.value} value={meal.value}>
+                        {meal.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          }
+          onOpenChange={(open) => {
+            setIsAddToLogOpen(open);
+          }}
+          onSave={async (rows) => {
+            if (!logDate) {
+              toast.error("Date is required");
+              return;
+            }
+
+            startAddToLogTransition(async () => {
+              const completeRows = rows.filter(
+                (row): row is { ingredientId: string; unitId: string; amount: number } =>
+                  row.ingredientId != null &&
+                  row.unitId != null &&
+                  row.amount != null &&
+                  row.amount > 0,
+              );
+              const result = await addRecipeToLogAction({
+                recipeId: recipe.id,
+                person: logPerson,
+                date: logDate,
+                mealType: logMealType,
+                ingredients: completeRows,
+              });
+
+              if (result.type === "error") {
+                toast.error(result.message);
+                return;
+              }
+
+              setIsAddToLogOpen(false);
+              toast.success("Recipe added to log");
+            });
+          }}
+        />
+      ) : null}
     </div>
   );
 }

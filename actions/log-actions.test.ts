@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { updateLogRecipeIngredients } from "@/lib/db/logs";
-import { updateLogRecipeIngredientsAction } from "./log-actions";
+import { replaceMealSlotWithRecipe, updateLogRecipeIngredients } from "@/lib/db/logs";
+import { addRecipeToLogAction, updateLogRecipeIngredientsAction } from "./log-actions";
 
 vi.mock("@/lib/db/logs", () => ({
   updateLogRecipeIngredients: vi.fn(),
+  replaceMealSlotWithRecipe: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -45,6 +46,48 @@ describe("updateLogRecipeIngredientsAction", () => {
       person: "PRIMARY",
       entryId: "entry-1",
       entryRecipeId: "entry-recipe-1",
+      ingredients: [{ ingredientId: "ing-1", unitId: "unit-g", amount: 120 }],
+    });
+  });
+});
+
+describe("addRecipeToLogAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns validation error for invalid input", async () => {
+    const result = await addRecipeToLogAction({
+      recipeId: "",
+      person: "PRIMARY",
+      date: "invalid-date",
+      mealType: "DINNER",
+      ingredients: [],
+    } as never);
+
+    expect(result.type).toBe("error");
+    expect(replaceMealSlotWithRecipe).not.toHaveBeenCalled();
+  });
+
+  it("adds recipe to log and returns success", async () => {
+    vi.mocked(replaceMealSlotWithRecipe).mockResolvedValue({
+      logId: "log-1",
+    });
+
+    const result = await addRecipeToLogAction({
+      recipeId: "recipe-1",
+      person: "PRIMARY",
+      date: "2026-03-19",
+      mealType: "DINNER",
+      ingredients: [{ ingredientId: "ing-1", unitId: "unit-g", amount: 120 }],
+    } as never);
+
+    expect(result).toEqual({ type: "success" });
+    expect(replaceMealSlotWithRecipe).toHaveBeenCalledWith({
+      recipeId: "recipe-1",
+      person: "PRIMARY",
+      date: new Date("2026-03-19"),
+      mealType: "DINNER",
       ingredients: [{ ingredientId: "ing-1", unitId: "unit-g", amount: 120 }],
     });
   });
