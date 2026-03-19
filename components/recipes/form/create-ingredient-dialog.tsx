@@ -40,7 +40,8 @@ export function CreateIngredientDialog({
         <DialogHeader>
           <DialogTitle>Create ingredient</DialogTitle>
           <DialogDescription>
-            Add a missing ingredient without leaving the recipe form.
+            {/* Reused across recipe and log contexts, so keep copy flow-agnostic. */}
+            Add a missing ingredient without leaving your current flow.
           </DialogDescription>
         </DialogHeader>
 

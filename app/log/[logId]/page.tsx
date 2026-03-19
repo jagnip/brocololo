@@ -8,6 +8,7 @@ import { getPersonIngredientAmountPerMeal } from "@/lib/log/helpers";
 import { LogPersonSelect } from "@/components/log/log-person-select";
 import { buildLogDays } from "@/lib/log/view-model";
 import { LogDayView } from "@/components/log/log-day-view";
+import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
 
 type LogDetailPageProps = {
   params: Promise<{ logId: string }>;
@@ -69,10 +70,11 @@ export default async function LogDetailPage({
   const { person: rawPerson } = await searchParams;
   const person = parsePerson(rawPerson);
 
-  const [log, ingredients, recipes] = await Promise.all([
+  const [log, ingredients, recipes, ingredientFormDependencies] = await Promise.all([
     getLogById(logId, person),
     getIngredients(),
     getRecipes([]),
+    getIngredientFormDependencies(),
   ]);
   if (!log) notFound();
   const days = buildLogDays(log.entries);
@@ -109,6 +111,7 @@ export default async function LogDetailPage({
             unitNamePlural: conversion.unit.namePlural ?? null,
           })),
         }))}
+        ingredientFormDependencies={ingredientFormDependencies}
       />
     </div>
   );

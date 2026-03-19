@@ -23,6 +23,13 @@ type SelectedRecipeState = {
   initialRows: EditableIngredientRow[];
 };
 
+type IngredientFormDependencies = {
+  categories: Array<{ id: string; name: string }>;
+  units: Array<{ id: string; name: string; namePlural: string | null }>;
+  gramsUnitId: string;
+  iconOptions: string[];
+};
+
 function toDayMacros(day: LogDayData) {
   // Aggregate all rendered slot recipes into a daily macro summary.
   return day.slots.reduce(
@@ -112,6 +119,7 @@ type LogDayViewProps = {
     initialRows: EditableIngredientRow[];
   }>;
   ingredientOptions?: LogIngredientOption[];
+  ingredientFormDependencies?: IngredientFormDependencies;
 };
 
 export function LogDayView({
@@ -120,6 +128,7 @@ export function LogDayView({
   person,
   recipeOptions = [],
   ingredientOptions = [],
+  ingredientFormDependencies,
 }: LogDayViewProps) {
   const [localDays, setLocalDays] = useState(days);
   const [selectedRecipe, setSelectedRecipe] = useState<SelectedRecipeState | null>(null);
@@ -209,6 +218,7 @@ export function LogDayView({
           subtitle={selectedRecipe.subtitle}
           initialRows={selectedRecipe.initialRows}
           ingredientOptions={ingredientOptions}
+          ingredientFormDependencies={ingredientFormDependencies}
           isSaving={isSaving}
           contextControls={
             <div className="space-y-2">

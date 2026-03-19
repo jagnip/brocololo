@@ -25,6 +25,8 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
+import { CreateIngredientDialog } from "@/components/recipes/form/create-ingredient-dialog";
+import type { IngredientType } from "@/types/ingredient";
 
 export type LogIngredientOption = {
   id: string;
@@ -51,12 +53,25 @@ export type EditableIngredientRow = {
 
 type DialogRow = EditableIngredientRow & { key: string };
 
+type IngredientFormDependencies = {
+  categories: Array<{ id: string; name: string }>;
+  units: Array<{ id: string; name: string; namePlural: string | null }>;
+  gramsUnitId: string;
+  iconOptions: string[];
+};
+
+type CreateIngredientState = {
+  rowKey: string;
+  initialName: string;
+};
+
 type EditLogIngredientsDialogProps = {
   open: boolean;
   title: string;
   subtitle: string;
   initialRows: EditableIngredientRow[];
   ingredientOptions: LogIngredientOption[];
+  ingredientFormDependencies?: IngredientFormDependencies;
   isSaving: boolean;
   contextControls?: ReactNode;
   saveLabel?: string;
@@ -116,12 +131,33 @@ function getMacrosFromRows(
   };
 }
 
+function mapIngredientToLogOption(ingredient: IngredientType): LogIngredientOption {
+  // Keep the integration boundary explicit between IngredientType and log dialog options.
+  return {
+    id: ingredient.id,
+    name: ingredient.name,
+    brand: ingredient.brand,
+    defaultUnitId: ingredient.defaultUnitId,
+    calories: ingredient.calories,
+    proteins: ingredient.proteins,
+    fats: ingredient.fats,
+    carbs: ingredient.carbs,
+    unitConversions: ingredient.unitConversions.map((conversion) => ({
+      unitId: conversion.unitId,
+      gramsPerUnit: conversion.gramsPerUnit,
+      unitName: conversion.unit.name,
+      unitNamePlural: conversion.unit.namePlural ?? null,
+    })),
+  };
+}
+
 export function EditLogIngredientsDialog({
   open,
   title,
   subtitle,
   initialRows,
   ingredientOptions,
+  ingredientFormDependencies,
   isSaving,
   contextControls,
   saveLabel = "Save",
@@ -134,6 +170,13 @@ export function EditLogIngredientsDialog({
       key: toRowKey(),
     })),
   );
+  const [localIngredientOptions, setLocalIngredientOptions] = useState(ingredientOptions);
+  const [createIngredientState, setCreateIngredientState] =
+    useState<CreateIngredientState | null>(null);
+
+  useEffect(() => {
+    setLocalIngredientOptions(ingredientOptions);
+  }, [ingredientOptions]);
 
   useEffect(() => {
     if (!open) {
@@ -149,21 +192,21 @@ export function EditLogIngredientsDialog({
   }, [initialRows, open]);
 
   const ingredientById = useMemo(
-    () => new Map(ingredientOptions.map((ingredient) => [ingredient.id, ingredient])),
-    [ingredientOptions],
+    () => new Map(localIngredientOptions.map((ingredient) => [ingredient.id, ingredient])),
+    [localIngredientOptions],
   );
 
-  const macros = useMemo(() => getMacrosFromRows(rows, ingredientOptions), [
-    ingredientOptions,
+  const macros = useMemo(() => getMacrosFromRows(rows, localIngredientOptions), [
+    localIngredientOptions,
     rows,
   ]);
 
   const ingredientSelectOptions = useMemo(
-    () => ingredientOptions.map((ingredient) => ({
+    () => localIngredientOptions.map((ingredient) => ({
       value: ingredient.id,
       label: getIngredientDisplayName(ingredient.name, ingredient.brand),
     })),
-    [ingredientOptions],
+    [localIngredientOptions],
   );
 
   const handleAddRow = () => {
@@ -283,6 +326,12 @@ export function EditLogIngredientsDialog({
                       placeholder="Select ingredient..."
                       searchPlaceholder="Search ingredient..."
                       emptyLabel="No ingredient found."
+                      onCreateOption={(searchTerm) => {
+                        setCreateIngredientState({
+                          rowKey: row.key,
+                          initialName: searchTerm,
+                        });
+                      }}
                       allowClear
                       clearLabel="Clear ingredient"
                     />
@@ -356,15 +405,78 @@ export function EditLogIngredientsDialog({
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={isSaving}
+            disabled={isSaving || Boolean(createIngredientState)}
           >
             Cancel
           </Button>
-          <Button type="button" onClick={handleSave} disabled={isSaving}>
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving || Boolean(createIngredientState)}
+          >
             {isSaving ? "Saving..." : saveLabel}
           </Button>
         </DialogFooter>
       </DialogContent>
+      {ingredientFormDependencies ? (
+        <CreateIngredientDialog
+          open={Boolean(createIngredientState)}
+          initialName={createIngredientState?.initialName}
+          onOpenChange={(open) => {
+            if (!open) {
+              setCreateIngredientState(null);
+            }
+          }}
+          onCreated={(createdIngredient) => {
+            const mappedIngredient = mapIngredientToLogOption(createdIngredient);
+            setLocalIngredientOptions((prev) =>
+              prev.some((item) => item.id === mappedIngredient.id)
+                ? prev
+                : [...prev, mappedIngredient],
+            );
+
+            const rowKey = createIngredientState?.rowKey;
+            if (!rowKey) {
+              toast.error("Could not apply created ingredient to row");
+              setCreateIngredientState(null);
+              return;
+            }
+
+            const defaultUnitId = getDefaultUnitIdForIngredient({
+              defaultUnitId: mappedIngredient.defaultUnitId,
+              unitConversions: mappedIngredient.unitConversions.map((unit) => ({
+                unitId: unit.unitId,
+                unit: { name: unit.unitName },
+              })),
+            });
+
+            const rowExists = rows.some((item) => item.key === rowKey);
+            if (!rowExists) {
+              toast.error("Could not apply created ingredient to row");
+              setCreateIngredientState(null);
+              return;
+            }
+
+            setRows((prev) =>
+              prev.map((item) =>
+                item.key === rowKey
+                  ? {
+                      ...item,
+                      ingredientId: mappedIngredient.id,
+                      unitId: defaultUnitId,
+                    }
+                  : item,
+              ),
+            );
+            setCreateIngredientState(null);
+            toast.success("Ingredient created and selected");
+          }}
+          categories={ingredientFormDependencies.categories}
+          units={ingredientFormDependencies.units}
+          gramsUnitId={ingredientFormDependencies.gramsUnitId}
+          iconOptions={ingredientFormDependencies.iconOptions}
+        />
+      ) : null}
     </Dialog>
   );
 }

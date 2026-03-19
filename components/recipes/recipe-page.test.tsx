@@ -19,6 +19,39 @@ vi.mock("@/actions/log-actions", () => ({
   addRecipeToLogAction: vi.fn(),
 }));
 
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+if (!globalThis.ResizeObserver) {
+  // Cmdk-based selects rely on ResizeObserver in jsdom tests.
+  globalThis.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
+}
+
+if (!HTMLElement.prototype.scrollIntoView) {
+  // Cmdk attempts to scroll highlighted options into view.
+  HTMLElement.prototype.scrollIntoView = () => {};
+}
+
+const ingredientFormDependencies = {
+  categories: [{ id: "cat-dairy", name: "Dairy" }],
+  units: [{ id: "unit-grams", name: "grams", namePlural: null }],
+  gramsUnitId: "unit-grams",
+  iconOptions: [],
+};
+
+function renderRecipePage(recipe: RecipeType, ingredients: IngredientType[]) {
+  return render(
+    <RecipePage
+      recipe={recipe}
+      ingredients={ingredients}
+      ingredientFormDependencies={ingredientFormDependencies}
+    />,
+  );
+}
+
 function createRecipeFixture(): { recipe: RecipeType; ingredients: IngredientType[] } {
   const gramsUnit = createMockUnit({ id: "unit-grams", name: "grams" });
 
@@ -258,7 +291,7 @@ describe("RecipePage nutrition integration", () => {
   it("opens add to log dialog with Jagoda and today's date defaults", async () => {
     const { recipe, ingredients } = createRecipeFixture();
     const user = userEvent.setup();
-    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+    renderRecipePage(recipe, ingredients);
 
     await user.click(screen.getByRole("button", { name: "Add to log" }));
 
@@ -274,7 +307,7 @@ describe("RecipePage nutrition integration", () => {
   it("resets add to log defaults on reopen", async () => {
     const { recipe, ingredients } = createRecipeFixture();
     const user = userEvent.setup();
-    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+    renderRecipePage(recipe, ingredients);
 
     await user.click(screen.getByRole("button", { name: "Add to log" }));
     const firstDialog = screen.getByRole("dialog");
@@ -294,9 +327,28 @@ describe("RecipePage nutrition integration", () => {
     expect(within(secondDialog).getByText("Jagoda")).toBeInTheDocument();
   });
 
+  it('supports create-missing-ingredient path inside Add to log dialog', async () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    const user = userEvent.setup();
+    renderRecipePage(recipe, ingredients);
+
+    await user.click(screen.getByRole("button", { name: "Add to log" }));
+    const addToLogDialog = screen.getByRole("dialog");
+    await user.click(within(addToLogDialog).getByText("Shared Protein"));
+    await user.type(screen.getByPlaceholderText("Search ingredient..."), "cottage chee");
+
+    expect(screen.getByText('Create "cottage chee"')).toBeInTheDocument();
+    await user.click(screen.getByText('Create "cottage chee"'));
+
+    expect(
+      screen.getByText("Add a missing ingredient without leaving your current flow."),
+    ).toBeInTheDocument();
+    expect(within(addToLogDialog).getByText(`Add ${recipe.name} to log`)).toBeInTheDocument();
+  });
+
   it("updates only edited row nutrition by default and shows apply-all icon", async () => {
     const { recipe, ingredients } = createRecipeFixture();
-    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+    renderRecipePage(recipe, ingredients);
 
     await waitFor(() => expectNutritionToMatchScaledRecipe(recipe));
 
@@ -317,7 +369,7 @@ describe("RecipePage nutrition integration", () => {
 
   it("applies edited row ratio to all ingredients when scale icon is clicked", async () => {
     const { recipe, ingredients } = createRecipeFixture();
-    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+    renderRecipePage(recipe, ingredients);
 
     await setIngredientAmount("Side Veg Jagoda", "200");
     await userEvent.click(
@@ -338,7 +390,7 @@ describe("RecipePage nutrition integration", () => {
 
   it("uses the second edited row as source for apply-all and clears previous local intent", async () => {
     const { recipe, ingredients } = createRecipeFixture();
-    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+    renderRecipePage(recipe, ingredients);
 
     // Row A local scale: 1.5x
     await setIngredientAmount("Shared Protein", "450");
@@ -359,7 +411,7 @@ describe("RecipePage nutrition integration", () => {
 
   it("keeps SECONDARY_ONLY rows unscaled by Jagoda calorie target", async () => {
     const { recipe, ingredients } = createRecipeFixture();
-    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+    renderRecipePage(recipe, ingredients);
 
     const caloriesInput = screen.getByLabelText("Calories per portion");
     await userEvent.type(caloriesInput, "300");
@@ -375,7 +427,7 @@ describe("RecipePage nutrition integration", () => {
 
   it("resets to baseline values after mixed scaling interactions", async () => {
     const { recipe, ingredients } = createRecipeFixture();
-    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+    renderRecipePage(recipe, ingredients);
 
     await setIngredientAmount("Shared Protein", "450");
     await userEvent.click(
@@ -395,7 +447,7 @@ describe("RecipePage nutrition integration", () => {
 
   it("shows all instruction ingredient badges when no person is selected", () => {
     const { recipe, ingredients } = createRecipeFixture();
-    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+    renderRecipePage(recipe, ingredients);
 
     expectInstructionBadgesVisibleForNoFilter();
     expectInstructionStepTextToRemainVisible();
@@ -403,7 +455,7 @@ describe("RecipePage nutrition integration", () => {
 
   it("filters instruction ingredient badges for Jagoda and splits BOTH amounts", async () => {
     const { recipe, ingredients } = createRecipeFixture();
-    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+    renderRecipePage(recipe, ingredients);
 
     await userEvent.click(screen.getByRole("radio", { name: "Jagoda" }));
     const instructionSectionText = getNormalizedInstructionsSectionText();
@@ -417,7 +469,7 @@ describe("RecipePage nutrition integration", () => {
 
   it("filters instruction ingredient badges for Nelson and splits BOTH amounts", async () => {
     const { recipe, ingredients } = createRecipeFixture();
-    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+    renderRecipePage(recipe, ingredients);
 
     await userEvent.click(screen.getByRole("radio", { name: "Nelson" }));
     const instructionSectionText = getNormalizedInstructionsSectionText();
@@ -431,7 +483,7 @@ describe("RecipePage nutrition integration", () => {
 
   it("toggles selected person off when clicking the same segment again", async () => {
     const { recipe, ingredients } = createRecipeFixture();
-    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+    renderRecipePage(recipe, ingredients);
 
     const jagodaButton = screen.getByRole("radio", { name: "Jagoda" });
     await userEvent.click(jagodaButton);
@@ -445,7 +497,7 @@ describe("RecipePage nutrition integration", () => {
 
   it("combines person filter with global scaling for instruction badges", async () => {
     const { recipe, ingredients } = createRecipeFixture();
-    render(<RecipePage recipe={recipe} ingredients={ingredients} />);
+    renderRecipePage(recipe, ingredients);
 
     // 300 -> 600 globally for shared ingredient when applying 2x from Jagoda row.
     await setIngredientAmount("Side Veg Jagoda", "200");
