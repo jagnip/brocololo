@@ -90,6 +90,10 @@ describe("LogDayView", () => {
     expect(screen.getByText("Oatmeal")).toBeInTheDocument();
     expect(screen.getByText("Chicken Bowl")).toBeInTheDocument();
     expect(screen.getByText("Salmon Rice")).toBeInTheDocument();
+    expect(screen.getByText("1750 kcal")).toBeInTheDocument();
+    expect(screen.getByText("115.0g protein")).toBeInTheDocument();
+    expect(screen.getByText("57.0g fat")).toBeInTheDocument();
+    expect(screen.getByText("164.0g carbs")).toBeInTheDocument();
 
     expect(
       screen.getByRole("button", { name: /yogurt with frozen fruits and nuts/i }),

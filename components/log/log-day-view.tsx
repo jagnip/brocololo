@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import type { LogDayData } from "@/lib/log/view-model";
 import { LogSlotCard } from "./log-slot-card";
@@ -19,6 +20,22 @@ type SelectedRecipeState = {
   subtitle: string;
   initialRows: EditableIngredientRow[];
 };
+
+function toDayMacros(day: LogDayData) {
+  // Aggregate all rendered slot recipes into a daily macro summary.
+  return day.slots.reduce(
+    (totals, slot) => {
+      for (const recipe of slot.recipes) {
+        totals.calories += recipe.calories;
+        totals.proteins += recipe.proteins;
+        totals.fats += recipe.fats;
+        totals.carbs += recipe.carbs;
+      }
+      return totals;
+    },
+    { calories: 0, proteins: 0, fats: 0, carbs: 0 },
+  );
+}
 
 function toRecipeMacros(
   rows: EditableIngredientRow[],
@@ -117,40 +134,49 @@ export function LogDayView({
 
   return (
     <section className="mt-8 space-y-8">
-      {localDays.map((day) => (
-        <article key={day.dateKey} className="space-y-4">
-          <h2 className="text-base font-medium">{formatDayLabel(day.date)}</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {day.slots.map((slot) => (
-              <div key={`${day.dateKey}-${slot.mealType}`} className="space-y-2">
-                <p className="text-sm text-muted-foreground">{slot.label}</p>
-                <LogSlotCard
-                  slot={slot}
-                  onRecipeClick={(recipe) => {
-                    if (!recipe.entryId) {
-                      toast.error("Cannot edit this recipe yet");
-                      return;
-                    }
+      {localDays.map((day) => {
+        const dayMacros = toDayMacros(day);
+        return (
+          <article key={day.dateKey} className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-base font-medium">{formatDayLabel(day.date)}</h2>
+              <Badge variant="outline">{dayMacros.calories.toFixed(0)} kcal</Badge>
+              <Badge variant="outline">{dayMacros.proteins.toFixed(1)}g protein</Badge>
+              <Badge variant="outline">{dayMacros.fats.toFixed(1)}g fat</Badge>
+              <Badge variant="outline">{dayMacros.carbs.toFixed(1)}g carbs</Badge>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {day.slots.map((slot) => (
+                <div key={`${day.dateKey}-${slot.mealType}`} className="space-y-2">
+                  <p className="text-sm text-muted-foreground">{slot.label}</p>
+                  <LogSlotCard
+                    slot={slot}
+                    onRecipeClick={(recipe) => {
+                      if (!recipe.entryId) {
+                        toast.error("Cannot edit this recipe yet");
+                        return;
+                      }
 
-                    setSelectedRecipe({
-                      entryId: recipe.entryId,
-                      entryRecipeId: recipe.id,
-                      title: recipe.title,
-                      subtitle: `${slot.label} • ${formatDayLabel(day.date)}`,
-                      initialRows:
-                        recipe.ingredients?.map((ingredient) => ({
-                          ingredientId: ingredient.ingredientId,
-                          unitId: ingredient.unitId,
-                          amount: ingredient.amount,
-                        })) ?? [],
-                    });
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        </article>
-      ))}
+                      setSelectedRecipe({
+                        entryId: recipe.entryId,
+                        entryRecipeId: recipe.id,
+                        title: recipe.title,
+                        subtitle: `${slot.label} • ${formatDayLabel(day.date)}`,
+                        initialRows:
+                          recipe.ingredients?.map((ingredient) => ({
+                            ingredientId: ingredient.ingredientId,
+                            unitId: ingredient.unitId,
+                            amount: ingredient.amount,
+                          })) ?? [],
+                      });
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </article>
+        );
+      })}
 
       {selectedRecipe ? (
         <EditLogIngredientsDialog
