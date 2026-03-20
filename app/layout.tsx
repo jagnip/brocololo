@@ -21,7 +21,6 @@ export const metadata: Metadata = {
   description: "Recipes",
 };
 
-// Avoid build-time prerender DB access; render pages on demand.
 export const dynamic = "force-dynamic";
 
 export default function RootLayout({
