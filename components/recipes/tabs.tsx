@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { useScrollDirection } from "./use-scroll-direction";
 
 const TIME_OPTIONS = [
   { value: "lte20", label: "Below 20 min" },
@@ -38,6 +39,8 @@ export function RecipeTabs({
   const selectedTime = searchParams.get("time") ?? "";
 
   const isSweet = selectedCategory === SWEET_SLUG;
+  const direction = useScrollDirection(12);
+  const hidden = direction === "down";
 
   const applyParams = (params: URLSearchParams) => {
     const query = params.toString();
@@ -68,7 +71,13 @@ export function RecipeTabs({
   const setTime = (nextValue: string) => setQueryParam("time", nextValue);
 
   return (
-    <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6 pb-4">
+    <div
+      className={[
+        "sticky top-14 z-5 bg-background transition-transform duration-200",
+        hidden ? "-translate-y-full" : "translate-y-0",
+      ].join(" ")}
+    >
+      <div className="grid grid-cols-2 gap-2 p-4 md:grid-cols-3 lg:grid-cols-6">
       <div className="w-full">
         <Select
           value={selectedCategory}
@@ -138,6 +147,7 @@ export function RecipeTabs({
         placeholder="Search recipes..."
         className="col-span-2 w-full md:col-span-2 lg:col-span-2"
       />
+      </div>
     </div>
   );
 }
