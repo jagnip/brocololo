@@ -2,23 +2,10 @@ import { Suspense } from "react";
 import {
   SidebarProvider,
   SidebarInset,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppSidebarSkeleton } from "@/components/app-sidebar-skeleton";
-import { getCategoriesByType } from "@/lib/db/categories";
-import { getPlans } from "@/lib/db/planner";
-import { getLogs } from "@/lib/db/logs";
-
-async function AppSidebarData() {
-  const [categories, plans, logs] = await Promise.all([
-    getCategoriesByType("FLAVOUR"),
-    getPlans(),
-    getLogs(),
-  ]);
-
-  return <AppSidebar categories={categories} plans={plans} logs={logs} />;
-}
+import { AppTopbar } from "@/components/app-topbar";
 
 export function AppSidebarContainer({
   children,
@@ -28,12 +15,10 @@ export function AppSidebarContainer({
   return (
     <SidebarProvider>
       <Suspense fallback={<AppSidebarSkeleton />}>
-        <AppSidebarData />
+        <AppSidebar />
       </Suspense>
       <SidebarInset>
-        <header className="flex h-12 items-center gap-2 px-4 border-b">
-          <SidebarTrigger />
-        </header>
+        <AppTopbar />
         <main className="flex-1 p-4">{children}</main>
       </SidebarInset>
     </SidebarProvider>

@@ -22,6 +22,7 @@ export default async function Page({
   const protein = Array.isArray(params.protein) ? params.protein[0] : params.protein;
   const type = Array.isArray(params.type) ? params.type[0] : params.type;
   const time = Array.isArray(params.time) ? params.time[0] : params.time;
+
   const gridProps: RecipeGridProps = {
     categorySlugs: category,
     search,
@@ -32,7 +33,6 @@ export default async function Page({
 
   return (
     <>
-      {/* Use one shared fallback so header + tabs + cards resolve as one loading unit. */}
       <Suspense fallback={<RecipesPageSkeleton />}>
         <RecipeTabsContainer />
         <RecipeGrid {...gridProps} />

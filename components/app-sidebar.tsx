@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   CalendarDays,
-  CalendarPlus,
   CookingPot,
   UtensilsCrossed,
   ShoppingCart,
@@ -12,57 +11,19 @@ import {
 } from "lucide-react";
 import {
   Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
-import type { CategoryType } from "@/types/category";
 import { ROUTES } from "@/lib/constants";
 
-type PlanSummary = {
-  id: string;
-  startDate: Date;
-  endDate: Date;
-};
 
-type LogSummary = {
-  id: string;
-  createdAt: Date;
-  plan: {
-    id: string;
-    startDate: Date;
-    endDate: Date;
-  };
-};
 
-function formatDateRange(start: Date, end: Date): string {
-  const options: Intl.DateTimeFormatOptions = {
-    month: "short",
-    day: "numeric",
-  };
-  const startStr = start.toLocaleDateString("en-US", options);
-  const endStr = end.toLocaleDateString("en-US", options);
-  return `${startStr} - ${endStr}`;
-}
-
-export function AppSidebar({
-  categories,
-  plans,
-  logs,
-}: {
-  categories: CategoryType[];
-  plans: PlanSummary[];
-  logs: LogSummary[];
-}) {
+export function AppSidebar() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const router = useRouter();
+  const { isMobile, setOpenMobile } = useSidebar();
 
   const isRecipes = pathname.startsWith(ROUTES.recipes);
   const isIngredients = pathname.startsWith(ROUTES.ingredients);
@@ -70,25 +31,19 @@ export function AppSidebar({
   const isGroceries = pathname.startsWith(ROUTES.groceries);
   const isLog = pathname.startsWith(ROUTES.log);
 
-  const selectedCategory = searchParams.get("category") ?? "";
-
-  const toggleCategory = (categorySlug: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (selectedCategory === categorySlug) {
-      params.delete("category");
-    } else {
-      params.set("category", categorySlug);
-    }
-    router.push(`${ROUTES.recipes}?${params.toString()}`);
-  };
-
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isRecipes} tooltip="Recipes">
-              <Link href={ROUTES.recipes}>
+              <Link
+                href={ROUTES.recipes}
+                onClick={() => {
+                  if (!isMobile) return;
+                  setOpenMobile(false);
+                }}
+              >
                 <CookingPot />
                 <span>Recipes</span>
               </Link>
@@ -96,7 +51,13 @@ export function AppSidebar({
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isPlanner} tooltip="Planner">
-              <Link href={ROUTES.plan}>
+              <Link
+                href={ROUTES.plan}
+                onClick={() => {
+                  if (!isMobile) return;
+                  setOpenMobile(false);
+                }}
+              >
                 <UtensilsCrossed />
                 <span>Planner</span>
               </Link>
@@ -108,7 +69,13 @@ export function AppSidebar({
               isActive={isIngredients}
               tooltip="Ingredients"
             >
-              <Link href={ROUTES.ingredients}>
+              <Link
+                href={ROUTES.ingredients}
+                onClick={() => {
+                  if (!isMobile) return;
+                  setOpenMobile(false);
+                }}
+              >
                 <Apple />
                 <span>Ingredients</span>
               </Link>
@@ -116,7 +83,13 @@ export function AppSidebar({
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isLog} tooltip="Log">
-              <Link href={ROUTES.log}>
+              <Link
+                href={ROUTES.log}
+                onClick={() => {
+                  if (!isMobile) return;
+                  setOpenMobile(false);
+                }}
+              >
                 <CalendarDays />
                 <span>Log</span>
               </Link>
@@ -128,7 +101,13 @@ export function AppSidebar({
               isActive={isGroceries}
               tooltip="Groceries"
             >
-              <Link href={ROUTES.groceries}>
+              <Link
+                href={ROUTES.groceries}
+                onClick={() => {
+                  if (!isMobile) return;
+                  setOpenMobile(false);
+                }}
+              >
                 <ShoppingCart />
                 <span>Groceries</span>
               </Link>
@@ -136,125 +115,6 @@ export function AppSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-
-      <SidebarSeparator />
-
-      <SidebarContent>
-        {isRecipes && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Recipes</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {categories.map((category) => (
-                  <SidebarMenuItem key={category.id}>
-                    <SidebarMenuButton
-                      isActive={selectedCategory === category.slug}
-                      tooltip={category.name}
-                      onClick={() => toggleCategory(category.slug)}
-                    >
-                      <span>{category.name}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {isPlanner && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Planner</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === ROUTES.planCreate}
-                    tooltip="New plan"
-                  >
-                    <Link href={ROUTES.planCreate}>
-                      <CalendarPlus />
-                      <span>New plan</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                {plans.map((plan) => {
-                  const label = formatDateRange(plan.startDate, plan.endDate);
-                  return (
-                    <SidebarMenuItem key={plan.id}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={pathname === ROUTES.planView(plan.id)}
-                        tooltip={label}
-                      >
-                        <Link href={ROUTES.planView(plan.id)}>
-                          <CalendarDays />
-                          <span>{label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {isGroceries && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Groceries</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {plans.map((plan) => {
-                  const label = formatDateRange(plan.startDate, plan.endDate);
-                  return (
-                    <SidebarMenuItem key={plan.id}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={pathname === ROUTES.groceriesView(plan.id)}
-                        tooltip={label}
-                      >
-                        <Link href={ROUTES.groceriesView(plan.id)}>
-                          <CalendarDays />
-                          <span>{label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {isLog && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Log</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {logs.map((log) => {
-                  const label = formatDateRange(log.plan.startDate, log.plan.endDate);
-                  return (
-                    <SidebarMenuItem key={log.id}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={pathname === ROUTES.logView(log.id)}
-                        tooltip={label}
-                      >
-                        <Link href={ROUTES.logView(log.id)}>
-                          <CalendarDays />
-                          <span>{label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-      </SidebarContent>
     </Sidebar>
   );
 }

@@ -53,7 +53,6 @@ export function RecipeTabs({
     [typeCategories, selectedType],
   );
   const visibleTypeCategories = useMemo(() => {
-    // Keep recipe type options scoped to chosen flavour when one is selected.
     if (!selectedFlavour) {
       return typeCategories;
     }
