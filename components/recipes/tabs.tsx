@@ -68,7 +68,7 @@ export function RecipeTabs({
   const setTime = (nextValue: string) => setQueryParam("time", nextValue);
 
   return (
-    <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
+    <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6 pb-4">
       <div className="w-full">
         <Select
           value={selectedCategory}
