@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   CalendarDays,
-  CalendarPlus,
   CookingPot,
   UtensilsCrossed,
   ShoppingCart,
@@ -12,23 +11,19 @@ import {
 } from "lucide-react";
 import {
   Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
-import type { CategoryType } from "@/types/category";
 import { ROUTES } from "@/lib/constants";
 
 
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { isMobile, setOpenMobile } = useSidebar();
 
   const isRecipes = pathname.startsWith(ROUTES.recipes);
   const isIngredients = pathname.startsWith(ROUTES.ingredients);
@@ -42,7 +37,13 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isRecipes} tooltip="Recipes">
-              <Link href={ROUTES.recipes}>
+              <Link
+                href={ROUTES.recipes}
+                onClick={() => {
+                  if (!isMobile) return;
+                  setOpenMobile(false);
+                }}
+              >
                 <CookingPot />
                 <span>Recipes</span>
               </Link>
@@ -50,7 +51,13 @@ export function AppSidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isPlanner} tooltip="Planner">
-              <Link href={ROUTES.plan}>
+              <Link
+                href={ROUTES.plan}
+                onClick={() => {
+                  if (!isMobile) return;
+                  setOpenMobile(false);
+                }}
+              >
                 <UtensilsCrossed />
                 <span>Planner</span>
               </Link>
@@ -62,7 +69,13 @@ export function AppSidebar() {
               isActive={isIngredients}
               tooltip="Ingredients"
             >
-              <Link href={ROUTES.ingredients}>
+              <Link
+                href={ROUTES.ingredients}
+                onClick={() => {
+                  if (!isMobile) return;
+                  setOpenMobile(false);
+                }}
+              >
                 <Apple />
                 <span>Ingredients</span>
               </Link>
@@ -70,7 +83,13 @@ export function AppSidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isLog} tooltip="Log">
-              <Link href={ROUTES.log}>
+              <Link
+                href={ROUTES.log}
+                onClick={() => {
+                  if (!isMobile) return;
+                  setOpenMobile(false);
+                }}
+              >
                 <CalendarDays />
                 <span>Log</span>
               </Link>
@@ -82,7 +101,13 @@ export function AppSidebar() {
               isActive={isGroceries}
               tooltip="Groceries"
             >
-              <Link href={ROUTES.groceries}>
+              <Link
+                href={ROUTES.groceries}
+                onClick={() => {
+                  if (!isMobile) return;
+                  setOpenMobile(false);
+                }}
+              >
                 <ShoppingCart />
                 <span>Groceries</span>
               </Link>
