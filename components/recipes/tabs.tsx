@@ -68,23 +68,25 @@ export function RecipeTabs({
   const setTime = (nextValue: string) => setQueryParam("time", nextValue);
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Select
-        value={selectedCategory}
-        onValueChange={(nextValue) => setFlavour(nextValue || null)}
-        allowInlineClear
-      >
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Flavour" />
-        </SelectTrigger>
-        <SelectContent align="start">
-          {flavourCategories.map((category: CategoryType) => (
-            <SelectItem key={category.id} value={category.slug}>
-              {category.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
+      <div className="w-full">
+        <Select
+          value={selectedCategory}
+          onValueChange={(nextValue) => setFlavour(nextValue || null)}
+          allowInlineClear
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Flavour" />
+          </SelectTrigger>
+          <SelectContent align="start">
+            {flavourCategories.map((category: CategoryType) => (
+              <SelectItem key={category.id} value={category.slug}>
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <SearchableSelect
         options={proteinCategories.map((category) => ({
@@ -99,6 +101,7 @@ export function RecipeTabs({
         allowClear
         clearLabel="Clear protein filter"
         disabled={isSweet}
+        className="w-full"
       />
 
       <SearchableSelect
@@ -113,22 +116,28 @@ export function RecipeTabs({
         emptyLabel="No type found."
         allowClear
         clearLabel="Clear type filter"
+        className="w-full"
       />
 
-      <Select value={selectedTime} onValueChange={setTime} allowInlineClear>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Hands-on time" />
-        </SelectTrigger>
-        <SelectContent align="start">
-          {TIME_OPTIONS.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="w-full">
+        <Select value={selectedTime} onValueChange={setTime} allowInlineClear>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Hands-on time" />
+          </SelectTrigger>
+          <SelectContent align="start">
+            {TIME_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-      <SearchInput placeholder="Search recipes..." className="flex-1" />
+      <SearchInput
+        placeholder="Search recipes..."
+        className="col-span-2 w-full md:col-span-2 lg:col-span-2"
+      />
     </div>
   );
 }
