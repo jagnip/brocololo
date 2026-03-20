@@ -2,10 +2,10 @@ import { Suspense } from "react";
 import {
   SidebarProvider,
   SidebarInset,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppSidebarSkeleton } from "@/components/app-sidebar-skeleton";
+import { AppTopbar } from "@/components/app-topbar";
 
 export function AppSidebarContainer({
   children,
@@ -18,9 +18,7 @@ export function AppSidebarContainer({
         <AppSidebar />
       </Suspense>
       <SidebarInset>
-        <header className="flex h-12 items-center gap-2 px-4 border-b md:hidden">
-          <SidebarTrigger />
-        </header>
+        <AppTopbar />
         <main className="flex-1 p-4">{children}</main>
       </SidebarInset>
     </SidebarProvider>

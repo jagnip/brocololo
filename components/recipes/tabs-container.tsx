@@ -24,8 +24,8 @@ export async function RecipeTabsContainer() {
             typeCategories={typeCategories}
           />
         </div>
-        {/* Keep create action in the same header row as tabs/search. */}
-        <Button asChild>
+        {/* Desktop keeps local action; mobile/tablet action is in the global top bar. */}
+        <Button asChild className="hidden lg:inline-flex">
           <Link href={ROUTES.recipeCreate}>
             <Plus className="h-4 w-4" />
             Create recipe
