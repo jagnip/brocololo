@@ -25,7 +25,7 @@ export function SearchInput({
   placeholder = "Search...",
   queryParam = "q",
   debounceMs = 500,
-  className = "max-w-[400px]",
+  className,
   pathOverride,
   resetParamsOnChange = ["page"],
 }: SearchInputProps) {
@@ -34,7 +34,6 @@ export function SearchInput({
   const router = useRouter();
   const pathname = usePathname();
 
-  // Keep the search input synced with URL query params.
   const [value, setValue] = useState(() => searchParams.get(queryParam) ?? "");
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentQueryValue = searchParams.get(queryParam) ?? "";
@@ -54,7 +53,7 @@ export function SearchInput({
       } else {
         params.delete(queryParam);
       }
-      // Reset params like page when search text changes.
+
       for (const key of resetParamsOnChange) {
         params.delete(key);
       }
@@ -80,7 +79,7 @@ export function SearchInput({
   ]);
 
   return (
-      <SearchField className={cn("max-w-[400px]", className)} value={value}
+    <SearchField className={cn(className)} value={value}
       onChange={setValue}>
       <FieldGroup>
         <SearchIcon aria-hidden className="size-4 text-muted-foreground" />
