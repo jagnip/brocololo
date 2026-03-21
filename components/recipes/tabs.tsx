@@ -29,10 +29,12 @@ export function RecipeTabs({
   proteinCategories: CategoryType[];
   typeCategories: CategoryType[];
 }) {
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
+  //selects are controlled from the URL
   const selectedCategory = searchParams.get("category") ?? "";
   const selectedProtein = searchParams.get("protein");
   const selectedType = searchParams.get("type");
@@ -42,11 +44,13 @@ export function RecipeTabs({
   const direction = useScrollDirection(12);
   const hidden = direction === "down";
 
+  // navigate to the new URL
   const applyParams = (params: URLSearchParams) => {
     const query = params.toString();
     router.push(query ? `${pathname}?${query}` : pathname);
   };
 
+  //set a query param (or delete it)
   type QueryKey = "category" | "protein" | "type" | "time";
   const setQueryParam = (
     key: QueryKey,
@@ -78,75 +82,75 @@ export function RecipeTabs({
       ].join(" ")}
     >
       <div className="grid grid-cols-2 gap-2 p-4 md:grid-cols-3 lg:grid-cols-6">
-      <div className="w-full">
-        <Select
-          value={selectedCategory}
-          onValueChange={(nextValue) => setFlavour(nextValue || null)}
-          allowInlineClear
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Flavour" />
-          </SelectTrigger>
-          <SelectContent align="start">
-            {flavourCategories.map((category: CategoryType) => (
-              <SelectItem key={category.id} value={category.slug}>
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        <div className="w-full">
+          <Select
+            value={selectedCategory}
+            onValueChange={(nextValue) => setFlavour(nextValue || null)}
+            allowInlineClear
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Flavour" />
+            </SelectTrigger>
+            <SelectContent align="start">
+              {flavourCategories.map((category: CategoryType) => (
+                <SelectItem key={category.id} value={category.slug}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      <SearchableSelect
-        options={proteinCategories.map((category) => ({
-          value: category.slug,
-          label: category.name,
-        }))}
-        value={selectedProtein}
-        onValueChange={setProtein}
-        placeholder="Protein"
-        searchPlaceholder="Search proteins..."
-        emptyLabel="No protein found."
-        allowClear
-        clearLabel="Clear protein filter"
-        disabled={isSweet}
-        className="w-full"
-      />
+        <SearchableSelect
+          options={proteinCategories.map((category) => ({
+            value: category.slug,
+            label: category.name,
+          }))}
+          value={selectedProtein}
+          onValueChange={setProtein}
+          placeholder="Protein"
+          searchPlaceholder="Search proteins..."
+          emptyLabel="No protein found."
+          allowClear
+          clearLabel="Clear protein filter"
+          disabled={isSweet}
+          className="w-full"
+        />
 
-      <SearchableSelect
-        options={typeCategories.map((category) => ({
-          value: category.slug,
-          label: category.name,
-        }))}
-        value={selectedType}
-        onValueChange={setType}
-        placeholder="Type"
-        searchPlaceholder="Search recipe types..."
-        emptyLabel="No type found."
-        allowClear
-        clearLabel="Clear type filter"
-        className="w-full"
-      />
+        <SearchableSelect
+          options={typeCategories.map((category) => ({
+            value: category.slug,
+            label: category.name,
+          }))}
+          value={selectedType}
+          onValueChange={setType}
+          placeholder="Type"
+          searchPlaceholder="Search recipe types..."
+          emptyLabel="No type found."
+          allowClear
+          clearLabel="Clear type filter"
+          className="w-full"
+        />
 
-      <div className="w-full">
-        <Select value={selectedTime} onValueChange={setTime} allowInlineClear>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Hands-on time" />
-          </SelectTrigger>
-          <SelectContent align="start">
-            {TIME_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        <div className="w-full">
+          <Select value={selectedTime} onValueChange={setTime} allowInlineClear>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Hands-on time" />
+            </SelectTrigger>
+            <SelectContent align="start">
+              {TIME_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      <SearchInput
-        placeholder="Search recipes..."
-        className="col-span-2 w-full md:col-span-2 lg:col-span-2"
-      />
+        <SearchInput
+          placeholder="Search recipes..."
+          className="col-span-2 w-full md:col-span-2 lg:col-span-2"
+        />
       </div>
     </div>
   );

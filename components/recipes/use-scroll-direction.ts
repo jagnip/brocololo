@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-/**
- * Tracks scroll direction with a threshold to prevent jitter.
- */
+
 export function useScrollDirection(threshold = 12) {
   const lastY = useRef(0);
   const [direction, setDirection] = useState<"up" | "down">("up");

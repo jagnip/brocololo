@@ -3,7 +3,7 @@ import { Skeleton } from "../ui/skeleton";
 export function TabsSkeleton() {
   return (
     <div
-      className="grid grid-cols-2 gap-2 pb-4 md:grid-cols-3 lg:grid-cols-6"
+      className="grid grid-cols-2 gap-2 pb-4 md:grid-cols-3 lg:grid-cols-6 pt-4"
       data-slot="recipes-tabs-skeleton"
     >
       <Skeleton className="h-9 w-full rounded-md" />
