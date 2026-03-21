@@ -99,19 +99,21 @@ export function SearchInput({
   ]);
 
   return (
-    <SearchField className={cn(className)} value={value} onChange={setValue}>
-      <FieldGroup>
-        {isPending ? (
-          <Loader2 className="size-4 animate-spin text-muted-foreground" />
-        ) : (
-          <SearchIcon aria-hidden className="size-4 text-muted-foreground" />
-        )}
-        <SearchFieldInput placeholder={placeholder} />
 
-        <SearchFieldClear>
-          <XIcon aria-hidden className="size-4" />
-        </SearchFieldClear>
-      </FieldGroup>
-    </SearchField>
+      <SearchField className={cn(className)} value={value} onChange={setValue} data-pending={isPending}>
+        <FieldGroup>
+          {isPending ? (
+            <Loader2 className="size-4 animate-spin text-muted-foreground" />
+          ) : (
+            <SearchIcon aria-hidden className="size-4 text-muted-foreground" />
+          )}
+          <SearchFieldInput placeholder={placeholder} />
+
+          <SearchFieldClear>
+            <XIcon aria-hidden className="size-4" />
+          </SearchFieldClear>
+        </FieldGroup>
+      </SearchField>
+   
   );
 }
