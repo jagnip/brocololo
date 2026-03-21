@@ -34,8 +34,10 @@ export default async function Page({
   return (
     <>
       <Suspense fallback={<RecipesPageSkeleton />}>
+      <div className="group">
         <RecipeTabsContainer />
         <RecipeGrid {...gridProps} />
+        </div>
       </Suspense>
     </>
   );

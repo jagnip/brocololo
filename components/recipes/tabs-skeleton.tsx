@@ -2,14 +2,18 @@ import { Skeleton } from "../ui/skeleton";
 
 export function TabsSkeleton() {
   return (
-    <div className="flex items-center gap-2" data-slot="recipes-tabs-skeleton">
-      {/* Keep tabs skeleton on a single row to match common recipes header height. */}
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-10 w-24 rounded-lg" />
-        <Skeleton className="h-10 w-28 rounded-lg" />
-      </div>
-      {/* Reserve room for the inline search control in loading state. */}
-      <Skeleton className="h-10 w-56 rounded-lg" data-slot="recipes-search-skeleton" />
+    <div
+      className="grid grid-cols-2 gap-2 pb-4 md:grid-cols-3 lg:grid-cols-6 pt-4"
+      data-slot="recipes-tabs-skeleton"
+    >
+      <Skeleton className="h-9 w-full rounded-md" />
+      <Skeleton className="h-9 w-full rounded-md" />
+      <Skeleton className="h-9 w-full rounded-md" />
+      <Skeleton className="h-9 w-full rounded-md" />
+      <Skeleton
+        className="col-span-2 h-9 w-full rounded-md md:col-span-2 lg:col-span-2"
+        data-slot="recipes-search-skeleton"
+      />
     </div>
   );
 }

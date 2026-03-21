@@ -19,7 +19,7 @@ export function AppSidebarContainer({
       </Suspense>
       <SidebarInset>
         <AppTopbar />
-        <main className="flex-1 p-4">{children}</main>
+        <main>{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );
