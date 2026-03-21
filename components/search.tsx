@@ -1,6 +1,6 @@
 "use client";
 
-import { SearchIcon, XIcon } from "lucide-react"
+import { Loader2, SearchIcon, XIcon } from "lucide-react"
 
 import { FieldGroup } from "@/components/ui/field"
 import {
@@ -9,7 +9,7 @@ import {
   SearchFieldInput,
 } from "@/components/ui/searchfield"
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useTransition } from "react";
 import { cn } from "@/lib/utils";
 
 type SearchInputProps = {
@@ -37,6 +37,7 @@ export function SearchInput({
   const [value, setValue] = useState(() => searchParams.get(queryParam) ?? "");
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentQueryValue = searchParams.get(queryParam) ?? "";
+  const [isPending, startTransition] = useTransition();
 
   //runs when URL's value changes – back/forward, opening a shared link etc
   useEffect(() => {
@@ -71,7 +72,9 @@ export function SearchInput({
       //from URLSearchParams object to string
       const nextQuery = params.toString();
     
-      router.push(nextQuery ? `${targetPath}?${nextQuery}` : targetPath);
+      startTransition(() => { 
+        router.push(nextQuery ? `${targetPath}?${nextQuery}` : targetPath);
+      });
       timeoutRef.current = null;
     }, debounceMs);
 
@@ -96,15 +99,19 @@ export function SearchInput({
   ]);
 
   return (
-    <SearchField className={cn(className)} value={value}
-      onChange={setValue}>
+    <SearchField className={cn(className)} value={value} onChange={setValue}>
       <FieldGroup>
-        <SearchIcon aria-hidden className="size-4 text-muted-foreground" />
+        {isPending ? (
+          <Loader2 className="size-4 animate-spin text-muted-foreground" />
+        ) : (
+          <SearchIcon aria-hidden className="size-4 text-muted-foreground" />
+        )}
         <SearchFieldInput placeholder={placeholder} />
+
         <SearchFieldClear>
           <XIcon aria-hidden className="size-4" />
         </SearchFieldClear>
       </FieldGroup>
     </SearchField>
-  )
+  );
 }
