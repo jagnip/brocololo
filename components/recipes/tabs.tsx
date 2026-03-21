@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { useScrollDirection } from "./use-scroll-direction";
-import { useTransition } from "react";
+import { useOptimistic, useTransition } from "react";
 
 const TIME_OPTIONS = [
   { value: "lte20", label: "Below 20 min" },
@@ -30,9 +30,6 @@ export function RecipeTabs({
   proteinCategories: CategoryType[];
   typeCategories: CategoryType[];
 }) {
-
-  const [isPending, startTransition] = useTransition();
-
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -43,7 +40,16 @@ export function RecipeTabs({
   const selectedType = searchParams.get("type");
   const selectedTime = searchParams.get("time") ?? "";
 
-  const isSweet = selectedCategory === SWEET_SLUG;
+  const [isPending, startTransition] = useTransition();
+  const [optimisticCategory, setOptimisticCategory] =
+    useOptimistic(selectedCategory);
+  const [optimisticProtein, setOptimisticProtein] =
+    useOptimistic(selectedProtein);
+  const [optimisticType, setOptimisticType] = useOptimistic(selectedType);
+  const [optimisticTime, setOptimisticTime] = useOptimistic(selectedTime);
+
+  // Use optimistic flavour so dependent UI (e.g. protein disabled when sweet) updates immediately.
+  const isSweet = optimisticCategory === SWEET_SLUG;
   const direction = useScrollDirection(12);
   const hidden = direction === "down";
 
@@ -90,8 +96,8 @@ export function RecipeTabs({
       <div className="grid grid-cols-2 gap-2 p-4 md:grid-cols-3 lg:grid-cols-6">
         <div className="w-full">
           <Select
-            value={selectedCategory}
-            onValueChange={(nextValue) => setFlavour(nextValue || null)}
+            value={optimisticCategory}
+            onValueChange={(nextValue) => { setFlavour(nextValue || null); setOptimisticCategory(nextValue)}}
             allowInlineClear
           >
             <SelectTrigger className="w-full">
@@ -112,8 +118,11 @@ export function RecipeTabs({
             value: category.slug,
             label: category.name,
           }))}
-          value={selectedProtein}
-          onValueChange={setProtein}
+          value={optimisticProtein}
+          onValueChange={(next) => {
+            setProtein(next);
+            setOptimisticProtein(next);
+          }}
           placeholder="Protein"
           searchPlaceholder="Search proteins..."
           emptyLabel="No protein found."
@@ -128,8 +137,11 @@ export function RecipeTabs({
             value: category.slug,
             label: category.name,
           }))}
-          value={selectedType}
-          onValueChange={setType}
+          value={optimisticType}
+          onValueChange={(next) => {
+            setType(next);
+            setOptimisticType(next);
+          }}
           placeholder="Type"
           searchPlaceholder="Search recipe types..."
           emptyLabel="No type found."
@@ -139,7 +151,14 @@ export function RecipeTabs({
         />
 
         <div className="w-full">
-          <Select value={selectedTime} onValueChange={setTime} allowInlineClear>
+          <Select
+            value={optimisticTime}
+            onValueChange={(next) => {
+              setTime(next);
+              setOptimisticTime(next);
+            }}
+            allowInlineClear
+          >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Hands-on time" />
             </SelectTrigger>
