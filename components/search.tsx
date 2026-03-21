@@ -39,11 +39,6 @@ export function SearchInput({
   const currentQueryValue = searchParams.get(queryParam) ?? "";
   const [isPending, startTransition] = useTransition();
 
-  //runs when URL's value changes – back/forward, opening a shared link etc
-  useEffect(() => {
-    setValue(currentQueryValue);
-  }, [currentQueryValue]);
-
   useEffect(() => {
     //set a timeout to update the URL after the user stops typing for 500ms (debounceMc)
     timeoutRef.current = setTimeout(() => {
