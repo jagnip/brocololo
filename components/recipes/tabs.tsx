@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { useScrollDirection } from "./use-scroll-direction";
+import { useTransition } from "react";
 
 const TIME_OPTIONS = [
   { value: "lte20", label: "Below 20 min" },
@@ -30,6 +31,8 @@ export function RecipeTabs({
   typeCategories: CategoryType[];
 }) {
 
+  const [isPending, startTransition] = useTransition();
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -47,7 +50,9 @@ export function RecipeTabs({
   // navigate to the new URL
   const applyParams = (params: URLSearchParams) => {
     const query = params.toString();
-    router.push(query ? `${pathname}?${query}` : pathname);
+    startTransition(() => {
+      router.push(query ? `${pathname}?${query}` : pathname);
+    });
   };
 
   //set a query param (or delete it)
@@ -76,6 +81,7 @@ export function RecipeTabs({
 
   return (
     <div
+      data-pending={isPending}
       className={[
         "sticky top-14 z-5 bg-background transition-transform duration-200",
         hidden ? "-translate-y-full" : "translate-y-0",
