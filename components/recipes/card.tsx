@@ -24,34 +24,36 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
   );
 
   return (
-    <Link href={url} scroll={false}>
-      <Card className="cursor-pointer hover:shadow-md transition-shadow">
+    <Link href={url} scroll={false} >
+      <Card className="h-full cursor-pointer transition-shadow hover:shadow-md overflow-hidden py-0 gap-0">
         {coverImage && (
-          <Image
-            src={coverImage.url}
-            alt={recipe.name}
-            width={300}
-            height={300}
-            className="w-full h-auto rounded-xl"
-          />
+          <div className="relative w-full overflow-hidden aspect-2/1 sm:aspect-3/2">
+            <Image
+              src={coverImage.url}
+              alt={recipe.name}
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            />
+          </div>
         )}
-        <CardHeader>
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1">
-              <h3 className="font-medium">{recipe.name}</h3>
-              <div className="flex flex-wrap gap-1 mt-2">
-                <Badge variant="outline">{recipe.handsOnTime} min</Badge>
-                {proteinCategories.length > 0 &&
-                  proteinCategories.map((category) => (
-                    <Badge
-                      key={category.id}
-                      variant="secondary"
-                      className="text-xs"
-                    >
-                      {category.name}
-                    </Badge>
-                  ))}
-              </div>
+        <CardHeader className="flex-1 px-4 py-3">
+          <div className="min-w-0">
+            <h3 className="truncate font-medium" title={recipe.name}>
+              {recipe.name}
+            </h3>
+            <div className="mt-2 flex items-center gap-1 overflow-hidden whitespace-nowrap">
+              <Badge variant="outline">{recipe.handsOnTime} min</Badge>
+              {proteinCategories.length > 0 &&
+                proteinCategories.map((category) => (
+                  <Badge
+                    key={category.id}
+                    variant="secondary"
+                    className="text-xs"
+                  >
+                    {category.name}
+                  </Badge>
+                ))}
             </div>
           </div>
         </CardHeader>
