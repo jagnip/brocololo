@@ -24,7 +24,8 @@ export async function generatePlan(
   | { type: "error"; message: string }
 > {
   try {
-    const recipes = await getRecipes([], undefined, false); //get all recipes that are not excluded from planner
+    // No flavour filter in planner context; include only planner-eligible recipes.
+    const recipes = await getRecipes(undefined, undefined, false);
 
     if (recipes.length === 0) {
       return { type: "error", message: "No recipes available to plan." };

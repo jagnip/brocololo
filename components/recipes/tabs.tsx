@@ -15,11 +15,10 @@ import { useScrollDirection } from "./use-scroll-direction";
 import { useOptimistic, useTransition } from "react";
 
 const TIME_OPTIONS = [
-  { value: "lte20", label: "Below 20 min" },
-  { value: "lte30", label: "Below 30 min" },
+  // Query params are strings; numeric-like strings keep URL and parsing simple.
+  { value: "20", label: "Below 20 min" },
+  { value: "30", label: "Below 30 min" },
 ] as const;
-
-const SWEET_SLUG = "sweet";
 
 export function RecipeTabs({
   flavourCategories,
@@ -35,21 +34,20 @@ export function RecipeTabs({
   const pathname = usePathname();
 
   //selects are controlled from the URL
-  const selectedCategory = searchParams.get("category") ?? "";
+  const selectedFlavour = searchParams.get("flavour") ?? "";
   const selectedProtein = searchParams.get("protein");
   const selectedType = searchParams.get("type");
   const selectedTime = searchParams.get("time") ?? "";
 
   const [isPending, startTransition] = useTransition();
-  const [optimisticCategory, setOptimisticCategory] =
-    useOptimistic(selectedCategory);
+  const [optimisticFlavour, setOptimisticFlavour] =
+    useOptimistic(selectedFlavour);
   const [optimisticProtein, setOptimisticProtein] =
     useOptimistic(selectedProtein);
   const [optimisticType, setOptimisticType] = useOptimistic(selectedType);
   const [optimisticTime, setOptimisticTime] = useOptimistic(selectedTime);
 
-  // Use optimistic flavour so dependent UI (e.g. protein disabled when sweet) updates immediately.
-  const isSweet = optimisticCategory === SWEET_SLUG;
+
   const direction = useScrollDirection(12);
   const hidden = direction === "down";
 
@@ -62,7 +60,7 @@ export function RecipeTabs({
   };
 
   //set a query param (or delete it)
-  type QueryKey = "category" | "protein" | "type" | "time";
+  type QueryKey = "flavour" | "protein" | "type" | "time";
   const setQueryParam = (
     key: QueryKey,
     nextValue: string | null | undefined,
@@ -78,7 +76,7 @@ export function RecipeTabs({
   };
 
   const setFlavour = (nextValue: string | null) =>
-    setQueryParam("category", nextValue);
+    setQueryParam("flavour", nextValue);
   const setProtein = (nextValue: string | null) =>
     setQueryParam("protein", nextValue);
   const setType = (nextValue: string | null) =>
@@ -96,8 +94,11 @@ export function RecipeTabs({
       <div className="grid grid-cols-2 gap-2 p-4 md:grid-cols-3 lg:grid-cols-6">
         <div className="w-full">
           <Select
-            value={optimisticCategory}
-            onValueChange={(nextValue) => { setFlavour(nextValue || null); setOptimisticCategory(nextValue)}}
+            value={optimisticFlavour}
+            onValueChange={(nextValue) => {
+              setFlavour(nextValue || null);
+              setOptimisticFlavour(nextValue);
+            }}
             allowInlineClear
           >
             <SelectTrigger className="w-full">
@@ -128,7 +129,6 @@ export function RecipeTabs({
           emptyLabel="No protein found."
           allowClear
           clearLabel="Clear protein filter"
-          disabled={isSweet}
           className="w-full"
         />
 

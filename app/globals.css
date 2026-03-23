@@ -121,10 +121,9 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
   }
-  html {
-  scrollbar-gutter: stable;
-}
 }
 
 @utility container {
