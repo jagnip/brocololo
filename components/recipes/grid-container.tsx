@@ -16,9 +16,8 @@ export default async function RecipeGridContainer({
   type,
   time,
 }: RecipeGridContainerProps) {
-  // Translate single-select time key into numeric DB filter.
-  const handsOnTimeMax =
-    time === "lte20" ? 20 : time === "lte30" ? 30 : undefined;
+
+const handsOnTimeMax = time ? Number(time) : undefined;
 
   const recipes = await getRecipes(flavour, search, undefined, {
     proteinSlug: protein,

@@ -15,8 +15,9 @@ import { useScrollDirection } from "./use-scroll-direction";
 import { useOptimistic, useTransition } from "react";
 
 const TIME_OPTIONS = [
-  { value: "lte20", label: "Below 20 min" },
-  { value: "lte30", label: "Below 30 min" },
+  // Query params are strings; numeric-like strings keep URL and parsing simple.
+  { value: "20", label: "Below 20 min" },
+  { value: "30", label: "Below 30 min" },
 ] as const;
 
 export function RecipeTabs({
