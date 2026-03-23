@@ -79,7 +79,7 @@ export async function getRecipeBySlug(slug: string): Promise<RecipeType | null> 
 }
 
 export async function getRecipes(
-  flavourSlugs: string[],
+  flavour?: string,
   q?: string,
   excludeFromPlanner?: boolean,
   filters?: {
@@ -90,8 +90,8 @@ export async function getRecipes(
 ): Promise<RecipeType[]> {
   // Build category filters as explicit AND conditions so none overwrite each other.
   const categoryConditions = [
-    ...(flavourSlugs.length > 0
-      ? [{ categories: { some: { slug: { in: flavourSlugs } } } }]
+    ...(flavour
+      ? [{ categories: { some: { slug: flavour } } }]
       : []),
     ...(filters?.proteinSlug
       ? [{ categories: { some: { slug: filters.proteinSlug } } }]

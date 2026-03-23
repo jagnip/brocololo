@@ -16,14 +16,11 @@ export default async function RecipeGridContainer({
   type,
   time,
 }: RecipeGridContainerProps) {
-  // Keep prop names aligned with URL/search params, then adapt for DB helper.
-  const flavourSlugs = flavour ? [flavour] : [];
-
   // Translate single-select time key into numeric DB filter.
   const handsOnTimeMax =
     time === "lte20" ? 20 : time === "lte30" ? 30 : undefined;
 
-  const recipes = await getRecipes(flavourSlugs, search, undefined, {
+  const recipes = await getRecipes(flavour, search, undefined, {
     proteinSlug: protein,
     typeSlug: type,
     handsOnTimeMax,

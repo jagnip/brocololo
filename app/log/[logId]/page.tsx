@@ -73,7 +73,8 @@ export default async function LogDetailPage({
   const [log, ingredients, recipes, ingredientFormDependencies] = await Promise.all([
     getLogById(logId, person),
     getIngredients(),
-    getRecipes([]),
+    // No flavour filter on log page recipe selector.
+    getRecipes(undefined),
     getIngredientFormDependencies(),
   ]);
   if (!log) notFound();

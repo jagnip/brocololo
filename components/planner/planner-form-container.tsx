@@ -6,7 +6,8 @@ import { PlannerForm } from "./planner-form";
 export default async function PlannerFormContainer() {
   const [ingredients, recipes, previousPlanUnusedRecipes] = await Promise.all([
     getIngredients(),
-    getRecipes([], undefined, false),
+    // No flavour filter in planner context; include only planner-eligible recipes.
+    getRecipes(undefined, undefined, false),
     getUnusedRecipesFromLatestPlan(),
   ]);
 
