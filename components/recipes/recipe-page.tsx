@@ -106,10 +106,10 @@ export default function RecipePage({
     "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER"
   >(LogMealType.DINNER);
   const searchParams = useSearchParams();
-  const categorySlug = searchParams.get("category");
+  const flavourSlug = searchParams.get("flavour");
   const flavourLabel =
-    categorySlug && categorySlug in FLAVOUR_BREADCRUMB_LABELS
-      ? FLAVOUR_BREADCRUMB_LABELS[categorySlug]
+    flavourSlug && flavourSlug in FLAVOUR_BREADCRUMB_LABELS
+      ? FLAVOUR_BREADCRUMB_LABELS[flavourSlug]
       : null;
 
   useEffect(() => {
@@ -477,7 +477,7 @@ export default function RecipePage({
             <>
               <BreadcrumbItem>
                 <BreadcrumbLink
-                  href={`${ROUTES.recipes}?category=${categorySlug}`}
+                  href={`${ROUTES.recipes}?flavour=${flavourSlug}`}
                 >
                   {flavourLabel}
                 </BreadcrumbLink>
