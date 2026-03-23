@@ -3,7 +3,8 @@ import { Skeleton } from "../ui/skeleton";
 export function TabsSkeleton() {
   return (
     <div
-      className="grid grid-cols-2 gap-2 pb-4 md:grid-cols-3 lg:grid-cols-6 pt-4"
+      // Match live tabs spacing so skeleton doesn't shift on mobile/tablet.
+      className="grid grid-cols-2 gap-2 p-4 md:grid-cols-3 lg:grid-cols-6"
       data-slot="recipes-tabs-skeleton"
     >
       <Skeleton className="h-9 w-full rounded-md" />
