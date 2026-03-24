@@ -32,7 +32,7 @@ import {
   BreadcrumbSeparator,
 } from "../ui/breadcrumb";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FLAVOUR_BREADCRUMB_LABELS, ROUTES } from "@/lib/constants";
 import { parseMarkdownLinks } from "@/lib/recipes/text-formatting";
 import { toast } from "sonner";
@@ -105,6 +105,8 @@ export default function RecipePage({
   const [logMealType, setLogMealType] = useState<
     "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER"
   >(LogMealType.DINNER);
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const flavourSlug = searchParams.get("flavour");
   const flavourLabel =
@@ -125,6 +127,19 @@ export default function RecipePage({
     setLogDate(toDateInputValue(new Date()));
     setLogMealType(LogMealType.DINNER);
   }, [recipe.id, recipe.servings]);
+
+  useEffect(() => {
+    if (searchParams.get("addToLog") !== "1") {
+      return;
+    }
+
+    // Allow topbar action to open dialog via query param, then clean URL.
+    handleOpenAddToLogDialog();
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("addToLog");
+    const query = nextParams.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [pathname, router, searchParams]);
 
   const effectiveRecipe = useMemo(
     () =>
