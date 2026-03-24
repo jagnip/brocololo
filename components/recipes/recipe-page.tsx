@@ -216,10 +216,7 @@ export default function RecipePage({
             visibleGroupedIngredients={visibleGroupedIngredients}
             onReset={handleReset}
             onServingsChange={handleServingsChange}
-            // TS can infer a narrower callback type from deep component composition; keep the contract explicit here.
-            onUnitChange={
-              handleUnitChange as (recipeIngredientId: string, unitId: string | null) => void
-            }
+            onUnitChange={handleUnitChange}
             getIngredientDisplayScalingFactor={getIngredientDisplayScalingFactor}
             getIngredientCalorieFactor={getIngredientCalorieFactor}
             onAmountEdit={handleIngredientEdit}
