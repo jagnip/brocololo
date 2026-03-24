@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { type TopbarConfig, useTopbar } from "@/components/topbar/topbar-context";
+import { type TopbarConfig, useTopbar } from "@/components/context/topbar-context";
 
 type TopbarConfigControllerProps = {
   config: TopbarConfig;

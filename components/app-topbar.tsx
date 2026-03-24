@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { useTopbar } from "@/components/topbar/topbar-context";
+import { useTopbar } from "@/components/context/topbar-context";
 
 export function AppTopbar() {
   const { config } = useTopbar();

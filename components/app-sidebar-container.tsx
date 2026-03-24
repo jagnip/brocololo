@@ -6,7 +6,7 @@ import {
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppSidebarSkeleton } from "@/components/app-sidebar-skeleton";
 import { AppTopbar } from "@/components/app-topbar";
-import { TopbarProvider } from "@/components/topbar/topbar-context";
+import { TopbarProvider } from "@/components/context/topbar-context";
 
 export function AppSidebarContainer({
   children,

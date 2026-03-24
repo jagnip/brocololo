@@ -3,7 +3,6 @@
 import { Badge } from "../ui/badge";
 import { RecipeType } from "@/types/recipe";
 import { IngredientType } from "@/types/ingredient";
-import { buildEffectiveRecipeForSimulation } from "@/lib/recipes/helpers";
 import { ImageGallery } from "./image-gallery";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -15,9 +14,11 @@ import { NutritionSection } from "@/components/recipes/recipe-page/nutrition-sec
 import { InstructionsSection } from "@/components/recipes/recipe-page/instructions-section";
 import { IngredientsSection } from "@/components/recipes/recipe-page/ingredients-section";
 import { RecipeAddToLogDialog } from "@/components/recipes/recipe-page/recipe-add-to-log-dialog";
-import { useRecipeScalingState } from "@/components/recipes/recipe-page/use-recipe-scaling-state";
-import { useRecipeNutrition } from "@/components/recipes/recipe-page/use-recipe-nutrition";
-import { useIngredientGrouping } from "@/components/recipes/recipe-page/use-ingredient-grouping";
+import {
+  RecipePageProvider,
+  useRecipePageAddToLogData,
+  useRecipePageHeaderData,
+} from "@/components/context/recipe-page-context";
 
 type RecipePageProps = {
   recipe: RecipeType;
@@ -35,51 +36,28 @@ export default function RecipePage({
   ingredients,
   ingredientFormDependencies,
 }: RecipePageProps) {
-  const [selectedInstructionPerson, setSelectedInstructionPerson] = useState<
-    "jagoda" | "nelson" | null
-  >(null);
+  return (
+    <RecipePageProvider recipe={recipe} ingredients={ingredients}>
+      <RecipePageContent
+        ingredients={ingredients}
+        ingredientFormDependencies={ingredientFormDependencies}
+      />
+    </RecipePageProvider>
+  );
+}
+
+type RecipePageContentProps = {
+  ingredients: IngredientType[];
+  ingredientFormDependencies: RecipePageProps["ingredientFormDependencies"];
+};
+
+function RecipePageContent({
+  ingredients,
+  ingredientFormDependencies,
+}: RecipePageContentProps) {
   const [isAddToLogOpen, setIsAddToLogOpen] = useState(false);
-  const scaling = useRecipeScalingState({ recipe });
-  const effectiveRecipe = useMemo(
-    () =>
-      buildEffectiveRecipeForSimulation(
-        recipe,
-        scaling.swapsByRecipeIngredientId,
-        ingredients,
-      ),
-    [ingredients, recipe, scaling.swapsByRecipeIngredientId],
-  );
-  const nutrition = useRecipeNutrition({
-    recipe,
-    effectiveRecipe,
-    currentServings: scaling.currentServings,
-    targetCaloriesPerPortion: scaling.targetCaloriesPerPortion,
-    globalScaleRatio: scaling.globalScaleRatio,
-    localScaleByIngredientId: scaling.localScaleByIngredientId,
-  });
-  const { ungroupedIngredients, visibleGroupedIngredients } = useIngredientGrouping({
-    ingredientGroups: recipe.ingredientGroups,
-    ingredients: effectiveRecipe.ingredients,
-  });
-  const originalRecipeIngredientById = useMemo(
-    () =>
-      new Map(
-        recipe.ingredients.map((recipeIngredient) => [
-          recipeIngredient.id,
-          recipeIngredient,
-        ]),
-      ),
-    [recipe.ingredients],
-  );
-  const handleIngredientChange = (
-    recipeIngredientId: string,
-    selectedIngredientId: string,
-  ) =>
-    scaling.handleIngredientChange(
-      recipeIngredientId,
-      selectedIngredientId,
-      originalRecipeIngredientById,
-    );
+  const { recipe } = useRecipePageHeaderData();
+  const addToLogData = useRecipePageAddToLogData();
   const searchParams = useSearchParams();
   const flavourSlug = searchParams.get("flavour");
   const flavourLabel =
@@ -88,8 +66,6 @@ export default function RecipePage({
       : null;
 
   useEffect(() => {
-    // Reset person instruction filter when navigating to another recipe.
-    setSelectedInstructionPerson(null);
     setIsAddToLogOpen(false);
   }, [recipe.id, recipe.servings]);
 
@@ -186,13 +162,7 @@ export default function RecipePage({
             <Badge>Total time: {recipe.totalTime} minutes</Badge>
           </div>
 
-          <NutritionSection
-            currentServings={scaling.currentServings}
-            targetCaloriesPerPortion={scaling.targetCaloriesPerPortion}
-            jagodaNutrition={nutrition.jagodaNutrition}
-            nelsonNutrition={nutrition.nelsonNutrition}
-            onCaloriesChange={scaling.handleCaloriesChange}
-          />
+          <NutritionSection />
 
           {/* Notes Section */}
           {recipe.notes && recipe.notes.length > 0 && (
@@ -208,51 +178,21 @@ export default function RecipePage({
             </div>
           )}
 
-          <InstructionsSection
-            instructions={recipe.instructions}
-            effectiveRecipeIngredientById={nutrition.effectiveRecipeIngredientById}
-            selectedInstructionPerson={selectedInstructionPerson}
-            setSelectedInstructionPerson={setSelectedInstructionPerson}
-            selectedUnits={scaling.selectedUnits}
-            jagodaPortionFactor={nutrition.jagodaPortionFactor}
-            nelsonPortionFactor={nutrition.nelsonPortionFactor}
-            getIngredientDisplayScalingFactor={nutrition.getIngredientDisplayScalingFactor}
-            getIngredientCalorieFactor={nutrition.getIngredientCalorieFactor}
-            renderTextWithMarkdownLinks={renderTextWithMarkdownLinks}
-          />
+          <InstructionsSection />
 
-          <IngredientsSection
-            recipe={recipe}
-            ingredients={ingredients}
-            currentServings={scaling.currentServings}
-            jagodaPortionFactor={nutrition.jagodaPortionFactor}
-            nelsonPortionFactor={nutrition.nelsonPortionFactor}
-            hasActiveScaling={scaling.hasActiveScaling}
-            localScaleByIngredientId={scaling.localScaleByIngredientId}
-            selectedUnits={scaling.selectedUnits}
-            ungroupedIngredients={ungroupedIngredients}
-            visibleGroupedIngredients={visibleGroupedIngredients}
-            onReset={scaling.handleReset}
-            onServingsChange={scaling.handleServingsChange}
-            onUnitChange={scaling.handleUnitChange}
-            getIngredientDisplayScalingFactor={nutrition.getIngredientDisplayScalingFactor}
-            getIngredientCalorieFactor={nutrition.getIngredientCalorieFactor}
-            onAmountEdit={scaling.handleIngredientEdit}
-            onApplyScaleToAll={scaling.handleApplyScaleToAll}
-            onIngredientChange={handleIngredientChange}
-          />
+          <IngredientsSection />
         </div>
       </div>
       {isAddToLogOpen ? (
         <RecipeAddToLogDialog
-          recipeId={recipe.id}
-          recipeName={recipe.name}
+          recipeId={addToLogData.recipeId}
+          recipeName={addToLogData.recipeName}
           open={isAddToLogOpen}
           onOpenChange={setIsAddToLogOpen}
-          recipeIngredients={nutrition.recipeForScaledNutrition.ingredients}
-          currentServings={scaling.currentServings}
-          servingScalingFactor={nutrition.servingScalingFactor}
-          servingMultiplierForNelson={recipe.servingMultiplierForNelson}
+          recipeIngredients={addToLogData.recipeIngredients}
+          currentServings={addToLogData.currentServings}
+          servingScalingFactor={addToLogData.servingScalingFactor}
+          servingMultiplierForNelson={addToLogData.servingMultiplierForNelson}
           ingredientOptions={ingredientOptionsForLogDialog}
           ingredientFormDependencies={ingredientFormDependencies}
         />

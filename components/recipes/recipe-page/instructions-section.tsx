@@ -1,43 +1,47 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { parseMarkdownLinks } from "@/lib/recipes/text-formatting";
 import {
   formatInstructionIngredientBadge,
   getIngredientDisplay,
   getInstructionIngredientPersonFactor,
   isInstructionIngredientVisibleForPerson,
 } from "@/lib/recipes/helpers";
-import type { RecipeType } from "@/types/recipe";
-import type { Dispatch, SetStateAction } from "react";
+import { useRecipePageInstructionsSectionData } from "@/components/context/recipe-page-context";
 
-type InstructionsSectionProps = {
-  instructions: RecipeType["instructions"];
-  effectiveRecipeIngredientById: Map<string, RecipeType["ingredients"][number]>;
-  selectedInstructionPerson: "jagoda" | "nelson" | null;
-  setSelectedInstructionPerson: Dispatch<
-    SetStateAction<"jagoda" | "nelson" | null>
-  >;
-  selectedUnits: Record<string, string | null>;
-  jagodaPortionFactor: number;
-  nelsonPortionFactor: number;
-  getIngredientDisplayScalingFactor: (recipeIngredientId: string) => number;
-  getIngredientCalorieFactor: (
-    nutritionTarget: "BOTH" | "PRIMARY_ONLY" | "SECONDARY_ONLY",
-  ) => number;
-  renderTextWithMarkdownLinks: (text: string, keyPrefix: string) => React.ReactNode[];
-};
+export function InstructionsSection() {
+  const {
+    instructions,
+    effectiveRecipeIngredientById,
+    selectedInstructionPerson,
+    setSelectedInstructionPerson,
+    selectedUnits,
+    jagodaPortionFactor,
+    nelsonPortionFactor,
+    getIngredientDisplayScalingFactor,
+    getIngredientCalorieFactor,
+  } = useRecipePageInstructionsSectionData();
 
-export function InstructionsSection({
-  instructions,
-  effectiveRecipeIngredientById,
-  selectedInstructionPerson,
-  setSelectedInstructionPerson,
-  selectedUnits,
-  jagodaPortionFactor,
-  nelsonPortionFactor,
-  getIngredientDisplayScalingFactor,
-  getIngredientCalorieFactor,
-  renderTextWithMarkdownLinks,
-}: InstructionsSectionProps) {
+  const renderTextWithMarkdownLinks = (text: string, keyPrefix: string) =>
+    // Keep markdown-link rendering local to this section now that data comes from context.
+    parseMarkdownLinks(text).map((segment, index) => {
+      if (segment.type === "link") {
+        return (
+          <a
+            key={`${keyPrefix}-${index}`}
+            href={segment.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 break-all"
+          >
+            {segment.label}
+          </a>
+        );
+      }
+
+      return <span key={`${keyPrefix}-${index}`}>{segment.content}</span>;
+    });
+
   if (!instructions || instructions.length === 0) {
     return null;
   }

@@ -1,28 +1,16 @@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { useRecipePageNutritionSectionData } from "@/components/context/recipe-page-context";
 
-type NutritionValues = {
-  calories: number;
-  protein: number;
-  fat: number;
-  carbs: number;
-};
+export function NutritionSection() {
+  const {
+    currentServings,
+    targetCaloriesPerPortion,
+    jagodaNutrition,
+    nelsonNutrition,
+    onCaloriesChange,
+  } = useRecipePageNutritionSectionData();
 
-type NutritionSectionProps = {
-  currentServings: number;
-  targetCaloriesPerPortion: number | null;
-  jagodaNutrition: NutritionValues;
-  nelsonNutrition: NutritionValues;
-  onCaloriesChange: (value: string) => void;
-};
-
-export function NutritionSection({
-  currentServings,
-  targetCaloriesPerPortion,
-  jagodaNutrition,
-  nelsonNutrition,
-  onCaloriesChange,
-}: NutritionSectionProps) {
   return (
     <div>
       <h3 className="font-semibold mb-2">Nutrition (per meal)</h3>

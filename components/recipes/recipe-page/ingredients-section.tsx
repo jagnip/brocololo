@@ -5,58 +5,30 @@ import type { IngredientType } from "@/types/ingredient";
 import type { RecipeType } from "@/types/recipe";
 import { IngredientItem } from "@/components/recipes/ingredient-item";
 import { isScaleModified } from "@/lib/recipes/helpers";
+import { useRecipePageIngredientsSectionData } from "@/components/context/recipe-page-context";
 
-type IngredientsSectionProps = {
-  recipe: RecipeType;
-  ingredients: IngredientType[];
-  currentServings: number;
-  jagodaPortionFactor: number;
-  nelsonPortionFactor: number;
-  hasActiveScaling: boolean;
-  localScaleByIngredientId: Record<string, number>;
-  selectedUnits: Record<string, string | null>;
-  ungroupedIngredients: RecipeType["ingredients"];
-  visibleGroupedIngredients: Array<
-    RecipeType["ingredientGroups"][number] & {
-      ingredients: RecipeType["ingredients"];
-    }
-  >;
-  onReset: () => void;
-  onServingsChange: (nextServings: number) => void;
-  onUnitChange: (recipeIngredientId: string, unitId: string | null) => void;
-  getIngredientDisplayScalingFactor: (recipeIngredientId: string) => number;
-  getIngredientCalorieFactor: (
-    nutritionTarget: "BOTH" | "PRIMARY_ONLY" | "SECONDARY_ONLY",
-  ) => number;
-  onAmountEdit: (
-    recipeIngredientId: string,
-    ratio: number,
-    activeCalorieScalingFactor: number,
-  ) => void;
-  onApplyScaleToAll: (recipeIngredientId: string) => void;
-  onIngredientChange: (recipeIngredientId: string, ingredientId: string) => void;
-};
+export function IngredientsSection() {
+  const {
+    recipe,
+    ingredients,
+    currentServings,
+    jagodaPortionFactor,
+    nelsonPortionFactor,
+    hasActiveScaling,
+    localScaleByIngredientId,
+    selectedUnits,
+    ungroupedIngredients,
+    visibleGroupedIngredients,
+    onReset,
+    onServingsChange,
+    onUnitChange,
+    getIngredientDisplayScalingFactor,
+    getIngredientCalorieFactor,
+    onAmountEdit,
+    onApplyScaleToAll,
+    onIngredientChange,
+  } = useRecipePageIngredientsSectionData();
 
-export function IngredientsSection({
-  recipe,
-  ingredients,
-  currentServings,
-  jagodaPortionFactor,
-  nelsonPortionFactor,
-  hasActiveScaling,
-  localScaleByIngredientId,
-  selectedUnits,
-  ungroupedIngredients,
-  visibleGroupedIngredients,
-  onReset,
-  onServingsChange,
-  onUnitChange,
-  getIngredientDisplayScalingFactor,
-  getIngredientCalorieFactor,
-  onAmountEdit,
-  onApplyScaleToAll,
-  onIngredientChange,
-}: IngredientsSectionProps) {
   if (!recipe.ingredients || recipe.ingredients.length === 0) {
     return null;
   }
