@@ -4,7 +4,7 @@ import { Badge } from "../ui/badge";
 import { ImageGallery } from "./image-gallery";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { FLAVOUR_BREADCRUMB_LABELS, ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants";
 import { type LogIngredientOption } from "@/components/log/edit-log-ingredients-dialog";
 import { PageHeader } from "@/components/page-header";
 import { TopbarConfigController } from "@/components/topbar/topbar-config";
@@ -33,12 +33,7 @@ export default function RecipePage({
   const [isAddToLogOpen, setIsAddToLogOpen] = useState(false);
   const { recipe, ingredients } = useRecipePageBaseData();
   const addToLogData = useRecipePageAddToLogData();
-  const searchParams = useSearchParams();
-  const flavourSlug = searchParams.get("flavour");
-  const flavourLabel =
-    flavourSlug && flavourSlug in FLAVOUR_BREADCRUMB_LABELS
-      ? FLAVOUR_BREADCRUMB_LABELS[flavourSlug]
-      : null;
+
 
   useEffect(() => {
     setIsAddToLogOpen(false);
