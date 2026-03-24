@@ -1,14 +1,15 @@
 "use client";
 
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { LogMealType, LogPerson } from "@/src/generated/enums";
 import {
   EditLogIngredientsDialog,
-  type EditableIngredientRow,
   type LogIngredientOption,
 } from "@/components/log/edit-log-ingredients-dialog";
 import { addRecipeToLogAction } from "@/actions/log-actions";
 import { Input } from "@/components/ui/input";
+import type { RecipeType } from "@/types/recipe";
 import {
   Select,
   SelectContent,
@@ -16,6 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getPersonIngredientAmountPerMeal } from "@/lib/log/helpers";
+import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 
 type IngredientFormDependencies = {
   categories: Array<{ id: string; name: string }>;
@@ -29,17 +32,12 @@ type RecipeAddToLogDialogProps = {
   recipeName: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialRows: EditableIngredientRow[];
+  recipeIngredients: RecipeType["ingredients"];
+  currentServings: number;
+  servingScalingFactor: number;
+  servingMultiplierForNelson: number;
   ingredientOptions: LogIngredientOption[];
   ingredientFormDependencies: IngredientFormDependencies;
-  logPerson: "PRIMARY" | "SECONDARY";
-  setLogPerson: (next: "PRIMARY" | "SECONDARY") => void;
-  logDate: string;
-  setLogDate: (next: string) => void;
-  logMealType: "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER";
-  setLogMealType: (next: "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER") => void;
-  isSaving: boolean;
-  startSavingTransition: (callback: () => Promise<void>) => void;
 };
 
 const LOG_MEAL_OPTIONS = [
@@ -54,18 +52,71 @@ export function RecipeAddToLogDialog({
   recipeName,
   open,
   onOpenChange,
-  initialRows,
+  recipeIngredients,
+  currentServings,
+  servingScalingFactor,
+  servingMultiplierForNelson,
   ingredientOptions,
   ingredientFormDependencies,
-  logPerson,
-  setLogPerson,
-  logDate,
-  setLogDate,
-  logMealType,
-  setLogMealType,
-  isSaving,
-  startSavingTransition,
 }: RecipeAddToLogDialogProps) {
+  const [isSaving, startSavingTransition] = useTransition();
+  const [logPerson, setLogPerson] = useState<"PRIMARY" | "SECONDARY">(LogPerson.PRIMARY);
+  const [logDate, setLogDate] = useState(() => toDateInputValue(new Date()));
+  const [logMealType, setLogMealType] = useState<
+    "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER"
+  >(LogMealType.DINNER);
+
+  // Reset flow-specific state each time the dialog opens.
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    setLogPerson(LogPerson.PRIMARY);
+    setLogDate(toDateInputValue(new Date()));
+    setLogMealType(LogMealType.DINNER);
+  }, [open]);
+
+  const initialRows = useMemo(() => {
+    const selectedPerson = logPerson === LogPerson.PRIMARY ? "primary" : "secondary";
+
+    return recipeIngredients.flatMap((recipeIngredient) => {
+      if (recipeIngredient.amount == null) {
+        return [];
+      }
+
+      const scaledAmount = recipeIngredient.amount * servingScalingFactor;
+      const amountForPerson = getPersonIngredientAmountPerMeal({
+        amount: scaledAmount,
+        nutritionTarget: recipeIngredient.nutritionTarget,
+        person: selectedPerson,
+        recipeServings: currentServings,
+        servingMultiplierForNelson,
+      });
+      if (amountForPerson == null || amountForPerson <= 0) {
+        return [];
+      }
+
+      const defaultUnitId = getDefaultUnitIdForIngredient({
+        defaultUnitId: recipeIngredient.ingredient.defaultUnitId,
+        unitConversions: recipeIngredient.ingredient.unitConversions,
+      });
+
+      return [
+        {
+          ingredientId: recipeIngredient.ingredient.id,
+          unitId: recipeIngredient.unit?.id ?? defaultUnitId,
+          amount: Math.round(amountForPerson * 1000) / 1000,
+        },
+      ];
+    });
+  }, [
+    currentServings,
+    logPerson,
+    recipeIngredients,
+    servingMultiplierForNelson,
+    servingScalingFactor,
+  ]);
+
   const selectedMealLabel =
     LOG_MEAL_OPTIONS.find((option) => option.value === logMealType)?.label ?? "Dinner";
 
@@ -173,4 +224,8 @@ export function RecipeAddToLogDialog({
       }}
     />
   );
+}
+
+function toDateInputValue(date: Date) {
+  return date.toLocaleDateString("en-CA");
 }

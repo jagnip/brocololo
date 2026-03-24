@@ -14,17 +14,11 @@ import {
   IngredientSwapMap,
 } from "@/lib/recipes/helpers";
 import { ImageGallery } from "./image-gallery";
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { FLAVOUR_BREADCRUMB_LABELS, ROUTES } from "@/lib/constants";
 import { parseMarkdownLinks } from "@/lib/recipes/text-formatting";
-import {
-  type EditableIngredientRow,
-  type LogIngredientOption,
-} from "@/components/log/edit-log-ingredients-dialog";
-import { getPersonIngredientAmountPerMeal } from "@/lib/log/helpers";
-import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
-import { LogMealType, LogPerson } from "@/src/generated/enums";
+import { type LogIngredientOption } from "@/components/log/edit-log-ingredients-dialog";
 import { TopbarConfigController } from "@/components/topbar/topbar-config";
 import { NutritionSection } from "@/components/recipes/recipe-page/nutrition-section";
 import { InstructionsSection } from "@/components/recipes/recipe-page/instructions-section";
@@ -41,10 +35,6 @@ type RecipePageProps = {
     iconOptions: string[];
   };
 };
-
-function toDateInputValue(date: Date) {
-  return date.toLocaleDateString("en-CA");
-}
 
 export default function RecipePage({
   recipe,
@@ -68,14 +58,6 @@ export default function RecipePage({
     "jagoda" | "nelson" | null
   >(null);
   const [isAddToLogOpen, setIsAddToLogOpen] = useState(false);
-  const [isAddingToLog, startAddToLogTransition] = useTransition();
-  const [logPerson, setLogPerson] = useState<"PRIMARY" | "SECONDARY">(
-    LogPerson.PRIMARY,
-  );
-  const [logDate, setLogDate] = useState(() => toDateInputValue(new Date()));
-  const [logMealType, setLogMealType] = useState<
-    "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER"
-  >(LogMealType.DINNER);
   const searchParams = useSearchParams();
   const flavourSlug = searchParams.get("flavour");
   const flavourLabel =
@@ -92,9 +74,6 @@ export default function RecipePage({
     // Reset person instruction filter when navigating to another recipe.
     setSelectedInstructionPerson(null);
     setIsAddToLogOpen(false);
-    setLogPerson(LogPerson.PRIMARY);
-    setLogDate(toDateInputValue(new Date()));
-    setLogMealType(LogMealType.DINNER);
   }, [recipe.id, recipe.servings]);
 
   const effectiveRecipe = useMemo(
@@ -314,61 +293,14 @@ export default function RecipePage({
     [ingredients],
   );
 
-  const addToLogInitialRows = useMemo<EditableIngredientRow[]>(() => {
-    const selectedPerson = logPerson === LogPerson.PRIMARY ? "primary" : "secondary";
-    const rows: EditableIngredientRow[] = [];
-
-    for (const recipeIngredient of recipeForScaledNutrition.ingredients) {
-      if (recipeIngredient.amount == null) {
-        continue;
-      }
-
-      const scaledAmount = recipeIngredient.amount * servingScalingFactor;
-      const amountForPerson = getPersonIngredientAmountPerMeal({
-        amount: scaledAmount,
-        nutritionTarget: recipeIngredient.nutritionTarget,
-        person: selectedPerson,
-        recipeServings: currentServings,
-        servingMultiplierForNelson: recipe.servingMultiplierForNelson,
-      });
-      if (amountForPerson == null || amountForPerson <= 0) {
-        continue;
-      }
-
-      const defaultUnitId = getDefaultUnitIdForIngredient({
-        defaultUnitId: recipeIngredient.ingredient.defaultUnitId,
-        unitConversions: recipeIngredient.ingredient.unitConversions,
-      });
-
-      rows.push({
-        ingredientId: recipeIngredient.ingredient.id,
-        unitId: recipeIngredient.unit?.id ?? defaultUnitId,
-        amount: Math.round(amountForPerson * 1000) / 1000,
-      });
-    }
-
-    return rows;
-  }, [
-    currentServings,
-    logPerson,
-    recipe.servingMultiplierForNelson,
-    recipeForScaledNutrition.ingredients,
-    servingScalingFactor,
-  ]);
-
-  const handleOpenAddToLogDialog = useCallback(() => {
-    setLogPerson(LogPerson.PRIMARY);
-    setLogDate(toDateInputValue(new Date()));
-    setLogMealType(LogMealType.DINNER);
-    setIsAddToLogOpen(true);
-  }, []);
   const topbarConfig = useMemo(
     () => ({
       actions: [
         {
           id: "add-to-log",
           label: "Add to log",
-          onClick: handleOpenAddToLogDialog,
+          // Open only; dialog now owns add-to-log context state.
+          onClick: () => setIsAddToLogOpen(true),
           variant: "outline" as const,
           size: "sm" as const,
         },
@@ -387,7 +319,7 @@ export default function RecipePage({
           }
         : undefined,
     }),
-    [handleOpenAddToLogDialog, recipe.excludeFromPlanner, recipe.slug],
+    [recipe.excludeFromPlanner, recipe.slug],
   );
   const orderedIngredientGroups = useMemo(
     () =>
@@ -529,17 +461,12 @@ export default function RecipePage({
           recipeName={recipe.name}
           open={isAddToLogOpen}
           onOpenChange={setIsAddToLogOpen}
-          initialRows={addToLogInitialRows}
+          recipeIngredients={recipeForScaledNutrition.ingredients}
+          currentServings={currentServings}
+          servingScalingFactor={servingScalingFactor}
+          servingMultiplierForNelson={recipe.servingMultiplierForNelson}
           ingredientOptions={ingredientOptionsForLogDialog}
           ingredientFormDependencies={ingredientFormDependencies}
-          logPerson={logPerson}
-          setLogPerson={setLogPerson}
-          logDate={logDate}
-          setLogDate={setLogDate}
-          logMealType={logMealType}
-          setLogMealType={setLogMealType}
-          isSaving={isAddingToLog}
-          startSavingTransition={startAddToLogTransition}
         />
       ) : null}
     </div>
