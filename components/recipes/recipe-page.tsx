@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { FLAVOUR_BREADCRUMB_LABELS, ROUTES } from "@/lib/constants";
 import { type LogIngredientOption } from "@/components/log/edit-log-ingredients-dialog";
+import { PageHeader } from "@/components/page-header";
 import { TopbarConfigController } from "@/components/topbar/topbar-config";
 import { NutritionSection } from "@/components/recipes/recipe-page/nutrition-section";
 import { InstructionsSection } from "@/components/recipes/recipe-page/instructions-section";
@@ -93,35 +94,41 @@ export default function RecipePage({
     [recipe.excludeFromPlanner, recipe.slug],
   );
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="page-container">
       <TopbarConfigController config={topbarConfig} />
-      <div className="mb-4 flex items-center gap-2">
-        <h1 className="text-2xl font-semibold">{recipe.name}</h1>
-      </div>
-   
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Image Section */}
-        <div className="shrink-0 md:w-1/2">
-          <div className="overflow-hidden rounded-xl">
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
+        <div className="order-1 md:order-0 md:col-span-5">
+          <PageHeader title={recipe.name} className="mb-0" />
+        </div>
+
+        <div className="contents md:col-span-3 md:block md:space-y-6">
+          <div className="order-2 md:order-0 overflow-hidden rounded-xl">
             <ImageGallery images={recipe.images || []} />
+          </div>
+
+          <div className="order-5 md:order-0">
+            <InstructionsSection />
+          </div>
+
+          <div className="order-6 md:order-0">
+            <NotesSection />
           </div>
         </div>
 
-        {/* Content Section */}
-        <div className="flex-1 space-y-6">
-          {/* Time and Portion Badges */}
-          <div className="flex gap-2 flex-wrap">
-            <Badge>Hands-on time: {recipe.handsOnTime} minutes</Badge>
-            <Badge>Total time: {recipe.totalTime} minutes</Badge>
+        <div className="contents md:col-span-2 md:block md:space-y-6">
+          <div className="order-3 md:order-0 space-y-6">
+            <div className="flex gap-2 flex-wrap">
+              <Badge>Hands-on time: {recipe.handsOnTime} minutes</Badge>
+              <Badge>Total time: {recipe.totalTime} minutes</Badge>
+            </div>
+            <NutritionSection />
           </div>
 
-          <NutritionSection />
-
-          <NotesSection />
-
-          <InstructionsSection />
-
-          <IngredientsSection />
+          {/* Ingredients */}
+          <div className="order-4 md:order-0">
+            <IngredientsSection />
+          </div>
         </div>
       </div>
       {isAddToLogOpen ? (

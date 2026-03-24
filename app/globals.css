@@ -126,13 +126,15 @@
   }
 }
 
-@utility container {
-  margin-inline: auto;
-  padding-inline: 2rem;
-  @media (width >= --theme(--breakpoint-sm)) {
-    max-width: none;
-  }
-  @media (width >= 1400px) {
-    max-width: 1400px;
+@layer utilities {
+  .page-container {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 80rem; 
+    padding-inline: 1rem; 
+    padding-top: 1rem;
   }
 }
+
+
+
