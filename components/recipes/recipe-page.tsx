@@ -18,7 +18,7 @@ import {
   IngredientSwapMap,
 } from "@/lib/recipes/helpers";
 import { ImageGallery } from "./image-gallery";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { Button } from "../ui/button";
 import { Minus, Pencil, Plus, RotateCcw } from "lucide-react";
 import { IngredientItem } from "./ingredient-item";
@@ -32,7 +32,7 @@ import {
   BreadcrumbSeparator,
 } from "../ui/breadcrumb";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { FLAVOUR_BREADCRUMB_LABELS, ROUTES } from "@/lib/constants";
 import { parseMarkdownLinks } from "@/lib/recipes/text-formatting";
 import { toast } from "sonner";
@@ -52,6 +52,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { TopbarConfigController } from "@/components/topbar/topbar-config";
 
 type RecipePageProps = {
   recipe: RecipeType;
@@ -105,8 +106,6 @@ export default function RecipePage({
   const [logMealType, setLogMealType] = useState<
     "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER"
   >(LogMealType.DINNER);
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const flavourSlug = searchParams.get("flavour");
   const flavourLabel =
@@ -127,19 +126,6 @@ export default function RecipePage({
     setLogDate(toDateInputValue(new Date()));
     setLogMealType(LogMealType.DINNER);
   }, [recipe.id, recipe.servings]);
-
-  useEffect(() => {
-    if (searchParams.get("addToLog") !== "1") {
-      return;
-    }
-
-    // Allow topbar action to open dialog via query param, then clean URL.
-    handleOpenAddToLogDialog();
-    const nextParams = new URLSearchParams(searchParams.toString());
-    nextParams.delete("addToLog");
-    const query = nextParams.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [pathname, router, searchParams]);
 
   const effectiveRecipe = useMemo(
     () =>
@@ -400,12 +386,39 @@ export default function RecipePage({
     servingScalingFactor,
   ]);
 
-  const handleOpenAddToLogDialog = () => {
+  const handleOpenAddToLogDialog = useCallback(() => {
     setLogPerson(LogPerson.PRIMARY);
     setLogDate(toDateInputValue(new Date()));
     setLogMealType(LogMealType.DINNER);
     setIsAddToLogOpen(true);
-  };
+  }, []);
+  const topbarConfig = useMemo(
+    () => ({
+      actions: [
+        {
+          id: "add-to-log",
+          label: "Add to log",
+          onClick: handleOpenAddToLogDialog,
+          variant: "outline" as const,
+          size: "sm" as const,
+        },
+        {
+          id: "edit-recipe",
+          label: "Edit recipe",
+          href: ROUTES.recipeEdit(recipe.slug),
+          variant: "default" as const,
+          size: "sm" as const,
+        },
+      ],
+      badge: recipe.excludeFromPlanner
+        ? {
+            label: "Excluded from meal planner",
+            variant: "outline" as const,
+          }
+        : undefined,
+    }),
+    [handleOpenAddToLogDialog, recipe.excludeFromPlanner, recipe.slug],
+  );
   const selectedMealLabel =
     LOG_MEAL_OPTIONS.find((option) => option.value === logMealType)?.label ?? "Dinner";
 
@@ -460,6 +473,7 @@ export default function RecipePage({
 
   return (
     <div className="max-w-4xl mx-auto">
+      <TopbarConfigController config={topbarConfig} />
       <div className="mb-4 flex items-center gap-2">
         <h1 className="text-2xl font-semibold">{recipe.name}</h1>
       </div>

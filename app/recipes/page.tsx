@@ -2,6 +2,8 @@ import RecipeGridContainer from "@/components/recipes/grid-container";
 import { Suspense } from "react";
 import { RecipeTabsContainer } from "@/components/recipes/tabs-container";
 import { RecipesPageSkeleton } from "@/components/recipes/recipes-page-skeleton";
+import { TopbarConfigController } from "@/components/topbar/topbar-config";
+import { ROUTES } from "@/lib/constants";
 
 type RecipesPageSearchParams = {
   flavour?: string;
@@ -20,6 +22,19 @@ export default async function Page({ searchParams }: RecipesPageProps) {
 
   return (
     <>
+      <TopbarConfigController
+        config={{
+          actions: [
+            {
+              id: "create-recipe",
+              label: "Create recipe",
+              href: ROUTES.recipeCreate,
+              variant: "default",
+              size: "sm",
+            },
+          ],
+        }}
+      />
       <Suspense fallback={<RecipesPageSkeleton />}>
         <div className="group">
           <RecipeTabsContainer />
