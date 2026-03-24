@@ -5,12 +5,12 @@ import { ImageGallery } from "./image-gallery";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { FLAVOUR_BREADCRUMB_LABELS, ROUTES } from "@/lib/constants";
-import { parseMarkdownLinks } from "@/lib/recipes/text-formatting";
 import { type LogIngredientOption } from "@/components/log/edit-log-ingredients-dialog";
 import { TopbarConfigController } from "@/components/topbar/topbar-config";
 import { NutritionSection } from "@/components/recipes/recipe-page/nutrition-section";
 import { InstructionsSection } from "@/components/recipes/recipe-page/instructions-section";
 import { IngredientsSection } from "@/components/recipes/recipe-page/ingredients-section";
+import { NotesSection } from "@/components/recipes/recipe-page/notes-section";
 import { RecipeAddToLogDialog } from "@/components/recipes/recipe-page/recipe-add-to-log-dialog";
 import {
   useRecipePageAddToLogData,
@@ -92,27 +92,6 @@ export default function RecipePage({
     }),
     [recipe.excludeFromPlanner, recipe.slug],
   );
-  const renderTextWithMarkdownLinks = (text: string, keyPrefix: string) => {
-    // Render markdown links safely without injecting HTML.
-    return parseMarkdownLinks(text).map((segment, index) => {
-      if (segment.type === "link") {
-        return (
-          <a
-            key={`${keyPrefix}-${index}`}
-            href={segment.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline underline-offset-2 break-all"
-          >
-            {segment.label}
-          </a>
-        );
-      }
-
-      return <span key={`${keyPrefix}-${index}`}>{segment.content}</span>;
-    });
-  };
-
   return (
     <div className="max-w-4xl mx-auto">
       <TopbarConfigController config={topbarConfig} />
@@ -138,19 +117,7 @@ export default function RecipePage({
 
           <NutritionSection />
 
-          {/* Notes Section */}
-          {recipe.notes && recipe.notes.length > 0 && (
-            <div>
-              <h3 className="font-semibold mb-2">Notes</h3>
-              <ul className="list-disc list-inside space-y-1 text-sm">
-                {recipe.notes.map((note: string, index: number) => (
-                  <li key={index}>
-                    {renderTextWithMarkdownLinks(note, `note-${index}`)}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <NotesSection />
 
           <InstructionsSection />
 
