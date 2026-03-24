@@ -9,51 +9,27 @@ import {
   applyEditRatioToLocalScale,
   calculateNutritionPerServing,
   calculateServingScalingFactor,
-  formatInstructionIngredientBadge,
   getPrimaryCalorieScalingFactorForTarget,
-  getIngredientDisplay,
   isScaleModified,
-  isInstructionIngredientVisibleForPerson,
-  getInstructionIngredientPersonFactor,
   IngredientSwapMap,
 } from "@/lib/recipes/helpers";
 import { ImageGallery } from "./image-gallery";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import { Button } from "../ui/button";
-import { Minus, Pencil, Plus, RotateCcw } from "lucide-react";
-import { IngredientItem } from "./ingredient-item";
-import { Input } from "../ui/input";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "../ui/breadcrumb";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FLAVOUR_BREADCRUMB_LABELS, ROUTES } from "@/lib/constants";
 import { parseMarkdownLinks } from "@/lib/recipes/text-formatting";
-import { toast } from "sonner";
-import { addRecipeToLogAction } from "@/actions/log-actions";
 import {
-  EditLogIngredientsDialog,
   type EditableIngredientRow,
   type LogIngredientOption,
 } from "@/components/log/edit-log-ingredients-dialog";
 import { getPersonIngredientAmountPerMeal } from "@/lib/log/helpers";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { LogMealType, LogPerson } from "@/src/generated/enums";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
 import { TopbarConfigController } from "@/components/topbar/topbar-config";
 import { NutritionSection } from "@/components/recipes/recipe-page/nutrition-section";
+import { InstructionsSection } from "@/components/recipes/recipe-page/instructions-section";
+import { IngredientsSection } from "@/components/recipes/recipe-page/ingredients-section";
+import { RecipeAddToLogDialog } from "@/components/recipes/recipe-page/recipe-add-to-log-dialog";
 
 type RecipePageProps = {
   recipe: RecipeType;
@@ -65,13 +41,6 @@ type RecipePageProps = {
     iconOptions: string[];
   };
 };
-
-const LOG_MEAL_OPTIONS = [
-  { value: LogMealType.BREAKFAST, label: "Breakfast" },
-  { value: LogMealType.LUNCH, label: "Lunch" },
-  { value: LogMealType.SNACK, label: "Snack" },
-  { value: LogMealType.DINNER, label: "Dinner" },
-] as const;
 
 function toDateInputValue(date: Date) {
   return date.toLocaleDateString("en-CA");
@@ -420,9 +389,6 @@ export default function RecipePage({
     }),
     [handleOpenAddToLogDialog, recipe.excludeFromPlanner, recipe.slug],
   );
-  const selectedMealLabel =
-    LOG_MEAL_OPTIONS.find((option) => option.value === logMealType)?.label ?? "Dinner";
-
   const orderedIngredientGroups = useMemo(
     () =>
       [...recipe.ingredientGroups].sort((a, b) => a.position - b.position),
@@ -493,9 +459,6 @@ export default function RecipePage({
           <div className="flex gap-2 flex-wrap">
             <Badge>Hands-on time: {recipe.handsOnTime} minutes</Badge>
             <Badge>Total time: {recipe.totalTime} minutes</Badge>
-            {recipe.excludeFromPlanner && (
-              <Badge variant="outline">Excluded from meal planner</Badge>
-            )}
           </div>
 
           <NutritionSection
@@ -520,365 +483,63 @@ export default function RecipePage({
             </div>
           )}
 
-          {/* Instructions Section */}
-          {recipe.instructions && recipe.instructions.length > 0 && (
-            <div>
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <h3 className="font-semibold">Instructions</h3>
-                {/* Keep this local, lightweight segmented control consistent with existing button-group patterns. */}
-                <div
-                  className="flex items-center gap-1"
-                  role="radiogroup"
-                  aria-label="Instruction person filter"
-                >
-                  {(["jagoda", "nelson"] as const).map((person) => {
-                    const isSelected = selectedInstructionPerson === person;
-                    const label = person === "jagoda" ? "Jagoda" : "Nelson";
-                    return (
-                      <Button
-                        key={person}
-                        type="button"
-                        size="sm"
-                        role="radio"
-                        aria-checked={isSelected}
-                        variant={isSelected ? "default" : "outline"}
-                        onClick={() =>
-                          setSelectedInstructionPerson((prev) =>
-                            prev === person ? null : person,
-                          )
-                        }
-                      >
-                        {label}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-              <ol className="list-decimal list-inside space-y-2 text-sm">
-                {recipe.instructions.map((instruction) => (
-                  <li key={instruction.id}>
-                    <div>
-                      {renderTextWithMarkdownLinks(
-                        instruction.text,
-                        `instruction-${instruction.id}`,
-                      )}
-                    </div>
-                    {instruction.ingredients.length > 0 && (
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {instruction.ingredients.map((link) => {
-                          const recipeIngredient =
-                            effectiveRecipeIngredientById.get(
-                              link.recipeIngredient.id,
-                            ) ?? link.recipeIngredient;
-                          // Filter instruction badges by selected person, but keep step text visible.
-                          if (
-                            !isInstructionIngredientVisibleForPerson(
-                              recipeIngredient.nutritionTarget,
-                              selectedInstructionPerson,
-                            )
-                          ) {
-                            return null;
-                          }
-                          const selectedUnitId =
-                            selectedUnits[recipeIngredient.id] ||
-                            recipeIngredient.unit?.id ||
-                            null;
-                          const personFactor = getInstructionIngredientPersonFactor(
-                            recipeIngredient.nutritionTarget,
-                            selectedInstructionPerson,
-                            jagodaPortionFactor,
-                            nelsonPortionFactor,
-                          );
-                          const display = getIngredientDisplay(
-                            recipeIngredient.amount,
-                            recipeIngredient.unit?.id ?? null,
-                            recipeIngredient.unit?.name ?? null,
-                            selectedUnitId,
-                            recipeIngredient.ingredient.unitConversions,
-                            getIngredientDisplayScalingFactor(recipeIngredient.id) *
-                              personFactor,
-                            getIngredientCalorieFactor(recipeIngredient.nutritionTarget),
-                          );
+          <InstructionsSection
+            instructions={recipe.instructions}
+            effectiveRecipeIngredientById={effectiveRecipeIngredientById}
+            selectedInstructionPerson={selectedInstructionPerson}
+            setSelectedInstructionPerson={setSelectedInstructionPerson}
+            selectedUnits={selectedUnits}
+            jagodaPortionFactor={jagodaPortionFactor}
+            nelsonPortionFactor={nelsonPortionFactor}
+            getIngredientDisplayScalingFactor={getIngredientDisplayScalingFactor}
+            getIngredientCalorieFactor={getIngredientCalorieFactor}
+            renderTextWithMarkdownLinks={renderTextWithMarkdownLinks}
+          />
 
-                          return (
-                            <Badge
-                              key={`${instruction.id}-${recipeIngredient.id}`}
-                              variant="outline"
-                            >
-                              {formatInstructionIngredientBadge({
-                                rawAmount: display.rawAmount,
-                                rawAmountInGrams: display.rawAmountInGrams,
-                                displayAmount: display.displayAmount,
-                                displayUnitName: display.displayUnitName,
-                                displayUnitNamePlural: display.displayUnitNamePlural,
-                                ingredientName:
-                                  recipeIngredient.ingredient.name,
-                                additionalInfo: recipeIngredient.additionalInfo,
-                              })}
-                            </Badge>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </div>
-          )}
-
-          {/* Ingredients Section */}
-          {recipe.ingredients && recipe.ingredients.length > 0 && (
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold">Ingredients</h3>
-                  {hasActiveScaling && (
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={handleReset}
-                      aria-label="Reset ingredient amounts"
-                    >
-                      <RotateCcw className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon-sm"
-                    onClick={() => handleServingsChange(currentServings - 2)}
-                    disabled={currentServings <= 2}
-                    aria-label="Decrease servings"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm font-medium min-w-12 text-center">
-                    {currentServings}{" "}
-                    {currentServings === 1 ? "serving" : "servings"}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="icon-sm"
-                    onClick={() => handleServingsChange(currentServings + 2)}
-                    aria-label="Increase servings"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="text-xs text-muted-foreground mb-2 p-2 bg-muted rounded">
-                <div>Jagoda: {jagodaPortionFactor.toFixed(1)}</div>
-                <div>
-                  Nelson: {nelsonPortionFactor.toFixed(1)} (
-                  {recipe.servingMultiplierForNelson}x)
-                </div>
-              </div>
-
-              {ungroupedIngredients.length > 0 ? (
-                <div className="mb-3">
-                  {/* Keep uncategorized ingredients first and unlabeled. */}
-                  <ul className="space-y-1 text-sm">
-                    {ungroupedIngredients.map((recipeIngredient) => (
-                      <IngredientItem
-                        key={recipeIngredient.id}
-                        recipeIngredient={recipeIngredient}
-                        selectedUnitId={
-                          selectedUnits[recipeIngredient.id] ||
-                          recipeIngredient.unit?.id ||
-                          null
-                        }
-                        onUnitChange={(unitId) =>
-                          setSelectedUnits((prev) => ({
-                            ...prev,
-                            [recipeIngredient.id]: unitId,
-                          }))
-                        }
-                        servingScalingFactor={getIngredientDisplayScalingFactor(
-                          recipeIngredient.id,
-                        )}
-                        calorieScalingFactor={getIngredientCalorieFactor(
-                          recipeIngredient.nutritionTarget,
-                        )}
-                        onAmountEdit={(ratio, activeCalorieScalingFactor) =>
-                          handleIngredientEdit(
-                            recipeIngredient.id,
-                            ratio,
-                            activeCalorieScalingFactor,
-                          )
-                        }
-                        showApplyScaleAction={isScaleModified(
-                          localScaleByIngredientId[recipeIngredient.id] ?? 1,
-                        )}
-                        onApplyScaleToAll={() =>
-                          handleApplyScaleToAll(recipeIngredient.id)
-                        }
-                        onIngredientChange={(ingredientId) =>
-                          handleIngredientChange(recipeIngredient.id, ingredientId)
-                        }
-                        replacementCandidates={ingredients}
-                      />
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-
-              {visibleGroupedIngredients.map((group) => (
-                <div key={group.id} className="mb-3">
-                  <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {group.name}
-                  </h4>
-                  <ul className="space-y-1 text-sm">
-                    {group.ingredients.map((recipeIngredient) => (
-                      <IngredientItem
-                        key={recipeIngredient.id}
-                        recipeIngredient={recipeIngredient}
-                        selectedUnitId={
-                          selectedUnits[recipeIngredient.id] ||
-                          recipeIngredient.unit?.id ||
-                          null
-                        }
-                        onUnitChange={(unitId) =>
-                          setSelectedUnits((prev) => ({
-                            ...prev,
-                            [recipeIngredient.id]: unitId,
-                          }))
-                        }
-                        servingScalingFactor={getIngredientDisplayScalingFactor(
-                          recipeIngredient.id,
-                        )}
-                        calorieScalingFactor={getIngredientCalorieFactor(
-                          recipeIngredient.nutritionTarget,
-                        )}
-                        onAmountEdit={(ratio, activeCalorieScalingFactor) =>
-                          handleIngredientEdit(
-                            recipeIngredient.id,
-                            ratio,
-                            activeCalorieScalingFactor,
-                          )
-                        }
-                        showApplyScaleAction={isScaleModified(
-                          localScaleByIngredientId[recipeIngredient.id] ?? 1,
-                        )}
-                        onApplyScaleToAll={() =>
-                          handleApplyScaleToAll(recipeIngredient.id)
-                        }
-                        onIngredientChange={(ingredientId) =>
-                          handleIngredientChange(recipeIngredient.id, ingredientId)
-                        }
-                        replacementCandidates={ingredients}
-                      />
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          )}
+          <IngredientsSection
+            recipe={recipe}
+            ingredients={ingredients}
+            currentServings={currentServings}
+            jagodaPortionFactor={jagodaPortionFactor}
+            nelsonPortionFactor={nelsonPortionFactor}
+            hasActiveScaling={hasActiveScaling}
+            localScaleByIngredientId={localScaleByIngredientId}
+            selectedUnits={selectedUnits}
+            ungroupedIngredients={ungroupedIngredients}
+            visibleGroupedIngredients={visibleGroupedIngredients}
+            onReset={handleReset}
+            onServingsChange={handleServingsChange}
+            onUnitChange={(recipeIngredientId, unitId) =>
+              setSelectedUnits((prev) => ({
+                ...prev,
+                [recipeIngredientId]: unitId,
+              }))
+            }
+            getIngredientDisplayScalingFactor={getIngredientDisplayScalingFactor}
+            getIngredientCalorieFactor={getIngredientCalorieFactor}
+            onAmountEdit={handleIngredientEdit}
+            onApplyScaleToAll={handleApplyScaleToAll}
+            onIngredientChange={handleIngredientChange}
+          />
         </div>
       </div>
       {isAddToLogOpen ? (
-        <EditLogIngredientsDialog
+        <RecipeAddToLogDialog
+          recipeId={recipe.id}
+          recipeName={recipe.name}
           open={isAddToLogOpen}
-          title={`Add ${recipe.name} to log`}
-          subtitle={`${selectedMealLabel} • ${logDate}`}
+          onOpenChange={setIsAddToLogOpen}
           initialRows={addToLogInitialRows}
           ingredientOptions={ingredientOptionsForLogDialog}
           ingredientFormDependencies={ingredientFormDependencies}
+          logPerson={logPerson}
+          setLogPerson={setLogPerson}
+          logDate={logDate}
+          setLogDate={setLogDate}
+          logMealType={logMealType}
+          setLogMealType={setLogMealType}
           isSaving={isAddingToLog}
-          saveLabel="Add to log"
-          contextControls={
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="space-y-1.5">
-                <p className="text-xs tracking-wide uppercase text-muted-foreground font-semibold">
-                  Person
-                </p>
-                <Select
-                  value={logPerson}
-                  onValueChange={(nextValue) =>
-                    setLogPerson(nextValue as "PRIMARY" | "SECONDARY")
-                  }
-                  disabled={isAddingToLog}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={LogPerson.PRIMARY}>Jagoda</SelectItem>
-                    <SelectItem value={LogPerson.SECONDARY}>Nelson</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <p className="text-xs tracking-wide uppercase text-muted-foreground font-semibold">
-                  Date
-                </p>
-                <Input
-                  type="date"
-                  value={logDate}
-                  max="9999-12-31"
-                  onChange={(event) => setLogDate(event.target.value)}
-                  disabled={isAddingToLog}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <p className="text-xs tracking-wide uppercase text-muted-foreground font-semibold">
-                  Meal occasion
-                </p>
-                <Select
-                  value={logMealType}
-                  onValueChange={(nextValue) =>
-                    setLogMealType(nextValue as "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER")
-                  }
-                  disabled={isAddingToLog}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LOG_MEAL_OPTIONS.map((meal) => (
-                      <SelectItem key={meal.value} value={meal.value}>
-                        {meal.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          }
-          onOpenChange={(open) => {
-            setIsAddToLogOpen(open);
-          }}
-          onSave={async (rows) => {
-            if (!logDate) {
-              toast.error("Date is required");
-              return;
-            }
-
-            startAddToLogTransition(async () => {
-              const completeRows = rows.filter(
-                (row): row is { ingredientId: string; unitId: string; amount: number } =>
-                  row.ingredientId != null &&
-                  row.unitId != null &&
-                  row.amount != null &&
-                  row.amount > 0,
-              );
-              const result = await addRecipeToLogAction({
-                recipeId: recipe.id,
-                person: logPerson,
-                date: logDate,
-                mealType: logMealType,
-                ingredients: completeRows,
-              });
-
-              if (result.type === "error") {
-                toast.error(result.message);
-                return;
-              }
-
-              setIsAddToLogOpen(false);
-              toast.success("Recipe added to log");
-            });
-          }}
+          startSavingTransition={startAddToLogTransition}
         />
       ) : null}
     </div>
