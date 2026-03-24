@@ -1,8 +1,6 @@
 "use client";
 
 import { Badge } from "../ui/badge";
-import { RecipeType } from "@/types/recipe";
-import { IngredientType } from "@/types/ingredient";
 import { ImageGallery } from "./image-gallery";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -15,14 +13,11 @@ import { InstructionsSection } from "@/components/recipes/recipe-page/instructio
 import { IngredientsSection } from "@/components/recipes/recipe-page/ingredients-section";
 import { RecipeAddToLogDialog } from "@/components/recipes/recipe-page/recipe-add-to-log-dialog";
 import {
-  RecipePageProvider,
   useRecipePageAddToLogData,
-  useRecipePageHeaderData,
+  useRecipePageBaseData,
 } from "@/components/context/recipe-page-context";
 
 type RecipePageProps = {
-  recipe: RecipeType;
-  ingredients: IngredientType[];
   ingredientFormDependencies: {
     categories: Array<{ id: string; name: string }>;
     units: Array<{ id: string; name: string; namePlural: string | null }>;
@@ -32,31 +27,10 @@ type RecipePageProps = {
 };
 
 export default function RecipePage({
-  recipe,
-  ingredients,
   ingredientFormDependencies,
 }: RecipePageProps) {
-  return (
-    <RecipePageProvider recipe={recipe} ingredients={ingredients}>
-      <RecipePageContent
-        ingredients={ingredients}
-        ingredientFormDependencies={ingredientFormDependencies}
-      />
-    </RecipePageProvider>
-  );
-}
-
-type RecipePageContentProps = {
-  ingredients: IngredientType[];
-  ingredientFormDependencies: RecipePageProps["ingredientFormDependencies"];
-};
-
-function RecipePageContent({
-  ingredients,
-  ingredientFormDependencies,
-}: RecipePageContentProps) {
   const [isAddToLogOpen, setIsAddToLogOpen] = useState(false);
-  const { recipe } = useRecipePageHeaderData();
+  const { recipe, ingredients } = useRecipePageBaseData();
   const addToLogData = useRecipePageAddToLogData();
   const searchParams = useSearchParams();
   const flavourSlug = searchParams.get("flavour");

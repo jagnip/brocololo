@@ -192,6 +192,11 @@ export function useRecipePageHeaderData() {
   return { recipe };
 }
 
+export function useRecipePageBaseData() {
+  const { recipe, ingredients } = useRecipePageContext();
+  return { recipe, ingredients };
+}
+
 export function useRecipePageNutritionSectionData() {
   const {
     currentServings,
