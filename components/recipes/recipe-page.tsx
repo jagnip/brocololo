@@ -462,49 +462,8 @@ export default function RecipePage({
     <div className="max-w-4xl mx-auto">
       <div className="mb-4 flex items-center gap-2">
         <h1 className="text-2xl font-semibold">{recipe.name}</h1>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleOpenAddToLogDialog}
-        >
-          Add to log
-        </Button>
-        {/* Quick access to recipe editing from the detail page. */}
-        <Button
-          asChild
-          variant="ghost"
-          size="icon-sm"
-          aria-label={`Edit ${recipe.name}`}
-        >
-          <Link href={ROUTES.recipeEdit(recipe.slug)}>
-            <Pencil className="h-4 w-4" />
-          </Link>
-        </Button>
       </div>
-      <Breadcrumb className="mb-4">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink href={ROUTES.recipes}>Recipes</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          {flavourLabel && (
-            <>
-              <BreadcrumbItem>
-                <BreadcrumbLink
-                  href={`${ROUTES.recipes}?flavour=${flavourSlug}`}
-                >
-                  {flavourLabel}
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-            </>
-          )}
-          <BreadcrumbItem>
-            <BreadcrumbPage>{recipe.name}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+   
       <div className="flex flex-col md:flex-row gap-6">
         {/* Image Section */}
         <div className="shrink-0 md:w-1/2">
