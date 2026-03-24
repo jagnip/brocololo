@@ -3,7 +3,6 @@
 import { Badge } from "../ui/badge";
 import { ImageGallery } from "./image-gallery";
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { ROUTES } from "@/lib/constants";
 import { type LogIngredientOption } from "@/components/log/edit-log-ingredients-dialog";
 import { PageHeader } from "@/components/page-header";
