@@ -6,6 +6,7 @@ import {
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppSidebarSkeleton } from "@/components/app-sidebar-skeleton";
 import { AppTopbar } from "@/components/app-topbar";
+import { TopbarProvider } from "@/components/context/topbar-context";
 
 export function AppSidebarContainer({
   children,
@@ -14,13 +15,15 @@ export function AppSidebarContainer({
 }) {
   return (
     <SidebarProvider>
-      <Suspense fallback={<AppSidebarSkeleton />}>
-        <AppSidebar />
-      </Suspense>
-      <SidebarInset>
-        <AppTopbar />
-        <main>{children}</main>
-      </SidebarInset>
+      <TopbarProvider>
+        <Suspense fallback={<AppSidebarSkeleton />}>
+          <AppSidebar />
+        </Suspense>
+        <SidebarInset>
+          <AppTopbar />
+          <main>{children}</main>
+        </SidebarInset>
+      </TopbarProvider>
     </SidebarProvider>
   );
 }

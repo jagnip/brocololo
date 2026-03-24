@@ -3,14 +3,15 @@ import { getRecipeBySlug } from "@/lib/db/recipes";
 import { getIngredients } from "@/lib/db/ingredients";
 import RecipePage from "./recipe-page";
 import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
+import { RecipePageProvider } from "@/components/context/recipe-page-context";
 
-type RecipeDialogContainerProps = {
+type RecipePageContainerProps = {
   recipeSlug: string;
 };
 
-export default async function RecipeDialogContainer({
+export default async function RecipePageContainer({
   recipeSlug,
-}: RecipeDialogContainerProps) {
+}: RecipePageContainerProps) {
   const [recipe, ingredients, ingredientFormDependencies] = await Promise.all([
     getRecipeBySlug(recipeSlug),
     getIngredients(),
@@ -22,10 +23,8 @@ export default async function RecipeDialogContainer({
   }
 
   return (
-    <RecipePage
-      recipe={recipe}
-      ingredients={ingredients}
-      ingredientFormDependencies={ingredientFormDependencies}
-    />
+    <RecipePageProvider recipe={recipe} ingredients={ingredients}>
+      <RecipePage ingredientFormDependencies={ingredientFormDependencies} />
+    </RecipePageProvider>
   );
 }
