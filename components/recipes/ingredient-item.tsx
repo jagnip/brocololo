@@ -17,7 +17,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { ArrowLeftRight, ChevronDownIcon, Info } from "lucide-react";
+import {
+  ArrowLeftRight,
+  ChevronDownIcon,
+  Info,
+  ShoppingBasket,
+} from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 import { IngredientIcon } from "../ingredient-icon";
 import { useEffect, useRef, useState } from "react";
@@ -68,16 +73,15 @@ export function IngredientItem({
     displayUnitName,
     displayUnitNamePlural,
     availableUnits,
-  } =
-    getIngredientDisplay(
-      recipeIngredient.amount,
-      recipeIngredient.unit?.id ?? null,
-      recipeIngredient.unit?.name ?? null,
-      selectedUnitId,
-      ingredient.unitConversions,
-      servingScalingFactor,
-      calorieScalingFactor,
-    );
+  } = getIngredientDisplay(
+    recipeIngredient.amount,
+    recipeIngredient.unit?.id ?? null,
+    recipeIngredient.unit?.name ?? null,
+    selectedUnitId,
+    ingredient.unitConversions,
+    servingScalingFactor,
+    calorieScalingFactor,
+  );
 
   const getUnitOptionLabel = (unitId: string) => {
     // Recompute per target unit so option labels pluralize against converted amounts.
@@ -101,20 +105,20 @@ export function IngredientItem({
   // Build macro snapshots for selected unit and currently selected amount.
   const showPerOneSelectedUnitColumn =
     selectedUnitGramsPerUnit != null && !isGramUnit(displayUnitName);
-  const oneSelectedUnitNutrition =
-    !showPerOneSelectedUnitColumn
-      ? null
-      : scaleIngredientNutritionForGrams(nutrition, selectedUnitGramsPerUnit);
+  const oneSelectedUnitNutrition = !showPerOneSelectedUnitColumn
+    ? null
+    : scaleIngredientNutritionForGrams(nutrition, selectedUnitGramsPerUnit);
   const selectedAmountNutrition =
     rawAmountInGrams == null
       ? null
       : scaleIngredientNutritionForGrams(nutrition, rawAmountInGrams);
-  const oneUnitHeader = displayUnitName && showPerOneSelectedUnitColumn
-    ? `Per 1 ${displayUnitName} (${formatIngredientAmount(
-        selectedUnitGramsPerUnit ?? 0,
-        2,
-      )}g)`
-    : null;
+  const oneUnitHeader =
+    displayUnitName && showPerOneSelectedUnitColumn
+      ? `Per 1 ${displayUnitName} (${formatIngredientAmount(
+          selectedUnitGramsPerUnit ?? 0,
+          2,
+        )}g)`
+      : null;
   const selectedAmountText =
     rawAmount == null
       ? null
@@ -151,7 +155,8 @@ export function IngredientItem({
   const handleFocus = () => {
     committedRef.current = false;
     // Mirror non-edit display format so the input doesn't jump from 50 -> 50.0.
-    const displayed = rawAmount == null ? "" : formatIngredientAmount(rawAmount, 2);
+    const displayed =
+      rawAmount == null ? "" : formatIngredientAmount(rawAmount, 2);
     setIsEditing(true);
     setEditValue(displayed);
     initialEditValueRef.current = displayed;
@@ -166,7 +171,12 @@ export function IngredientItem({
     if (editValue === initialEditValueRef.current) return;
 
     const newValue = parseFloat(editValue);
-    if (isNaN(newValue) || newValue <= 0 || rawAmount == null || rawAmount === 0) {
+    if (
+      isNaN(newValue) ||
+      newValue <= 0 ||
+      rawAmount == null ||
+      rawAmount === 0
+    ) {
       return;
     }
 
@@ -191,15 +201,17 @@ export function IngredientItem({
     recipeIngredient.unit != null && displayAmount != null;
   const ingredientCandidates = [
     ingredient,
-    ...replacementCandidates.filter((candidate) => candidate.id !== ingredient.id),
+    ...replacementCandidates.filter(
+      (candidate) => candidate.id !== ingredient.id,
+    ),
   ];
 
   return (
-    <li className="flex flex-col gap-1">
-      <div className="flex items-center gap-2">
-        <IngredientIcon icon={ingredient.icon} name={ingredient.name} />
+    <li className="flex flex-col gap-1 rounded-md border border-border/60 p-1">
+      <div className="flex items-center gap-1 md:flex-col md:items-stretch lg:flex-row lg:items-center">
+        {/* <IngredientIcon icon={ingredient.icon} name={ingredient.name} /> */}
         {canRenderAmountAndUnit && (
-          <>
+          <div className="order-1 md:order-2 lg:order-1 flex items-center gap-1 md:w-full lg:w-auto">
             {isEditable ? (
               /* Amount */
               <div className="w-16 h-8 flex items-center justify-center">
@@ -234,7 +246,7 @@ export function IngredientItem({
               {/* Unit */}
               <SelectTrigger
                 size="sm"
-                className="inline-flex min-w-22 h-8 px-2 py-0 w-22 text-sm items-center [&>svg]:hidden"
+                className="inline-flex h-8 px-2 py-0 text-sm items-center [&>svg]:hidden w-23 min-w-23 md:w-full md:min-w-0 lg:w-23 lg:min-w-23"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -246,14 +258,14 @@ export function IngredientItem({
                 ))}
               </SelectContent>
             </Select>{" "}
-          </>
+          </div>
         )}
         <Popover open={swapOpen} onOpenChange={setSwapOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               size="sm"
-              className="h-8 flex-1 px-3 text-sm min-w-48 font-normal justify-start text-left gap-0 bg-transparent hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
+              className="order-2 md:order-1 lg:order-2 h-8 flex-1 min-w-0 md:w-full md:flex-none lg:flex-1 px-3 text-sm font-normal justify-start text-left gap-0 bg-transparent hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
             >
               {" "}
               <IngredientIcon icon={ingredient.icon} name={ingredient.name} />
@@ -302,49 +314,18 @@ export function IngredientItem({
           </PopoverContent>
         </Popover>
       </div>
-      <div className="flex items-center gap-2 flex-wrap">
-        <span>
-          {recipeIngredient.additionalInfo && (
-            <span className="text-muted-foreground text-xs ml-1">
-              ({recipeIngredient.additionalInfo})
-            </span>
-          )}
-          {recipeIngredient.nutritionTarget === "PRIMARY_ONLY" && (
-            <Badge variant="outline" className="ml-1 h-5 text-[10px]">
-              Jagoda only
-            </Badge>
-          )}
-          {recipeIngredient.nutritionTarget === "SECONDARY_ONLY" && (
-            <Badge variant="outline" className="ml-1 h-5 text-[10px]">
-              Nelson only
-            </Badge>
-          )}
-          {showApplyScaleAction && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="ml-1 h-6 w-6 p-0"
-              // One-click action: apply this row's ratio to every ingredient row.
-              onClick={onApplyScaleToAll}
-              aria-label={`Scale all ingredients based on ${ingredient.name}`}
-              title="Apply this amount change to all ingredients"
-            >
-              <ArrowLeftRight className="h-3.5 w-3.5" />
-            </Button>
-          )}
+      <div className="flex items-center justify-between gap-1 flex-wrap">
+        <div className="flex items-center gap-1">
           <Popover>
             <PopoverTrigger asChild>
-              {/* Mobile-friendly touch target: use labeled button instead of tiny icon-only trigger. */}
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="ml-1 h-8 px-3 text-xs"
+                className="h-8 w-8 p-0"
                 aria-label={`Nutrition details for ${ingredient.name}`}
               >
-                <Info className="h-3.5 w-3.5" />
-                <span>Nutrition details</span>
+                <Info className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-120 p-3">
@@ -468,16 +449,71 @@ export function IngredientItem({
             </PopoverContent>
           </Popover>
           {ingredient.supermarketUrl && (
-            <a
-              href={ingredient.supermarketUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ml-2 text-blue-600 hover:underline text-xs"
+            <Button
+              asChild
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0"
             >
-              🛒
-            </a>
+              <a
+                href={ingredient.supermarketUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Open supermarket link for ${ingredient.name}`}
+                title="Open supermarket link"
+              >
+                <ShoppingBasket className="h-4 w-4" />
+              </a>
+            </Button>
           )}
-        </span>
+          {showApplyScaleAction && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0"
+              // One-click action: apply this row's ratio to every ingredient row.
+              onClick={onApplyScaleToAll}
+              aria-label={`Scale all ingredients based on ${ingredient.name}`}
+              title="Apply this amount change to all ingredients"
+            >
+              <ArrowLeftRight className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+
+        <div className="ml-auto flex items-center gap-1">
+          {recipeIngredient.nutritionTarget === "PRIMARY_ONLY" && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0"
+              aria-label="Jagoda only"
+              title="Jagoda only"
+            >
+              J
+            </Button>
+          )}
+          {recipeIngredient.nutritionTarget === "SECONDARY_ONLY" && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0"
+              aria-label="Nelson only"
+              title="Nelson only"
+            >
+              N
+            </Button>
+          )}
+          {recipeIngredient.additionalInfo && (
+            <span className="text-muted-foreground text-sm">
+              ({recipeIngredient.additionalInfo})
+            </span>
+          )}
+        </div>
       </div>
     </li>
   );
