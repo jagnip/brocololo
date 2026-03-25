@@ -30,7 +30,7 @@ export function NutritionSection() {
               value={targetCaloriesPerPortion?.toString() ?? ""}
               onChange={(event) => onCaloriesChange(event.target.value)}
               placeholder={jagodaNutrition.calories.toString()}
-              className="h-[26px] w-16 [appearance:textfield] rounded-md border-input bg-background px-2 text-center text-sm leading-4 font-normal text-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="h-8 w-16 [appearance:textfield] rounded-md border-input bg-background px-2 text-center text-sm leading-4 font-normal text-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               aria-label="Calories per portion"
             />
             <span className="text-sm leading-4 font-normal text-foreground">

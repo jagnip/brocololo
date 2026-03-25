@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { ArrowLeftRight, Info } from "lucide-react";
+import { ArrowLeftRight, ChevronDownIcon, Info } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 import { IngredientIcon } from "../ingredient-icon";
 import { useEffect, useRef, useState } from "react";
@@ -32,7 +32,6 @@ import {
   CommandItem,
   CommandList,
 } from "../ui/command";
-import { cn } from "@/lib/utils";
 
 type IngredientItemProps = {
   recipeIngredient: RecipeType["ingredients"][number];
@@ -191,29 +190,40 @@ export function IngredientItem({
   const canRenderAmountAndUnit =
     recipeIngredient.unit != null && displayAmount != null;
   const shouldShowUnitSelect = availableUnits.length > 1;
+  const ingredientCandidates = [
+    ingredient,
+    ...replacementCandidates.filter((candidate) => candidate.id !== ingredient.id),
+  ];
 
   return (
-    <li className="flex items-center gap-2">
-      <IngredientIcon icon={ingredient.icon} name={ingredient.name} />
-      <span>
+    <li className="flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        <IngredientIcon icon={ingredient.icon} name={ingredient.name} />
         {canRenderAmountAndUnit && (
           <>
             {isEditable ? (
-              <Input
-                ref={inputRef}
-                type="number"
-                min="0.1"
-                step="any"
-                value={isEditing ? editValue : displayAmount}
-                onFocus={handleFocus}
-                onChange={(e) => setEditValue(e.target.value)}
-                onBlur={handleCommit}
-                onKeyDown={handleKeyDown}
-                className="inline-flex w-20 h-6 px-1 text-xs text-center"
-                aria-label={`Amount of ${ingredient.name}`}
-              />
+              /* Amount */
+              <div className="w-16 h-8 flex items-center justify-center">
+                <Input
+                  ref={inputRef}
+                  type="number"
+                  min="0.1"
+                  step="any"
+                  value={isEditing ? editValue : displayAmount}
+                  onFocus={handleFocus}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onBlur={handleCommit}
+                  onKeyDown={handleKeyDown}
+                  // Match select/button vertical rhythm: keep exact height and remove default vertical padding.
+                  // Number inputs can look left-aligned in some browsers; force centered text.
+                  className="w-16 min-w-16 h-8 px-1 py-0 text-sm leading-none text-center! tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  aria-label={`Amount of ${ingredient.name}`}
+                />
+              </div>
             ) : (
-              displayAmount
+              <div className="w-16 min-w-16 h-8 flex items-center justify-center text-sm leading-none text-center tabular-nums">
+                {displayAmount}
+              </div>
             )}{" "}
             {shouldShowUnitSelect ? (
               <Select
@@ -222,9 +232,10 @@ export function IngredientItem({
                 // Recipe page unit selectors should not be clearable.
                 allowInlineClear={false}
               >
+                {/* Unit */}
                 <SelectTrigger
                   size="sm"
-                  className="inline-flex h-6 px-2 text-xs [&>svg]:hidden"
+                  className="inline-flex min-w-22 h-8 px-2 py-0 w-22 text-sm leading-none items-center [&>svg]:hidden"
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -237,15 +248,15 @@ export function IngredientItem({
                 </SelectContent>
               </Select>
             ) : (
-              // Preserve row alignment by rendering a read-only single-option select.
               <Select
                 value={selectedUnitId ?? undefined}
                 disabled
                 allowInlineClear={false}
               >
+                {/* Unit */}
                 <SelectTrigger
                   size="sm"
-                  className="inline-flex h-6 px-2 text-xs border-transparent bg-transparent shadow-none [&_svg]:hidden disabled:opacity-100 disabled:cursor-default"
+                  className="inline-flex h-8 px-2 py-0 min-w-22 w-22 text-sm leading-none items-center border-transparent bg-transparent shadow-none [&_svg]:hidden disabled:opacity-100 disabled:cursor-default"
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -260,36 +271,28 @@ export function IngredientItem({
             )}{" "}
           </>
         )}
-        {recipeIngredient.additionalInfo && (
-          <span className="text-muted-foreground text-xs ml-1">
-            ({recipeIngredient.additionalInfo})
-          </span>
-        )}
-        {recipeIngredient.nutritionTarget === "PRIMARY_ONLY" && (
-          <Badge variant="outline" className="ml-1 h-5 text-[10px]">
-            Jagoda only
-          </Badge>
-        )}
-        {recipeIngredient.nutritionTarget === "SECONDARY_ONLY" && (
-          <Badge variant="outline" className="ml-1 h-5 text-[10px]">
-            Nelson only
-          </Badge>
-        )}
         <Popover open={swapOpen} onOpenChange={setSwapOpen}>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="ml-2 h-6 px-2 text-xs">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 flex-1 px-3 text-sm min-w-48 font-normal justify-start text-left gap-0 bg-transparent hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
+            >
+              {" "}
               <IngredientIcon icon={ingredient.icon} name={ingredient.name} />
-              <span className="ml-1 truncate max-w-28">{ingredient.name}</span>
+              <span className="truncate w-full text-left ml-2">
+                {ingredient.name}
+              </span>
+              <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-72 p-2" align="start">
-            {/* Inline ingredient selector used for swap simulation. */}
             <Command>
               <CommandInput placeholder="Search ingredient..." />
               <CommandList>
                 <CommandEmpty>No ingredient found.</CommandEmpty>
                 <CommandGroup>
-                  {replacementCandidates.map((candidate) => (
+                  {ingredientCandidates.map((candidate) => (
                     <CommandItem
                       key={candidate.id}
                       value={candidate.name}
@@ -297,14 +300,22 @@ export function IngredientItem({
                         onIngredientChange(candidate.id);
                         setSwapOpen(false);
                       }}
+                      className="text-left"
                     >
-                      <IngredientIcon icon={candidate.icon} name={candidate.name} />
-                      <span className="ml-2">{candidate.name}</span>
+                      <IngredientIcon
+                        icon={candidate.icon}
+                        name={candidate.name}
+                      />
+                      <span className="ml-2 truncate w-full text-left">
+                        {candidate.name}
+                      </span>
                       <span
-                        className={cn(
+                        className={[
                           "ml-auto inline-block h-2 w-2 rounded-full",
-                          ingredient.id === candidate.id ? "bg-primary" : "bg-transparent",
-                        )}
+                          ingredient.id === candidate.id
+                            ? "bg-primary"
+                            : "bg-transparent",
+                        ].join(" ")}
                       />
                     </CommandItem>
                   ))}
@@ -313,119 +324,184 @@ export function IngredientItem({
             </Command>
           </PopoverContent>
         </Popover>
-        {showApplyScaleAction && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="ml-1 h-6 w-6 p-0"
-            // One-click action: apply this row's ratio to every ingredient row.
-            onClick={onApplyScaleToAll}
-            aria-label={`Scale all ingredients based on ${ingredient.name}`}
-            title="Apply this amount change to all ingredients"
-          >
-            <ArrowLeftRight className="h-3.5 w-3.5" />
-          </Button>
-        )}
-        <Popover>
-          <PopoverTrigger asChild>
-            {/* Mobile-friendly touch target: use labeled button instead of tiny icon-only trigger. */}
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
+        <span>
+          {recipeIngredient.additionalInfo && (
+            <span className="text-muted-foreground text-xs ml-1">
+              ({recipeIngredient.additionalInfo})
+            </span>
+          )}
+          {recipeIngredient.nutritionTarget === "PRIMARY_ONLY" && (
+            <Badge variant="outline" className="ml-1 h-5 text-[10px]">
+              Jagoda only
+            </Badge>
+          )}
+          {recipeIngredient.nutritionTarget === "SECONDARY_ONLY" && (
+            <Badge variant="outline" className="ml-1 h-5 text-[10px]">
+              Nelson only
+            </Badge>
+          )}
+          {showApplyScaleAction && (
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="ml-1 h-8 px-3 text-xs"
-              aria-label={`Nutrition details for ${ingredient.name}`}
+              className="ml-1 h-6 w-6 p-0"
+              // One-click action: apply this row's ratio to every ingredient row.
+              onClick={onApplyScaleToAll}
+              aria-label={`Scale all ingredients based on ${ingredient.name}`}
+              title="Apply this amount change to all ingredients"
             >
-              <Info className="h-3.5 w-3.5" />
-              <span>Nutrition details</span>
+              <ArrowLeftRight className="h-3.5 w-3.5" />
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-120 p-3">
-            <div className="overflow-x-auto">
-              {/* Keep layout table-like so the three macro perspectives are easy to compare. */}
-              <table className="w-full table-fixed text-xs">
-                <thead>
-                  <tr className="text-left align-top">
-                    <th className="w-20 font-medium text-muted-foreground pr-2">
-                      Macro
-                    </th>
-                    <th className="font-medium pr-3">Per 100g</th>
-                    {oneUnitHeader && (
-                      <th className="font-medium pr-3">{oneUnitHeader}</th>
-                    )}
-                    {selectedAmountHeader && (
-                      <th className="font-medium">{selectedAmountHeader}</th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="text-muted-foreground pr-2">Calories</td>
-                    <td className="pr-3">{formatIngredientAmount(nutrition.calories, 2)} kcal</td>
-                    {oneSelectedUnitNutrition && (
+          )}
+          <Popover>
+            <PopoverTrigger asChild>
+              {/* Mobile-friendly touch target: use labeled button instead of tiny icon-only trigger. */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="ml-1 h-8 px-3 text-xs"
+                aria-label={`Nutrition details for ${ingredient.name}`}
+              >
+                <Info className="h-3.5 w-3.5" />
+                <span>Nutrition details</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-120 p-3">
+              <div className="overflow-x-auto">
+                {/* Keep layout table-like so the three macro perspectives are easy to compare. */}
+                <table className="w-full table-fixed text-xs">
+                  <thead>
+                    <tr className="text-left align-top">
+                      <th className="w-20 font-medium text-muted-foreground pr-2">
+                        Macro
+                      </th>
+                      <th className="font-medium pr-3">Per 100g</th>
+                      {oneUnitHeader && (
+                        <th className="font-medium pr-3">{oneUnitHeader}</th>
+                      )}
+                      {selectedAmountHeader && (
+                        <th className="font-medium">{selectedAmountHeader}</th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="text-muted-foreground pr-2">Calories</td>
                       <td className="pr-3">
-                        {formatIngredientAmount(oneSelectedUnitNutrition.calories, 2)} kcal
+                        {formatIngredientAmount(nutrition.calories, 2)} kcal
                       </td>
-                    )}
-                    {selectedAmountNutrition && (
-                      <td>
-                        {formatIngredientAmount(selectedAmountNutrition.calories, 2)} kcal
-                      </td>
-                    )}
-                  </tr>
-                  <tr>
-                    <td className="text-muted-foreground pr-2">Protein</td>
-                    <td className="pr-3">{formatIngredientAmount(nutrition.protein, 2)}g</td>
-                    {oneSelectedUnitNutrition && (
+                      {oneSelectedUnitNutrition && (
+                        <td className="pr-3">
+                          {formatIngredientAmount(
+                            oneSelectedUnitNutrition.calories,
+                            2,
+                          )}{" "}
+                          kcal
+                        </td>
+                      )}
+                      {selectedAmountNutrition && (
+                        <td>
+                          {formatIngredientAmount(
+                            selectedAmountNutrition.calories,
+                            2,
+                          )}{" "}
+                          kcal
+                        </td>
+                      )}
+                    </tr>
+                    <tr>
+                      <td className="text-muted-foreground pr-2">Protein</td>
                       <td className="pr-3">
-                        {formatIngredientAmount(oneSelectedUnitNutrition.protein, 2)}g
+                        {formatIngredientAmount(nutrition.protein, 2)}g
                       </td>
-                    )}
-                    {selectedAmountNutrition && (
-                      <td>{formatIngredientAmount(selectedAmountNutrition.protein, 2)}g</td>
-                    )}
-                  </tr>
-                  <tr>
-                    <td className="text-muted-foreground pr-2">Fat</td>
-                    <td className="pr-3">{formatIngredientAmount(nutrition.fat, 2)}g</td>
-                    {oneSelectedUnitNutrition && (
+                      {oneSelectedUnitNutrition && (
+                        <td className="pr-3">
+                          {formatIngredientAmount(
+                            oneSelectedUnitNutrition.protein,
+                            2,
+                          )}
+                          g
+                        </td>
+                      )}
+                      {selectedAmountNutrition && (
+                        <td>
+                          {formatIngredientAmount(
+                            selectedAmountNutrition.protein,
+                            2,
+                          )}
+                          g
+                        </td>
+                      )}
+                    </tr>
+                    <tr>
+                      <td className="text-muted-foreground pr-2">Fat</td>
                       <td className="pr-3">
-                        {formatIngredientAmount(oneSelectedUnitNutrition.fat, 2)}g
+                        {formatIngredientAmount(nutrition.fat, 2)}g
                       </td>
-                    )}
-                    {selectedAmountNutrition && (
-                      <td>{formatIngredientAmount(selectedAmountNutrition.fat, 2)}g</td>
-                    )}
-                  </tr>
-                  <tr>
-                    <td className="text-muted-foreground pr-2">Carbs</td>
-                    <td className="pr-3">{formatIngredientAmount(nutrition.carbs, 2)}g</td>
-                    {oneSelectedUnitNutrition && (
+                      {oneSelectedUnitNutrition && (
+                        <td className="pr-3">
+                          {formatIngredientAmount(
+                            oneSelectedUnitNutrition.fat,
+                            2,
+                          )}
+                          g
+                        </td>
+                      )}
+                      {selectedAmountNutrition && (
+                        <td>
+                          {formatIngredientAmount(
+                            selectedAmountNutrition.fat,
+                            2,
+                          )}
+                          g
+                        </td>
+                      )}
+                    </tr>
+                    <tr>
+                      <td className="text-muted-foreground pr-2">Carbs</td>
                       <td className="pr-3">
-                        {formatIngredientAmount(oneSelectedUnitNutrition.carbs, 2)}g
+                        {formatIngredientAmount(nutrition.carbs, 2)}g
                       </td>
-                    )}
-                    {selectedAmountNutrition && (
-                      <td>{formatIngredientAmount(selectedAmountNutrition.carbs, 2)}g</td>
-                    )}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </PopoverContent>
-        </Popover>
-        {ingredient.supermarketUrl && (
-          <a
-            href={ingredient.supermarketUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-2 text-blue-600 hover:underline text-xs"
-          >
-            🛒
-          </a>
-        )}
-      </span>
+                      {oneSelectedUnitNutrition && (
+                        <td className="pr-3">
+                          {formatIngredientAmount(
+                            oneSelectedUnitNutrition.carbs,
+                            2,
+                          )}
+                          g
+                        </td>
+                      )}
+                      {selectedAmountNutrition && (
+                        <td>
+                          {formatIngredientAmount(
+                            selectedAmountNutrition.carbs,
+                            2,
+                          )}
+                          g
+                        </td>
+                      )}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </PopoverContent>
+          </Popover>
+          {ingredient.supermarketUrl && (
+            <a
+              href={ingredient.supermarketUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-2 text-blue-600 hover:underline text-xs"
+            >
+              🛒
+            </a>
+          )}
+        </span>
+      </div>
     </li>
   );
 }
