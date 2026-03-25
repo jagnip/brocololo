@@ -110,8 +110,8 @@ export default function RecipePage({
           </div>
         </div>
 
-        <div className="contents md:col-span-2 md:block md:space-y-6">
-          <div className="order-3 md:order-0 space-y-6">
+        <div className="contents md:col-span-2 md:block md:space-y-4">
+          <div className="order-3 md:order-0 space-y-4">
             <div className="flex gap-2 flex-wrap">
               <Badge>Hands-on: {recipe.handsOnTime} min</Badge>
               <Badge>Total: {recipe.totalTime} min</Badge>
@@ -119,7 +119,6 @@ export default function RecipePage({
             <NutritionSection />
           </div>
 
-          {/* Ingredients */}
           <div className="order-4 md:order-0">
             <IngredientsSection />
           </div>
