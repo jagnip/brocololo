@@ -12,46 +12,56 @@ export function NutritionSection() {
   } = useRecipePageNutritionSectionData();
 
   return (
-    <div>
-      <h3 className="font-semibold mb-2">Nutrition (per meal)</h3>
+    <div className="space-y-2.5">
+      <h3 className="text text-base leading-5 font-semibold">
+        Nutrition (per serving)
+      </h3>
 
-      {/* Jagoda's nutrition — calorie input is editable */}
-      <div className="flex gap-2 flex-wrap items-center mb-1">
-        {currentServings >= 2 && (
-          <span className="text-xs text-muted-foreground w-12">
-            Jagoda
-          </span>
-        )}
-        <div className="flex items-center gap-1">
-          <Input
-            type="number"
-            min="1"
-            step="10"
-            value={targetCaloriesPerPortion?.toString() ?? ""}
-            onChange={(event) => onCaloriesChange(event.target.value)}
-            placeholder={jagodaNutrition.calories.toString()}
-            className="w-20 h-7 text-xs"
-            aria-label="Calories per portion"
-          />
-          calories
+      <div className="space-y-1.5 rounded-lg border border-border bg-card px-2 py-2">
+        <div className="flex flex-wrap items-center gap-2">
+        
+            <span className="w-[52px] shrink-0 text-sm leading-4 font-normal text-muted-foreground">
+              Jagoda
+            </span>
+      
+          <div className="flex items-center gap-1">
+            <Input
+              type="number"
+              value={targetCaloriesPerPortion?.toString() ?? ""}
+              onChange={(event) => onCaloriesChange(event.target.value)}
+              placeholder={jagodaNutrition.calories.toString()}
+              className="h-[26px] w-16 [appearance:textfield] rounded-md border-input bg-background px-2 text-center text-sm leading-4 font-normal text-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              aria-label="Calories per portion"
+            />
+            <span className="text-sm leading-4 font-normal text-foreground">
+              kcal
+            </span>
+          </div>
+          <div className="flex flex-nowrap items-center gap-1 justify-end ml-auto md:w-full md:ml-0 md:justify-start md:flex-wrap lg:w-auto lg:ml-auto lg:justify-end lg:flex-nowrap">
+            <Badge variant="outline">{jagodaNutrition.protein}p</Badge>
+            <Badge variant="outline">{jagodaNutrition.fat}f</Badge>
+            <Badge variant="outline">{jagodaNutrition.carbs}c</Badge>
+          </div>
         </div>
-        <Badge variant="outline">{jagodaNutrition.protein}g protein</Badge>
-        <Badge variant="outline">{jagodaNutrition.fat}g fat</Badge>
-        <Badge variant="outline">{jagodaNutrition.carbs}g carbs</Badge>
       </div>
 
-      {/* Nelson's nutrition — read-only, only for 2+ servings */}
-      {currentServings >= 2 && (
-        <div className="flex gap-2 flex-wrap items-center">
-          <span className="text-xs text-muted-foreground w-12">
-            Nelson
-          </span>
-          <Badge variant="outline">{nelsonNutrition.calories} calories</Badge>
-          <Badge variant="outline">{nelsonNutrition.protein}g protein</Badge>
-          <Badge variant="outline">{nelsonNutrition.fat}g fat</Badge>
-          <Badge variant="outline">{nelsonNutrition.carbs}g carbs</Badge>
+      
+        <div className="space-y-1.5 rounded-lg border border-border bg-card px-2 py-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="w-[52px] shrink-0 text-sm leading-4 font-normal text-muted-foreground">
+              Nelson
+            </span>
+            <span className="text-sm font-normal text-foreground">
+              {nelsonNutrition.calories} kcal
+            </span>
+            <div className="flex flex-nowrap items-center gap-1 justify-end ml-auto md:w-full md:ml-0 md:justify-start md:flex-wrap lg:w-auto lg:ml-auto lg:justify-end lg:flex-nowrap">
+              <Badge variant="outline">{nelsonNutrition.protein}p</Badge>
+              <Badge variant="outline">{nelsonNutrition.fat}f</Badge>
+              <Badge variant="outline">{nelsonNutrition.carbs}c</Badge>
+            </div>
+          </div>
         </div>
-      )}
+ 
     </div>
   );
 }
