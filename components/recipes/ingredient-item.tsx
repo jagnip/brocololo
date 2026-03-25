@@ -189,7 +189,6 @@ export function IngredientItem({
   const isEditable = rawAmount != null;
   const canRenderAmountAndUnit =
     recipeIngredient.unit != null && displayAmount != null;
-  const shouldShowUnitSelect = availableUnits.length > 1;
   const ingredientCandidates = [
     ingredient,
     ...replacementCandidates.filter((candidate) => candidate.id !== ingredient.id),
@@ -225,50 +224,28 @@ export function IngredientItem({
                 {displayAmount}
               </div>
             )}{" "}
-            {shouldShowUnitSelect ? (
-              <Select
-                value={selectedUnitId ?? undefined}
-                onValueChange={(value) => onUnitChange(value || null)}
-                // Recipe page unit selectors should not be clearable.
-                allowInlineClear={false}
+            <Select
+              value={selectedUnitId ?? undefined}
+              disabled={false}
+              onValueChange={(value) => onUnitChange(value || null)}
+              // Recipe page unit selectors should not be clearable.
+              allowInlineClear={false}
+            >
+              {/* Unit */}
+              <SelectTrigger
+                size="sm"
+                className="inline-flex min-w-22 h-8 px-2 py-0 w-22 text-sm leading-none items-center [&>svg]:hidden"
               >
-                {/* Unit */}
-                <SelectTrigger
-                  size="sm"
-                  className="inline-flex min-w-22 h-8 px-2 py-0 w-22 text-sm leading-none items-center [&>svg]:hidden"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableUnits.map((uc) => (
-                    <SelectItem key={uc.unitId} value={uc.unitId}>
-                      {getUnitOptionLabel(uc.unitId)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Select
-                value={selectedUnitId ?? undefined}
-                disabled
-                allowInlineClear={false}
-              >
-                {/* Unit */}
-                <SelectTrigger
-                  size="sm"
-                  className="inline-flex h-8 px-2 py-0 min-w-22 w-22 text-sm leading-none items-center border-transparent bg-transparent shadow-none [&_svg]:hidden disabled:opacity-100 disabled:cursor-default"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableUnits.map((uc) => (
-                    <SelectItem key={uc.unitId} value={uc.unitId}>
-                      {getUnitOptionLabel(uc.unitId)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}{" "}
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {availableUnits.map((uc) => (
+                  <SelectItem key={uc.unitId} value={uc.unitId}>
+                    {getUnitOptionLabel(uc.unitId)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>{" "}
           </>
         )}
         <Popover open={swapOpen} onOpenChange={setSwapOpen}>
