@@ -234,7 +234,7 @@ export function IngredientItem({
               {/* Unit */}
               <SelectTrigger
                 size="sm"
-                className="inline-flex min-w-22 h-8 px-2 py-0 w-22 text-sm leading-none items-center [&>svg]:hidden"
+                className="inline-flex min-w-22 h-8 px-2 py-0 w-22 text-sm items-center [&>svg]:hidden"
               >
                 <SelectValue />
               </SelectTrigger>
