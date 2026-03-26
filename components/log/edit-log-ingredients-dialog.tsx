@@ -267,7 +267,7 @@ export function EditLogIngredientsDialog({
 
           <section className="px-6 py-4 border-b space-y-3">
           {/* Mobile uses a stacked row layout, so keep column labels desktop-only. */}
-          <div className="hidden sm:grid sm:grid-cols-[minmax(240px,1fr)_104px_104px_44px] gap-2 px-2 text-xs tracking-wide uppercase text-muted-foreground font-semibold">
+          <div className="hidden sm:grid sm:grid-cols-[minmax(0,1fr)_96px_128px_44px] gap-2 px-2 text-xs tracking-wide uppercase text-muted-foreground font-semibold">
             <span>Ingredient</span>
             <span>Amount</span>
             <span>Unit</span>
@@ -284,12 +284,13 @@ export function EditLogIngredientsDialog({
               return (
                 <div
                   key={row.key}
-                  className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_44px] sm:grid-cols-[minmax(240px,1fr)_104px_104px_44px] gap-2"
+                    // Mobile: ingredient row, then amount + unit + remove on one row.
+                    className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_44px] gap-2 sm:grid-cols-[minmax(0,1fr)_96px_128px_44px]"
                 >
-                  {/* On mobile the ingredient selector gets its own row for readability. */}
+                  {/* Ingredient always gets the flexible width lane. */}
                   <div className="min-w-0 col-span-3 sm:col-span-1">
                     <SearchableSelect
-                      className="min-w-0 sm:min-w-[240px]"
+                      className="min-w-0 w-full"
                       options={ingredientSelectOptions}
                       value={row.ingredientId}
                       onValueChange={(nextValue) => {
@@ -342,6 +343,8 @@ export function EditLogIngredientsDialog({
                     min={0}
                     step="any"
                     placeholder="0"
+                    // Keep only width + numeric spinner reset; rely on DS spacing/typography defaults.
+                    className="w-full sm:w-24 sm:min-w-24 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     value={row.amount == null ? "" : row.amount}
                     onChange={(event) => {
                       const amount = event.target.value === ""
@@ -363,7 +366,8 @@ export function EditLogIngredientsDialog({
                       }}
                       disabled={!selectedIngredient}
                     >
-                      <SelectTrigger className="min-w-0">
+                      {/* Wider unit lane on desktop, fluid width on mobile. */}
+                      <SelectTrigger className="min-w-0 w-full sm:w-32 sm:min-w-32 [&>svg]:hidden">
                         <SelectValue placeholder="Unit" />
                       </SelectTrigger>
                       <SelectContent>
@@ -384,6 +388,8 @@ export function EditLogIngredientsDialog({
                     type="button"
                     variant="outline"
                     size="icon"
+                    // Keep remove action reachable after stacked mobile fields.
+                    className="justify-self-end sm:justify-self-auto"
                     aria-label="Remove ingredient row"
                     onClick={() => handleRemoveRow(row.key)}
                   >

@@ -33,7 +33,8 @@ function DatePicker({
           variant="outline"
           disabled={disabled}
           className={cn(
-            "w-full justify-between text-left font-normal",
+            // Keep trigger horizontal padding aligned with Input/Select defaults.
+            "w-full justify-between px-3 text-left font-normal",
             !calendarValue && "text-muted-foreground",
             className,
           )}

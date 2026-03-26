@@ -162,7 +162,8 @@ export function SearchableSelect({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            "w-full justify-between",
+            // Keep trigger horizontal padding aligned with Input/Select defaults.
+            "w-full justify-between px-3",
             !selectedOption && "text-muted-foreground",
             className,
           )}

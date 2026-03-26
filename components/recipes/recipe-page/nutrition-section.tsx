@@ -33,7 +33,8 @@ export function NutritionSection() {
                 jagodaNutrition.calories.toString()
               }
               onChange={(event) => onCaloriesChange(event.target.value)}
-              className="w-16 [appearance:textfield] px-2 text-center leading-4 font-normal text-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              // Keep only width + number spinner reset; rely on DS defaults for spacing.
+              className="w-16 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               aria-label="Calories per portion"
             />
             <span className="text-sm leading-4 font-normal text-foreground">
