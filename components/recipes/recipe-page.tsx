@@ -80,7 +80,7 @@ export default function RecipePage({
       badge: recipe.excludeFromPlanner
         ? {
             label: "Excluded from meal planner",
-            variant: "outline" as const,
+            variant: "secondary" as const,
           }
         : undefined,
     }),
@@ -112,8 +112,8 @@ export default function RecipePage({
         <div className="contents md:col-span-2 md:block md:space-y-6">
           <div className="order-3 md:order-0 space-y-4">
             <div className="flex gap-2 flex-wrap">
-              <Badge>Hands-on: {recipe.handsOnTime} min</Badge>
-              <Badge>Total: {recipe.totalTime} min</Badge>
+              <Badge variant="secondary">Hands-on: {recipe.handsOnTime} min</Badge>
+              <Badge variant="secondary">Total: {recipe.totalTime} min</Badge>
             </div>
             <NutritionSection />
           </div>

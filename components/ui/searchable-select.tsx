@@ -198,7 +198,10 @@ export function SearchableSelect({
                 <X className="h-3.5 w-3.5" />
               </span>
             ) : null}
-            {triggerIcon ?? <ChevronsUpDown className="h-4 w-4 opacity-50" />}
+            {/* Match icon tone with standard Select trigger affordance. */}
+            {triggerIcon ?? (
+              <ChevronsUpDown className="h-4 w-4 text-muted-foreground opacity-50" />
+            )}
           </span>
         </Button>
       </PopoverTrigger>

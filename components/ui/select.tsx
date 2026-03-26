@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon, X } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon, ChevronsUpDown, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -122,7 +122,8 @@ function SelectTrigger({
           </span>
         ) : null}
         <SelectPrimitive.Icon asChild>
-          <ChevronDownIcon className="size-4 opacity-50" />
+          {/* Keep trigger affordance consistent with searchable selects. */}
+          <ChevronsUpDown className="size-4 opacity-50" />
         </SelectPrimitive.Icon>
       </span>
     </SelectPrimitive.Trigger>

@@ -280,7 +280,7 @@ export function IngredientItem({
           emptyLabel="No ingredient found."
           allowClear={false}
           // Keep layout-only overrides; spacing/typography come from the component defaults.
-          className="order-2 md:order-1 lg:order-2 flex-1 min-w-0 md:w-full md:flex-none lg:flex-1"
+          className="order-2 md:order-1 lg:order-2 flex-1 min-w-0 md:w-full md:flex-none lg:flex-1 font-normal"
           renderIcon={(option) => (
             <IngredientIcon icon={option.icon ?? null} name={option.label} />
           )}
