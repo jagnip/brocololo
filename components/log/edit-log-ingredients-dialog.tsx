@@ -69,6 +69,7 @@ type EditLogIngredientsDialogProps = {
   open: boolean;
   title: string;
   subtitle: string;
+  titleClassName?: string;
   initialRows: EditableIngredientRow[];
   ingredientOptions: LogIngredientOption[];
   ingredientFormDependencies?: IngredientFormDependencies;
@@ -247,25 +248,24 @@ export function EditLogIngredientsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-[min(1000px,calc(100vw-3rem))] sm:max-w-[1000px] lg:w-[min(1200px,calc(100vw-4rem))] lg:max-w-[1200px] xl:w-[min(1400px,calc(100vw-5rem))] xl:max-w-[1400px] 2xl:w-[min(1600px,calc(100vw-6rem))] 2xl:max-w-[1600px] max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col">
-        <DialogHeader className="px-6 py-5 border-b">
-          <DialogTitle className="text-4xl sm:text-4xl">{title}</DialogTitle>
-          <DialogDescription className="sr-only">
-            Edit ingredients for this log recipe.
-          </DialogDescription>
-          <p className="text-muted-foreground text-sm mt-1">{subtitle}</p>
-          {contextControls ? <div className="mt-4">{contextControls}</div> : null}
-        </DialogHeader>
+        {/* Keep footer fixed by scrolling the whole content area above it. */}
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+          <DialogHeader className="px-6 py-5 border-b">
+            <DialogTitle className="text-2xl">{title}</DialogTitle>
+            <p className="text-muted-foreground text-sm">{subtitle}</p>
+            {contextControls ? <div className="mt-4">{contextControls}</div> : null}
+          </DialogHeader>
 
-        <section className="px-6 py-4 border-b">
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">{macros.calories.toFixed(0)} kcal</Badge>
-            <Badge variant="outline">{macros.proteins.toFixed(1)}g protein</Badge>
-            <Badge variant="outline">{macros.fats.toFixed(1)}g fat</Badge>
-            <Badge variant="outline">{macros.carbs.toFixed(1)}g carbs</Badge>
-          </div>
-        </section>
+          <section className="px-6 py-4 border-b">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline">{macros.calories.toFixed(0)} kcal</Badge>
+              <Badge variant="outline">{macros.proteins.toFixed(1)}g protein</Badge>
+              <Badge variant="outline">{macros.fats.toFixed(1)}g fat</Badge>
+              <Badge variant="outline">{macros.carbs.toFixed(1)}g carbs</Badge>
+            </div>
+          </section>
 
-        <section className="px-6 py-4 border-b space-y-3 flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+          <section className="px-6 py-4 border-b space-y-3">
           {/* Mobile uses a stacked row layout, so keep column labels desktop-only. */}
           <div className="hidden sm:grid sm:grid-cols-[minmax(240px,1fr)_104px_104px_44px] gap-2 px-2 text-xs tracking-wide uppercase text-muted-foreground font-semibold">
             <span>Ingredient</span>
@@ -394,11 +394,12 @@ export function EditLogIngredientsDialog({
             })}
           </div>
 
-          <Button type="button" variant="outline" onClick={handleAddRow}>
-            <Plus className="h-4 w-4" />
-            Add ingredient
-          </Button>
-        </section>
+            <Button type="button" variant="outline" onClick={handleAddRow}>
+              <Plus className="h-4 w-4" />
+              Add ingredient
+            </Button>
+          </section>
+        </div>
 
         <DialogFooter className="px-6 py-4 flex-row justify-end gap-2">
           <Button
