@@ -8,7 +8,7 @@ import {
   type LogIngredientOption,
 } from "@/components/log/edit-log-ingredients-dialog";
 import { addRecipeToLogAction } from "@/actions/log-actions";
-import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker-rac";
 import { Label } from "@/components/ui/label";
 import type { RecipeType } from "@/types/recipe";
 import {
@@ -157,12 +157,13 @@ export function RecipeAddToLogDialog({
             </Select>
           </div>
           <div className="w-full space-y-1.5 md:flex-1 lg:w-[300px] lg:flex-none">
-            <Label>Date</Label>
-            <Input
-              type="date"
+            <Label>
+              Date
+            </Label>
+            {/* Reuse shared shadcn-style date picker for consistent behavior. */}
+            <DatePicker
               value={logDate}
-              max="9999-12-31"
-              onChange={(event) => setLogDate(event.target.value)}
+              onChange={setLogDate}
               disabled={isSaving}
             />
           </div>
@@ -234,5 +235,6 @@ export function RecipeAddToLogDialog({
 }
 
 function toDateInputValue(date: Date) {
-  return date.toLocaleDateString("en-CA");
+  // Keep stable ISO date format for date picker state.
+  return date.toISOString().slice(0, 10);
 }
