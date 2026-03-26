@@ -6,6 +6,7 @@ import type { RecipeType } from "@/types/recipe";
 import { IngredientItem } from "@/components/recipes/ingredient-item";
 import { isScaleModified } from "@/lib/recipes/helpers";
 import { useRecipePageIngredientsSectionData } from "@/components/context/recipe-page-context";
+import { PortionSplitCard } from "@/components/recipes/recipe-page/portion-split-card";
 
 export function IngredientsSection() {
   const {
@@ -37,7 +38,7 @@ export function IngredientsSection() {
     <div>
       <div className="flex justify-between items-center mb-2">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold">Ingredients</h3>
+          <h3 className="font-semibold text-base">Ingredients</h3>
           {hasActiveScaling && (
             <Button
               variant="ghost"
@@ -45,7 +46,7 @@ export function IngredientsSection() {
               onClick={onReset}
               aria-label="Reset ingredient amounts"
             >
-              <RotateCcw className="h-3.5 w-3.5" />
+              <RotateCcw  />
             </Button>
           )}
         </div>
@@ -57,9 +58,9 @@ export function IngredientsSection() {
             disabled={currentServings <= 2}
             aria-label="Decrease servings"
           >
-            <Minus className="h-4 w-4" />
+            <Minus />
           </Button>
-          <span className="text-sm font-medium min-w-12 text-center">
+          <span className="text-sm font-base min-w-12 text-center">
             {currentServings} {currentServings === 1 ? "serving" : "servings"}
           </span>
           <Button
@@ -68,16 +69,15 @@ export function IngredientsSection() {
             onClick={() => onServingsChange(currentServings + 2)}
             aria-label="Increase servings"
           >
-            <Plus className="h-4 w-4" />
+            <Plus />
           </Button>
         </div>
       </div>
-      <div className="text-xs text-muted-foreground mb-2 p-2 bg-muted rounded">
-        <div>Jagoda: {jagodaPortionFactor.toFixed(1)}</div>
-        <div>
-          Nelson: {nelsonPortionFactor.toFixed(1)} ({recipe.servingMultiplierForNelson}x)
-        </div>
-      </div>
+      <PortionSplitCard
+        jagodaPortionFactor={jagodaPortionFactor}
+        nelsonPortionFactor={nelsonPortionFactor}
+        nelsonMultiplier={recipe.servingMultiplierForNelson}
+      />
 
       {ungroupedIngredients.length > 0 ? (
         <div className="mb-3">

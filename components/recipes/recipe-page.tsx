@@ -33,7 +33,6 @@ export default function RecipePage({
   const { recipe, ingredients } = useRecipePageBaseData();
   const addToLogData = useRecipePageAddToLogData();
 
-
   useEffect(() => {
     setIsAddToLogOpen(false);
   }, [recipe.id, recipe.servings]);

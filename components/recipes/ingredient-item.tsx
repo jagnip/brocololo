@@ -17,13 +17,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { ArrowLeftRight, Info } from "lucide-react";
+import {
+  ArrowLeftRight,
+  ChevronDownIcon,
+  Info,
+  ShoppingBasket,
+} from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 import { IngredientIcon } from "../ingredient-icon";
 import { useEffect, useRef, useState } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
+import { IngredientNutritionalInfo } from "./ingredient-nutritional-info";
 import {
   Command,
   CommandEmpty,
@@ -32,7 +38,6 @@ import {
   CommandItem,
   CommandList,
 } from "../ui/command";
-import { cn } from "@/lib/utils";
 
 type IngredientItemProps = {
   recipeIngredient: RecipeType["ingredients"][number];
@@ -69,16 +74,15 @@ export function IngredientItem({
     displayUnitName,
     displayUnitNamePlural,
     availableUnits,
-  } =
-    getIngredientDisplay(
-      recipeIngredient.amount,
-      recipeIngredient.unit?.id ?? null,
-      recipeIngredient.unit?.name ?? null,
-      selectedUnitId,
-      ingredient.unitConversions,
-      servingScalingFactor,
-      calorieScalingFactor,
-    );
+  } = getIngredientDisplay(
+    recipeIngredient.amount,
+    recipeIngredient.unit?.id ?? null,
+    recipeIngredient.unit?.name ?? null,
+    selectedUnitId,
+    ingredient.unitConversions,
+    servingScalingFactor,
+    calorieScalingFactor,
+  );
 
   const getUnitOptionLabel = (unitId: string) => {
     // Recompute per target unit so option labels pluralize against converted amounts.
@@ -102,20 +106,20 @@ export function IngredientItem({
   // Build macro snapshots for selected unit and currently selected amount.
   const showPerOneSelectedUnitColumn =
     selectedUnitGramsPerUnit != null && !isGramUnit(displayUnitName);
-  const oneSelectedUnitNutrition =
-    !showPerOneSelectedUnitColumn
-      ? null
-      : scaleIngredientNutritionForGrams(nutrition, selectedUnitGramsPerUnit);
+  const oneSelectedUnitNutrition = !showPerOneSelectedUnitColumn
+    ? null
+    : scaleIngredientNutritionForGrams(nutrition, selectedUnitGramsPerUnit);
   const selectedAmountNutrition =
     rawAmountInGrams == null
       ? null
       : scaleIngredientNutritionForGrams(nutrition, rawAmountInGrams);
-  const oneUnitHeader = displayUnitName && showPerOneSelectedUnitColumn
-    ? `Per 1 ${displayUnitName} (${formatIngredientAmount(
-        selectedUnitGramsPerUnit ?? 0,
-        2,
-      )}g)`
-    : null;
+  const oneUnitHeader =
+    displayUnitName && showPerOneSelectedUnitColumn
+      ? `1 ${displayUnitName} (${formatIngredientAmount(
+          selectedUnitGramsPerUnit ?? 0,
+          2,
+        )}g)`
+      : null;
   const selectedAmountText =
     rawAmount == null
       ? null
@@ -129,14 +133,17 @@ export function IngredientItem({
   });
   const selectedAmountHeader =
     selectedAmountText && selectedUnitLabel && rawAmountInGrams != null
-      ? `Per ${selectedAmountText} ${selectedUnitLabel} (${formatIngredientAmount(
-          rawAmountInGrams,
-          2,
-        )}g)`
+      ? isGramUnit(displayUnitName)
+        ? `${selectedAmountText}g`
+        : `${selectedAmountText} ${selectedUnitLabel} (${formatIngredientAmount(
+            rawAmountInGrams,
+            2,
+          )}g)`
       : null;
 
   const [isEditing, setIsEditing] = useState(false);
   const [swapOpen, setSwapOpen] = useState(false);
+  const [showNutritionDetails, setShowNutritionDetails] = useState(false);
   const [editValue, setEditValue] = useState("");
   const initialEditValueRef = useRef("");
   const committedRef = useRef(false);
@@ -152,7 +159,8 @@ export function IngredientItem({
   const handleFocus = () => {
     committedRef.current = false;
     // Mirror non-edit display format so the input doesn't jump from 50 -> 50.0.
-    const displayed = rawAmount == null ? "" : formatIngredientAmount(rawAmount, 2);
+    const displayed =
+      rawAmount == null ? "" : formatIngredientAmount(rawAmount, 2);
     setIsEditing(true);
     setEditValue(displayed);
     initialEditValueRef.current = displayed;
@@ -167,7 +175,12 @@ export function IngredientItem({
     if (editValue === initialEditValueRef.current) return;
 
     const newValue = parseFloat(editValue);
-    if (isNaN(newValue) || newValue <= 0 || rawAmount == null || rawAmount === 0) {
+    if (
+      isNaN(newValue) ||
+      newValue <= 0 ||
+      rawAmount == null ||
+      rawAmount === 0
+    ) {
       return;
     }
 
@@ -190,106 +203,89 @@ export function IngredientItem({
   const isEditable = rawAmount != null;
   const canRenderAmountAndUnit =
     recipeIngredient.unit != null && displayAmount != null;
-  const shouldShowUnitSelect = availableUnits.length > 1;
+  const ingredientCandidates = [
+    ingredient,
+    ...replacementCandidates.filter(
+      (candidate) => candidate.id !== ingredient.id,
+    ),
+  ];
 
   return (
-    <li className="flex items-center gap-2">
-      <IngredientIcon icon={ingredient.icon} name={ingredient.name} />
-      <span>
+    <li className="flex flex-col gap-1 rounded-md border border-border/60 p-1">
+      <div className="flex items-center gap-1 md:flex-col md:items-stretch lg:flex-row lg:items-center">
+        {/* <IngredientIcon icon={ingredient.icon} name={ingredient.name} /> */}
         {canRenderAmountAndUnit && (
-          <>
+          <div className="order-1 md:order-2 lg:order-1 flex items-center gap-1 md:w-full lg:w-auto">
             {isEditable ? (
-              <Input
-                ref={inputRef}
-                type="number"
-                min="0.1"
-                step="any"
-                value={isEditing ? editValue : displayAmount}
-                onFocus={handleFocus}
-                onChange={(e) => setEditValue(e.target.value)}
-                onBlur={handleCommit}
-                onKeyDown={handleKeyDown}
-                className="inline-flex w-20 h-6 px-1 text-xs text-center"
-                aria-label={`Amount of ${ingredient.name}`}
-              />
+              /* Amount */
+              <div className="w-16 h-8 flex items-center justify-center">
+                <Input
+                  ref={inputRef}
+                  type="number"
+                  min="0.1"
+                  step="any"
+                  value={isEditing ? editValue : displayAmount}
+                  onFocus={handleFocus}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onBlur={handleCommit}
+                  onKeyDown={handleKeyDown}
+                  // Match select/button vertical rhythm: keep exact height and remove default vertical padding.
+                  // Number inputs can look left-aligned in some browsers; force centered text.
+                  className="w-16 min-w-16 h-8 px-1 py-0 text-sm leading-none text-center! tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  aria-label={`Amount of ${ingredient.name}`}
+                />
+              </div>
             ) : (
-              displayAmount
+              <div className="w-16 min-w-16 h-8 flex items-center justify-center text-sm leading-none text-center tabular-nums">
+                {displayAmount}
+              </div>
             )}{" "}
-            {shouldShowUnitSelect ? (
-              <Select
-                value={selectedUnitId ?? undefined}
-                onValueChange={(value) => onUnitChange(value || null)}
-                // Recipe page unit selectors should not be clearable.
-                allowInlineClear={false}
+            <Select
+              value={selectedUnitId ?? undefined}
+              disabled={false}
+              onValueChange={(value) => onUnitChange(value || null)}
+              // Recipe page unit selectors should not be clearable.
+              allowInlineClear={false}
+            >
+              {/* Unit */}
+              <SelectTrigger
+                size="sm"
+                className="inline-flex h-8 px-2 py-0 text-sm items-center [&>svg]:hidden w-24 min-w-24 md:w-full md:min-w-0 lg:w-24 lg:min-w-24"
               >
-                <SelectTrigger
-                  size="sm"
-                  className="inline-flex h-6 px-2 text-xs [&>svg]:hidden"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableUnits.map((uc) => (
-                    <SelectItem key={uc.unitId} value={uc.unitId}>
-                      {getUnitOptionLabel(uc.unitId)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              // Preserve row alignment by rendering a read-only single-option select.
-              <Select
-                value={selectedUnitId ?? undefined}
-                disabled
-                allowInlineClear={false}
-              >
-                <SelectTrigger
-                  size="sm"
-                  className="inline-flex h-6 px-2 text-xs border-transparent bg-transparent shadow-none [&_svg]:hidden disabled:opacity-100 disabled:cursor-default"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableUnits.map((uc) => (
-                    <SelectItem key={uc.unitId} value={uc.unitId}>
-                      {getUnitOptionLabel(uc.unitId)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}{" "}
-          </>
-        )}
-        {recipeIngredient.additionalInfo && (
-          <span className="text-muted-foreground text-xs ml-1">
-            ({recipeIngredient.additionalInfo})
-          </span>
-        )}
-        {recipeIngredient.nutritionTarget === "PRIMARY_ONLY" && (
-          <Badge variant="outline" className="ml-1 h-5 text-[10px]">
-            Jagoda only
-          </Badge>
-        )}
-        {recipeIngredient.nutritionTarget === "SECONDARY_ONLY" && (
-          <Badge variant="outline" className="ml-1 h-5 text-[10px]">
-            Nelson only
-          </Badge>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {availableUnits.map((uc) => (
+                  <SelectItem key={uc.unitId} value={uc.unitId}>
+                    {getUnitOptionLabel(uc.unitId)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>{" "}
+          </div>
         )}
         <Popover open={swapOpen} onOpenChange={setSwapOpen}>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="ml-2 h-6 px-2 text-xs">
+            <Button
+              variant="outline"
+              size="sm"
+              className="order-2 md:order-1 lg:order-2 h-8 flex-1 min-w-0 md:w-full md:flex-none lg:flex-1 px-3 text-sm font-normal justify-start text-left gap-0 bg-transparent hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
+            >
+              {" "}
               <IngredientIcon icon={ingredient.icon} name={ingredient.name} />
-              <span className="ml-1 truncate max-w-28">{ingredient.name}</span>
+              <span className="truncate w-full text-left ml-2">
+                {ingredient.name}
+              </span>
+              <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-72 p-2" align="start">
-            {/* Inline ingredient selector used for swap simulation. */}
             <Command>
               <CommandInput placeholder="Search ingredient..." />
               <CommandList>
                 <CommandEmpty>No ingredient found.</CommandEmpty>
                 <CommandGroup>
-                  {replacementCandidates.map((candidate) => (
+                  {ingredientCandidates.map((candidate) => (
                     <CommandItem
                       key={candidate.id}
                       value={candidate.name}
@@ -297,14 +293,22 @@ export function IngredientItem({
                         onIngredientChange(candidate.id);
                         setSwapOpen(false);
                       }}
+                      className="text-left"
                     >
-                      <IngredientIcon icon={candidate.icon} name={candidate.name} />
-                      <span className="ml-2">{candidate.name}</span>
+                      <IngredientIcon
+                        icon={candidate.icon}
+                        name={candidate.name}
+                      />
+                      <span className="ml-2 truncate w-full text-left">
+                        {candidate.name}
+                      </span>
                       <span
-                        className={cn(
+                        className={[
                           "ml-auto inline-block h-2 w-2 rounded-full",
-                          ingredient.id === candidate.id ? "bg-primary" : "bg-transparent",
-                        )}
+                          ingredient.id === candidate.id
+                            ? "bg-primary"
+                            : "bg-transparent",
+                        ].join(" ")}
                       />
                     </CommandItem>
                   ))}
@@ -313,119 +317,95 @@ export function IngredientItem({
             </Command>
           </PopoverContent>
         </Popover>
-        {showApplyScaleAction && (
+      </div>
+      <div className="flex items-center justify-between gap-1 flex-wrap">
+        <div className="flex items-center gap-1">
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="ml-1 h-6 w-6 p-0"
-            // One-click action: apply this row's ratio to every ingredient row.
-            onClick={onApplyScaleToAll}
-            aria-label={`Scale all ingredients based on ${ingredient.name}`}
-            title="Apply this amount change to all ingredients"
+            className="h-8 w-8 p-0"
+            aria-label={`Nutrition details for ${ingredient.name}`}
+            aria-expanded={showNutritionDetails}
+            onClick={() => setShowNutritionDetails((prev) => !prev)}
           >
-            <ArrowLeftRight className="h-3.5 w-3.5" />
+            <Info className="h-4 w-4" />
           </Button>
-        )}
-        <Popover>
-          <PopoverTrigger asChild>
-            {/* Mobile-friendly touch target: use labeled button instead of tiny icon-only trigger. */}
+          {ingredient.supermarketUrl && (
+            <Button
+              asChild
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0"
+            >
+              <a
+                href={ingredient.supermarketUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Open supermarket link for ${ingredient.name}`}
+                title="Open supermarket link"
+              >
+                <ShoppingBasket className="h-4 w-4" />
+              </a>
+            </Button>
+          )}
+          {showApplyScaleAction && (
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="ml-1 h-8 px-3 text-xs"
-              aria-label={`Nutrition details for ${ingredient.name}`}
+              className="h-8 w-8 p-0"
+              // One-click action: apply this row's ratio to every ingredient row.
+              onClick={onApplyScaleToAll}
+              aria-label={`Scale all ingredients based on ${ingredient.name}`}
+              title="Apply this amount change to all ingredients"
             >
-              <Info className="h-3.5 w-3.5" />
-              <span>Nutrition details</span>
+              <ArrowLeftRight className="h-4 w-4" />
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-120 p-3">
-            <div className="overflow-x-auto">
-              {/* Keep layout table-like so the three macro perspectives are easy to compare. */}
-              <table className="w-full table-fixed text-xs">
-                <thead>
-                  <tr className="text-left align-top">
-                    <th className="w-20 font-medium text-muted-foreground pr-2">
-                      Macro
-                    </th>
-                    <th className="font-medium pr-3">Per 100g</th>
-                    {oneUnitHeader && (
-                      <th className="font-medium pr-3">{oneUnitHeader}</th>
-                    )}
-                    {selectedAmountHeader && (
-                      <th className="font-medium">{selectedAmountHeader}</th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="text-muted-foreground pr-2">Calories</td>
-                    <td className="pr-3">{formatIngredientAmount(nutrition.calories, 2)} kcal</td>
-                    {oneSelectedUnitNutrition && (
-                      <td className="pr-3">
-                        {formatIngredientAmount(oneSelectedUnitNutrition.calories, 2)} kcal
-                      </td>
-                    )}
-                    {selectedAmountNutrition && (
-                      <td>
-                        {formatIngredientAmount(selectedAmountNutrition.calories, 2)} kcal
-                      </td>
-                    )}
-                  </tr>
-                  <tr>
-                    <td className="text-muted-foreground pr-2">Protein</td>
-                    <td className="pr-3">{formatIngredientAmount(nutrition.protein, 2)}g</td>
-                    {oneSelectedUnitNutrition && (
-                      <td className="pr-3">
-                        {formatIngredientAmount(oneSelectedUnitNutrition.protein, 2)}g
-                      </td>
-                    )}
-                    {selectedAmountNutrition && (
-                      <td>{formatIngredientAmount(selectedAmountNutrition.protein, 2)}g</td>
-                    )}
-                  </tr>
-                  <tr>
-                    <td className="text-muted-foreground pr-2">Fat</td>
-                    <td className="pr-3">{formatIngredientAmount(nutrition.fat, 2)}g</td>
-                    {oneSelectedUnitNutrition && (
-                      <td className="pr-3">
-                        {formatIngredientAmount(oneSelectedUnitNutrition.fat, 2)}g
-                      </td>
-                    )}
-                    {selectedAmountNutrition && (
-                      <td>{formatIngredientAmount(selectedAmountNutrition.fat, 2)}g</td>
-                    )}
-                  </tr>
-                  <tr>
-                    <td className="text-muted-foreground pr-2">Carbs</td>
-                    <td className="pr-3">{formatIngredientAmount(nutrition.carbs, 2)}g</td>
-                    {oneSelectedUnitNutrition && (
-                      <td className="pr-3">
-                        {formatIngredientAmount(oneSelectedUnitNutrition.carbs, 2)}g
-                      </td>
-                    )}
-                    {selectedAmountNutrition && (
-                      <td>{formatIngredientAmount(selectedAmountNutrition.carbs, 2)}g</td>
-                    )}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </PopoverContent>
-        </Popover>
-        {ingredient.supermarketUrl && (
-          <a
-            href={ingredient.supermarketUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-2 text-blue-600 hover:underline text-xs"
-          >
-            🛒
-          </a>
-        )}
-      </span>
+          )}
+        </div>
+
+        <div className="ml-auto flex items-center gap-1">
+          {recipeIngredient.nutritionTarget === "PRIMARY_ONLY" && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0"
+              aria-label="Jagoda only"
+              title="Jagoda only"
+            >
+              J
+            </Button>
+          )}
+          {recipeIngredient.nutritionTarget === "SECONDARY_ONLY" && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0"
+              aria-label="Nelson only"
+              title="Nelson only"
+            >
+              N
+            </Button>
+          )}
+          {recipeIngredient.additionalInfo && (
+            <span className="text-muted-foreground text-sm">
+              {recipeIngredient.additionalInfo}
+            </span>
+          )}
+        </div>
+      </div>
+      <IngredientNutritionalInfo
+        isOpen={showNutritionDetails}
+        nutrition={nutrition}
+        oneUnitHeader={oneUnitHeader}
+        selectedAmountHeader={selectedAmountHeader}
+        oneSelectedUnitNutrition={oneSelectedUnitNutrition}
+        selectedAmountNutrition={selectedAmountNutrition}
+      />
     </li>
   );
 }
