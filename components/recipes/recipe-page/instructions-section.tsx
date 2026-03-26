@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { parseMarkdownLinks } from "@/lib/recipes/text-formatting";
+import { useState } from "react";
 import {
   formatIngredientAmount,
   formatInstructionIngredientBadge,
@@ -23,6 +24,7 @@ export function InstructionsSection() {
     getIngredientDisplayScalingFactor,
     getIngredientCalorieFactor,
   } = useRecipePageInstructionsSectionData();
+  const [selectedInstructionId, setSelectedInstructionId] = useState<string | null>(null);
 
   const renderTextWithMarkdownLinks = (text: string, keyPrefix: string) =>
     // Keep markdown-link rendering local to this section now that data comes from context.
@@ -90,14 +92,46 @@ export function InstructionsSection() {
         </div>
       </div>
       <ol className="flex flex-col gap-2.5">
-        {instructions.map((instruction, index) => (
+        {instructions.map((instruction, index) => {
+          const isSelected = selectedInstructionId === instruction.id;
+
+          return (
           <li
             key={instruction.id}
-            className="flex items-start gap-2.5 rounded-lg border border-border bg-card p-2.5"
+            role="button"
+            tabIndex={0}
+            aria-pressed={isSelected}
+            onClick={(event) => {
+              // Keep markdown links functional without toggling the selected step.
+              if ((event.target as HTMLElement).closest("a")) {
+                return;
+              }
+              setSelectedInstructionId(instruction.id);
+            }}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter" && event.key !== " ") {
+                return;
+              }
+              event.preventDefault();
+              setSelectedInstructionId(instruction.id);
+            }}
+            className={`flex items-start gap-2.5 rounded-lg border p-2.5 cursor-pointer transition-colors ${
+              isSelected
+                ? "border-border bg-muted/60"
+                : "border-border bg-card hover:bg-muted/40"
+            }`}
           >
-            {/* Paper-like step number circle */}
-            <div className="self-start flex size-5 shrink-0 items-center justify-center rounded-full border border-border bg-muted">
-              <div className="text-[10px] leading-none font-medium text-muted-foreground">
+            {/* Increase active-state contrast so step index remains visible on selection. */}
+            <div
+              className={`self-start flex size-5 shrink-0 items-center justify-center rounded-full ${
+                isSelected ? "bg-foreground" : "bg-muted"
+              }`}
+            >
+              <div
+                className={`text-[10px] leading-none font-medium ${
+                  isSelected ? "text-background" : "text-secondary-foreground"
+                }`}
+              >
                 {index + 1}
               </div>
             </div>
@@ -183,7 +217,9 @@ export function InstructionsSection() {
                     return (
                       <Badge
                         key={`${instruction.id}-${recipeIngredient.id}`}
-                        variant="outline"
+                        variant="secondary"
+                        // Make badges more prominent inside the selected step.
+                        className={isSelected ? "bg-background border-foreground/20" : undefined}
                       >
                         <span>{baseBadgeLabel}</span>
                         {mutedGramsLabel ? (
@@ -198,7 +234,7 @@ export function InstructionsSection() {
               )}
             </div>
           </li>
-        ))}
+        )})}
       </ol>
     </div>
   );

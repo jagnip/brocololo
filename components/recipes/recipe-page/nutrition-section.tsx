@@ -33,7 +33,8 @@ export function NutritionSection() {
                 jagodaNutrition.calories.toString()
               }
               onChange={(event) => onCaloriesChange(event.target.value)}
-              className="w-16 [appearance:textfield] px-2 text-center leading-4 font-normal text-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              // Keep only width + number spinner reset; rely on DS defaults for spacing.
+              className="w-16 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               aria-label="Calories per portion"
             />
             <span className="text-sm leading-4 font-normal text-foreground">
@@ -41,9 +42,9 @@ export function NutritionSection() {
             </span>
           </div>
           <div className="flex flex-nowrap items-center gap-1 justify-end ml-auto pl-6 md:w-full md:ml-0 md:pl-0 md:justify-start md:flex-wrap lg:w-auto lg:ml-auto lg:pl-6 lg:justify-end lg:flex-nowrap">
-            <Badge variant="outline">{jagodaNutrition.protein}p</Badge>
-            <Badge variant="outline">{jagodaNutrition.fat}f</Badge>
-            <Badge variant="outline">{jagodaNutrition.carbs}c</Badge>
+            <Badge variant="secondary">{jagodaNutrition.protein}p</Badge>
+            <Badge variant="secondary">{jagodaNutrition.fat}f</Badge>
+            <Badge variant="secondary">{jagodaNutrition.carbs}c</Badge>
           </div>
         </div>
       </div>
@@ -58,9 +59,9 @@ export function NutritionSection() {
               {nelsonNutrition.calories} kcal
             </span>
             <div className="flex flex-nowrap items-center gap-1 justify-end ml-auto pl-6 md:w-full md:ml-0 md:pl-0 md:justify-start md:flex-wrap lg:w-auto lg:ml-auto lg:pl-6 lg:justify-end lg:flex-nowrap">
-              <Badge variant="outline">{nelsonNutrition.protein}p</Badge>
-              <Badge variant="outline">{nelsonNutrition.fat}f</Badge>
-              <Badge variant="outline">{nelsonNutrition.carbs}c</Badge>
+              <Badge variant="secondary">{nelsonNutrition.protein}p</Badge>
+              <Badge variant="secondary">{nelsonNutrition.fat}f</Badge>
+              <Badge variant="secondary">{nelsonNutrition.carbs}c</Badge>
             </div>
           </div>
         </div>

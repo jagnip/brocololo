@@ -162,7 +162,8 @@ export function SearchableSelect({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            "w-full justify-between",
+            // Keep trigger horizontal padding aligned with Input/Select defaults.
+            "w-full justify-between px-3",
             !selectedOption && "text-muted-foreground",
             className,
           )}
@@ -194,10 +195,14 @@ export function SearchableSelect({
                   setOpen(false);
                 }}
               >
-                <X className="h-3.5 w-3.5" />
+                {/* Match clear icon sizing with the standard Select component. */}
+                <X className="size-3.5" />
               </span>
             ) : null}
-            {triggerIcon ?? <ChevronsUpDown className="h-4 w-4 opacity-50" />}
+            {/* Match icon tone with standard Select trigger affordance. */}
+            {triggerIcon ?? (
+              <ChevronsUpDown className="h-4 w-4 text-muted-foreground opacity-50" />
+            )}
           </span>
         </Button>
       </PopoverTrigger>

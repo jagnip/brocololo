@@ -232,9 +232,8 @@ export function IngredientItem({
                   onChange={(e) => setEditValue(e.target.value)}
                   onBlur={handleCommit}
                   onKeyDown={handleKeyDown}
-                  // Match select/button vertical rhythm: keep exact height and remove default vertical padding.
-                  // Number inputs can look left-aligned in some browsers; force centered text.
-                  className="w-16 min-w-16 px-1 py-0 text-sm leading-none text-center! tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  // Keep width compact; rely on DS defaults for spacing/typography.
+                  className="w-16 min-w-16 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   aria-label={`Amount of ${ingredient.name}`}
                 />
               </div>
@@ -253,7 +252,8 @@ export function IngredientItem({
               {/* Unit */}
               <SelectTrigger
                 size="sm"
-                className="inline-flex px-2 items-center [&>svg]:hidden w-24 min-w-24 md:w-full md:min-w-0 lg:w-24 lg:min-w-24"
+                // Keep tablet fluid; slightly widen desktop unit control.
+                className="inline-flex items-center [&>svg]:hidden w-24 min-w-24 md:w-full md:min-w-0 lg:w-26 lg:min-w-26"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -279,8 +279,8 @@ export function IngredientItem({
           searchPlaceholder="Search ingredient..."
           emptyLabel="No ingredient found."
           allowClear={false}
-          // Match row layout and text treatment used by the previous trigger.
-          className="order-2 md:order-1 lg:order-2 flex-1 min-w-0 md:w-full md:flex-none lg:flex-1 px-3 text-sm font-normal"
+          // Keep layout-only overrides; spacing/typography come from the component defaults.
+          className="order-2 md:order-1 lg:order-2 flex-1 min-w-0 md:w-full md:flex-none lg:flex-1 font-normal"
           renderIcon={(option) => (
             <IngredientIcon icon={option.icon ?? null} name={option.label} />
           )}
@@ -291,8 +291,8 @@ export function IngredientItem({
           <Button
             type="button"
             variant="outline"
-            size="sm"
-            className="h-8 w-8 p-0"
+            // Use icon size variant so global icon-color rules apply.
+            size="icon-sm"
             aria-label={`Nutrition details for ${ingredient.name}`}
             aria-expanded={showNutritionDetails}
             onClick={() => setShowNutritionDetails((prev) => !prev)}
@@ -304,8 +304,8 @@ export function IngredientItem({
               asChild
               type="button"
               variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0"
+              // Use icon size variant so global icon-color rules apply.
+              size="icon-sm"
             >
               <a
                 href={ingredient.supermarketUrl}
@@ -322,8 +322,8 @@ export function IngredientItem({
             <Button
               type="button"
               variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0"
+              // Use icon size variant so global icon-color rules apply.
+              size="icon-sm"
               // One-click action: apply this row's ratio to every ingredient row.
               onClick={onApplyScaleToAll}
               aria-label={`Scale all ingredients based on ${ingredient.name}`}

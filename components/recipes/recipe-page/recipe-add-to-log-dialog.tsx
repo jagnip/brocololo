@@ -8,7 +8,8 @@ import {
   type LogIngredientOption,
 } from "@/components/log/edit-log-ingredients-dialog";
 import { addRecipeToLogAction } from "@/actions/log-actions";
-import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker-rac";
+import { Label } from "@/components/ui/label";
 import type { RecipeType } from "@/types/recipe";
 import {
   Select,
@@ -60,7 +61,9 @@ export function RecipeAddToLogDialog({
   ingredientFormDependencies,
 }: RecipeAddToLogDialogProps) {
   const [isSaving, startSavingTransition] = useTransition();
-  const [logPerson, setLogPerson] = useState<"PRIMARY" | "SECONDARY">(LogPerson.PRIMARY);
+  const [logPerson, setLogPerson] = useState<"PRIMARY" | "SECONDARY">(
+    LogPerson.PRIMARY,
+  );
   const [logDate, setLogDate] = useState(() => toDateInputValue(new Date()));
   const [logMealType, setLogMealType] = useState<
     "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER"
@@ -77,7 +80,8 @@ export function RecipeAddToLogDialog({
   }, [open]);
 
   const initialRows = useMemo(() => {
-    const selectedPerson = logPerson === LogPerson.PRIMARY ? "primary" : "secondary";
+    const selectedPerson =
+      logPerson === LogPerson.PRIMARY ? "primary" : "secondary";
 
     return recipeIngredients.flatMap((recipeIngredient) => {
       if (recipeIngredient.amount == null) {
@@ -118,12 +122,14 @@ export function RecipeAddToLogDialog({
   ]);
 
   const selectedMealLabel =
-    LOG_MEAL_OPTIONS.find((option) => option.value === logMealType)?.label ?? "Dinner";
+    LOG_MEAL_OPTIONS.find((option) => option.value === logMealType)?.label ??
+    "Dinner";
 
   return (
     <EditLogIngredientsDialog
       open={open}
-      title={`Add ${recipeName} to log`}
+      // Keep modal title in sentence case for consistent UI copy.
+      title={`Add ${recipeName.toLocaleLowerCase()} to log`}
       subtitle={`${selectedMealLabel} • ${logDate}`}
       initialRows={initialRows}
       ingredientOptions={ingredientOptions}
@@ -131,12 +137,10 @@ export function RecipeAddToLogDialog({
       isSaving={isSaving}
       saveLabel="Add to log"
       contextControls={
-        // Keep recipe-specific context controls in this wrapper so page stays focused.
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="space-y-1.5">
-            <p className="text-xs tracking-wide uppercase text-muted-foreground font-semibold">
-              Person
-            </p>
+        <div className="flex w-full flex-col gap-4 md:flex-row md:items-start">
+          {/* Phone: stacked full width. Tablet: one row. Desktop: fixed 300px fields. */}
+          <div className="w-full space-y-1.5 md:flex-1 lg:w-[300px] lg:flex-none">
+            <Label>Person</Label>
             <Select
               value={logPerson}
               onValueChange={(nextValue) =>
@@ -144,7 +148,7 @@ export function RecipeAddToLogDialog({
               }
               disabled={isSaving}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -153,30 +157,29 @@ export function RecipeAddToLogDialog({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
-            <p className="text-xs tracking-wide uppercase text-muted-foreground font-semibold">
+          <div className="w-full space-y-1.5 md:flex-1 lg:w-[300px] lg:flex-none">
+            <Label>
               Date
-            </p>
-            <Input
-              type="date"
+            </Label>
+            {/* Reuse shared shadcn-style date picker for consistent behavior. */}
+            <DatePicker
               value={logDate}
-              max="9999-12-31"
-              onChange={(event) => setLogDate(event.target.value)}
+              onChange={setLogDate}
               disabled={isSaving}
             />
           </div>
-          <div className="space-y-1.5">
-            <p className="text-xs tracking-wide uppercase text-muted-foreground font-semibold">
-              Meal occasion
-            </p>
+          <div className="w-full space-y-1.5 md:flex-1 lg:w-[300px] lg:flex-none">
+            <Label>Meal occasion</Label>
             <Select
               value={logMealType}
               onValueChange={(nextValue) =>
-                setLogMealType(nextValue as "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER")
+                setLogMealType(
+                  nextValue as "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER",
+                )
               }
               disabled={isSaving}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -199,7 +202,13 @@ export function RecipeAddToLogDialog({
 
         startSavingTransition(async () => {
           const completeRows = rows.filter(
-            (row): row is { ingredientId: string; unitId: string; amount: number } =>
+            (
+              row,
+            ): row is {
+              ingredientId: string;
+              unitId: string;
+              amount: number;
+            } =>
               row.ingredientId != null &&
               row.unitId != null &&
               row.amount != null &&
@@ -227,5 +236,6 @@ export function RecipeAddToLogDialog({
 }
 
 function toDateInputValue(date: Date) {
-  return date.toLocaleDateString("en-CA");
+  // Keep stable ISO date format for date picker state.
+  return date.toISOString().slice(0, 10);
 }
