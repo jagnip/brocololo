@@ -49,8 +49,8 @@ export function InstructionsSection() {
   }
 
   return (
-    <div className="rounded-xl bg-card p-4 antialiased">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+    <div className="rounded-xl bg-card antialiased">
+      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-base leading-5 font-semibold text-foreground">
           Instructions
         </h3>

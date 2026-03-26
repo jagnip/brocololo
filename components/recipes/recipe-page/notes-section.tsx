@@ -29,13 +29,21 @@ export function NotesSection() {
     });
 
   return (
-    <div>
-      <h3 className="font-semibold mb-2">Notes</h3>
-      <ul className="list-disc list-inside space-y-1 text-sm">
-        {recipe.notes.map((note: string, index: number) => (
-          <li key={index}>{renderTextWithMarkdownLinks(note, `note-${index}`)}</li>
-        ))}
-      </ul>
+    <div className="rounded-xl bg-card antialiased">
+      <div className="mb-2.5 flex items-center justify-between gap-2">
+        <h3 className="text-base leading-5 font-semibold text-foreground">
+          Notes
+        </h3>
+      </div>
+      <div className="rounded-[10px] border border-border bg-card p-2.5">
+        <ul className="list-disc list-inside space-y-1.5 text-sm leading-5 text-foreground">
+          {recipe.notes.map((note: string, index: number) => (
+            <li key={index} className="whitespace-pre-wrap">
+              {renderTextWithMarkdownLinks(note, `note-${index}`)}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

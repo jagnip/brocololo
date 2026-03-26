@@ -39,7 +39,7 @@ export function NutritionSection() {
               kcal
             </span>
           </div>
-          <div className="flex flex-nowrap items-center gap-1 justify-end ml-auto md:w-full md:ml-0 md:justify-start md:flex-wrap lg:w-auto lg:ml-auto lg:justify-end lg:flex-nowrap">
+          <div className="flex flex-nowrap items-center gap-1 justify-end ml-auto pl-6 md:w-full md:ml-0 md:pl-0 md:justify-start md:flex-wrap lg:w-auto lg:ml-auto lg:pl-6 lg:justify-end lg:flex-nowrap">
             <Badge variant="outline">{jagodaNutrition.protein}p</Badge>
             <Badge variant="outline">{jagodaNutrition.fat}f</Badge>
             <Badge variant="outline">{jagodaNutrition.carbs}c</Badge>
@@ -56,7 +56,7 @@ export function NutritionSection() {
             <span className="text-sm font-normal text-foreground">
               {nelsonNutrition.calories} kcal
             </span>
-            <div className="flex flex-nowrap items-center gap-1 justify-end ml-auto md:w-full md:ml-0 md:justify-start md:flex-wrap lg:w-auto lg:ml-auto lg:justify-end lg:flex-nowrap">
+            <div className="flex flex-nowrap items-center gap-1 justify-end ml-auto pl-6 md:w-full md:ml-0 md:pl-0 md:justify-start md:flex-wrap lg:w-auto lg:ml-auto lg:pl-6 lg:justify-end lg:flex-nowrap">
               <Badge variant="outline">{nelsonNutrition.protein}p</Badge>
               <Badge variant="outline">{nelsonNutrition.fat}f</Badge>
               <Badge variant="outline">{nelsonNutrition.carbs}c</Badge>

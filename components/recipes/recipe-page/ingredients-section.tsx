@@ -36,7 +36,7 @@ export function IngredientsSection() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-2">
+      <div className="mb-2.5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-base">Ingredients</h3>
           {hasActiveScaling && (
