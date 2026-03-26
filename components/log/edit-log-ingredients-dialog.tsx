@@ -265,7 +265,7 @@ export function EditLogIngredientsDialog({
           </section>
 
           <section className="px-4 py-4 md:px-6 md:py-6 border-b space-y-3">
-          <div className="hidden sm:grid sm:grid-cols-[minmax(0,1fr)_96px_128px_44px] lg:grid-cols-[minmax(0,450px)_96px_128px_44px] gap-2 text-xs tracking-wide uppercase text-muted-foreground font-semibold">
+          <div className="hidden sm:grid sm:grid-cols-[minmax(0,1fr)_96px_128px_auto] gap-2 text-xs tracking-wide uppercase text-muted-foreground font-semibold">
             <span>Ingredient</span>
             <span>Amount</span>
             <span>Unit</span>
@@ -282,7 +282,7 @@ export function EditLogIngredientsDialog({
               return (
                 <div
                   key={row.key}
-                    className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_96px_128px_44px] lg:grid-cols-[minmax(0,450px)_96px_128px_44px]"
+                    className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_96px_128px_auto]"
                 >
           
                   <div className="min-w-0 col-span-3 sm:col-span-1">
@@ -386,7 +386,7 @@ export function EditLogIngredientsDialog({
                     variant="outline"
                     size="icon"
          
-                    className="justify-self-end sm:justify-self-auto"
+                    className="justify-self-end"
                     aria-label="Remove ingredient row"
                     onClick={() => handleRemoveRow(row.key)}
                   >

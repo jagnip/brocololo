@@ -195,7 +195,8 @@ export function SearchableSelect({
                   setOpen(false);
                 }}
               >
-                <X className="h-3.5 w-3.5" />
+                {/* Match clear icon sizing with the standard Select component. */}
+                <X className="size-3.5" />
               </span>
             ) : null}
             {/* Match icon tone with standard Select trigger affordance. */}

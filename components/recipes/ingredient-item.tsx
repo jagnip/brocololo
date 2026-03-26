@@ -291,8 +291,8 @@ export function IngredientItem({
           <Button
             type="button"
             variant="outline"
-            size="sm"
-            className="h-8 w-8 p-0"
+            // Use icon size variant so global icon-color rules apply.
+            size="icon-sm"
             aria-label={`Nutrition details for ${ingredient.name}`}
             aria-expanded={showNutritionDetails}
             onClick={() => setShowNutritionDetails((prev) => !prev)}
@@ -304,8 +304,8 @@ export function IngredientItem({
               asChild
               type="button"
               variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0"
+              // Use icon size variant so global icon-color rules apply.
+              size="icon-sm"
             >
               <a
                 href={ingredient.supermarketUrl}
@@ -322,8 +322,8 @@ export function IngredientItem({
             <Button
               type="button"
               variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0"
+              // Use icon size variant so global icon-color rules apply.
+              size="icon-sm"
               // One-click action: apply this row's ratio to every ingredient row.
               onClick={onApplyScaleToAll}
               aria-label={`Scale all ingredients based on ${ingredient.name}`}
