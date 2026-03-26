@@ -27,6 +27,7 @@ export function NutritionSection() {
           <div className="flex items-center gap-1">
             <Input
               type="number"
+              size="sm"
               value={
                 targetCaloriesPerPortion?.toString() ??
                 jagodaNutrition.calories.toString()

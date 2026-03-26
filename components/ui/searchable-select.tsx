@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown, X } from "lucide-react";
+import { Check, ChevronDownIcon, ChevronsUpDown, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +35,8 @@ type SearchableSelectProps = {
   onCreateOption?: (searchTerm: string) => void;
   createOptionLabel?: (searchTerm: string) => string;
   renderIcon?: (option: SearchableSelectOption) => React.ReactNode;
+  triggerIcon?: React.ReactNode;
+  size?: "default" | "sm";
   className?: string;
 };
 
@@ -105,6 +107,8 @@ export function SearchableSelect({
   onCreateOption,
   createOptionLabel = (searchTerm) => `Create "${searchTerm}"`,
   renderIcon,
+  triggerIcon,
+  size = "default",
   className,
 }: SearchableSelectProps) {
   const [open, setOpen] = React.useState(false);
@@ -152,6 +156,8 @@ export function SearchableSelect({
         <Button
           type="button"
           variant="outline"
+          // Mirror Input/Button API: allow a compact trigger via size="sm".
+          size={size}
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
@@ -191,7 +197,7 @@ export function SearchableSelect({
                 <X className="h-3.5 w-3.5" />
               </span>
             ) : null}
-            <ChevronsUpDown className="h-4 w-4 opacity-50" />
+            {triggerIcon ?? <ChevronsUpDown className="h-4 w-4 opacity-50" />}
           </span>
         </Button>
       </PopoverTrigger>
