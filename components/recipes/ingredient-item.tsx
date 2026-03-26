@@ -250,7 +250,7 @@ export function IngredientItem({
               {/* Unit */}
               <SelectTrigger
                 size="sm"
-                className="inline-flex h-8 px-2 py-0 text-sm items-center [&>svg]:hidden w-23 min-w-23 md:w-full md:min-w-0 lg:w-23 lg:min-w-23"
+                className="inline-flex h-8 px-2 py-0 text-sm items-center [&>svg]:hidden w-24 min-w-24 md:w-full md:min-w-0 lg:w-24 lg:min-w-24"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -393,7 +393,7 @@ export function IngredientItem({
           )}
           {recipeIngredient.additionalInfo && (
             <span className="text-muted-foreground text-sm">
-              ({recipeIngredient.additionalInfo})
+              {recipeIngredient.additionalInfo}
             </span>
           )}
         </div>
