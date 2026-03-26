@@ -128,7 +128,8 @@ export function RecipeAddToLogDialog({
   return (
     <EditLogIngredientsDialog
       open={open}
-      title={`Add ${recipeName} to log`}
+      // Keep modal title in sentence case for consistent UI copy.
+      title={`Add ${recipeName.toLocaleLowerCase()} to log`}
       subtitle={`${selectedMealLabel} • ${logDate}`}
       initialRows={initialRows}
       ingredientOptions={ingredientOptions}
