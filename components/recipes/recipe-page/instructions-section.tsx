@@ -70,7 +70,6 @@ export function InstructionsSection() {
                 size="sm"
                 role="radio"
                 aria-checked={isSelected}
-                // Paper-like segmented control: filled for selected, outlined for unselected.
                 variant="outline"
                 onClick={() =>
                   setSelectedInstructionPerson((prev) =>
