@@ -247,16 +247,15 @@ export function EditLogIngredientsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-[min(1000px,calc(100vw-3rem))] sm:max-w-[1000px] lg:w-[min(1200px,calc(100vw-4rem))] lg:max-w-[1200px] xl:w-[min(1400px,calc(100vw-5rem))] xl:max-w-[1400px] 2xl:w-[min(1600px,calc(100vw-6rem))] 2xl:max-w-[1600px] max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col">
-        {/* Keep footer fixed by scrolling the whole content area above it. */}
+      <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-[min(1000px,calc(100vw-3rem))] sm:max-w-[1000px] lg:w-[min(1200px,calc(100vw-4rem))] lg:max-w-[1200px] xl:w-[min(1400px,calc(100vw-5rem))] xl:max-w-[1400px] 2xl:w-[min(1600px,calc(100vw-6rem))] 2xl:max-w-[1600px] max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col *:data-[slot=dialog-close]:top-4 *:data-[slot=dialog-close]:right-4 md:*:data-[slot=dialog-close]:top-6 md:*:data-[slot=dialog-close]:right-6">
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-          <DialogHeader className="px-6 py-5 border-b">
+          <DialogHeader className="px-4 py-4 md:px-6 md:py-6 border-b text-left">
             <DialogTitle className="text-2xl">{title}</DialogTitle>
             <p className="text-muted-foreground text-sm">{subtitle}</p>
             {contextControls ? <div className="mt-4">{contextControls}</div> : null}
           </DialogHeader>
 
-          <section className="px-6 py-4 border-b">
+          <section className="px-4 py-4 md:px-6 md:py-6 border-b">
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline">{macros.calories.toFixed(0)} kcal</Badge>
               <Badge variant="outline">{macros.proteins.toFixed(1)}g protein</Badge>
@@ -265,9 +264,8 @@ export function EditLogIngredientsDialog({
             </div>
           </section>
 
-          <section className="px-6 py-4 border-b space-y-3">
-          {/* Mobile uses a stacked row layout, so keep column labels desktop-only. */}
-          <div className="hidden sm:grid sm:grid-cols-[minmax(0,1fr)_96px_128px_44px] gap-2 px-2 text-xs tracking-wide uppercase text-muted-foreground font-semibold">
+          <section className="px-4 py-4 md:px-6 md:py-6 border-b space-y-3">
+          <div className="hidden sm:grid sm:grid-cols-[minmax(0,1fr)_96px_128px_44px] lg:grid-cols-[minmax(0,450px)_96px_128px_44px] gap-2 px-2 text-xs tracking-wide uppercase text-muted-foreground font-semibold">
             <span>Ingredient</span>
             <span>Amount</span>
             <span>Unit</span>
@@ -284,13 +282,12 @@ export function EditLogIngredientsDialog({
               return (
                 <div
                   key={row.key}
-                    // Mobile: ingredient row, then amount + unit + remove on one row.
-                    className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_44px] gap-2 sm:grid-cols-[minmax(0,1fr)_96px_128px_44px]"
+                    className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_44px] gap-2 sm:grid-cols-[minmax(0,1fr)_96px_128px_44px] lg:grid-cols-[minmax(0,450px)_96px_128px_44px]"
                 >
-                  {/* Ingredient always gets the flexible width lane. */}
+          
                   <div className="min-w-0 col-span-3 sm:col-span-1">
                     <SearchableSelect
-                      className="min-w-0 w-full"
+                      className="min-w-0 w-full font-normal"
                       options={ingredientSelectOptions}
                       value={row.ingredientId}
                       onValueChange={(nextValue) => {
@@ -343,7 +340,7 @@ export function EditLogIngredientsDialog({
                     min={0}
                     step="any"
                     placeholder="0"
-                    // Keep only width + numeric spinner reset; rely on DS spacing/typography defaults.
+              
                     className="w-full sm:w-24 sm:min-w-24 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     value={row.amount == null ? "" : row.amount}
                     onChange={(event) => {
@@ -366,7 +363,7 @@ export function EditLogIngredientsDialog({
                       }}
                       disabled={!selectedIngredient}
                     >
-                      {/* Wider unit lane on desktop, fluid width on mobile. */}
+                 
                       <SelectTrigger className="min-w-0 w-full sm:w-32 sm:min-w-32 [&>svg]:hidden">
                         <SelectValue placeholder="Unit" />
                       </SelectTrigger>
@@ -388,7 +385,7 @@ export function EditLogIngredientsDialog({
                     type="button"
                     variant="outline"
                     size="icon"
-                    // Keep remove action reachable after stacked mobile fields.
+         
                     className="justify-self-end sm:justify-self-auto"
                     aria-label="Remove ingredient row"
                     onClick={() => handleRemoveRow(row.key)}
@@ -407,7 +404,7 @@ export function EditLogIngredientsDialog({
           </section>
         </div>
 
-        <DialogFooter className="px-6 py-4 flex-row justify-end gap-2">
+        <DialogFooter className="px-4 py-4 md:px-6 md:py-6 flex-row justify-end gap-2">
           <Button
             type="button"
             variant="outline"
