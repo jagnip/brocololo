@@ -23,7 +23,6 @@ import {
   Info,
   ShoppingBasket,
 } from "lucide-react";
-import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 import { IngredientIcon } from "../ingredient-icon";
 import { useEffect, useRef, useState } from "react";
 import { Input } from "../ui/input";
@@ -31,13 +30,9 @@ import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { IngredientNutritionalInfo } from "./ingredient-nutritional-info";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "../ui/command";
+  SearchableSelect,
+  type SearchableSelectOption,
+} from "../ui/searchable-select";
 
 type IngredientItemProps = {
   recipeIngredient: RecipeType["ingredients"][number];
@@ -142,7 +137,6 @@ export function IngredientItem({
       : null;
 
   const [isEditing, setIsEditing] = useState(false);
-  const [swapOpen, setSwapOpen] = useState(false);
   const [showNutritionDetails, setShowNutritionDetails] = useState(false);
   const [editValue, setEditValue] = useState("");
   const initialEditValueRef = useRef("");
@@ -209,6 +203,14 @@ export function IngredientItem({
       (candidate) => candidate.id !== ingredient.id,
     ),
   ];
+  // Reuse shared searchable-select model so this row matches form behavior.
+  const ingredientOptions: SearchableSelectOption[] = ingredientCandidates.map(
+    (candidate) => ({
+      value: candidate.id,
+      label: candidate.name,
+      icon: candidate.icon,
+    }),
+  );
 
   return (
     <li className="flex flex-col gap-1 rounded-md border border-border/60 p-1">
@@ -224,6 +226,7 @@ export function IngredientItem({
                   type="number"
                   min="0.1"
                   step="any"
+                  size="sm"
                   value={isEditing ? editValue : displayAmount}
                   onFocus={handleFocus}
                   onChange={(e) => setEditValue(e.target.value)}
@@ -231,7 +234,7 @@ export function IngredientItem({
                   onKeyDown={handleKeyDown}
                   // Match select/button vertical rhythm: keep exact height and remove default vertical padding.
                   // Number inputs can look left-aligned in some browsers; force centered text.
-                  className="w-16 min-w-16 h-8 px-1 py-0 text-sm leading-none text-center! tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-16 min-w-16 px-1 py-0 text-sm leading-none text-center! tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   aria-label={`Amount of ${ingredient.name}`}
                 />
               </div>
@@ -250,7 +253,7 @@ export function IngredientItem({
               {/* Unit */}
               <SelectTrigger
                 size="sm"
-                className="inline-flex h-8 px-2 py-0 text-sm items-center [&>svg]:hidden w-24 min-w-24 md:w-full md:min-w-0 lg:w-24 lg:min-w-24"
+                className="inline-flex px-2 items-center [&>svg]:hidden w-24 min-w-24 md:w-full md:min-w-0 lg:w-24 lg:min-w-24"
               >
                 <SelectValue />
               </SelectTrigger>
@@ -264,59 +267,24 @@ export function IngredientItem({
             </Select>{" "}
           </div>
         )}
-        <Popover open={swapOpen} onOpenChange={setSwapOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="order-2 md:order-1 lg:order-2 h-8 flex-1 min-w-0 md:w-full md:flex-none lg:flex-1 px-3 text-sm font-normal justify-start text-left gap-0 bg-transparent hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
-            >
-              {" "}
-              <IngredientIcon icon={ingredient.icon} name={ingredient.name} />
-              <span className="truncate w-full text-left ml-2">
-                {ingredient.name}
-              </span>
-              <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-72 p-2" align="start">
-            <Command>
-              <CommandInput placeholder="Search ingredient..." />
-              <CommandList>
-                <CommandEmpty>No ingredient found.</CommandEmpty>
-                <CommandGroup>
-                  {ingredientCandidates.map((candidate) => (
-                    <CommandItem
-                      key={candidate.id}
-                      value={candidate.name}
-                      onSelect={() => {
-                        onIngredientChange(candidate.id);
-                        setSwapOpen(false);
-                      }}
-                      className="text-left"
-                    >
-                      <IngredientIcon
-                        icon={candidate.icon}
-                        name={candidate.name}
-                      />
-                      <span className="ml-2 truncate w-full text-left">
-                        {candidate.name}
-                      </span>
-                      <span
-                        className={[
-                          "ml-auto inline-block h-2 w-2 rounded-full",
-                          ingredient.id === candidate.id
-                            ? "bg-primary"
-                            : "bg-transparent",
-                        ].join(" ")}
-                      />
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+        <SearchableSelect
+          options={ingredientOptions}
+          value={ingredient.id}
+          onValueChange={(next) => {
+            if (!next) return;
+            onIngredientChange(next);
+          }}
+          size="sm"
+          placeholder="Select ingredient..."
+          searchPlaceholder="Search ingredient..."
+          emptyLabel="No ingredient found."
+          allowClear={false}
+          // Match row layout and text treatment used by the previous trigger.
+          className="order-2 md:order-1 lg:order-2 flex-1 min-w-0 md:w-full md:flex-none lg:flex-1 px-3 text-sm font-normal"
+          renderIcon={(option) => (
+            <IngredientIcon icon={option.icon ?? null} name={option.label} />
+          )}
+        />
       </div>
       <div className="flex items-center justify-between gap-1 flex-wrap">
         <div className="flex items-center gap-1">

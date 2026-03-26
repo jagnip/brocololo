@@ -27,19 +27,20 @@ export function NutritionSection() {
           <div className="flex items-center gap-1">
             <Input
               type="number"
+              size="sm"
               value={
                 targetCaloriesPerPortion?.toString() ??
                 jagodaNutrition.calories.toString()
               }
               onChange={(event) => onCaloriesChange(event.target.value)}
-              className="h-8 w-16 [appearance:textfield] rounded-md border-input bg-background px-2 text-center text-sm leading-4 font-normal text-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="w-16 [appearance:textfield] px-2 text-center leading-4 font-normal text-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               aria-label="Calories per portion"
             />
             <span className="text-sm leading-4 font-normal text-foreground">
               kcal
             </span>
           </div>
-          <div className="flex flex-nowrap items-center gap-1 justify-end ml-auto md:w-full md:ml-0 md:justify-start md:flex-wrap lg:w-auto lg:ml-auto lg:justify-end lg:flex-nowrap">
+          <div className="flex flex-nowrap items-center gap-1 justify-end ml-auto pl-6 md:w-full md:ml-0 md:pl-0 md:justify-start md:flex-wrap lg:w-auto lg:ml-auto lg:pl-6 lg:justify-end lg:flex-nowrap">
             <Badge variant="outline">{jagodaNutrition.protein}p</Badge>
             <Badge variant="outline">{jagodaNutrition.fat}f</Badge>
             <Badge variant="outline">{jagodaNutrition.carbs}c</Badge>
@@ -56,7 +57,7 @@ export function NutritionSection() {
             <span className="text-sm font-normal text-foreground">
               {nelsonNutrition.calories} kcal
             </span>
-            <div className="flex flex-nowrap items-center gap-1 justify-end ml-auto md:w-full md:ml-0 md:justify-start md:flex-wrap lg:w-auto lg:ml-auto lg:justify-end lg:flex-nowrap">
+            <div className="flex flex-nowrap items-center gap-1 justify-end ml-auto pl-6 md:w-full md:ml-0 md:pl-0 md:justify-start md:flex-wrap lg:w-auto lg:ml-auto lg:pl-6 lg:justify-end lg:flex-nowrap">
               <Badge variant="outline">{nelsonNutrition.protein}p</Badge>
               <Badge variant="outline">{nelsonNutrition.fat}f</Badge>
               <Badge variant="outline">{nelsonNutrition.carbs}c</Badge>
