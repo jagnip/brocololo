@@ -6,6 +6,7 @@ import type { RecipeType } from "@/types/recipe";
 import { IngredientItem } from "@/components/recipes/ingredient-item";
 import { isScaleModified } from "@/lib/recipes/helpers";
 import { useRecipePageIngredientsSectionData } from "@/components/context/recipe-page-context";
+import { PortionSplitCard } from "@/components/recipes/recipe-page/portion-split-card";
 
 export function IngredientsSection() {
   const {
@@ -72,12 +73,11 @@ export function IngredientsSection() {
           </Button>
         </div>
       </div>
-      <div className="text-xs text-muted-foreground mb-2 p-2 bg-muted rounded">
-        <div>Jagoda: {jagodaPortionFactor.toFixed(1)}</div>
-        <div>
-          Nelson: {nelsonPortionFactor.toFixed(1)} ({recipe.servingMultiplierForNelson}x)
-        </div>
-      </div>
+      <PortionSplitCard
+        jagodaPortionFactor={jagodaPortionFactor}
+        nelsonPortionFactor={nelsonPortionFactor}
+        nelsonMultiplier={recipe.servingMultiplierForNelson}
+      />
 
       {ungroupedIngredients.length > 0 ? (
         <div className="mb-3">
