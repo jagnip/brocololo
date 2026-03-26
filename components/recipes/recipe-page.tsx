@@ -90,7 +90,7 @@ export default function RecipePage({
     <div className="page-container">
       <TopbarConfigController config={topbarConfig} />
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-6">
         <div className="order-1 md:order-0 md:col-span-5">
           <PageHeader title={recipe.name} className="mb-0" />
         </div>
