@@ -121,9 +121,17 @@ export function InstructionsSection() {
                 : "border-border bg-card hover:bg-muted/40"
             }`}
           >
-            {/* Paper-like step number circle */}
-            <div className="self-start flex size-5 shrink-0 items-center justify-center rounded-full bg-muted">
-              <div className="text-[10px] leading-none font-medium text-secondary-foreground">
+            {/* Increase active-state contrast so step index remains visible on selection. */}
+            <div
+              className={`self-start flex size-5 shrink-0 items-center justify-center rounded-full ${
+                isSelected ? "bg-foreground" : "bg-muted"
+              }`}
+            >
+              <div
+                className={`text-[10px] leading-none font-medium ${
+                  isSelected ? "text-background" : "text-secondary-foreground"
+                }`}
+              >
                 {index + 1}
               </div>
             </div>
