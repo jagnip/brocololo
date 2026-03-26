@@ -218,6 +218,8 @@ export function InstructionsSection() {
                       <Badge
                         key={`${instruction.id}-${recipeIngredient.id}`}
                         variant="secondary"
+                        // Make badges more prominent inside the selected step.
+                        className={isSelected ? "bg-background border-foreground/20" : undefined}
                       >
                         <span>{baseBadgeLabel}</span>
                         {mutedGramsLabel ? (

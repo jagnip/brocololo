@@ -90,12 +90,12 @@ export default function RecipePage({
     <div className="page-container">
       <TopbarConfigController config={topbarConfig} />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-4">
         <div className="order-1 md:order-0 md:col-span-5">
           <PageHeader title={recipe.name} className="mb-0" />
         </div>
 
-        <div className="contents md:col-span-3 md:block md:space-y-6">
+        <div className="contents md:col-span-3 md:block md:space-y-4">
           <div className="order-2 md:order-0 overflow-hidden rounded-xl">
             <ImageGallery images={recipe.images || []} />
           </div>
@@ -109,7 +109,7 @@ export default function RecipePage({
           </div>
         </div>
 
-        <div className="contents md:col-span-2 md:block md:space-y-6">
+        <div className="contents md:col-span-2 md:block md:space-y-4">
           <div className="order-3 md:order-0 space-y-4">
             <div className="flex gap-2 flex-wrap">
               <Badge variant="secondary">Hands-on: {recipe.handsOnTime} min</Badge>
