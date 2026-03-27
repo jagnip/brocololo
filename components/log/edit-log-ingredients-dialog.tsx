@@ -130,32 +130,12 @@ function getMacrosFromRows(
   };
 }
 
-function mapIngredientToLogOption(ingredient: IngredientType): LogIngredientOption {
-  // Keep the integration boundary explicit between IngredientType and log dialog options.
-  return {
-    id: ingredient.id,
-    name: ingredient.name,
-    brand: ingredient.brand,
-    defaultUnitId: ingredient.defaultUnitId,
-    calories: ingredient.calories,
-    proteins: ingredient.proteins,
-    fats: ingredient.fats,
-    carbs: ingredient.carbs,
-    unitConversions: ingredient.unitConversions.map((conversion) => ({
-      unitId: conversion.unitId,
-      gramsPerUnit: conversion.gramsPerUnit,
-      unitName: conversion.unit.name,
-      unitNamePlural: conversion.unit.namePlural ?? null,
-    })),
-  };
-}
 
 export function EditLogIngredientsForm({
   title,
   subtitle,
   initialRows,
   ingredientOptions,
-  ingredientFormDependencies,
   isSaving,
   contextControls,
   saveLabel = "Save",
@@ -256,12 +236,6 @@ export function EditLogIngredientsForm({
         </section>
 
         <section className="px-4 py-4 md:px-6 md:py-6 border-b flex flex-col gap-2">
-          <div className="hidden sm:grid sm:grid-cols-[minmax(0,1fr)_96px_128px_auto] lg:grid-cols-[minmax(0,32rem)_96px_128px_auto] gap-2 text-xs tracking-wide uppercase text-muted-foreground font-semibold">
-            <span>Ingredient</span>
-            <span>Amount</span>
-            <span>Unit</span>
-            <span className="sr-only">Remove</span>
-          </div>
 
           <div className="space-y-2">
             {rows.map((row) => {
