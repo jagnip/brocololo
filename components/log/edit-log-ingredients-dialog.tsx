@@ -9,10 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -72,6 +69,13 @@ type EditLogIngredientsDialogProps = {
   saveLabel?: string;
   onOpenChange: (open: boolean) => void;
   onSave: (rows: EditableIngredientRow[]) => Promise<void>;
+};
+
+type EditLogIngredientsFormProps = Omit<
+  EditLogIngredientsDialogProps,
+  "open" | "onOpenChange"
+> & {
+  onCancel?: () => void;
 };
 
 function toRowKey() {
@@ -146,8 +150,7 @@ function mapIngredientToLogOption(ingredient: IngredientType): LogIngredientOpti
   };
 }
 
-export function EditLogIngredientsDialog({
-  open,
+export function EditLogIngredientsForm({
   title,
   subtitle,
   initialRows,
@@ -156,9 +159,9 @@ export function EditLogIngredientsDialog({
   isSaving,
   contextControls,
   saveLabel = "Save",
-  onOpenChange,
+  onCancel,
   onSave,
-}: EditLogIngredientsDialogProps) {
+}: EditLogIngredientsFormProps) {
   const [rows, setRows] = useState<DialogRow[]>(() =>
     initialRows.map((row) => ({
       ...row,
@@ -172,17 +175,14 @@ export function EditLogIngredientsDialog({
   }, [ingredientOptions]);
 
   useEffect(() => {
-    if (!open) {
-      return;
-    }
-
+    // Reset editable rows whenever parent context switches to another slot/recipe.
     setRows(
       initialRows.map((row) => ({
         ...row,
         key: toRowKey(),
       })),
     );
-  }, [initialRows, open]);
+  }, [initialRows]);
 
   const ingredientById = useMemo(
     () => new Map(localIngredientOptions.map((ingredient) => [ingredient.id, ingredient])),
@@ -238,28 +238,24 @@ export function EditLogIngredientsDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        showCloseButton={false}
-        className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-[min(1000px,calc(100vw-3rem))] sm:max-w-[1000px] lg:w-[min(1200px,calc(100vw-4rem))] lg:max-w-[1200px] xl:w-[min(1400px,calc(100vw-5rem))] xl:max-w-[1400px] 2xl:w-[min(1600px,calc(100vw-6rem))] 2xl:max-w-[1600px] max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col"
-      >
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-          <DialogHeader className="px-4 py-4 md:px-6 md:py-6 border-b text-left">
-            <DialogTitle className="text-2xl">{title}</DialogTitle>
-            <p className="text-muted-foreground text-sm">{subtitle}</p>
-            {contextControls ? <div className="mt-4">{contextControls}</div> : null}
-          </DialogHeader>
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+        <div className="px-4 py-4 md:px-6 md:py-6 border-b text-left">
+          <h2 className="text-2xl font-semibold">{title}</h2>
+          <p className="text-muted-foreground text-sm">{subtitle}</p>
+          {contextControls ? <div className="mt-4">{contextControls}</div> : null}
+        </div>
 
-          <section className="px-4 py-4 md:px-6 md:py-6 border-b">
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">{macros.calories.toFixed(0)} kcal</Badge>
-              <Badge variant="secondary">{macros.proteins.toFixed(1)}g protein</Badge>
-              <Badge variant="secondary">{macros.fats.toFixed(1)}g fat</Badge>
-              <Badge variant="secondary">{macros.carbs.toFixed(1)}g carbs</Badge>
-            </div>
-          </section>
+        <section className="px-4 py-4 md:px-6 md:py-6 border-b">
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="secondary">{macros.calories.toFixed(0)} kcal</Badge>
+            <Badge variant="secondary">{macros.proteins.toFixed(1)}g protein</Badge>
+            <Badge variant="secondary">{macros.fats.toFixed(1)}g fat</Badge>
+            <Badge variant="secondary">{macros.carbs.toFixed(1)}g carbs</Badge>
+          </div>
+        </section>
 
-          <section className="px-4 py-4 md:px-6 md:py-6 border-b flex flex-col gap-2">
+        <section className="px-4 py-4 md:px-6 md:py-6 border-b flex flex-col gap-2">
           <div className="hidden sm:grid sm:grid-cols-[minmax(0,1fr)_96px_128px_auto] lg:grid-cols-[minmax(0,32rem)_96px_128px_auto] gap-2 text-xs tracking-wide uppercase text-muted-foreground font-semibold">
             <span>Ingredient</span>
             <span>Amount</span>
@@ -389,26 +385,47 @@ export function EditLogIngredientsDialog({
             <Button type="button" variant="outline" onClick={handleAddRow}>
               Add ingredient
             </Button>
-          </section>
-        </div>
+        </section>
+      </div>
 
-        <DialogFooter className="px-4 py-4 md:px-6 md:py-6 flex-row justify-end gap-2">
+      <DialogFooter className="px-4 py-4 md:px-6 md:py-6 flex-row justify-end gap-2">
+        {onCancel ? (
           <Button
             type="button"
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={onCancel}
             disabled={isSaving}
           >
             Cancel
           </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving}
-          >
-            {isSaving ? "Saving..." : saveLabel}
-          </Button>
-        </DialogFooter>
+        ) : null}
+        <Button
+          type="button"
+          onClick={handleSave}
+          disabled={isSaving}
+        >
+          {isSaving ? "Saving..." : saveLabel}
+        </Button>
+      </DialogFooter>
+    </div>
+  );
+}
+
+export function EditLogIngredientsDialog({
+  open,
+  onOpenChange,
+  ...formProps
+}: EditLogIngredientsDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        showCloseButton={false}
+        className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-[min(1000px,calc(100vw-3rem))] sm:max-w-[1000px] lg:w-[min(1200px,calc(100vw-4rem))] lg:max-w-[1200px] xl:w-[min(1400px,calc(100vw-5rem))] xl:max-w-[1400px] 2xl:w-[min(1600px,calc(100vw-6rem))] 2xl:max-w-[1600px] max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col"
+      >
+        <EditLogIngredientsForm
+          {...formProps}
+          onCancel={() => onOpenChange(false)}
+        />
       </DialogContent>
     </Dialog>
   );

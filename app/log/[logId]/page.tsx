@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { LogPerson } from "@/src/generated/enums";
+import { ROUTES } from "@/lib/constants";
 import { getLogById } from "@/lib/db/logs";
 import { getIngredients } from "@/lib/db/ingredients";
 import { getRecipes } from "@/lib/db/recipes";
@@ -9,11 +10,24 @@ import { LogPersonSelect } from "@/components/log/log-person-select";
 import { buildLogDays } from "@/lib/log/view-model";
 import { LogDayView } from "@/components/log/log-day-view";
 import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 
 type LogDetailPageProps = {
   params: Promise<{ logId: string }>;
-  searchParams: Promise<{ person?: string }>;
+  searchParams: Promise<{ person?: string; day?: string }>;
 };
+
+function formatDateRange(start: Date, end: Date): string {
+  // Keep period label concise and consistent with the log list page.
+  const options: Intl.DateTimeFormatOptions = {
+    month: "short",
+    day: "numeric",
+  };
+
+  const startStr = start.toLocaleDateString("en-US", options);
+  const endStr = end.toLocaleDateString("en-US", options);
+  return `${startStr} - ${endStr}`;
+}
 
 function parsePerson(input?: string): "PRIMARY" | "SECONDARY" {
   if (input === LogPerson.SECONDARY) return LogPerson.SECONDARY;
@@ -67,7 +81,7 @@ export default async function LogDetailPage({
   searchParams,
 }: LogDetailPageProps) {
   const { logId } = await params;
-  const { person: rawPerson } = await searchParams;
+  const { person: rawPerson, day } = await searchParams;
   const person = parsePerson(rawPerson);
 
   const [log, ingredients, recipes, ingredientFormDependencies] = await Promise.all([
@@ -79,6 +93,7 @@ export default async function LogDetailPage({
   ]);
   if (!log) notFound();
   const days = buildLogDays(log.entries);
+  const logPeriodLabel = formatDateRange(log.plan.startDate, log.plan.endDate);
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
@@ -86,9 +101,17 @@ export default async function LogDetailPage({
         <h1 className="text-2xl font-semibold">Log details</h1>
         <LogPersonSelect value={person} />
       </header>
+      <Breadcrumbs
+        // Keep parent context visible for period-focused log details.
+        items={[
+          { label: "Planner", href: ROUTES.plan },
+          { label: logPeriodLabel },
+        ]}
+      />
 
       <LogDayView
         days={days}
+        initialSelectedDayKey={day}
         logId={logId}
         person={person}
         recipeOptions={recipes.map((recipe) => ({
