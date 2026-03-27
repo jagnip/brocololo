@@ -104,7 +104,7 @@ export default async function LogDetailPage({
       <Breadcrumbs
         // Keep parent context visible for period-focused log details.
         items={[
-          { label: "Planner", href: ROUTES.plan },
+          { label: "Logs", href: ROUTES.log },
           { label: logPeriodLabel },
         ]}
       />
