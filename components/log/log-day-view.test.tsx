@@ -121,10 +121,10 @@ describe("LogDayView", () => {
 
     render(<LogDayView days={days} />);
 
-    expect(screen.getByText("Breakfast")).toBeInTheDocument();
-    expect(screen.getByText("Lunch")).toBeInTheDocument();
-    expect(screen.getByText("Snack")).toBeInTheDocument();
-    expect(screen.getByText("Dinner")).toBeInTheDocument();
+    expect(screen.getAllByText("Breakfast").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Lunch").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Snack").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Dinner").length).toBeGreaterThan(0);
 
     expect(screen.getByText("Oatmeal")).toBeInTheDocument();
     expect(screen.getByText("Chicken Bowl")).toBeInTheDocument();
@@ -140,7 +140,148 @@ describe("LogDayView", () => {
     ).toBeInTheDocument();
   });
 
-  it("opens ingredient editor dialog when recipe card is clicked", async () => {
+  it("shows one day at a time and switches by date tabs", async () => {
+    const user = userEvent.setup();
+    const days: LogDayData[] = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        dateKey: "2026-03-17",
+        slots: [
+          {
+            mealType: LogMealType.BREAKFAST,
+            label: "Breakfast",
+            recipes: [
+              {
+                id: "r1",
+                entryRecipeId: "r1",
+                sourceRecipeId: "recipe-oatmeal",
+                mealLabel: "Breakfast",
+                cardKind: "recipe",
+                title: "Oatmeal",
+                slug: "oatmeal",
+                imageUrl: null,
+                calories: 350,
+                proteins: 12,
+                fats: 7,
+                carbs: 60,
+              },
+            ],
+          },
+          { mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
+          { mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
+          { mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+        ],
+      },
+      {
+        date: new Date("2026-03-18T00:00:00.000Z"),
+        dateKey: "2026-03-18",
+        slots: [
+          {
+            mealType: LogMealType.BREAKFAST,
+            label: "Breakfast",
+            recipes: [
+              {
+                id: "r2",
+                entryRecipeId: "r2",
+                sourceRecipeId: "recipe-eggs",
+                mealLabel: "Breakfast",
+                cardKind: "recipe",
+                title: "Scrambled Eggs",
+                slug: "scrambled-eggs",
+                imageUrl: null,
+                calories: 280,
+                proteins: 20,
+                fats: 18,
+                carbs: 4,
+              },
+            ],
+          },
+          { mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
+          { mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
+          { mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+        ],
+      },
+    ];
+
+    render(<LogDayView days={days} />);
+
+    expect(screen.getByText("Oatmeal")).toBeInTheDocument();
+    expect(screen.queryByText("Scrambled Eggs")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /wednesday 18 mar/i }));
+    expect(screen.getByText("Scrambled Eggs")).toBeInTheDocument();
+    expect(screen.queryByText("Oatmeal")).not.toBeInTheDocument();
+  });
+
+  it("uses initialSelectedDayKey when provided", () => {
+    const days: LogDayData[] = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        dateKey: "2026-03-17",
+        slots: [
+          {
+            mealType: LogMealType.BREAKFAST,
+            label: "Breakfast",
+            recipes: [
+              {
+                id: "r1",
+                entryRecipeId: "r1",
+                sourceRecipeId: "recipe-oatmeal",
+                mealLabel: "Breakfast",
+                cardKind: "recipe",
+                title: "Oatmeal",
+                slug: "oatmeal",
+                imageUrl: null,
+                calories: 350,
+                proteins: 12,
+                fats: 7,
+                carbs: 60,
+              },
+            ],
+          },
+          { mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
+          { mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
+          { mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+        ],
+      },
+      {
+        date: new Date("2026-03-18T00:00:00.000Z"),
+        dateKey: "2026-03-18",
+        slots: [
+          {
+            mealType: LogMealType.BREAKFAST,
+            label: "Breakfast",
+            recipes: [
+              {
+                id: "r2",
+                entryRecipeId: "r2",
+                sourceRecipeId: "recipe-eggs",
+                mealLabel: "Breakfast",
+                cardKind: "recipe",
+                title: "Scrambled Eggs",
+                slug: "scrambled-eggs",
+                imageUrl: null,
+                calories: 280,
+                proteins: 20,
+                fats: 18,
+                carbs: 4,
+              },
+            ],
+          },
+          { mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
+          { mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
+          { mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+        ],
+      },
+    ];
+
+    render(<LogDayView days={days} initialSelectedDayKey="2026-03-18" />);
+
+    expect(screen.getByText("Scrambled Eggs")).toBeInTheDocument();
+    expect(screen.queryByText("Oatmeal")).not.toBeInTheDocument();
+  });
+
+  it("renders ingredient editor inline when recipe card is clicked", async () => {
     const user = userEvent.setup();
 
     const days: LogDayData[] = [
@@ -227,11 +368,10 @@ describe("LogDayView", () => {
 
     await user.click(screen.getByRole("button", { name: /oatmeal/i }));
 
-    const dialog = screen.getByRole("dialog");
-    expect(dialog).toBeInTheDocument();
-    expect(within(dialog).getByText("Breakfast")).toBeInTheDocument();
-    expect(within(dialog).getByText("Recipe (optional)")).toBeInTheDocument();
-    expect(within(dialog).getByRole("button", { name: /add ingredient/i })).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Breakfast").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Recipe (optional)").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: /add ingredient/i }).length).toBeGreaterThan(0);
   });
 
   it("renders empty slot with add entry CTA", () => {
@@ -272,7 +412,30 @@ describe("LogDayView", () => {
     ).toBeGreaterThan(0);
   });
 
-  it("opens ingredient editor dialog when empty slot card is clicked", async () => {
+  it("renders slot list without mobile accordion controls", () => {
+    const days: LogDayData[] = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        dateKey: "2026-03-17",
+        slots: [
+          { entryId: "entry-breakfast", mealType: LogMealType.BREAKFAST, label: "Breakfast", recipes: [] },
+          { entryId: "entry-lunch", mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
+          { entryId: "entry-snack", mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
+          { entryId: "entry-dinner", mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+        ],
+      },
+    ];
+
+    render(<LogDayView days={days} logId="log-1" person="PRIMARY" ingredientOptions={[]} />);
+
+    // Without accordion controls, each empty slot CTA appears once.
+    expect(screen.getAllByRole("button", { name: /add breakfast entry/i }).length).toBe(1);
+    expect(screen.getAllByRole("button", { name: /add lunch entry/i }).length).toBe(1);
+    expect(screen.getAllByRole("button", { name: /add snack entry/i }).length).toBe(1);
+    expect(screen.getAllByRole("button", { name: /add dinner entry/i }).length).toBe(1);
+  });
+
+  it("renders ingredient editor inline when empty slot card is clicked", async () => {
     const user = userEvent.setup();
     const days: LogDayData[] = [
       {
@@ -319,13 +482,12 @@ describe("LogDayView", () => {
 
     await user.click(screen.getByRole("button", { name: /add snack entry/i }));
 
-    const dialog = screen.getByRole("dialog");
-    expect(dialog).toBeInTheDocument();
-    expect(within(dialog).getByText("Snack")).toBeInTheDocument();
-    expect(within(dialog).getByText("Recipe (optional)")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Snack").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Recipe (optional)").length).toBeGreaterThan(0);
   });
 
-  it('shows Create "..." in ingredient selector when search has no exact match', async () => {
+  it('does not show Create "..." when creation is unavailable', async () => {
     const user = userEvent.setup();
     const days: LogDayData[] = [
       {
@@ -370,9 +532,8 @@ describe("LogDayView", () => {
     );
 
     await user.click(screen.getByRole("button", { name: /add snack entry/i }));
-    const dialog = screen.getByRole("dialog");
-    await user.click(within(dialog).getByRole("button", { name: /add ingredient/i }));
-    const ingredientCombobox = within(dialog)
+    await user.click(screen.getAllByRole("button", { name: /add ingredient/i })[0]!);
+    const ingredientCombobox = screen
       .getAllByRole("combobox")
       .find((element) =>
         element.textContent?.toLowerCase().includes("select ingredient"),
@@ -381,10 +542,10 @@ describe("LogDayView", () => {
     await user.click(ingredientCombobox!);
     await user.type(screen.getByPlaceholderText("Search ingredient..."), "cottage chee");
 
-    expect(screen.getByText('Create "cottage chee"')).toBeInTheDocument();
+    expect(screen.queryByText('Create "cottage chee"')).not.toBeInTheDocument();
   });
 
-  it("opens create ingredient dialog from log flow and keeps parent dialog context", async () => {
+  it("keeps inline editor context stable while searching ingredients", async () => {
     const user = userEvent.setup();
     const days: LogDayData[] = [
       {
@@ -410,9 +571,8 @@ describe("LogDayView", () => {
     );
 
     await user.click(screen.getByRole("button", { name: /add snack entry/i }));
-    const dialog = screen.getByRole("dialog");
-    await user.click(within(dialog).getByRole("button", { name: /add ingredient/i }));
-    const ingredientCombobox = within(dialog)
+    await user.click(screen.getAllByRole("button", { name: /add ingredient/i })[0]!);
+    const ingredientCombobox = screen
       .getAllByRole("combobox")
       .find((element) =>
         element.textContent?.toLowerCase().includes("select ingredient"),
@@ -420,11 +580,7 @@ describe("LogDayView", () => {
     expect(ingredientCombobox).toBeDefined();
     await user.click(ingredientCombobox!);
     await user.type(screen.getByPlaceholderText("Search ingredient..."), "cottage chee");
-    await user.click(screen.getByText('Create "cottage chee"'));
-
-    expect(
-      screen.getByText("Add a missing ingredient without leaving your current flow."),
-    ).toBeInTheDocument();
-    expect(within(dialog).getByText("Snack")).toBeInTheDocument();
+    expect(screen.queryByText('Create "cottage chee"')).not.toBeInTheDocument();
+    expect(screen.getAllByText("Snack").length).toBeGreaterThan(0);
   });
 });

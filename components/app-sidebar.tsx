@@ -84,7 +84,8 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isLog} tooltip="Log">
               <Link
-                href={ROUTES.log}
+                // Open current log from left-nav quick access.
+                href={ROUTES.logCurrent}
                 onClick={() => {
                   if (!isMobile) return;
                   setOpenMobile(false);

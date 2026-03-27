@@ -78,14 +78,8 @@ export default function RecipePage({
           size: "sm" as const,
         },
       ],
-      badge: recipe.excludeFromPlanner
-        ? {
-            label: "Excluded from meal planner",
-            variant: "secondary" as const,
-          }
-        : undefined,
     }),
-    [recipe.excludeFromPlanner, recipe.slug],
+    [recipe.slug],
   );
   return (
     <div className="page-container">
@@ -102,7 +96,8 @@ export default function RecipePage({
                 href: ROUTES.recipes,
                 preserveQuery: ["q", "flavour", "protein", "type", "time"],
               },
-              { label: recipe.name },
+              // Keep detail crumb stable across recipe renames and long titles.
+              { label: "This recipe" },
             ]}
           />
         </div>
@@ -121,11 +116,14 @@ export default function RecipePage({
           </div>
         </div>
 
-        <div className="contents md:col-span-2 md:grid md:gap-4">
+        <div className="contents md:col-span-2 md:block md:space-y-4">
           <div className="order-3 md:order-0 flex flex-col gap-4">
             <div className="flex gap-2 flex-wrap">
               <Badge variant="secondary">Hands-on: {recipe.handsOnTime} min</Badge>
               <Badge variant="secondary">Total: {recipe.totalTime} min</Badge>
+              {recipe.excludeFromPlanner ? (
+                <Badge variant="secondary">Excluded from planner</Badge>
+              ) : null}
             </div>
             <NutritionSection />
           </div>

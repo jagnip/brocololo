@@ -140,6 +140,13 @@ export async function getPlanById(planId: string) {
   }));
 }
 
+export async function getPlanDateRangeById(planId: string) {
+  return prisma.plan.findUnique({
+    where: { id: planId },
+    select: { startDate: true, endDate: true },
+  });
+}
+
 export async function getPlanForGroceries(planId: string) {
   const plan = await prisma.plan.findUnique({
     where: { id: planId },
