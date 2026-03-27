@@ -259,7 +259,7 @@ export function EditLogIngredientsDialog({
             </div>
           </section>
 
-          <section className="px-4 py-4 md:px-6 md:py-6 border-b space-y-2">
+          <section className="px-4 py-4 md:px-6 md:py-6 border-b flex flex-col gap-2">
           <div className="hidden sm:grid sm:grid-cols-[minmax(0,1fr)_96px_128px_auto] lg:grid-cols-[minmax(0,32rem)_96px_128px_auto] gap-2 text-xs tracking-wide uppercase text-muted-foreground font-semibold">
             <span>Ingredient</span>
             <span>Amount</span>

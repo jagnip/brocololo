@@ -12,12 +12,12 @@ export function NutritionSection() {
   } = useRecipePageNutritionSectionData();
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2">
       <h3 className="text text-base leading-5 font-semibold">
         Nutrition (per serving)
       </h3>
 
-      <div className="space-y-2 rounded-lg border border-border bg-card px-2 py-2">
+      <div className="flex flex-col gap-2 rounded-lg border border-border bg-card px-2 py-2">
         <div className="flex flex-wrap items-center gap-2">
         
             <span className="w-[52px] shrink-0 text-sm leading-4 font-normal text-muted-foreground">
@@ -50,7 +50,7 @@ export function NutritionSection() {
       </div>
 
       
-        <div className="space-y-2 rounded-lg border border-border bg-card px-2 py-2">
+        <div className="flex flex-col gap-2 rounded-lg border border-border bg-card px-2 py-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className="w-[52px] shrink-0 text-sm leading-4 font-normal text-muted-foreground">
               Nelson
