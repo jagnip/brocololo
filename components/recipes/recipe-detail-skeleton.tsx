@@ -40,6 +40,7 @@ export function RecipeDetailSkeleton() {
             <div className="flex gap-2 flex-wrap">
               <Skeleton className="h-6 w-28 rounded-full" />
               <Skeleton className="h-6 w-28 rounded-full" />
+              <Skeleton className="h-6 w-36 rounded-full" />
             </div>
 
             <div className="space-y-2.5">

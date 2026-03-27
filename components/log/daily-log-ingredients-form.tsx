@@ -6,11 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { DialogFooter } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -48,33 +44,16 @@ export type EditableIngredientRow = {
 
 type DialogRow = EditableIngredientRow & { key: string };
 
-type IngredientFormDependencies = {
-  categories: Array<{ id: string; name: string }>;
-  units: Array<{ id: string; name: string; namePlural: string | null }>;
-  gramsUnitId: string;
-  iconOptions: string[];
-};
-
-type EditLogIngredientsDialogProps = {
-  open: boolean;
+type DailyLogIngredientsFormProps = {
   title: string;
   subtitle: string;
-  titleClassName?: string;
   initialRows: EditableIngredientRow[];
   ingredientOptions: LogIngredientOption[];
-  ingredientFormDependencies?: IngredientFormDependencies;
   isSaving: boolean;
   contextControls?: ReactNode;
   saveLabel?: string;
-  onOpenChange: (open: boolean) => void;
-  onSave: (rows: EditableIngredientRow[]) => Promise<void>;
-};
-
-type RecipeAddToLogDialogFormProps = Omit<
-  EditLogIngredientsDialogProps,
-  "open" | "onOpenChange"
-> & {
   onCancel?: () => void;
+  onSave: (rows: EditableIngredientRow[]) => Promise<void>;
 };
 
 function toRowKey() {
@@ -129,8 +108,7 @@ function getMacrosFromRows(
   };
 }
 
-
-function RecipeAddToLogDialogForm({
+export function DailyLogIngredientsForm({
   title,
   subtitle,
   initialRows,
@@ -140,7 +118,7 @@ function RecipeAddToLogDialogForm({
   saveLabel = "Save",
   onCancel,
   onSave,
-}: RecipeAddToLogDialogFormProps) {
+}: DailyLogIngredientsFormProps) {
   const [rows, setRows] = useState<DialogRow[]>(() =>
     initialRows.map((row) => ({
       ...row,
@@ -235,7 +213,6 @@ function RecipeAddToLogDialogForm({
         </section>
 
         <section className="px-4 py-4 md:px-6 md:py-6 border-b flex flex-col gap-2">
-
           <div className="space-y-2">
             {rows.map((row) => {
               const selectedIngredient = row.ingredientId
@@ -246,10 +223,9 @@ function RecipeAddToLogDialogForm({
               return (
                 <div
                   key={row.key}
-                    // Mobile-only row framing mirrors recipe-page ingredient cards.
-                    className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 rounded-md border border-border/60 p-2 sm:rounded-none sm:border-0 sm:p-0 sm:gap-2 sm:grid-cols-[minmax(0,1fr)_96px_128px_auto] lg:grid-cols-[minmax(0,32rem)_96px_128px_auto]"
+                  // Mobile-only row framing mirrors recipe-page ingredient cards.
+                  className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 rounded-md border border-border/60 p-2 sm:rounded-none sm:border-0 sm:p-0 sm:gap-2 sm:grid-cols-[minmax(0,1fr)_96px_128px_auto] lg:grid-cols-[minmax(0,32rem)_96px_128px_auto]"
                 >
-          
                   <div className="min-w-0 col-span-3 sm:col-span-1">
                     <SearchableSelect
                       className="min-w-0 w-full font-normal"
@@ -299,7 +275,6 @@ function RecipeAddToLogDialogForm({
                     min={0}
                     step="any"
                     placeholder="0"
-              
                     className="w-full sm:w-24 sm:min-w-24 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     value={row.amount == null ? "" : row.amount}
                     onChange={(event) => {
@@ -322,7 +297,6 @@ function RecipeAddToLogDialogForm({
                       }}
                       disabled={!selectedIngredient}
                     >
-                 
                       <SelectTrigger className="min-w-0 w-full sm:w-32 sm:min-w-32 [&>svg]:hidden">
                         <SelectValue placeholder="Unit" />
                       </SelectTrigger>
@@ -355,15 +329,15 @@ function RecipeAddToLogDialogForm({
             })}
           </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              // Mobile keeps a large touch target; larger viewports use content width.
-              className="w-full sm:w-auto sm:self-start"
-              onClick={handleAddRow}
-            >
-              Add ingredient
-            </Button>
+          <Button
+            type="button"
+            variant="outline"
+            // Mobile keeps a large touch target; larger viewports use content width.
+            className="w-full sm:w-auto sm:self-start"
+            onClick={handleAddRow}
+          >
+            Add ingredient
+          </Button>
         </section>
       </div>
 
@@ -387,25 +361,5 @@ function RecipeAddToLogDialogForm({
         </Button>
       </DialogFooter>
     </div>
-  );
-}
-
-export function EditLogIngredientsDialog({
-  open,
-  onOpenChange,
-  ...formProps
-}: EditLogIngredientsDialogProps) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        showCloseButton={false}
-        className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-[min(1000px,calc(100vw-3rem))] sm:max-w-[1000px] lg:w-[min(1200px,calc(100vw-4rem))] lg:max-w-[1200px] xl:w-[min(1400px,calc(100vw-5rem))] xl:max-w-[1400px] 2xl:w-[min(1600px,calc(100vw-6rem))] 2xl:max-w-[1600px] max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col"
-      >
-        <RecipeAddToLogDialogForm
-          {...formProps}
-          onCancel={() => onOpenChange(false)}
-        />
-      </DialogContent>
-    </Dialog>
   );
 }
