@@ -102,7 +102,7 @@ export default function RecipePage({
                 href: ROUTES.recipes,
                 preserveQuery: ["q", "flavour", "protein", "type", "time"],
               },
-              { label: "Recipe page" },
+              { label: recipe.name },
             ]}
           />
         </div>
