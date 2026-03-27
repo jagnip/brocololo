@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -50,9 +50,11 @@ type DailyLogIngredientsFormProps = {
   initialRows: EditableIngredientRow[];
   ingredientOptions: LogIngredientOption[];
   isSaving: boolean;
+  recipeOptions: Array<{ id: string; name: string }>;
+  selectedRecipeId: string | null;
+  onSelectedRecipeIdChange: (nextRecipeId: string | null) => void;
   saveLabel?: string;
   onCancel?: () => void;
-  headerControls?: ReactNode;
   onSave: (rows: EditableIngredientRow[]) => Promise<void>;
 };
 
@@ -108,13 +110,23 @@ function getMacrosFromRows(
   };
 }
 
+function toComparableRows(rows: EditableIngredientRow[]) {
+  return rows.map((row) => ({
+    ingredientId: row.ingredientId,
+    unitId: row.unitId,
+    amount: row.amount,
+  }));
+}
+
 export function DailyLogIngredientsForm({
   title,
   subtitle,
   initialRows,
   ingredientOptions,
   isSaving,
-  headerControls,
+  recipeOptions,
+  selectedRecipeId,
+  onSelectedRecipeIdChange,
   saveLabel = "Save",
   onCancel,
   onSave,
@@ -158,6 +170,11 @@ export function DailyLogIngredientsForm({
     })),
     [localIngredientOptions],
   );
+  const hasUnsavedChanges = useMemo(() => {
+    const normalizedCurrent = toComparableRows(rows);
+    const normalizedInitial = toComparableRows(initialRows);
+    return JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedInitial);
+  }, [initialRows, rows]);
 
   const handleAddRow = () => {
     setRows((prev) => [
@@ -200,7 +217,27 @@ export function DailyLogIngredientsForm({
         <div className="px-4 py-4 md:px-6 md:py-6 border-b text-left">
           <h2 className="text-2xl font-semibold">{title}</h2>
           <p className="text-muted-foreground text-sm">{subtitle}</p>
-          {headerControls ? <div className="mt-4">{headerControls}</div> : null}
+          <div className="mt-4 space-y-2">
+            <p className="text-xs tracking-wide uppercase text-muted-foreground font-semibold">
+              Recipe (optional)
+            </p>
+            <SearchableSelect
+              options={recipeOptions.map((recipe) => ({
+                value: recipe.id,
+                label: recipe.name,
+              }))}
+              value={selectedRecipeId}
+              onValueChange={onSelectedRecipeIdChange}
+              placeholder="Select a recipe..."
+              searchPlaceholder="Search recipe..."
+              emptyLabel="No recipe found."
+              allowClear
+              clearLabel="Clear recipe"
+            />
+            <p className="text-xs text-muted-foreground">
+              Clearing recipe removes current ingredients for this person.
+            </p>
+          </div>
         </div>
 
         <section className="px-4 py-4 md:px-6 md:py-6 border-b">
@@ -355,7 +392,7 @@ export function DailyLogIngredientsForm({
         <Button
           type="button"
           onClick={handleSave}
-          disabled={isSaving}
+          disabled={isSaving || !hasUnsavedChanges}
         >
           {isSaving ? "Saving..." : saveLabel}
         </Button>

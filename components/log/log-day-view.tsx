@@ -7,10 +7,10 @@ import { formatDayLabel } from "@/lib/planner/helpers";
 import type { LogDayData } from "@/lib/log/view-model";
 import { LogSlotCard } from "./log-slot-card";
 import {
+  DailyLogIngredientsForm,
   type EditableIngredientRow,
   type LogIngredientOption,
 } from "./daily-log-ingredients-form";
-import { LogSlotIngredientsEditor } from "./log-slot-ingredients-editor";
 import { upsertLogSlotAction } from "@/actions/log-actions";
 
 type SelectedSlotState = {
@@ -457,7 +457,7 @@ export function LogDayView({
             </div>
             {selectedSlot?.dayKey === day.dateKey ? (
               <div className="rounded-lg border">
-                <LogSlotIngredientsEditor
+                <DailyLogIngredientsForm
                   title={selectedSlot.mealLabel}
                   subtitle={selectedSlot.subtitle}
                   initialRows={selectedSlot.initialRows}

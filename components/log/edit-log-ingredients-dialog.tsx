@@ -129,6 +129,14 @@ function getMacrosFromRows(
   };
 }
 
+function toComparableRows(rows: EditableIngredientRow[]) {
+  return rows.map((row) => ({
+    ingredientId: row.ingredientId,
+    unitId: row.unitId,
+    amount: row.amount,
+  }));
+}
+
 
 function RecipeAddToLogDialogForm({
   title,
@@ -180,6 +188,11 @@ function RecipeAddToLogDialogForm({
     })),
     [localIngredientOptions],
   );
+  const hasUnsavedChanges = useMemo(() => {
+    const normalizedCurrent = toComparableRows(rows);
+    const normalizedInitial = toComparableRows(initialRows);
+    return JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedInitial);
+  }, [initialRows, rows]);
 
   const handleAddRow = () => {
     setRows((prev) => [
@@ -381,7 +394,7 @@ function RecipeAddToLogDialogForm({
         <Button
           type="button"
           onClick={handleSave}
-          disabled={isSaving}
+          disabled={isSaving || !hasUnsavedChanges}
         >
           {isSaving ? "Saving..." : saveLabel}
         </Button>
