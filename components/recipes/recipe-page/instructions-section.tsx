@@ -52,13 +52,13 @@ export function InstructionsSection() {
 
   return (
     <div className="rounded-xl bg-card antialiased">
-      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-base leading-5 font-semibold text-foreground">
           Instructions
         </h3>
         {/* Keep this local segmented control aligned with existing button-group patterns. */}
         <div
-          className="flex items-center gap-1"
+          className="flex items-center gap-2"
           role="radiogroup"
           aria-label="Instruction person filter"
         >
@@ -91,7 +91,7 @@ export function InstructionsSection() {
           })}
         </div>
       </div>
-      <ol className="flex flex-col gap-2.5">
+      <ol className="flex flex-col gap-2">
         {instructions.map((instruction, index) => {
           const isSelected = selectedInstructionId === instruction.id;
 
@@ -115,10 +115,10 @@ export function InstructionsSection() {
               event.preventDefault();
               setSelectedInstructionId(instruction.id);
             }}
-            className={`flex items-start gap-2.5 rounded-lg border p-2.5 cursor-pointer transition-colors ${
+            className={`flex items-start gap-2 rounded-lg border p-2 cursor-pointer transition-colors ${
               isSelected
-                ? "border-border bg-muted/60"
-                : "border-border bg-card hover:bg-muted/40"
+                ? "border-border/60 bg-muted/60"
+                : "border-border/60 bg-card hover:bg-muted/40"
             }`}
           >
             {/* Increase active-state contrast so step index remains visible on selection. */}
@@ -136,7 +136,7 @@ export function InstructionsSection() {
               </div>
             </div>
 
-            <div className="flex min-w-0 flex-col gap-1.5">
+            <div className="flex min-w-0 flex-col gap-2">
               <div className="text-sm leading-5 text-foreground">
                 {renderTextWithMarkdownLinks(
                   instruction.text,
@@ -145,7 +145,7 @@ export function InstructionsSection() {
               </div>
 
               {instruction.ingredients.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {instruction.ingredients.map((link) => {
                     const recipeIngredient =
                       effectiveRecipeIngredientById.get(

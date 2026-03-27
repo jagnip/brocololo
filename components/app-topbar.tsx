@@ -1,18 +1,38 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useTopbar } from "@/components/context/topbar-context";
 
 export function AppTopbar() {
   const { config } = useTopbar();
+  const pathname = usePathname();
+  const isRecipeDetailRoute = /^\/recipes\/[^/]+$/.test(pathname);
+  const isRecipesIndexRoute = pathname === "/recipes";
+  const shouldShowRecipeTopbarSkeleton = isRecipeDetailRoute && !config;
+  const shouldShowRecipesIndexTopbarSkeleton = isRecipesIndexRoute && !config;
 
   return (
     <header className="flex h-14 items-center border-b px-4 sticky top-0 bg-background z-10">
       <SidebarTrigger className="lg:hidden" />
       <div className="ml-auto flex items-center gap-2">
+        {shouldShowRecipeTopbarSkeleton ? (
+          <>
+            {/* Mirror only action buttons while detail page topbar config loads. */}
+            <Skeleton className="h-8 w-24 rounded-md" />
+            <Skeleton className="h-8 w-24 rounded-md" />
+          </>
+        ) : null}
+        {shouldShowRecipesIndexTopbarSkeleton ? (
+          <>
+            {/* Mirror recipes index topbar action while config hydrates. */}
+            <Skeleton className="h-8 w-28 rounded-md" />
+          </>
+        ) : null}
         {config?.badge ? (
           <Badge variant={config.badge.variant ?? "outline"}>
             {config.badge.label}
