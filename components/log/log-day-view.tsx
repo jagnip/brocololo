@@ -132,7 +132,6 @@ export function LogDayView({
   person,
   recipeOptions = [],
   ingredientOptions = [],
-  ingredientFormDependencies,
 }: LogDayViewProps) {
   const defaultDayKey =
     initialSelectedDayKey && days.some((day) => day.dateKey === initialSelectedDayKey)
@@ -165,7 +164,6 @@ export function LogDayView({
       return;
     }
 
-    // Keep desktop flow efficient by preselecting the first editable slot for active day.
     if (selectedSlot?.dayKey === selectedDayKey) {
       return;
     }
