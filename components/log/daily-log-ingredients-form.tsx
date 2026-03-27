@@ -50,9 +50,9 @@ type DailyLogIngredientsFormProps = {
   initialRows: EditableIngredientRow[];
   ingredientOptions: LogIngredientOption[];
   isSaving: boolean;
-  contextControls?: ReactNode;
   saveLabel?: string;
   onCancel?: () => void;
+  headerControls?: ReactNode;
   onSave: (rows: EditableIngredientRow[]) => Promise<void>;
 };
 
@@ -114,7 +114,7 @@ export function DailyLogIngredientsForm({
   initialRows,
   ingredientOptions,
   isSaving,
-  contextControls,
+  headerControls,
   saveLabel = "Save",
   onCancel,
   onSave,
@@ -200,7 +200,7 @@ export function DailyLogIngredientsForm({
         <div className="px-4 py-4 md:px-6 md:py-6 border-b text-left">
           <h2 className="text-2xl font-semibold">{title}</h2>
           <p className="text-muted-foreground text-sm">{subtitle}</p>
-          {contextControls ? <div className="mt-4">{contextControls}</div> : null}
+          {headerControls ? <div className="mt-4">{headerControls}</div> : null}
         </div>
 
         <section className="px-4 py-4 md:px-6 md:py-6 border-b">

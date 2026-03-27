@@ -3,15 +3,14 @@
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { SearchableSelect } from "@/components/ui/searchable-select";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import type { LogDayData } from "@/lib/log/view-model";
 import { LogSlotCard } from "./log-slot-card";
 import {
-  DailyLogIngredientsForm,
   type EditableIngredientRow,
   type LogIngredientOption,
 } from "./daily-log-ingredients-form";
+import { LogSlotIngredientsEditor } from "./log-slot-ingredients-editor";
 import { upsertLogSlotAction } from "@/actions/log-actions";
 
 type SelectedSlotState = {
@@ -33,7 +32,6 @@ type IngredientFormDependencies = {
 };
 
 function toDayMacros(day: LogDayData) {
-  // Aggregate all rendered slot recipes into a daily macro summary.
   return day.slots.reduce(
     (totals, slot) => {
       for (const recipe of slot.recipes) {
@@ -243,6 +241,160 @@ export function LogDayView({
     });
   };
 
+  const handleSelectedRecipeChange = (nextRecipeId: string | null) => {
+    setSelectedSlot((prev) => {
+      if (!prev) {
+        return prev;
+      }
+
+      if (!nextRecipeId) {
+        return {
+          ...prev,
+          selectedRecipeId: null,
+          initialRows: [],
+        };
+      }
+
+      const selectedOption = recipeOptions.find(
+        (recipeOption) => recipeOption.id === nextRecipeId,
+      );
+
+      return {
+        ...prev,
+        selectedRecipeId: nextRecipeId,
+        initialRows: selectedOption?.initialRows ?? [],
+      };
+    });
+  };
+
+  const handleSlotSave = async (rows: EditableIngredientRow[]) => {
+    if (!logId || !person || !selectedSlot) {
+      toast.error("Missing log context for this action");
+      return;
+    }
+
+    // Snapshot selection at submit-time so async save uses stable identifiers.
+    const activeSelection = selectedSlot;
+    const completeRows = rows.filter(
+      (row): row is { ingredientId: string; unitId: string; amount: number } =>
+        row.ingredientId != null &&
+        row.unitId != null &&
+        row.amount != null &&
+        row.amount > 0,
+    );
+
+    startSavingTransition(async () => {
+      const result = await upsertLogSlotAction({
+        logId,
+        person,
+        entryId: activeSelection.entryId,
+        recipeId: activeSelection.selectedRecipeId,
+        ingredients: completeRows,
+      });
+
+      if (result.type === "error") {
+        toast.error(result.message);
+        return;
+      }
+
+      const nextMacros = toRecipeMacros(rows, ingredientOptions);
+      const nextIngredients = toRecipeIngredients(rows, ingredientOptions);
+
+      setLocalDays((prev) => {
+        const selectedRecipeOption = recipeOptions.find(
+          (recipeOption) => recipeOption.id === activeSelection.selectedRecipeId,
+        );
+
+        return prev.map((mappedDay) => ({
+          ...mappedDay,
+          slots: mappedDay.slots.map((mappedSlot) => {
+            if (mappedSlot.entryId !== activeSelection.entryId) {
+              return mappedSlot;
+            }
+
+            const existingIndex = mappedSlot.recipes.findIndex(
+              (recipe) => recipe.entryId === activeSelection.entryId,
+            );
+            const existingRecipe =
+              existingIndex >= 0 ? mappedSlot.recipes[existingIndex] : null;
+
+            const nextRecipeCard = {
+              ...(existingRecipe ?? {
+                id: `temp-${activeSelection.entryId}`,
+                entryId: activeSelection.entryId,
+                entryRecipeId: null,
+                sourceRecipeId: null,
+                mealLabel: mappedSlot.label,
+                cardKind: "custom" as const,
+                title: `Custom ${mappedSlot.label.toLowerCase()}`,
+                slug: null,
+                imageUrl: null,
+                calories: 0,
+                proteins: 0,
+                fats: 0,
+                carbs: 0,
+                ingredients: [],
+              }),
+              id:
+                activeSelection.selectedRecipeId == null
+                  ? `custom-${activeSelection.entryId}`
+                  : (existingRecipe?.id ?? `temp-${activeSelection.entryId}`),
+              entryRecipeId:
+                activeSelection.selectedRecipeId == null
+                  ? null
+                  : (existingRecipe?.entryRecipeId ?? activeSelection.entryRecipeId),
+              sourceRecipeId: activeSelection.selectedRecipeId,
+              cardKind:
+                activeSelection.selectedRecipeId == null
+                  ? ("custom" as const)
+                  : ("recipe" as const),
+              title:
+                activeSelection.selectedRecipeId == null
+                  ? `Custom ${mappedSlot.label.toLowerCase()}`
+                  : selectedRecipeOption?.name ??
+                    existingRecipe?.title ??
+                    `Custom ${mappedSlot.label.toLowerCase()}`,
+              slug: null,
+              imageUrl: null,
+              ...nextMacros,
+              ingredients: nextIngredients,
+            };
+
+            const nextRecipes = [...mappedSlot.recipes];
+            if (
+              activeSelection.selectedRecipeId == null &&
+              nextIngredients.length === 0
+            ) {
+              if (existingIndex >= 0) {
+                nextRecipes.splice(existingIndex, 1);
+              }
+            } else if (existingIndex >= 0) {
+              nextRecipes[existingIndex] = nextRecipeCard;
+            } else {
+              nextRecipes.unshift(nextRecipeCard);
+            }
+
+            return {
+              ...mappedSlot,
+              recipes: nextRecipes,
+            };
+          }),
+        }));
+      });
+
+      // Keep the inline form in sync after successful save.
+      setSelectedSlot((prev) =>
+        prev == null
+          ? prev
+          : {
+              ...prev,
+              initialRows: rows,
+            },
+      );
+      toast.success("Ingredients updated");
+    });
+  };
+
   if (days.length === 0) {
     return (
       <section className="rounded-lg border p-6 space-y-3">
@@ -305,185 +457,16 @@ export function LogDayView({
             </div>
             {selectedSlot?.dayKey === day.dateKey ? (
               <div className="rounded-lg border">
-                <DailyLogIngredientsForm
+                <LogSlotIngredientsEditor
                   title={selectedSlot.mealLabel}
                   subtitle={selectedSlot.subtitle}
                   initialRows={selectedSlot.initialRows}
                   ingredientOptions={ingredientOptions}
                   isSaving={isSaving}
-                  contextControls={
-                    <div className="space-y-2">
-                      <p className="text-xs tracking-wide uppercase text-muted-foreground font-semibold">
-                        Recipe (optional)
-                      </p>
-                      <SearchableSelect
-                        options={recipeOptions.map((recipe) => ({
-                          value: recipe.id,
-                          label: recipe.name,
-                        }))}
-                        value={selectedSlot.selectedRecipeId}
-                        onValueChange={(nextRecipeId) => {
-                          setSelectedSlot((prev) => {
-                            if (!prev) {
-                              return prev;
-                            }
-
-                            if (!nextRecipeId) {
-                              return {
-                                ...prev,
-                                selectedRecipeId: null,
-                                initialRows: [],
-                              };
-                            }
-
-                            const selectedOption = recipeOptions.find(
-                              (recipeOption) => recipeOption.id === nextRecipeId,
-                            );
-
-                            return {
-                              ...prev,
-                              selectedRecipeId: nextRecipeId,
-                              initialRows: selectedOption?.initialRows ?? [],
-                            };
-                          });
-                        }}
-                        placeholder="Select a recipe..."
-                        searchPlaceholder="Search recipe..."
-                        emptyLabel="No recipe found."
-                        allowClear
-                        clearLabel="Clear recipe"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Clearing recipe removes current ingredients for this person.
-                      </p>
-                    </div>
-                  }
-                  onSave={async (rows) => {
-                    if (!logId || !person || !selectedSlot) {
-                      toast.error("Missing log context for this action");
-                      return;
-                    }
-
-                    const activeSelection = selectedSlot;
-                    const completeRows = rows.filter(
-                      (row): row is { ingredientId: string; unitId: string; amount: number } =>
-                        row.ingredientId != null &&
-                        row.unitId != null &&
-                        row.amount != null &&
-                        row.amount > 0,
-                    );
-
-                    startSavingTransition(async () => {
-                      const result = await upsertLogSlotAction({
-                        logId,
-                        person,
-                        entryId: activeSelection.entryId,
-                        recipeId: activeSelection.selectedRecipeId,
-                        ingredients: completeRows,
-                      });
-
-                      if (result.type === "error") {
-                        toast.error(result.message);
-                        return;
-                      }
-
-                      const nextMacros = toRecipeMacros(rows, ingredientOptions);
-                      const nextIngredients = toRecipeIngredients(rows, ingredientOptions);
-
-                      setLocalDays((prev) => {
-                        const selectedRecipeOption = recipeOptions.find(
-                          (recipeOption) => recipeOption.id === activeSelection.selectedRecipeId,
-                        );
-
-                        return prev.map((mappedDay) => ({
-                          ...mappedDay,
-                          slots: mappedDay.slots.map((mappedSlot) => {
-                            if (mappedSlot.entryId !== activeSelection.entryId) {
-                              return mappedSlot;
-                            }
-
-                            const existingIndex = mappedSlot.recipes.findIndex(
-                              (recipe) => recipe.entryId === activeSelection.entryId,
-                            );
-                            const existingRecipe =
-                              existingIndex >= 0 ? mappedSlot.recipes[existingIndex] : null;
-
-                            const nextRecipeCard = {
-                              ...(existingRecipe ?? {
-                                id: `temp-${activeSelection.entryId}`,
-                                entryId: activeSelection.entryId,
-                                entryRecipeId: null,
-                                sourceRecipeId: null,
-                                mealLabel: mappedSlot.label,
-                                cardKind: "custom" as const,
-                                title: `Custom ${mappedSlot.label.toLowerCase()}`,
-                                slug: null,
-                                imageUrl: null,
-                                calories: 0,
-                                proteins: 0,
-                                fats: 0,
-                                carbs: 0,
-                                ingredients: [],
-                              }),
-                              id:
-                                activeSelection.selectedRecipeId == null
-                                  ? `custom-${activeSelection.entryId}`
-                                  : (existingRecipe?.id ?? `temp-${activeSelection.entryId}`),
-                              entryRecipeId:
-                                activeSelection.selectedRecipeId == null
-                                  ? null
-                                  : (existingRecipe?.entryRecipeId ?? activeSelection.entryRecipeId),
-                              sourceRecipeId: activeSelection.selectedRecipeId,
-                              cardKind:
-                                activeSelection.selectedRecipeId == null
-                                  ? ("custom" as const)
-                                  : ("recipe" as const),
-                              title:
-                                activeSelection.selectedRecipeId == null
-                                  ? `Custom ${mappedSlot.label.toLowerCase()}`
-                                  : selectedRecipeOption?.name ??
-                                    existingRecipe?.title ??
-                                    `Custom ${mappedSlot.label.toLowerCase()}`,
-                              slug: null,
-                              imageUrl: null,
-                              ...nextMacros,
-                              ingredients: nextIngredients,
-                            };
-
-                            const nextRecipes = [...mappedSlot.recipes];
-                            if (
-                              activeSelection.selectedRecipeId == null &&
-                              nextIngredients.length === 0
-                            ) {
-                              if (existingIndex >= 0) {
-                                nextRecipes.splice(existingIndex, 1);
-                              }
-                            } else if (existingIndex >= 0) {
-                              nextRecipes[existingIndex] = nextRecipeCard;
-                            } else {
-                              nextRecipes.unshift(nextRecipeCard);
-                            }
-
-                            return {
-                              ...mappedSlot,
-                              recipes: nextRecipes,
-                            };
-                          }),
-                        }));
-                      });
-
-                      // Keep the inline form in sync after successful save.
-                      setSelectedSlot((prev) =>
-                        prev == null
-                          ? prev
-                          : {
-                              ...prev,
-                              initialRows: rows,
-                            },
-                      );
-                      toast.success("Ingredients updated");
-                    });
-                  }}
+                  recipeOptions={recipeOptions}
+                  selectedRecipeId={selectedSlot.selectedRecipeId}
+                  onSelectedRecipeIdChange={handleSelectedRecipeChange}
+                  onSave={handleSlotSave}
                 />
               </div>
             ) : null}
