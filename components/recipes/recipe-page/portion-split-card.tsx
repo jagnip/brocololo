@@ -26,7 +26,7 @@ export function PortionSplitCard({
 
   return (
     <div className="mb-2 rounded-lg border border-border bg-muted p-2">
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2">
         <div
           className="relative size-10 shrink-0 rounded-full border border-border"
           style={{ backgroundImage: pieBackground }}

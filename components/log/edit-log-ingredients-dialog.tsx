@@ -25,7 +25,6 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
-import { CreateIngredientDialog } from "@/components/recipes/form/create-ingredient-dialog";
 import type { IngredientType } from "@/types/ingredient";
 
 export type LogIngredientOption = {
@@ -58,11 +57,6 @@ type IngredientFormDependencies = {
   units: Array<{ id: string; name: string; namePlural: string | null }>;
   gramsUnitId: string;
   iconOptions: string[];
-};
-
-type CreateIngredientState = {
-  rowKey: string;
-  initialName: string;
 };
 
 type EditLogIngredientsDialogProps = {
@@ -172,8 +166,6 @@ export function EditLogIngredientsDialog({
     })),
   );
   const [localIngredientOptions, setLocalIngredientOptions] = useState(ingredientOptions);
-  const [createIngredientState, setCreateIngredientState] =
-    useState<CreateIngredientState | null>(null);
 
   useEffect(() => {
     setLocalIngredientOptions(ingredientOptions);
@@ -247,7 +239,10 @@ export function EditLogIngredientsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-[min(1000px,calc(100vw-3rem))] sm:max-w-[1000px] lg:w-[min(1200px,calc(100vw-4rem))] lg:max-w-[1200px] xl:w-[min(1400px,calc(100vw-5rem))] xl:max-w-[1400px] 2xl:w-[min(1600px,calc(100vw-6rem))] 2xl:max-w-[1600px] max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col *:data-[slot=dialog-close]:top-4 *:data-[slot=dialog-close]:right-4 md:*:data-[slot=dialog-close]:top-6 md:*:data-[slot=dialog-close]:right-6">
+      <DialogContent
+        showCloseButton={false}
+        className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-[min(1000px,calc(100vw-3rem))] sm:max-w-[1000px] lg:w-[min(1200px,calc(100vw-4rem))] lg:max-w-[1200px] xl:w-[min(1400px,calc(100vw-5rem))] xl:max-w-[1400px] 2xl:w-[min(1600px,calc(100vw-6rem))] 2xl:max-w-[1600px] max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col"
+      >
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
           <DialogHeader className="px-4 py-4 md:px-6 md:py-6 border-b text-left">
             <DialogTitle className="text-2xl">{title}</DialogTitle>
@@ -257,15 +252,15 @@ export function EditLogIngredientsDialog({
 
           <section className="px-4 py-4 md:px-6 md:py-6 border-b">
             <div className="flex flex-wrap gap-2">
-              <Badge variant="outline">{macros.calories.toFixed(0)} kcal</Badge>
-              <Badge variant="outline">{macros.proteins.toFixed(1)}g protein</Badge>
-              <Badge variant="outline">{macros.fats.toFixed(1)}g fat</Badge>
-              <Badge variant="outline">{macros.carbs.toFixed(1)}g carbs</Badge>
+              <Badge variant="secondary">{macros.calories.toFixed(0)} kcal</Badge>
+              <Badge variant="secondary">{macros.proteins.toFixed(1)}g protein</Badge>
+              <Badge variant="secondary">{macros.fats.toFixed(1)}g fat</Badge>
+              <Badge variant="secondary">{macros.carbs.toFixed(1)}g carbs</Badge>
             </div>
           </section>
 
-          <section className="px-4 py-4 md:px-6 md:py-6 border-b space-y-3">
-          <div className="hidden sm:grid sm:grid-cols-[minmax(0,1fr)_96px_128px_auto] gap-2 text-xs tracking-wide uppercase text-muted-foreground font-semibold">
+          <section className="px-4 py-4 md:px-6 md:py-6 border-b flex flex-col gap-2">
+          <div className="hidden sm:grid sm:grid-cols-[minmax(0,1fr)_96px_128px_auto] lg:grid-cols-[minmax(0,32rem)_96px_128px_auto] gap-2 text-xs tracking-wide uppercase text-muted-foreground font-semibold">
             <span>Ingredient</span>
             <span>Amount</span>
             <span>Unit</span>
@@ -282,7 +277,8 @@ export function EditLogIngredientsDialog({
               return (
                 <div
                   key={row.key}
-                    className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_96px_128px_auto]"
+                    // Mobile-only row framing mirrors recipe-page ingredient cards.
+                    className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 rounded-md border border-border/60 p-2 sm:rounded-none sm:border-0 sm:p-0 sm:gap-2 sm:grid-cols-[minmax(0,1fr)_96px_128px_auto] lg:grid-cols-[minmax(0,32rem)_96px_128px_auto]"
                 >
           
                   <div className="min-w-0 col-span-3 sm:col-span-1">
@@ -324,12 +320,6 @@ export function EditLogIngredientsDialog({
                       placeholder="Select ingredient..."
                       searchPlaceholder="Search ingredient..."
                       emptyLabel="No ingredient found."
-                      onCreateOption={(searchTerm) => {
-                        setCreateIngredientState({
-                          rowKey: row.key,
-                          initialName: searchTerm,
-                        });
-                      }}
                       allowClear
                       clearLabel="Clear ingredient"
                     />
@@ -385,8 +375,7 @@ export function EditLogIngredientsDialog({
                     type="button"
                     variant="outline"
                     size="icon"
-         
-                    className="justify-self-end"
+                    className="justify-self-start"
                     aria-label="Remove ingredient row"
                     onClick={() => handleRemoveRow(row.key)}
                   >
@@ -408,78 +397,19 @@ export function EditLogIngredientsDialog({
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={isSaving || Boolean(createIngredientState)}
+            disabled={isSaving}
           >
             Cancel
           </Button>
           <Button
             type="button"
             onClick={handleSave}
-            disabled={isSaving || Boolean(createIngredientState)}
+            disabled={isSaving}
           >
             {isSaving ? "Saving..." : saveLabel}
           </Button>
         </DialogFooter>
       </DialogContent>
-      {ingredientFormDependencies ? (
-        <CreateIngredientDialog
-          open={Boolean(createIngredientState)}
-          initialName={createIngredientState?.initialName}
-          onOpenChange={(open) => {
-            if (!open) {
-              setCreateIngredientState(null);
-            }
-          }}
-          onCreated={(createdIngredient) => {
-            const mappedIngredient = mapIngredientToLogOption(createdIngredient);
-            setLocalIngredientOptions((prev) =>
-              prev.some((item) => item.id === mappedIngredient.id)
-                ? prev
-                : [...prev, mappedIngredient],
-            );
-
-            const rowKey = createIngredientState?.rowKey;
-            if (!rowKey) {
-              toast.error("Could not apply created ingredient to row");
-              setCreateIngredientState(null);
-              return;
-            }
-
-            const defaultUnitId = getDefaultUnitIdForIngredient({
-              defaultUnitId: mappedIngredient.defaultUnitId,
-              unitConversions: mappedIngredient.unitConversions.map((unit) => ({
-                unitId: unit.unitId,
-                unit: { name: unit.unitName },
-              })),
-            });
-
-            const rowExists = rows.some((item) => item.key === rowKey);
-            if (!rowExists) {
-              toast.error("Could not apply created ingredient to row");
-              setCreateIngredientState(null);
-              return;
-            }
-
-            setRows((prev) =>
-              prev.map((item) =>
-                item.key === rowKey
-                  ? {
-                      ...item,
-                      ingredientId: mappedIngredient.id,
-                      unitId: defaultUnitId,
-                    }
-                  : item,
-              ),
-            );
-            setCreateIngredientState(null);
-            toast.success("Ingredient created and selected");
-          }}
-          categories={ingredientFormDependencies.categories}
-          units={ingredientFormDependencies.units}
-          gramsUnitId={ingredientFormDependencies.gramsUnitId}
-          iconOptions={ingredientFormDependencies.iconOptions}
-        />
-      ) : null}
     </Dialog>
   );
 }

@@ -12,6 +12,7 @@ import { InstructionsSection } from "@/components/recipes/recipe-page/instructio
 import { IngredientsSection } from "@/components/recipes/recipe-page/ingredients-section";
 import { NotesSection } from "@/components/recipes/recipe-page/notes-section";
 import { RecipeAddToLogDialog } from "@/components/recipes/recipe-page/recipe-add-to-log-dialog";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import {
   useRecipePageAddToLogData,
   useRecipePageBaseData,
@@ -91,8 +92,19 @@ export default function RecipePage({
       <TopbarConfigController config={topbarConfig} />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-4">
-        <div className="order-1 md:order-0 md:col-span-5">
+        <div className="order-1 md:order-0 md:col-span-5 flex flex-col gap-1">
           <PageHeader title={recipe.name} className="mb-0" />
+          <Breadcrumbs
+            // Keep list context when users navigate back to the recipes index.
+            items={[
+              {
+                label: "Recipes",
+                href: ROUTES.recipes,
+                preserveQuery: ["q", "flavour", "protein", "type", "time"],
+              },
+              { label: recipe.name },
+            ]}
+          />
         </div>
 
         <div className="contents md:col-span-3 md:block md:space-y-4">
@@ -109,8 +121,8 @@ export default function RecipePage({
           </div>
         </div>
 
-        <div className="contents md:col-span-2 md:block md:space-y-4">
-          <div className="order-3 md:order-0 space-y-4">
+        <div className="contents md:col-span-2 md:grid md:gap-4">
+          <div className="order-3 md:order-0 flex flex-col gap-4">
             <div className="flex gap-2 flex-wrap">
               <Badge variant="secondary">Hands-on: {recipe.handsOnTime} min</Badge>
               <Badge variant="secondary">Total: {recipe.totalTime} min</Badge>

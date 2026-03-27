@@ -137,9 +137,9 @@ export function RecipeAddToLogDialog({
       isSaving={isSaving}
       saveLabel="Add to log"
       contextControls={
-        <div className="flex w-full flex-col gap-4 md:flex-row md:items-start">
-          {/* Phone: stacked full width. Tablet: one row. Desktop: fixed 300px fields. */}
-          <div className="w-full space-y-1.5 md:flex-1 lg:w-[300px] lg:flex-none">
+        <div className="flex w-full flex-wrap items-start gap-2 md:flex-nowrap">
+          {/* Mobile: Person + Meal first row, Date second row. Tablet/Desktop: single row. */}
+          <div className="min-w-0 flex-1 basis-0 space-y-2 lg:w-[300px] lg:flex-none">
             <Label>Person</Label>
             <Select
               value={logPerson}
@@ -157,19 +157,8 @@ export function RecipeAddToLogDialog({
               </SelectContent>
             </Select>
           </div>
-          <div className="w-full space-y-1.5 md:flex-1 lg:w-[300px] lg:flex-none">
-            <Label>
-              Date
-            </Label>
-            {/* Reuse shared shadcn-style date picker for consistent behavior. */}
-            <DatePicker
-              value={logDate}
-              onChange={setLogDate}
-              disabled={isSaving}
-            />
-          </div>
-          <div className="w-full space-y-1.5 md:flex-1 lg:w-[300px] lg:flex-none">
-            <Label>Meal occasion</Label>
+          <div className="min-w-0 flex-1 basis-0 space-y-2 lg:w-[300px] lg:flex-none">
+            <Label>Meal</Label>
             <Select
               value={logMealType}
               onValueChange={(nextValue) =>
@@ -190,6 +179,15 @@ export function RecipeAddToLogDialog({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="w-full space-y-2 md:w-auto md:min-w-0 md:flex-1 md:basis-0 lg:w-[300px] lg:flex-none">
+            <Label>Date</Label>
+            {/* Reuse shared shadcn-style date picker for consistent behavior. */}
+            <DatePicker
+              value={logDate}
+              onChange={setLogDate}
+              disabled={isSaving}
+            />
           </div>
         </div>
       }

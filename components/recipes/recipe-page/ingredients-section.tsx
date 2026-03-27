@@ -36,7 +36,7 @@ export function IngredientsSection() {
 
   return (
     <div>
-      <div className="mb-2.5 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-base">Ingredients</h3>
           {hasActiveScaling && (
@@ -80,9 +80,9 @@ export function IngredientsSection() {
       />
 
       {ungroupedIngredients.length > 0 ? (
-        <div className="mb-3">
+        <div className="mb-2">
           {/* Keep uncategorized ingredients first and unlabeled. */}
-          <ul className="space-y-1 text-sm">
+          <ul className="space-y-2 text-sm">
             {ungroupedIngredients.map((recipeIngredient) => (
               <IngredientItem
                 key={recipeIngredient.id}
@@ -113,11 +113,11 @@ export function IngredientsSection() {
       ) : null}
 
       {visibleGroupedIngredients.map((group) => (
-        <div key={group.id} className="mb-3">
+        <div key={group.id} className="mb-2">
           <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {group.name}
           </h4>
-          <ul className="space-y-1 text-sm">
+          <ul className="space-y-2 text-sm">
             {group.ingredients.map((recipeIngredient) => (
               <IngredientItem
                 key={recipeIngredient.id}
