@@ -356,7 +356,13 @@ export function EditLogIngredientsForm({
             })}
           </div>
 
-            <Button type="button" variant="outline" onClick={handleAddRow}>
+            <Button
+              type="button"
+              variant="outline"
+              // Mobile keeps a large touch target; larger viewports use content width.
+              className="w-full sm:w-auto sm:self-start"
+              onClick={handleAddRow}
+            >
               Add ingredient
             </Button>
         </section>
