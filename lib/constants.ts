@@ -23,6 +23,8 @@ export const ROUTES = {
   ingredientCreate: "/ingredients/create",
   ingredientEdit: (slug: string) => `/ingredients/${slug}/edit`,
   plan: "/plan",
+  /** Left nav “Planner” — opens today’s plan (or latest), like Log → current log. */
+  planCurrent: "/plan/current",
   planCreate: "/plan/create",
   planView: (planId: string) => `/plan/${planId}`,
   groceries: "/groceries",
