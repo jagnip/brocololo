@@ -52,7 +52,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isPlanner} tooltip="Planner">
               <Link
-                href={ROUTES.plan}
+                href={ROUTES.planCurrent}
                 onClick={() => {
                   if (!isMobile) return;
                   setOpenMobile(false);
