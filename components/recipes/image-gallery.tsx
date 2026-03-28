@@ -18,7 +18,7 @@ export function ImageGallery({ images }: ImageGalleryProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-block">
       {/* Cover image */}
       {coverImage && (
         <div className="relative w-full aspect-video rounded-xl overflow-hidden">
@@ -35,7 +35,7 @@ export function ImageGallery({ images }: ImageGalleryProps) {
       {/* Additional images grid */}
       {otherImages.length > 0 && (
         <div>
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-item">
             {otherImages.map((image, index) => (
               <div
                 key={index}

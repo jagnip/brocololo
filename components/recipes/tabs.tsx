@@ -91,7 +91,7 @@ export function RecipeTabs({
         hidden ? "-translate-y-full" : "translate-y-0",
       ].join(" ")}
     >
-      <div className="grid grid-cols-2 gap-2 p-4 md:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-item p-sheet md:grid-cols-3 lg:grid-cols-6">
         <div className="w-full">
           <Select
             value={optimisticFlavour}

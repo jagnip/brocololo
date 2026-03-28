@@ -52,13 +52,13 @@ export function InstructionsSection() {
 
   return (
     <div className="rounded-xl bg-card antialiased">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-base leading-5 font-semibold text-foreground">
+      <div className="mb-item flex flex-wrap items-center justify-between gap-item">
+        <h3 className="text-section font-semibold text-foreground">
           Instructions
         </h3>
         {/* Keep this local segmented control aligned with existing button-group patterns. */}
         <div
-          className="flex items-center gap-2"
+          className="flex items-center gap-item"
           role="radiogroup"
           aria-label="Instruction person filter"
         >
@@ -91,7 +91,7 @@ export function InstructionsSection() {
           })}
         </div>
       </div>
-      <ol className="flex flex-col gap-2">
+      <ol className="flex flex-col gap-item">
         {instructions.map((instruction, index) => {
           const isSelected = selectedInstructionId === instruction.id;
 
@@ -115,7 +115,7 @@ export function InstructionsSection() {
               event.preventDefault();
               setSelectedInstructionId(instruction.id);
             }}
-            className={`flex items-start gap-2 rounded-lg border p-2 cursor-pointer transition-colors ${
+            className={`flex items-start gap-item rounded-lg border p-nest cursor-pointer transition-colors ${
               isSelected
                 ? "border-border/60 bg-muted/60"
                 : "border-border/60 bg-card hover:bg-muted/40"
@@ -128,7 +128,7 @@ export function InstructionsSection() {
               }`}
             >
               <div
-                className={`text-[10px] leading-none font-medium ${
+                className={`text-micro font-medium ${
                   isSelected ? "text-background" : "text-secondary-foreground"
                 }`}
               >
@@ -136,8 +136,8 @@ export function InstructionsSection() {
               </div>
             </div>
 
-            <div className="flex min-w-0 flex-col gap-2">
-              <div className="text-sm leading-5 text-foreground">
+            <div className="flex min-w-0 flex-col gap-item">
+              <div className="text-prose text-foreground">
                 {renderTextWithMarkdownLinks(
                   instruction.text,
                   `instruction-${instruction.id}`,
@@ -145,7 +145,7 @@ export function InstructionsSection() {
               </div>
 
               {instruction.ingredients.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-item">
                   {instruction.ingredients.map((link) => {
                     const recipeIngredient =
                       effectiveRecipeIngredientById.get(
