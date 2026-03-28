@@ -34,8 +34,8 @@ export function PortionSplitCard({
         />
 
         <div className="min-w-0">
-          <div className="text-prose font-semibold text-foreground">{ratioText}</div>
-          <div className="text-caption text-muted-foreground">
+          <div className="type-body font-semibold text-foreground">{ratioText}</div>
+          <div className="type-caption text-muted-foreground">
             Jagoda {jagodaPct}% / Nelson {nelsonPct}%
           </div>
         </div>

@@ -31,12 +31,12 @@ export function NotesSection() {
   return (
     <div className="rounded-xl bg-card antialiased">
       <div className="mb-item flex items-center justify-between gap-item">
-        <h3 className="text-section font-semibold text-foreground">
+        <h3 className="type-h2 text-foreground">
           Notes
         </h3>
       </div>
       <div className="rounded-[10px] border border-border bg-card p-nest">
-        <ul className="list-disc list-inside space-y-item text-prose text-foreground">
+        <ul className="list-disc list-inside space-y-item type-body text-foreground">
           {recipe.notes.map((note: string, index: number) => (
             <li key={index} className="whitespace-pre-wrap">
               {renderTextWithMarkdownLinks(note, `note-${index}`)}

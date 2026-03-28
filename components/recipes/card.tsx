@@ -39,7 +39,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
         )}
         <CardHeader className="flex-1 px-card-x py-card-y">
           <div className="min-w-0">
-            <h3 className="truncate text-section font-medium" title={recipe.name}>
+            <h3 className="truncate type-h3" title={recipe.name}>
               {recipe.name}
             </h3>
             <div className="mt-item flex items-center gap-tight overflow-hidden whitespace-nowrap">

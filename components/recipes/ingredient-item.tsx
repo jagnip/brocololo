@@ -238,7 +238,7 @@ export function IngredientItem({
                 />
               </div>
             ) : (
-              <div className="w-16 min-w-16 h-8 flex items-center justify-center text-prose leading-none text-center tabular-nums">
+              <div className="w-16 min-w-16 h-8 flex items-center justify-center type-body leading-none text-center tabular-nums">
                 {displayAmount}
               </div>
             )}{" "}
@@ -360,7 +360,7 @@ export function IngredientItem({
             </Button>
           )}
           {recipeIngredient.additionalInfo && (
-            <span className="text-muted-foreground text-prose">
+            <span className="text-muted-foreground type-body">
               {recipeIngredient.additionalInfo}
             </span>
           )}

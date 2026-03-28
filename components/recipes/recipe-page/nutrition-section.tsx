@@ -13,14 +13,14 @@ export function NutritionSection() {
 
   return (
     <div className="flex flex-col gap-item">
-      <h3 className="text-section font-semibold">
+      <h3 className="type-h2">
         Nutrition (per serving)
       </h3>
 
       <div className="flex flex-col gap-item rounded-lg border border-border bg-card px-nest py-nest">
         <div className="flex flex-wrap items-center gap-item">
         
-            <span className="w-[52px] shrink-0 text-prose leading-4 font-normal text-muted-foreground">
+            <span className="w-[52px] shrink-0 type-body leading-4 text-muted-foreground">
               Jagoda
             </span>
       
@@ -37,7 +37,7 @@ export function NutritionSection() {
               className="w-16 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               aria-label="Calories per portion"
             />
-            <span className="text-prose leading-4 font-normal text-foreground">
+            <span className="type-body leading-4 text-foreground">
               kcal
             </span>
           </div>
@@ -52,10 +52,10 @@ export function NutritionSection() {
       
         <div className="flex flex-col gap-item rounded-lg border border-border bg-card px-nest py-nest">
           <div className="flex flex-wrap items-center gap-item">
-            <span className="w-[52px] shrink-0 text-prose leading-4 font-normal text-muted-foreground">
+            <span className="w-[52px] shrink-0 type-body leading-4 text-muted-foreground">
               Nelson
             </span>
-            <span className="text-prose font-normal text-foreground">
+            <span className="type-body text-foreground">
               {nelsonNutrition.calories} kcal
             </span>
             <div className="flex flex-nowrap items-center gap-tight justify-end ml-auto pl-6 md:w-full md:ml-0 md:pl-0 md:justify-start md:flex-wrap lg:w-auto lg:ml-auto lg:pl-6 lg:justify-end lg:flex-nowrap">

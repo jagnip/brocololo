@@ -53,7 +53,7 @@ export function InstructionsSection() {
   return (
     <div className="rounded-xl bg-card antialiased">
       <div className="mb-item flex flex-wrap items-center justify-between gap-item">
-        <h3 className="text-section font-semibold text-foreground">
+        <h3 className="type-h2 text-foreground">
           Instructions
         </h3>
         {/* Keep this local segmented control aligned with existing button-group patterns. */}
@@ -128,7 +128,7 @@ export function InstructionsSection() {
               }`}
             >
               <div
-                className={`text-micro font-medium ${
+                className={`type-micro ${
                   isSelected ? "text-background" : "text-secondary-foreground"
                 }`}
               >
@@ -137,7 +137,7 @@ export function InstructionsSection() {
             </div>
 
             <div className="flex min-w-0 flex-col gap-item">
-              <div className="text-prose text-foreground">
+              <div className="type-body text-foreground">
                 {renderTextWithMarkdownLinks(
                   instruction.text,
                   `instruction-${instruction.id}`,

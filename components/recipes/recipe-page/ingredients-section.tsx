@@ -38,7 +38,7 @@ export function IngredientsSection() {
     <div>
       <div className="mb-item flex items-center justify-between">
         <div className="flex items-center gap-item">
-          <h3 className="text-section font-semibold">Ingredients</h3>
+          <h3 className="type-h2">Ingredients</h3>
           {hasActiveScaling && (
             <Button
               variant="ghost"
@@ -60,7 +60,7 @@ export function IngredientsSection() {
           >
             <Minus />
           </Button>
-          <span className="text-prose font-normal min-w-12 text-center">
+          <span className="type-body min-w-12 text-center">
             {currentServings} {currentServings === 1 ? "serving" : "servings"}
           </span>
           <Button
@@ -82,7 +82,7 @@ export function IngredientsSection() {
       {ungroupedIngredients.length > 0 ? (
         <div className="mb-item">
           {/* Keep uncategorized ingredients first and unlabeled. */}
-          <ul className="space-y-item text-prose">
+          <ul className="space-y-item type-body">
             {ungroupedIngredients.map((recipeIngredient) => (
               <IngredientItem
                 key={recipeIngredient.id}
@@ -114,10 +114,10 @@ export function IngredientsSection() {
 
       {visibleGroupedIngredients.map((group) => (
         <div key={group.id} className="mb-item">
-          <h4 className="mb-tight text-overline font-semibold uppercase tracking-wide text-muted-foreground">
+          <h4 className="mb-tight type-overline text-muted-foreground">
             {group.name}
           </h4>
-          <ul className="space-y-item text-prose">
+          <ul className="space-y-item type-body">
             {group.ingredients.map((recipeIngredient) => (
               <IngredientItem
                 key={recipeIngredient.id}

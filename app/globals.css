@@ -58,25 +58,40 @@
   --spacing-card-y: 0.75rem; /* recipe card header: py-3 */
   --spacing-empty-x: 1.5rem; /* empty state horizontal: px-6 */
   --spacing-empty-y: 3.5rem; /* empty state vertical: py-14 */
-
-  /* Typography — same surfaces */
-  --text-page-title: 1.5rem;
-  --text-page-title--line-height: 2rem;
-  --text-section: 1rem;
-  --text-section--line-height: 1.25rem;
-  --text-prose: 0.875rem;
-  --text-prose--line-height: 1.25rem;
-  --text-prose-relaxed: 0.875rem;
-  --text-prose-relaxed--line-height: 1.625rem;
-  --text-overline: 0.75rem;
-  --text-overline--line-height: 1rem;
-  --text-caption: 0.75rem;
-  --text-caption--line-height: 1rem;
-  --text-micro: 0.625rem;
-  --text-micro--line-height: 1;
 }
 
 :root {
+  /* Typography presets — metrics for @utility type-* (single class = full stack) */
+  --type-h1-size: 1.5rem;
+  --type-h1-line-height: 2rem;
+  --type-h1-weight: 600;
+  --type-h1-tracking: -0.02em;
+  --type-h2-size: 1rem;
+  --type-h2-line-height: 1.25rem;
+  --type-h2-weight: 600;
+  --type-h2-tracking: -0.01em;
+  --type-h3-size: 1rem;
+  --type-h3-line-height: 1.25rem;
+  --type-h3-weight: 500;
+  --type-h3-tracking: 0em;
+  --type-body-size: 0.875rem;
+  --type-body-line-height: 1.25rem;
+  --type-body-weight: 400;
+  --type-body-tracking: 0em;
+  --type-body-relaxed-line-height: 1.625rem;
+  --type-overline-size: 0.75rem;
+  --type-overline-line-height: 1rem;
+  --type-overline-weight: 600;
+  --type-overline-tracking: 0.05em;
+  --type-caption-size: 0.75rem;
+  --type-caption-line-height: 1rem;
+  --type-caption-weight: 400;
+  --type-caption-tracking: 0em;
+  --type-micro-size: 0.625rem;
+  --type-micro-line-height: 1;
+  --type-micro-weight: 500;
+  --type-micro-tracking: 0em;
+
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
@@ -154,6 +169,72 @@
     overflow-y: auto;
     scrollbar-gutter: stable;
   }
+}
+
+/* Compound typography — one utility = size + leading + weight + tracking (+ uppercase for overline) */
+@utility type-h1 {
+  font-family: var(--font-sans);
+  font-size: var(--type-h1-size);
+  line-height: var(--type-h1-line-height);
+  font-weight: var(--type-h1-weight);
+  letter-spacing: var(--type-h1-tracking);
+}
+
+@utility type-h2 {
+  font-family: var(--font-sans);
+  font-size: var(--type-h2-size);
+  line-height: var(--type-h2-line-height);
+  font-weight: var(--type-h2-weight);
+  letter-spacing: var(--type-h2-tracking);
+}
+
+@utility type-h3 {
+  font-family: var(--font-sans);
+  font-size: var(--type-h3-size);
+  line-height: var(--type-h3-line-height);
+  font-weight: var(--type-h3-weight);
+  letter-spacing: var(--type-h3-tracking);
+}
+
+@utility type-body {
+  font-family: var(--font-sans);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-line-height);
+  font-weight: var(--type-body-weight);
+  letter-spacing: var(--type-body-tracking);
+}
+
+@utility type-body-relaxed {
+  font-family: var(--font-sans);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-relaxed-line-height);
+  font-weight: var(--type-body-weight);
+  letter-spacing: var(--type-body-tracking);
+}
+
+@utility type-overline {
+  font-family: var(--font-sans);
+  font-size: var(--type-overline-size);
+  line-height: var(--type-overline-line-height);
+  font-weight: var(--type-overline-weight);
+  letter-spacing: var(--type-overline-tracking);
+  text-transform: uppercase;
+}
+
+@utility type-caption {
+  font-family: var(--font-sans);
+  font-size: var(--type-caption-size);
+  line-height: var(--type-caption-line-height);
+  font-weight: var(--type-caption-weight);
+  letter-spacing: var(--type-caption-tracking);
+}
+
+@utility type-micro {
+  font-family: var(--font-sans);
+  font-size: var(--type-micro-size);
+  line-height: var(--type-micro-line-height);
+  font-weight: var(--type-micro-weight);
+  letter-spacing: var(--type-micro-tracking);
 }
 
 @layer utilities {

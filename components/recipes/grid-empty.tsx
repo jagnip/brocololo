@@ -14,8 +14,8 @@ export function RecipeGridEmpty() {
         <IngredientIcon icon="sausage.svg" name="" size={28} />
       </div>
       <div className="space-y-cozy">
-        <p className="text-section font-medium text-foreground">No recipes found</p>
-        <p className="max-w-sm text-prose-relaxed text-muted-foreground">You silly sausage</p>
+        <p className="type-h3 text-foreground">No recipes found</p>
+        <p className="max-w-sm type-body-relaxed text-muted-foreground">You silly sausage</p>
       </div>
     </div>
   );
