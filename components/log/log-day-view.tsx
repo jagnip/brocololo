@@ -31,6 +31,7 @@ type SelectedSlotState = {
   entryRecipeId: string | null;
   mealLabel: string;
   selectedRecipeId: string | null;
+  initialSelectedRecipeId: string | null;
   subtitle: string;
   initialRows: EditableIngredientRow[];
 };
@@ -224,6 +225,7 @@ export function LogDayView({
         entryRecipeId: firstRecipe?.entryRecipeId ?? null,
         mealLabel: slot.label,
         selectedRecipeId: firstRecipe?.sourceRecipeId ?? null,
+        initialSelectedRecipeId: firstRecipe?.sourceRecipeId ?? null,
         subtitle: `${formatDayLabel(activeDay.date)}`,
         initialRows:
           firstRecipe?.ingredients?.map((ingredient) => ({
@@ -249,6 +251,7 @@ export function LogDayView({
       entryRecipeId: null,
       mealLabel: slot.label,
       selectedRecipeId: null,
+      initialSelectedRecipeId: null,
       subtitle: `${formatDayLabel(day.date)}`,
       initialRows: [],
     });
@@ -271,6 +274,7 @@ export function LogDayView({
       entryRecipeId: recipe.entryRecipeId,
       mealLabel: slot.label,
       selectedRecipeId: recipe.sourceRecipeId,
+      initialSelectedRecipeId: recipe.sourceRecipeId,
       subtitle: `${formatDayLabel(day.date)}`,
       initialRows:
         recipe.ingredients?.map((ingredient) => ({
@@ -429,6 +433,7 @@ export function LogDayView({
           : {
               ...prev,
               initialRows: rows,
+              initialSelectedRecipeId: activeSelection.selectedRecipeId,
             },
       );
       toast.success("Ingredients updated");
@@ -605,6 +610,7 @@ export function LogDayView({
                   isSaving={isSaving}
                   recipeOptions={recipeOptions}
                   selectedRecipeId={selectedSlot.selectedRecipeId}
+                  initialSelectedRecipeId={selectedSlot.initialSelectedRecipeId}
                   onSelectedRecipeIdChange={handleSelectedRecipeChange}
                   onSave={handleSlotSave}
                 />

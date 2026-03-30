@@ -106,6 +106,12 @@ export async function placePlannerPoolItemAction(input: PlacePlannerPoolItemInpu
     await placePlannerPoolItemInEntry(parsed.data);
   } catch (error) {
     console.error("Error placing planner pool item", error);
+    if (error instanceof Error && error.message === "NO_UNUSED_PLAN_SLOT_FOR_RECIPE") {
+      return {
+        type: "error" as const,
+        message: "No remaining planner slots for this recipe.",
+      };
+    }
     return {
       type: "error" as const,
       message: "Failed to place planner item",

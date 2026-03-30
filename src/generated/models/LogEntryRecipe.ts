@@ -38,6 +38,7 @@ export type LogEntryRecipeMinAggregateOutputType = {
   id: string | null
   entryId: string | null
   sourceRecipeId: string | null
+  planSlotId: string | null
   position: number | null
 }
 
@@ -45,6 +46,7 @@ export type LogEntryRecipeMaxAggregateOutputType = {
   id: string | null
   entryId: string | null
   sourceRecipeId: string | null
+  planSlotId: string | null
   position: number | null
 }
 
@@ -52,6 +54,7 @@ export type LogEntryRecipeCountAggregateOutputType = {
   id: number
   entryId: number
   sourceRecipeId: number
+  planSlotId: number
   position: number
   _all: number
 }
@@ -69,6 +72,7 @@ export type LogEntryRecipeMinAggregateInputType = {
   id?: true
   entryId?: true
   sourceRecipeId?: true
+  planSlotId?: true
   position?: true
 }
 
@@ -76,6 +80,7 @@ export type LogEntryRecipeMaxAggregateInputType = {
   id?: true
   entryId?: true
   sourceRecipeId?: true
+  planSlotId?: true
   position?: true
 }
 
@@ -83,6 +88,7 @@ export type LogEntryRecipeCountAggregateInputType = {
   id?: true
   entryId?: true
   sourceRecipeId?: true
+  planSlotId?: true
   position?: true
   _all?: true
 }
@@ -177,6 +183,7 @@ export type LogEntryRecipeGroupByOutputType = {
   id: string
   entryId: string
   sourceRecipeId: string | null
+  planSlotId: string | null
   position: number
   _count: LogEntryRecipeCountAggregateOutputType | null
   _avg: LogEntryRecipeAvgAggregateOutputType | null
@@ -207,9 +214,11 @@ export type LogEntryRecipeWhereInput = {
   id?: Prisma.StringFilter<"LogEntryRecipe"> | string
   entryId?: Prisma.StringFilter<"LogEntryRecipe"> | string
   sourceRecipeId?: Prisma.StringNullableFilter<"LogEntryRecipe"> | string | null
+  planSlotId?: Prisma.StringNullableFilter<"LogEntryRecipe"> | string | null
   position?: Prisma.IntFilter<"LogEntryRecipe"> | number
   entry?: Prisma.XOR<Prisma.LogEntryScalarRelationFilter, Prisma.LogEntryWhereInput>
   sourceRecipe?: Prisma.XOR<Prisma.RecipeNullableScalarRelationFilter, Prisma.RecipeWhereInput> | null
+  planSlot?: Prisma.XOR<Prisma.PlanSlotNullableScalarRelationFilter, Prisma.PlanSlotWhereInput> | null
   ingredients?: Prisma.LogIngredientListRelationFilter
 }
 
@@ -217,9 +226,11 @@ export type LogEntryRecipeOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   entryId?: Prisma.SortOrder
   sourceRecipeId?: Prisma.SortOrderInput | Prisma.SortOrder
+  planSlotId?: Prisma.SortOrderInput | Prisma.SortOrder
   position?: Prisma.SortOrder
   entry?: Prisma.LogEntryOrderByWithRelationInput
   sourceRecipe?: Prisma.RecipeOrderByWithRelationInput
+  planSlot?: Prisma.PlanSlotOrderByWithRelationInput
   ingredients?: Prisma.LogIngredientOrderByRelationAggregateInput
 }
 
@@ -230,9 +241,11 @@ export type LogEntryRecipeWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.LogEntryRecipeWhereInput | Prisma.LogEntryRecipeWhereInput[]
   entryId?: Prisma.StringFilter<"LogEntryRecipe"> | string
   sourceRecipeId?: Prisma.StringNullableFilter<"LogEntryRecipe"> | string | null
+  planSlotId?: Prisma.StringNullableFilter<"LogEntryRecipe"> | string | null
   position?: Prisma.IntFilter<"LogEntryRecipe"> | number
   entry?: Prisma.XOR<Prisma.LogEntryScalarRelationFilter, Prisma.LogEntryWhereInput>
   sourceRecipe?: Prisma.XOR<Prisma.RecipeNullableScalarRelationFilter, Prisma.RecipeWhereInput> | null
+  planSlot?: Prisma.XOR<Prisma.PlanSlotNullableScalarRelationFilter, Prisma.PlanSlotWhereInput> | null
   ingredients?: Prisma.LogIngredientListRelationFilter
 }, "id">
 
@@ -240,6 +253,7 @@ export type LogEntryRecipeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   entryId?: Prisma.SortOrder
   sourceRecipeId?: Prisma.SortOrderInput | Prisma.SortOrder
+  planSlotId?: Prisma.SortOrderInput | Prisma.SortOrder
   position?: Prisma.SortOrder
   _count?: Prisma.LogEntryRecipeCountOrderByAggregateInput
   _avg?: Prisma.LogEntryRecipeAvgOrderByAggregateInput
@@ -255,6 +269,7 @@ export type LogEntryRecipeScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"LogEntryRecipe"> | string
   entryId?: Prisma.StringWithAggregatesFilter<"LogEntryRecipe"> | string
   sourceRecipeId?: Prisma.StringNullableWithAggregatesFilter<"LogEntryRecipe"> | string | null
+  planSlotId?: Prisma.StringNullableWithAggregatesFilter<"LogEntryRecipe"> | string | null
   position?: Prisma.IntWithAggregatesFilter<"LogEntryRecipe"> | number
 }
 
@@ -263,6 +278,7 @@ export type LogEntryRecipeCreateInput = {
   position?: number
   entry: Prisma.LogEntryCreateNestedOneWithoutRecipesInput
   sourceRecipe?: Prisma.RecipeCreateNestedOneWithoutLogEntryRecipesInput
+  planSlot?: Prisma.PlanSlotCreateNestedOneWithoutLogEntryRecipesInput
   ingredients?: Prisma.LogIngredientCreateNestedManyWithoutEntryRecipeInput
 }
 
@@ -270,6 +286,7 @@ export type LogEntryRecipeUncheckedCreateInput = {
   id?: string
   entryId: string
   sourceRecipeId?: string | null
+  planSlotId?: string | null
   position?: number
   ingredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutEntryRecipeInput
 }
@@ -279,6 +296,7 @@ export type LogEntryRecipeUpdateInput = {
   position?: Prisma.IntFieldUpdateOperationsInput | number
   entry?: Prisma.LogEntryUpdateOneRequiredWithoutRecipesNestedInput
   sourceRecipe?: Prisma.RecipeUpdateOneWithoutLogEntryRecipesNestedInput
+  planSlot?: Prisma.PlanSlotUpdateOneWithoutLogEntryRecipesNestedInput
   ingredients?: Prisma.LogIngredientUpdateManyWithoutEntryRecipeNestedInput
 }
 
@@ -286,6 +304,7 @@ export type LogEntryRecipeUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   entryId?: Prisma.StringFieldUpdateOperationsInput | string
   sourceRecipeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  planSlotId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   ingredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutEntryRecipeNestedInput
 }
@@ -294,6 +313,7 @@ export type LogEntryRecipeCreateManyInput = {
   id?: string
   entryId: string
   sourceRecipeId?: string | null
+  planSlotId?: string | null
   position?: number
 }
 
@@ -306,6 +326,7 @@ export type LogEntryRecipeUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   entryId?: Prisma.StringFieldUpdateOperationsInput | string
   sourceRecipeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  planSlotId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -323,6 +344,7 @@ export type LogEntryRecipeCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   entryId?: Prisma.SortOrder
   sourceRecipeId?: Prisma.SortOrder
+  planSlotId?: Prisma.SortOrder
   position?: Prisma.SortOrder
 }
 
@@ -334,6 +356,7 @@ export type LogEntryRecipeMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   entryId?: Prisma.SortOrder
   sourceRecipeId?: Prisma.SortOrder
+  planSlotId?: Prisma.SortOrder
   position?: Prisma.SortOrder
 }
 
@@ -341,6 +364,7 @@ export type LogEntryRecipeMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   entryId?: Prisma.SortOrder
   sourceRecipeId?: Prisma.SortOrder
+  planSlotId?: Prisma.SortOrder
   position?: Prisma.SortOrder
 }
 
@@ -351,6 +375,48 @@ export type LogEntryRecipeSumOrderByAggregateInput = {
 export type LogEntryRecipeNullableScalarRelationFilter = {
   is?: Prisma.LogEntryRecipeWhereInput | null
   isNot?: Prisma.LogEntryRecipeWhereInput | null
+}
+
+export type LogEntryRecipeCreateNestedManyWithoutPlanSlotInput = {
+  create?: Prisma.XOR<Prisma.LogEntryRecipeCreateWithoutPlanSlotInput, Prisma.LogEntryRecipeUncheckedCreateWithoutPlanSlotInput> | Prisma.LogEntryRecipeCreateWithoutPlanSlotInput[] | Prisma.LogEntryRecipeUncheckedCreateWithoutPlanSlotInput[]
+  connectOrCreate?: Prisma.LogEntryRecipeCreateOrConnectWithoutPlanSlotInput | Prisma.LogEntryRecipeCreateOrConnectWithoutPlanSlotInput[]
+  createMany?: Prisma.LogEntryRecipeCreateManyPlanSlotInputEnvelope
+  connect?: Prisma.LogEntryRecipeWhereUniqueInput | Prisma.LogEntryRecipeWhereUniqueInput[]
+}
+
+export type LogEntryRecipeUncheckedCreateNestedManyWithoutPlanSlotInput = {
+  create?: Prisma.XOR<Prisma.LogEntryRecipeCreateWithoutPlanSlotInput, Prisma.LogEntryRecipeUncheckedCreateWithoutPlanSlotInput> | Prisma.LogEntryRecipeCreateWithoutPlanSlotInput[] | Prisma.LogEntryRecipeUncheckedCreateWithoutPlanSlotInput[]
+  connectOrCreate?: Prisma.LogEntryRecipeCreateOrConnectWithoutPlanSlotInput | Prisma.LogEntryRecipeCreateOrConnectWithoutPlanSlotInput[]
+  createMany?: Prisma.LogEntryRecipeCreateManyPlanSlotInputEnvelope
+  connect?: Prisma.LogEntryRecipeWhereUniqueInput | Prisma.LogEntryRecipeWhereUniqueInput[]
+}
+
+export type LogEntryRecipeUpdateManyWithoutPlanSlotNestedInput = {
+  create?: Prisma.XOR<Prisma.LogEntryRecipeCreateWithoutPlanSlotInput, Prisma.LogEntryRecipeUncheckedCreateWithoutPlanSlotInput> | Prisma.LogEntryRecipeCreateWithoutPlanSlotInput[] | Prisma.LogEntryRecipeUncheckedCreateWithoutPlanSlotInput[]
+  connectOrCreate?: Prisma.LogEntryRecipeCreateOrConnectWithoutPlanSlotInput | Prisma.LogEntryRecipeCreateOrConnectWithoutPlanSlotInput[]
+  upsert?: Prisma.LogEntryRecipeUpsertWithWhereUniqueWithoutPlanSlotInput | Prisma.LogEntryRecipeUpsertWithWhereUniqueWithoutPlanSlotInput[]
+  createMany?: Prisma.LogEntryRecipeCreateManyPlanSlotInputEnvelope
+  set?: Prisma.LogEntryRecipeWhereUniqueInput | Prisma.LogEntryRecipeWhereUniqueInput[]
+  disconnect?: Prisma.LogEntryRecipeWhereUniqueInput | Prisma.LogEntryRecipeWhereUniqueInput[]
+  delete?: Prisma.LogEntryRecipeWhereUniqueInput | Prisma.LogEntryRecipeWhereUniqueInput[]
+  connect?: Prisma.LogEntryRecipeWhereUniqueInput | Prisma.LogEntryRecipeWhereUniqueInput[]
+  update?: Prisma.LogEntryRecipeUpdateWithWhereUniqueWithoutPlanSlotInput | Prisma.LogEntryRecipeUpdateWithWhereUniqueWithoutPlanSlotInput[]
+  updateMany?: Prisma.LogEntryRecipeUpdateManyWithWhereWithoutPlanSlotInput | Prisma.LogEntryRecipeUpdateManyWithWhereWithoutPlanSlotInput[]
+  deleteMany?: Prisma.LogEntryRecipeScalarWhereInput | Prisma.LogEntryRecipeScalarWhereInput[]
+}
+
+export type LogEntryRecipeUncheckedUpdateManyWithoutPlanSlotNestedInput = {
+  create?: Prisma.XOR<Prisma.LogEntryRecipeCreateWithoutPlanSlotInput, Prisma.LogEntryRecipeUncheckedCreateWithoutPlanSlotInput> | Prisma.LogEntryRecipeCreateWithoutPlanSlotInput[] | Prisma.LogEntryRecipeUncheckedCreateWithoutPlanSlotInput[]
+  connectOrCreate?: Prisma.LogEntryRecipeCreateOrConnectWithoutPlanSlotInput | Prisma.LogEntryRecipeCreateOrConnectWithoutPlanSlotInput[]
+  upsert?: Prisma.LogEntryRecipeUpsertWithWhereUniqueWithoutPlanSlotInput | Prisma.LogEntryRecipeUpsertWithWhereUniqueWithoutPlanSlotInput[]
+  createMany?: Prisma.LogEntryRecipeCreateManyPlanSlotInputEnvelope
+  set?: Prisma.LogEntryRecipeWhereUniqueInput | Prisma.LogEntryRecipeWhereUniqueInput[]
+  disconnect?: Prisma.LogEntryRecipeWhereUniqueInput | Prisma.LogEntryRecipeWhereUniqueInput[]
+  delete?: Prisma.LogEntryRecipeWhereUniqueInput | Prisma.LogEntryRecipeWhereUniqueInput[]
+  connect?: Prisma.LogEntryRecipeWhereUniqueInput | Prisma.LogEntryRecipeWhereUniqueInput[]
+  update?: Prisma.LogEntryRecipeUpdateWithWhereUniqueWithoutPlanSlotInput | Prisma.LogEntryRecipeUpdateWithWhereUniqueWithoutPlanSlotInput[]
+  updateMany?: Prisma.LogEntryRecipeUpdateManyWithWhereWithoutPlanSlotInput | Prisma.LogEntryRecipeUpdateManyWithWhereWithoutPlanSlotInput[]
+  deleteMany?: Prisma.LogEntryRecipeScalarWhereInput | Prisma.LogEntryRecipeScalarWhereInput[]
 }
 
 export type LogEntryRecipeCreateNestedManyWithoutSourceRecipeInput = {
@@ -453,16 +519,71 @@ export type LogEntryRecipeUpdateOneWithoutIngredientsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.LogEntryRecipeUpdateToOneWithWhereWithoutIngredientsInput, Prisma.LogEntryRecipeUpdateWithoutIngredientsInput>, Prisma.LogEntryRecipeUncheckedUpdateWithoutIngredientsInput>
 }
 
+export type LogEntryRecipeCreateWithoutPlanSlotInput = {
+  id?: string
+  position?: number
+  entry: Prisma.LogEntryCreateNestedOneWithoutRecipesInput
+  sourceRecipe?: Prisma.RecipeCreateNestedOneWithoutLogEntryRecipesInput
+  ingredients?: Prisma.LogIngredientCreateNestedManyWithoutEntryRecipeInput
+}
+
+export type LogEntryRecipeUncheckedCreateWithoutPlanSlotInput = {
+  id?: string
+  entryId: string
+  sourceRecipeId?: string | null
+  position?: number
+  ingredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutEntryRecipeInput
+}
+
+export type LogEntryRecipeCreateOrConnectWithoutPlanSlotInput = {
+  where: Prisma.LogEntryRecipeWhereUniqueInput
+  create: Prisma.XOR<Prisma.LogEntryRecipeCreateWithoutPlanSlotInput, Prisma.LogEntryRecipeUncheckedCreateWithoutPlanSlotInput>
+}
+
+export type LogEntryRecipeCreateManyPlanSlotInputEnvelope = {
+  data: Prisma.LogEntryRecipeCreateManyPlanSlotInput | Prisma.LogEntryRecipeCreateManyPlanSlotInput[]
+  skipDuplicates?: boolean
+}
+
+export type LogEntryRecipeUpsertWithWhereUniqueWithoutPlanSlotInput = {
+  where: Prisma.LogEntryRecipeWhereUniqueInput
+  update: Prisma.XOR<Prisma.LogEntryRecipeUpdateWithoutPlanSlotInput, Prisma.LogEntryRecipeUncheckedUpdateWithoutPlanSlotInput>
+  create: Prisma.XOR<Prisma.LogEntryRecipeCreateWithoutPlanSlotInput, Prisma.LogEntryRecipeUncheckedCreateWithoutPlanSlotInput>
+}
+
+export type LogEntryRecipeUpdateWithWhereUniqueWithoutPlanSlotInput = {
+  where: Prisma.LogEntryRecipeWhereUniqueInput
+  data: Prisma.XOR<Prisma.LogEntryRecipeUpdateWithoutPlanSlotInput, Prisma.LogEntryRecipeUncheckedUpdateWithoutPlanSlotInput>
+}
+
+export type LogEntryRecipeUpdateManyWithWhereWithoutPlanSlotInput = {
+  where: Prisma.LogEntryRecipeScalarWhereInput
+  data: Prisma.XOR<Prisma.LogEntryRecipeUpdateManyMutationInput, Prisma.LogEntryRecipeUncheckedUpdateManyWithoutPlanSlotInput>
+}
+
+export type LogEntryRecipeScalarWhereInput = {
+  AND?: Prisma.LogEntryRecipeScalarWhereInput | Prisma.LogEntryRecipeScalarWhereInput[]
+  OR?: Prisma.LogEntryRecipeScalarWhereInput[]
+  NOT?: Prisma.LogEntryRecipeScalarWhereInput | Prisma.LogEntryRecipeScalarWhereInput[]
+  id?: Prisma.StringFilter<"LogEntryRecipe"> | string
+  entryId?: Prisma.StringFilter<"LogEntryRecipe"> | string
+  sourceRecipeId?: Prisma.StringNullableFilter<"LogEntryRecipe"> | string | null
+  planSlotId?: Prisma.StringNullableFilter<"LogEntryRecipe"> | string | null
+  position?: Prisma.IntFilter<"LogEntryRecipe"> | number
+}
+
 export type LogEntryRecipeCreateWithoutSourceRecipeInput = {
   id?: string
   position?: number
   entry: Prisma.LogEntryCreateNestedOneWithoutRecipesInput
+  planSlot?: Prisma.PlanSlotCreateNestedOneWithoutLogEntryRecipesInput
   ingredients?: Prisma.LogIngredientCreateNestedManyWithoutEntryRecipeInput
 }
 
 export type LogEntryRecipeUncheckedCreateWithoutSourceRecipeInput = {
   id?: string
   entryId: string
+  planSlotId?: string | null
   position?: number
   ingredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutEntryRecipeInput
 }
@@ -493,26 +614,18 @@ export type LogEntryRecipeUpdateManyWithWhereWithoutSourceRecipeInput = {
   data: Prisma.XOR<Prisma.LogEntryRecipeUpdateManyMutationInput, Prisma.LogEntryRecipeUncheckedUpdateManyWithoutSourceRecipeInput>
 }
 
-export type LogEntryRecipeScalarWhereInput = {
-  AND?: Prisma.LogEntryRecipeScalarWhereInput | Prisma.LogEntryRecipeScalarWhereInput[]
-  OR?: Prisma.LogEntryRecipeScalarWhereInput[]
-  NOT?: Prisma.LogEntryRecipeScalarWhereInput | Prisma.LogEntryRecipeScalarWhereInput[]
-  id?: Prisma.StringFilter<"LogEntryRecipe"> | string
-  entryId?: Prisma.StringFilter<"LogEntryRecipe"> | string
-  sourceRecipeId?: Prisma.StringNullableFilter<"LogEntryRecipe"> | string | null
-  position?: Prisma.IntFilter<"LogEntryRecipe"> | number
-}
-
 export type LogEntryRecipeCreateWithoutEntryInput = {
   id?: string
   position?: number
   sourceRecipe?: Prisma.RecipeCreateNestedOneWithoutLogEntryRecipesInput
+  planSlot?: Prisma.PlanSlotCreateNestedOneWithoutLogEntryRecipesInput
   ingredients?: Prisma.LogIngredientCreateNestedManyWithoutEntryRecipeInput
 }
 
 export type LogEntryRecipeUncheckedCreateWithoutEntryInput = {
   id?: string
   sourceRecipeId?: string | null
+  planSlotId?: string | null
   position?: number
   ingredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutEntryRecipeInput
 }
@@ -548,12 +661,14 @@ export type LogEntryRecipeCreateWithoutIngredientsInput = {
   position?: number
   entry: Prisma.LogEntryCreateNestedOneWithoutRecipesInput
   sourceRecipe?: Prisma.RecipeCreateNestedOneWithoutLogEntryRecipesInput
+  planSlot?: Prisma.PlanSlotCreateNestedOneWithoutLogEntryRecipesInput
 }
 
 export type LogEntryRecipeUncheckedCreateWithoutIngredientsInput = {
   id?: string
   entryId: string
   sourceRecipeId?: string | null
+  planSlotId?: string | null
   position?: number
 }
 
@@ -578,9 +693,41 @@ export type LogEntryRecipeUpdateWithoutIngredientsInput = {
   position?: Prisma.IntFieldUpdateOperationsInput | number
   entry?: Prisma.LogEntryUpdateOneRequiredWithoutRecipesNestedInput
   sourceRecipe?: Prisma.RecipeUpdateOneWithoutLogEntryRecipesNestedInput
+  planSlot?: Prisma.PlanSlotUpdateOneWithoutLogEntryRecipesNestedInput
 }
 
 export type LogEntryRecipeUncheckedUpdateWithoutIngredientsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  entryId?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceRecipeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  planSlotId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+}
+
+export type LogEntryRecipeCreateManyPlanSlotInput = {
+  id?: string
+  entryId: string
+  sourceRecipeId?: string | null
+  position?: number
+}
+
+export type LogEntryRecipeUpdateWithoutPlanSlotInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  entry?: Prisma.LogEntryUpdateOneRequiredWithoutRecipesNestedInput
+  sourceRecipe?: Prisma.RecipeUpdateOneWithoutLogEntryRecipesNestedInput
+  ingredients?: Prisma.LogIngredientUpdateManyWithoutEntryRecipeNestedInput
+}
+
+export type LogEntryRecipeUncheckedUpdateWithoutPlanSlotInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  entryId?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceRecipeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  position?: Prisma.IntFieldUpdateOperationsInput | number
+  ingredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutEntryRecipeNestedInput
+}
+
+export type LogEntryRecipeUncheckedUpdateManyWithoutPlanSlotInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   entryId?: Prisma.StringFieldUpdateOperationsInput | string
   sourceRecipeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -590,6 +737,7 @@ export type LogEntryRecipeUncheckedUpdateWithoutIngredientsInput = {
 export type LogEntryRecipeCreateManySourceRecipeInput = {
   id?: string
   entryId: string
+  planSlotId?: string | null
   position?: number
 }
 
@@ -597,12 +745,14 @@ export type LogEntryRecipeUpdateWithoutSourceRecipeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   position?: Prisma.IntFieldUpdateOperationsInput | number
   entry?: Prisma.LogEntryUpdateOneRequiredWithoutRecipesNestedInput
+  planSlot?: Prisma.PlanSlotUpdateOneWithoutLogEntryRecipesNestedInput
   ingredients?: Prisma.LogIngredientUpdateManyWithoutEntryRecipeNestedInput
 }
 
 export type LogEntryRecipeUncheckedUpdateWithoutSourceRecipeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   entryId?: Prisma.StringFieldUpdateOperationsInput | string
+  planSlotId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   ingredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutEntryRecipeNestedInput
 }
@@ -610,12 +760,14 @@ export type LogEntryRecipeUncheckedUpdateWithoutSourceRecipeInput = {
 export type LogEntryRecipeUncheckedUpdateManyWithoutSourceRecipeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   entryId?: Prisma.StringFieldUpdateOperationsInput | string
+  planSlotId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type LogEntryRecipeCreateManyEntryInput = {
   id?: string
   sourceRecipeId?: string | null
+  planSlotId?: string | null
   position?: number
 }
 
@@ -623,12 +775,14 @@ export type LogEntryRecipeUpdateWithoutEntryInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   position?: Prisma.IntFieldUpdateOperationsInput | number
   sourceRecipe?: Prisma.RecipeUpdateOneWithoutLogEntryRecipesNestedInput
+  planSlot?: Prisma.PlanSlotUpdateOneWithoutLogEntryRecipesNestedInput
   ingredients?: Prisma.LogIngredientUpdateManyWithoutEntryRecipeNestedInput
 }
 
 export type LogEntryRecipeUncheckedUpdateWithoutEntryInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   sourceRecipeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  planSlotId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
   ingredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutEntryRecipeNestedInput
 }
@@ -636,6 +790,7 @@ export type LogEntryRecipeUncheckedUpdateWithoutEntryInput = {
 export type LogEntryRecipeUncheckedUpdateManyWithoutEntryInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   sourceRecipeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  planSlotId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   position?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
@@ -674,9 +829,11 @@ export type LogEntryRecipeSelect<ExtArgs extends runtime.Types.Extensions.Intern
   id?: boolean
   entryId?: boolean
   sourceRecipeId?: boolean
+  planSlotId?: boolean
   position?: boolean
   entry?: boolean | Prisma.LogEntryDefaultArgs<ExtArgs>
   sourceRecipe?: boolean | Prisma.LogEntryRecipe$sourceRecipeArgs<ExtArgs>
+  planSlot?: boolean | Prisma.LogEntryRecipe$planSlotArgs<ExtArgs>
   ingredients?: boolean | Prisma.LogEntryRecipe$ingredientsArgs<ExtArgs>
   _count?: boolean | Prisma.LogEntryRecipeCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["logEntryRecipe"]>
@@ -685,41 +842,49 @@ export type LogEntryRecipeSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   id?: boolean
   entryId?: boolean
   sourceRecipeId?: boolean
+  planSlotId?: boolean
   position?: boolean
   entry?: boolean | Prisma.LogEntryDefaultArgs<ExtArgs>
   sourceRecipe?: boolean | Prisma.LogEntryRecipe$sourceRecipeArgs<ExtArgs>
+  planSlot?: boolean | Prisma.LogEntryRecipe$planSlotArgs<ExtArgs>
 }, ExtArgs["result"]["logEntryRecipe"]>
 
 export type LogEntryRecipeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   entryId?: boolean
   sourceRecipeId?: boolean
+  planSlotId?: boolean
   position?: boolean
   entry?: boolean | Prisma.LogEntryDefaultArgs<ExtArgs>
   sourceRecipe?: boolean | Prisma.LogEntryRecipe$sourceRecipeArgs<ExtArgs>
+  planSlot?: boolean | Prisma.LogEntryRecipe$planSlotArgs<ExtArgs>
 }, ExtArgs["result"]["logEntryRecipe"]>
 
 export type LogEntryRecipeSelectScalar = {
   id?: boolean
   entryId?: boolean
   sourceRecipeId?: boolean
+  planSlotId?: boolean
   position?: boolean
 }
 
-export type LogEntryRecipeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "entryId" | "sourceRecipeId" | "position", ExtArgs["result"]["logEntryRecipe"]>
+export type LogEntryRecipeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "entryId" | "sourceRecipeId" | "planSlotId" | "position", ExtArgs["result"]["logEntryRecipe"]>
 export type LogEntryRecipeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.LogEntryDefaultArgs<ExtArgs>
   sourceRecipe?: boolean | Prisma.LogEntryRecipe$sourceRecipeArgs<ExtArgs>
+  planSlot?: boolean | Prisma.LogEntryRecipe$planSlotArgs<ExtArgs>
   ingredients?: boolean | Prisma.LogEntryRecipe$ingredientsArgs<ExtArgs>
   _count?: boolean | Prisma.LogEntryRecipeCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type LogEntryRecipeIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.LogEntryDefaultArgs<ExtArgs>
   sourceRecipe?: boolean | Prisma.LogEntryRecipe$sourceRecipeArgs<ExtArgs>
+  planSlot?: boolean | Prisma.LogEntryRecipe$planSlotArgs<ExtArgs>
 }
 export type LogEntryRecipeIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   entry?: boolean | Prisma.LogEntryDefaultArgs<ExtArgs>
   sourceRecipe?: boolean | Prisma.LogEntryRecipe$sourceRecipeArgs<ExtArgs>
+  planSlot?: boolean | Prisma.LogEntryRecipe$planSlotArgs<ExtArgs>
 }
 
 export type $LogEntryRecipePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -727,12 +892,14 @@ export type $LogEntryRecipePayload<ExtArgs extends runtime.Types.Extensions.Inte
   objects: {
     entry: Prisma.$LogEntryPayload<ExtArgs>
     sourceRecipe: Prisma.$RecipePayload<ExtArgs> | null
+    planSlot: Prisma.$PlanSlotPayload<ExtArgs> | null
     ingredients: Prisma.$LogIngredientPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     entryId: string
     sourceRecipeId: string | null
+    planSlotId: string | null
     position: number
   }, ExtArgs["result"]["logEntryRecipe"]>
   composites: {}
@@ -1130,6 +1297,7 @@ export interface Prisma__LogEntryRecipeClient<T, Null = never, ExtArgs extends r
   readonly [Symbol.toStringTag]: "PrismaPromise"
   entry<T extends Prisma.LogEntryDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LogEntryDefaultArgs<ExtArgs>>): Prisma.Prisma__LogEntryClient<runtime.Types.Result.GetResult<Prisma.$LogEntryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   sourceRecipe<T extends Prisma.LogEntryRecipe$sourceRecipeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LogEntryRecipe$sourceRecipeArgs<ExtArgs>>): Prisma.Prisma__RecipeClient<runtime.Types.Result.GetResult<Prisma.$RecipePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  planSlot<T extends Prisma.LogEntryRecipe$planSlotArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LogEntryRecipe$planSlotArgs<ExtArgs>>): Prisma.Prisma__PlanSlotClient<runtime.Types.Result.GetResult<Prisma.$PlanSlotPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   ingredients<T extends Prisma.LogEntryRecipe$ingredientsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LogEntryRecipe$ingredientsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LogIngredientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1163,6 +1331,7 @@ export interface LogEntryRecipeFieldRefs {
   readonly id: Prisma.FieldRef<"LogEntryRecipe", 'String'>
   readonly entryId: Prisma.FieldRef<"LogEntryRecipe", 'String'>
   readonly sourceRecipeId: Prisma.FieldRef<"LogEntryRecipe", 'String'>
+  readonly planSlotId: Prisma.FieldRef<"LogEntryRecipe", 'String'>
   readonly position: Prisma.FieldRef<"LogEntryRecipe", 'Int'>
 }
     
@@ -1576,6 +1745,25 @@ export type LogEntryRecipe$sourceRecipeArgs<ExtArgs extends runtime.Types.Extens
    */
   include?: Prisma.RecipeInclude<ExtArgs> | null
   where?: Prisma.RecipeWhereInput
+}
+
+/**
+ * LogEntryRecipe.planSlot
+ */
+export type LogEntryRecipe$planSlotArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PlanSlot
+   */
+  select?: Prisma.PlanSlotSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PlanSlot
+   */
+  omit?: Prisma.PlanSlotOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PlanSlotInclude<ExtArgs> | null
+  where?: Prisma.PlanSlotWhereInput
 }
 
 /**

@@ -319,5 +319,6 @@ export function buildGroupedPlannerPoolCards(
     });
   }
 
-  return Array.from(grouped.values());
+  const groupedValues = Array.from(grouped.values());
+  return groupedValues;
 }

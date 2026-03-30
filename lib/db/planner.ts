@@ -438,6 +438,106 @@ export async function getPlannerPoolItemsForPlan(params: {
   });
 }
 
+export async function reserveNextUnusedPlanSlot(params: {
+  planId: string;
+  recipeId: string;
+}): Promise<string | null> {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const reserved = await prisma.$transaction(async (tx) => {
+      const slot = await tx.planSlot.findFirst({
+        where: {
+          planId: params.planId,
+          recipeId: params.recipeId,
+          used: false,
+        },
+        orderBy: [
+          { date: "asc" },
+          { mealType: "asc" },
+          { id: "asc" },
+        ],
+        select: { id: true },
+      });
+
+      if (!slot) {
+        return null;
+      }
+
+      const updated = await tx.planSlot.updateMany({
+        where: {
+          id: slot.id,
+          used: false,
+        },
+        data: { used: true },
+      });
+
+      if (updated.count === 0) {
+        return "__RETRY__";
+      }
+
+      return slot.id;
+    });
+
+    if (reserved === "__RETRY__") {
+      continue;
+    }
+
+    return reserved;
+  }
+
+  return null;
+}
+
+export async function releaseReservedPlanSlot(planSlotId: string) {
+  await prisma.planSlot.updateMany({
+    where: { id: planSlotId },
+    data: { used: false },
+  });
+}
+
+export async function reserveNextUnusedPlanSlotTx(params: {
+  tx: Prisma.TransactionClient;
+  planId: string;
+  recipeId: string;
+}): Promise<string | null> {
+  const slot = await params.tx.planSlot.findFirst({
+    where: {
+      planId: params.planId,
+      recipeId: params.recipeId,
+      used: false,
+    },
+    orderBy: [{ date: "asc" }, { mealType: "asc" }, { id: "asc" }],
+    select: { id: true },
+  });
+
+  if (!slot) {
+    return null;
+  }
+
+  const updated = await params.tx.planSlot.updateMany({
+    where: {
+      id: slot.id,
+      used: false,
+    },
+    data: { used: true },
+  });
+
+  if (updated.count === 0) {
+    return null;
+  }
+
+  return slot.id;
+}
+
+export async function releaseReservedPlanSlotTx(params: {
+  tx: Prisma.TransactionClient;
+  planSlotId: string;
+}) {
+  await params.tx.planSlot.updateMany({
+    where: { id: params.planSlotId },
+    data: { used: false },
+  });
+}
+
 export async function updatePlan(planId: string, slots: SlotSaveData[]) {
   const now = new Date();
   const uniqueRecipeIds = [
