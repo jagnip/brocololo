@@ -28,7 +28,7 @@ export default async function LogPage() {
         <section className="rounded-lg border p-6 space-y-3">
           <h2 className="text-lg font-medium">No logs yet</h2>
           <p className="text-sm text-muted-foreground">
-            Logs are created when a plan is saved.
+            Logs are created when you generate them from a saved planner plan.
           </p>
         </section>
       ) : (
