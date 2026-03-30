@@ -213,11 +213,11 @@ export function IngredientItem({
   );
 
   return (
-    <li className="flex flex-col gap-2 rounded-md border border-border/60 p-2">
-      <div className="flex items-center gap-2 md:flex-col md:items-stretch lg:flex-row lg:items-center">
+    <li className="flex flex-col gap-item rounded-md border border-border/60 p-nest">
+      <div className="flex items-center gap-item md:flex-col md:items-stretch lg:flex-row lg:items-center">
         {/* <IngredientIcon icon={ingredient.icon} name={ingredient.name} /> */}
         {canRenderAmountAndUnit && (
-          <div className="order-1 md:order-2 lg:order-1 flex items-center gap-2 md:w-full lg:w-auto">
+          <div className="order-1 md:order-2 lg:order-1 flex items-center gap-item md:w-full lg:w-auto">
             {isEditable ? (
               /* Amount */
               <div className="w-16 h-8 flex items-center justify-center">
@@ -238,7 +238,7 @@ export function IngredientItem({
                 />
               </div>
             ) : (
-              <div className="w-16 min-w-16 h-8 flex items-center justify-center text-sm leading-none text-center tabular-nums">
+              <div className="w-16 min-w-16 h-8 flex items-center justify-center type-body leading-none text-center tabular-nums">
                 {displayAmount}
               </div>
             )}{" "}
@@ -286,8 +286,8 @@ export function IngredientItem({
           )}
         />
       </div>
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-item flex-wrap">
+        <div className="flex items-center gap-item">
           <Button
             type="button"
             variant="outline"
@@ -334,7 +334,7 @@ export function IngredientItem({
           )}
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-item">
           {recipeIngredient.nutritionTarget === "PRIMARY_ONLY" && (
             <Button
               type="button"
@@ -360,7 +360,7 @@ export function IngredientItem({
             </Button>
           )}
           {recipeIngredient.additionalInfo && (
-            <span className="text-muted-foreground text-sm">
+            <span className="text-muted-foreground type-body">
               {recipeIngredient.additionalInfo}
             </span>
           )}

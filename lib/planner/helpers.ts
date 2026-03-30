@@ -7,14 +7,16 @@ import { PROTEIN_GROUP_MAP } from "../constants";
 
 export function getDaysInRange(start: Date, end: Date): Date[] {
   const days: Date[] = [];
+  // Important: plan/slot day keys are derived from `toISOString().slice(0, 10)` (UTC).
+  // Using local midnight here causes off-by-one day shifts when local timezone != UTC.
   const current = new Date(start);
-  current.setHours(0, 0, 0, 0);
+  current.setUTCHours(0, 0, 0, 0);
   const endDate = new Date(end);
-  endDate.setHours(0, 0, 0, 0);
+  endDate.setUTCHours(0, 0, 0, 0);
 
-  while (current <= endDate) {
+  while (current.getTime() <= endDate.getTime()) {
     days.push(new Date(current));
-    current.setDate(current.getDate() + 1);
+    current.setUTCDate(current.getUTCDate() + 1);
   }
 
   return days;

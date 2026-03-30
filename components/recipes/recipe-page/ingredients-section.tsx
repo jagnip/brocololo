@@ -36,9 +36,9 @@ export function IngredientsSection() {
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-base">Ingredients</h3>
+      <div className="mb-item flex items-center justify-between">
+        <div className="flex items-center gap-item">
+          <h3 className="type-h2">Ingredients</h3>
           {hasActiveScaling && (
             <Button
               variant="ghost"
@@ -50,7 +50,7 @@ export function IngredientsSection() {
             </Button>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-item">
           <Button
             variant="outline"
             size="icon-sm"
@@ -60,7 +60,7 @@ export function IngredientsSection() {
           >
             <Minus />
           </Button>
-          <span className="text-sm font-base min-w-12 text-center">
+          <span className="type-body min-w-12 text-center">
             {currentServings} {currentServings === 1 ? "serving" : "servings"}
           </span>
           <Button
@@ -80,9 +80,9 @@ export function IngredientsSection() {
       />
 
       {ungroupedIngredients.length > 0 ? (
-        <div className="mb-2">
+        <div className="mb-item">
           {/* Keep uncategorized ingredients first and unlabeled. */}
-          <ul className="space-y-2 text-sm">
+          <ul className="space-y-item type-body">
             {ungroupedIngredients.map((recipeIngredient) => (
               <IngredientItem
                 key={recipeIngredient.id}
@@ -113,11 +113,11 @@ export function IngredientsSection() {
       ) : null}
 
       {visibleGroupedIngredients.map((group) => (
-        <div key={group.id} className="mb-2">
-          <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <div key={group.id} className="mb-item">
+          <h4 className="mb-tight type-overline text-muted-foreground">
             {group.name}
           </h4>
-          <ul className="space-y-2 text-sm">
+          <ul className="space-y-item type-body">
             {group.ingredients.map((recipeIngredient) => (
               <IngredientItem
                 key={recipeIngredient.id}

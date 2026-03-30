@@ -25,8 +25,8 @@ export function PortionSplitCard({
   )`;
 
   return (
-    <div className="mb-2 rounded-lg border border-border bg-muted p-2">
-      <div className="flex items-center gap-2">
+    <div className="mb-item rounded-lg border border-border bg-muted p-nest">
+      <div className="flex items-center gap-item">
         <div
           className="relative size-10 shrink-0 rounded-full border border-border"
           style={{ backgroundImage: pieBackground }}
@@ -34,8 +34,8 @@ export function PortionSplitCard({
         />
 
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-foreground">{ratioText}</div>
-          <div className="text-xs text-muted-foreground">
+          <div className="type-body font-semibold text-foreground">{ratioText}</div>
+          <div className="type-caption text-muted-foreground">
             Jagoda {jagodaPct}% / Nelson {nelsonPct}%
           </div>
         </div>
