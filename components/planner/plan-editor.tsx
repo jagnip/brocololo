@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { PlanInputType, SlotSaveData } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PlanView } from "./plan-view";
 import { toast } from "sonner";
 import { updateSavedPlan } from "@/actions/planner-actions";
+import { Button } from "@/components/ui/button";
 
 type PlanEditorProps = {
   planId: string;
@@ -13,46 +14,46 @@ type PlanEditorProps = {
   recipes: RecipeType[];
 };
 
-type SaveStatus = "idle" | "saving" | "saved" | "error";
+type SaveStatus = "idle" | "saving";
 
 export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
   const [plan, setPlan] = useState<PlanInputType>(initialPlan);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-  const hasEdited = useRef(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const editVersionRef = useRef(0);
 
-  useEffect(() => {
-    if (!hasEdited.current) return;
+  const handleSave = useCallback(async () => {
+    if (!isDirty) return;
+    if (saveStatus === "saving") return;
 
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    const saveEditVersion = editVersionRef.current;
+    setSaveStatus("saving");
+
+    const saveData: SlotSaveData[] = plan.map((s) => ({
+      date: new Date(s.date),
+      mealType: s.mealType,
+      recipeId: s.recipe?.id ?? null,
+      alternativeRecipeIds: s.alternatives.map((a) => a.id),
+      used: s.used,
+    }));
+
+    const result = await updateSavedPlan(planId, saveData);
+    if (result.type === "error") {
+      setSaveStatus("idle");
+      toast.error(result.message);
+      return;
+    }
 
     setSaveStatus("idle");
-    timeoutRef.current = setTimeout(async () => {
-      setSaveStatus("saving");
-      const saveData: SlotSaveData[] = plan.map((s) => ({
-        date: new Date(s.date),
-        mealType: s.mealType,
-        recipeId: s.recipe?.id ?? null,
-        alternativeRecipeIds: s.alternatives.map((a) => a.id),
-        used: s.used,
-      }));
-      const result = await updateSavedPlan(planId, saveData);
-      if (result.type === "error") {
-        setSaveStatus("error");
-        toast.error(result.message);
-      } else {
-        setSaveStatus("saved");
-      }
-    }, 1000);
-
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [plan, planId]);
+    if (saveEditVersion === editVersionRef.current) {
+      setIsDirty(false);
+    }
+  }, [isDirty, plan, planId, saveStatus]);
 
   function markEdited<T extends unknown[]>(fn: (...args: T) => void) {
     return (...args: T) => {
-      hasEdited.current = true;
+      editVersionRef.current += 1;
+      setIsDirty(true);
       fn(...args);
     };
   }
@@ -108,13 +109,19 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
 
   return (
     <>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <h1 className="text-lg font-semibold">Edit plan</h1>
-        <span className="text-sm text-muted-foreground">
-          {saveStatus === "saving" && "Saving…"}
-          {saveStatus === "saved" && "Saved"}
-          {saveStatus === "error" && "Failed to save"}
-        </span>
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={!isDirty || saveStatus === "saving"}
+          aria-busy={saveStatus === "saving"}
+          onClick={() => {
+            void handleSave();
+          }}
+        >
+          {saveStatus === "saving" ? "Saving..." : "Save"}
+        </Button>
       </div>
       <PlanView
         plan={plan}
