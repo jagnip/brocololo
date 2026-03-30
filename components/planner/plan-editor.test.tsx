@@ -332,6 +332,24 @@ describe("PlanEditor manual save", () => {
     expect(toast.info).toHaveBeenCalledWith("Log already generated for this plan.");
     expect(pushMock).not.toHaveBeenCalled();
   });
+
+  it("shows conflict dates and stays on plan when plan days already exist in logs", async () => {
+    const user = userEvent.setup();
+
+    vi.mocked(generateLogFromPlan).mockResolvedValue({
+      type: "date_conflict",
+      dates: ["2026-04-10", "2026-04-12"],
+    });
+
+    render(<PlanEditor planId="plan-1" initialPlan={initialPlanForTests()} recipes={[]} />);
+
+    await user.click(screen.getByRole("button", { name: "Generate log" }));
+
+    expect(toast.info).toHaveBeenCalledWith(
+      "Cannot generate log. These dates already exist in a log: Apr 10, 2026, Apr 12, 2026",
+    );
+    expect(pushMock).not.toHaveBeenCalled();
+  });
 });
 
 function initialPlanForTests(): PlanInputType {

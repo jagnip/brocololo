@@ -439,8 +439,39 @@ export async function generateBaselineLogForPlan(
   planId: string,
 ): Promise<
   | { type: "success"; logId: string }
+  | { type: "date_conflict"; dates: string[] }
   | { type: "already_exists"; logId: string }
 > {
+  const slots = await getPlanById(planId);
+  if (!slots) {
+    throw new Error("PLAN_NOT_FOUND");
+  }
+
+  const planDateKeys = [...new Set(slots.map((slot) => slot.date.toISOString().slice(0, 10)))].sort();
+  const minDate = new Date(`${planDateKeys[0]}T00:00:00.000Z`);
+  const maxDate = new Date(`${planDateKeys[planDateKeys.length - 1]}T23:59:59.999Z`);
+  const planDateKeySet = new Set(planDateKeys);
+
+  const existingEntries = await prisma.logEntry.findMany({
+    where: {
+      date: {
+        gte: minDate,
+        lte: maxDate,
+      },
+    },
+    select: { date: true },
+  });
+
+  const conflictDates = [...new Set(
+    existingEntries
+      .map((entry) => entry.date.toISOString().slice(0, 10))
+      .filter((dateKey) => planDateKeySet.has(dateKey)),
+  )].sort();
+
+  if (conflictDates.length > 0) {
+    return { type: "date_conflict", dates: conflictDates };
+  }
+
   const existingLog = await prisma.log.findUnique({
     where: { planId },
     select: { id: true },
@@ -448,11 +479,6 @@ export async function generateBaselineLogForPlan(
 
   if (existingLog) {
     return { type: "already_exists", logId: existingLog.id };
-  }
-
-  const slots = await getPlanById(planId);
-  if (!slots) {
-    throw new Error("PLAN_NOT_FOUND");
   }
 
   try {

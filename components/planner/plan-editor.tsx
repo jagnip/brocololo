@@ -31,6 +31,18 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
   const router = useRouter();
   const [logStatus, setLogStatus] = useState<"idle" | "generating">("idle");
 
+  function formatDateKeysForToast(dateKeys: string[]) {
+    // Format YYYY-MM-DD as a readable UTC date string to avoid timezone drift.
+    return dateKeys.map((dateKey) =>
+      new Date(`${dateKey}T00:00:00.000Z`).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        timeZone: "UTC",
+      }),
+    );
+  }
+
   const parseUtcDateKey = (dateKey: string): Date => new Date(`${dateKey}T00:00:00.000Z`);
 
   function shiftPlanSlotsByUtcDayDelta(slots: PlanInputType, deltaDays: number): PlanInputType {
@@ -258,6 +270,13 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
               setLogStatus("generating");
               try {
                 const result = await generateLogFromPlan(planId);
+                if (result.type === "date_conflict") {
+                  const formattedDates = formatDateKeysForToast(result.dates);
+                  toast.info(
+                    `Cannot generate log. These dates already exist in a log: ${formattedDates.join(", ")}`,
+                  );
+                  return;
+                }
                 if (result.type === "already_exists") {
                   toast.info("Log already generated for this plan.");
                   return;

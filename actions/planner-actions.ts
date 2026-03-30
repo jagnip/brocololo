@@ -147,6 +147,7 @@ export async function generateLogFromPlan(
   planId: string,
 ): Promise<
   | { type: "success"; logId: string }
+  | { type: "date_conflict"; dates: string[] }
   | { type: "already_exists"; logId: string }
   | { type: "error"; message: string }
 > {
