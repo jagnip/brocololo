@@ -7,6 +7,7 @@ import {
   PlannerMealType,
   Prisma,
 } from "@/src/generated/client";
+import { getDaysInRange } from "@/lib/planner/helpers";
 import { prisma } from "./index";
 
 const recipeInclude = {

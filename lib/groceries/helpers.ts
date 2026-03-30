@@ -179,7 +179,9 @@ function aggregateIngredients(items: ScaledIngredient[]): GroceryItem[] {
 
 export function transformPlanToGroceryItems(slots: PlanSlotData[]): GroceryItem[] {
   const scaled = scaleIngredients(slots);
-  return aggregateIngredients(scaled);
+  const aggregated = aggregateIngredients(scaled);
+
+  return aggregated;
 }
 
 export function formatAmount(amount: number): string {

@@ -171,7 +171,6 @@
   }
 }
 
-/* Compound typography — one utility = size + leading + weight + tracking (+ uppercase for overline) */
 @utility type-h1 {
   font-family: var(--font-sans);
   font-size: var(--type-h1-size);
