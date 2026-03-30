@@ -46,3 +46,27 @@ export const addRecipeToLogSchema = z.object({
 
 export type AddRecipeToLogInput = z.input<typeof addRecipeToLogSchema>;
 export type ParsedAddRecipeToLogInput = z.infer<typeof addRecipeToLogSchema>;
+
+export const plannerPoolIngredientSchema = z.object({
+  ingredientId: z.string().min(1),
+  unitId: z.string().min(1),
+  amount: z.coerce.number().positive(),
+});
+
+export const placePlannerPoolItemSchema = z.object({
+  logId: z.string().min(1),
+  person: z.enum([LogPerson.PRIMARY, LogPerson.SECONDARY]),
+  entryId: z.string().min(1),
+  sourceRecipeId: z.string().min(1),
+  ingredients: z.array(plannerPoolIngredientSchema).max(200),
+});
+
+export type PlacePlannerPoolItemInput = z.infer<typeof placePlannerPoolItemSchema>;
+
+export const clearLogEntryAssignmentSchema = z.object({
+  logId: z.string().min(1),
+  person: z.enum([LogPerson.PRIMARY, LogPerson.SECONDARY]),
+  entryId: z.string().min(1),
+});
+
+export type ClearLogEntryAssignmentInput = z.infer<typeof clearLogEntryAssignmentSchema>;

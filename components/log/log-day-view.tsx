@@ -1,17 +1,25 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { DndContext, type DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { formatDayLabel } from "@/lib/planner/helpers";
-import type { LogDayData } from "@/lib/log/view-model";
+import type { LogDayData, PlannerPoolCardData } from "@/lib/log/view-model";
 import { LogSlotCard } from "./log-slot-card";
 import {
   DailyLogIngredientsForm,
   type EditableIngredientRow,
   type LogIngredientOption,
 } from "./daily-log-ingredients-form";
-import { upsertLogSlotAction } from "@/actions/log-actions";
+import {
+  clearLogEntryAssignmentAction,
+  placePlannerPoolItemAction,
+  upsertLogSlotAction,
+} from "@/actions/log-actions";
+import { LogPlannerPool } from "./log-planner-pool";
+import { LogSlotDropZone } from "./log-slot-drop-zone";
+import { LogMealType } from "@/src/generated/enums";
 
 type SelectedSlotState = {
   dayKey: string;
@@ -111,6 +119,7 @@ function toRecipeIngredients(
 
 type LogDayViewProps = {
   days: LogDayData[];
+  plannerPool?: PlannerPoolCardData[];
   initialSelectedDayKey?: string;
   logId?: string;
   person?: "PRIMARY" | "SECONDARY";
@@ -125,6 +134,7 @@ type LogDayViewProps = {
 
 export function LogDayView({
   days,
+  plannerPool = [],
   initialSelectedDayKey,
   logId,
   person,
@@ -139,6 +149,32 @@ export function LogDayView({
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(defaultDayKey);
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlotState | null>(null);
   const [isSaving, startSavingTransition] = useTransition();
+  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
+
+  const plannerPoolByKey = (() => {
+    const keyCountByPool = new Map<string, number>();
+    for (const day of localDays) {
+      for (const slot of day.slots) {
+        for (const recipe of slot.recipes) {
+          const key = `${slot.mealType}-${recipe.sourceRecipeId ?? "none"}`;
+          keyCountByPool.set(key, (keyCountByPool.get(key) ?? 0) + 1);
+        }
+      }
+    }
+
+    const visible: PlannerPoolCardData[] = [];
+    for (const item of plannerPool) {
+      const key = `${item.mealType}-${item.sourceRecipeId ?? "none"}`;
+      const remaining = keyCountByPool.get(key) ?? 0;
+      if (remaining > 0) {
+        keyCountByPool.set(key, remaining - 1);
+        continue;
+      }
+      visible.push(item);
+    }
+
+    return visible;
+  })();
 
   useEffect(() => {
     setLocalDays(days);
@@ -395,6 +431,101 @@ export function LogDayView({
     });
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const activeData = event.active.data.current;
+    const overData = event.over?.data.current;
+    if (!activeData || !overData) return;
+    if (activeData.type !== "planner-pool-item" || overData.type !== "log-slot") return;
+
+    if (!logId || !person || !overData.entryId) {
+      toast.error("Missing log context for this action");
+      return;
+    }
+
+    const plannerItem = activeData.item as PlannerPoolCardData;
+    const targetEntryId = overData.entryId as string;
+
+    startSavingTransition(async () => {
+      const result = await placePlannerPoolItemAction({
+        logId,
+        person,
+        entryId: targetEntryId,
+        sourceRecipeId: plannerItem.sourceRecipeId ?? "",
+        ingredients: plannerItem.ingredients,
+      });
+
+      if (result.type === "error") {
+        toast.error(result.message);
+        return;
+      }
+
+      setLocalDays((prev) =>
+        prev.map((day) => ({
+          ...day,
+          slots: day.slots.map((slot) => {
+            if (slot.entryId !== targetEntryId) return slot;
+            return {
+              ...slot,
+              recipes: [
+                {
+                  id: `placed-${targetEntryId}-${plannerItem.id}`,
+                  entryId: targetEntryId,
+                  entryRecipeId: null,
+                  sourceRecipeId: plannerItem.sourceRecipeId,
+                  mealLabel: slot.label,
+                  cardKind: "recipe",
+                  title: plannerItem.title,
+                  slug: null,
+                  imageUrl: plannerItem.imageUrl,
+                  calories: 0,
+                  proteins: 0,
+                  fats: 0,
+                  carbs: 0,
+                  ingredients: plannerItem.ingredients.map((ingredient) => ({
+                    ingredientId: ingredient.ingredientId,
+                    ingredientName: null,
+                    unitId: ingredient.unitId,
+                    unitName: null,
+                    amount: ingredient.amount,
+                  })),
+                },
+              ],
+            };
+          }),
+        })),
+      );
+    });
+  };
+
+  const handleRemovePlacedRecipe = async (slot: LogDayData["slots"][number]) => {
+    if (!logId || !person || !slot.entryId) {
+      toast.error("Missing log context for this action");
+      return;
+    }
+
+    startSavingTransition(async () => {
+      const result = await clearLogEntryAssignmentAction({
+        logId,
+        person,
+        entryId: slot.entryId!,
+      });
+
+      if (result.type === "error") {
+        toast.error(result.message);
+        return;
+      }
+
+      setLocalDays((prev) =>
+        prev.map((day) => ({
+          ...day,
+          slots: day.slots.map((s) => (s.entryId === slot.entryId ? { ...s, recipes: [] } : s)),
+        })),
+      );
+
+      setSelectedSlot((prev) => (prev?.entryId === slot.entryId ? null : prev));
+    });
+  };
+
   if (days.length === 0) {
     return (
       <section className="rounded-lg border p-6 space-y-3">
@@ -407,7 +538,9 @@ export function LogDayView({
   }
 
   return (
-    <section className="mt-8 space-y-8">
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <section className="mt-8 space-y-8">
+      <LogPlannerPool items={plannerPoolByKey} />
       <div className="flex flex-wrap gap-2">
         {localDays.map((day) => {
           const isActive = day.dateKey === selectedDayKey;
@@ -447,11 +580,14 @@ export function LogDayView({
               {day.slots.map((slot) => (
                 <div key={`${day.dateKey}-${slot.mealType}`} className="space-y-2">
                   <p className="text-sm text-muted-foreground">{slot.label}</p>
-                  <LogSlotCard
-                    slot={slot}
-                    onEmptyClick={() => selectEmptySlot(day, slot)}
-                    onRecipeClick={(recipe) => selectRecipeSlot(day, slot, recipe)}
-                  />
+                  <LogSlotDropZone dateKey={day.dateKey} mealType={slot.mealType} entryId={slot.entryId}>
+                    <LogSlotCard
+                      slot={slot}
+                      onEmptyClick={() => selectEmptySlot(day, slot)}
+                      onRecipeClick={(recipe) => selectRecipeSlot(day, slot, recipe)}
+                      onRecipeRemove={slot.recipes.length > 0 ? () => handleRemovePlacedRecipe(slot) : undefined}
+                    />
+                  </LogSlotDropZone>
                 </div>
               ))}
             </div>
@@ -473,6 +609,7 @@ export function LogDayView({
           </article>
           );
         })}
-    </section>
+      </section>
+    </DndContext>
   );
 }

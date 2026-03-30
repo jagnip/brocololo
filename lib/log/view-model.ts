@@ -74,6 +74,22 @@ export type LogDayData = {
   slots: LogSlotData[];
 };
 
+export type PlannerPoolCardData = {
+  id: string;
+  date: Date;
+  dateKey: string;
+  mealType: LogMealType;
+  mealLabel: LogSlotData["label"];
+  title: string;
+  sourceRecipeId: string | null;
+  imageUrl: string | null;
+  ingredients: Array<{
+    ingredientId: string;
+    unitId: string;
+    amount: number;
+  }>;
+};
+
 export const LOG_MEAL_ORDER: LogMealType[] = [
   LogMealType.BREAKFAST,
   LogMealType.LUNCH,
@@ -242,4 +258,42 @@ export function buildLogDays(entries: LogEntryRow[]): LogDayData[] {
       dateKey,
       slots: LOG_MEAL_ORDER.map((mealType) => day.slots[mealType]),
     }));
+}
+
+function plannerPoolMatchKey(item: {
+  sourceRecipeId: string | null;
+  mealType: LogMealType;
+}) {
+  return `${item.mealType}-${item.sourceRecipeId ?? "none"}`;
+}
+
+export function buildVisiblePlannerPoolCards(params: {
+  items: PlannerPoolCardData[];
+  entries: LogEntryRow[];
+}): PlannerPoolCardData[] {
+  const { items, entries } = params;
+  const placedCounts = new Map<string, number>();
+
+  for (const entry of entries) {
+    for (const recipe of entry.recipes) {
+      const key = plannerPoolMatchKey({
+        sourceRecipeId: recipe.sourceRecipe?.id ?? null,
+        mealType: entry.mealType,
+      });
+      placedCounts.set(key, (placedCounts.get(key) ?? 0) + 1);
+    }
+  }
+
+  const visible: PlannerPoolCardData[] = [];
+  for (const item of items) {
+    const key = plannerPoolMatchKey(item);
+    const remaining = placedCounts.get(key) ?? 0;
+    if (remaining > 0) {
+      placedCounts.set(key, remaining - 1);
+      continue;
+    }
+    visible.push(item);
+  }
+
+  return visible;
 }
