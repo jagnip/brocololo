@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PlanInputType } from "@/types/planner";
+import { PlannerMealType } from "@/src/generated/enums";
 
 const pushMock = vi.hoisted(() => vi.fn());
 
@@ -20,12 +21,45 @@ vi.mock("./plan-view", () => ({
   }) => {
     const first = plan[0];
     const slotKey = `${first.date.toISOString()}-${first.mealType}`;
+
+    const dinnerByDay = plan
+      .filter((s) => s.mealType === PlannerMealType.DINNER)
+      .map((s) => `${s.date.toISOString().slice(0, 10)}:${s.recipe?.id ?? "empty"}`)
+      .join(",");
+
     return (
-      <button type="button" onClick={() => onShuffle?.(slotKey)}>
-        Shuffle
-      </button>
+      <div>
+        <div aria-label="slot-count">{plan.length}</div>
+        <div aria-label="dinner-by-day">{dinnerByDay}</div>
+        <button type="button" onClick={() => onShuffle?.(slotKey)}>
+          Shuffle
+        </button>
+      </div>
     );
   },
+}));
+
+vi.mock("./date-range-picker", () => ({
+  getDefaultDateRange: () => ({ start: "2026-03-17", end: "2026-03-24" }),
+  WeekPicker: ({ value, onChange }: { value: any; onChange: any }) => (
+    <div>
+      <button type="button" onClick={() => onChange({ start: value.start, end: value.end })}>
+        Range same
+      </button>
+      <button type="button" onClick={() => onChange({ start: "2026-03-18", end: "2026-03-18" })}>
+        Range shrink
+      </button>
+      <button type="button" onClick={() => onChange({ start: "2026-03-17", end: "2026-03-19" })}>
+        Range restore
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange({ start: "2026-04-10", end: "2026-04-15" })}
+      >
+        Range extend
+      </button>
+    </div>
+  ),
 }));
 
 vi.mock("sonner", () => ({
@@ -183,6 +217,75 @@ describe("PlanEditor manual save", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
     });
+  });
+
+  it("rebase creates empty slots and marks editor dirty when date range changes", async () => {
+    const user = userEvent.setup();
+
+    render(<PlanEditor planId="plan-1" initialPlan={initialPlanForTests()} recipes={[]} />);
+
+    // When the range expands, the editor should create empty meal slots for the new days,
+    // and enable "Save" because the editor becomes dirty.
+    const beforeCount = Number(screen.getByLabelText("slot-count").textContent);
+
+    await user.click(screen.getByRole("button", { name: "Range extend" }));
+
+    const afterCount = Number(screen.getByLabelText("slot-count").textContent);
+    expect(afterCount).toBeGreaterThan(beforeCount);
+
+    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+  });
+
+  it("preserves recipes in memory when shrinking then restoring before Save", async () => {
+    const user = userEvent.setup();
+
+    const recipe17 = createRecipe("recipe-17");
+    const recipe18 = createRecipe("recipe-18");
+    const recipe19 = createRecipe("recipe-19");
+
+    const initialPlan3Days: PlanInputType = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        mealType: PlannerMealType.DINNER,
+        recipe: recipe17,
+        alternatives: [],
+        used: false,
+      },
+      {
+        date: new Date("2026-03-18T00:00:00.000Z"),
+        mealType: PlannerMealType.DINNER,
+        recipe: recipe18,
+        alternatives: [],
+        used: false,
+      },
+      {
+        date: new Date("2026-03-19T00:00:00.000Z"),
+        mealType: PlannerMealType.DINNER,
+        recipe: recipe19,
+        alternatives: [],
+        used: false,
+      },
+    ];
+
+    render(<PlanEditor planId="plan-1" initialPlan={initialPlan3Days} recipes={[]} />);
+
+    // Before shrinking, we should see dinner recipes for all 3 days.
+    expect(screen.getByLabelText("dinner-by-day").textContent).toContain("2026-03-17:recipe-17");
+    expect(screen.getByLabelText("dinner-by-day").textContent).toContain("2026-03-18:recipe-18");
+    expect(screen.getByLabelText("dinner-by-day").textContent).toContain("2026-03-19:recipe-19");
+
+    await user.click(screen.getByRole("button", { name: "Range shrink" }));
+    // Changing `start` from 2026-03-17 -> 2026-03-18 shifts existing slots forward by +1 day.
+    // So the recipe that was on 2026-03-17 should appear on 2026-03-18.
+    expect(screen.getByLabelText("dinner-by-day").textContent).toBe("2026-03-18:recipe-17");
+
+    await user.click(screen.getByRole("button", { name: "Range restore" }));
+    const dinnerAfterRestore = screen.getByLabelText("dinner-by-day").textContent ?? "";
+    expect(dinnerAfterRestore).toContain("2026-03-17:recipe-17");
+    expect(dinnerAfterRestore).toContain("2026-03-18:recipe-18");
+    expect(dinnerAfterRestore).toContain("2026-03-19:recipe-19");
+
+    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
   });
 
   it("disables Generate log when the editor is dirty", async () => {
