@@ -1,10 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PlanInputType } from "@/types/planner";
+
+const pushMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/actions/planner-actions", () => ({
   updateSavedPlan: vi.fn(),
+  generateLogFromPlan: vi.fn(),
 }));
 
 vi.mock("./plan-view", () => ({
@@ -28,10 +31,20 @@ vi.mock("./plan-view", () => ({
 vi.mock("sonner", () => ({
   toast: {
     error: vi.fn(),
+    info: vi.fn(),
   },
 }));
 
-import { updateSavedPlan } from "@/actions/planner-actions";
+vi.mock("next/navigation", async () => {
+  const actual = await vi.importActual<typeof import("next/navigation")>("next/navigation");
+  return {
+    ...actual,
+    useRouter: () => ({ push: pushMock }),
+  };
+});
+
+import { toast } from "sonner";
+import { generateLogFromPlan, updateSavedPlan } from "@/actions/planner-actions";
 import { PlanEditor } from "./plan-editor";
 
 function createRecipe(id: string) {
@@ -54,6 +67,11 @@ function createRecipe(id: string) {
 }
 
 describe("PlanEditor manual save", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    pushMock.mockClear();
+  });
+
   it("does not auto-save when the user edits the plan", async () => {
     const user = userEvent.setup();
 
@@ -122,9 +140,9 @@ describe("PlanEditor manual save", () => {
     expect(slotsArg[0]!.alternativeRecipeIds).toEqual(["recipe-c", "recipe-a"]);
 
     resolveSave({ type: "success" });
-    await Promise.resolve();
-
-    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    });
   });
 
   it("keeps the plan dirty if edits happen while Save is in-flight", async () => {
@@ -162,9 +180,70 @@ describe("PlanEditor manual save", () => {
     await user.click(screen.getByRole("button", { name: "Shuffle" }));
 
     resolveSave({ type: "success" });
-    await Promise.resolve();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+    });
+  });
 
-    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+  it("disables Generate log when the editor is dirty", async () => {
+    const user = userEvent.setup();
+
+    render(<PlanEditor planId="plan-1" initialPlan={initialPlanForTests()} recipes={[]} />);
+
+    const generateButton = screen.getByRole("button", { name: "Generate log" });
+    expect(generateButton).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "Shuffle" }));
+
+    expect(screen.getByRole("button", { name: "Generate log" })).toBeDisabled();
+  });
+
+  it("redirects to log page on Generate log success", async () => {
+    const user = userEvent.setup();
+
+    vi.mocked(generateLogFromPlan).mockResolvedValue({
+      type: "success",
+      logId: "log-1",
+    });
+
+    render(<PlanEditor planId="plan-1" initialPlan={initialPlanForTests()} recipes={[]} />);
+
+    await user.click(screen.getByRole("button", { name: "Generate log" }));
+
+    expect(vi.mocked(generateLogFromPlan)).toHaveBeenCalledWith("plan-1");
+    expect(pushMock).toHaveBeenCalledWith("/log/log-1");
+  });
+
+  it("shows info and stays on plan when log already exists", async () => {
+    const user = userEvent.setup();
+
+    vi.mocked(generateLogFromPlan).mockResolvedValue({
+      type: "already_exists",
+      logId: "log-1",
+    });
+
+    render(<PlanEditor planId="plan-1" initialPlan={initialPlanForTests()} recipes={[]} />);
+
+    await user.click(screen.getByRole("button", { name: "Generate log" }));
+
+    expect(toast.info).toHaveBeenCalledWith("Log already generated for this plan.");
+    expect(pushMock).not.toHaveBeenCalled();
   });
 });
+
+function initialPlanForTests(): PlanInputType {
+  const recipeA = createRecipe("recipe-a");
+  const recipeB = createRecipe("recipe-b");
+  const recipeC = createRecipe("recipe-c");
+
+  return [
+    {
+      date: new Date("2026-03-17T00:00:00.000Z"),
+      mealType: "DINNER" as any,
+      recipe: recipeA,
+      alternatives: [recipeB, recipeC],
+      used: false,
+    },
+  ];
+}
 

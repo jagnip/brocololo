@@ -225,8 +225,6 @@ export async function createPlan(
       },
       include: { slots: true },
     });
-
-    await createBaselineLogTx(tx, createdPlan.id, slots);
     return createdPlan;
   }, { timeout: 30000 });
 
@@ -385,6 +383,8 @@ async function createBaselineLogTx(
       }
     }
   }
+
+  return log.id;
 }
 
 export async function updatePlan(planId: string, slots: SlotSaveData[]) {
@@ -433,4 +433,50 @@ export async function updatePlan(planId: string, slots: SlotSaveData[]) {
   }
 
   return plan;
+}
+
+export async function generateBaselineLogForPlan(
+  planId: string,
+): Promise<
+  | { type: "success"; logId: string }
+  | { type: "already_exists"; logId: string }
+> {
+  const existingLog = await prisma.log.findUnique({
+    where: { planId },
+    select: { id: true },
+  });
+
+  if (existingLog) {
+    return { type: "already_exists", logId: existingLog.id };
+  }
+
+  const slots = await getPlanById(planId);
+  if (!slots) {
+    throw new Error("PLAN_NOT_FOUND");
+  }
+
+  try {
+    const logId = await prisma.$transaction(
+      (tx) => createBaselineLogTx(tx, planId, slots),
+      { timeout: 30000 },
+    );
+
+    return { type: "success", logId };
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      const fallback = await prisma.log.findUnique({
+        where: { planId },
+        select: { id: true },
+      });
+
+      if (fallback) {
+        return { type: "already_exists", logId: fallback.id };
+      }
+    }
+
+    throw error;
+  }
 }

@@ -11,7 +11,7 @@ import { redirect } from "next/navigation";
 import { filterByFlavour, filterExcluded, filterByHandsOnTime, filterByTotalTime } from "@/lib/planner/filters";
 import { DayTimeLimitsType, RollingRecipeType } from "@/lib/validations/planner";
 import { pickBestCandidate } from "@/lib/planner/scoring";
-
+import { generateBaselineLogForPlan } from "@/lib/db/planner";
 
 export async function generatePlan(
   start: Date,
@@ -141,4 +141,21 @@ export async function updateSavedPlan(
 
   revalidatePath("/");
   return { type: "success" };
+}
+
+export async function generateLogFromPlan(
+  planId: string,
+): Promise<
+  | { type: "success"; logId: string }
+  | { type: "already_exists"; logId: string }
+  | { type: "error"; message: string }
+> {
+  try {
+    const result = await generateBaselineLogForPlan(planId);
+    revalidatePath(ROUTES.log);
+    return result;
+  } catch (error) {
+    console.error("Error generating baseline log", error);
+    return { type: "error", message: "Failed to generate log." };
+  }
 }

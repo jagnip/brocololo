@@ -5,8 +5,10 @@ import { PlanInputType, SlotSaveData } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PlanView } from "./plan-view";
 import { toast } from "sonner";
-import { updateSavedPlan } from "@/actions/planner-actions";
 import { Button } from "@/components/ui/button";
+import { ROUTES } from "@/lib/constants";
+import { useRouter } from "next/navigation";
+import { generateLogFromPlan, updateSavedPlan } from "@/actions/planner-actions";
 
 type PlanEditorProps = {
   planId: string;
@@ -21,6 +23,8 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [isDirty, setIsDirty] = useState(false);
   const editVersionRef = useRef(0);
+  const router = useRouter();
+  const [logStatus, setLogStatus] = useState<"idle" | "generating">("idle");
 
   const handleSave = useCallback(async () => {
     if (!isDirty) return;
@@ -111,17 +115,51 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
     <>
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-lg font-semibold">Edit plan</h1>
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={!isDirty || saveStatus === "saving"}
-          aria-busy={saveStatus === "saving"}
-          onClick={() => {
-            void handleSave();
-          }}
-        >
-          {saveStatus === "saving" ? "Saving..." : "Save"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={!isDirty || saveStatus === "saving"}
+            aria-busy={saveStatus === "saving"}
+            onClick={() => {
+              void handleSave();
+            }}
+          >
+            {saveStatus === "saving" ? "Saving..." : "Save"}
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isDirty || saveStatus === "saving" || logStatus === "generating"}
+            aria-busy={logStatus === "generating"}
+            onClick={async () => {
+              if (isDirty) {
+                toast.info("Save your plan before generating a log.");
+                return;
+              }
+
+              setLogStatus("generating");
+              try {
+                const result = await generateLogFromPlan(planId);
+                if (result.type === "already_exists") {
+                  toast.info("Log already generated for this plan.");
+                  return;
+                }
+                if (result.type === "error") {
+                  toast.error(result.message);
+                  return;
+                }
+
+                router.push(ROUTES.logView(result.logId));
+              } finally {
+                setLogStatus("idle");
+              }
+            }}
+          >
+            {logStatus === "generating" ? "Generating log..." : "Generate log"}
+          </Button>
+        </div>
       </div>
       <PlanView
         plan={plan}
