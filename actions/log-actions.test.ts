@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  clearLogEntryAssignment,
+  placePlannerPoolItemInEntry,
   replaceMealSlotWithRecipe,
   updateLogRecipeIngredients,
   upsertLogSlot,
 } from "@/lib/db/logs";
 import {
   addRecipeToLogAction,
+  clearLogEntryAssignmentAction,
+  placePlannerPoolItemAction,
   updateLogRecipeIngredientsAction,
   upsertLogSlotAction,
 } from "./log-actions";
@@ -14,6 +18,8 @@ vi.mock("@/lib/db/logs", () => ({
   updateLogRecipeIngredients: vi.fn(),
   replaceMealSlotWithRecipe: vi.fn(),
   upsertLogSlot: vi.fn(),
+  placePlannerPoolItemInEntry: vi.fn(),
+  clearLogEntryAssignment: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -138,6 +144,54 @@ describe("upsertLogSlotAction", () => {
       entryId: "entry-1",
       recipeId: null,
       ingredients: [{ ingredientId: "ing-1", unitId: "unit-g", amount: 120 }],
+    });
+  });
+});
+
+describe("placePlannerPoolItemAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("maps NO_UNUSED_PLAN_SLOT_FOR_RECIPE to user-friendly error", async () => {
+    vi.mocked(placePlannerPoolItemInEntry).mockRejectedValue(
+      new Error("NO_UNUSED_PLAN_SLOT_FOR_RECIPE"),
+    );
+
+    const result = await placePlannerPoolItemAction({
+      logId: "log-1",
+      person: "PRIMARY",
+      entryId: "entry-1",
+      sourceRecipeId: "recipe-1",
+      ingredients: [{ ingredientId: "ing-1", unitId: "unit-g", amount: 120 }],
+    });
+
+    expect(result).toEqual({
+      type: "error",
+      message: "No remaining planner slots for this recipe.",
+    });
+  });
+});
+
+describe("clearLogEntryAssignmentAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("clears entry assignment and returns success", async () => {
+    vi.mocked(clearLogEntryAssignment).mockResolvedValue(undefined);
+
+    const result = await clearLogEntryAssignmentAction({
+      logId: "log-1",
+      person: "PRIMARY",
+      entryId: "entry-1",
+    });
+
+    expect(result).toEqual({ type: "success" });
+    expect(clearLogEntryAssignment).toHaveBeenCalledWith({
+      logId: "log-1",
+      person: "PRIMARY",
+      entryId: "entry-1",
     });
   });
 });

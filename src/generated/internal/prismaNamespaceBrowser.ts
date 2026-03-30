@@ -270,6 +270,7 @@ export const LogEntryRecipeScalarFieldEnum = {
   id: 'id',
   entryId: 'entryId',
   sourceRecipeId: 'sourceRecipeId',
+  planSlotId: 'planSlotId',
   position: 'position'
 } as const
 

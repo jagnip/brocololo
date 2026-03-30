@@ -2,12 +2,13 @@ import { notFound } from "next/navigation";
 import { LogPerson } from "@/src/generated/enums";
 import { ROUTES } from "@/lib/constants";
 import { getLogById } from "@/lib/db/logs";
+import { getPlannerPoolItemsForPlan } from "@/lib/db/planner";
 import { getIngredients } from "@/lib/db/ingredients";
 import { getRecipes } from "@/lib/db/recipes";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { getPersonIngredientAmountPerMeal } from "@/lib/log/helpers";
 import { LogPersonSelect } from "@/components/log/log-person-select";
-import { buildLogDays } from "@/lib/log/view-model";
+import { buildLogDays, buildVisiblePlannerPoolCards } from "@/lib/log/view-model";
 import { LogDayView } from "@/components/log/log-day-view";
 import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -93,6 +94,25 @@ export async function LogDetailPageContainer({
   if (!log) notFound();
 
   const days = buildLogDays(log.entries);
+  const poolItemsRaw = await getPlannerPoolItemsForPlan({
+    planId: log.plan.id,
+    person,
+  });
+  const plannerPool = buildVisiblePlannerPoolCards({
+    items: poolItemsRaw.map((item) => ({
+      ...item,
+      dateKey: item.date.toISOString().slice(0, 10),
+      mealLabel:
+        item.mealType === "BREAKFAST"
+          ? "Breakfast"
+          : item.mealType === "LUNCH"
+            ? "Lunch"
+            : item.mealType === "SNACK"
+              ? "Snack"
+              : "Dinner",
+    })),
+    entries: log.entries,
+  });
   const logPeriodLabel = formatDateRange(log.plan.startDate, log.plan.endDate);
 
   return (
@@ -110,6 +130,7 @@ export async function LogDetailPageContainer({
 
       <LogDayView
         days={days}
+        plannerPool={plannerPool}
         initialSelectedDayKey={day}
         logId={logId}
         person={person}

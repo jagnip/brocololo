@@ -52,6 +52,7 @@ type DailyLogIngredientsFormProps = {
   isSaving: boolean;
   recipeOptions: Array<{ id: string; name: string }>;
   selectedRecipeId: string | null;
+  initialSelectedRecipeId: string | null;
   onSelectedRecipeIdChange: (nextRecipeId: string | null) => void;
   saveLabel?: string;
   onCancel?: () => void;
@@ -126,6 +127,7 @@ export function DailyLogIngredientsForm({
   isSaving,
   recipeOptions,
   selectedRecipeId,
+  initialSelectedRecipeId,
   onSelectedRecipeIdChange,
   saveLabel = "Save",
   onCancel,
@@ -173,8 +175,15 @@ export function DailyLogIngredientsForm({
   const hasUnsavedChanges = useMemo(() => {
     const normalizedCurrent = toComparableRows(rows);
     const normalizedInitial = toComparableRows(initialRows);
-    return JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedInitial);
-  }, [initialRows, rows]);
+    const rowsChanged =
+      JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedInitial);
+    const recipeChanged = selectedRecipeId !== initialSelectedRecipeId;
+    // If the slot is fully empty, keep Save disabled.
+    if (selectedRecipeId == null && rows.length === 0) {
+      return false;
+    }
+    return rowsChanged || recipeChanged;
+  }, [initialRows, rows, selectedRecipeId, initialSelectedRecipeId]);
 
   const handleAddRow = () => {
     setRows((prev) => [

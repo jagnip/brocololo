@@ -1,7 +1,13 @@
 import { LogPerson, Prisma } from "@/src/generated/client";
 import { prisma } from "./index";
+import {
+  releaseReservedPlanSlotTx,
+  reserveNextUnusedPlanSlotTx,
+} from "./planner";
 import type {
   ParsedAddRecipeToLogInput,
+  PlacePlannerPoolItemInput,
+  ClearLogEntryAssignmentInput,
   UpsertLogSlotInput,
   UpdateLogRecipeIngredientsInput,
 } from "@/lib/validations/log";
@@ -128,6 +134,14 @@ export async function updateLogRecipeIngredients(
       throw new Error("ENTRY_RECIPE_NOT_FOUND");
     }
 
+    const log = await tx.log.findUnique({
+      where: { id: input.logId },
+      select: { planId: true },
+    });
+    if (!log) {
+      throw new Error("LOG_NOT_FOUND");
+    }
+
     await assertIngredientRowsHaveSupportedUnits(tx, input.ingredients);
 
     await tx.logIngredient.deleteMany({
@@ -164,6 +178,14 @@ export async function upsertLogSlot(input: UpsertLogSlotInput) {
 
     if (!entry) {
       throw new Error("LOG_ENTRY_NOT_FOUND");
+    }
+
+    const log = await tx.log.findUnique({
+      where: { id: input.logId },
+      select: { planId: true },
+    });
+    if (!log) {
+      throw new Error("LOG_NOT_FOUND");
     }
 
     await assertIngredientRowsHaveSupportedUnits(tx, input.ingredients);
@@ -204,6 +226,133 @@ export async function upsertLogSlot(input: UpsertLogSlotInput) {
         })),
       });
     }
+  });
+}
+
+export async function placePlannerPoolItemInEntry(input: PlacePlannerPoolItemInput) {
+  await prisma.$transaction(async (tx) => {
+    const entry = await tx.logEntry.findFirst({
+      where: {
+        id: input.entryId,
+        logId: input.logId,
+        person: input.person,
+      },
+      select: { id: true },
+    });
+
+    if (!entry) {
+      throw new Error("LOG_ENTRY_NOT_FOUND");
+    }
+
+    const log = await tx.log.findUnique({
+      where: { id: input.logId },
+      select: { planId: true },
+    });
+    if (!log) {
+      throw new Error("LOG_NOT_FOUND");
+    }
+
+    await assertIngredientRowsHaveSupportedUnits(tx, input.ingredients);
+
+    const existingRecipeForEntry = await tx.logEntryRecipe.findFirst({
+      where: {
+        entryId: input.entryId,
+      },
+      select: { planSlotId: true },
+    });
+
+    if (existingRecipeForEntry?.planSlotId) {
+      await releaseReservedPlanSlotTx({
+        tx,
+        planSlotId: existingRecipeForEntry.planSlotId,
+      });
+    }
+
+    const reservedPlanSlotId = await reserveNextUnusedPlanSlotTx({
+      tx,
+      planId: log.planId,
+      recipeId: input.sourceRecipeId,
+    });
+    if (!reservedPlanSlotId) {
+      throw new Error("NO_UNUSED_PLAN_SLOT_FOR_RECIPE");
+    }
+
+    await tx.logIngredient.deleteMany({
+      where: {
+        entryId: input.entryId,
+      },
+    });
+
+    await tx.logEntryRecipe.deleteMany({
+      where: {
+        entryId: input.entryId,
+      },
+    });
+
+    const entryRecipe = await tx.logEntryRecipe.create({
+      data: {
+        entryId: input.entryId,
+        sourceRecipeId: input.sourceRecipeId,
+        planSlotId: reservedPlanSlotId,
+        position: 0,
+      },
+      select: { id: true },
+    });
+
+    if (input.ingredients.length > 0) {
+      await tx.logIngredient.createMany({
+        data: input.ingredients.map((row) => ({
+          entryId: input.entryId,
+          entryRecipeId: entryRecipe.id,
+          ingredientId: row.ingredientId,
+          amount: row.amount,
+          unitId: row.unitId,
+        })),
+      });
+    }
+  });
+}
+
+export async function clearLogEntryAssignment(input: ClearLogEntryAssignmentInput) {
+  await prisma.$transaction(async (tx) => {
+    const entry = await tx.logEntry.findFirst({
+      where: {
+        id: input.entryId,
+        logId: input.logId,
+        person: input.person,
+      },
+      select: { id: true },
+    });
+
+    if (!entry) {
+      throw new Error("LOG_ENTRY_NOT_FOUND");
+    }
+
+    const existingRecipeForEntry = await tx.logEntryRecipe.findFirst({
+      where: {
+        entryId: input.entryId,
+      },
+      select: { planSlotId: true },
+    });
+
+    if (existingRecipeForEntry?.planSlotId) {
+      await releaseReservedPlanSlotTx({
+        tx,
+        planSlotId: existingRecipeForEntry.planSlotId,
+      });
+    }
+
+    await tx.logIngredient.deleteMany({
+      where: {
+        entryId: input.entryId,
+      },
+    });
+
+    await tx.logEntryRecipe.deleteMany({
+      where: {
+        entryId: input.entryId,
+      },
+    });
   });
 }
 

@@ -69,6 +69,7 @@ model PlanSlot {
   plan         Plan                  @relation(fields: [planId], references: [id], onDelete: Cascade)
   recipe       Recipe?               @relation("recipe_plan_slots", fields: [recipeId], references: [id], onDelete: Cascade)
   alternatives PlanSlotAlternative[]
+  logEntryRecipes LogEntryRecipe[]
 
   @@index([planId])
   @@index([recipeId])
@@ -290,14 +291,17 @@ model LogEntryRecipe {
   id             String   @id @default(cuid())
   entryId        String   @map("entry_id")
   sourceRecipeId String?  @map("source_recipe_id")
+  planSlotId     String?  @map("plan_slot_id")
   position       Int      @default(0)
 
   entry        LogEntry        @relation(fields: [entryId], references: [id], onDelete: Cascade)
   sourceRecipe Recipe?         @relation(fields: [sourceRecipeId], references: [id], onDelete: SetNull)
+  planSlot    PlanSlot?        @relation(fields: [planSlotId], references: [id], onDelete: SetNull)
   ingredients  LogIngredient[]
 
   @@index([entryId])
   @@index([sourceRecipeId])
+  @@index([planSlotId])
   @@map("log_entry_recipes")
 }
 

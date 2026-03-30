@@ -29,6 +29,55 @@ const ingredientFormDependencies = {
 };
 
 describe("LogDayView", () => {
+  it("groups duplicate planner pool cards and shows quantity counter", () => {
+    const days: LogDayData[] = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        dateKey: "2026-03-17",
+        slots: [
+          { entryId: "entry-breakfast", mealType: LogMealType.BREAKFAST, label: "Breakfast", recipes: [] },
+          { entryId: "entry-lunch", mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
+          { entryId: "entry-snack", mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
+          { entryId: "entry-dinner", mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+        ],
+      },
+    ];
+
+    render(
+      <LogDayView
+        days={days}
+        plannerPool={[
+          {
+            id: "pool-1",
+            date: new Date("2026-03-17T00:00:00.000Z"),
+            dateKey: "2026-03-17",
+            mealType: LogMealType.DINNER,
+            mealLabel: "Dinner",
+            title: "Salmon Rice",
+            sourceRecipeId: "recipe-salmon-rice",
+            imageUrl: null,
+            ingredients: [],
+          },
+          {
+            id: "pool-2",
+            date: new Date("2026-03-18T00:00:00.000Z"),
+            dateKey: "2026-03-18",
+            mealType: LogMealType.BREAKFAST,
+            mealLabel: "Breakfast",
+            title: "Salmon Rice",
+            sourceRecipeId: "recipe-salmon-rice",
+            imageUrl: null,
+            ingredients: [],
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText("Planned meals")).toBeInTheDocument();
+    expect(screen.getByText("Salmon Rice")).toBeInTheDocument();
+    expect(screen.getByText("x2")).toBeInTheDocument();
+  });
+
   it("renders all four slots and shows snack recipe when present", () => {
     const days: LogDayData[] = [
       {

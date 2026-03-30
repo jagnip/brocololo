@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import type { LogSlotData } from "@/lib/log/view-model";
 import { LogRecipeCard } from "./log-recipe-card";
 
@@ -6,9 +7,10 @@ type LogSlotCardProps = {
   slot: LogSlotData;
   onRecipeClick?: (recipe: LogSlotData["recipes"][number]) => void;
   onEmptyClick?: () => void;
+  onRecipeRemove?: (recipe: LogSlotData["recipes"][number]) => void;
 };
 
-export function LogSlotCard({ slot, onRecipeClick, onEmptyClick }: LogSlotCardProps) {
+export function LogSlotCard({ slot, onRecipeClick, onEmptyClick, onRecipeRemove }: LogSlotCardProps) {
   if (slot.recipes.length === 0) {
     return (
       <Card className="min-h-[120px] border-dashed bg-muted/20">
@@ -34,18 +36,29 @@ export function LogSlotCard({ slot, onRecipeClick, onEmptyClick }: LogSlotCardPr
   return (
     <div className="space-y-2">
       {slot.recipes.map((recipe) => (
-        <LogRecipeCard
-          key={recipe.id}
-          cardKind={recipe.cardKind}
-          title={recipe.title}
-          slug={recipe.slug}
-          imageUrl={recipe.imageUrl}
-          calories={recipe.calories}
-          proteins={recipe.proteins}
-          fats={recipe.fats}
-          carbs={recipe.carbs}
-          onClick={onRecipeClick ? () => onRecipeClick(recipe) : undefined}
-        />
+        <div key={recipe.id} className="space-y-2">
+          <LogRecipeCard
+            cardKind={recipe.cardKind}
+            title={recipe.title}
+            slug={recipe.slug}
+            imageUrl={recipe.imageUrl}
+            calories={recipe.calories}
+            proteins={recipe.proteins}
+            fats={recipe.fats}
+            carbs={recipe.carbs}
+            onClick={onRecipeClick ? () => onRecipeClick(recipe) : undefined}
+          />
+          {onRecipeRemove ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onRecipeRemove(recipe)}
+            >
+              Remove from slot
+            </Button>
+          ) : null}
+        </div>
       ))}
     </div>
   );
