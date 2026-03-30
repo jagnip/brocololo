@@ -5,7 +5,11 @@ import { DndContext, type DragEndEvent, KeyboardSensor, PointerSensor, useSensor
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { formatDayLabel } from "@/lib/planner/helpers";
-import type { LogDayData, PlannerPoolCardData } from "@/lib/log/view-model";
+import {
+  buildGroupedPlannerPoolCards,
+  type LogDayData,
+  type PlannerPoolCardData,
+} from "@/lib/log/view-model";
 import { LogSlotCard } from "./log-slot-card";
 import {
   DailyLogIngredientsForm,
@@ -19,7 +23,6 @@ import {
 } from "@/actions/log-actions";
 import { LogPlannerPool } from "./log-planner-pool";
 import { LogSlotDropZone } from "./log-slot-drop-zone";
-import { LogMealType } from "@/src/generated/enums";
 
 type SelectedSlotState = {
   dayKey: string;
@@ -156,7 +159,7 @@ export function LogDayView({
     for (const day of localDays) {
       for (const slot of day.slots) {
         for (const recipe of slot.recipes) {
-          const key = `${slot.mealType}-${recipe.sourceRecipeId ?? "none"}`;
+          const key = recipe.sourceRecipeId ?? "none";
           keyCountByPool.set(key, (keyCountByPool.get(key) ?? 0) + 1);
         }
       }
@@ -164,7 +167,7 @@ export function LogDayView({
 
     const visible: PlannerPoolCardData[] = [];
     for (const item of plannerPool) {
-      const key = `${item.mealType}-${item.sourceRecipeId ?? "none"}`;
+      const key = item.sourceRecipeId ?? "none";
       const remaining = keyCountByPool.get(key) ?? 0;
       if (remaining > 0) {
         keyCountByPool.set(key, remaining - 1);
@@ -175,6 +178,7 @@ export function LogDayView({
 
     return visible;
   })();
+  const groupedPlannerPool = buildGroupedPlannerPoolCards(plannerPoolByKey);
 
   useEffect(() => {
     setLocalDays(days);
@@ -540,7 +544,7 @@ export function LogDayView({
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <section className="mt-8 space-y-8">
-      <LogPlannerPool items={plannerPoolByKey} />
+      <LogPlannerPool items={groupedPlannerPool} />
       <div className="flex flex-wrap gap-2">
         {localDays.map((day) => {
           const isActive = day.dateKey === selectedDayKey;

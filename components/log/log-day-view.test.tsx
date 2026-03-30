@@ -29,7 +29,7 @@ const ingredientFormDependencies = {
 };
 
 describe("LogDayView", () => {
-  it("renders planner pool cards when provided", () => {
+  it("groups duplicate planner pool cards and shows quantity counter", () => {
     const days: LogDayData[] = [
       {
         date: new Date("2026-03-17T00:00:00.000Z"),
@@ -58,12 +58,24 @@ describe("LogDayView", () => {
             imageUrl: null,
             ingredients: [],
           },
+          {
+            id: "pool-2",
+            date: new Date("2026-03-18T00:00:00.000Z"),
+            dateKey: "2026-03-18",
+            mealType: LogMealType.BREAKFAST,
+            mealLabel: "Breakfast",
+            title: "Salmon Rice",
+            sourceRecipeId: "recipe-salmon-rice",
+            imageUrl: null,
+            ingredients: [],
+          },
         ]}
       />,
     );
 
     expect(screen.getByText("Planned meals")).toBeInTheDocument();
     expect(screen.getByText("Salmon Rice")).toBeInTheDocument();
+    expect(screen.getByText("x2")).toBeInTheDocument();
   });
 
   it("renders all four slots and shows snack recipe when present", () => {

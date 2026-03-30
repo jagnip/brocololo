@@ -90,6 +90,10 @@ export type PlannerPoolCardData = {
   }>;
 };
 
+export type PlannerPoolGroupedCardData = PlannerPoolCardData & {
+  count: number;
+};
+
 export const LOG_MEAL_ORDER: LogMealType[] = [
   LogMealType.BREAKFAST,
   LogMealType.LUNCH,
@@ -262,9 +266,8 @@ export function buildLogDays(entries: LogEntryRow[]): LogDayData[] {
 
 function plannerPoolMatchKey(item: {
   sourceRecipeId: string | null;
-  mealType: LogMealType;
 }) {
-  return `${item.mealType}-${item.sourceRecipeId ?? "none"}`;
+  return item.sourceRecipeId ?? "none";
 }
 
 export function buildVisiblePlannerPoolCards(params: {
@@ -278,7 +281,6 @@ export function buildVisiblePlannerPoolCards(params: {
     for (const recipe of entry.recipes) {
       const key = plannerPoolMatchKey({
         sourceRecipeId: recipe.sourceRecipe?.id ?? null,
-        mealType: entry.mealType,
       });
       placedCounts.set(key, (placedCounts.get(key) ?? 0) + 1);
     }
@@ -296,4 +298,26 @@ export function buildVisiblePlannerPoolCards(params: {
   }
 
   return visible;
+}
+
+export function buildGroupedPlannerPoolCards(
+  items: PlannerPoolCardData[],
+): PlannerPoolGroupedCardData[] {
+  const grouped = new Map<string, PlannerPoolGroupedCardData>();
+
+  for (const item of items) {
+    const key = item.sourceRecipeId ?? `fallback-${item.id}`;
+    const existing = grouped.get(key);
+    if (existing) {
+      existing.count += 1;
+      continue;
+    }
+
+    grouped.set(key, {
+      ...item,
+      count: 1,
+    });
+  }
+
+  return Array.from(grouped.values());
 }
