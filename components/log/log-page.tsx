@@ -8,7 +8,10 @@ import { getRecipes } from "@/lib/db/recipes";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { getPersonIngredientAmountPerMeal } from "@/lib/log/helpers";
 import { LogPersonSelect } from "@/components/log/log-person-select";
-import { buildLogDays, buildVisiblePlannerPoolCards } from "@/lib/log/view-model";
+import {
+  buildLogDays,
+  buildVisiblePlannerPoolCards,
+} from "@/lib/log/view-model";
 import { LogDayView } from "@/components/log/log-day-view";
 import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -41,7 +44,8 @@ function toRecipeSelectorRows(params: {
   recipe: Awaited<ReturnType<typeof getRecipes>>[number];
   person: "PRIMARY" | "SECONDARY";
 }) {
-  const selectedPerson = params.person === LogPerson.PRIMARY ? "primary" : "secondary";
+  const selectedPerson =
+    params.person === LogPerson.PRIMARY ? "primary" : "secondary";
 
   return params.recipe.ingredients
     .map((recipeIngredient) => {
@@ -54,7 +58,8 @@ function toRecipeSelectorRows(params: {
         nutritionTarget: recipeIngredient.nutritionTarget ?? "BOTH",
         person: selectedPerson,
         recipeServings: params.recipe.servings,
-        servingMultiplierForNelson: params.recipe.servingMultiplierForNelson ?? 1,
+        servingMultiplierForNelson:
+          params.recipe.servingMultiplierForNelson ?? 1,
       });
       if (amountForPerson == null || amountForPerson <= 0) {
         return null;
@@ -76,22 +81,26 @@ function toRecipeSelectorRows(params: {
 
       return row;
     })
-    .filter((row): row is { ingredientId: string; unitId: string; amount: number } => row != null);
+    .filter(
+      (row): row is { ingredientId: string; unitId: string; amount: number } =>
+        row != null,
+    );
 }
 
-export async function LogDetailPageContainer({
+export async function LogPage({
   logId,
   person: rawPerson,
   day,
 }: LogDetailPageContainerProps) {
   const person = parsePerson(rawPerson);
 
-  const [log, ingredients, recipes, ingredientFormDependencies] = await Promise.all([
-    getLogById(logId, person),
-    getIngredients(),
-    getRecipes(undefined),
-    getIngredientFormDependencies(),
-  ]);
+  const [log, ingredients, recipes, ingredientFormDependencies] =
+    await Promise.all([
+      getLogById(logId, person),
+      getIngredients(),
+      getRecipes(undefined),
+      getIngredientFormDependencies(),
+    ]);
   if (!log) notFound();
 
   const days = buildLogDays(log.entries);
@@ -126,10 +135,7 @@ export async function LogDetailPageContainer({
         </div>
       </header>
       <Breadcrumbs
-        items={[
-          { label: "Logs", href: ROUTES.log },
-          { label: logPeriodLabel },
-        ]}
+        items={[{ label: "Logs", href: ROUTES.log }, { label: logPeriodLabel }]}
       />
 
       <LogDayView

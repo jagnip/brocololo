@@ -1,4 +1,4 @@
-import { LogDetailPageContainer } from "@/components/log/log-detail-page-container";
+import { LogPage } from "@/components/log/log-page";
 
 export default async function LogDetailPage({
   params,
@@ -12,7 +12,7 @@ export default async function LogDetailPage({
 
   return (
     <div className="page-container">
-      <LogDetailPageContainer logId={logId} person={person} day={day} />
+      <LogPage logId={logId} person={person} day={day} />
     </div>
   );
 }

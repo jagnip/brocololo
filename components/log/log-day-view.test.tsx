@@ -19,7 +19,8 @@ const appendNextLogDayActionMock = vi.fn();
 const removeLogDayActionMock = vi.fn();
 
 vi.mock("@/actions/log-actions", () => ({
-  appendNextLogDayAction: (...args: unknown[]) => appendNextLogDayActionMock(...args),
+  appendNextLogDayAction: (...args: unknown[]) =>
+    appendNextLogDayActionMock(...args),
   removeLogDayAction: (...args: unknown[]) => removeLogDayActionMock(...args),
   clearLogEntryAssignmentAction: vi.fn(),
   placePlannerPoolItemAction: vi.fn(),
@@ -34,7 +35,8 @@ class ResizeObserverMock {
 
 if (!globalThis.ResizeObserver) {
   // Cmdk-based selects rely on ResizeObserver in jsdom tests.
-  globalThis.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
+  globalThis.ResizeObserver =
+    ResizeObserverMock as unknown as typeof ResizeObserver;
 }
 
 if (!HTMLElement.prototype.scrollIntoView) {
@@ -68,10 +70,30 @@ describe("LogDayView", () => {
         date: new Date("2026-03-17T00:00:00.000Z"),
         dateKey: "2026-03-17",
         slots: [
-          { entryId: "entry-breakfast", mealType: LogMealType.BREAKFAST, label: "Breakfast", recipes: [] },
-          { entryId: "entry-lunch", mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
-          { entryId: "entry-snack", mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
-          { entryId: "entry-dinner", mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+          {
+            entryId: "entry-breakfast",
+            mealType: LogMealType.BREAKFAST,
+            label: "Breakfast",
+            recipes: [],
+          },
+          {
+            entryId: "entry-lunch",
+            mealType: LogMealType.LUNCH,
+            label: "Lunch",
+            recipes: [],
+          },
+          {
+            entryId: "entry-snack",
+            mealType: LogMealType.SNACK,
+            label: "Snack",
+            recipes: [],
+          },
+          {
+            entryId: "entry-dinner",
+            mealType: LogMealType.DINNER,
+            label: "Dinner",
+            recipes: [],
+          },
         ],
       },
     ];
@@ -218,7 +240,9 @@ describe("LogDayView", () => {
     expect(screen.queryByText("Snack: empty")).not.toBeInTheDocument();
 
     expect(
-      screen.getByRole("button", { name: /yogurt with frozen fruits and nuts/i }),
+      screen.getByRole("button", {
+        name: /yogurt with frozen fruits and nuts/i,
+      }),
     ).toBeInTheDocument();
   });
 
@@ -453,7 +477,9 @@ describe("LogDayView", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getAllByText("Breakfast").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Recipe (optional)").length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("button", { name: /add ingredient/i }).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("button", { name: /add ingredient/i }).length,
+    ).toBeGreaterThan(0);
   });
 
   it("adds next day and navigates to new day tab URL", async () => {
@@ -463,10 +489,30 @@ describe("LogDayView", () => {
         date: new Date("2026-03-17T00:00:00.000Z"),
         dateKey: "2026-03-17",
         slots: [
-          { entryId: "entry-breakfast", mealType: LogMealType.BREAKFAST, label: "Breakfast", recipes: [] },
-          { entryId: "entry-lunch", mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
-          { entryId: "entry-snack", mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
-          { entryId: "entry-dinner", mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+          {
+            entryId: "entry-breakfast",
+            mealType: LogMealType.BREAKFAST,
+            label: "Breakfast",
+            recipes: [],
+          },
+          {
+            entryId: "entry-lunch",
+            mealType: LogMealType.LUNCH,
+            label: "Lunch",
+            recipes: [],
+          },
+          {
+            entryId: "entry-snack",
+            mealType: LogMealType.SNACK,
+            label: "Snack",
+            recipes: [],
+          },
+          {
+            entryId: "entry-dinner",
+            mealType: LogMealType.DINNER,
+            label: "Dinner",
+            recipes: [],
+          },
         ],
       },
     ];
@@ -476,8 +522,12 @@ describe("LogDayView", () => {
     await user.click(screen.getByRole("button", { name: /add day/i }));
 
     await waitFor(() => {
-      expect(appendNextLogDayActionMock).toHaveBeenCalledWith({ logId: "log-1" });
-      expect(pushMock).toHaveBeenCalledWith("/log/log-1?person=PRIMARY&day=2026-03-18");
+      expect(appendNextLogDayActionMock).toHaveBeenCalledWith({
+        logId: "log-1",
+      });
+      expect(pushMock).toHaveBeenCalledWith(
+        "/log/log-1?person=PRIMARY&day=2026-03-18",
+      );
       expect(refreshMock).toHaveBeenCalled();
     });
   });
@@ -489,27 +539,69 @@ describe("LogDayView", () => {
         date: new Date("2026-03-17T00:00:00.000Z"),
         dateKey: "2026-03-17",
         slots: [
-          { entryId: "entry-breakfast-1", mealType: LogMealType.BREAKFAST, label: "Breakfast", recipes: [] },
-          { entryId: "entry-lunch-1", mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
-          { entryId: "entry-snack-1", mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
-          { entryId: "entry-dinner-1", mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+          {
+            entryId: "entry-breakfast-1",
+            mealType: LogMealType.BREAKFAST,
+            label: "Breakfast",
+            recipes: [],
+          },
+          {
+            entryId: "entry-lunch-1",
+            mealType: LogMealType.LUNCH,
+            label: "Lunch",
+            recipes: [],
+          },
+          {
+            entryId: "entry-snack-1",
+            mealType: LogMealType.SNACK,
+            label: "Snack",
+            recipes: [],
+          },
+          {
+            entryId: "entry-dinner-1",
+            mealType: LogMealType.DINNER,
+            label: "Dinner",
+            recipes: [],
+          },
         ],
       },
       {
         date: new Date("2026-03-18T00:00:00.000Z"),
         dateKey: "2026-03-18",
         slots: [
-          { entryId: "entry-breakfast-2", mealType: LogMealType.BREAKFAST, label: "Breakfast", recipes: [] },
-          { entryId: "entry-lunch-2", mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
-          { entryId: "entry-snack-2", mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
-          { entryId: "entry-dinner-2", mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+          {
+            entryId: "entry-breakfast-2",
+            mealType: LogMealType.BREAKFAST,
+            label: "Breakfast",
+            recipes: [],
+          },
+          {
+            entryId: "entry-lunch-2",
+            mealType: LogMealType.LUNCH,
+            label: "Lunch",
+            recipes: [],
+          },
+          {
+            entryId: "entry-snack-2",
+            mealType: LogMealType.SNACK,
+            label: "Snack",
+            recipes: [],
+          },
+          {
+            entryId: "entry-dinner-2",
+            mealType: LogMealType.DINNER,
+            label: "Dinner",
+            recipes: [],
+          },
         ],
       },
     ];
 
     render(<LogDayView days={days} logId="log-1" person="PRIMARY" />);
 
-    const removeButtons = screen.getAllByRole("button", { name: /remove day/i });
+    const removeButtons = screen.getAllByRole("button", {
+      name: /remove day/i,
+    });
     await user.click(removeButtons[0]!);
 
     await waitFor(() => {
@@ -517,7 +609,9 @@ describe("LogDayView", () => {
         logId: "log-1",
         dateKey: "2026-03-17",
       });
-      expect(pushMock).toHaveBeenCalledWith("/log/log-1?person=PRIMARY&day=2026-03-19");
+      expect(pushMock).toHaveBeenCalledWith(
+        "/log/log-1?person=PRIMARY&day=2026-03-19",
+      );
       expect(refreshMock).toHaveBeenCalled();
     });
   });
@@ -566,21 +660,56 @@ describe("LogDayView", () => {
         date: new Date("2026-03-17T00:00:00.000Z"),
         dateKey: "2026-03-17",
         slots: [
-          { entryId: "entry-breakfast", mealType: LogMealType.BREAKFAST, label: "Breakfast", recipes: [] },
-          { entryId: "entry-lunch", mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
-          { entryId: "entry-snack", mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
-          { entryId: "entry-dinner", mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+          {
+            entryId: "entry-breakfast",
+            mealType: LogMealType.BREAKFAST,
+            label: "Breakfast",
+            recipes: [],
+          },
+          {
+            entryId: "entry-lunch",
+            mealType: LogMealType.LUNCH,
+            label: "Lunch",
+            recipes: [],
+          },
+          {
+            entryId: "entry-snack",
+            mealType: LogMealType.SNACK,
+            label: "Snack",
+            recipes: [],
+          },
+          {
+            entryId: "entry-dinner",
+            mealType: LogMealType.DINNER,
+            label: "Dinner",
+            recipes: [],
+          },
         ],
       },
     ];
 
-    render(<LogDayView days={days} logId="log-1" person="PRIMARY" ingredientOptions={[]} />);
+    render(
+      <LogDayView
+        days={days}
+        logId="log-1"
+        person="PRIMARY"
+        ingredientOptions={[]}
+      />,
+    );
 
     // Without accordion controls, each empty slot CTA appears once.
-    expect(screen.getAllByRole("button", { name: /add breakfast entry/i }).length).toBe(1);
-    expect(screen.getAllByRole("button", { name: /add lunch entry/i }).length).toBe(1);
-    expect(screen.getAllByRole("button", { name: /add snack entry/i }).length).toBe(1);
-    expect(screen.getAllByRole("button", { name: /add dinner entry/i }).length).toBe(1);
+    expect(
+      screen.getAllByRole("button", { name: /add breakfast entry/i }).length,
+    ).toBe(1);
+    expect(
+      screen.getAllByRole("button", { name: /add lunch entry/i }).length,
+    ).toBe(1);
+    expect(
+      screen.getAllByRole("button", { name: /add snack entry/i }).length,
+    ).toBe(1);
+    expect(
+      screen.getAllByRole("button", { name: /add dinner entry/i }).length,
+    ).toBe(1);
   });
 
   it("renders ingredient editor inline when empty slot card is clicked", async () => {
@@ -623,7 +752,9 @@ describe("LogDayView", () => {
         days={days}
         logId="log-1"
         person="PRIMARY"
-        recipeOptions={[{ id: "recipe-1", name: "Banana pancakes", initialRows: [] }]}
+        recipeOptions={[
+          { id: "recipe-1", name: "Banana pancakes", initialRows: [] },
+        ]}
         ingredientOptions={[]}
       />,
     );
@@ -642,10 +773,30 @@ describe("LogDayView", () => {
         date: new Date("2026-03-17T00:00:00.000Z"),
         dateKey: "2026-03-17",
         slots: [
-          { entryId: "entry-breakfast", mealType: LogMealType.BREAKFAST, label: "Breakfast", recipes: [] },
-          { entryId: "entry-lunch", mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
-          { entryId: "entry-snack", mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
-          { entryId: "entry-dinner", mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+          {
+            entryId: "entry-breakfast",
+            mealType: LogMealType.BREAKFAST,
+            label: "Breakfast",
+            recipes: [],
+          },
+          {
+            entryId: "entry-lunch",
+            mealType: LogMealType.LUNCH,
+            label: "Lunch",
+            recipes: [],
+          },
+          {
+            entryId: "entry-snack",
+            mealType: LogMealType.SNACK,
+            label: "Snack",
+            recipes: [],
+          },
+          {
+            entryId: "entry-dinner",
+            mealType: LogMealType.DINNER,
+            label: "Dinner",
+            recipes: [],
+          },
         ],
       },
     ];
@@ -680,7 +831,9 @@ describe("LogDayView", () => {
     );
 
     await user.click(screen.getByRole("button", { name: /add snack entry/i }));
-    await user.click(screen.getAllByRole("button", { name: /add ingredient/i })[0]!);
+    await user.click(
+      screen.getAllByRole("button", { name: /add ingredient/i })[0]!,
+    );
     const ingredientCombobox = screen
       .getAllByRole("combobox")
       .find((element) =>
@@ -688,7 +841,10 @@ describe("LogDayView", () => {
       );
     expect(ingredientCombobox).toBeDefined();
     await user.click(ingredientCombobox!);
-    await user.type(screen.getByPlaceholderText("Search ingredient..."), "cottage chee");
+    await user.type(
+      screen.getByPlaceholderText("Search ingredient..."),
+      "cottage chee",
+    );
 
     expect(screen.queryByText('Create "cottage chee"')).not.toBeInTheDocument();
   });
@@ -700,10 +856,30 @@ describe("LogDayView", () => {
         date: new Date("2026-03-17T00:00:00.000Z"),
         dateKey: "2026-03-17",
         slots: [
-          { entryId: "entry-breakfast", mealType: LogMealType.BREAKFAST, label: "Breakfast", recipes: [] },
-          { entryId: "entry-lunch", mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
-          { entryId: "entry-snack", mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
-          { entryId: "entry-dinner", mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+          {
+            entryId: "entry-breakfast",
+            mealType: LogMealType.BREAKFAST,
+            label: "Breakfast",
+            recipes: [],
+          },
+          {
+            entryId: "entry-lunch",
+            mealType: LogMealType.LUNCH,
+            label: "Lunch",
+            recipes: [],
+          },
+          {
+            entryId: "entry-snack",
+            mealType: LogMealType.SNACK,
+            label: "Snack",
+            recipes: [],
+          },
+          {
+            entryId: "entry-dinner",
+            mealType: LogMealType.DINNER,
+            label: "Dinner",
+            recipes: [],
+          },
         ],
       },
     ];
@@ -719,7 +895,9 @@ describe("LogDayView", () => {
     );
 
     await user.click(screen.getByRole("button", { name: /add snack entry/i }));
-    await user.click(screen.getAllByRole("button", { name: /add ingredient/i })[0]!);
+    await user.click(
+      screen.getAllByRole("button", { name: /add ingredient/i })[0]!,
+    );
     const ingredientCombobox = screen
       .getAllByRole("combobox")
       .find((element) =>
@@ -727,7 +905,10 @@ describe("LogDayView", () => {
       );
     expect(ingredientCombobox).toBeDefined();
     await user.click(ingredientCombobox!);
-    await user.type(screen.getByPlaceholderText("Search ingredient..."), "cottage chee");
+    await user.type(
+      screen.getByPlaceholderText("Search ingredient..."),
+      "cottage chee",
+    );
     expect(screen.queryByText('Create "cottage chee"')).not.toBeInTheDocument();
     expect(screen.getAllByText("Snack").length).toBeGreaterThan(0);
   });

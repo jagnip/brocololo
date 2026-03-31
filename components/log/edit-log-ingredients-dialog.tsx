@@ -6,11 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -22,29 +18,15 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
+import type {
+  EditableIngredientRow,
+  LogIngredientOption,
+} from "./log-ingredients-form";
 
-export type LogIngredientOption = {
-  id: string;
-  name: string;
-  brand: string | null;
-  defaultUnitId: string | null;
-  calories: number;
-  proteins: number;
-  fats: number;
-  carbs: number;
-  unitConversions: Array<{
-    unitId: string;
-    gramsPerUnit: number;
-    unitName: string;
-    unitNamePlural: string | null;
-  }>;
-};
-
-export type EditableIngredientRow = {
-  ingredientId: string | null;
-  unitId: string | null;
-  amount: number | null;
-};
+export type {
+  EditableIngredientRow,
+  LogIngredientOption,
+} from "./log-ingredients-form";
 
 type DialogRow = EditableIngredientRow & { key: string };
 
@@ -55,7 +37,7 @@ type IngredientFormDependencies = {
   iconOptions: string[];
 };
 
-type EditLogIngredientsDialogProps = {
+export type EditLogIngredientsDialogProps = {
   open: boolean;
   title: string;
   subtitle: string;
@@ -70,7 +52,7 @@ type EditLogIngredientsDialogProps = {
   onSave: (rows: EditableIngredientRow[]) => Promise<void>;
 };
 
-type RecipeAddToLogDialogFormProps = Omit<
+type EditLogIngredientsDialogFormProps = Omit<
   EditLogIngredientsDialogProps,
   "open" | "onOpenChange"
 > & {
@@ -78,7 +60,10 @@ type RecipeAddToLogDialogFormProps = Omit<
 };
 
 function toRowKey() {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
   return `row-${Math.random().toString(36).slice(2)}`;
@@ -93,7 +78,9 @@ function getMacrosFromRows(
   let fats = 0;
   let carbs = 0;
 
-  const ingredientById = new Map(ingredientOptions.map((option) => [option.id, option]));
+  const ingredientById = new Map(
+    ingredientOptions.map((option) => [option.id, option]),
+  );
 
   for (const row of rows) {
     if (!row.ingredientId || !row.unitId || row.amount == null) {
@@ -137,8 +124,8 @@ function toComparableRows(rows: EditableIngredientRow[]) {
   }));
 }
 
-
-function RecipeAddToLogDialogForm({
+/** Form body only; `RecipeAddToLogDialog` wraps this in `Dialog` + `DialogContent`. */
+function RecipeAddToLogForm({
   title,
   subtitle,
   initialRows,
@@ -148,14 +135,15 @@ function RecipeAddToLogDialogForm({
   saveLabel = "Save",
   onCancel,
   onSave,
-}: RecipeAddToLogDialogFormProps) {
+}: EditLogIngredientsDialogFormProps) {
   const [rows, setRows] = useState<DialogRow[]>(() =>
     initialRows.map((row) => ({
       ...row,
       key: toRowKey(),
     })),
   );
-  const [localIngredientOptions, setLocalIngredientOptions] = useState(ingredientOptions);
+  const [localIngredientOptions, setLocalIngredientOptions] =
+    useState(ingredientOptions);
 
   useEffect(() => {
     setLocalIngredientOptions(ingredientOptions);
@@ -172,26 +160,32 @@ function RecipeAddToLogDialogForm({
   }, [initialRows]);
 
   const ingredientById = useMemo(
-    () => new Map(localIngredientOptions.map((ingredient) => [ingredient.id, ingredient])),
+    () =>
+      new Map(
+        localIngredientOptions.map((ingredient) => [ingredient.id, ingredient]),
+      ),
     [localIngredientOptions],
   );
 
-  const macros = useMemo(() => getMacrosFromRows(rows, localIngredientOptions), [
-    localIngredientOptions,
-    rows,
-  ]);
+  const macros = useMemo(
+    () => getMacrosFromRows(rows, localIngredientOptions),
+    [localIngredientOptions, rows],
+  );
 
   const ingredientSelectOptions = useMemo(
-    () => localIngredientOptions.map((ingredient) => ({
-      value: ingredient.id,
-      label: getIngredientDisplayName(ingredient.name, ingredient.brand),
-    })),
+    () =>
+      localIngredientOptions.map((ingredient) => ({
+        value: ingredient.id,
+        label: getIngredientDisplayName(ingredient.name, ingredient.brand),
+      })),
     [localIngredientOptions],
   );
   const hasUnsavedChanges = useMemo(() => {
     const normalizedCurrent = toComparableRows(rows);
     const normalizedInitial = toComparableRows(initialRows);
-    return JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedInitial);
+    return (
+      JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedInitial)
+    );
   }, [initialRows, rows]);
 
   const handleAddRow = () => {
@@ -218,7 +212,11 @@ function RecipeAddToLogDialogForm({
     }));
 
     const hasInvalidRow = normalizedRows.some(
-      (row) => !row.ingredientId || !row.unitId || row.amount == null || row.amount <= 0,
+      (row) =>
+        !row.ingredientId ||
+        !row.unitId ||
+        row.amount == null ||
+        row.amount <= 0,
     );
 
     if (hasInvalidRow) {
@@ -235,20 +233,23 @@ function RecipeAddToLogDialogForm({
         <div className="px-4 py-4 md:px-6 md:py-6 border-b text-left">
           <h2 className="text-2xl font-semibold">{title}</h2>
           <p className="text-muted-foreground text-sm">{subtitle}</p>
-          {contextControls ? <div className="mt-4">{contextControls}</div> : null}
+          {contextControls ? (
+            <div className="mt-4">{contextControls}</div>
+          ) : null}
         </div>
 
         <section className="px-4 py-4 md:px-6 md:py-6 border-b">
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">{macros.calories.toFixed(0)} kcal</Badge>
-            <Badge variant="secondary">{macros.proteins.toFixed(1)}g protein</Badge>
+            <Badge variant="secondary">
+              {macros.proteins.toFixed(1)}g protein
+            </Badge>
             <Badge variant="secondary">{macros.fats.toFixed(1)}g fat</Badge>
             <Badge variant="secondary">{macros.carbs.toFixed(1)}g carbs</Badge>
           </div>
         </section>
 
         <section className="px-4 py-4 md:px-6 md:py-6 border-b flex flex-col gap-2">
-
           <div className="space-y-2">
             {rows.map((row) => {
               const selectedIngredient = row.ingredientId
@@ -259,10 +260,9 @@ function RecipeAddToLogDialogForm({
               return (
                 <div
                   key={row.key}
-                    // Mobile-only row framing mirrors recipe-page ingredient cards.
-                    className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 rounded-md border border-border/60 p-2 sm:rounded-none sm:border-0 sm:p-0 sm:gap-2 sm:grid-cols-[minmax(0,1fr)_96px_128px_auto] lg:grid-cols-[minmax(0,32rem)_96px_128px_auto]"
+                  // Mobile-only row framing mirrors recipe-page ingredient cards.
+                  className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 rounded-md border border-border/60 p-2 sm:rounded-none sm:border-0 sm:p-0 sm:gap-2 sm:grid-cols-[minmax(0,1fr)_96px_128px_auto] lg:grid-cols-[minmax(0,32rem)_96px_128px_auto]"
                 >
-          
                   <div className="min-w-0 col-span-3 sm:col-span-1">
                     <SearchableSelect
                       className="min-w-0 w-full font-normal"
@@ -270,11 +270,18 @@ function RecipeAddToLogDialogForm({
                       value={row.ingredientId}
                       onValueChange={(nextValue) => {
                         if (!nextValue) {
-                          setRows((prev) => prev.map((item) =>
-                            item.key === row.key
-                              ? { ...item, ingredientId: null, unitId: null, amount: null }
-                              : item,
-                          ));
+                          setRows((prev) =>
+                            prev.map((item) =>
+                              item.key === row.key
+                                ? {
+                                    ...item,
+                                    ingredientId: null,
+                                    unitId: null,
+                                    amount: null,
+                                  }
+                                : item,
+                            ),
+                          );
                           return;
                         }
 
@@ -282,22 +289,26 @@ function RecipeAddToLogDialogForm({
                         const defaultUnitId = ingredient
                           ? getDefaultUnitIdForIngredient({
                               defaultUnitId: ingredient.defaultUnitId,
-                              unitConversions: ingredient.unitConversions.map((conversion) => ({
-                                unitId: conversion.unitId,
-                                unit: { name: conversion.unitName },
-                              })),
+                              unitConversions: ingredient.unitConversions.map(
+                                (conversion) => ({
+                                  unitId: conversion.unitId,
+                                  unit: { name: conversion.unitName },
+                                }),
+                              ),
                             })
                           : null;
 
-                        setRows((prev) => prev.map((item) =>
-                          item.key === row.key
-                            ? {
-                                ...item,
-                                ingredientId: nextValue,
-                                unitId: defaultUnitId,
-                              }
-                            : item,
-                        ));
+                        setRows((prev) =>
+                          prev.map((item) =>
+                            item.key === row.key
+                              ? {
+                                  ...item,
+                                  ingredientId: nextValue,
+                                  unitId: defaultUnitId,
+                                }
+                              : item,
+                          ),
+                        );
                       }}
                       placeholder="Select ingredient..."
                       searchPlaceholder="Search ingredient..."
@@ -312,16 +323,18 @@ function RecipeAddToLogDialogForm({
                     min={0}
                     step="any"
                     placeholder="0"
-              
                     className="w-full sm:w-24 sm:min-w-24 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     value={row.amount == null ? "" : row.amount}
                     onChange={(event) => {
-                      const amount = event.target.value === ""
-                        ? null
-                        : Number(event.target.value);
-                      setRows((prev) => prev.map((item) =>
-                        item.key === row.key ? { ...item, amount } : item,
-                      ));
+                      const amount =
+                        event.target.value === ""
+                          ? null
+                          : Number(event.target.value);
+                      setRows((prev) =>
+                        prev.map((item) =>
+                          item.key === row.key ? { ...item, amount } : item,
+                        ),
+                      );
                     }}
                   />
 
@@ -329,13 +342,16 @@ function RecipeAddToLogDialogForm({
                     <Select
                       value={row.unitId ?? ""}
                       onValueChange={(nextUnitId) => {
-                        setRows((prev) => prev.map((item) =>
-                          item.key === row.key ? { ...item, unitId: nextUnitId } : item,
-                        ));
+                        setRows((prev) =>
+                          prev.map((item) =>
+                            item.key === row.key
+                              ? { ...item, unitId: nextUnitId }
+                              : item,
+                          ),
+                        );
                       }}
                       disabled={!selectedIngredient}
                     >
-                 
                       <SelectTrigger className="min-w-0 w-full sm:w-32 sm:min-w-32 [&>svg]:hidden">
                         <SelectValue placeholder="Unit" />
                       </SelectTrigger>
@@ -368,15 +384,15 @@ function RecipeAddToLogDialogForm({
             })}
           </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              // Mobile keeps a large touch target; larger viewports use content width.
-              className="w-full sm:w-auto sm:self-start"
-              onClick={handleAddRow}
-            >
-              Add ingredient
-            </Button>
+          <Button
+            type="button"
+            variant="outline"
+            // Mobile keeps a large touch target; larger viewports use content width.
+            className="w-full sm:w-auto sm:self-start"
+            onClick={handleAddRow}
+          >
+            Add ingredient
+          </Button>
         </section>
       </div>
 
@@ -403,7 +419,7 @@ function RecipeAddToLogDialogForm({
   );
 }
 
-export function EditLogIngredientsDialog({
+export function RecipeAddToLogDialog({
   open,
   onOpenChange,
   ...formProps
@@ -414,7 +430,7 @@ export function EditLogIngredientsDialog({
         showCloseButton={false}
         className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-[min(1000px,calc(100vw-3rem))] sm:max-w-[1000px] lg:w-[min(1200px,calc(100vw-4rem))] lg:max-w-[1200px] xl:w-[min(1400px,calc(100vw-5rem))] xl:max-w-[1400px] 2xl:w-[min(1600px,calc(100vw-6rem))] 2xl:max-w-[1600px] max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col"
       >
-        <RecipeAddToLogDialogForm
+        <RecipeAddToLogForm
           {...formProps}
           onCancel={() => onOpenChange(false)}
         />

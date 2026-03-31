@@ -11,10 +11,11 @@ type LogPlannerPoolProps = {
 };
 
 function PlannerPoolCard({ item }: { item: PlannerPoolGroupedCardData }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: `planner-pool-${item.id}`,
-    data: { type: "planner-pool-item", item },
-  });
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: `planner-pool-${item.id}`,
+      data: { type: "planner-pool-item", item },
+    });
 
   return (
     <Card
@@ -34,13 +35,17 @@ function PlannerPoolCard({ item }: { item: PlannerPoolGroupedCardData }) {
         </Badge>
       </div>
       <p className="text-xs text-muted-foreground">
-        {item.mealLabel} - {item.date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+        {item.mealLabel} -{" "}
+        {item.date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })}
       </p>
     </Card>
   );
 }
 
-export function LogPlannerPool({ items }: LogPlannerPoolProps) {
+export function LogMealsPool({ items }: LogPlannerPoolProps) {
   return (
     <section className="space-y-2">
       <h3 className="text-sm font-medium">Planned meals</h3>
@@ -58,4 +63,3 @@ export function LogPlannerPool({ items }: LogPlannerPoolProps) {
     </section>
   );
 }
-

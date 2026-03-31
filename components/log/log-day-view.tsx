@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { DndContext, type DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { Trash2 } from "lucide-react";
+import {
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import {
@@ -14,12 +18,12 @@ import {
   type LogDayData,
   type PlannerPoolCardData,
 } from "@/lib/log/view-model";
-import { LogSlotCard } from "./log-slot-card";
+import { LogSlot } from "./log-slot";
 import {
-  DailyLogIngredientsForm,
+  LogIngredientsForm,
   type EditableIngredientRow,
   type LogIngredientOption,
-} from "./daily-log-ingredients-form";
+} from "./log-ingredients-form";
 import {
   appendNextLogDayAction,
   clearLogEntryAssignmentAction,
@@ -27,8 +31,9 @@ import {
   removeLogDayAction,
   upsertLogSlotAction,
 } from "@/actions/log-actions";
-import { LogPlannerPool } from "./log-planner-pool";
-import { LogSlotDropZone } from "./log-slot-drop-zone";
+import { LogDayHeader } from "./log-day-header";
+import { LogDaySelector } from "./log-day-selector";
+import { LogMealsPool } from "./log-meals-pool";
 
 type SelectedSlotState = {
   dayKey: string;
@@ -49,21 +54,6 @@ type IngredientFormDependencies = {
   iconOptions: string[];
 };
 
-function toDayMacros(day: LogDayData) {
-  return day.slots.reduce(
-    (totals, slot) => {
-      for (const recipe of slot.recipes) {
-        totals.calories += recipe.calories;
-        totals.proteins += recipe.proteins;
-        totals.fats += recipe.fats;
-        totals.carbs += recipe.carbs;
-      }
-      return totals;
-    },
-    { calories: 0, proteins: 0, fats: 0, carbs: 0 },
-  );
-}
-
 function toRecipeMacros(
   rows: EditableIngredientRow[],
   ingredientOptions: LogIngredientOption[],
@@ -73,7 +63,9 @@ function toRecipeMacros(
   let fats = 0;
   let carbs = 0;
 
-  const ingredientById = new Map(ingredientOptions.map((item) => [item.id, item]));
+  const ingredientById = new Map(
+    ingredientOptions.map((item) => [item.id, item]),
+  );
 
   for (const row of rows) {
     if (row.amount == null || !row.ingredientId || !row.unitId) {
@@ -85,7 +77,9 @@ function toRecipeMacros(
       continue;
     }
 
-    const conversion = ingredient.unitConversions.find((item) => item.unitId === row.unitId);
+    const conversion = ingredient.unitConversions.find(
+      (item) => item.unitId === row.unitId,
+    );
     if (!conversion) {
       continue;
     }
@@ -111,11 +105,17 @@ function toRecipeIngredients(
   rows: EditableIngredientRow[],
   ingredientOptions: LogIngredientOption[],
 ) {
-  const ingredientById = new Map(ingredientOptions.map((item) => [item.id, item]));
+  const ingredientById = new Map(
+    ingredientOptions.map((item) => [item.id, item]),
+  );
 
   return rows.map((row) => {
-    const ingredient = row.ingredientId ? ingredientById.get(row.ingredientId) : null;
-    const unit = ingredient?.unitConversions.find((item) => item.unitId === row.unitId);
+    const ingredient = row.ingredientId
+      ? ingredientById.get(row.ingredientId)
+      : null;
+    const unit = ingredient?.unitConversions.find(
+      (item) => item.unitId === row.unitId,
+    );
 
     return {
       ingredientId: row.ingredientId,
@@ -153,16 +153,24 @@ export function LogDayView({
 }: LogDayViewProps) {
   const router = useRouter();
   const defaultDayKey =
-    initialSelectedDayKey && days.some((day) => day.dateKey === initialSelectedDayKey)
+    initialSelectedDayKey &&
+    days.some((day) => day.dateKey === initialSelectedDayKey)
       ? initialSelectedDayKey
       : (days[0]?.dateKey ?? null);
   const [localDays, setLocalDays] = useState(days);
-  const [selectedDayKey, setSelectedDayKey] = useState<string | null>(defaultDayKey);
-  const [selectedSlot, setSelectedSlot] = useState<SelectedSlotState | null>(null);
+  const [selectedDayKey, setSelectedDayKey] = useState<string | null>(
+    defaultDayKey,
+  );
+  const [selectedSlot, setSelectedSlot] = useState<SelectedSlotState | null>(
+    null,
+  );
   const [isSaving, startSavingTransition] = useTransition();
   const [isAddingDay, startAddDayTransition] = useTransition();
   const [isRemovingDay, startRemoveDayTransition] = useTransition();
-  const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor),
+  );
 
   const plannerPoolByKey = (() => {
     const keyCountByPool = new Map<string, number>();
@@ -247,7 +255,10 @@ export function LogDayView({
     }
   }, [days, selectedDayKey, selectedSlot]);
 
-  const selectEmptySlot = (day: LogDayData, slot: LogDayData["slots"][number]) => {
+  const selectEmptySlot = (
+    day: LogDayData,
+    slot: LogDayData["slots"][number],
+  ) => {
     if (!slot.entryId) {
       toast.error("Cannot edit this slot yet");
       return;
@@ -355,7 +366,8 @@ export function LogDayView({
 
       setLocalDays((prev) => {
         const selectedRecipeOption = recipeOptions.find(
-          (recipeOption) => recipeOption.id === activeSelection.selectedRecipeId,
+          (recipeOption) =>
+            recipeOption.id === activeSelection.selectedRecipeId,
         );
 
         return prev.map((mappedDay) => ({
@@ -395,7 +407,8 @@ export function LogDayView({
               entryRecipeId:
                 activeSelection.selectedRecipeId == null
                   ? null
-                  : (existingRecipe?.entryRecipeId ?? activeSelection.entryRecipeId),
+                  : (existingRecipe?.entryRecipeId ??
+                    activeSelection.entryRecipeId),
               sourceRecipeId: activeSelection.selectedRecipeId,
               cardKind:
                 activeSelection.selectedRecipeId == null
@@ -404,9 +417,9 @@ export function LogDayView({
               title:
                 activeSelection.selectedRecipeId == null
                   ? `Custom ${mappedSlot.label.toLowerCase()}`
-                  : selectedRecipeOption?.name ??
+                  : (selectedRecipeOption?.name ??
                     existingRecipe?.title ??
-                    `Custom ${mappedSlot.label.toLowerCase()}`,
+                    `Custom ${mappedSlot.label.toLowerCase()}`),
               slug: null,
               imageUrl: null,
               ...nextMacros,
@@ -453,7 +466,8 @@ export function LogDayView({
     const activeData = event.active.data.current;
     const overData = event.over?.data.current;
     if (!activeData || !overData) return;
-    if (activeData.type !== "planner-pool-item" || overData.type !== "log-slot") return;
+    if (activeData.type !== "planner-pool-item" || overData.type !== "log-slot")
+      return;
 
     if (!logId || !person || !overData.entryId) {
       toast.error("Missing log context for this action");
@@ -515,10 +529,14 @@ export function LogDayView({
 
       const targetDayKey = (overData.dateKey as string) ?? null;
       const targetMealType =
-        (overData.mealType as LogDayData["slots"][number]["mealType"] | undefined) ?? null;
-      const targetDay = localDays.find((day) => day.dateKey === targetDayKey) ?? null;
+        (overData.mealType as
+          | LogDayData["slots"][number]["mealType"]
+          | undefined) ?? null;
+      const targetDay =
+        localDays.find((day) => day.dateKey === targetDayKey) ?? null;
       const targetSlot =
-        targetDay?.slots.find((slot) => slot.mealType === targetMealType) ?? null;
+        targetDay?.slots.find((slot) => slot.mealType === targetMealType) ??
+        null;
 
       if (targetDay && targetSlot?.entryId) {
         const initialRows = plannerItem.ingredients.map((ingredient) => ({
@@ -544,7 +562,9 @@ export function LogDayView({
     });
   };
 
-  const handleRemovePlacedRecipe = async (slot: LogDayData["slots"][number]) => {
+  const handleRemovePlacedRecipe = async (
+    slot: LogDayData["slots"][number],
+  ) => {
     if (!logId || !person || !slot.entryId) {
       toast.error("Missing log context for this action");
       return;
@@ -565,7 +585,9 @@ export function LogDayView({
       setLocalDays((prev) =>
         prev.map((day) => ({
           ...day,
-          slots: day.slots.map((s) => (s.entryId === slot.entryId ? { ...s, recipes: [] } : s)),
+          slots: day.slots.map((s) =>
+            s.entryId === slot.entryId ? { ...s, recipes: [] } : s,
+          ),
         })),
       );
 
@@ -576,7 +598,9 @@ export function LogDayView({
   if (days.length === 0) {
     return (
       <section className="rounded-lg border p-6 space-y-3">
-        <h2 className="text-lg font-medium">No log entries for selected person</h2>
+        <h2 className="text-lg font-medium">
+          No log entries for selected person
+        </h2>
         <p className="text-sm text-muted-foreground">
           Switch person or create a plan to generate baseline log entries.
         </p>
@@ -587,34 +611,17 @@ export function LogDayView({
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <section className="mt-8 space-y-8">
-      <LogPlannerPool items={groupedPlannerPool} />
-      <div className="flex flex-wrap items-center gap-2">
-        {localDays.map((day) => {
-          const isActive = day.dateKey === selectedDayKey;
-          return (
-            <button
-              key={day.dateKey}
-              type="button"
-              className={
-                isActive
-                  ? "h-8 rounded-md bg-foreground px-3 text-xs text-background"
-                  : "h-8 rounded-md border px-3 text-xs text-muted-foreground"
-              }
-              onClick={() => {
-                setSelectedDayKey(day.dateKey);
-                setSelectedSlot(null);
-              }}
-            >
-              {formatDayLabel(day.date)}
-            </button>
-          );
-        })}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={isAddingDay || !logId}
-          onClick={() => {
+        <LogMealsPool items={groupedPlannerPool} />
+        <LogDaySelector
+          days={localDays}
+          selectedDayKey={selectedDayKey}
+          onSelectDay={(dateKey) => {
+            setSelectedDayKey(dateKey);
+            setSelectedSlot(null);
+          }}
+          logId={logId}
+          isAddingDay={isAddingDay}
+          onAddDay={() => {
             if (!logId) {
               return;
             }
@@ -625,32 +632,22 @@ export function LogDayView({
                 return;
               }
               const nextPerson = person ?? "PRIMARY";
-              const nextUrl =
-                `${ROUTES.logView(logId)}?person=${nextPerson}&day=${result.dateKey}`;
+              const nextUrl = `${ROUTES.logView(logId)}?person=${nextPerson}&day=${result.dateKey}`;
               router.push(nextUrl);
               router.refresh();
             });
           }}
-        >
-          {isAddingDay ? "Adding..." : "Add day"}
-        </Button>
-      </div>
-      {localDays
-        .filter((day) => day.dateKey === selectedDayKey)
-        .map((day) => {
-          const dayMacros = toDayMacros(day);
-          return (
-            <article key={day.dateKey} className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base font-medium">{formatDayLabel(day.date)}</h2>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  disabled={isRemovingDay || !logId}
-                  aria-label={`Remove day ${formatDayLabel(day.date)}`}
-                  onClick={() => {
+        />
+        {localDays
+          .filter((day) => day.dateKey === selectedDayKey)
+          .map((day) => {
+            return (
+              <article key={day.dateKey} className="space-y-4">
+                <LogDayHeader
+                  day={day}
+                  logId={logId}
+                  isRemovingDay={isRemovingDay}
+                  onRemoveDay={() => {
                     if (!logId) {
                       return;
                     }
@@ -665,57 +662,50 @@ export function LogDayView({
                       }
                       const nextPerson = person ?? "PRIMARY";
                       if (result.nextDayKey) {
-                        const nextUrl =
-                          `${ROUTES.logView(logId)}?person=${nextPerson}&day=${result.nextDayKey}`;
+                        const nextUrl = `${ROUTES.logView(logId)}?person=${nextPerson}&day=${result.nextDayKey}`;
                         router.push(nextUrl);
                       } else {
-                        router.push(`${ROUTES.logView(logId)}?person=${nextPerson}`);
+                        router.push(
+                          `${ROUTES.logView(logId)}?person=${nextPerson}`,
+                        );
                       }
                       router.refresh();
                     });
                   }}
-                >
-                  <Trash2 className="h-4 w-4 text-muted-foreground" />
-                </Button>
-                <Badge variant="outline">{dayMacros.calories.toFixed(0)} kcal</Badge>
-                <Badge variant="outline">{dayMacros.proteins.toFixed(1)}g protein</Badge>
-                <Badge variant="outline">{dayMacros.fats.toFixed(1)}g fat</Badge>
-                <Badge variant="outline">{dayMacros.carbs.toFixed(1)}g carbs</Badge>
-              </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {day.slots.map((slot) => (
-                <div key={`${day.dateKey}-${slot.mealType}`} className="space-y-2">
-                  <p className="text-sm text-muted-foreground">{slot.label}</p>
-                  <LogSlotDropZone dateKey={day.dateKey} mealType={slot.mealType} entryId={slot.entryId}>
-                    <LogSlotCard
+                />
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  {day.slots.map((slot) => (
+                    <LogSlot
+                      key={`${day.dateKey}-${slot.mealType}`}
+                      dayKey={day.dateKey}
                       slot={slot}
                       onEmptyClick={() => selectEmptySlot(day, slot)}
-                      onRecipeClick={(recipe) => selectRecipeSlot(day, slot, recipe)}
-                      onRecipeRemove={slot.recipes.length > 0 ? () => handleRemovePlacedRecipe(slot) : undefined}
+                      onRecipeClick={(recipe) =>
+                        selectRecipeSlot(day, slot, recipe)
+                      }
+                      onRecipeRemove={() => handleRemovePlacedRecipe(slot)}
                     />
-                  </LogSlotDropZone>
+                  ))}
                 </div>
-              ))}
-            </div>
-            {selectedSlot?.dayKey === day.dateKey ? (
-              <div className="rounded-lg border">
-                <DailyLogIngredientsForm
-                  title={selectedSlot.mealLabel}
-                  subtitle={selectedSlot.subtitle}
-                  initialRows={selectedSlot.initialRows}
-                  ingredientOptions={ingredientOptions}
-                  isSaving={isSaving}
-                  recipeOptions={recipeOptions}
-                  selectedRecipeId={selectedSlot.selectedRecipeId}
-                  initialSelectedRecipeId={selectedSlot.initialSelectedRecipeId}
-                  onSelectedRecipeIdChange={handleSelectedRecipeChange}
-                  onSave={handleSlotSave}
-                />
-              </div>
-            ) : null}
-          </article>
-          );
-        })}
+                {selectedSlot?.dayKey === day.dateKey ? (
+                  <LogIngredientsForm
+                    title={selectedSlot.mealLabel}
+                    subtitle={selectedSlot.subtitle}
+                    initialRows={selectedSlot.initialRows}
+                    ingredientOptions={ingredientOptions}
+                    isSaving={isSaving}
+                    recipeOptions={recipeOptions}
+                    selectedRecipeId={selectedSlot.selectedRecipeId}
+                    initialSelectedRecipeId={
+                      selectedSlot.initialSelectedRecipeId
+                    }
+                    onSelectedRecipeIdChange={handleSelectedRecipeChange}
+                    onSave={handleSlotSave}
+                  />
+                ) : null}
+              </article>
+            );
+          })}
       </section>
     </DndContext>
   );

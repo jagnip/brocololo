@@ -2,7 +2,7 @@ import RecipeGridContainer from "@/components/recipes/grid-container";
 import { Suspense } from "react";
 import { RecipeTabsContainer } from "@/components/recipes/tabs-container";
 import { RecipesPageSkeleton } from "@/components/recipes/recipes-page-skeleton";
-import { TopbarConfigController } from "@/components/topbar/topbar-config";
+import { TopbarConfigController } from "@/components/topbar-config";
 import { ROUTES } from "@/lib/constants";
 
 type RecipesPageSearchParams = {
