@@ -66,6 +66,9 @@ export async function addRecipeToLogAction(input: AddRecipeToLogInput) {
   try {
     const { logId } = await replaceMealSlotWithRecipe(parsed.data);
     revalidatePath(ROUTES.logView(logId));
+    revalidatePath(ROUTES.log);
+    revalidatePath(ROUTES.logCurrent);
+    revalidatePath("/");
   } catch (error) {
     console.error("Error adding recipe to log", error);
     return {

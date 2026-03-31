@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { LogMealType, LogPerson } from "@/src/generated/enums";
 import { RecipeAddToLogDialog } from "./add-to-log-dialog";
@@ -61,6 +62,7 @@ export function RecipeAddToLogDialogContainer({
   ingredientOptions,
   ingredientFormDependencies,
 }: RecipeAddToLogDialogProps) {
+  const router = useRouter();
   const [isSaving, startSavingTransition] = useTransition();
   const [logPerson, setLogPerson] = useState<"PRIMARY" | "SECONDARY">(
     LogPerson.PRIMARY,
@@ -227,6 +229,7 @@ export function RecipeAddToLogDialogContainer({
           }
 
           onOpenChange(false);
+          router.refresh();
           toast.success("Recipe added to log");
         });
       }}
