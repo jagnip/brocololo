@@ -76,3 +76,10 @@ export const appendNextLogDaySchema = z.object({
 });
 
 export type AppendNextLogDayInput = z.infer<typeof appendNextLogDaySchema>;
+
+export const removeLogDaySchema = z.object({
+  logId: z.string().min(1),
+  dateKey: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+export type RemoveLogDayInput = z.infer<typeof removeLogDaySchema>;

@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { ROUTES } from "@/lib/constants";
 import {
   appendNextLogDay,
+  deleteLogById,
+  removeLogDay,
   replaceMealSlotWithRecipe,
   clearLogEntryAssignment,
   placePlannerPoolItemInEntry,
@@ -16,6 +18,8 @@ import {
   clearLogEntryAssignmentSchema,
   type AddRecipeToLogInput,
   type AppendNextLogDayInput,
+  removeLogDaySchema,
+  type RemoveLogDayInput,
   placePlannerPoolItemSchema,
   type PlacePlannerPoolItemInput,
   type ClearLogEntryAssignmentInput,
@@ -168,4 +172,51 @@ export async function appendNextLogDayAction(input: AppendNextLogDayInput) {
       message: "Failed to add next day",
     };
   }
+}
+
+export async function removeLogDayAction(input: RemoveLogDayInput) {
+  const parsed = removeLogDaySchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      type: "error" as const,
+      message: parsed.error.issues[0]?.message ?? "Invalid remove day request",
+    };
+  }
+
+  try {
+    const result = await removeLogDay(parsed.data);
+    revalidatePath(ROUTES.logView(parsed.data.logId));
+    return { type: "success" as const, nextDayKey: result.nextDayKey };
+  } catch (error) {
+    console.error("Error removing log day", error);
+    if (error instanceof Error && error.message === "CANNOT_REMOVE_LAST_LOG_DAY") {
+      return {
+        type: "error" as const,
+        message: "At least one log day must remain.",
+      };
+    }
+    return {
+      type: "error" as const,
+      message: "Failed to remove day",
+    };
+  }
+}
+
+export async function deleteLogAction(
+  logId: string,
+): Promise<{ type: "success" } | { type: "error"; message: string }> {
+  if (!logId) {
+    return { type: "error", message: "Missing log id." };
+  }
+
+  try {
+    await deleteLogById(logId);
+  } catch (error) {
+    console.error("Error deleting log", error);
+    return { type: "error", message: "Failed to delete log." };
+  }
+
+  revalidatePath(ROUTES.log);
+  revalidatePath("/");
+  return { type: "success" };
 }

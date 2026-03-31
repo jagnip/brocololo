@@ -84,6 +84,12 @@ export async function getLatestPlanId() {
   return plan?.id ?? null;
 }
 
+export async function deletePlanById(planId: string) {
+  await prisma.plan.delete({
+    where: { id: planId },
+  });
+}
+
 // Returns unused recipes from the most recent plan, grouped by recipeId.
 // meals = number of unused slots for that recipe (the "debt" to carry forward).
 export async function getUnusedRecipesFromLatestPlan() {

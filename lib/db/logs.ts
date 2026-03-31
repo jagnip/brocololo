@@ -29,6 +29,12 @@ export async function getLogs() {
   });
 }
 
+export async function deleteLogById(logId: string) {
+  await prisma.log.delete({
+    where: { id: logId },
+  });
+}
+
 export async function getLogById(logId: string, person: LogPerson) {
   return prisma.log.findUnique({
     where: { id: logId },
@@ -169,6 +175,40 @@ export async function appendNextLogDay(input: { logId: string }) {
     }
 
     return { dateKey: nextDate.toISOString().slice(0, 10) };
+  });
+}
+
+export async function removeLogDay(input: { logId: string; dateKey: string }) {
+  return prisma.$transaction(async (tx) => {
+    const distinctDays = await tx.logEntry.findMany({
+      where: { logId: input.logId },
+      distinct: ["date"],
+      orderBy: { date: "asc" },
+      select: { date: true },
+    });
+
+    if (distinctDays.length <= 1) {
+      throw new Error("CANNOT_REMOVE_LAST_LOG_DAY");
+    }
+
+    const targetDate = new Date(`${input.dateKey}T00:00:00.000Z`);
+    await tx.logEntry.deleteMany({
+      where: {
+        logId: input.logId,
+        date: targetDate,
+      },
+    });
+
+    const remainingDays = await tx.logEntry.findMany({
+      where: { logId: input.logId },
+      distinct: ["date"],
+      orderBy: { date: "asc" },
+      select: { date: true },
+    });
+
+    return {
+      nextDayKey: remainingDays[0]?.date.toISOString().slice(0, 10) ?? null,
+    };
   });
 }
 

@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   appendNextLogDay,
   clearLogEntryAssignment,
+  deleteLogById,
   placePlannerPoolItemInEntry,
+  removeLogDay,
   replaceMealSlotWithRecipe,
   updateLogRecipeIngredients,
   upsertLogSlot,
@@ -11,7 +13,9 @@ import {
   addRecipeToLogAction,
   appendNextLogDayAction,
   clearLogEntryAssignmentAction,
+  deleteLogAction,
   placePlannerPoolItemAction,
+  removeLogDayAction,
   updateLogRecipeIngredientsAction,
   upsertLogSlotAction,
 } from "./log-actions";
@@ -23,6 +27,8 @@ vi.mock("@/lib/db/logs", () => ({
   placePlannerPoolItemInEntry: vi.fn(),
   clearLogEntryAssignment: vi.fn(),
   appendNextLogDay: vi.fn(),
+  removeLogDay: vi.fn(),
+  deleteLogById: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -218,5 +224,60 @@ describe("appendNextLogDayAction", () => {
 
     expect(result).toEqual({ type: "success", dateKey: "2026-04-04" });
     expect(appendNextLogDay).toHaveBeenCalledWith({ logId: "log-1" });
+  });
+});
+
+describe("removeLogDayAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns validation error for invalid input", async () => {
+    const result = await removeLogDayAction({ logId: "", dateKey: "2026-04-10" });
+
+    expect(result.type).toBe("error");
+    expect(removeLogDay).not.toHaveBeenCalled();
+  });
+
+  it("maps CANNOT_REMOVE_LAST_LOG_DAY to user-friendly error", async () => {
+    vi.mocked(removeLogDay).mockRejectedValue(new Error("CANNOT_REMOVE_LAST_LOG_DAY"));
+
+    const result = await removeLogDayAction({ logId: "log-1", dateKey: "2026-04-10" });
+
+    expect(result).toEqual({
+      type: "error",
+      message: "At least one log day must remain.",
+    });
+  });
+
+  it("removes day and returns next day key", async () => {
+    vi.mocked(removeLogDay).mockResolvedValue({ nextDayKey: "2026-04-11" });
+
+    const result = await removeLogDayAction({ logId: "log-1", dateKey: "2026-04-10" });
+
+    expect(result).toEqual({ type: "success", nextDayKey: "2026-04-11" });
+    expect(removeLogDay).toHaveBeenCalledWith({
+      logId: "log-1",
+      dateKey: "2026-04-10",
+    });
+  });
+});
+
+describe("deleteLogAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns error when log id is missing", async () => {
+    const result = await deleteLogAction("");
+    expect(result).toEqual({ type: "error", message: "Missing log id." });
+    expect(deleteLogById).not.toHaveBeenCalled();
+  });
+
+  it("deletes log and returns success", async () => {
+    vi.mocked(deleteLogById).mockResolvedValue(undefined);
+    const result = await deleteLogAction("log-1");
+    expect(result).toEqual({ type: "success" });
+    expect(deleteLogById).toHaveBeenCalledWith("log-1");
   });
 });

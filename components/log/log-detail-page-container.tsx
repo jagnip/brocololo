@@ -12,6 +12,7 @@ import { buildLogDays, buildVisiblePlannerPoolCards } from "@/lib/log/view-model
 import { LogDayView } from "@/components/log/log-day-view";
 import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { DeleteLogButton } from "@/components/log/delete-log-button";
 
 type LogDetailPageContainerProps = {
   logId: string;
@@ -119,7 +120,10 @@ export async function LogDetailPageContainer({
     <>
       <header className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Log details</h1>
-        <LogPersonSelect value={person} />
+        <div className="flex items-center gap-2">
+          <LogPersonSelect value={person} />
+          <DeleteLogButton logId={logId} />
+        </div>
       </header>
       <Breadcrumbs
         items={[

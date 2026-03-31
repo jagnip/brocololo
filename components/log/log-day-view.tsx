@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { DndContext, type DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ import {
   appendNextLogDayAction,
   clearLogEntryAssignmentAction,
   placePlannerPoolItemAction,
+  removeLogDayAction,
   upsertLogSlotAction,
 } from "@/actions/log-actions";
 import { LogPlannerPool } from "./log-planner-pool";
@@ -159,6 +161,7 @@ export function LogDayView({
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlotState | null>(null);
   const [isSaving, startSavingTransition] = useTransition();
   const [isAddingDay, startAddDayTransition] = useTransition();
+  const [isRemovingDay, startRemoveDayTransition] = useTransition();
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
 
   const plannerPoolByKey = (() => {
@@ -640,6 +643,40 @@ export function LogDayView({
             <article key={day.dateKey} className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-base font-medium">{formatDayLabel(day.date)}</h2>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  disabled={isRemovingDay || !logId}
+                  aria-label={`Remove day ${formatDayLabel(day.date)}`}
+                  onClick={() => {
+                    if (!logId) {
+                      return;
+                    }
+                    startRemoveDayTransition(async () => {
+                      const result = await removeLogDayAction({
+                        logId,
+                        dateKey: day.dateKey,
+                      });
+                      if (result.type === "error") {
+                        toast.error(result.message);
+                        return;
+                      }
+                      const nextPerson = person ?? "PRIMARY";
+                      if (result.nextDayKey) {
+                        const nextUrl =
+                          `${ROUTES.logView(logId)}?person=${nextPerson}&day=${result.nextDayKey}`;
+                        router.push(nextUrl);
+                      } else {
+                        router.push(`${ROUTES.logView(logId)}?person=${nextPerson}`);
+                      }
+                      router.refresh();
+                    });
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 text-muted-foreground" />
+                </Button>
                 <Badge variant="outline">{dayMacros.calories.toFixed(0)} kcal</Badge>
                 <Badge variant="outline">{dayMacros.proteins.toFixed(1)}g protein</Badge>
                 <Badge variant="outline">{dayMacros.fats.toFixed(1)}g fat</Badge>

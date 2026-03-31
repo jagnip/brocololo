@@ -185,7 +185,7 @@
   line-height: var(--type-h2-line-height);
   font-weight: var(--type-h2-weight);
   letter-spacing: var(--type-h2-tracking);
-}
+} 
 
 @utility type-h3 {
   font-family: var(--font-sans);
