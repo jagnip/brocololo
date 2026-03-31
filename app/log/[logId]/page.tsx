@@ -11,7 +11,7 @@ export default async function LogDetailPage({
   const { person, day } = await searchParams;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <div className="page-container">
       <LogDetailPageContainer logId={logId} person={person} day={day} />
     </div>
   );
