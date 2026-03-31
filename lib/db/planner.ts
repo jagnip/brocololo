@@ -345,29 +345,7 @@ export async function getPlannerPoolItemsForPlan(params: {
   const slots = await getPlanById(params.planId);
   if (!slots) return [];
 
-  const fixedSnackRecipe = await prisma.recipe.findUnique({
-    where: { id: FIXED_SNACK_RECIPE_ID },
-    select: {
-      id: true,
-      name: true,
-      images: {
-        where: { isCover: true },
-        select: { url: true },
-        take: 1,
-      },
-      servings: true,
-      servingMultiplierForNelson: true,
-      ingredients: {
-        select: {
-          ingredientId: true,
-          amount: true,
-          nutritionTarget: true,
-          unitId: true,
-        },
-      },
-    },
-  });
-
+  // Pool only reflects recipes assigned to planner slots — not baseline snack prefills (e.g. fixed snack).
   const items: PlannerPoolItem[] = [];
   for (const slot of slots) {
     if (!slot.recipe) continue;
@@ -398,43 +376,6 @@ export async function getPlannerPoolItemsForPlan(params: {
         })
         .filter((row): row is PlannerPoolIngredientRow => row != null),
     });
-  }
-
-  if (fixedSnackRecipe) {
-    const uniqueDaysByKey = new Map<string, Date>();
-    for (const slot of slots) {
-      const key = slot.date.toISOString().slice(0, 10);
-      if (!uniqueDaysByKey.has(key)) uniqueDaysByKey.set(key, slot.date);
-    }
-
-    for (const day of uniqueDaysByKey.values()) {
-      const dayKey = day.toISOString().slice(0, 10);
-      items.push({
-        id: `snack-${dayKey}-${fixedSnackRecipe.id}`,
-        date: day,
-        mealType: LogMealType.SNACK,
-        title: fixedSnackRecipe.name ?? "Snack",
-        sourceRecipeId: fixedSnackRecipe.id,
-        imageUrl: fixedSnackRecipe.images[0]?.url ?? null,
-        ingredients: fixedSnackRecipe.ingredients
-          .map((ri) => {
-            const personAmount = getPersonIngredientAmountPerMeal({
-              amount: ri.amount,
-              nutritionTarget: ri.nutritionTarget,
-              person: params.person === LogPerson.PRIMARY ? "primary" : "secondary",
-              recipeServings: fixedSnackRecipe.servings,
-              servingMultiplierForNelson: fixedSnackRecipe.servingMultiplierForNelson,
-            });
-            if (personAmount == null || ri.unitId == null) return null;
-            return {
-              ingredientId: ri.ingredientId,
-              unitId: ri.unitId,
-              amount: Math.round(personAmount * 1000) / 1000,
-            };
-          })
-          .filter((row): row is PlannerPoolIngredientRow => row != null),
-      });
-    }
   }
 
   return items.sort((a, b) => {
