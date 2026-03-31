@@ -1,4 +1,4 @@
-import { LogPerson, Prisma } from "@/src/generated/client";
+import { LogMealType, LogPerson, Prisma } from "@/src/generated/client";
 import { prisma } from "./index";
 import {
   releaseReservedPlanSlotTx,
@@ -102,6 +102,73 @@ export async function getLogById(logId: string, person: LogPerson) {
         },
       },
     },
+  });
+}
+
+export async function appendNextLogDay(input: { logId: string }) {
+  return prisma.$transaction(async (tx) => {
+    const log = await tx.log.findUnique({
+      where: { id: input.logId },
+      select: {
+        id: true,
+        plan: {
+          select: {
+            endDate: true,
+          },
+        },
+      },
+    });
+
+    if (!log) {
+      throw new Error("LOG_NOT_FOUND");
+    }
+
+    const latestEntry = await tx.logEntry.findFirst({
+      where: { logId: input.logId },
+      orderBy: { date: "desc" },
+      select: { date: true },
+    });
+
+    const baseDate = latestEntry?.date ?? log.plan.endDate;
+    const nextDate = new Date(
+      Date.UTC(
+        baseDate.getUTCFullYear(),
+        baseDate.getUTCMonth(),
+        baseDate.getUTCDate() + 1,
+      ),
+    );
+
+    const mealTypes = [
+      LogMealType.BREAKFAST,
+      LogMealType.LUNCH,
+      LogMealType.SNACK,
+      LogMealType.DINNER,
+    ] as const;
+    const people = [LogPerson.PRIMARY, LogPerson.SECONDARY] as const;
+
+    for (const person of people) {
+      for (const mealType of mealTypes) {
+        await tx.logEntry.upsert({
+          where: {
+            logId_date_mealType_person: {
+              logId: input.logId,
+              date: nextDate,
+              mealType,
+              person,
+            },
+          },
+          update: {},
+          create: {
+            logId: input.logId,
+            date: nextDate,
+            mealType,
+            person,
+          },
+        });
+      }
+    }
+
+    return { dateKey: nextDate.toISOString().slice(0, 10) };
   });
 }
 

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { ROUTES } from "@/lib/constants";
 import {
+  appendNextLogDay,
   replaceMealSlotWithRecipe,
   clearLogEntryAssignment,
   placePlannerPoolItemInEntry,
@@ -11,8 +12,10 @@ import {
 } from "@/lib/db/logs";
 import {
   addRecipeToLogSchema,
+  appendNextLogDaySchema,
   clearLogEntryAssignmentSchema,
   type AddRecipeToLogInput,
+  type AppendNextLogDayInput,
   placePlannerPoolItemSchema,
   type PlacePlannerPoolItemInput,
   type ClearLogEntryAssignmentInput,
@@ -143,4 +146,26 @@ export async function clearLogEntryAssignmentAction(input: ClearLogEntryAssignme
 
   revalidatePath(ROUTES.logView(parsed.data.logId));
   return { type: "success" as const };
+}
+
+export async function appendNextLogDayAction(input: AppendNextLogDayInput) {
+  const parsed = appendNextLogDaySchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      type: "error" as const,
+      message: parsed.error.issues[0]?.message ?? "Invalid log day request",
+    };
+  }
+
+  try {
+    const result = await appendNextLogDay(parsed.data);
+    revalidatePath(ROUTES.logView(parsed.data.logId));
+    return { type: "success" as const, dateKey: result.dateKey };
+  } catch (error) {
+    console.error("Error appending next log day", error);
+    return {
+      type: "error" as const,
+      message: "Failed to add next day",
+    };
+  }
 }

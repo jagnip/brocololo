@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  appendNextLogDay,
   clearLogEntryAssignment,
   placePlannerPoolItemInEntry,
   replaceMealSlotWithRecipe,
@@ -8,6 +9,7 @@ import {
 } from "@/lib/db/logs";
 import {
   addRecipeToLogAction,
+  appendNextLogDayAction,
   clearLogEntryAssignmentAction,
   placePlannerPoolItemAction,
   updateLogRecipeIngredientsAction,
@@ -20,6 +22,7 @@ vi.mock("@/lib/db/logs", () => ({
   upsertLogSlot: vi.fn(),
   placePlannerPoolItemInEntry: vi.fn(),
   clearLogEntryAssignment: vi.fn(),
+  appendNextLogDay: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -193,5 +196,27 @@ describe("clearLogEntryAssignmentAction", () => {
       person: "PRIMARY",
       entryId: "entry-1",
     });
+  });
+});
+
+describe("appendNextLogDayAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns validation error for invalid input", async () => {
+    const result = await appendNextLogDayAction({ logId: "" });
+
+    expect(result.type).toBe("error");
+    expect(appendNextLogDay).not.toHaveBeenCalled();
+  });
+
+  it("appends next day and returns date key", async () => {
+    vi.mocked(appendNextLogDay).mockResolvedValue({ dateKey: "2026-04-04" });
+
+    const result = await appendNextLogDayAction({ logId: "log-1" });
+
+    expect(result).toEqual({ type: "success", dateKey: "2026-04-04" });
+    expect(appendNextLogDay).toHaveBeenCalledWith({ logId: "log-1" });
   });
 });

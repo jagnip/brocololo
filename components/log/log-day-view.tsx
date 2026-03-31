@@ -2,8 +2,11 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { DndContext, type DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ROUTES } from "@/lib/constants";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import {
   buildGroupedPlannerPoolCards,
@@ -17,6 +20,7 @@ import {
   type LogIngredientOption,
 } from "./daily-log-ingredients-form";
 import {
+  appendNextLogDayAction,
   clearLogEntryAssignmentAction,
   placePlannerPoolItemAction,
   upsertLogSlotAction,
@@ -145,6 +149,7 @@ export function LogDayView({
   recipeOptions = [],
   ingredientOptions = [],
 }: LogDayViewProps) {
+  const router = useRouter();
   const defaultDayKey =
     initialSelectedDayKey && days.some((day) => day.dateKey === initialSelectedDayKey)
       ? initialSelectedDayKey
@@ -153,6 +158,7 @@ export function LogDayView({
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(defaultDayKey);
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlotState | null>(null);
   const [isSaving, startSavingTransition] = useTransition();
+  const [isAddingDay, startAddDayTransition] = useTransition();
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
 
   const plannerPoolByKey = (() => {
@@ -579,7 +585,7 @@ export function LogDayView({
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <section className="mt-8 space-y-8">
       <LogPlannerPool items={groupedPlannerPool} />
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {localDays.map((day) => {
           const isActive = day.dateKey === selectedDayKey;
           return (
@@ -600,6 +606,31 @@ export function LogDayView({
             </button>
           );
         })}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={isAddingDay || !logId}
+          onClick={() => {
+            if (!logId) {
+              return;
+            }
+            startAddDayTransition(async () => {
+              const result = await appendNextLogDayAction({ logId });
+              if (result.type === "error") {
+                toast.error(result.message);
+                return;
+              }
+              const nextPerson = person ?? "PRIMARY";
+              const nextUrl =
+                `${ROUTES.logView(logId)}?person=${nextPerson}&day=${result.dateKey}`;
+              router.push(nextUrl);
+              router.refresh();
+            });
+          }}
+        >
+          {isAddingDay ? "Adding..." : "Add day"}
+        </Button>
       </div>
       {localDays
         .filter((day) => day.dateKey === selectedDayKey)

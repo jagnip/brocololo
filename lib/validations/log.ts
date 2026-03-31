@@ -70,3 +70,9 @@ export const clearLogEntryAssignmentSchema = z.object({
 });
 
 export type ClearLogEntryAssignmentInput = z.infer<typeof clearLogEntryAssignmentSchema>;
+
+export const appendNextLogDaySchema = z.object({
+  logId: z.string().min(1),
+});
+
+export type AppendNextLogDayInput = z.infer<typeof appendNextLogDaySchema>;
