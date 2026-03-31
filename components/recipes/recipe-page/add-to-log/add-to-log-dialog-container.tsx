@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { LogMealType, LogPerson } from "@/src/generated/enums";
-import { RecipeAddToLogDialog } from "../../log/edit-log-ingredients-dialog";
+import { RecipeAddToLogDialog } from "./add-to-log-dialog";
 import type {
   EditableIngredientRow,
   LogIngredientOption,
-} from "../../log/log-ingredients-form";
+} from "../../../log/log-ingredients-form";
 import { addRecipeToLogAction } from "@/actions/log-actions";
 import { DatePicker } from "@/components/ui/date-picker-rac";
 import { Label } from "@/components/ui/label";

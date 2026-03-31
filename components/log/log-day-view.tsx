@@ -33,7 +33,7 @@ import {
 } from "@/actions/log-actions";
 import { LogDayHeader } from "./log-day-header";
 import { LogDaySelector } from "./log-day-selector";
-import { LogMealsPool } from "./log-meals-pool";
+import { LogPool } from "./log-pool";
 
 type SelectedSlotState = {
   dayKey: string;
@@ -611,7 +611,7 @@ export function LogDayView({
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <section className="mt-8 space-y-8">
-        <LogMealsPool items={groupedPlannerPool} />
+        <LogPool items={groupedPlannerPool} />
         <LogDaySelector
           days={localDays}
           selectedDayKey={selectedDayKey}

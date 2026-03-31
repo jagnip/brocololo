@@ -11,7 +11,7 @@ import { NutritionSection } from "@/components/recipes/recipe-page/nutrition-sec
 import { InstructionsSection } from "@/components/recipes/recipe-page/instructions-section";
 import { IngredientsSection } from "@/components/recipes/recipe-page/ingredients-section";
 import { NotesSection } from "@/components/recipes/recipe-page/notes-section";
-import { RecipeAddToLogDialogContainer } from "@/components/recipes/recipe-page/recipe-add-to-log-dialog-container";
+import { RecipeAddToLogDialogContainer } from "@/components/recipes/recipe-page/add-to-log/add-to-log-dialog-container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import {
   useRecipePageAddToLogData,

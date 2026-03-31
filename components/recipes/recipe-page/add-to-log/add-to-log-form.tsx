@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { DialogFooter } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -21,12 +21,12 @@ import { getUnitDisplayName } from "@/lib/recipes/helpers";
 import type {
   EditableIngredientRow,
   LogIngredientOption,
-} from "./log-ingredients-form";
+} from "../../../log/log-ingredients-form";
 
 export type {
   EditableIngredientRow,
   LogIngredientOption,
-} from "./log-ingredients-form";
+} from "../../../log/log-ingredients-form";
 
 type DialogRow = EditableIngredientRow & { key: string };
 
@@ -48,6 +48,7 @@ export type EditLogIngredientsDialogProps = {
   isSaving: boolean;
   contextControls?: ReactNode;
   saveLabel?: string;
+  requireDirtyToSave?: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (rows: EditableIngredientRow[]) => Promise<void>;
 };
@@ -124,8 +125,8 @@ function toComparableRows(rows: EditableIngredientRow[]) {
   }));
 }
 
-/** Form body only; `RecipeAddToLogDialog` wraps this in `Dialog` + `DialogContent`. */
-function RecipeAddToLogForm({
+/** Form body; wrapped by `RecipeAddToLogDialog` in `recipe-add-to-log-dialog.tsx`. */
+export function RecipeAddToLogForm({
   title,
   subtitle,
   initialRows,
@@ -133,6 +134,7 @@ function RecipeAddToLogForm({
   isSaving,
   contextControls,
   saveLabel = "Save",
+  requireDirtyToSave = false,
   onCancel,
   onSave,
 }: EditLogIngredientsDialogFormProps) {
@@ -410,31 +412,11 @@ function RecipeAddToLogForm({
         <Button
           type="button"
           onClick={handleSave}
-          disabled={isSaving || !hasUnsavedChanges}
+          disabled={isSaving || (requireDirtyToSave && !hasUnsavedChanges)}
         >
           {isSaving ? "Saving..." : saveLabel}
         </Button>
       </DialogFooter>
     </div>
-  );
-}
-
-export function RecipeAddToLogDialog({
-  open,
-  onOpenChange,
-  ...formProps
-}: EditLogIngredientsDialogProps) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        showCloseButton={false}
-        className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-[min(1000px,calc(100vw-3rem))] sm:max-w-[1000px] lg:w-[min(1200px,calc(100vw-4rem))] lg:max-w-[1200px] xl:w-[min(1400px,calc(100vw-5rem))] xl:max-w-[1400px] 2xl:w-[min(1600px,calc(100vw-6rem))] 2xl:max-w-[1600px] max-h-[85vh] p-0 gap-0 overflow-hidden flex flex-col"
-      >
-        <RecipeAddToLogForm
-          {...formProps}
-          onCancel={() => onOpenChange(false)}
-        />
-      </DialogContent>
-    </Dialog>
   );
 }
