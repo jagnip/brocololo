@@ -498,10 +498,30 @@ async function assertIngredientRowsHaveSupportedUnits(
   }
 }
 
+/**
+ * Log `?day=YYYY-MM-DD` and `buildLogDays` dateKey use `date.toISOString().slice(0, 10)` (UTC).
+ * `new Date(d).setHours(0,0,0,0)` uses *local* midnight and can shift the UTC calendar day,
+ * so the entry lands on the wrong PostgreSQL DATE vs the picker value.
+ */
+function utcCalendarDateForLogEntry(value: Date | string): Date {
+  if (typeof value === "string") {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+    if (match) {
+      const y = Number(match[1]);
+      const m = Number(match[2]) - 1;
+      const d = Number(match[3]);
+      return new Date(Date.UTC(y, m, d));
+    }
+  }
+  const v = value instanceof Date ? value : new Date(value);
+  return new Date(
+    Date.UTC(v.getUTCFullYear(), v.getUTCMonth(), v.getUTCDate()),
+  );
+}
+
 export async function replaceMealSlotWithRecipe(input: ParsedAddRecipeToLogInput) {
   return prisma.$transaction(async (tx) => {
-    const date = new Date(input.date);
-    date.setHours(0, 0, 0, 0);
+    const date = utcCalendarDateForLogEntry(input.date);
 
     const activeLog = await tx.log.findFirst({
       where: {

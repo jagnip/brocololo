@@ -10,7 +10,12 @@ type LogSlotCardProps = {
   onRecipeRemove?: (recipe: LogSlotData["recipes"][number]) => void;
 };
 
-export function LogSlotCard({ slot, onRecipeClick, onEmptyClick, onRecipeRemove }: LogSlotCardProps) {
+export function LogPoolCard({
+  slot,
+  onRecipeClick,
+  onEmptyClick,
+  onRecipeRemove,
+}: LogSlotCardProps) {
   if (slot.recipes.length === 0) {
     return (
       <Card className="min-h-[120px] border-dashed bg-muted/20">
@@ -24,7 +29,9 @@ export function LogSlotCard({ slot, onRecipeClick, onEmptyClick, onRecipeRemove 
           <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border text-sm">
             +
           </span>
-          <span className="text-sm font-medium">Add {slot.label.toLowerCase()} entry</span>
+          <span className="text-sm font-medium">
+            Add {slot.label.toLowerCase()} entry
+          </span>
           <span className="text-xs text-muted-foreground">
             Click to choose recipe or add ingredients
           </span>

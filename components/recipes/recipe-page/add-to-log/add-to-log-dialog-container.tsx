@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { LogMealType, LogPerson } from "@/src/generated/enums";
-import {
-  EditLogIngredientsDialog,
-  type LogIngredientOption,
-} from "@/components/log/edit-log-ingredients-dialog";
+import { RecipeAddToLogDialog } from "./add-to-log-dialog";
+import type {
+  EditableIngredientRow,
+  LogIngredientOption,
+} from "../../../log/log-ingredients-form";
 import { addRecipeToLogAction } from "@/actions/log-actions";
 import { DatePicker } from "@/components/ui/date-picker-rac";
 import { Label } from "@/components/ui/label";
@@ -48,7 +50,7 @@ const LOG_MEAL_OPTIONS = [
   { value: LogMealType.DINNER, label: "Dinner" },
 ] as const;
 
-export function RecipeAddToLogDialog({
+export function RecipeAddToLogDialogContainer({
   recipeId,
   recipeName,
   open,
@@ -60,6 +62,7 @@ export function RecipeAddToLogDialog({
   ingredientOptions,
   ingredientFormDependencies,
 }: RecipeAddToLogDialogProps) {
+  const router = useRouter();
   const [isSaving, startSavingTransition] = useTransition();
   const [logPerson, setLogPerson] = useState<"PRIMARY" | "SECONDARY">(
     LogPerson.PRIMARY,
@@ -126,7 +129,7 @@ export function RecipeAddToLogDialog({
     "Dinner";
 
   return (
-    <EditLogIngredientsDialog
+    <RecipeAddToLogDialog
       open={open}
       // Keep modal title in sentence case for consistent UI copy.
       title={`Add ${recipeName.toLocaleLowerCase()} to log`}
@@ -192,7 +195,7 @@ export function RecipeAddToLogDialog({
         </div>
       }
       onOpenChange={onOpenChange}
-      onSave={async (rows) => {
+      onSave={async (rows: EditableIngredientRow[]) => {
         if (!logDate) {
           toast.error("Date is required");
           return;
@@ -201,7 +204,7 @@ export function RecipeAddToLogDialog({
         startSavingTransition(async () => {
           const completeRows = rows.filter(
             (
-              row,
+              row: EditableIngredientRow,
             ): row is {
               ingredientId: string;
               unitId: string;
@@ -226,6 +229,7 @@ export function RecipeAddToLogDialog({
           }
 
           onOpenChange(false);
+          router.refresh();
           toast.success("Recipe added to log");
         });
       }}

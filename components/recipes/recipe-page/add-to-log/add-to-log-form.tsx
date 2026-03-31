@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -18,49 +18,53 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
+import type {
+  EditableIngredientRow,
+  LogIngredientOption,
+} from "../../../log/log-ingredients-form";
 
-export type LogIngredientOption = {
-  id: string;
-  name: string;
-  brand: string | null;
-  defaultUnitId: string | null;
-  calories: number;
-  proteins: number;
-  fats: number;
-  carbs: number;
-  unitConversions: Array<{
-    unitId: string;
-    gramsPerUnit: number;
-    unitName: string;
-    unitNamePlural: string | null;
-  }>;
-};
-
-export type EditableIngredientRow = {
-  ingredientId: string | null;
-  unitId: string | null;
-  amount: number | null;
-};
+export type {
+  EditableIngredientRow,
+  LogIngredientOption,
+} from "../../../log/log-ingredients-form";
 
 type DialogRow = EditableIngredientRow & { key: string };
 
-type DailyLogIngredientsFormProps = {
+type IngredientFormDependencies = {
+  categories: Array<{ id: string; name: string }>;
+  units: Array<{ id: string; name: string; namePlural: string | null }>;
+  gramsUnitId: string;
+  iconOptions: string[];
+};
+
+export type EditLogIngredientsDialogProps = {
+  open: boolean;
   title: string;
   subtitle: string;
+  titleClassName?: string;
   initialRows: EditableIngredientRow[];
   ingredientOptions: LogIngredientOption[];
+  ingredientFormDependencies?: IngredientFormDependencies;
   isSaving: boolean;
-  recipeOptions: Array<{ id: string; name: string }>;
-  selectedRecipeId: string | null;
-  initialSelectedRecipeId: string | null;
-  onSelectedRecipeIdChange: (nextRecipeId: string | null) => void;
+  contextControls?: ReactNode;
   saveLabel?: string;
-  onCancel?: () => void;
+  requireDirtyToSave?: boolean;
+  onOpenChange: (open: boolean) => void;
   onSave: (rows: EditableIngredientRow[]) => Promise<void>;
 };
 
+type EditLogIngredientsDialogFormProps = Omit<
+  EditLogIngredientsDialogProps,
+  "open" | "onOpenChange"
+> & {
+  onCancel?: () => void;
+};
+
 function toRowKey() {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
   return `row-${Math.random().toString(36).slice(2)}`;
@@ -75,7 +79,9 @@ function getMacrosFromRows(
   let fats = 0;
   let carbs = 0;
 
-  const ingredientById = new Map(ingredientOptions.map((option) => [option.id, option]));
+  const ingredientById = new Map(
+    ingredientOptions.map((option) => [option.id, option]),
+  );
 
   for (const row of rows) {
     if (!row.ingredientId || !row.unitId || row.amount == null) {
@@ -119,27 +125,27 @@ function toComparableRows(rows: EditableIngredientRow[]) {
   }));
 }
 
-export function DailyLogIngredientsForm({
+/** Form body; wrapped by `RecipeAddToLogDialog` in `recipe-add-to-log-dialog.tsx`. */
+export function RecipeAddToLogForm({
   title,
   subtitle,
   initialRows,
   ingredientOptions,
   isSaving,
-  recipeOptions,
-  selectedRecipeId,
-  initialSelectedRecipeId,
-  onSelectedRecipeIdChange,
+  contextControls,
   saveLabel = "Save",
+  requireDirtyToSave = false,
   onCancel,
   onSave,
-}: DailyLogIngredientsFormProps) {
+}: EditLogIngredientsDialogFormProps) {
   const [rows, setRows] = useState<DialogRow[]>(() =>
     initialRows.map((row) => ({
       ...row,
       key: toRowKey(),
     })),
   );
-  const [localIngredientOptions, setLocalIngredientOptions] = useState(ingredientOptions);
+  const [localIngredientOptions, setLocalIngredientOptions] =
+    useState(ingredientOptions);
 
   useEffect(() => {
     setLocalIngredientOptions(ingredientOptions);
@@ -156,34 +162,33 @@ export function DailyLogIngredientsForm({
   }, [initialRows]);
 
   const ingredientById = useMemo(
-    () => new Map(localIngredientOptions.map((ingredient) => [ingredient.id, ingredient])),
+    () =>
+      new Map(
+        localIngredientOptions.map((ingredient) => [ingredient.id, ingredient]),
+      ),
     [localIngredientOptions],
   );
 
-  const macros = useMemo(() => getMacrosFromRows(rows, localIngredientOptions), [
-    localIngredientOptions,
-    rows,
-  ]);
+  const macros = useMemo(
+    () => getMacrosFromRows(rows, localIngredientOptions),
+    [localIngredientOptions, rows],
+  );
 
   const ingredientSelectOptions = useMemo(
-    () => localIngredientOptions.map((ingredient) => ({
-      value: ingredient.id,
-      label: getIngredientDisplayName(ingredient.name, ingredient.brand),
-    })),
+    () =>
+      localIngredientOptions.map((ingredient) => ({
+        value: ingredient.id,
+        label: getIngredientDisplayName(ingredient.name, ingredient.brand),
+      })),
     [localIngredientOptions],
   );
   const hasUnsavedChanges = useMemo(() => {
     const normalizedCurrent = toComparableRows(rows);
     const normalizedInitial = toComparableRows(initialRows);
-    const rowsChanged =
-      JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedInitial);
-    const recipeChanged = selectedRecipeId !== initialSelectedRecipeId;
-    // If the slot is fully empty, keep Save disabled.
-    if (selectedRecipeId == null && rows.length === 0) {
-      return false;
-    }
-    return rowsChanged || recipeChanged;
-  }, [initialRows, rows, selectedRecipeId, initialSelectedRecipeId]);
+    return (
+      JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedInitial)
+    );
+  }, [initialRows, rows]);
 
   const handleAddRow = () => {
     setRows((prev) => [
@@ -209,7 +214,11 @@ export function DailyLogIngredientsForm({
     }));
 
     const hasInvalidRow = normalizedRows.some(
-      (row) => !row.ingredientId || !row.unitId || row.amount == null || row.amount <= 0,
+      (row) =>
+        !row.ingredientId ||
+        !row.unitId ||
+        row.amount == null ||
+        row.amount <= 0,
     );
 
     if (hasInvalidRow) {
@@ -226,33 +235,17 @@ export function DailyLogIngredientsForm({
         <div className="px-4 py-4 md:px-6 md:py-6 border-b text-left">
           <h2 className="text-2xl font-semibold">{title}</h2>
           <p className="text-muted-foreground text-sm">{subtitle}</p>
-          <div className="mt-4 space-y-2">
-            <p className="text-xs tracking-wide uppercase text-muted-foreground font-semibold">
-              Recipe (optional)
-            </p>
-            <SearchableSelect
-              options={recipeOptions.map((recipe) => ({
-                value: recipe.id,
-                label: recipe.name,
-              }))}
-              value={selectedRecipeId}
-              onValueChange={onSelectedRecipeIdChange}
-              placeholder="Select a recipe..."
-              searchPlaceholder="Search recipe..."
-              emptyLabel="No recipe found."
-              allowClear
-              clearLabel="Clear recipe"
-            />
-            <p className="text-xs text-muted-foreground">
-              Clearing recipe removes current ingredients for this person.
-            </p>
-          </div>
+          {contextControls ? (
+            <div className="mt-4">{contextControls}</div>
+          ) : null}
         </div>
 
         <section className="px-4 py-4 md:px-6 md:py-6 border-b">
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">{macros.calories.toFixed(0)} kcal</Badge>
-            <Badge variant="secondary">{macros.proteins.toFixed(1)}g protein</Badge>
+            <Badge variant="secondary">
+              {macros.proteins.toFixed(1)}g protein
+            </Badge>
             <Badge variant="secondary">{macros.fats.toFixed(1)}g fat</Badge>
             <Badge variant="secondary">{macros.carbs.toFixed(1)}g carbs</Badge>
           </div>
@@ -279,11 +272,18 @@ export function DailyLogIngredientsForm({
                       value={row.ingredientId}
                       onValueChange={(nextValue) => {
                         if (!nextValue) {
-                          setRows((prev) => prev.map((item) =>
-                            item.key === row.key
-                              ? { ...item, ingredientId: null, unitId: null, amount: null }
-                              : item,
-                          ));
+                          setRows((prev) =>
+                            prev.map((item) =>
+                              item.key === row.key
+                                ? {
+                                    ...item,
+                                    ingredientId: null,
+                                    unitId: null,
+                                    amount: null,
+                                  }
+                                : item,
+                            ),
+                          );
                           return;
                         }
 
@@ -291,22 +291,26 @@ export function DailyLogIngredientsForm({
                         const defaultUnitId = ingredient
                           ? getDefaultUnitIdForIngredient({
                               defaultUnitId: ingredient.defaultUnitId,
-                              unitConversions: ingredient.unitConversions.map((conversion) => ({
-                                unitId: conversion.unitId,
-                                unit: { name: conversion.unitName },
-                              })),
+                              unitConversions: ingredient.unitConversions.map(
+                                (conversion) => ({
+                                  unitId: conversion.unitId,
+                                  unit: { name: conversion.unitName },
+                                }),
+                              ),
                             })
                           : null;
 
-                        setRows((prev) => prev.map((item) =>
-                          item.key === row.key
-                            ? {
-                                ...item,
-                                ingredientId: nextValue,
-                                unitId: defaultUnitId,
-                              }
-                            : item,
-                        ));
+                        setRows((prev) =>
+                          prev.map((item) =>
+                            item.key === row.key
+                              ? {
+                                  ...item,
+                                  ingredientId: nextValue,
+                                  unitId: defaultUnitId,
+                                }
+                              : item,
+                          ),
+                        );
                       }}
                       placeholder="Select ingredient..."
                       searchPlaceholder="Search ingredient..."
@@ -324,12 +328,15 @@ export function DailyLogIngredientsForm({
                     className="w-full sm:w-24 sm:min-w-24 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     value={row.amount == null ? "" : row.amount}
                     onChange={(event) => {
-                      const amount = event.target.value === ""
-                        ? null
-                        : Number(event.target.value);
-                      setRows((prev) => prev.map((item) =>
-                        item.key === row.key ? { ...item, amount } : item,
-                      ));
+                      const amount =
+                        event.target.value === ""
+                          ? null
+                          : Number(event.target.value);
+                      setRows((prev) =>
+                        prev.map((item) =>
+                          item.key === row.key ? { ...item, amount } : item,
+                        ),
+                      );
                     }}
                   />
 
@@ -337,9 +344,13 @@ export function DailyLogIngredientsForm({
                     <Select
                       value={row.unitId ?? ""}
                       onValueChange={(nextUnitId) => {
-                        setRows((prev) => prev.map((item) =>
-                          item.key === row.key ? { ...item, unitId: nextUnitId } : item,
-                        ));
+                        setRows((prev) =>
+                          prev.map((item) =>
+                            item.key === row.key
+                              ? { ...item, unitId: nextUnitId }
+                              : item,
+                          ),
+                        );
                       }}
                       disabled={!selectedIngredient}
                     >
@@ -401,7 +412,7 @@ export function DailyLogIngredientsForm({
         <Button
           type="button"
           onClick={handleSave}
-          disabled={isSaving || !hasUnsavedChanges}
+          disabled={isSaving || (requireDirtyToSave && !hasUnsavedChanges)}
         >
           {isSaving ? "Saving..." : saveLabel}
         </Button>

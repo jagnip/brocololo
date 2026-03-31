@@ -4,14 +4,14 @@ import { Badge } from "../ui/badge";
 import { ImageGallery } from "./image-gallery";
 import { useEffect, useMemo, useState } from "react";
 import { ROUTES } from "@/lib/constants";
-import { type LogIngredientOption } from "@/components/log/edit-log-ingredients-dialog";
+import { type LogIngredientOption } from "@/components/log/log-ingredients-form";
 import { PageHeader } from "@/components/page-header";
-import { TopbarConfigController } from "@/components/topbar/topbar-config";
+import { TopbarConfigController } from "@/components/topbar-config";
 import { NutritionSection } from "@/components/recipes/recipe-page/nutrition-section";
 import { InstructionsSection } from "@/components/recipes/recipe-page/instructions-section";
 import { IngredientsSection } from "@/components/recipes/recipe-page/ingredients-section";
 import { NotesSection } from "@/components/recipes/recipe-page/notes-section";
-import { RecipeAddToLogDialog } from "@/components/recipes/recipe-page/recipe-add-to-log-dialog";
+import { RecipeAddToLogDialogContainer } from "@/components/recipes/recipe-page/add-to-log/add-to-log-dialog-container";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import {
   useRecipePageAddToLogData,
@@ -119,7 +119,9 @@ export default function RecipePage({
         <div className="contents md:col-span-2 md:block md:space-y-block">
           <div className="order-3 md:order-0 flex flex-col gap-block">
             <div className="flex gap-item flex-wrap">
-              <Badge variant="secondary">Hands-on: {recipe.handsOnTime} min</Badge>
+              <Badge variant="secondary">
+                Hands-on: {recipe.handsOnTime} min
+              </Badge>
               <Badge variant="secondary">Total: {recipe.totalTime} min</Badge>
               {recipe.excludeFromPlanner ? (
                 <Badge variant="secondary">Excluded from planner</Badge>
@@ -134,7 +136,7 @@ export default function RecipePage({
         </div>
       </div>
       {isAddToLogOpen ? (
-        <RecipeAddToLogDialog
+        <RecipeAddToLogDialogContainer
           recipeId={addToLogData.recipeId}
           recipeName={addToLogData.recipeName}
           open={isAddToLogOpen}

@@ -1,4 +1,4 @@
-import { LogDetailPageContainer } from "@/components/log/log-detail-page-container";
+import { LogPage } from "@/components/log/log-page";
 
 export default async function LogDetailPage({
   params,
@@ -11,8 +11,8 @@ export default async function LogDetailPage({
   const { person, day } = await searchParams;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-      <LogDetailPageContainer logId={logId} person={person} day={day} />
+    <div className="page-container">
+      <LogPage logId={logId} person={person} day={day} />
     </div>
   );
 }
