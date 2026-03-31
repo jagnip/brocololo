@@ -503,6 +503,35 @@ export function LogDayView({
           }),
         })),
       );
+
+      const targetDayKey = (overData.dateKey as string) ?? null;
+      const targetMealType =
+        (overData.mealType as LogDayData["slots"][number]["mealType"] | undefined) ?? null;
+      const targetDay = localDays.find((day) => day.dateKey === targetDayKey) ?? null;
+      const targetSlot =
+        targetDay?.slots.find((slot) => slot.mealType === targetMealType) ?? null;
+
+      if (targetDay && targetSlot?.entryId) {
+        const initialRows = plannerItem.ingredients.map((ingredient) => ({
+          ingredientId: ingredient.ingredientId,
+          unitId: ingredient.unitId,
+          amount: ingredient.amount,
+        }));
+
+        // Auto-open details for the just-dropped recipe so ingredients are immediately editable.
+        setSelectedDayKey(targetDay.dateKey);
+        setSelectedSlot({
+          dayKey: targetDay.dateKey,
+          mealType: targetSlot.mealType,
+          entryId: targetSlot.entryId,
+          entryRecipeId: null,
+          mealLabel: targetSlot.label,
+          selectedRecipeId: plannerItem.sourceRecipeId,
+          initialSelectedRecipeId: plannerItem.sourceRecipeId,
+          subtitle: `${formatDayLabel(targetDay.date)}`,
+          initialRows,
+        });
+      }
     });
   };
 
