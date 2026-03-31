@@ -1,9 +1,30 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LogMealType } from "@/src/generated/enums";
 import { LogDayView } from "./log-day-view";
 import type { LogDayData } from "@/lib/log/view-model";
+
+const pushMock = vi.fn();
+const refreshMock = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: pushMock,
+    refresh: refreshMock,
+  }),
+}));
+
+const appendNextLogDayActionMock = vi.fn();
+const removeLogDayActionMock = vi.fn();
+
+vi.mock("@/actions/log-actions", () => ({
+  appendNextLogDayAction: (...args: unknown[]) => appendNextLogDayActionMock(...args),
+  removeLogDayAction: (...args: unknown[]) => removeLogDayActionMock(...args),
+  clearLogEntryAssignmentAction: vi.fn(),
+  placePlannerPoolItemAction: vi.fn(),
+  upsertLogSlotAction: vi.fn(),
+}));
 
 class ResizeObserverMock {
   observe() {}
@@ -29,6 +50,18 @@ const ingredientFormDependencies = {
 };
 
 describe("LogDayView", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    appendNextLogDayActionMock.mockResolvedValue({
+      type: "success",
+      dateKey: "2026-03-18",
+    });
+    removeLogDayActionMock.mockResolvedValue({
+      type: "success",
+      nextDayKey: "2026-03-19",
+    });
+  });
+
   it("groups duplicate planner pool cards and shows quantity counter", () => {
     const days: LogDayData[] = [
       {
@@ -421,6 +454,72 @@ describe("LogDayView", () => {
     expect(screen.getAllByText("Breakfast").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Recipe (optional)").length).toBeGreaterThan(0);
     expect(screen.getAllByRole("button", { name: /add ingredient/i }).length).toBeGreaterThan(0);
+  });
+
+  it("adds next day and navigates to new day tab URL", async () => {
+    const user = userEvent.setup();
+    const days: LogDayData[] = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        dateKey: "2026-03-17",
+        slots: [
+          { entryId: "entry-breakfast", mealType: LogMealType.BREAKFAST, label: "Breakfast", recipes: [] },
+          { entryId: "entry-lunch", mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
+          { entryId: "entry-snack", mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
+          { entryId: "entry-dinner", mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+        ],
+      },
+    ];
+
+    render(<LogDayView days={days} logId="log-1" person="PRIMARY" />);
+
+    await user.click(screen.getByRole("button", { name: /add day/i }));
+
+    await waitFor(() => {
+      expect(appendNextLogDayActionMock).toHaveBeenCalledWith({ logId: "log-1" });
+      expect(pushMock).toHaveBeenCalledWith("/log/log-1?person=PRIMARY&day=2026-03-18");
+      expect(refreshMock).toHaveBeenCalled();
+    });
+  });
+
+  it("removes day and navigates to fallback day", async () => {
+    const user = userEvent.setup();
+    const days: LogDayData[] = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        dateKey: "2026-03-17",
+        slots: [
+          { entryId: "entry-breakfast-1", mealType: LogMealType.BREAKFAST, label: "Breakfast", recipes: [] },
+          { entryId: "entry-lunch-1", mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
+          { entryId: "entry-snack-1", mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
+          { entryId: "entry-dinner-1", mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+        ],
+      },
+      {
+        date: new Date("2026-03-18T00:00:00.000Z"),
+        dateKey: "2026-03-18",
+        slots: [
+          { entryId: "entry-breakfast-2", mealType: LogMealType.BREAKFAST, label: "Breakfast", recipes: [] },
+          { entryId: "entry-lunch-2", mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
+          { entryId: "entry-snack-2", mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
+          { entryId: "entry-dinner-2", mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+        ],
+      },
+    ];
+
+    render(<LogDayView days={days} logId="log-1" person="PRIMARY" />);
+
+    const removeButtons = screen.getAllByRole("button", { name: /remove day/i });
+    await user.click(removeButtons[0]!);
+
+    await waitFor(() => {
+      expect(removeLogDayActionMock).toHaveBeenCalledWith({
+        logId: "log-1",
+        dateKey: "2026-03-17",
+      });
+      expect(pushMock).toHaveBeenCalledWith("/log/log-1?person=PRIMARY&day=2026-03-19");
+      expect(refreshMock).toHaveBeenCalled();
+    });
   });
 
   it("renders empty slot with add entry CTA", () => {

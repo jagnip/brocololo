@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { Trash2 } from "lucide-react";
 import { PlanInputType, SlotSaveData, type SlotInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PlanView } from "./plan-view";
@@ -8,7 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 import { useRouter } from "next/navigation";
-import { generateLogFromPlan, updateSavedPlan } from "@/actions/planner-actions";
+import { deletePlanAction, generateLogFromPlan, updateSavedPlan } from "@/actions/planner-actions";
 import { WeekPicker, getDefaultDateRange, type DateRangeValue } from "./date-range-picker";
 import { rebasePlanSlotsByDateRangeDelta } from "@/lib/planner/plan-date-rebase";
 
@@ -30,6 +31,7 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
   const editVersionRef = useRef(0);
   const router = useRouter();
   const [logStatus, setLogStatus] = useState<"idle" | "generating">("idle");
+  const [deleteStatus, setDeleteStatus] = useState<"idle" | "deleting">("idle");
 
   function formatDateKeysForToast(dateKeys: string[]) {
     // Format YYYY-MM-DD as a readable UTC date string to avoid timezone drift.
@@ -293,6 +295,34 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
             }}
           >
             {logStatus === "generating" ? "Generating log..." : "Generate log"}
+          </Button>
+
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={saveStatus === "saving" || logStatus === "generating" || deleteStatus === "deleting"}
+            onClick={async () => {
+              const confirmed = window.confirm(
+                "Delete this plan permanently? This cannot be undone.",
+              );
+              if (!confirmed) return;
+
+              setDeleteStatus("deleting");
+              try {
+                const result = await deletePlanAction(planId);
+                if (result.type === "error") {
+                  toast.error(result.message);
+                  return;
+                }
+                router.push(ROUTES.plan);
+                router.refresh();
+              } finally {
+                setDeleteStatus("idle");
+              }
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+            {deleteStatus === "deleting" ? "Deleting..." : "Delete plan"}
           </Button>
         </div>
       </div>

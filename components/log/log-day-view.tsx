@@ -2,8 +2,12 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { DndContext, type DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ROUTES } from "@/lib/constants";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import {
   buildGroupedPlannerPoolCards,
@@ -17,8 +21,10 @@ import {
   type LogIngredientOption,
 } from "./daily-log-ingredients-form";
 import {
+  appendNextLogDayAction,
   clearLogEntryAssignmentAction,
   placePlannerPoolItemAction,
+  removeLogDayAction,
   upsertLogSlotAction,
 } from "@/actions/log-actions";
 import { LogPlannerPool } from "./log-planner-pool";
@@ -145,6 +151,7 @@ export function LogDayView({
   recipeOptions = [],
   ingredientOptions = [],
 }: LogDayViewProps) {
+  const router = useRouter();
   const defaultDayKey =
     initialSelectedDayKey && days.some((day) => day.dateKey === initialSelectedDayKey)
       ? initialSelectedDayKey
@@ -153,6 +160,8 @@ export function LogDayView({
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(defaultDayKey);
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlotState | null>(null);
   const [isSaving, startSavingTransition] = useTransition();
+  const [isAddingDay, startAddDayTransition] = useTransition();
+  const [isRemovingDay, startRemoveDayTransition] = useTransition();
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
 
   const plannerPoolByKey = (() => {
@@ -503,6 +512,35 @@ export function LogDayView({
           }),
         })),
       );
+
+      const targetDayKey = (overData.dateKey as string) ?? null;
+      const targetMealType =
+        (overData.mealType as LogDayData["slots"][number]["mealType"] | undefined) ?? null;
+      const targetDay = localDays.find((day) => day.dateKey === targetDayKey) ?? null;
+      const targetSlot =
+        targetDay?.slots.find((slot) => slot.mealType === targetMealType) ?? null;
+
+      if (targetDay && targetSlot?.entryId) {
+        const initialRows = plannerItem.ingredients.map((ingredient) => ({
+          ingredientId: ingredient.ingredientId,
+          unitId: ingredient.unitId,
+          amount: ingredient.amount,
+        }));
+
+        // Auto-open details for the just-dropped recipe so ingredients are immediately editable.
+        setSelectedDayKey(targetDay.dateKey);
+        setSelectedSlot({
+          dayKey: targetDay.dateKey,
+          mealType: targetSlot.mealType,
+          entryId: targetSlot.entryId,
+          entryRecipeId: null,
+          mealLabel: targetSlot.label,
+          selectedRecipeId: plannerItem.sourceRecipeId,
+          initialSelectedRecipeId: plannerItem.sourceRecipeId,
+          subtitle: `${formatDayLabel(targetDay.date)}`,
+          initialRows,
+        });
+      }
     });
   };
 
@@ -550,7 +588,7 @@ export function LogDayView({
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <section className="mt-8 space-y-8">
       <LogPlannerPool items={groupedPlannerPool} />
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {localDays.map((day) => {
           const isActive = day.dateKey === selectedDayKey;
           return (
@@ -571,6 +609,31 @@ export function LogDayView({
             </button>
           );
         })}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={isAddingDay || !logId}
+          onClick={() => {
+            if (!logId) {
+              return;
+            }
+            startAddDayTransition(async () => {
+              const result = await appendNextLogDayAction({ logId });
+              if (result.type === "error") {
+                toast.error(result.message);
+                return;
+              }
+              const nextPerson = person ?? "PRIMARY";
+              const nextUrl =
+                `${ROUTES.logView(logId)}?person=${nextPerson}&day=${result.dateKey}`;
+              router.push(nextUrl);
+              router.refresh();
+            });
+          }}
+        >
+          {isAddingDay ? "Adding..." : "Add day"}
+        </Button>
       </div>
       {localDays
         .filter((day) => day.dateKey === selectedDayKey)
@@ -580,6 +643,40 @@ export function LogDayView({
             <article key={day.dateKey} className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-base font-medium">{formatDayLabel(day.date)}</h2>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  disabled={isRemovingDay || !logId}
+                  aria-label={`Remove day ${formatDayLabel(day.date)}`}
+                  onClick={() => {
+                    if (!logId) {
+                      return;
+                    }
+                    startRemoveDayTransition(async () => {
+                      const result = await removeLogDayAction({
+                        logId,
+                        dateKey: day.dateKey,
+                      });
+                      if (result.type === "error") {
+                        toast.error(result.message);
+                        return;
+                      }
+                      const nextPerson = person ?? "PRIMARY";
+                      if (result.nextDayKey) {
+                        const nextUrl =
+                          `${ROUTES.logView(logId)}?person=${nextPerson}&day=${result.nextDayKey}`;
+                        router.push(nextUrl);
+                      } else {
+                        router.push(`${ROUTES.logView(logId)}?person=${nextPerson}`);
+                      }
+                      router.refresh();
+                    });
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 text-muted-foreground" />
+                </Button>
                 <Badge variant="outline">{dayMacros.calories.toFixed(0)} kcal</Badge>
                 <Badge variant="outline">{dayMacros.proteins.toFixed(1)}g protein</Badge>
                 <Badge variant="outline">{dayMacros.fats.toFixed(1)}g fat</Badge>

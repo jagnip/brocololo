@@ -4,7 +4,7 @@ import { getRecipes } from "@/lib/db/recipes";
 import { getDaysInRange as getDaysToPlan, getMaxDaysSinceLastUsedCandidate, getMealTimeLimit, markBatchSlots, formatDayLabel } from "@/lib/planner/helpers";
 import { PlanInputType, SlotSaveData } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
-import { createPlan, updatePlan } from "@/lib/db/planner";
+import { createPlan, deletePlanById, updatePlan } from "@/lib/db/planner";
 import { MEAL_TYPES, ROUTES } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -159,4 +159,24 @@ export async function generateLogFromPlan(
     console.error("Error generating baseline log", error);
     return { type: "error", message: "Failed to generate log." };
   }
+}
+
+export async function deletePlanAction(
+  planId: string,
+): Promise<{ type: "success" } | { type: "error"; message: string }> {
+  if (!planId) {
+    return { type: "error", message: "Missing plan id." };
+  }
+
+  try {
+    await deletePlanById(planId);
+  } catch (error) {
+    console.error("Error deleting plan", error);
+    return { type: "error", message: "Failed to delete plan." };
+  }
+
+  revalidatePath(ROUTES.plan);
+  revalidatePath(ROUTES.log);
+  revalidatePath("/");
+  return { type: "success" };
 }

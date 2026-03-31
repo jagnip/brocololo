@@ -45,19 +45,19 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
-  /* Spacing — from /recipes index + recipe detail (grid, tabs, cards, sections) */
-  --spacing-gutter: 1rem; /* page + grid horizontal rhythm (px-4) */
-  --spacing-block: 1rem; /* major vertical/column gaps: gap-4, space-y-4 */
-  --spacing-item: 0.5rem; /* related controls, lists: gap-2, space-y-2 */
-  --spacing-tight: 0.25rem; /* dense inline rows: gap-1 */
-  --spacing-comfort: 0.75rem; /* empty-state outer gap: gap-3 */
-  --spacing-cozy: 0.375rem; /* tight title + subtitle: space-y-1.5 */
-  --spacing-nest: 0.5rem; /* inset panels: p-2 */
-  --spacing-sheet: 1rem; /* filter bar: p-4 */
-  --spacing-card-x: 1rem; /* recipe card header: px-4 */
-  --spacing-card-y: 0.75rem; /* recipe card header: py-3 */
-  --spacing-empty-x: 1.5rem; /* empty state horizontal: px-6 */
-  --spacing-empty-y: 3.5rem; /* empty state vertical: py-14 */
+  /* Spacing — recipes list + recipe detail primitives (described by UI element). */
+  --spacing-gutter: 1rem; /* outer horizontal/bottom breathing space of the recipes grid wrapper */
+  --spacing-block: 1rem; /* major section-to-section gaps in recipe detail columns and top-level blocks */
+  --spacing-item: 0.5rem; /* default inner spacing between related controls/items (chips, rows, list items) */
+  --spacing-tight: 0.25rem; /* compact inline micro-gaps (small icon+text/meta clusters) */
+  --spacing-comfort: 0.75rem; /* vertical spacing between empty-state icon, heading, and supporting text */
+  --spacing-cozy: 0.375rem; /* tight heading-to-subtitle spacing in small empty-state text groups */
+  --spacing-nest: 0.5rem; /* inset padding inside nested panels/cards (instruction step card, notes box, nutrient rows) */
+  --spacing-sheet: 1rem; /* recipes tabs container padding (the segmented tabs block) */
+  --spacing-card-x: 1rem; /* recipe card header horizontal padding */
+  --spacing-card-y: 0.75rem; /* recipe card header vertical padding */
+  --spacing-empty-x: 1.5rem; /* empty-state horizontal padding inside dashed container */
+  --spacing-empty-y: 3.5rem; /* empty-state vertical padding inside dashed container */
 }
 
 :root {
@@ -171,6 +171,7 @@
   }
 }
 
+/* Page title utility. Used for top-level headers like `PageHeader` titles. */
 @utility type-h1 {
   font-family: var(--font-sans);
   font-size: var(--type-h1-size);
@@ -179,14 +180,16 @@
   letter-spacing: var(--type-h1-tracking);
 }
 
+/* Section heading utility. Used in recipe detail sections (Ingredients, Instructions, Notes, Nutrition). */
 @utility type-h2 {
   font-family: var(--font-sans);
   font-size: var(--type-h2-size);
   line-height: var(--type-h2-line-height);
   font-weight: var(--type-h2-weight);
   letter-spacing: var(--type-h2-tracking);
-}
+} 
 
+/* Card/subsection heading utility. Used in recipe cards and recipe empty states. */
 @utility type-h3 {
   font-family: var(--font-sans);
   font-size: var(--type-h3-size);
@@ -195,6 +198,7 @@
   letter-spacing: var(--type-h3-tracking);
 }
 
+/* Default body copy utility. Used for most recipe detail/body text across cards and lists. */
 @utility type-body {
   font-family: var(--font-sans);
   font-size: var(--type-body-size);
@@ -203,6 +207,7 @@
   letter-spacing: var(--type-body-tracking);
 }
 
+/* Relaxed body copy utility (more line-height). Used in long-form empty-state/help text. */
 @utility type-body-relaxed {
   font-family: var(--font-sans);
   font-size: var(--type-body-size);
@@ -211,6 +216,7 @@
   letter-spacing: var(--type-body-tracking);
 }
 
+/* Small uppercase label utility. Used for metadata labels in recipe detail (e.g. per-person context labels). */
 @utility type-overline {
   font-family: var(--font-sans);
   font-size: var(--type-overline-size);
@@ -220,6 +226,7 @@
   text-transform: uppercase;
 }
 
+/* Compact caption utility. Used for supporting secondary text in dense UI blocks. */
 @utility type-caption {
   font-family: var(--font-sans);
   font-size: var(--type-caption-size);
@@ -228,12 +235,18 @@
   letter-spacing: var(--type-caption-tracking);
 }
 
+/* Tiny micro-label utility. Used for very compact tokens, e.g. instruction step number text. */
 @utility type-micro {
   font-family: var(--font-sans);
   font-size: var(--type-micro-size);
   line-height: var(--type-micro-line-height);
   font-weight: var(--type-micro-weight);
   letter-spacing: var(--type-micro-tracking);
+}
+
+/* Reusable recipe/log section shell to avoid repeating base card styles. */
+@utility section-container {
+  @apply rounded-xl bg-card antialiased;
 }
 
 @layer utilities {

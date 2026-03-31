@@ -51,7 +51,8 @@ export function InstructionsSection() {
   }
 
   return (
-    <div className="rounded-xl bg-card antialiased">
+    // Shared section container utility keeps card shell styling consistent.
+    <div className="section-container">
       <div className="mb-item flex flex-wrap items-center justify-between gap-item">
         <h3 className="type-h2 text-foreground">
           Instructions
