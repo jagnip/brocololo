@@ -31,15 +31,15 @@ export function DeleteLogButton({ logId }: DeleteLogButtonProps) {
     <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <Button
         type="button"
-        variant="destructive"
-        size="sm"
+        variant="outline"
+        size="icon"
         disabled={isDeleting}
         onClick={() => {
           setIsDialogOpen(true);
         }}
       >
         <Trash2 className="h-4 w-4" />
-        {isDeleting ? "Deleting..." : "Delete log"}
+        {isDeleting ? "Deleting..." : ""}
       </Button>
       <AlertDialogContent>
         <AlertDialogHeader>

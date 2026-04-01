@@ -1,6 +1,7 @@
 import { LogSelect, type LogSelectOption } from "@/components/log/log-select";
 import { LogPersonSelect } from "@/components/log/log-person-select";
 import { DeleteLogButton } from "@/components/log/delete-log-button";
+import { PageHeader } from "../page-header";
 
 type LogPageHeaderProps = {
   logOptions: LogSelectOption[];
@@ -14,11 +15,12 @@ export function LogPageHeader({
   person,
 }: LogPageHeaderProps) {
   return (
-    <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-      <div className="min-w-0 flex-1">
+    <header className="flex flex-col gap-item">
+      {/* Title row — mb-0 so vertical spacing comes only from gap-item above the toolbar */}
+      <PageHeader title="Log details" className="mb-0" />
+      {/* Left-aligned row: same gap token as recipe index filters (RecipeTabs). */}
+      <div className="flex flex-wrap items-center gap-item">
         <LogSelect logs={logOptions} currentLogId={logId} />
-      </div>
-      <div className="flex shrink-0 flex-wrap items-center gap-2">
         <LogPersonSelect value={person} />
         <DeleteLogButton logId={logId} />
       </div>
