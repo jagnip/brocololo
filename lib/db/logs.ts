@@ -29,6 +29,21 @@ export async function getLogs() {
   });
 }
 
+export type LogListEntry = Awaited<ReturnType<typeof getLogs>>[number];
+
+/** Log whose plan range contains the given calendar day (UTC date keys), if any. */
+export function findLogContainingDate(
+  logs: LogListEntry[],
+  date: Date,
+): LogListEntry | undefined {
+  const targetKey = date.toISOString().slice(0, 10);
+  return logs.find((log) => {
+    const startKey = log.plan.startDate.toISOString().slice(0, 10);
+    const endKey = log.plan.endDate.toISOString().slice(0, 10);
+    return targetKey >= startKey && targetKey <= endKey;
+  });
+}
+
 export async function deleteLogById(logId: string) {
   await prisma.log.delete({
     where: { id: logId },

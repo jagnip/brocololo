@@ -1,28 +1,32 @@
-import { redirect } from "next/navigation";
-import { ROUTES } from "@/lib/constants";
-import { getLogs } from "@/lib/db/logs";
+import { LogPage } from "@/components/log/log-page";
+import { LogCurrentEmpty } from "@/components/log/log-current-empty";
+import { findLogContainingDate, getLogs } from "@/lib/db/logs";
 
 function toDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-function isWithinDateRange(date: Date, start: Date, end: Date) {
-  const targetKey = toDateKey(date);
-  const startKey = toDateKey(start);
-  const endKey = toDateKey(end);
-  return targetKey >= startKey && targetKey <= endKey;
-}
-
-export default async function LogCurrentPage() {
+export default async function LogCurrentPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ person?: string; day?: string }>;
+}) {
   const logs = await getLogs();
+  const { person, day } = await searchParams;
+
   if (logs.length === 0) {
-    redirect(ROUTES.log);
+    return <LogCurrentEmpty />;
   }
 
   const today = new Date();
-  const targetLog = logs.find((log) =>
-    isWithinDateRange(today, log.plan.startDate, log.plan.endDate),
-  ) ?? logs[0];
+  // Prefer the log whose plan includes today; otherwise newest-created (getLogs order).
+  const currentLog = findLogContainingDate(logs, today) ?? logs[0];
+  // Default day tab to “today” when the URL has no ?day= (e.g. sidebar → Log).
+  const dayForView = day ?? toDateKey(today);
 
-  redirect(`${ROUTES.logView(targetLog.id)}?day=${toDateKey(today)}`);
+  return (
+    <div className="page-container">
+      <LogPage logId={currentLog.id} person={person} day={dayForView} />
+    </div>
+  );
 }

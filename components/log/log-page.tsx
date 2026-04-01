@@ -1,21 +1,18 @@
 import { notFound } from "next/navigation";
 import { LogPerson } from "@/src/generated/enums";
-import { ROUTES } from "@/lib/constants";
-import { getLogById } from "@/lib/db/logs";
+import { getLogById, getLogs } from "@/lib/db/logs";
 import { getPlannerPoolItemsForPlan } from "@/lib/db/planner";
 import { getIngredients } from "@/lib/db/ingredients";
 import { getRecipes } from "@/lib/db/recipes";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { getPersonIngredientAmountPerMeal } from "@/lib/log/helpers";
-import { LogPersonSelect } from "@/components/log/log-person-select";
 import {
   buildLogDays,
   buildVisiblePlannerPoolCards,
 } from "@/lib/log/view-model";
 import { LogDayView } from "@/components/log/log-day-view";
 import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
-import { Breadcrumbs } from "@/components/ui/breadcrumbs";
-import { DeleteLogButton } from "@/components/log/delete-log-button";
+import { LogPageHeader } from "@/components/log/log-page-header";
 
 type LogDetailPageContainerProps = {
   logId: string;
@@ -24,7 +21,6 @@ type LogDetailPageContainerProps = {
 };
 
 function formatDateRange(start: Date, end: Date): string {
-  // Keep period label concise and consistent with the log list page.
   const options: Intl.DateTimeFormatOptions = {
     month: "short",
     day: "numeric",
@@ -94,14 +90,20 @@ export async function LogPage({
 }: LogDetailPageContainerProps) {
   const person = parsePerson(rawPerson);
 
-  const [log, ingredients, recipes, ingredientFormDependencies] =
+  const [log, ingredients, recipes, ingredientFormDependencies, allLogs] =
     await Promise.all([
       getLogById(logId, person),
       getIngredients(),
       getRecipes(undefined),
       getIngredientFormDependencies(),
+      getLogs(),
     ]);
   if (!log) notFound();
+
+  const logOptions = allLogs.map((entry) => ({
+    id: entry.id,
+    label: formatDateRange(entry.plan.startDate, entry.plan.endDate),
+  }));
 
   const days = buildLogDays(log.entries);
   const poolItemsRaw = await getPlannerPoolItemsForPlan({
@@ -123,20 +125,9 @@ export async function LogPage({
     })),
     entries: log.entries,
   });
-  const logPeriodLabel = formatDateRange(log.plan.startDate, log.plan.endDate);
-
   return (
     <>
-      <header className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Log details</h1>
-        <div className="flex items-center gap-2">
-          <LogPersonSelect value={person} />
-          <DeleteLogButton logId={logId} />
-        </div>
-      </header>
-      <Breadcrumbs
-        items={[{ label: "Logs", href: ROUTES.log }, { label: logPeriodLabel }]}
-      />
+      <LogPageHeader logOptions={logOptions} logId={logId} person={person} />
 
       <LogDayView
         days={days}
