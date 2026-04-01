@@ -554,6 +554,7 @@ export async function replaceMealSlotWithRecipe(input: ParsedAddRecipeToLogInput
       },
       select: {
         id: true,
+        planId: true,
       },
     });
     if (!activeLog) {
@@ -596,10 +597,21 @@ export async function replaceMealSlotWithRecipe(input: ParsedAddRecipeToLogInput
       },
     });
 
+    // Keep planner/log counts in sync: one recipe-page add consumes one planned instance (FIFO).
+    const reservedPlanSlotId =
+      input.mealType === LogMealType.SNACK
+        ? null
+        : await reserveNextUnusedPlanSlotTx({
+            tx,
+            planId: activeLog.planId,
+            recipeId: input.recipeId,
+          });
+
     const createdRecipe = await tx.logEntryRecipe.create({
       data: {
         entryId: entry.id,
         sourceRecipeId: input.recipeId,
+        planSlotId: reservedPlanSlotId ?? undefined,
         position: 0,
       },
       select: {
