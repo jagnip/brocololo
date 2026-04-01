@@ -166,6 +166,9 @@ export async function appendNextLogDayAction(input: AppendNextLogDayInput) {
 
   try {
     const result = await appendNextLogDay(parsed.data);
+    if (result.type === "date_conflict") {
+      return result;
+    }
     revalidatePath(ROUTES.logView(parsed.data.logId));
     revalidatePath(ROUTES.planView(result.planId));
     revalidatePath(ROUTES.planCurrent);

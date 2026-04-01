@@ -170,6 +170,60 @@ export type PlannerPoolItem = {
   ingredients: PlannerPoolIngredientRow[];
 };
 
+export type DateCollisionResult = {
+  dates: string[];
+  conflictingLogIds: string[];
+  conflictingPlanIds: string[];
+};
+
+/**
+ * Global single-owner date collision check.
+ * Excludes the currently edited owner so updating the same plan/log pair is allowed.
+ */
+export async function findDateCollisionsTx(params: {
+  tx: Prisma.TransactionClient;
+  dateKeys: string[];
+  excludePlanId?: string;
+  excludeLogId?: string;
+}): Promise<DateCollisionResult> {
+  if (params.dateKeys.length === 0) {
+    return {
+      dates: [],
+      conflictingLogIds: [],
+      conflictingPlanIds: [],
+    };
+  }
+
+  const entries = await params.tx.logEntry.findMany({
+    where: {
+      date: {
+        in: params.dateKeys.map((dateKey) => new Date(`${dateKey}T00:00:00.000Z`)),
+      },
+      ...(params.excludeLogId
+        ? { NOT: { logId: params.excludeLogId } }
+        : {}),
+      ...(params.excludePlanId
+        ? { log: { planId: { not: params.excludePlanId } } }
+        : {}),
+    },
+    select: {
+      date: true,
+      logId: true,
+      log: {
+        select: {
+          planId: true,
+        },
+      },
+    },
+  });
+
+  return {
+    dates: [...new Set(entries.map((entry) => entry.date.toISOString().slice(0, 10)))].sort(),
+    conflictingLogIds: [...new Set(entries.map((entry) => entry.logId))].sort(),
+    conflictingPlanIds: [...new Set(entries.map((entry) => entry.log.planId))].sort(),
+  };
+}
+
 export async function getPlanForGroceries(planId: string) {
   const plan = await prisma.plan.findUnique({
     where: { id: planId },
@@ -219,13 +273,38 @@ export async function createPlan(
   startDate: Date,
   endDate: Date,
   slots: SlotInputType[]
-) {
+): Promise<
+  | {
+      type: "success";
+      plan: Awaited<ReturnType<typeof prisma.plan.create>>;
+    }
+  | {
+      type: "date_conflict";
+      dates: string[];
+      conflictingLogIds: string[];
+      conflictingPlanIds: string[];
+    }
+> {
   const now = new Date();
   const uniqueRecipeIds = [
     ...new Set(slots.filter((s) => s.recipe).map((s) => s.recipe!.id)),
   ];
 
-  const plan = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
+    const dateKeys = [...new Set(slots.map((slot) => slot.date.toISOString().slice(0, 10)))];
+    const dateCollision = await findDateCollisionsTx({
+      tx,
+      dateKeys,
+    });
+    if (dateCollision.dates.length > 0) {
+      return {
+        type: "date_conflict" as const,
+        dates: dateCollision.dates,
+        conflictingLogIds: dateCollision.conflictingLogIds,
+        conflictingPlanIds: dateCollision.conflictingPlanIds,
+      };
+    }
+
     const createdPlan = await tx.plan.create({
       data: {
         startDate,
@@ -247,8 +326,12 @@ export async function createPlan(
       },
       include: { slots: true },
     });
-    return createdPlan;
+    return { type: "success" as const, plan: createdPlan };
   }, { timeout: 30000 });
+
+  if (result.type === "date_conflict") {
+    return result;
+  }
 
   if (uniqueRecipeIds.length > 0) {
     await prisma.recipe.updateMany({
@@ -257,7 +340,7 @@ export async function createPlan(
     });
   }
 
-  return plan;
+  return result;
 }
 
 function toLogMealType(mealType: PlannerMealType): LogMealType {
@@ -497,6 +580,12 @@ type PlanSyncImpact = {
 
 export type UpdatePlanResult =
   | { type: "success" }
+  | {
+      type: "date_conflict";
+      dates: string[];
+      conflictingLogIds: string[];
+      conflictingPlanIds: string[];
+    }
   | ({ type: "sync_conflict" } & PlanSyncImpact);
 
 type UpdatePlanOptions = {
@@ -544,6 +633,21 @@ export async function updatePlan(
     const existingDateKeys = new Set(existingPlan.slots.map((slot) => toDateKey(slot.date)));
     const removedDateKeys = [...existingDateKeys].filter((dateKey) => !nextDateKeys.has(dateKey)).sort();
     const addedDateKeys = [...nextDateKeys].filter((dateKey) => !existingDateKeys.has(dateKey)).sort();
+
+    // Block extending a plan into dates already owned by another plan/log pair.
+    const dateCollision = await findDateCollisionsTx({
+      tx,
+      dateKeys: addedDateKeys,
+      excludePlanId: planId,
+    });
+    if (dateCollision.dates.length > 0) {
+      return {
+        type: "date_conflict" as const,
+        dates: dateCollision.dates,
+        conflictingLogIds: dateCollision.conflictingLogIds,
+        conflictingPlanIds: dateCollision.conflictingPlanIds,
+      };
+    }
 
     const impactedPlanMealsCount = existingPlan.slots.filter(
       (slot) => removedDateKeys.includes(toDateKey(slot.date)) && slot.recipeId != null,

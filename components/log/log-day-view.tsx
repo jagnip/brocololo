@@ -681,6 +681,13 @@ export function LogDayView({
             }
             startAddDayTransition(async () => {
               const result = await appendNextLogDayAction({ logId });
+              if (result.type === "date_conflict") {
+                // Keep collision feedback explicit: hard-block without destructive override.
+                toast.error(
+                  `Cannot add day. Date conflict: ${result.dates.join(", ")}`,
+                );
+                return;
+              }
               if (result.type === "error") {
                 toast.error(result.message);
                 return;

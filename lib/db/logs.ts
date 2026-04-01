@@ -6,6 +6,7 @@ import {
 } from "@/src/generated/client";
 import { prisma } from "./index";
 import {
+  findDateCollisionsTx,
   releaseReservedPlanSlotTx,
   reserveNextUnusedPlanSlotTx,
 } from "./planner";
@@ -153,7 +154,20 @@ export async function getLogById(logId: string, person: LogPerson) {
   });
 }
 
-export async function appendNextLogDay(input: { logId: string }) {
+export type AppendNextLogDayResult =
+  | {
+      type: "success";
+      dateKey: string;
+      planId: string;
+    }
+  | {
+      type: "date_conflict";
+      dates: string[];
+      conflictingLogIds: string[];
+      conflictingPlanIds: string[];
+    };
+
+export async function appendNextLogDay(input: { logId: string }): Promise<AppendNextLogDayResult> {
   return prisma.$transaction(async (tx) => {
     const log = await tx.log.findUnique({
       where: { id: input.logId },
@@ -186,6 +200,22 @@ export async function appendNextLogDay(input: { logId: string }) {
         baseDate.getUTCDate() + 1,
       ),
     );
+    const nextDateKey = nextDate.toISOString().slice(0, 10);
+    // Block collisions with any other plan/log owner for the target day.
+    const dateCollision = await findDateCollisionsTx({
+      tx,
+      dateKeys: [nextDateKey],
+      excludePlanId: log.plan.id,
+      excludeLogId: log.id,
+    });
+    if (dateCollision.dates.length > 0) {
+      return {
+        type: "date_conflict",
+        dates: dateCollision.dates,
+        conflictingLogIds: dateCollision.conflictingLogIds,
+        conflictingPlanIds: dateCollision.conflictingPlanIds,
+      };
+    }
 
     const logMealTypes = [
       LogMealType.BREAKFAST,
@@ -238,7 +268,7 @@ export async function appendNextLogDay(input: { logId: string }) {
       });
     }
 
-    return { dateKey: nextDate.toISOString().slice(0, 10), planId: log.plan.id };
+    return { type: "success", dateKey: nextDateKey, planId: log.plan.id };
   });
 }
 

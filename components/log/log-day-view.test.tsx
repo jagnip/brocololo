@@ -532,6 +532,37 @@ describe("LogDayView", () => {
     });
   });
 
+  it("does not navigate when add day collides with another owner", async () => {
+    const user = userEvent.setup();
+    appendNextLogDayActionMock.mockResolvedValueOnce({
+      type: "date_conflict",
+      dates: ["2026-03-18"],
+      conflictingLogIds: ["log-2"],
+      conflictingPlanIds: ["plan-2"],
+    });
+
+    const days: LogDayData[] = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        dateKey: "2026-03-17",
+        slots: [
+          { entryId: "entry-breakfast", mealType: LogMealType.BREAKFAST, label: "Breakfast", recipes: [] },
+          { entryId: "entry-lunch", mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
+          { entryId: "entry-snack", mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
+          { entryId: "entry-dinner", mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+        ],
+      },
+    ];
+
+    render(<LogDayView days={days} logId="log-1" person="PRIMARY" />);
+    await user.click(screen.getByRole("button", { name: /add day/i }));
+
+    await waitFor(() => {
+      expect(appendNextLogDayActionMock).toHaveBeenCalledWith({ logId: "log-1" });
+      expect(pushMock).not.toHaveBeenCalledWith("/log/log-1?person=PRIMARY&day=2026-03-18");
+    });
+  });
+
   it("removes day and navigates to fallback day", async () => {
     const user = userEvent.setup();
     const days: LogDayData[] = [

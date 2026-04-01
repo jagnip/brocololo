@@ -1,4 +1,76 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createPlan, updatePlan } from "@/lib/db/planner";
+import { savePlan, updateSavedPlan } from "./planner-actions";
+
+vi.mock("@/lib/db/planner", () => ({
+  createPlan: vi.fn(),
+  updatePlan: vi.fn(),
+  deletePlanById: vi.fn(),
+  generateBaselineLogForPlan: vi.fn(),
+}));
+
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}));
+
+describe("planner-actions collisions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("savePlan forwards date_conflict from createPlan", async () => {
+    vi.mocked(createPlan).mockResolvedValueOnce({
+      type: "date_conflict",
+      dates: ["2026-04-08"],
+      conflictingLogIds: ["log-2"],
+      conflictingPlanIds: ["plan-2"],
+    } as any);
+
+    const result = await savePlan([
+      {
+        date: new Date("2026-04-08T00:00:00.000Z"),
+        mealType: "DINNER" as any,
+        recipe: null,
+        alternatives: [],
+        used: false,
+      },
+    ]);
+
+    expect(result).toEqual({
+      type: "date_conflict",
+      dates: ["2026-04-08"],
+      conflictingLogIds: ["log-2"],
+      conflictingPlanIds: ["plan-2"],
+    });
+  });
+
+  it("updateSavedPlan forwards date_conflict from updatePlan", async () => {
+    vi.mocked(updatePlan).mockResolvedValueOnce({
+      type: "date_conflict",
+      dates: ["2026-04-08"],
+      conflictingLogIds: ["log-2"],
+      conflictingPlanIds: ["plan-2"],
+    } as any);
+
+    const result = await updateSavedPlan("plan-1", [
+      {
+        date: new Date("2026-04-08T00:00:00.000Z"),
+        mealType: "DINNER" as any,
+        recipeId: null,
+        alternativeRecipeIds: [],
+        used: false,
+      },
+    ]);
+
+    expect(result).toEqual({
+      type: "date_conflict",
+      dates: ["2026-04-08"],
+      conflictingLogIds: ["log-2"],
+      conflictingPlanIds: ["plan-2"],
+    });
+  });
+});
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { deletePlanById, updatePlan } from "@/lib/db/planner";
 import { revalidatePath } from "next/cache";
 import { deletePlanAction, updateSavedPlan } from "./planner-actions";

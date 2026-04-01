@@ -218,7 +218,11 @@ describe("appendNextLogDayAction", () => {
   });
 
   it("appends next day and returns date key", async () => {
-    vi.mocked(appendNextLogDay).mockResolvedValue({ dateKey: "2026-04-04" });
+    vi.mocked(appendNextLogDay).mockResolvedValue({
+      type: "success",
+      dateKey: "2026-04-04",
+      planId: "plan-1",
+    });
 
     const result = await appendNextLogDayAction({ logId: "log-1" });
 
@@ -251,7 +255,10 @@ describe("removeLogDayAction", () => {
   });
 
   it("removes day and returns next day key", async () => {
-    vi.mocked(removeLogDay).mockResolvedValue({ nextDayKey: "2026-04-11" });
+    vi.mocked(removeLogDay).mockResolvedValue({
+      type: "success",
+      nextDayKey: "2026-04-11",
+    });
 
     const result = await removeLogDayAction({ logId: "log-1", dateKey: "2026-04-10" });
 

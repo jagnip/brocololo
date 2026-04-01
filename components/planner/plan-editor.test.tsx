@@ -264,6 +264,43 @@ describe("PlanEditor manual save", () => {
     });
   });
 
+  it("keeps editor dirty when save hits date conflict", async () => {
+    const user = userEvent.setup();
+    const recipeA = createRecipe("recipe-a");
+    const recipeB = createRecipe("recipe-b");
+    const recipeC = createRecipe("recipe-c");
+
+    vi.mocked(updateSavedPlan).mockResolvedValueOnce({
+      type: "date_conflict",
+      dates: ["2026-03-18"],
+      conflictingLogIds: ["log-2"],
+      conflictingPlanIds: ["plan-2"],
+    } as any);
+
+    render(
+      <PlanEditor
+        planId="plan-1"
+        initialPlan={[
+          {
+            date: new Date("2026-03-17T00:00:00.000Z"),
+            mealType: "DINNER" as any,
+            recipe: recipeA,
+            alternatives: [recipeB, recipeC],
+            used: false,
+          },
+        ]}
+        recipes={[]}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Shuffle" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+    });
+  });
+
   it("rebase creates empty slots and marks editor dirty when date range changes", async () => {
     const user = userEvent.setup();
 

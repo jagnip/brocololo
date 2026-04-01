@@ -111,6 +111,14 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
     }));
 
     const result = await updateSavedPlan(planId, saveData);
+    if (result.type === "date_conflict") {
+      setSaveStatus("idle");
+      // Surface blocked extension dates so user can pick a non-colliding range.
+      toast.error(
+        `Cannot save. Date conflict: ${formatDateKeysForToast(result.dates).join(", ")}`,
+      );
+      return;
+    }
     if (result.type === "sync_conflict") {
       setSaveStatus("idle");
       setSyncConflict({
@@ -339,6 +347,13 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
                   );
                   if (forcedResult.type === "error") {
                     toast.error(forcedResult.message);
+                    setSaveStatus("idle");
+                    return;
+                  }
+                  if (forcedResult.type === "date_conflict") {
+                    toast.error(
+                      `Cannot save. Date conflict: ${formatDateKeysForToast(forcedResult.dates).join(", ")}`,
+                    );
                     setSaveStatus("idle");
                     return;
                   }
