@@ -87,7 +87,7 @@ export default function RecipePage({
 
       <div className="grid grid-cols-1 gap-block md:grid-cols-5 md:gap-block">
         <div className="order-1 md:order-0 md:col-span-5 flex flex-col gap-tight">
-          <PageHeader title={recipe.name} className="mb-0" />
+          <PageHeader title={recipe.name} />
           <Breadcrumbs
             // Keep list context when users navigate back to the recipes index.
             items={[

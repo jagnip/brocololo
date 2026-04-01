@@ -38,7 +38,7 @@ export function LogSelect({ logs, currentLogId }: LogSelectProps) {
       onValueChange={handleValueChange}
       allowInlineClear={false}
     >
-      <SelectTrigger className="w-full min-w-48 max-w-md">
+      <SelectTrigger className="min-w-48 max-w-md">
         <SelectValue placeholder="Select a log" />
       </SelectTrigger>
       <SelectContent>
