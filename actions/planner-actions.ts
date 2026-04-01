@@ -175,7 +175,7 @@ export async function deletePlanAction(
     return { type: "error", message: "Failed to delete plan." };
   }
 
-  revalidatePath(ROUTES.plan);
+  revalidatePath(ROUTES.planCurrent);
   revalidatePath(ROUTES.log);
   revalidatePath("/");
   return { type: "success" };

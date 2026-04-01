@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { ROUTES } from "@/lib/constants";
 import { getPlans } from "@/lib/db/planner";
+import { PlanCurrentEmpty } from "@/components/planner/plan-current-empty";
 
 function toDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
@@ -15,12 +16,12 @@ function isWithinDateRange(date: Date, start: Date, end: Date) {
 
 /**
  * Sidebar “Planner” entry: jump straight to the active plan (today in range) or latest.
- * For the full list of plans, use /plan (breadcrumb “Planner” target).
  */
 export default async function PlanCurrentPage() {
   const plans = await getPlans();
   if (plans.length === 0) {
-    redirect(ROUTES.plan);
+    // Render an actionable empty state instead of redirecting back to /plan.
+    return <PlanCurrentEmpty />;
   }
   const today = new Date();
   const targetPlan =
