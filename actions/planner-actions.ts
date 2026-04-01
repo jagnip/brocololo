@@ -100,6 +100,12 @@ export async function generatePlan(
 
 export async function savePlan(plan: PlanInputType): Promise<
   | { type: "success"; planId: string }
+  | {
+      type: "date_conflict";
+      dates: string[];
+      conflictingLogIds: string[];
+      conflictingPlanIds: string[];
+    }
   | { type: "error"; message: string }
 > {
   if (plan.length === 0) {
@@ -113,7 +119,10 @@ export async function savePlan(plan: PlanInputType): Promise<
   let planId: string;
   try {
     const created = await createPlan(startDate, endDate, plan);
-    planId = created.id;
+    if (created.type === "date_conflict") {
+      return created;
+    }
+    planId = created.plan.id;
     // return { type: "success", planId: created.id };
   } catch (error) {
     console.error("Error saving plan", error);
@@ -127,13 +136,35 @@ export async function savePlan(plan: PlanInputType): Promise<
 export async function updateSavedPlan(
   planId: string,
   slots: SlotSaveData[],
-): Promise<{ type: "success" } | { type: "error"; message: string }> {
+  options?: { forceDestructiveSync?: boolean },
+): Promise<
+  | { type: "success" }
+  | {
+      type: "date_conflict";
+      dates: string[];
+      conflictingLogIds: string[];
+      conflictingPlanIds: string[];
+    }
+  | {
+      type: "sync_conflict";
+      impactedDates: string[];
+      impactedLogMealsCount: number;
+      impactedPlanMealsCount: number;
+    }
+  | { type: "error"; message: string }
+> {
   if (slots.length === 0) {
     return { type: "error", message: "No meals in plan." };
   }
 
   try {
-    await updatePlan(planId, slots);
+    const result = await updatePlan(planId, slots, options);
+    if (result.type === "date_conflict") {
+      return result;
+    }
+    if (result.type === "sync_conflict") {
+      return result;
+    }
   } catch (error) {
     console.error("Error updating plan", error);
     return { type: "error", message: "Failed to update plan." };

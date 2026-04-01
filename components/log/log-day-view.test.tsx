@@ -532,6 +532,37 @@ describe("LogDayView", () => {
     });
   });
 
+  it("does not navigate when add day collides with another owner", async () => {
+    const user = userEvent.setup();
+    appendNextLogDayActionMock.mockResolvedValueOnce({
+      type: "date_conflict",
+      dates: ["2026-03-18"],
+      conflictingLogIds: ["log-2"],
+      conflictingPlanIds: ["plan-2"],
+    });
+
+    const days: LogDayData[] = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        dateKey: "2026-03-17",
+        slots: [
+          { entryId: "entry-breakfast", mealType: LogMealType.BREAKFAST, label: "Breakfast", recipes: [] },
+          { entryId: "entry-lunch", mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
+          { entryId: "entry-snack", mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
+          { entryId: "entry-dinner", mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+        ],
+      },
+    ];
+
+    render(<LogDayView days={days} logId="log-1" person="PRIMARY" />);
+    await user.click(screen.getByRole("button", { name: /add day/i }));
+
+    await waitFor(() => {
+      expect(appendNextLogDayActionMock).toHaveBeenCalledWith({ logId: "log-1" });
+      expect(pushMock).not.toHaveBeenCalledWith("/log/log-1?person=PRIMARY&day=2026-03-18");
+    });
+  });
+
   it("removes day and navigates to fallback day", async () => {
     const user = userEvent.setup();
     const days: LogDayData[] = [
@@ -613,6 +644,58 @@ describe("LogDayView", () => {
         "/log/log-1?person=PRIMARY&day=2026-03-19",
       );
       expect(refreshMock).toHaveBeenCalled();
+    });
+  });
+
+  it("shows warning dialog for impacted day and removes only after confirmation", async () => {
+    const user = userEvent.setup();
+    removeLogDayActionMock
+      .mockResolvedValueOnce({
+        type: "impact_warning",
+        impactedDates: ["2026-03-17"],
+        impactedLogMealsCount: 2,
+        impactedPlanMealsCount: 1,
+      })
+      .mockResolvedValueOnce({
+        type: "success",
+        nextDayKey: "2026-03-18",
+      });
+
+    const days: LogDayData[] = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        dateKey: "2026-03-17",
+        slots: [
+          { entryId: "entry-breakfast-1", mealType: LogMealType.BREAKFAST, label: "Breakfast", recipes: [] },
+          { entryId: "entry-lunch-1", mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
+          { entryId: "entry-snack-1", mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
+          { entryId: "entry-dinner-1", mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+        ],
+      },
+      {
+        date: new Date("2026-03-18T00:00:00.000Z"),
+        dateKey: "2026-03-18",
+        slots: [
+          { entryId: "entry-breakfast-2", mealType: LogMealType.BREAKFAST, label: "Breakfast", recipes: [] },
+          { entryId: "entry-lunch-2", mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
+          { entryId: "entry-snack-2", mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
+          { entryId: "entry-dinner-2", mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+        ],
+      },
+    ];
+
+    render(<LogDayView days={days} logId="log-1" person="PRIMARY" />);
+    await user.click(screen.getAllByRole("button", { name: /remove day/i })[0]!);
+
+    expect(screen.getByText(/delete day and synced plan meals/i)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /delete day/i }));
+
+    await waitFor(() => {
+      expect(removeLogDayActionMock).toHaveBeenNthCalledWith(2, {
+        logId: "log-1",
+        dateKey: "2026-03-17",
+        force: true,
+      });
     });
   });
 

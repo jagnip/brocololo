@@ -34,6 +34,16 @@ import {
 import { LogDayHeader } from "./log-day-header";
 import { LogDaySelector } from "./log-day-selector";
 import { LogPool } from "./log-pool";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type SelectedSlotState = {
   dayKey: string;
@@ -142,6 +152,12 @@ type LogDayViewProps = {
   ingredientFormDependencies?: IngredientFormDependencies;
 };
 
+type RemoveDayWarningState = {
+  dateKey: string;
+  impactedLogMealsCount: number;
+  impactedPlanMealsCount: number;
+};
+
 export function LogDayView({
   days,
   plannerPool = [],
@@ -164,6 +180,8 @@ export function LogDayView({
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlotState | null>(
     null,
   );
+  const [removeDayWarning, setRemoveDayWarning] =
+    useState<RemoveDayWarningState | null>(null);
   const [isSaving, startSavingTransition] = useTransition();
   const [isAddingDay, startAddDayTransition] = useTransition();
   const [isRemovingDay, startRemoveDayTransition] = useTransition();
@@ -593,6 +611,60 @@ export function LogDayView({
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <section className="mt-8 space-y-8">
+        <AlertDialog
+          open={removeDayWarning != null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setRemoveDayWarning(null);
+            }
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete day and synced plan meals?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {removeDayWarning
+                  ? `This will remove ${removeDayWarning.impactedLogMealsCount} non-empty log meals and ${removeDayWarning.impactedPlanMealsCount} planned meals for this date.`
+                  : "This action cannot be undone."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (!removeDayWarning || !logId) {
+                    return;
+                  }
+                  startRemoveDayTransition(async () => {
+                    const forcedResult = await removeLogDayAction({
+                      logId,
+                      dateKey: removeDayWarning.dateKey,
+                      force: true,
+                    });
+                    if (forcedResult.type === "error") {
+                      toast.error(forcedResult.message);
+                      return;
+                    }
+                    const nextPerson = person ?? "PRIMARY";
+                    if (forcedResult.type === "success" && forcedResult.nextDayKey) {
+                      router.push(
+                        `${ROUTES.logView(logId)}?person=${nextPerson}&day=${forcedResult.nextDayKey}`,
+                      );
+                    } else {
+                      router.push(
+                        `${ROUTES.logView(logId)}?person=${nextPerson}`,
+                      );
+                    }
+                    setRemoveDayWarning(null);
+                    router.refresh();
+                  });
+                }}
+              >
+                Delete day
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         <LogPool items={groupedPlannerPool} />
         <LogDaySelector
           days={localDays}
@@ -609,6 +681,13 @@ export function LogDayView({
             }
             startAddDayTransition(async () => {
               const result = await appendNextLogDayAction({ logId });
+              if (result.type === "date_conflict") {
+                // Keep collision feedback explicit: hard-block without destructive override.
+                toast.error(
+                  `Cannot add day. Date conflict: ${result.dates.join(", ")}`,
+                );
+                return;
+              }
               if (result.type === "error") {
                 toast.error(result.message);
                 return;
@@ -638,6 +717,14 @@ export function LogDayView({
                         logId,
                         dateKey: day.dateKey,
                       });
+                      if (result.type === "impact_warning") {
+                        setRemoveDayWarning({
+                          dateKey: day.dateKey,
+                          impactedLogMealsCount: result.impactedLogMealsCount,
+                          impactedPlanMealsCount: result.impactedPlanMealsCount,
+                        });
+                        return;
+                      }
                       if (result.type === "error") {
                         toast.error(result.message);
                         return;

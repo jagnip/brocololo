@@ -170,6 +170,60 @@ export type PlannerPoolItem = {
   ingredients: PlannerPoolIngredientRow[];
 };
 
+export type DateCollisionResult = {
+  dates: string[];
+  conflictingLogIds: string[];
+  conflictingPlanIds: string[];
+};
+
+/**
+ * Global single-owner date collision check.
+ * Excludes the currently edited owner so updating the same plan/log pair is allowed.
+ */
+export async function findDateCollisionsTx(params: {
+  tx: Prisma.TransactionClient;
+  dateKeys: string[];
+  excludePlanId?: string;
+  excludeLogId?: string;
+}): Promise<DateCollisionResult> {
+  if (params.dateKeys.length === 0) {
+    return {
+      dates: [],
+      conflictingLogIds: [],
+      conflictingPlanIds: [],
+    };
+  }
+
+  const entries = await params.tx.logEntry.findMany({
+    where: {
+      date: {
+        in: params.dateKeys.map((dateKey) => new Date(`${dateKey}T00:00:00.000Z`)),
+      },
+      ...(params.excludeLogId
+        ? { NOT: { logId: params.excludeLogId } }
+        : {}),
+      ...(params.excludePlanId
+        ? { log: { planId: { not: params.excludePlanId } } }
+        : {}),
+    },
+    select: {
+      date: true,
+      logId: true,
+      log: {
+        select: {
+          planId: true,
+        },
+      },
+    },
+  });
+
+  return {
+    dates: [...new Set(entries.map((entry) => entry.date.toISOString().slice(0, 10)))].sort(),
+    conflictingLogIds: [...new Set(entries.map((entry) => entry.logId))].sort(),
+    conflictingPlanIds: [...new Set(entries.map((entry) => entry.log.planId))].sort(),
+  };
+}
+
 export async function getPlanForGroceries(planId: string) {
   const plan = await prisma.plan.findUnique({
     where: { id: planId },
@@ -219,13 +273,38 @@ export async function createPlan(
   startDate: Date,
   endDate: Date,
   slots: SlotInputType[]
-) {
+): Promise<
+  | {
+      type: "success";
+      plan: Awaited<ReturnType<typeof prisma.plan.create>>;
+    }
+  | {
+      type: "date_conflict";
+      dates: string[];
+      conflictingLogIds: string[];
+      conflictingPlanIds: string[];
+    }
+> {
   const now = new Date();
   const uniqueRecipeIds = [
     ...new Set(slots.filter((s) => s.recipe).map((s) => s.recipe!.id)),
   ];
 
-  const plan = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
+    const dateKeys = [...new Set(slots.map((slot) => slot.date.toISOString().slice(0, 10)))];
+    const dateCollision = await findDateCollisionsTx({
+      tx,
+      dateKeys,
+    });
+    if (dateCollision.dates.length > 0) {
+      return {
+        type: "date_conflict" as const,
+        dates: dateCollision.dates,
+        conflictingLogIds: dateCollision.conflictingLogIds,
+        conflictingPlanIds: dateCollision.conflictingPlanIds,
+      };
+    }
+
     const createdPlan = await tx.plan.create({
       data: {
         startDate,
@@ -247,8 +326,12 @@ export async function createPlan(
       },
       include: { slots: true },
     });
-    return createdPlan;
+    return { type: "success" as const, plan: createdPlan };
   }, { timeout: 30000 });
+
+  if (result.type === "date_conflict") {
+    return result;
+  }
 
   if (uniqueRecipeIds.length > 0) {
     await prisma.recipe.updateMany({
@@ -257,7 +340,7 @@ export async function createPlan(
     });
   }
 
-  return plan;
+  return result;
 }
 
 function toLogMealType(mealType: PlannerMealType): LogMealType {
@@ -489,7 +572,36 @@ export async function releaseReservedPlanSlotTx(params: {
   });
 }
 
-export async function updatePlan(planId: string, slots: SlotSaveData[]) {
+type PlanSyncImpact = {
+  impactedDates: string[];
+  impactedLogMealsCount: number;
+  impactedPlanMealsCount: number;
+};
+
+export type UpdatePlanResult =
+  | { type: "success" }
+  | {
+      type: "date_conflict";
+      dates: string[];
+      conflictingLogIds: string[];
+      conflictingPlanIds: string[];
+    }
+  | ({ type: "sync_conflict" } & PlanSyncImpact);
+
+type UpdatePlanOptions = {
+  // Force applying a destructive sync after explicit user confirmation.
+  forceDestructiveSync?: boolean;
+};
+
+function toDateKey(value: Date | string): string {
+  return new Date(value).toISOString().slice(0, 10);
+}
+
+export async function updatePlan(
+  planId: string,
+  slots: SlotSaveData[],
+  options: UpdatePlanOptions = {},
+): Promise<UpdatePlanResult> {
   const now = new Date();
   const uniqueRecipeIds = [
     ...new Set(slots.filter((s) => s.recipeId).map((s) => s.recipeId!)),
@@ -498,12 +610,76 @@ export async function updatePlan(planId: string, slots: SlotSaveData[]) {
   const dates = slots.map((s) => new Date(s.date).getTime());
   const startDate = new Date(Math.min(...dates));
   const endDate = new Date(Math.max(...dates));
+  const nextDateKeys = new Set(slots.map((slot) => toDateKey(slot.date)));
+  const forceDestructiveSync = options.forceDestructiveSync ?? false;
 
-  const plan = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
+    const existingPlan = await tx.plan.findUnique({
+      where: { id: planId },
+      include: {
+        log: { select: { id: true } },
+        slots: {
+          select: {
+            date: true,
+            recipeId: true,
+          },
+        },
+      },
+    });
+    if (!existingPlan) {
+      throw new Error("PLAN_NOT_FOUND");
+    }
+
+    const existingDateKeys = new Set(existingPlan.slots.map((slot) => toDateKey(slot.date)));
+    const removedDateKeys = [...existingDateKeys].filter((dateKey) => !nextDateKeys.has(dateKey)).sort();
+    const addedDateKeys = [...nextDateKeys].filter((dateKey) => !existingDateKeys.has(dateKey)).sort();
+
+    // Block extending a plan into dates already owned by another plan/log pair.
+    const dateCollision = await findDateCollisionsTx({
+      tx,
+      dateKeys: addedDateKeys,
+      excludePlanId: planId,
+    });
+    if (dateCollision.dates.length > 0) {
+      return {
+        type: "date_conflict" as const,
+        dates: dateCollision.dates,
+        conflictingLogIds: dateCollision.conflictingLogIds,
+        conflictingPlanIds: dateCollision.conflictingPlanIds,
+      };
+    }
+
+    const impactedPlanMealsCount = existingPlan.slots.filter(
+      (slot) => removedDateKeys.includes(toDateKey(slot.date)) && slot.recipeId != null,
+    ).length;
+
+    let impactedLogMealsCount = 0;
+    if (existingPlan.log && removedDateKeys.length > 0) {
+      // Count non-empty log entries only on removed days.
+      const impactedEntries = await tx.logEntry.findMany({
+        where: {
+          logId: existingPlan.log.id,
+          date: { in: removedDateKeys.map((dateKey) => new Date(`${dateKey}T00:00:00.000Z`)) },
+          OR: [{ recipes: { some: {} } }, { ingredients: { some: {} } }],
+        },
+        select: { id: true },
+      });
+      impactedLogMealsCount = impactedEntries.length;
+    }
+
+    if ((impactedPlanMealsCount > 0 || impactedLogMealsCount > 0) && !forceDestructiveSync) {
+      return {
+        type: "sync_conflict" as const,
+        impactedDates: removedDateKeys,
+        impactedLogMealsCount,
+        impactedPlanMealsCount,
+      };
+    }
+
     await tx.planSlotAlternative.deleteMany({ where: { planSlot: { planId } } });
     await tx.planSlot.deleteMany({ where: { planId } });
 
-    return tx.plan.update({
+    await tx.plan.update({
       where: { id: planId },
       data: {
         startDate,
@@ -525,7 +701,58 @@ export async function updatePlan(planId: string, slots: SlotSaveData[]) {
       },
       include: { slots: true },
     });
+
+    if (existingPlan.log) {
+      const logId = existingPlan.log.id;
+      const mealTypes = [
+        LogMealType.BREAKFAST,
+        LogMealType.LUNCH,
+        LogMealType.SNACK,
+        LogMealType.DINNER,
+      ] as const;
+      const people = [LogPerson.PRIMARY, LogPerson.SECONDARY] as const;
+
+      // Keep log days aligned with plan dates.
+      for (const dateKey of removedDateKeys) {
+        await tx.logEntry.deleteMany({
+          where: {
+            logId,
+            date: new Date(`${dateKey}T00:00:00.000Z`),
+          },
+        });
+      }
+      for (const dateKey of addedDateKeys) {
+        const date = new Date(`${dateKey}T00:00:00.000Z`);
+        for (const person of people) {
+          for (const mealType of mealTypes) {
+            await tx.logEntry.upsert({
+              where: {
+                logId_date_mealType_person: {
+                  logId,
+                  date,
+                  mealType,
+                  person,
+                },
+              },
+              update: {},
+              create: {
+                logId,
+                date,
+                mealType,
+                person,
+              },
+            });
+          }
+        }
+      }
+    }
+
+    return { type: "success" as const };
   }, { timeout: 15000 });
+
+  if (result.type === "sync_conflict") {
+    return result;
+  }
 
   if (uniqueRecipeIds.length > 0) {
     await prisma.recipe.updateMany({
@@ -534,7 +761,7 @@ export async function updatePlan(planId: string, slots: SlotSaveData[]) {
     });
   }
 
-  return plan;
+  return result;
 }
 
 export async function generateBaselineLogForPlan(

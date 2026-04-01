@@ -1,6 +1,12 @@
-import { LogMealType, LogPerson, Prisma } from "@/src/generated/client";
+import {
+  LogMealType,
+  LogPerson,
+  PlannerMealType,
+  Prisma,
+} from "@/src/generated/client";
 import { prisma } from "./index";
 import {
+  findDateCollisionsTx,
   releaseReservedPlanSlotTx,
   reserveNextUnusedPlanSlotTx,
 } from "./planner";
@@ -148,7 +154,20 @@ export async function getLogById(logId: string, person: LogPerson) {
   });
 }
 
-export async function appendNextLogDay(input: { logId: string }) {
+export type AppendNextLogDayResult =
+  | {
+      type: "success";
+      dateKey: string;
+      planId: string;
+    }
+  | {
+      type: "date_conflict";
+      dates: string[];
+      conflictingLogIds: string[];
+      conflictingPlanIds: string[];
+    };
+
+export async function appendNextLogDay(input: { logId: string }): Promise<AppendNextLogDayResult> {
   return prisma.$transaction(async (tx) => {
     const log = await tx.log.findUnique({
       where: { id: input.logId },
@@ -156,6 +175,7 @@ export async function appendNextLogDay(input: { logId: string }) {
         id: true,
         plan: {
           select: {
+            id: true,
             endDate: true,
           },
         },
@@ -180,17 +200,38 @@ export async function appendNextLogDay(input: { logId: string }) {
         baseDate.getUTCDate() + 1,
       ),
     );
+    const nextDateKey = nextDate.toISOString().slice(0, 10);
+    // Block collisions with any other plan/log owner for the target day.
+    const dateCollision = await findDateCollisionsTx({
+      tx,
+      dateKeys: [nextDateKey],
+      excludePlanId: log.plan.id,
+      excludeLogId: log.id,
+    });
+    if (dateCollision.dates.length > 0) {
+      return {
+        type: "date_conflict",
+        dates: dateCollision.dates,
+        conflictingLogIds: dateCollision.conflictingLogIds,
+        conflictingPlanIds: dateCollision.conflictingPlanIds,
+      };
+    }
 
-    const mealTypes = [
+    const logMealTypes = [
       LogMealType.BREAKFAST,
       LogMealType.LUNCH,
       LogMealType.SNACK,
       LogMealType.DINNER,
     ] as const;
+    const plannerMealTypes = [
+      PlannerMealType.BREAKFAST,
+      PlannerMealType.LUNCH,
+      PlannerMealType.DINNER,
+    ] as const;
     const people = [LogPerson.PRIMARY, LogPerson.SECONDARY] as const;
 
     for (const person of people) {
-      for (const mealType of mealTypes) {
+      for (const mealType of logMealTypes) {
         await tx.logEntry.upsert({
           where: {
             logId_date_mealType_person: {
@@ -210,12 +251,42 @@ export async function appendNextLogDay(input: { logId: string }) {
         });
       }
     }
+    // Keep planner dates aligned with manually-added log days.
+    await tx.planSlot.createMany({
+      data: plannerMealTypes.map((mealType) => ({
+        planId: log.plan.id,
+        date: nextDate,
+        mealType,
+        recipeId: null,
+        used: false,
+      })),
+    });
+    if (nextDate > log.plan.endDate) {
+      await tx.plan.update({
+        where: { id: log.plan.id },
+        data: { endDate: nextDate },
+      });
+    }
 
-    return { dateKey: nextDate.toISOString().slice(0, 10) };
+    return { type: "success", dateKey: nextDateKey, planId: log.plan.id };
   });
 }
 
-export async function removeLogDay(input: { logId: string; dateKey: string }) {
+type RemoveDayImpact = {
+  impactedDates: string[];
+  impactedLogMealsCount: number;
+  impactedPlanMealsCount: number;
+};
+
+export type RemoveLogDayResult =
+  | { type: "success"; nextDayKey: string | null }
+  | ({ type: "impact_warning" } & RemoveDayImpact);
+
+export async function removeLogDay(input: {
+  logId: string;
+  dateKey: string;
+  force?: boolean;
+}): Promise<RemoveLogDayResult> {
   return prisma.$transaction(async (tx) => {
     const distinctDays = await tx.logEntry.findMany({
       where: { logId: input.logId },
@@ -229,12 +300,72 @@ export async function removeLogDay(input: { logId: string; dateKey: string }) {
     }
 
     const targetDate = new Date(`${input.dateKey}T00:00:00.000Z`);
+    const logWithPlan = await tx.log.findUnique({
+      where: { id: input.logId },
+      select: { planId: true },
+    });
+    if (!logWithPlan) {
+      throw new Error("LOG_NOT_FOUND");
+    }
+
+    // Impact on the log side: any non-empty meal entry (has recipe or ingredients).
+    const nonEmptyLogEntries = await tx.logEntry.findMany({
+      where: {
+        logId: input.logId,
+        date: targetDate,
+        OR: [{ recipes: { some: {} } }, { ingredients: { some: {} } }],
+      },
+      select: { id: true },
+    });
+
+    // Impact on the plan side: any planned slot (recipe assigned) on that date.
+    const impactedPlanMealsCount = await tx.planSlot.count({
+      where: {
+        planId: logWithPlan.planId,
+        date: targetDate,
+        recipeId: { not: null },
+      },
+    });
+
+    const impactedLogMealsCount = nonEmptyLogEntries.length;
+    const hasImpact = impactedLogMealsCount > 0 || impactedPlanMealsCount > 0;
+    if (hasImpact && !input.force) {
+      return {
+        type: "impact_warning",
+        impactedDates: [input.dateKey],
+        impactedLogMealsCount,
+        impactedPlanMealsCount,
+      };
+    }
+
     await tx.logEntry.deleteMany({
       where: {
         logId: input.logId,
         date: targetDate,
       },
     });
+    // Keep planner dates synced with log date removals.
+    await tx.planSlot.deleteMany({
+      where: {
+        planId: logWithPlan.planId,
+        date: targetDate,
+      },
+    });
+
+    const remainingPlanBounds = await tx.planSlot.aggregate({
+      where: { planId: logWithPlan.planId },
+      _min: { date: true },
+      _max: { date: true },
+    });
+    if (remainingPlanBounds._min.date && remainingPlanBounds._max.date) {
+      await tx.plan.update({
+        where: { id: logWithPlan.planId },
+        data: {
+          startDate: remainingPlanBounds._min.date,
+          endDate: remainingPlanBounds._max.date,
+        },
+      });
+    }
 
     const remainingDays = await tx.logEntry.findMany({
       where: { logId: input.logId },
@@ -244,6 +375,7 @@ export async function removeLogDay(input: { logId: string; dateKey: string }) {
     });
 
     return {
+      type: "success",
       nextDayKey: remainingDays[0]?.date.toISOString().slice(0, 10) ?? null,
     };
   });

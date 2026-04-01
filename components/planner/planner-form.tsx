@@ -167,6 +167,11 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
     setIsSaving(true);
     try {
       const result = await savePlan(plan);
+      if (result.type === "date_conflict") {
+        // Hard-block collisions so one plan/log owner exists per date globally.
+        toast.error(`Cannot save plan. Date conflict: ${result.dates.join(", ")}`);
+        return;
+      }
       if (result.type === "error") {
         toast.error(result.message);
         return;
