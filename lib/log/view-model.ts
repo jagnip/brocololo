@@ -20,6 +20,8 @@ type LogIngredientRow = {
 
 type LogRecipeRow = {
   id: string;
+  /** Set when this row came from dragging a planner-pool card (reserves a plan slot). */
+  planSlotId?: string | null;
   sourceRecipe:
     | {
         id: string;
@@ -274,30 +276,10 @@ export function buildVisiblePlannerPoolCards(params: {
   items: PlannerPoolCardData[];
   entries: LogEntryRow[];
 }): PlannerPoolCardData[] {
-  const { items, entries } = params;
-  const placedCounts = new Map<string, number>();
-
-  for (const entry of entries) {
-    for (const recipe of entry.recipes) {
-      const key = plannerPoolMatchKey({
-        sourceRecipeId: recipe.sourceRecipe?.id ?? null,
-      });
-      placedCounts.set(key, (placedCounts.get(key) ?? 0) + 1);
-    }
-  }
-
-  const visible: PlannerPoolCardData[] = [];
-  for (const item of items) {
-    const key = plannerPoolMatchKey(item);
-    const remaining = placedCounts.get(key) ?? 0;
-    if (remaining > 0) {
-      placedCounts.set(key, remaining - 1);
-      continue;
-    }
-    visible.push(item);
-  }
-
-  return visible;
+  const { items } = params;
+  // Source of truth is planner slot `used` state (pool query already returns unused slots only).
+  // Do not subtract by log placements here, otherwise one placement hides two duplicate lines.
+  return items;
 }
 
 export function buildGroupedPlannerPoolCards(

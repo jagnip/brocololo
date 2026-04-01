@@ -5,10 +5,12 @@ import type { PlanInputType } from "@/types/planner";
 import { PlannerMealType } from "@/src/generated/enums";
 
 const pushMock = vi.hoisted(() => vi.fn());
+const refreshMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/actions/planner-actions", () => ({
   updateSavedPlan: vi.fn(),
   generateLogFromPlan: vi.fn(),
+  deletePlanAction: vi.fn(),
 }));
 
 vi.mock("./plan-view", () => ({
@@ -73,12 +75,12 @@ vi.mock("next/navigation", async () => {
   const actual = await vi.importActual<typeof import("next/navigation")>("next/navigation");
   return {
     ...actual,
-    useRouter: () => ({ push: pushMock }),
+    useRouter: () => ({ push: pushMock, refresh: refreshMock }),
   };
 });
 
 import { toast } from "sonner";
-import { generateLogFromPlan, updateSavedPlan } from "@/actions/planner-actions";
+import { deletePlanAction, generateLogFromPlan, updateSavedPlan } from "@/actions/planner-actions";
 import { PlanEditor } from "./plan-editor";
 
 function createRecipe(id: string) {
@@ -104,6 +106,7 @@ describe("PlanEditor manual save", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     pushMock.mockClear();
+    refreshMock.mockClear();
   });
 
   it("does not auto-save when the user edits the plan", async () => {
@@ -349,6 +352,22 @@ describe("PlanEditor manual save", () => {
       "Cannot generate log. These dates already exist in a log: Apr 10, 2026, Apr 12, 2026",
     );
     expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("redirects to current planner route after deleting a plan", async () => {
+    const user = userEvent.setup();
+    vi.mocked(deletePlanAction).mockResolvedValue({ type: "success" });
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    render(<PlanEditor planId="plan-1" initialPlan={initialPlanForTests()} recipes={[]} />);
+
+    await user.click(screen.getByRole("button", { name: "Delete plan" }));
+
+    expect(vi.mocked(deletePlanAction)).toHaveBeenCalledWith("plan-1");
+    expect(pushMock).toHaveBeenCalledWith("/plan/current");
+    expect(refreshMock).toHaveBeenCalled();
+
+    confirmSpy.mockRestore();
   });
 });
 

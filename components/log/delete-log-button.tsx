@@ -33,7 +33,7 @@ export function DeleteLogButton({ logId }: DeleteLogButtonProps) {
             toast.error(result.message);
             return;
           }
-          router.push(ROUTES.log);
+          router.push(ROUTES.recipes);
           router.refresh();
         } finally {
           setIsDeleting(false);

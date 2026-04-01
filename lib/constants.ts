@@ -22,6 +22,7 @@ export const ROUTES = {
   ingredients: "/ingredients",
   ingredientCreate: "/ingredients/create",
   ingredientEdit: (slug: string) => `/ingredients/${slug}/edit`,
+  /** URL prefix for planner routes; index redirects to /plan/current. */
   plan: "/plan",
   /** Left nav “Planner” — opens today’s plan (or latest), like Log → current log. */
   planCurrent: "/plan/current",
@@ -29,6 +30,7 @@ export const ROUTES = {
   planView: (planId: string) => `/plan/${planId}`,
   groceries: "/groceries",
   groceriesView: (planId: string) => `/groceries/${planId}`,
+  /** URL prefix for log routes; there is no list page at this path (index redirects). */
   log: "/log",
   logCurrent: "/log/current",
   logView: (logId: string) => `/log/${logId}`,

@@ -345,12 +345,16 @@ export async function getPlannerPoolItemsForPlan(params: {
   const slots = await getPlanById(params.planId);
   if (!slots) return [];
 
-  // Pool only reflects recipes assigned to planner slots — not baseline snack prefills (e.g. fixed snack).
+  // Pool = unused plan slots only: matches planner "used" checkmarks and reserveNextUnusedPlanSlot.
   const items: PlannerPoolItem[] = [];
   for (const slot of slots) {
     if (!slot.recipe) continue;
+    if (slot.used) {
+      continue;
+    }
     const dayKey = slot.date.toISOString().slice(0, 10);
     const mealType = toLogMealType(slot.mealType);
+
     items.push({
       id: `plan-${dayKey}-${mealType}-${slot.recipe.id}`,
       date: slot.date,

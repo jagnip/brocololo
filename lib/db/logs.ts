@@ -12,6 +12,27 @@ import type {
   UpdateLogRecipeIngredientsInput,
 } from "@/lib/validations/log";
 
+/** Release every plan slot reserved by this entry’s recipes (avoids orphaned `used` slots). */
+async function releasePlanSlotsLinkedToEntryRecipes(
+  tx: Prisma.TransactionClient,
+  entryId: string,
+) {
+  const rows = await tx.logEntryRecipe.findMany({
+    where: { entryId },
+    select: { planSlotId: true },
+  });
+  const released = new Set<string>();
+  for (const row of rows) {
+    if (row.planSlotId && !released.has(row.planSlotId)) {
+      released.add(row.planSlotId);
+      await releaseReservedPlanSlotTx({
+        tx,
+        planSlotId: row.planSlotId,
+      });
+    }
+  }
+}
+
 export async function getLogs() {
   return prisma.log.findMany({
     orderBy: { createdAt: "desc" },
@@ -26,6 +47,21 @@ export async function getLogs() {
         },
       },
     },
+  });
+}
+
+export type LogListEntry = Awaited<ReturnType<typeof getLogs>>[number];
+
+/** Log whose plan range contains the given calendar day (UTC date keys), if any. */
+export function findLogContainingDate(
+  logs: LogListEntry[],
+  date: Date,
+): LogListEntry | undefined {
+  const targetKey = date.toISOString().slice(0, 10);
+  return logs.find((log) => {
+    const startKey = log.plan.startDate.toISOString().slice(0, 10);
+    const endKey = log.plan.endDate.toISOString().slice(0, 10);
+    return targetKey >= startKey && targetKey <= endKey;
   });
 }
 
@@ -61,6 +97,7 @@ export async function getLogById(logId: string, person: LogPerson) {
             select: {
               id: true,
               position: true,
+              planSlotId: true,
               sourceRecipe: {
                 select: {
                   id: true,
@@ -297,6 +334,8 @@ export async function upsertLogSlot(input: UpsertLogSlotInput) {
 
     await assertIngredientRowsHaveSupportedUnits(tx, input.ingredients);
 
+    await releasePlanSlotsLinkedToEntryRecipes(tx, input.entryId);
+
     await tx.logIngredient.deleteMany({
       where: {
         entryId: input.entryId,
@@ -361,19 +400,7 @@ export async function placePlannerPoolItemInEntry(input: PlacePlannerPoolItemInp
 
     await assertIngredientRowsHaveSupportedUnits(tx, input.ingredients);
 
-    const existingRecipeForEntry = await tx.logEntryRecipe.findFirst({
-      where: {
-        entryId: input.entryId,
-      },
-      select: { planSlotId: true },
-    });
-
-    if (existingRecipeForEntry?.planSlotId) {
-      await releaseReservedPlanSlotTx({
-        tx,
-        planSlotId: existingRecipeForEntry.planSlotId,
-      });
-    }
+    await releasePlanSlotsLinkedToEntryRecipes(tx, input.entryId);
 
     const reservedPlanSlotId = await reserveNextUnusedPlanSlotTx({
       tx,
@@ -435,19 +462,7 @@ export async function clearLogEntryAssignment(input: ClearLogEntryAssignmentInpu
       throw new Error("LOG_ENTRY_NOT_FOUND");
     }
 
-    const existingRecipeForEntry = await tx.logEntryRecipe.findFirst({
-      where: {
-        entryId: input.entryId,
-      },
-      select: { planSlotId: true },
-    });
-
-    if (existingRecipeForEntry?.planSlotId) {
-      await releaseReservedPlanSlotTx({
-        tx,
-        planSlotId: existingRecipeForEntry.planSlotId,
-      });
-    }
+    await releasePlanSlotsLinkedToEntryRecipes(tx, input.entryId);
 
     await tx.logIngredient.deleteMany({
       where: {
@@ -539,6 +554,7 @@ export async function replaceMealSlotWithRecipe(input: ParsedAddRecipeToLogInput
       },
       select: {
         id: true,
+        planId: true,
       },
     });
     if (!activeLog) {
@@ -568,6 +584,8 @@ export async function replaceMealSlotWithRecipe(input: ParsedAddRecipeToLogInput
       },
     });
 
+    await releasePlanSlotsLinkedToEntryRecipes(tx, entry.id);
+
     await tx.logIngredient.deleteMany({
       where: {
         entryId: entry.id,
@@ -579,10 +597,21 @@ export async function replaceMealSlotWithRecipe(input: ParsedAddRecipeToLogInput
       },
     });
 
+    // Keep planner/log counts in sync: one recipe-page add consumes one planned instance (FIFO).
+    const reservedPlanSlotId =
+      input.mealType === LogMealType.SNACK
+        ? null
+        : await reserveNextUnusedPlanSlotTx({
+            tx,
+            planId: activeLog.planId,
+            recipeId: input.recipeId,
+          });
+
     const createdRecipe = await tx.logEntryRecipe.create({
       data: {
         entryId: entry.id,
         sourceRecipeId: input.recipeId,
+        planSlotId: reservedPlanSlotId ?? undefined,
         position: 0,
       },
       select: {

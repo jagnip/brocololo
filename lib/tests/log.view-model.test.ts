@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { LogMealType } from "@/src/generated/enums";
-import { buildLogDays } from "@/lib/log/view-model";
+import {
+  buildLogDays,
+  buildVisiblePlannerPoolCards,
+} from "@/lib/log/view-model";
 
 const gramsUnit = { id: "unit-grams", name: "grams" };
 
@@ -139,20 +142,6 @@ describe("buildLogDays", () => {
               unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
             },
           },
-          {
-            entryRecipeId: null,
-            amount: 20,
-            unit: gramsUnit,
-            ingredient: {
-              id: "ing-null",
-              name: "Ingredient Null",
-              calories: 999,
-              proteins: 999,
-              fats: 999,
-              carbs: 999,
-              unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
-            },
-          },
         ],
       },
     ]);
@@ -215,5 +204,78 @@ describe("buildLogDays", () => {
       fats: 4,
       carbs: 10,
     });
+  });
+});
+
+describe("buildVisiblePlannerPoolCards", () => {
+  const poolItem = (id: string, recipeId: string) => ({
+    id,
+    date: new Date("2026-03-30T00:00:00.000Z"),
+    dateKey: "2026-03-30",
+    mealType: LogMealType.DINNER,
+    mealLabel: "Dinner" as const,
+    title: "Red cabbage",
+    sourceRecipeId: recipeId,
+    imageUrl: null,
+    ingredients: [] as Array<{
+      ingredientId: string;
+      unitId: string;
+      amount: number;
+    }>,
+  });
+
+  it("hides one pool card per plan-linked log recipe, not per manual recipe", () => {
+    const items = [poolItem("p1", "rec-a"), poolItem("p2", "rec-a")];
+    const entries = [
+      {
+        id: "e1",
+        date: new Date("2026-03-30T00:00:00.000Z"),
+        mealType: LogMealType.LUNCH,
+        recipes: [
+          {
+            id: "er-manual",
+            planSlotId: null,
+            sourceRecipe: {
+              id: "rec-a",
+              name: "Red cabbage",
+              slug: "rc",
+              images: [],
+            },
+          },
+        ],
+        ingredients: [],
+      },
+    ];
+
+    const visible = buildVisiblePlannerPoolCards({ items, entries });
+    expect(visible).toHaveLength(2);
+  });
+
+  it("does not subtract pool lines by log placements (planner used-state is source of truth)", () => {
+    const items = [poolItem("p1", "rec-a"), poolItem("p2", "rec-a")];
+    const entries = [
+      {
+        id: "e1",
+        date: new Date("2026-03-30T00:00:00.000Z"),
+        mealType: LogMealType.LUNCH,
+        recipes: [
+          {
+            id: "er-pool",
+            planSlotId: "slot-1",
+            sourceRecipe: {
+              id: "rec-a",
+              name: "Red cabbage",
+              slug: "rc",
+              images: [],
+            },
+          },
+        ],
+        ingredients: [],
+      },
+    ];
+
+    const visible = buildVisiblePlannerPoolCards({ items, entries });
+    expect(visible).toHaveLength(2);
+    expect(visible.map((item) => item.id)).toEqual(["p1", "p2"]);
   });
 });

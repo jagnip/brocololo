@@ -172,31 +172,9 @@ export function LogDayView({
     useSensor(KeyboardSensor),
   );
 
-  const plannerPoolByKey = (() => {
-    const keyCountByPool = new Map<string, number>();
-    for (const day of localDays) {
-      for (const slot of day.slots) {
-        for (const recipe of slot.recipes) {
-          const key = recipe.sourceRecipeId ?? "none";
-          keyCountByPool.set(key, (keyCountByPool.get(key) ?? 0) + 1);
-        }
-      }
-    }
+  // Pool list comes from the server only (unused plan slots + buildVisiblePlannerPoolCards).
 
-    const visible: PlannerPoolCardData[] = [];
-    for (const item of plannerPool) {
-      const key = item.sourceRecipeId ?? "none";
-      const remaining = keyCountByPool.get(key) ?? 0;
-      if (remaining > 0) {
-        keyCountByPool.set(key, remaining - 1);
-        continue;
-      }
-      visible.push(item);
-    }
-
-    return visible;
-  })();
-  const groupedPlannerPool = buildGroupedPlannerPoolCards(plannerPoolByKey);
+  const groupedPlannerPool = buildGroupedPlannerPoolCards(plannerPool);
 
   useEffect(() => {
     setLocalDays(days);
@@ -559,6 +537,8 @@ export function LogDayView({
           initialRows,
         });
       }
+
+      router.refresh();
     });
   };
 
@@ -592,6 +572,8 @@ export function LogDayView({
       );
 
       setSelectedSlot((prev) => (prev?.entryId === slot.entryId ? null : prev));
+
+      router.refresh();
     });
   };
 

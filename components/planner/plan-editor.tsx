@@ -314,7 +314,7 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
                   toast.error(result.message);
                   return;
                 }
-                router.push(ROUTES.plan);
+                router.push(ROUTES.planCurrent);
                 router.refresh();
               } finally {
                 setDeleteStatus("idle");

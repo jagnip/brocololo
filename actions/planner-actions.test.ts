@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { deletePlanById, updatePlan } from "@/lib/db/planner";
 import { revalidatePath } from "next/cache";
 import { deletePlanAction, updateSavedPlan } from "./planner-actions";
+import { ROUTES } from "@/lib/constants";
 
 vi.mock("@/lib/db/planner", () => ({
   updatePlan: vi.fn(),
@@ -69,5 +70,8 @@ describe("deletePlanAction", () => {
     const result = await deletePlanAction("plan-1");
     expect(result).toEqual({ type: "success" });
     expect(deletePlanById).toHaveBeenCalledWith("plan-1");
+    expect(revalidatePath).toHaveBeenCalledWith(ROUTES.planCurrent);
+    expect(revalidatePath).toHaveBeenCalledWith(ROUTES.log);
+    expect(revalidatePath).toHaveBeenCalledWith("/");
   });
 });
