@@ -13,7 +13,7 @@ import {
 import { LogDayView } from "@/components/log/log-day-view";
 import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
 import { LogPageHeader } from "@/components/log/log-page-header";
-import { PageHeader } from "../page-header";
+import { LogTopbarConfig } from "@/components/log/log-topbar-config";
 
 type LogDetailPageContainerProps = {
   logId: string;
@@ -128,7 +128,8 @@ export async function LogPage({
   });
   return (
     <>
-      
+      <LogTopbarConfig planId={log.plan.id} />
+
       <LogPageHeader logOptions={logOptions} logId={logId} person={person} />
 
       <LogDayView
