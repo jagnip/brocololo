@@ -167,6 +167,8 @@ export async function appendNextLogDayAction(input: AppendNextLogDayInput) {
   try {
     const result = await appendNextLogDay(parsed.data);
     revalidatePath(ROUTES.logView(parsed.data.logId));
+    revalidatePath(ROUTES.planView(result.planId));
+    revalidatePath(ROUTES.planCurrent);
     return { type: "success" as const, dateKey: result.dateKey };
   } catch (error) {
     console.error("Error appending next log day", error);
@@ -188,8 +190,11 @@ export async function removeLogDayAction(input: RemoveLogDayInput) {
 
   try {
     const result = await removeLogDay(parsed.data);
+    if (result.type === "impact_warning") {
+      return result;
+    }
     revalidatePath(ROUTES.logView(parsed.data.logId));
-    return { type: "success" as const, nextDayKey: result.nextDayKey };
+    return result;
   } catch (error) {
     console.error("Error removing log day", error);
     if (error instanceof Error && error.message === "CANNOT_REMOVE_LAST_LOG_DAY") {

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PlanInputType } from "@/types/planner";
@@ -222,6 +222,48 @@ describe("PlanEditor manual save", () => {
     });
   });
 
+  it("shows sync warning dialog and retries with force when confirmed", async () => {
+    const user = userEvent.setup();
+    const recipeA = createRecipe("recipe-a");
+    const recipeB = createRecipe("recipe-b");
+    const recipeC = createRecipe("recipe-c");
+
+    vi.mocked(updateSavedPlan)
+      .mockResolvedValueOnce({
+        type: "sync_conflict",
+        impactedDates: ["2026-03-17"],
+        impactedLogMealsCount: 2,
+        impactedPlanMealsCount: 1,
+      } as any)
+      .mockResolvedValueOnce({ type: "success" } as any);
+
+    render(
+      <PlanEditor
+        planId="plan-1"
+        initialPlan={[
+          {
+            date: new Date("2026-03-17T00:00:00.000Z"),
+            mealType: "DINNER" as any,
+            recipe: recipeA,
+            alternatives: [recipeB, recipeC],
+            used: false,
+          },
+        ]}
+        recipes={[]}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Shuffle" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(screen.getByText(/sync will remove existing meals/i)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Save and sync" }));
+
+    expect(vi.mocked(updateSavedPlan).mock.calls[1]?.[2]).toEqual({
+      forceDestructiveSync: true,
+    });
+  });
+
   it("rebase creates empty slots and marks editor dirty when date range changes", async () => {
     const user = userEvent.setup();
 
@@ -357,17 +399,16 @@ describe("PlanEditor manual save", () => {
   it("redirects to current planner route after deleting a plan", async () => {
     const user = userEvent.setup();
     vi.mocked(deletePlanAction).mockResolvedValue({ type: "success" });
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
 
     render(<PlanEditor planId="plan-1" initialPlan={initialPlanForTests()} recipes={[]} />);
 
     await user.click(screen.getByRole("button", { name: "Delete plan" }));
+    const dialog = screen.getByRole("alertdialog");
+    await user.click(within(dialog).getByRole("button", { name: "Delete plan" }));
 
     expect(vi.mocked(deletePlanAction)).toHaveBeenCalledWith("plan-1");
     expect(pushMock).toHaveBeenCalledWith("/plan/current");
     expect(refreshMock).toHaveBeenCalled();
-
-    confirmSpy.mockRestore();
   });
 });
 

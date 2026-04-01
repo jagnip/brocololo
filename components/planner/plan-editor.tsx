@@ -12,6 +12,16 @@ import { useRouter } from "next/navigation";
 import { deletePlanAction, generateLogFromPlan, updateSavedPlan } from "@/actions/planner-actions";
 import { WeekPicker, getDefaultDateRange, type DateRangeValue } from "./date-range-picker";
 import { rebasePlanSlotsByDateRangeDelta } from "@/lib/planner/plan-date-rebase";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type PlanEditorProps = {
   planId: string;
@@ -20,6 +30,12 @@ type PlanEditorProps = {
 };
 
 type SaveStatus = "idle" | "saving";
+type SyncConflictState = {
+  impactedDates: string[];
+  impactedLogMealsCount: number;
+  impactedPlanMealsCount: number;
+  saveData: SlotSaveData[];
+};
 
 export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
   const [plan, setPlan] = useState<PlanInputType>(initialPlan);
@@ -32,6 +48,8 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
   const router = useRouter();
   const [logStatus, setLogStatus] = useState<"idle" | "generating">("idle");
   const [deleteStatus, setDeleteStatus] = useState<"idle" | "deleting">("idle");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [syncConflict, setSyncConflict] = useState<SyncConflictState | null>(null);
 
   function formatDateKeysForToast(dateKeys: string[]) {
     // Format YYYY-MM-DD as a readable UTC date string to avoid timezone drift.
@@ -93,6 +111,16 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
     }));
 
     const result = await updateSavedPlan(planId, saveData);
+    if (result.type === "sync_conflict") {
+      setSaveStatus("idle");
+      setSyncConflict({
+        impactedDates: result.impactedDates,
+        impactedLogMealsCount: result.impactedLogMealsCount,
+        impactedPlanMealsCount: result.impactedPlanMealsCount,
+        saveData,
+      });
+      return;
+    }
     if (result.type === "error") {
       setSaveStatus("idle");
       toast.error(result.message);
@@ -243,6 +271,100 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
 
   return (
     <>
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this plan permanently?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setDeleteStatus("deleting");
+                void (async () => {
+                  try {
+                    const result = await deletePlanAction(planId);
+                    if (result.type === "error") {
+                      toast.error(result.message);
+                      return;
+                    }
+                    router.push(ROUTES.planCurrent);
+                    router.refresh();
+                  } finally {
+                    setDeleteStatus("idle");
+                    setIsDeleteDialogOpen(false);
+                  }
+                })();
+              }}
+            >
+              Delete plan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={syncConflict != null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSyncConflict(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sync will remove existing meals</AlertDialogTitle>
+            <AlertDialogDescription>
+              {syncConflict
+                ? `This update removes ${syncConflict.impactedLogMealsCount} non-empty log meals and ${syncConflict.impactedPlanMealsCount} planned meals across ${syncConflict.impactedDates.length} day(s).`
+                : "This update will remove meals."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!syncConflict) {
+                  return;
+                }
+                setSaveStatus("saving");
+                void (async () => {
+                  const forcedResult = await updateSavedPlan(
+                    planId,
+                    syncConflict.saveData,
+                    { forceDestructiveSync: true },
+                  );
+                  if (forcedResult.type === "error") {
+                    toast.error(forcedResult.message);
+                    setSaveStatus("idle");
+                    return;
+                  }
+                  if (forcedResult.type === "sync_conflict") {
+                    setSyncConflict({
+                      impactedDates: forcedResult.impactedDates,
+                      impactedLogMealsCount: forcedResult.impactedLogMealsCount,
+                      impactedPlanMealsCount: forcedResult.impactedPlanMealsCount,
+                      saveData: syncConflict.saveData,
+                    });
+                    setSaveStatus("idle");
+                    return;
+                  }
+                  setSyncConflict(null);
+                  setSaveStatus("idle");
+                  setIsDirty(false);
+                  allSlotsRef.current = plan;
+                })();
+              }}
+            >
+              Save and sync
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-lg font-semibold">Edit plan</h1>
         <div className="flex items-center gap-2">
@@ -301,24 +423,8 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
             type="button"
             variant="destructive"
             disabled={saveStatus === "saving" || logStatus === "generating" || deleteStatus === "deleting"}
-            onClick={async () => {
-              const confirmed = window.confirm(
-                "Delete this plan permanently? This cannot be undone.",
-              );
-              if (!confirmed) return;
-
-              setDeleteStatus("deleting");
-              try {
-                const result = await deletePlanAction(planId);
-                if (result.type === "error") {
-                  toast.error(result.message);
-                  return;
-                }
-                router.push(ROUTES.planCurrent);
-                router.refresh();
-              } finally {
-                setDeleteStatus("idle");
-              }
+            onClick={() => {
+              setIsDeleteDialogOpen(true);
             }}
           >
             <Trash2 className="h-4 w-4" />
