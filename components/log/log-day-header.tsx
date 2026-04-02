@@ -60,7 +60,7 @@ export function LogDayHeader({
 
   return (
     <div>
-      <PageHeader title="Log details" className="mb-4" />
+      <PageHeader title="Log details"/>
 
       <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-2">
         <div className="flex flex-nowrap items-center gap-1.5 md:flex-wrap md:gap-2">
