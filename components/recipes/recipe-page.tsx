@@ -74,7 +74,7 @@ export default function RecipePage({
           id: "edit-recipe",
           label: "Edit recipe",
           href: ROUTES.recipeEdit(recipe.slug),
-          variant: "default" as const,
+          variant: "outline" as const,
           size: "default" as const,
         },
       ],
@@ -86,7 +86,7 @@ export default function RecipePage({
       <TopbarConfigController config={topbarConfig} />
 
       <div className="grid grid-cols-1 gap-block md:grid-cols-5 md:gap-block">
-        <div className="order-1 md:order-0 md:col-span-5 flex flex-col gap-tight">
+        <div className="order-1 md:order-0 md:col-span-5 flex flex-col ">
           <PageHeader title={recipe.name} />
           <Breadcrumbs
             // Keep list context when users navigate back to the recipes index.

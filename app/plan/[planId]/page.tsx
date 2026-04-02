@@ -18,7 +18,7 @@ export default async function PlanPage({
               id: "new-plan",
               label: "New plan",
               href: ROUTES.planCreate,
-              variant: "default" as const,
+              variant: "outline" as const,
               size: "default" as const,
             },
           ],

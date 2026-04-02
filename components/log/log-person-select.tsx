@@ -27,7 +27,8 @@ export function LogPersonSelect({ value }: LogPersonSelectProps) {
 
   return (
     <Select value={value} onValueChange={handleValueChange}>
-      <SelectTrigger className="w-44">
+      {/* Narrower on small phones so day + person + day actions fit one row with the log header. */}
+      <SelectTrigger className="w-32 shrink-0 sm:w-44">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

@@ -60,24 +60,27 @@ export function LogDayHeader({
 
   return (
     <div>
-      <PageHeader title="Log details" className="mb-2" />
+      <PageHeader title="Log details"/>
 
       <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Inputs order: day selector → person selector */}
+        <div className="flex flex-nowrap items-center gap-1.5 md:flex-wrap md:gap-2">
+          {/* Inputs order: day selector → person selector; single row on mobile (md+ may wrap). */}
 
-          <Select value={selectedDayKey} onValueChange={onSelectDay}>
-            <SelectTrigger className="min-w-48">
-              <SelectValue placeholder="Select a day" />
-            </SelectTrigger>
-            <SelectContent>
-              {days.map((d) => (
-                <SelectItem key={d.dateKey} value={d.dateKey}>
-                  {formatDayLabel(d.date)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Mobile: grows in the one-row toolbar; md+: fixed width like desktop (12rem). */}
+          <div className="min-w-0 flex-1 md:flex-none md:w-48">
+            <Select value={selectedDayKey} onValueChange={onSelectDay}>
+              <SelectTrigger className="w-full min-w-0">
+                <SelectValue placeholder="Select a day" />
+              </SelectTrigger>
+              <SelectContent>
+                {days.map((d) => (
+                  <SelectItem key={d.dateKey} value={d.dateKey}>
+                    {formatDayLabel(d.date)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {person ? <LogPersonSelect value={person} /> : null}
 
@@ -86,6 +89,7 @@ export function LogDayHeader({
             type="button"
             variant="outline"
             size="icon"
+            className="shrink-0"
             disabled={isAddingDay || !logId}
             onClick={onAddDay}
             aria-label="Add day"
@@ -97,6 +101,7 @@ export function LogDayHeader({
             type="button"
             variant="outline"
             size="icon"
+            className="shrink-0"
             disabled={isRemovingDay || !logId}
             aria-label={`Remove day ${formatDayLabel(day.date)}`}
             onClick={onRemoveDay}
