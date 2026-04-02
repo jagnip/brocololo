@@ -1,10 +1,21 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { LogDayData } from "@/lib/log/view-model";
 import { formatDayLabel } from "@/lib/planner/helpers";
+import { PageHeader } from "../page-header";
+import { LogSelect, type LogSelectOption } from "./log-select";
+import { LogPersonSelect } from "./log-person-select";
+import { DeleteLogButton } from "./delete-log-button";
 
 function toDayMacros(day: LogDayData) {
   return day.slots.reduce(
@@ -24,37 +35,97 @@ function toDayMacros(day: LogDayData) {
 /** Title row for the active log day: label, remove, daily macro totals. */
 export type LogDayPanelHeaderProps = {
   day: LogDayData;
+  days: LogDayData[];
+  selectedDayKey: string;
+  onSelectDay: (dateKey: string) => void;
+  logOptions?: LogSelectOption[];
   logId?: string;
+  person?: "PRIMARY" | "SECONDARY";
+  isAddingDay: boolean;
+  onAddDay: () => void;
   isRemovingDay: boolean;
   onRemoveDay: () => void;
 };
 
 export function LogDayHeader({
   day,
+  days,
+  selectedDayKey,
+  onSelectDay,
+  logOptions = [],
   logId,
+  person,
+  isAddingDay,
+  onAddDay,
   isRemovingDay,
   onRemoveDay,
 }: LogDayPanelHeaderProps) {
   const dayMacros = toDayMacros(day);
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <h2 className="text-base font-medium">{formatDayLabel(day.date)}</h2>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="h-7 w-7"
-        disabled={isRemovingDay || !logId}
-        aria-label={`Remove day ${formatDayLabel(day.date)}`}
-        onClick={onRemoveDay}
-      >
-        <Trash2 className="h-4 w-4 text-muted-foreground" />
-      </Button>
-      <Badge variant="outline">{dayMacros.calories.toFixed(0)} kcal</Badge>
-      <Badge variant="outline">{dayMacros.proteins.toFixed(1)}g protein</Badge>
-      <Badge variant="outline">{dayMacros.fats.toFixed(1)}g fat</Badge>
-      <Badge variant="outline">{dayMacros.carbs.toFixed(1)}g carbs</Badge>
+    <div>
+      <PageHeader title="Log details" className="mb-2" />
+
+      <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Inputs order: log selector → day selector → person selector */}
+          {logId && logOptions.length > 0 ? (
+            <LogSelect logs={logOptions} currentLogId={logId} />
+          ) : null}
+
+          <Select value={selectedDayKey} onValueChange={onSelectDay}>
+            <SelectTrigger className="min-w-48">
+              <SelectValue placeholder="Select a day" />
+            </SelectTrigger>
+            <SelectContent>
+              {days.map((d) => (
+                <SelectItem key={d.dateKey} value={d.dateKey}>
+                  {formatDayLabel(d.date)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {person ? <LogPersonSelect value={person} /> : null}
+
+          {/* Actions order: add day → delete day → delete log */}
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={isAddingDay || !logId}
+            onClick={onAddDay}
+            aria-label="Add day"
+          >
+            <Plus />
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={isRemovingDay || !logId}
+            aria-label={`Remove day ${formatDayLabel(day.date)}`}
+            onClick={onRemoveDay}
+          >
+            <Trash2 />
+          </Button>
+
+          {logId ? <DeleteLogButton logId={logId} /> : null}
+        </div>
+
+        {/* Macro badges */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline">{dayMacros.calories.toFixed(0)} kcal</Badge>
+          <Badge variant="outline">
+            {dayMacros.proteins.toFixed(1)}g protein
+          </Badge>
+          <Badge variant="outline">{dayMacros.fats.toFixed(1)}g fat</Badge>
+          <Badge variant="outline">{dayMacros.carbs.toFixed(1)}g carbs</Badge>
+        </div>
+
+        {/* Actions */}
+      </div>
     </div>
   );
 }

@@ -16,7 +16,7 @@ export function LogPageHeader({
 }: LogPageHeaderProps) {
   return (
     <header className="flex flex-col gap-item">
-      <PageHeader title="Log details" className="mb-0" />
+      {/* <PageHeader title="Log details" className="mb-0" /> */}
       <div className="flex flex-wrap items-center gap-item">
         <LogSelect logs={logOptions} currentLogId={logId} />
         <LogPersonSelect value={person} />

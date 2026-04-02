@@ -18,6 +18,7 @@ import {
   type LogDayData,
   type PlannerPoolCardData,
 } from "@/lib/log/view-model";
+import type { LogSelectOption } from "@/components/log/log-select";
 import { LogSlot } from "./log-slot";
 import {
   LogIngredientsForm,
@@ -32,7 +33,6 @@ import {
   upsertLogSlotAction,
 } from "@/actions/log-actions";
 import { LogDayHeader } from "./log-day-header";
-import { LogDaySelector } from "./log-day-selector";
 import { LogPool } from "./log-pool";
 import { LogRemoveDayAlertDialog } from "./log-remove-day-alert-dialog";
 
@@ -132,6 +132,7 @@ type LogDayViewProps = {
   days: LogDayData[];
   plannerPool?: PlannerPoolCardData[];
   initialSelectedDayKey?: string;
+  logOptions?: LogSelectOption[];
   logId?: string;
   person?: "PRIMARY" | "SECONDARY";
   recipeOptions?: Array<{
@@ -153,6 +154,7 @@ export function LogDayView({
   days,
   plannerPool = [],
   initialSelectedDayKey,
+  logOptions = [],
   logId,
   person,
   recipeOptions = [],
@@ -586,6 +588,33 @@ export function LogDayView({
     });
   };
 
+  const handleSelectDay = (dateKey: string) => {
+    setSelectedDayKey(dateKey);
+    setSelectedSlot(null);
+  };
+
+  const handleAddDay = () => {
+    if (!logId) return;
+
+    startAddDayTransition(async () => {
+      const result = await appendNextLogDayAction({ logId });
+      if (result.type === "date_conflict") {
+        // Keep collision feedback explicit: hard-block without destructive override.
+        toast.error(`Cannot add day. Date conflict: ${result.dates.join(", ")}`);
+        return;
+      }
+      if (result.type === "error") {
+        toast.error(result.message);
+        return;
+      }
+
+      const nextPerson = person ?? "PRIMARY";
+      const nextUrl = `${ROUTES.logView(logId)}?person=${nextPerson}&day=${result.dateKey}`;
+      router.push(nextUrl);
+      router.refresh();
+    });
+  };
+
   if (days.length === 0) {
     return (
       <section className="rounded-lg border p-6 space-y-3">
@@ -601,7 +630,7 @@ export function LogDayView({
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      <section className="mt-8 space-y-8">
+      <section className="space-y-8">
         <LogRemoveDayAlertDialog
           open={removeDayWarning != null}
           warning={
@@ -647,52 +676,50 @@ export function LogDayView({
             });
           }}
         />
-        {/* Keep the current stacking order on smaller screens. */}
-        <div className="lg:hidden">
-          <LogPool items={groupedPlannerPool} />
-        </div>
-        <LogDaySelector
-          days={localDays}
-          selectedDayKey={selectedDayKey}
-          onSelectDay={(dateKey) => {
-            setSelectedDayKey(dateKey);
-            setSelectedSlot(null);
-          }}
-          logId={logId}
-          isAddingDay={isAddingDay}
-          onAddDay={() => {
-            if (!logId) {
-              return;
-            }
-            startAddDayTransition(async () => {
-              const result = await appendNextLogDayAction({ logId });
-              if (result.type === "date_conflict") {
-                // Keep collision feedback explicit: hard-block without destructive override.
-                toast.error(
-                  `Cannot add day. Date conflict: ${result.dates.join(", ")}`,
-                );
-                return;
-              }
-              if (result.type === "error") {
-                toast.error(result.message);
-                return;
-              }
-              const nextPerson = person ?? "PRIMARY";
-              const nextUrl = `${ROUTES.logView(logId)}?person=${nextPerson}&day=${result.dateKey}`;
-              router.push(nextUrl);
-              router.refresh();
-            });
-          }}
-        />
         {localDays
           .filter((day) => day.dateKey === selectedDayKey)
           .map((day) => {
             const isActiveDay = selectedSlot?.dayKey === day.dateKey;
+
+            const slots = day.slots.map((slot) => (
+              <LogSlot
+                key={`${day.dateKey}-${slot.mealType}`}
+                dayKey={day.dateKey}
+                slot={slot}
+                onEmptyClick={() => selectEmptySlot(day, slot)}
+                onRecipeClick={(recipe) => selectRecipeSlot(day, slot, recipe)}
+                onRecipeRemove={() => handleRemovePlacedRecipe(slot)}
+              />
+            ));
+
+            const editor =
+              selectedSlot && isActiveDay ? (
+                <LogIngredientsForm
+                  title={selectedSlot.mealLabel}
+                  subtitle={selectedSlot.subtitle}
+                  initialRows={selectedSlot.initialRows}
+                  ingredientOptions={ingredientOptions}
+                  isSaving={isSaving}
+                  recipeOptions={recipeOptions}
+                  selectedRecipeId={selectedSlot.selectedRecipeId}
+                  initialSelectedRecipeId={selectedSlot.initialSelectedRecipeId}
+                  onSelectedRecipeIdChange={handleSelectedRecipeChange}
+                  onSave={handleSlotSave}
+                />
+              ) : null;
+
             return (
               <article key={day.dateKey} className="space-y-4">
                 <LogDayHeader
                   day={day}
+                  days={localDays}
+                  selectedDayKey={day.dateKey}
+                  onSelectDay={handleSelectDay}
+                  logOptions={logOptions}
                   logId={logId}
+                  person={person}
+                  isAddingDay={isAddingDay}
+                  onAddDay={handleAddDay}
                   isRemovingDay={isRemovingDay}
                   onRemoveDay={() => {
                     if (!logId) {
@@ -728,56 +755,24 @@ export function LogDayView({
                     });
                   }}
                 />
-                {/* Desktop: 3 columns (slots/editor/pool) with fixed spans. */}
-                <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-8 lg:gap-4 lg:items-stretch">
-                  {/* Pool: span 2 columns */}
-                  <div className="hidden lg:block lg:col-span-2 lg:min-h-0">
+
+                {/* Single responsive layout.
+                    Rendered once to avoid duplicated DOM nodes in JSDOM tests (Tailwind hiding doesn't apply there). */}
+                <div className="flex flex-col gap-4 lg:grid lg:grid-cols-8 lg:gap-4 lg:items-stretch">
+                  {/* Planner meals */}
+                  <div className="lg:col-span-2 lg:min-h-0">
                     <LogPool items={groupedPlannerPool} />
                   </div>
 
-                  {/* Slots: span 2 columns */}
+                  {/* Slots */}
                   <div className="lg:col-span-2">
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-                      {day.slots.map((slot) => (
-                        <LogSlot
-                          key={`${day.dateKey}-${slot.mealType}`}
-                          dayKey={day.dateKey}
-                          slot={slot}
-                          onEmptyClick={() => selectEmptySlot(day, slot)}
-                          onRecipeClick={(recipe) =>
-                            selectRecipeSlot(day, slot, recipe)
-                          }
-                          onRecipeRemove={() => handleRemovePlacedRecipe(slot)}
-                        />
-                      ))}
+                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-1">
+                      {slots}
                     </div>
                   </div>
 
-                  {/* Editor: span 4 columns */}
-                  <div
-                    className={
-                      isActiveDay
-                        ? "lg:col-span-4 min-h-0"
-                        : "hidden lg:block lg:col-span-4 lg:min-h-0"
-                    }
-                  >
-                    {isActiveDay ? (
-                      <LogIngredientsForm
-                        title={selectedSlot.mealLabel}
-                        subtitle={selectedSlot.subtitle}
-                        initialRows={selectedSlot.initialRows}
-                        ingredientOptions={ingredientOptions}
-                        isSaving={isSaving}
-                        recipeOptions={recipeOptions}
-                        selectedRecipeId={selectedSlot.selectedRecipeId}
-                        initialSelectedRecipeId={
-                          selectedSlot.initialSelectedRecipeId
-                        }
-                        onSelectedRecipeIdChange={handleSelectedRecipeChange}
-                        onSave={handleSlotSave}
-                      />
-                    ) : null}
-                  </div>
+                  {/* Details */}
+                  <div className="lg:col-span-4 min-h-0">{editor}</div>
                 </div>
               </article>
             );
