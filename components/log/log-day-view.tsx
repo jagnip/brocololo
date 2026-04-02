@@ -34,16 +34,7 @@ import {
 import { LogDayHeader } from "./log-day-header";
 import { LogDaySelector } from "./log-day-selector";
 import { LogPool } from "./log-pool";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { LogRemoveDayAlertDialog } from "./log-remove-day-alert-dialog";
 
 type SelectedSlotState = {
   dayKey: string;
@@ -611,61 +602,55 @@ export function LogDayView({
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <section className="mt-8 space-y-8">
-        <AlertDialog
+        <LogRemoveDayAlertDialog
           open={removeDayWarning != null}
+          warning={
+            removeDayWarning
+              ? {
+                  impactedLogMealsCount: removeDayWarning.impactedLogMealsCount,
+                  impactedPlanMealsCount:
+                    removeDayWarning.impactedPlanMealsCount,
+                }
+              : null
+          }
           onOpenChange={(open) => {
-            if (!open) {
-              setRemoveDayWarning(null);
-            }
+            if (!open) setRemoveDayWarning(null);
           }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete day and synced plan meals?</AlertDialogTitle>
-              <AlertDialogDescription>
-                {removeDayWarning
-                  ? `This will remove ${removeDayWarning.impactedLogMealsCount} non-empty log meals and ${removeDayWarning.impactedPlanMealsCount} planned meals for this date.`
-                  : "This action cannot be undone."}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => {
-                  if (!removeDayWarning || !logId) {
-                    return;
-                  }
-                  startRemoveDayTransition(async () => {
-                    const forcedResult = await removeLogDayAction({
-                      logId,
-                      dateKey: removeDayWarning.dateKey,
-                      force: true,
-                    });
-                    if (forcedResult.type === "error") {
-                      toast.error(forcedResult.message);
-                      return;
-                    }
-                    const nextPerson = person ?? "PRIMARY";
-                    if (forcedResult.type === "success" && forcedResult.nextDayKey) {
-                      router.push(
-                        `${ROUTES.logView(logId)}?person=${nextPerson}&day=${forcedResult.nextDayKey}`,
-                      );
-                    } else {
-                      router.push(
-                        `${ROUTES.logView(logId)}?person=${nextPerson}`,
-                      );
-                    }
-                    setRemoveDayWarning(null);
-                    router.refresh();
-                  });
-                }}
-              >
-                Delete day
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-        <LogPool items={groupedPlannerPool} />
+          onConfirm={() => {
+            if (!removeDayWarning || !logId) {
+              return;
+            }
+
+            const warningSnapshot = removeDayWarning;
+            startRemoveDayTransition(async () => {
+              const forcedResult = await removeLogDayAction({
+                logId,
+                dateKey: warningSnapshot.dateKey,
+                force: true,
+              });
+              if (forcedResult.type === "error") {
+                toast.error(forcedResult.message);
+                return;
+              }
+
+              const nextPerson = person ?? "PRIMARY";
+              if (forcedResult.type === "success" && forcedResult.nextDayKey) {
+                router.push(
+                  `${ROUTES.logView(logId)}?person=${nextPerson}&day=${forcedResult.nextDayKey}`,
+                );
+              } else {
+                router.push(`${ROUTES.logView(logId)}?person=${nextPerson}`);
+              }
+
+              setRemoveDayWarning(null);
+              router.refresh();
+            });
+          }}
+        />
+        {/* Keep the current stacking order on smaller screens. */}
+        <div className="lg:hidden">
+          <LogPool items={groupedPlannerPool} />
+        </div>
         <LogDaySelector
           days={localDays}
           selectedDayKey={selectedDayKey}
@@ -702,6 +687,7 @@ export function LogDayView({
         {localDays
           .filter((day) => day.dateKey === selectedDayKey)
           .map((day) => {
+            const isActiveDay = selectedSlot?.dayKey === day.dateKey;
             return (
               <article key={day.dateKey} className="space-y-4">
                 <LogDayHeader
@@ -742,36 +728,57 @@ export function LogDayView({
                     });
                   }}
                 />
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  {day.slots.map((slot) => (
-                    <LogSlot
-                      key={`${day.dateKey}-${slot.mealType}`}
-                      dayKey={day.dateKey}
-                      slot={slot}
-                      onEmptyClick={() => selectEmptySlot(day, slot)}
-                      onRecipeClick={(recipe) =>
-                        selectRecipeSlot(day, slot, recipe)
-                      }
-                      onRecipeRemove={() => handleRemovePlacedRecipe(slot)}
-                    />
-                  ))}
-                </div>
-                {selectedSlot?.dayKey === day.dateKey ? (
-                  <LogIngredientsForm
-                    title={selectedSlot.mealLabel}
-                    subtitle={selectedSlot.subtitle}
-                    initialRows={selectedSlot.initialRows}
-                    ingredientOptions={ingredientOptions}
-                    isSaving={isSaving}
-                    recipeOptions={recipeOptions}
-                    selectedRecipeId={selectedSlot.selectedRecipeId}
-                    initialSelectedRecipeId={
-                      selectedSlot.initialSelectedRecipeId
+                {/* Desktop: 3 columns (slots/editor/pool) with fixed spans. */}
+                <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-8 lg:gap-4 lg:items-stretch">
+                  {/* Pool: span 2 columns */}
+                  <div className="hidden lg:block lg:col-span-2 lg:min-h-0">
+                    <LogPool items={groupedPlannerPool} />
+                  </div>
+
+                  {/* Slots: span 2 columns */}
+                  <div className="lg:col-span-2">
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                      {day.slots.map((slot) => (
+                        <LogSlot
+                          key={`${day.dateKey}-${slot.mealType}`}
+                          dayKey={day.dateKey}
+                          slot={slot}
+                          onEmptyClick={() => selectEmptySlot(day, slot)}
+                          onRecipeClick={(recipe) =>
+                            selectRecipeSlot(day, slot, recipe)
+                          }
+                          onRecipeRemove={() => handleRemovePlacedRecipe(slot)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Editor: span 4 columns */}
+                  <div
+                    className={
+                      isActiveDay
+                        ? "lg:col-span-4 min-h-0"
+                        : "hidden lg:block lg:col-span-4 lg:min-h-0"
                     }
-                    onSelectedRecipeIdChange={handleSelectedRecipeChange}
-                    onSave={handleSlotSave}
-                  />
-                ) : null}
+                  >
+                    {isActiveDay ? (
+                      <LogIngredientsForm
+                        title={selectedSlot.mealLabel}
+                        subtitle={selectedSlot.subtitle}
+                        initialRows={selectedSlot.initialRows}
+                        ingredientOptions={ingredientOptions}
+                        isSaving={isSaving}
+                        recipeOptions={recipeOptions}
+                        selectedRecipeId={selectedSlot.selectedRecipeId}
+                        initialSelectedRecipeId={
+                          selectedSlot.initialSelectedRecipeId
+                        }
+                        onSelectedRecipeIdChange={handleSelectedRecipeChange}
+                        onSave={handleSlotSave}
+                      />
+                    ) : null}
+                  </div>
+                </div>
               </article>
             );
           })}

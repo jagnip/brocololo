@@ -16,7 +16,7 @@ export function LogPool({ items }: LogPlannerPoolProps) {
           No planner meals left in pool.
         </div>
       ) : (
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
           {items.map((item) => (
             <LogPlannerPoolCard key={item.id} item={item} />
           ))}
