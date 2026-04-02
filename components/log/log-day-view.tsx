@@ -32,18 +32,8 @@ import {
   upsertLogSlotAction,
 } from "@/actions/log-actions";
 import { LogDayHeader } from "./log-day-header";
-import { LogDaySelector } from "./log-day-selector";
 import { LogPool } from "./log-pool";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { LogRemoveDayAlertDialog } from "./log-remove-day-alert-dialog";
 
 type SelectedSlotState = {
   dayKey: string;
@@ -595,6 +585,33 @@ export function LogDayView({
     });
   };
 
+  const handleSelectDay = (dateKey: string) => {
+    setSelectedDayKey(dateKey);
+    setSelectedSlot(null);
+  };
+
+  const handleAddDay = () => {
+    if (!logId) return;
+
+    startAddDayTransition(async () => {
+      const result = await appendNextLogDayAction({ logId });
+      if (result.type === "date_conflict") {
+        // Keep collision feedback explicit: hard-block without destructive override.
+        toast.error(`Cannot add day. Date conflict: ${result.dates.join(", ")}`);
+        return;
+      }
+      if (result.type === "error") {
+        toast.error(result.message);
+        return;
+      }
+
+      const nextPerson = person ?? "PRIMARY";
+      const nextUrl = `${ROUTES.logView(logId)}?person=${nextPerson}&day=${result.dateKey}`;
+      router.push(nextUrl);
+      router.refresh();
+    });
+  };
+
   if (days.length === 0) {
     return (
       <section className="rounded-lg border p-6 space-y-3">
@@ -610,91 +627,48 @@ export function LogDayView({
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      <section className="mt-8 space-y-8">
-        <AlertDialog
+      <section className="space-y-8">
+        <LogRemoveDayAlertDialog
           open={removeDayWarning != null}
+          warning={
+            removeDayWarning
+              ? {
+                  impactedLogMealsCount: removeDayWarning.impactedLogMealsCount,
+                  impactedPlanMealsCount:
+                    removeDayWarning.impactedPlanMealsCount,
+                }
+              : null
+          }
           onOpenChange={(open) => {
-            if (!open) {
-              setRemoveDayWarning(null);
-            }
+            if (!open) setRemoveDayWarning(null);
           }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete day and synced plan meals?</AlertDialogTitle>
-              <AlertDialogDescription>
-                {removeDayWarning
-                  ? `This will remove ${removeDayWarning.impactedLogMealsCount} non-empty log meals and ${removeDayWarning.impactedPlanMealsCount} planned meals for this date.`
-                  : "This action cannot be undone."}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => {
-                  if (!removeDayWarning || !logId) {
-                    return;
-                  }
-                  startRemoveDayTransition(async () => {
-                    const forcedResult = await removeLogDayAction({
-                      logId,
-                      dateKey: removeDayWarning.dateKey,
-                      force: true,
-                    });
-                    if (forcedResult.type === "error") {
-                      toast.error(forcedResult.message);
-                      return;
-                    }
-                    const nextPerson = person ?? "PRIMARY";
-                    if (forcedResult.type === "success" && forcedResult.nextDayKey) {
-                      router.push(
-                        `${ROUTES.logView(logId)}?person=${nextPerson}&day=${forcedResult.nextDayKey}`,
-                      );
-                    } else {
-                      router.push(
-                        `${ROUTES.logView(logId)}?person=${nextPerson}`,
-                      );
-                    }
-                    setRemoveDayWarning(null);
-                    router.refresh();
-                  });
-                }}
-              >
-                Delete day
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-        <LogPool items={groupedPlannerPool} />
-        <LogDaySelector
-          days={localDays}
-          selectedDayKey={selectedDayKey}
-          onSelectDay={(dateKey) => {
-            setSelectedDayKey(dateKey);
-            setSelectedSlot(null);
-          }}
-          logId={logId}
-          isAddingDay={isAddingDay}
-          onAddDay={() => {
-            if (!logId) {
+          onConfirm={() => {
+            if (!removeDayWarning || !logId) {
               return;
             }
-            startAddDayTransition(async () => {
-              const result = await appendNextLogDayAction({ logId });
-              if (result.type === "date_conflict") {
-                // Keep collision feedback explicit: hard-block without destructive override.
-                toast.error(
-                  `Cannot add day. Date conflict: ${result.dates.join(", ")}`,
-                );
+
+            const warningSnapshot = removeDayWarning;
+            startRemoveDayTransition(async () => {
+              const forcedResult = await removeLogDayAction({
+                logId,
+                dateKey: warningSnapshot.dateKey,
+                force: true,
+              });
+              if (forcedResult.type === "error") {
+                toast.error(forcedResult.message);
                 return;
               }
-              if (result.type === "error") {
-                toast.error(result.message);
-                return;
-              }
+
               const nextPerson = person ?? "PRIMARY";
-              const nextUrl = `${ROUTES.logView(logId)}?person=${nextPerson}&day=${result.dateKey}`;
-              router.push(nextUrl);
+              if (forcedResult.type === "success" && forcedResult.nextDayKey) {
+                router.push(
+                  `${ROUTES.logView(logId)}?person=${nextPerson}&day=${forcedResult.nextDayKey}`,
+                );
+              } else {
+                router.push(`${ROUTES.logView(logId)}?person=${nextPerson}`);
+              }
+
+              setRemoveDayWarning(null);
               router.refresh();
             });
           }}
@@ -702,11 +676,46 @@ export function LogDayView({
         {localDays
           .filter((day) => day.dateKey === selectedDayKey)
           .map((day) => {
+            const isActiveDay = selectedSlot?.dayKey === day.dateKey;
+
+            const slots = day.slots.map((slot) => (
+              <LogSlot
+                key={`${day.dateKey}-${slot.mealType}`}
+                dayKey={day.dateKey}
+                slot={slot}
+                onEmptyClick={() => selectEmptySlot(day, slot)}
+                onRecipeClick={(recipe) => selectRecipeSlot(day, slot, recipe)}
+                onRecipeRemove={() => handleRemovePlacedRecipe(slot)}
+              />
+            ));
+
+            const editor =
+              selectedSlot && isActiveDay ? (
+                <LogIngredientsForm
+                  title={selectedSlot.mealLabel}
+                  subtitle={selectedSlot.subtitle}
+                  initialRows={selectedSlot.initialRows}
+                  ingredientOptions={ingredientOptions}
+                  isSaving={isSaving}
+                  recipeOptions={recipeOptions}
+                  selectedRecipeId={selectedSlot.selectedRecipeId}
+                  initialSelectedRecipeId={selectedSlot.initialSelectedRecipeId}
+                  onSelectedRecipeIdChange={handleSelectedRecipeChange}
+                  onSave={handleSlotSave}
+                />
+              ) : null;
+
             return (
               <article key={day.dateKey} className="space-y-4">
                 <LogDayHeader
                   day={day}
+                  days={localDays}
+                  selectedDayKey={day.dateKey}
+                  onSelectDay={handleSelectDay}
                   logId={logId}
+                  person={person}
+                  isAddingDay={isAddingDay}
+                  onAddDay={handleAddDay}
                   isRemovingDay={isRemovingDay}
                   onRemoveDay={() => {
                     if (!logId) {
@@ -742,36 +751,25 @@ export function LogDayView({
                     });
                   }}
                 />
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  {day.slots.map((slot) => (
-                    <LogSlot
-                      key={`${day.dateKey}-${slot.mealType}`}
-                      dayKey={day.dateKey}
-                      slot={slot}
-                      onEmptyClick={() => selectEmptySlot(day, slot)}
-                      onRecipeClick={(recipe) =>
-                        selectRecipeSlot(day, slot, recipe)
-                      }
-                      onRecipeRemove={() => handleRemovePlacedRecipe(slot)}
-                    />
-                  ))}
+
+                {/* Single responsive layout.
+                    Rendered once to avoid duplicated DOM nodes in JSDOM tests (Tailwind hiding doesn't apply there). */}
+                <div className="flex flex-col gap-4 lg:grid lg:grid-cols-8 lg:gap-4 lg:items-stretch">
+                  {/* Planner meals */}
+                  <div className="lg:col-span-2 lg:min-h-0">
+                    <LogPool items={groupedPlannerPool} />
+                  </div>
+
+                  {/* Slots */}
+                  <div className="lg:col-span-2">
+                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-1">
+                      {slots}
+                    </div>
+                  </div>
+
+                  {/* Details */}
+                  <div className="lg:col-span-4 min-h-0">{editor}</div>
                 </div>
-                {selectedSlot?.dayKey === day.dateKey ? (
-                  <LogIngredientsForm
-                    title={selectedSlot.mealLabel}
-                    subtitle={selectedSlot.subtitle}
-                    initialRows={selectedSlot.initialRows}
-                    ingredientOptions={ingredientOptions}
-                    isSaving={isSaving}
-                    recipeOptions={recipeOptions}
-                    selectedRecipeId={selectedSlot.selectedRecipeId}
-                    initialSelectedRecipeId={
-                      selectedSlot.initialSelectedRecipeId
-                    }
-                    onSelectedRecipeIdChange={handleSelectedRecipeChange}
-                    onSave={handleSlotSave}
-                  />
-                ) : null}
               </article>
             );
           })}

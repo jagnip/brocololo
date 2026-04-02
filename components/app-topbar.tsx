@@ -14,9 +14,14 @@ export function AppTopbar() {
   const isRecipeDetailRoute = /^\/recipes\/[^/]+$/.test(pathname);
   const isRecipesIndexRoute = pathname === "/recipes";
   const isLogDetailRoute = /^\/log\/[^/]+$/.test(pathname);
+  const isIngredientsIndexRoute = pathname === "/ingredients";
+  const isPlanDetailRoute = /^\/plan\/(?!create$)[^/]+$/.test(pathname);
   const shouldShowRecipeTopbarSkeleton = isRecipeDetailRoute && !config;
   const shouldShowRecipesIndexTopbarSkeleton = isRecipesIndexRoute && !config;
   const shouldShowLogTopbarSkeleton = isLogDetailRoute && !config;
+  const shouldShowIngredientsTopbarSkeleton =
+    isIngredientsIndexRoute && !config;
+  const shouldShowPlanTopbarSkeleton = isPlanDetailRoute && !config;
 
   return (
     <header className="flex h-14 items-center border-b px-4 sticky top-0 bg-background z-10">
@@ -25,20 +30,34 @@ export function AppTopbar() {
         {shouldShowRecipeTopbarSkeleton ? (
           <>
             {/* Mirror only action buttons while detail page topbar config loads. */}
-            <Skeleton className="h-8 w-24 rounded-md" />
-            <Skeleton className="h-8 w-24 rounded-md" />
+            <Skeleton className="h-9 w-24 rounded-md" />
+            <Skeleton className="h-9 w-24 rounded-md" />
           </>
         ) : null}
         {shouldShowRecipesIndexTopbarSkeleton ? (
           <>
             {/* Mirror recipes index topbar action while config hydrates. */}
-            <Skeleton className="h-8 w-28 rounded-md" />
+            <Skeleton className="h-9 w-28 rounded-md" />
           </>
         ) : null}
         {shouldShowLogTopbarSkeleton ? (
           <>
-            {/* Mirror “View plan” secondary action while log topbar config hydrates. */}
-            <Skeleton className="h-8 w-28 rounded-md" />
+            {/* Mirror log topbar controls: selector + delete + view-plan icon. */}
+            <Skeleton className="h-9 w-48 rounded-md" />
+            <Skeleton className="h-9 w-9 rounded-md" />
+            <Skeleton className="h-9 w-9 rounded-md" />
+          </>
+        ) : null}
+        {shouldShowIngredientsTopbarSkeleton ? (
+          <>
+            {/* Mirror “Create ingredient” secondary action while ingredients topbar config hydrates. */}
+            <Skeleton className="h-9 w-44 rounded-md" />
+          </>
+        ) : null}
+        {shouldShowPlanTopbarSkeleton ? (
+          <>
+            {/* Mirror “New plan” secondary action while plan topbar config hydrates. */}
+            <Skeleton className="h-9 w-28 rounded-md" />
           </>
         ) : null}
         {config?.badge ? (
@@ -46,9 +65,12 @@ export function AppTopbar() {
             {config.badge.label}
           </Badge>
         ) : null}
+        {config?.rightContent ?? null}
         {config?.actions.map((action) => {
           const variant = action.variant ?? "default";
           const size = action.size ?? "sm";
+          const content =
+            action.size === "icon" && action.icon ? action.icon : action.label;
 
           if (action.href) {
             return (
@@ -59,7 +81,7 @@ export function AppTopbar() {
                 size={size}
                 aria-label={action.ariaLabel}
               >
-                <Link href={action.href}>{action.label}</Link>
+                <Link href={action.href}>{content}</Link>
               </Button>
             );
           }
@@ -72,7 +94,7 @@ export function AppTopbar() {
               onClick={action.onClick}
               aria-label={action.ariaLabel}
             >
-              {action.label}
+              {content}
             </Button>
           );
         })}

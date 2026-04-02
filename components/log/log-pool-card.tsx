@@ -59,7 +59,7 @@ export function LogPoolCard({
             <Button
               type="button"
               variant="outline"
-              size="sm"
+              size="default"
               onClick={() => onRecipeRemove(recipe)}
             >
               Remove from slot

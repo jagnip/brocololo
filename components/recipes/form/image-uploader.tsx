@@ -72,7 +72,7 @@ export function ImageUploader({
                     <Button
                       type="button"
                       variant="secondary"
-                      size="sm"
+                      size="default"
                       onClick={() => setCoverImage(index)}
                       disabled={image.isCover}
                     >
@@ -81,7 +81,7 @@ export function ImageUploader({
                     <Button
                       type="button"
                       variant="destructive"
-                      size="sm"
+                      size="default"
                       onClick={() => removeImage(index)}
                     >
                       <X className="h-4 w-4" />

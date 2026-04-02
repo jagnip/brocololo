@@ -67,7 +67,7 @@ export function GroceriesContainer({ plan }: { plan: GroceryPlan }) {
             <Button
               key={dayKey}
               variant={isSelected ? "default" : "outline"}
-              size="sm"
+              size="default"
               onClick={() => toggleDate(dayKey)}
             >
               {formatDayLabel(date)}

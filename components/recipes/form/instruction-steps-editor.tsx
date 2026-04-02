@@ -76,7 +76,7 @@ export function InstructionStepsEditor({
                 <Button
                   key={option.tempIngredientKey}
                   type="button"
-                  size="sm"
+                  size="default"
                   variant={selected ? "default" : "outline"}
                   onClick={() =>
                     toggleIngredientLink(index, option.tempIngredientKey)

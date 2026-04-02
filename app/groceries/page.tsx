@@ -46,7 +46,7 @@ export default async function GroceriesPage() {
                   <CalendarDays className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">{label}</span>
                 </div>
-                <Button asChild variant="outline" size="sm">
+                <Button asChild variant="outline" size="default">
                   <Link href={ROUTES.groceriesView(plan.id)}>Open list</Link>
                 </Button>
               </li>

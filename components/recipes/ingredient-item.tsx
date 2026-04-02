@@ -226,7 +226,7 @@ export function IngredientItem({
                   type="number"
                   min="0.1"
                   step="any"
-                  size="sm"
+                  size="default"
                   value={isEditing ? editValue : displayAmount}
                   onFocus={handleFocus}
                   onChange={(e) => setEditValue(e.target.value)}
@@ -251,7 +251,7 @@ export function IngredientItem({
             >
               {/* Unit */}
               <SelectTrigger
-                size="sm"
+                size="default"
                 // Keep tablet fluid; slightly widen desktop unit control.
                 className="inline-flex items-center [&>svg]:hidden w-24 min-w-24 md:w-full md:min-w-0 lg:w-26 lg:min-w-26"
               >
@@ -274,7 +274,7 @@ export function IngredientItem({
             if (!next) return;
             onIngredientChange(next);
           }}
-          size="sm"
+          size="default"
           placeholder="Select ingredient..."
           searchPlaceholder="Search ingredient..."
           emptyLabel="No ingredient found."
@@ -339,7 +339,7 @@ export function IngredientItem({
             <Button
               type="button"
               variant="outline"
-              size="sm"
+              size="default"
               className="h-8 w-8 p-0"
               aria-label="Jagoda only"
               title="Jagoda only"
@@ -351,7 +351,7 @@ export function IngredientItem({
             <Button
               type="button"
               variant="outline"
-              size="sm"
+              size="default"
               className="h-8 w-8 p-0"
               aria-label="Nelson only"
               title="Nelson only"

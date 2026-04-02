@@ -14,13 +14,15 @@ export type TopbarActionConfig = {
   href?: string;
   onClick?: () => void;
   variant?: "default" | "outline" | "secondary" | "ghost";
-  size?: "default" | "sm" | "lg";
+  size?: "default" | "sm" | "lg" | "icon";
   ariaLabel?: string;
+  icon?: ReactNode;
 };
 
 export type TopbarConfig = {
   actions: TopbarActionConfig[];
   badge?: TopbarBadgeConfig;
+  rightContent?: ReactNode;
 };
 
 type TopbarContextValue = {

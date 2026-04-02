@@ -68,14 +68,14 @@ export default function RecipePage({
           // Open only; dialog now owns add-to-log context state.
           onClick: () => setIsAddToLogOpen(true),
           variant: "outline" as const,
-          size: "sm" as const,
+          size: "default" as const,
         },
         {
           id: "edit-recipe",
           label: "Edit recipe",
           href: ROUTES.recipeEdit(recipe.slug),
           variant: "default" as const,
-          size: "sm" as const,
+          size: "default" as const,
         },
       ],
     }),

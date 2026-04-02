@@ -13,6 +13,8 @@ vi.mock("next/navigation", () => ({
     push: pushMock,
     refresh: refreshMock,
   }),
+  usePathname: () => "/log/log-1",
+  useSearchParams: () => new URLSearchParams(""),
 }));
 
 const appendNextLogDayActionMock = vi.fn();
@@ -42,6 +44,20 @@ if (!globalThis.ResizeObserver) {
 if (!HTMLElement.prototype.scrollIntoView) {
   // Cmdk attempts to scroll highlighted options into view.
   HTMLElement.prototype.scrollIntoView = () => {};
+}
+
+// Radix Select uses pointer capture APIs which aren't implemented in jsdom.
+if (!("hasPointerCapture" in Element.prototype)) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (Element.prototype as any).hasPointerCapture = () => false;
+}
+if (!("setPointerCapture" in Element.prototype)) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (Element.prototype as any).setPointerCapture = () => {};
+}
+if (!("releasePointerCapture" in Element.prototype)) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (Element.prototype as any).releasePointerCapture = () => {};
 }
 
 const ingredientFormDependencies = {
@@ -314,7 +330,11 @@ describe("LogDayView", () => {
     expect(screen.getByText("Oatmeal")).toBeInTheDocument();
     expect(screen.queryByText("Scrambled Eggs")).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /wednesday 18 mar/i }));
+    // Day selector is now a dropdown (combobox) instead of date pill buttons.
+    await user.click(screen.getByRole("combobox"));
+    const nextDayOption = await screen.findByText(/wednesday 18 mar/i);
+    await user.click(nextDayOption);
+
     expect(screen.getByText("Scrambled Eggs")).toBeInTheDocument();
     expect(screen.queryByText("Oatmeal")).not.toBeInTheDocument();
   });

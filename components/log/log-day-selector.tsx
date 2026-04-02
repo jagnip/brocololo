@@ -44,7 +44,7 @@ export function LogDaySelector({
       <Button
         type="button"
         variant="outline"
-        size="sm"
+        size="default"
         disabled={isAddingDay || !logId}
         onClick={onAddDay}
       >

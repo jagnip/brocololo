@@ -507,7 +507,7 @@ export default function IngredientForm({
                             <Button
                               type="button"
                               variant="ghost"
-                              size="sm"
+                              size="default"
                               className="h-7 px-2 text-xs"
                               onClick={() => {
                                 const selectedUnit =
@@ -606,7 +606,7 @@ export default function IngredientForm({
           <Button
             type="button"
             variant="outline"
-            size="sm"
+            size="default"
             onClick={() => append({ unitId: "", gramsPerUnit: 1 })}
           >
             <Plus className="h-4 w-4" />

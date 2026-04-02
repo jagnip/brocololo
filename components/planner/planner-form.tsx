@@ -562,7 +562,7 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
                     <Button
                       type="button"
                       variant="outline"
-                      size="sm"
+                      size="default"
                       disabled={previousPlanUnusedRecipes.length === 0}
                       onClick={() => {
                         const currentIds = new Set(selected.map((r) => r.recipeId));
