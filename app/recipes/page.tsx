@@ -29,7 +29,7 @@ export default async function Page({ searchParams }: RecipesPageProps) {
               id: "create-recipe",
               label: "Create recipe",
               href: ROUTES.recipeCreate,
-              variant: "default",
+              variant: "outline",
               size: "default",
             },
           ],

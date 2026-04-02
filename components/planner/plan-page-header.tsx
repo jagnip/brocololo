@@ -15,7 +15,8 @@ export function PlanPageHeader({ planOptions, planId }: PlanPageHeaderProps) {
         <PlanSelect plans={planOptions} currentPlanId={planId} />
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <Button asChild>
+        {/* Match topbar: secondary visual weight for “create another plan” next to the selector. */}
+        <Button asChild variant="outline">
           <Link href={ROUTES.planCreate}>
             New plan
           </Link>

@@ -74,7 +74,7 @@ export default function RecipePage({
           id: "edit-recipe",
           label: "Edit recipe",
           href: ROUTES.recipeEdit(recipe.slug),
-          variant: "default" as const,
+          variant: "outline" as const,
           size: "default" as const,
         },
       ],
