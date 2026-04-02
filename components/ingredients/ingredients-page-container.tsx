@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { SearchInput } from "@/components/search";
 import { IngredientIcon } from "@/components/ingredient-icon";
 import { getIngredientDisplayName } from "@/lib/ingredients/format";
@@ -43,7 +43,6 @@ export async function IngredientsPageContainer({
           <Button asChild>
             {/* Top-level entry point for ingredient creation. */}
             <Link href={ROUTES.ingredientCreate}>
-              <Plus className="h-4 w-4" />
               Create ingredient
             </Link>
           </Button>

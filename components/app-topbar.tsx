@@ -14,9 +14,14 @@ export function AppTopbar() {
   const isRecipeDetailRoute = /^\/recipes\/[^/]+$/.test(pathname);
   const isRecipesIndexRoute = pathname === "/recipes";
   const isLogDetailRoute = /^\/log\/[^/]+$/.test(pathname);
+  const isIngredientsIndexRoute = pathname === "/ingredients";
+  const isPlanDetailRoute = /^\/plan\/(?!create$)[^/]+$/.test(pathname);
   const shouldShowRecipeTopbarSkeleton = isRecipeDetailRoute && !config;
   const shouldShowRecipesIndexTopbarSkeleton = isRecipesIndexRoute && !config;
   const shouldShowLogTopbarSkeleton = isLogDetailRoute && !config;
+  const shouldShowIngredientsTopbarSkeleton =
+    isIngredientsIndexRoute && !config;
+  const shouldShowPlanTopbarSkeleton = isPlanDetailRoute && !config;
 
   return (
     <header className="flex h-14 items-center border-b px-4 sticky top-0 bg-background z-10">
@@ -38,6 +43,18 @@ export function AppTopbar() {
         {shouldShowLogTopbarSkeleton ? (
           <>
             {/* Mirror “View plan” secondary action while log topbar config hydrates. */}
+            <Skeleton className="h-8 w-28 rounded-md" />
+          </>
+        ) : null}
+        {shouldShowIngredientsTopbarSkeleton ? (
+          <>
+            {/* Mirror “Create ingredient” secondary action while ingredients topbar config hydrates. */}
+            <Skeleton className="h-8 w-44 rounded-md" />
+          </>
+        ) : null}
+        {shouldShowPlanTopbarSkeleton ? (
+          <>
+            {/* Mirror “New plan” secondary action while plan topbar config hydrates. */}
             <Skeleton className="h-8 w-28 rounded-md" />
           </>
         ) : null}

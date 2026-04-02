@@ -1,4 +1,6 @@
+import { TopbarConfigController } from "@/components/topbar-config";
 import { IngredientsPageContainer } from "@/components/ingredients/ingredients-page-container";
+import { ROUTES } from "@/lib/constants";
 
 export default async function IngredientsPage({
   searchParams,
@@ -9,7 +11,19 @@ export default async function IngredientsPage({
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-      {/* Keep page thin and delegate data loading to container. */}
+      <TopbarConfigController
+        config={{
+          actions: [
+            {
+              id: "create-ingredient",
+              label: "Create ingredient",
+              href: ROUTES.ingredientCreate,
+              variant: "default" as const,
+              size: "sm" as const,
+            },
+          ],
+        }}
+      />
       <IngredientsPageContainer q={params.q} page={params.page} />
     </div>
   );

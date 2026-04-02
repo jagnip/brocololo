@@ -16,9 +16,7 @@ export function LogPageHeader({
 }: LogPageHeaderProps) {
   return (
     <header className="flex flex-col gap-item">
-      {/* Title row — mb-0 so vertical spacing comes only from gap-item above the toolbar */}
       <PageHeader title="Log details" className="mb-0" />
-      {/* Left-aligned row: same gap token as recipe index filters (RecipeTabs). */}
       <div className="flex flex-wrap items-center gap-item">
         <LogSelect logs={logOptions} currentLogId={logId} />
         <LogPersonSelect value={person} />

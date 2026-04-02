@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 import { PlanSelect, type PlanSelectOption } from "./plan-select";
@@ -18,7 +17,6 @@ export function PlanPageHeader({ planOptions, planId }: PlanPageHeaderProps) {
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         <Button asChild>
           <Link href={ROUTES.planCreate}>
-            <CalendarPlus className="h-4 w-4" />
             New plan
           </Link>
         </Button>
