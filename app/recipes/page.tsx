@@ -30,7 +30,7 @@ export default async function Page({ searchParams }: RecipesPageProps) {
               label: "Create recipe",
               href: ROUTES.recipeCreate,
               variant: "default",
-              size: "sm",
+              size: "default",
             },
           ],
         }}

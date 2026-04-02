@@ -156,7 +156,7 @@ export function SearchableSelect({
         <Button
           type="button"
           variant="outline"
-          // Mirror Input/Button API: allow a compact trigger via size="sm".
+          // Mirror Input/Button API: allow a compact trigger via size="default".
           size={size}
           role="combobox"
           aria-expanded={open}

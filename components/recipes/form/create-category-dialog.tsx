@@ -84,7 +84,7 @@ export function CreateCategoryDialog({ onCreated }: CreateCategoryDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button" variant="outline" size="sm">
+        <Button type="button" variant="outline" size="default">
           Add category
         </Button>
       </DialogTrigger>

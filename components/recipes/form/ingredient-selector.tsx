@@ -776,7 +776,7 @@ export function IngredientSelector({
             <span className="text-muted-foreground">Nutrition target:</span>
             <Button
               type="button"
-              size="sm"
+              size="default"
               variant={
                 (item.nutritionTarget ?? "BOTH") === "PRIMARY_ONLY"
                   ? "default"
@@ -795,7 +795,7 @@ export function IngredientSelector({
             </Button>
             <Button
               type="button"
-              size="sm"
+              size="default"
               variant={
                 (item.nutritionTarget ?? "BOTH") === "SECONDARY_ONLY"
                   ? "default"
@@ -877,7 +877,7 @@ export function IngredientSelector({
             <Button
               type="button"
               variant="ghost"
-              size="sm"
+              size="default"
               className="ml-auto"
               onClick={() => deleteGroup(lane.groupTempKey!)}
             >

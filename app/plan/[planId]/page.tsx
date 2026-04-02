@@ -19,7 +19,7 @@ export default async function PlanPage({
               label: "New plan",
               href: ROUTES.planCreate,
               variant: "default" as const,
-              size: "sm" as const,
+              size: "default" as const,
             },
           ],
         }}

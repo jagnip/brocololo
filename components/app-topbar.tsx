@@ -30,32 +30,34 @@ export function AppTopbar() {
         {shouldShowRecipeTopbarSkeleton ? (
           <>
             {/* Mirror only action buttons while detail page topbar config loads. */}
-            <Skeleton className="h-8 w-24 rounded-md" />
-            <Skeleton className="h-8 w-24 rounded-md" />
+            <Skeleton className="h-9 w-24 rounded-md" />
+            <Skeleton className="h-9 w-24 rounded-md" />
           </>
         ) : null}
         {shouldShowRecipesIndexTopbarSkeleton ? (
           <>
             {/* Mirror recipes index topbar action while config hydrates. */}
-            <Skeleton className="h-8 w-28 rounded-md" />
+            <Skeleton className="h-9 w-28 rounded-md" />
           </>
         ) : null}
         {shouldShowLogTopbarSkeleton ? (
           <>
-            {/* Mirror “View plan” secondary action while log topbar config hydrates. */}
-            <Skeleton className="h-8 w-28 rounded-md" />
+            {/* Mirror log topbar controls: selector + delete + view-plan icon. */}
+            <Skeleton className="h-9 w-48 rounded-md" />
+            <Skeleton className="h-9 w-9 rounded-md" />
+            <Skeleton className="h-9 w-9 rounded-md" />
           </>
         ) : null}
         {shouldShowIngredientsTopbarSkeleton ? (
           <>
             {/* Mirror “Create ingredient” secondary action while ingredients topbar config hydrates. */}
-            <Skeleton className="h-8 w-44 rounded-md" />
+            <Skeleton className="h-9 w-44 rounded-md" />
           </>
         ) : null}
         {shouldShowPlanTopbarSkeleton ? (
           <>
             {/* Mirror “New plan” secondary action while plan topbar config hydrates. */}
-            <Skeleton className="h-8 w-28 rounded-md" />
+            <Skeleton className="h-9 w-28 rounded-md" />
           </>
         ) : null}
         {config?.badge ? (

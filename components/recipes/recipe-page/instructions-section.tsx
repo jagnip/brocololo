@@ -70,7 +70,7 @@ export function InstructionsSection() {
               <Button
                 key={person}
                 type="button"
-                size="sm"
+                size="default"
                 role="radio"
                 aria-checked={isSelected}
                 variant="outline"
