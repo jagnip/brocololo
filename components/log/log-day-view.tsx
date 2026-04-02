@@ -18,7 +18,6 @@ import {
   type LogDayData,
   type PlannerPoolCardData,
 } from "@/lib/log/view-model";
-import type { LogSelectOption } from "@/components/log/log-select";
 import { LogSlot } from "./log-slot";
 import {
   LogIngredientsForm,
@@ -132,7 +131,6 @@ type LogDayViewProps = {
   days: LogDayData[];
   plannerPool?: PlannerPoolCardData[];
   initialSelectedDayKey?: string;
-  logOptions?: LogSelectOption[];
   logId?: string;
   person?: "PRIMARY" | "SECONDARY";
   recipeOptions?: Array<{
@@ -154,7 +152,6 @@ export function LogDayView({
   days,
   plannerPool = [],
   initialSelectedDayKey,
-  logOptions = [],
   logId,
   person,
   recipeOptions = [],
@@ -715,7 +712,6 @@ export function LogDayView({
                   days={localDays}
                   selectedDayKey={day.dateKey}
                   onSelectDay={handleSelectDay}
-                  logOptions={logOptions}
                   logId={logId}
                   person={person}
                   isAddingDay={isAddingDay}

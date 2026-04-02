@@ -63,9 +63,12 @@ export function AppTopbar() {
             {config.badge.label}
           </Badge>
         ) : null}
+        {config?.rightContent ?? null}
         {config?.actions.map((action) => {
           const variant = action.variant ?? "default";
           const size = action.size ?? "sm";
+          const content =
+            action.size === "icon" && action.icon ? action.icon : action.label;
 
           if (action.href) {
             return (
@@ -76,7 +79,7 @@ export function AppTopbar() {
                 size={size}
                 aria-label={action.ariaLabel}
               >
-                <Link href={action.href}>{action.label}</Link>
+                <Link href={action.href}>{content}</Link>
               </Button>
             );
           }
@@ -89,7 +92,7 @@ export function AppTopbar() {
               onClick={action.onClick}
               aria-label={action.ariaLabel}
             >
-              {action.label}
+              {content}
             </Button>
           );
         })}

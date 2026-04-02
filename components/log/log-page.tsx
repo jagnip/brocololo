@@ -127,10 +127,9 @@ export async function LogPage({
   });
   return (
     <>
-      <LogTopbarConfig planId={log.plan.id} />
+      <LogTopbarConfig planId={log.plan.id} logOptions={logOptions} logId={logId} />
 
       <LogDayView
-        logOptions={logOptions}
         days={days}
         plannerPool={plannerPool}
         initialSelectedDayKey={day}

@@ -13,9 +13,7 @@ import {
 import type { LogDayData } from "@/lib/log/view-model";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import { PageHeader } from "../page-header";
-import { LogSelect, type LogSelectOption } from "./log-select";
 import { LogPersonSelect } from "./log-person-select";
-import { DeleteLogButton } from "./delete-log-button";
 
 function toDayMacros(day: LogDayData) {
   return day.slots.reduce(
@@ -38,7 +36,6 @@ export type LogDayPanelHeaderProps = {
   days: LogDayData[];
   selectedDayKey: string;
   onSelectDay: (dateKey: string) => void;
-  logOptions?: LogSelectOption[];
   logId?: string;
   person?: "PRIMARY" | "SECONDARY";
   isAddingDay: boolean;
@@ -52,7 +49,6 @@ export function LogDayHeader({
   days,
   selectedDayKey,
   onSelectDay,
-  logOptions = [],
   logId,
   person,
   isAddingDay,
@@ -68,10 +64,7 @@ export function LogDayHeader({
 
       <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          {/* Inputs order: log selector → day selector → person selector */}
-          {logId && logOptions.length > 0 ? (
-            <LogSelect logs={logOptions} currentLogId={logId} />
-          ) : null}
+          {/* Inputs order: day selector → person selector */}
 
           <Select value={selectedDayKey} onValueChange={onSelectDay}>
             <SelectTrigger className="min-w-48">
@@ -111,7 +104,6 @@ export function LogDayHeader({
             <Trash2 />
           </Button>
 
-          {logId ? <DeleteLogButton logId={logId} /> : null}
         </div>
 
         {/* Macro badges */}
