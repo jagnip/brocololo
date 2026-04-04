@@ -1,5 +1,6 @@
 import { parseMarkdownLinks } from "@/lib/recipes/text-formatting";
 import { useRecipePageHeaderData } from "@/components/context/recipe-page-context";
+import { Subheader } from "@/components/recipes/recipe-page/subheader";
 
 export function NotesSection() {
   const { recipe } = useRecipePageHeaderData();
@@ -32,9 +33,7 @@ export function NotesSection() {
     // Shared section container utility keeps card shell styling consistent.
     <div className="section-container">
       <div className="mb-item flex items-center justify-between gap-item">
-        <h3 className="type-h2 text-foreground">
-          Notes
-        </h3>
+        <Subheader>Notes</Subheader>
       </div>
       <div className="rounded-[10px] border border-border bg-card p-nest">
         <ul className="list-disc list-inside space-y-item type-body text-foreground">
