@@ -7,6 +7,7 @@ import { IngredientItem } from "@/components/recipes/ingredient-item";
 import { isScaleModified } from "@/lib/recipes/helpers";
 import { useRecipePageIngredientsSectionData } from "@/components/context/recipe-page-context";
 import { PortionSplitCard } from "@/components/recipes/recipe-page/portion-split-card";
+import { Subheader } from "@/components/recipes/recipe-page/subheader";
 
 export function IngredientsSection() {
   const {
@@ -38,7 +39,7 @@ export function IngredientsSection() {
     <div>
       <div className="mb-item flex items-center justify-between">
         <div className="flex items-center gap-item">
-          <h3 className="type-h2">Ingredients</h3>
+          <Subheader>Ingredients</Subheader>
           {hasActiveScaling && (
             <Button
               variant="ghost"

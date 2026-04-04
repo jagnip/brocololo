@@ -11,6 +11,7 @@ import {
   isInstructionIngredientVisibleForPerson,
 } from "@/lib/recipes/helpers";
 import { useRecipePageInstructionsSectionData } from "@/components/context/recipe-page-context";
+import { Subheader } from "@/components/recipes/recipe-page/subheader";
 
 export function InstructionsSection() {
   const {
@@ -54,9 +55,7 @@ export function InstructionsSection() {
     // Shared section container utility keeps card shell styling consistent.
     <div className="section-container">
       <div className="mb-item flex flex-wrap items-center justify-between gap-item">
-        <h3 className="type-h2 text-foreground">
-          Instructions
-        </h3>
+        <Subheader>Instructions</Subheader>
         {/* Keep this local segmented control aligned with existing button-group patterns. */}
         <div
           className="flex items-center gap-item"

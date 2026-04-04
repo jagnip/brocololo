@@ -241,11 +241,7 @@ describe("LogDayView", () => {
 
     render(<LogDayView days={days} />);
 
-    expect(screen.getAllByText("Breakfast").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Lunch").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Snack").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Dinner").length).toBeGreaterThan(0);
-
+    // Compact slot cards show recipe title + macros, not a separate meal-label line.
     expect(screen.getByText("Oatmeal")).toBeInTheDocument();
     expect(screen.getByText("Chicken Bowl")).toBeInTheDocument();
     expect(screen.getByText("Salmon Rice")).toBeInTheDocument();
@@ -751,10 +747,10 @@ describe("LogDayView", () => {
 
     render(<LogDayView days={days} />);
 
-    expect(screen.getByText("Add snack entry")).toBeInTheDocument();
     expect(
-      screen.getAllByText("Click to choose recipe or add ingredients").length,
-    ).toBeGreaterThan(0);
+      screen.getByRole("button", { name: /add snack entry/i }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Drag to add").length).toBeGreaterThan(0);
   });
 
   it("renders slot list without mobile accordion controls", () => {

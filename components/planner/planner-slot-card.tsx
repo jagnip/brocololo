@@ -59,7 +59,7 @@ export function PlannerSlotCard({
   return (
     <Card
       className={cn(
-        "relative group transition-shadow",
+        "relative transition-shadow",
         accentColor && `border-l-4 ${accentColor}`,
         slot.used && "opacity-50",
       )}
@@ -106,7 +106,7 @@ export function PlannerSlotCard({
         </div>
       </CardHeader>
       {(canShuffle || canReplace || onRemove || onToggleUsed) && (
-        <div className="absolute bottom-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute bottom-2 right-2 flex gap-1">
           {onToggleUsed && (
             <Button
               type="button"

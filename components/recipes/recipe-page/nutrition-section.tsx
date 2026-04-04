@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useRecipePageNutritionSectionData } from "@/components/context/recipe-page-context";
+import { Subheader } from "@/components/recipes/recipe-page/subheader";
 
 export function NutritionSection() {
   const {
@@ -13,9 +14,7 @@ export function NutritionSection() {
 
   return (
     <div className="flex flex-col gap-item">
-      <h3 className="type-h2">
-        Nutrition (per serving)
-      </h3>
+      <Subheader>Nutrition (per serving)</Subheader>
 
       <div className="flex flex-col gap-item rounded-lg border border-border bg-card px-nest py-nest">
         <div className="flex flex-wrap items-center gap-item">

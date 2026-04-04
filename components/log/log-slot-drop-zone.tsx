@@ -20,19 +20,18 @@ export function LogSlotDropZone({ dateKey, mealType, entryId, children }: LogSlo
       mealType,
       entryId,
     },
-    disabled: !entryId,
+    disabled: false,
   });
 
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        "rounded-lg transition-colors",
-        isOver && entryId ? "bg-accent/30 ring-1 ring-accent" : "",
+        "flex h-full min-h-0 flex-col rounded-lg transition-colors",
+        isOver ? "bg-accent/85 ring-1 ring-accent dark:bg-accent/75" : "",
       )}
     >
       {children}
     </div>
   );
 }
-
