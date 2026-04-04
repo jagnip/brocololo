@@ -100,34 +100,34 @@ export function LogActiveDayView({
         onRemoveDay={onRemoveDay}
       />
 
-      {/* Single responsive layout.
-          Rendered once to avoid duplicated DOM nodes in JSDOM tests (Tailwind hiding doesn't apply there). */}
-      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-8 lg:gap-4 lg:items-stretch">
-        <div className="lg:col-span-2 lg:min-h-0">
+      <div className="flex flex-col gap-4 2xl:grid 2xl:grid-cols-8 2xl:gap-4 2xl:items-stretch">
+        <div className="2xl:col-span-2 2xl:min-h-0">
           <LogPool items={groupedPlannerPool} />
         </div>
 
-        <div className="lg:col-span-2">
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-1">
-            {slots}
+        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-5 lg:gap-4 2xl:contents">
+          <div className="lg:col-span-2 2xl:col-span-2">
+            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-1">
+              {slots}
+            </div>
           </div>
-        </div>
 
-        <div className="lg:col-span-4 min-h-0">
-          {editorSlot ? (
-            <LogIngredientsForm
-              title={editorSlot.mealLabel}
-              subtitle={editorSlot.subtitle}
-              initialRows={editorSlot.initialRows}
-              ingredientOptions={ingredientOptions}
-              isSaving={isSaving}
-              recipeOptions={recipeOptions}
-              selectedRecipeId={editorSlot.selectedRecipeId}
-              initialSelectedRecipeId={editorSlot.initialSelectedRecipeId}
-              onSelectedRecipeIdChange={onSelectedRecipeIdChange}
-              onSave={onSave}
-            />
-          ) : null}
+          <div className="lg:col-span-3 min-h-0 2xl:col-span-4">
+            {editorSlot ? (
+              <LogIngredientsForm
+                title={editorSlot.mealLabel}
+                subtitle={editorSlot.subtitle}
+                initialRows={editorSlot.initialRows}
+                ingredientOptions={ingredientOptions}
+                isSaving={isSaving}
+                recipeOptions={recipeOptions}
+                selectedRecipeId={editorSlot.selectedRecipeId}
+                initialSelectedRecipeId={editorSlot.initialSelectedRecipeId}
+                onSelectedRecipeIdChange={onSelectedRecipeIdChange}
+                onSave={onSave}
+              />
+            ) : null}
+          </div>
         </div>
       </div>
     </article>
