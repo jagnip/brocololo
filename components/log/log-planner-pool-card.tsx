@@ -2,8 +2,10 @@
 
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import type { PlannerPoolGroupedCardData } from "@/lib/log/view-model";
 
 export type LogPlannerPoolCardProps = {
@@ -25,23 +27,43 @@ export function LogPlannerPoolCard({ item }: LogPlannerPoolCardProps) {
         transform: CSS.Translate.toString(transform),
         opacity: isDragging ? 0.5 : 1,
       }}
-      className="p-3 cursor-grab active:cursor-grabbing"
+      className={cn(
+        "flex flex-row items-stretch gap-0 overflow-hidden p-0",
+        "cursor-grab active:cursor-grabbing",
+      )}
       {...listeners}
       {...attributes}
     >
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-medium">{item.title}</p>
-        <Badge variant="outline" className="text-xs">
+      {/* ~1/4 width; full card height (flex cross-axis stretch). */}
+      <div className="relative w-1/4 shrink-0 basis-1/4 self-stretch overflow-hidden bg-muted">
+        {item.imageUrl ? (
+          <Image
+            src={item.imageUrl}
+            alt={item.title}
+            fill
+            className="object-cover"
+            sizes="80px"
+          />
+        ) : (
+          <div
+            className="absolute inset-0 bg-linear-to-br from-muted via-muted to-muted-foreground/25"
+            aria-hidden
+          />
+        )}
+      </div>
+
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 p-3">
+
+        <p
+          className="truncate text-sm font-medium leading-snug text-foreground"
+          title={item.title}
+        >
+          {item.title}
+        </p>
+        <Badge variant="outline" className="w-fit text-xs tabular-nums">
           x{item.count}
         </Badge>
       </div>
-      <p className="text-xs text-muted-foreground">
-        {item.mealLabel} -{" "}
-        {item.date.toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        })}
-      </p>
     </Card>
   );
 }

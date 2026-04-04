@@ -9,6 +9,7 @@ import {
 import { LogDayHeader } from "./log-day-header";
 import { LogPool } from "./log-pool";
 import { LogSlot } from "./log-slot";
+import { Subheader } from "../recipes/recipe-page/subheader";
 
 /** Inline editor selection for the active log day (owned by `LogDayViewController`). */
 export type SelectedSlotState = {
@@ -75,7 +76,7 @@ export function LogActiveDayView({
   onSave,
 }: LogActiveDayViewProps) {
   return (
-    <article className="space-y-4">
+    <article className="space-y-6">
       <LogDayHeader
         day={day}
         days={days}
@@ -89,13 +90,14 @@ export function LogActiveDayView({
         onRemoveDay={onRemoveDay}
       />
 
-      <div className="flex flex-col gap-4 2xl:grid 2xl:grid-cols-8 2xl:gap-4 2xl:items-stretch">
+      <div className="flex flex-col gap-6 2xl:grid 2xl:grid-cols-8 2xl:gap-4 2xl:items-stretch">
         <div className="2xl:col-span-2 2xl:min-h-0">
           <LogPool items={groupedPlannerPool} />
         </div>
 
         <div className="flex flex-col gap-4 lg:grid lg:grid-cols-5 lg:gap-4 2xl:contents">
           <div className="lg:col-span-2 2xl:col-span-2">
+            <Subheader>Log</Subheader>
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-1">
               {day.slots.map((slot) => (
                 <LogSlot

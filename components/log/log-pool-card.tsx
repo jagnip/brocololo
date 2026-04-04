@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { LogSlotData } from "@/lib/log/view-model";
 import { LogRecipeCard } from "./log-recipe-card";
+import { PlusIcon } from "lucide-react";
 
 type LogSlotCardProps = {
   slot: LogSlotData;
@@ -26,14 +27,11 @@ export function LogPoolCard({
           disabled={!onEmptyClick}
           aria-label={`Add ${slot.label.toLowerCase()} entry`}
         >
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border text-sm">
-            +
-          </span>
-          <span className="text-sm font-medium">
-            Add {slot.label.toLowerCase()} entry
+          <span className="text-sm font-medium text-muted-foreground">
+            {slot.label}
           </span>
           <span className="text-xs text-muted-foreground">
-            Click to choose recipe or add ingredients
+            I'm empty 😭
           </span>
         </button>
       </Card>
