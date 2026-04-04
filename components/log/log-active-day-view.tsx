@@ -97,12 +97,13 @@ export function LogActiveDayView({
 
         <div className="flex flex-col gap-4 lg:grid lg:grid-cols-5 lg:gap-4 2xl:contents">
           <div className="lg:col-span-2 2xl:col-span-2">
-            <Subheader>Log</Subheader>
-            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-1">
+            <Subheader className="mb-2">Log</Subheader>
+            <div className="grid items-stretch gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-1">
               {day.slots.map((slot) => (
                 <LogSlot
                   key={`${day.dateKey}-${slot.mealType}`}
                   dayKey={day.dateKey}
+                  editorSlot={editorSlot}
                   slot={slot}
                   onEmptyClick={() => onEmptySlotClick(slot)}
                   onRecipeClick={(recipe) => onRecipeClick(slot, recipe)}

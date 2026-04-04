@@ -42,7 +42,8 @@ export function LogPlannerPoolCard({ item }: LogPlannerPoolCardProps) {
             alt={item.title}
             fill
             className="object-cover"
-            sizes="80px"
+            sizes="(max-width: 768px) 28vw, 200px"
+            quality={85}
           />
         ) : (
           <div

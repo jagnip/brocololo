@@ -1,12 +1,15 @@
 "use client";
 
+import type { LogEditorSlotForHighlight } from "@/lib/log/is-log-recipe-card-selected";
 import type { LogSlotData } from "@/lib/log/view-model";
-import { LogPoolCard } from "./log-pool-card";
+import { LogSlots } from "./log-slots";
 import { LogSlotDropZone } from "./log-slot-drop-zone";
 
 /** One meal column for a day: label, drag target, and recipe / empty state. */
 export type LogSlotProps = {
   dayKey: string;
+  /** When set, the matching recipe card uses the same selected styles as recipe-page instructions. */
+  editorSlot: LogEditorSlotForHighlight | null;
   slot: LogSlotData;
   onEmptyClick: () => void;
   onRecipeClick: (recipe: LogSlotData["recipes"][number]) => void;
@@ -16,20 +19,22 @@ export type LogSlotProps = {
 
 export function LogSlot({
   dayKey,
+  editorSlot,
   slot,
   onEmptyClick,
   onRecipeClick,
   onRecipeRemove,
 }: LogSlotProps) {
   return (
-    <div className="space-y-2">
-      <p className="text-sm text-muted-foreground">{slot.label}</p>
+    <div className="flex h-full min-h-0 flex-col">
       <LogSlotDropZone
         dateKey={dayKey}
         mealType={slot.mealType}
         entryId={slot.entryId}
       >
-        <LogPoolCard
+        <LogSlots
+          dayKey={dayKey}
+          editorSlot={editorSlot}
           slot={slot}
           onEmptyClick={onEmptyClick}
           onRecipeClick={onRecipeClick}
