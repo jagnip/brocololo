@@ -10,7 +10,7 @@ import {
   buildLogDays,
   buildVisiblePlannerPoolCards,
 } from "@/lib/log/view-model";
-import { LogDayView } from "@/components/log/log-day-view";
+import { LogDayViewController } from "@/components/log/log-day-view";
 import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
 import { LogTopbarConfig } from "@/components/log/log-topbar-config";
 
@@ -125,37 +125,42 @@ export async function LogPage({
     })),
     entries: log.entries,
   });
+
+  const recipeOptions = recipes.map((recipe) => ({
+    id: recipe.id,
+    name: recipe.name,
+    initialRows: toRecipeSelectorRows({ recipe, person }),
+  }));
+
+  const ingredientOptions = ingredients.map((ingredient) => ({
+    id: ingredient.id,
+    name: ingredient.name,
+    brand: ingredient.brand,
+    defaultUnitId: ingredient.defaultUnitId,
+    calories: ingredient.calories,
+    proteins: ingredient.proteins,
+    fats: ingredient.fats,
+    carbs: ingredient.carbs,
+    unitConversions: ingredient.unitConversions.map((conversion) => ({
+      unitId: conversion.unitId,
+      gramsPerUnit: conversion.gramsPerUnit,
+      unitName: conversion.unit.name,
+      unitNamePlural: conversion.unit.namePlural ?? null,
+    })),
+  }));
+
   return (
     <>
       <LogTopbarConfig planId={log.plan.id} logOptions={logOptions} logId={logId} />
 
-      <LogDayView
+      <LogDayViewController
         days={days}
         plannerPool={plannerPool}
         initialSelectedDayKey={day}
         logId={logId}
         person={person}
-        recipeOptions={recipes.map((recipe) => ({
-          id: recipe.id,
-          name: recipe.name,
-          initialRows: toRecipeSelectorRows({ recipe, person }),
-        }))}
-        ingredientOptions={ingredients.map((ingredient) => ({
-          id: ingredient.id,
-          name: ingredient.name,
-          brand: ingredient.brand,
-          defaultUnitId: ingredient.defaultUnitId,
-          calories: ingredient.calories,
-          proteins: ingredient.proteins,
-          fats: ingredient.fats,
-          carbs: ingredient.carbs,
-          unitConversions: ingredient.unitConversions.map((conversion) => ({
-            unitId: conversion.unitId,
-            gramsPerUnit: conversion.gramsPerUnit,
-            unitName: conversion.unit.name,
-            unitNamePlural: conversion.unit.namePlural ?? null,
-          })),
-        }))}
+        recipeOptions={recipeOptions}
+        ingredientOptions={ingredientOptions}
         ingredientFormDependencies={ingredientFormDependencies}
       />
     </>

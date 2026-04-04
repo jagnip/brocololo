@@ -18,9 +18,7 @@ import {
   type LogDayData,
   type PlannerPoolCardData,
 } from "@/lib/log/view-model";
-import { LogSlot } from "./log-slot";
 import {
-  LogIngredientsForm,
   type EditableIngredientRow,
   type LogIngredientOption,
 } from "./log-ingredients-form";
@@ -31,21 +29,8 @@ import {
   removeLogDayAction,
   upsertLogSlotAction,
 } from "@/actions/log-actions";
-import { LogDayHeader } from "./log-day-header";
-import { LogPool } from "./log-pool";
+import { LogActiveDayView, type SelectedSlotState } from "./log-active-day-view";
 import { LogRemoveDayAlertDialog } from "./log-remove-day-alert-dialog";
-
-type SelectedSlotState = {
-  dayKey: string;
-  mealType: LogDayData["slots"][number]["mealType"];
-  entryId: string;
-  entryRecipeId: string | null;
-  mealLabel: string;
-  selectedRecipeId: string | null;
-  initialSelectedRecipeId: string | null;
-  subtitle: string;
-  initialRows: EditableIngredientRow[];
-};
 
 type IngredientFormDependencies = {
   categories: Array<{ id: string; name: string }>;
@@ -148,7 +133,7 @@ type RemoveDayWarningState = {
   impactedPlanMealsCount: number;
 };
 
-export function LogDayView({
+export function LogDayViewController({
   days,
   plannerPool = [],
   initialSelectedDayKey,
@@ -612,6 +597,88 @@ export function LogDayView({
     });
   };
 
+  const handleRemoveDay = (dateKey: string) => {
+    if (!logId) {
+      return;
+    }
+    startRemoveDayTransition(async () => {
+      const result = await removeLogDayAction({
+        logId,
+        dateKey,
+      });
+      if (result.type === "impact_warning") {
+        setRemoveDayWarning({
+          dateKey,
+          impactedLogMealsCount: result.impactedLogMealsCount,
+          impactedPlanMealsCount: result.impactedPlanMealsCount,
+        });
+        return;
+      }
+      if (result.type === "error") {
+        toast.error(result.message);
+        return;
+      }
+      const nextPerson = person ?? "PRIMARY";
+      if (result.nextDayKey) {
+        const nextUrl = `${ROUTES.logView(logId)}?person=${nextPerson}&day=${result.nextDayKey}`;
+        router.push(nextUrl);
+      } else {
+        router.push(`${ROUTES.logView(logId)}?person=${nextPerson}`);
+      }
+      router.refresh();
+    });
+  };
+
+  const removeDayDialogWarning =
+    removeDayWarning == null
+      ? null
+      : {
+          impactedLogMealsCount: removeDayWarning.impactedLogMealsCount,
+          impactedPlanMealsCount: removeDayWarning.impactedPlanMealsCount,
+        };
+
+  const handleRemoveDayDialogOpenChange = (open: boolean) => {
+    if (!open) setRemoveDayWarning(null);
+  };
+
+  const handleConfirmRemoveDay = () => {
+    if (!removeDayWarning || !logId) {
+      return;
+    }
+
+    const warningSnapshot = removeDayWarning;
+    startRemoveDayTransition(async () => {
+      const forcedResult = await removeLogDayAction({
+        logId,
+        dateKey: warningSnapshot.dateKey,
+        force: true,
+      });
+      if (forcedResult.type === "error") {
+        toast.error(forcedResult.message);
+        return;
+      }
+
+      const nextPerson = person ?? "PRIMARY";
+      if (forcedResult.type === "success" && forcedResult.nextDayKey) {
+        router.push(
+          `${ROUTES.logView(logId)}?person=${nextPerson}&day=${forcedResult.nextDayKey}`,
+        );
+      } else {
+        router.push(`${ROUTES.logView(logId)}?person=${nextPerson}`);
+      }
+
+      setRemoveDayWarning(null);
+      router.refresh();
+    });
+  };
+
+  const activeDay =
+    localDays.find((d) => d.dateKey === selectedDayKey) ?? null;
+  const editorSlot =
+    activeDay && selectedSlot?.dayKey === activeDay.dateKey
+      ? selectedSlot
+      : null;
+
   if (days.length === 0) {
     return (
       <section className="rounded-lg border p-6 space-y-3">
@@ -630,150 +697,38 @@ export function LogDayView({
       <section className="space-y-8">
         <LogRemoveDayAlertDialog
           open={removeDayWarning != null}
-          warning={
-            removeDayWarning
-              ? {
-                  impactedLogMealsCount: removeDayWarning.impactedLogMealsCount,
-                  impactedPlanMealsCount:
-                    removeDayWarning.impactedPlanMealsCount,
-                }
-              : null
-          }
-          onOpenChange={(open) => {
-            if (!open) setRemoveDayWarning(null);
-          }}
-          onConfirm={() => {
-            if (!removeDayWarning || !logId) {
-              return;
-            }
-
-            const warningSnapshot = removeDayWarning;
-            startRemoveDayTransition(async () => {
-              const forcedResult = await removeLogDayAction({
-                logId,
-                dateKey: warningSnapshot.dateKey,
-                force: true,
-              });
-              if (forcedResult.type === "error") {
-                toast.error(forcedResult.message);
-                return;
-              }
-
-              const nextPerson = person ?? "PRIMARY";
-              if (forcedResult.type === "success" && forcedResult.nextDayKey) {
-                router.push(
-                  `${ROUTES.logView(logId)}?person=${nextPerson}&day=${forcedResult.nextDayKey}`,
-                );
-              } else {
-                router.push(`${ROUTES.logView(logId)}?person=${nextPerson}`);
-              }
-
-              setRemoveDayWarning(null);
-              router.refresh();
-            });
-          }}
+          warning={removeDayDialogWarning}
+          onOpenChange={handleRemoveDayDialogOpenChange}
+          onConfirm={handleConfirmRemoveDay}
         />
-        {localDays
-          .filter((day) => day.dateKey === selectedDayKey)
-          .map((day) => {
-            const isActiveDay = selectedSlot?.dayKey === day.dateKey;
-
-            const slots = day.slots.map((slot) => (
-              <LogSlot
-                key={`${day.dateKey}-${slot.mealType}`}
-                dayKey={day.dateKey}
-                slot={slot}
-                onEmptyClick={() => selectEmptySlot(day, slot)}
-                onRecipeClick={(recipe) => selectRecipeSlot(day, slot, recipe)}
-                onRecipeRemove={() => handleRemovePlacedRecipe(slot)}
-              />
-            ));
-
-            const editor =
-              selectedSlot && isActiveDay ? (
-                <LogIngredientsForm
-                  title={selectedSlot.mealLabel}
-                  subtitle={selectedSlot.subtitle}
-                  initialRows={selectedSlot.initialRows}
-                  ingredientOptions={ingredientOptions}
-                  isSaving={isSaving}
-                  recipeOptions={recipeOptions}
-                  selectedRecipeId={selectedSlot.selectedRecipeId}
-                  initialSelectedRecipeId={selectedSlot.initialSelectedRecipeId}
-                  onSelectedRecipeIdChange={handleSelectedRecipeChange}
-                  onSave={handleSlotSave}
-                />
-              ) : null;
-
-            return (
-              <article key={day.dateKey} className="space-y-4">
-                <LogDayHeader
-                  day={day}
-                  days={localDays}
-                  selectedDayKey={day.dateKey}
-                  onSelectDay={handleSelectDay}
-                  logId={logId}
-                  person={person}
-                  isAddingDay={isAddingDay}
-                  onAddDay={handleAddDay}
-                  isRemovingDay={isRemovingDay}
-                  onRemoveDay={() => {
-                    if (!logId) {
-                      return;
-                    }
-                    startRemoveDayTransition(async () => {
-                      const result = await removeLogDayAction({
-                        logId,
-                        dateKey: day.dateKey,
-                      });
-                      if (result.type === "impact_warning") {
-                        setRemoveDayWarning({
-                          dateKey: day.dateKey,
-                          impactedLogMealsCount: result.impactedLogMealsCount,
-                          impactedPlanMealsCount: result.impactedPlanMealsCount,
-                        });
-                        return;
-                      }
-                      if (result.type === "error") {
-                        toast.error(result.message);
-                        return;
-                      }
-                      const nextPerson = person ?? "PRIMARY";
-                      if (result.nextDayKey) {
-                        const nextUrl = `${ROUTES.logView(logId)}?person=${nextPerson}&day=${result.nextDayKey}`;
-                        router.push(nextUrl);
-                      } else {
-                        router.push(
-                          `${ROUTES.logView(logId)}?person=${nextPerson}`,
-                        );
-                      }
-                      router.refresh();
-                    });
-                  }}
-                />
-
-                {/* Single responsive layout.
-                    Rendered once to avoid duplicated DOM nodes in JSDOM tests (Tailwind hiding doesn't apply there). */}
-                <div className="flex flex-col gap-4 lg:grid lg:grid-cols-8 lg:gap-4 lg:items-stretch">
-                  {/* Planner meals */}
-                  <div className="lg:col-span-2 lg:min-h-0">
-                    <LogPool items={groupedPlannerPool} />
-                  </div>
-
-                  {/* Slots */}
-                  <div className="lg:col-span-2">
-                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-1">
-                      {slots}
-                    </div>
-                  </div>
-
-                  {/* Details */}
-                  <div className="lg:col-span-4 min-h-0">{editor}</div>
-                </div>
-              </article>
-            );
-          })}
+        {activeDay ? (
+          <LogActiveDayView
+            day={activeDay}
+            days={localDays}
+            groupedPlannerPool={groupedPlannerPool}
+            editorSlot={editorSlot}
+            ingredientOptions={ingredientOptions}
+            recipeOptions={recipeOptions}
+            isSaving={isSaving}
+            isAddingDay={isAddingDay}
+            isRemovingDay={isRemovingDay}
+            logId={logId}
+            person={person}
+            onSelectDay={handleSelectDay}
+            onAddDay={handleAddDay}
+            onRemoveDay={() => handleRemoveDay(activeDay.dateKey)}
+            onEmptySlotClick={(slot) => selectEmptySlot(activeDay, slot)}
+            onRecipeClick={(slot, recipe) =>
+              selectRecipeSlot(activeDay, slot, recipe)
+            }
+            onRecipeRemove={handleRemovePlacedRecipe}
+            onSelectedRecipeIdChange={handleSelectedRecipeChange}
+            onSave={handleSlotSave}
+          />
+        ) : null}
       </section>
     </DndContext>
   );
 }
+
+export { LogDayViewController as LogDayView };
