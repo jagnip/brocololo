@@ -94,10 +94,9 @@ export function LogActiveDayView({
         <div className="2xl:col-span-2 2xl:min-h-0">
           <LogPool items={groupedPlannerPool} />
         </div>
-
-        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-5 lg:gap-4 2xl:contents">
-          <div className="lg:col-span-2 2xl:col-span-2">
-            <Subheader className="mb-2">Log</Subheader>
+        <div className="flex min-h-0 flex-col gap-y-2 lg:grid lg:grid-cols-5 lg:gap-x-4 lg:gap-y-2 2xl:col-span-6">
+          <Subheader className="lg:col-span-5">Log</Subheader>
+          <div className="lg:col-span-2">
             <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-1">
               {day.slots.map((slot) => (
                 <LogSlot
@@ -113,7 +112,7 @@ export function LogActiveDayView({
             </div>
           </div>
 
-          <div className="lg:col-span-3 min-h-0 2xl:col-span-4">
+          <div className="min-h-0 lg:col-span-3">
             {editorSlot ? (
               <LogIngredientsForm
                 title={editorSlot.mealLabel}

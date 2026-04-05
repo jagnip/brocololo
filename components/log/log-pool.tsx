@@ -9,6 +9,7 @@ type LogPlannerPoolProps = {
 };
 
 export function LogPool({ items }: LogPlannerPoolProps) {
+  // Tight spacing under subheader; aligns with Log block row gap (gap-y-2).
   return (
     <section className="space-y-2">
       <Subheader>Planned meals</Subheader>
