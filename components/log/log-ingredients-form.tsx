@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { DialogFooter } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -18,6 +17,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
+import { cn } from "@/lib/utils";
 
 export type LogIngredientOption = {
   id: string;
@@ -238,29 +238,49 @@ export function LogIngredientsForm({
     <div className="rounded-lg border">
       <div className="flex h-full min-h-0 flex-col">
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-          <div className="px-4 py-4 md:px-6 md:py-6 border-b text-left">
-            <h2 className="text-2xl font-semibold">{title}</h2>
-            <p className="text-muted-foreground text-sm">{subtitle}</p>
-            <div className="mt-4 space-y-2">
-              <p className="text-xs tracking-wide uppercase text-muted-foreground font-semibold">
+          {/* Same inset as macros + ingredients sections; avoid extra top margin now that the page header is gone. */}
+          <div className="border-b px-4 py-4 text-left md:px-6 md:py-6">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Recipe (optional)
               </p>
-              <SearchableSelect
-                options={recipeOptions.map((recipe) => ({
-                  value: recipe.id,
-                  label: recipe.name,
-                }))}
-                value={selectedRecipeId}
-                onValueChange={onSelectedRecipeIdChange}
-                placeholder="Select a recipe..."
-                searchPlaceholder="Search recipe..."
-                emptyLabel="No recipe found."
-                allowClear
-                clearLabel="Clear recipe"
-              />
-              <p className="text-xs text-muted-foreground">
-                Clearing recipe removes current ingredients for this person.
-              </p>
+              {/* Single row on all breakpoints: select shrinks (min-w-0), actions stay put (shrink-0). */}
+              <div className="flex min-w-0 flex-row flex-nowrap items-center gap-2 sm:gap-3">
+                <div className="min-w-0 flex-1">
+                  <SearchableSelect
+                    options={recipeOptions.map((recipe) => ({
+                      value: recipe.id,
+                      label: recipe.name,
+                    }))}
+                    value={selectedRecipeId}
+                    onValueChange={onSelectedRecipeIdChange}
+                    placeholder="Select a recipe..."
+                    searchPlaceholder="Search recipe..."
+                    emptyLabel="No recipe found."
+                    allowClear
+                    clearLabel="Clear recipe"
+                  />
+                </div>
+                <div className="flex shrink-0 flex-nowrap gap-2">
+                  {onCancel ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={onCancel}
+                      disabled={isSaving}
+                    >
+                      Cancel
+                    </Button>
+                  ) : null}
+                  <Button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={isSaving || !hasUnsavedChanges}
+                  >
+                    {isSaving ? "Saving..." : saveLabel}
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -279,9 +299,16 @@ export function LogIngredientsForm({
             </div>
           </section>
 
-          <section className="px-4 py-4 md:px-6 md:py-6 border-b flex flex-col gap-2">
-            <div className="space-y-2">
-              {rows.map((row) => {
+          <section
+            className={cn(
+              "flex flex-col px-4 py-4 md:px-6 md:py-6",
+              // Only gap between the list and "Add ingredient" when rows exist; avoids extra space above the button when empty.
+              rows.length > 0 && "gap-2",
+            )}
+          >
+            {rows.length > 0 ? (
+              <div className="space-y-2">
+                {rows.map((row) => {
                 const selectedIngredient = row.ingredientId
                   ? ingredientById.get(row.ingredientId)
                   : null;
@@ -413,7 +440,8 @@ export function LogIngredientsForm({
                   </div>
                 );
               })}
-            </div>
+              </div>
+            ) : null}
 
             <Button
               type="button"
@@ -426,26 +454,6 @@ export function LogIngredientsForm({
             </Button>
           </section>
         </div>
-
-        <DialogFooter className="px-4 py-4 md:px-6 md:py-6 flex-row justify-end gap-2">
-          {onCancel ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isSaving}
-            >
-              Cancel
-            </Button>
-          ) : null}
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving || !hasUnsavedChanges}
-          >
-            {isSaving ? "Saving..." : saveLabel}
-          </Button>
-        </DialogFooter>
       </div>
     </div>
   );
