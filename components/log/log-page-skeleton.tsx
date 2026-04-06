@@ -66,7 +66,7 @@ function LogPoolCardSkeleton() {
 /**
  * Full-page placeholder for `/log/[logId]` while the RSC payload resolves.
  * Layout matches `LogDayHeader` + `LogActiveDayView` (pool + log grid + details).
- * The app top bar shows skeleton actions via `AppTopbar` when no `LogTopbarConfig` is mounted yet.
+ * The app top bar shows skeleton actions via `AppTopbar` when `LogTopbar` has not set config yet.
  */
 export function LogPageSkeleton() {
   return (

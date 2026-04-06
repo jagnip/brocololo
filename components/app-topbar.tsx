@@ -57,7 +57,8 @@ export function AppTopbar() {
         ) : null}
         {shouldShowPlanTopbarSkeleton ? (
           <>
-            {/* Mirror “New plan” secondary action while plan topbar config hydrates. */}
+            {/* Mirror plan switcher + New plan while top bar config hydrates. */}
+            <Skeleton className="h-9 w-48 rounded-md" />
             <Skeleton className="h-9 w-28 rounded-md" />
           </>
         ) : null}

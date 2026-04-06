@@ -1,3 +1,4 @@
+import { cache } from "react";
 import {
   LogMealType,
   LogPerson,
@@ -55,6 +56,9 @@ export async function getLogs() {
     },
   });
 }
+
+/** Dedupes within a single RSC request when layout and data loaders both need the list. */
+export const getLogsCached = cache(getLogs);
 
 export type LogListEntry = Awaited<ReturnType<typeof getLogs>>[number];
 

@@ -1,5 +1,3 @@
-import { TopbarConfigController } from "@/components/topbar-config";
-import { ROUTES } from "@/lib/constants";
 import { PlanDetailPage } from "@/components/planner/plan-detail-page";
 
 export default async function PlanPage({
@@ -11,19 +9,6 @@ export default async function PlanPage({
 
   return (
     <div className="page-container">
-      <TopbarConfigController
-        config={{
-          actions: [
-            {
-              id: "new-plan",
-              label: "New plan",
-              href: ROUTES.planCreate,
-              variant: "outline" as const,
-              size: "default" as const,
-            },
-          ],
-        }}
-      />
       <PlanDetailPage planId={planId} />
     </div>
   );

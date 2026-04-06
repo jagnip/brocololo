@@ -1,6 +1,7 @@
 import { LogPage } from "@/components/log/log-page";
 import { LogCurrentEmpty } from "@/components/log/log-current-empty";
-import { findLogContainingDate, getLogs } from "@/lib/db/logs";
+import { LogTopbar } from "@/components/log/log-topbar";
+import { findLogContainingDate, getLogsCached } from "@/lib/db/logs";
 
 function toDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
@@ -11,7 +12,7 @@ export default async function LogCurrentPage({
 }: {
   searchParams: Promise<{ person?: string; day?: string }>;
 }) {
-  const logs = await getLogs();
+  const logs = await getLogsCached();
   const { person, day } = await searchParams;
 
   if (logs.length === 0) {
@@ -25,8 +26,11 @@ export default async function LogCurrentPage({
   const dayForView = day ?? toDateKey(today);
 
   return (
-    <div className="page-container">
-      <LogPage logId={currentLog.id} person={person} day={dayForView} />
-    </div>
+    <>
+      <LogTopbar logId={currentLog.id} />
+      <div className="page-container">
+        <LogPage logId={currentLog.id} person={person} day={dayForView} />
+      </div>
+    </>
   );
 }
