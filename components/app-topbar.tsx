@@ -23,8 +23,9 @@ export function AppTopbar() {
     isIngredientsIndexRoute && !config;
   const shouldShowPlanTopbarSkeleton = isPlanDetailRoute && !config;
 
+  // z-20: stay above page controls that use z-10 (e.g. log card remove buttons) while scrolling.
   return (
-    <header className="flex h-14 items-center border-b px-4 sticky top-0 bg-background z-10">
+    <header className="flex h-14 items-center border-b px-4 sticky top-0 z-20 bg-background">
       <SidebarTrigger className="lg:hidden" />
       <div className="ml-auto flex items-center gap-2">
         {shouldShowRecipeTopbarSkeleton ? (
