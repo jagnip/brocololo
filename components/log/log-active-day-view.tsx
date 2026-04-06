@@ -1,6 +1,9 @@
 "use client";
 
-import type { LogDayData, PlannerPoolGroupedCardData } from "@/lib/log/view-model";
+import type {
+  LogDayData,
+  PlannerPoolGroupedCardData,
+} from "@/lib/log/view-model";
 import {
   LogIngredientsForm,
   type EditableIngredientRow,

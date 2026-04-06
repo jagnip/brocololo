@@ -244,43 +244,19 @@ export function LogIngredientsForm({
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Recipe (optional)
               </p>
-              {/* Single row on all breakpoints: select shrinks (min-w-0), actions stay put (shrink-0). */}
-              <div className="flex min-w-0 flex-row flex-nowrap items-center gap-2 sm:gap-3">
-                <div className="min-w-0 flex-1">
-                  <SearchableSelect
-                    options={recipeOptions.map((recipe) => ({
-                      value: recipe.id,
-                      label: recipe.name,
-                    }))}
-                    value={selectedRecipeId}
-                    onValueChange={onSelectedRecipeIdChange}
-                    placeholder="Select a recipe..."
-                    searchPlaceholder="Search recipe..."
-                    emptyLabel="No recipe found."
-                    allowClear
-                    clearLabel="Clear recipe"
-                  />
-                </div>
-                <div className="flex shrink-0 flex-nowrap gap-2">
-                  {onCancel ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={onCancel}
-                      disabled={isSaving}
-                    >
-                      Cancel
-                    </Button>
-                  ) : null}
-                  <Button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={isSaving || !hasUnsavedChanges}
-                  >
-                    {isSaving ? "Saving..." : saveLabel}
-                  </Button>
-                </div>
-              </div>
+              <SearchableSelect
+                options={recipeOptions.map((recipe) => ({
+                  value: recipe.id,
+                  label: recipe.name,
+                }))}
+                value={selectedRecipeId}
+                onValueChange={onSelectedRecipeIdChange}
+                placeholder="Select a recipe..."
+                searchPlaceholder="Search recipe..."
+                emptyLabel="No recipe found."
+                allowClear
+                clearLabel="Clear recipe"
+              />
             </div>
           </div>
 
@@ -443,15 +419,36 @@ export function LogIngredientsForm({
               </div>
             ) : null}
 
-            <Button
-              type="button"
-              variant="outline"
-              // Mobile keeps a large touch target; larger viewports use content width.
-              className="w-full sm:w-auto sm:self-start"
-              onClick={handleAddRow}
-            >
-              Add ingredient
-            </Button>
+        
+            <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-start">
+              {onCancel ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full shrink-0 sm:w-auto"
+                  onClick={onCancel}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </Button>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto sm:self-start"
+                onClick={handleAddRow}
+              >
+                Add ingredient
+              </Button>
+              <Button
+                type="button"
+                className="w-full sm:w-auto"
+                onClick={handleSave}
+                disabled={isSaving || !hasUnsavedChanges}
+              >
+                {isSaving ? "Saving..." : saveLabel}
+              </Button>
+            </div>
           </section>
         </div>
       </div>

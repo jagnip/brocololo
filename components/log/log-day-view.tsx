@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import {
   DndContext,
   type DragEndEvent,
@@ -29,6 +29,7 @@ import {
   removeLogDayAction,
   upsertLogSlotAction,
 } from "@/actions/log-actions";
+import { isLogRecipeCardSelected } from "@/lib/log/is-log-recipe-card-selected";
 import { LogActiveDayView, type SelectedSlotState } from "./log-active-day-view";
 import { LogRemoveDayAlertDialog } from "./log-remove-day-alert-dialog";
 
@@ -155,6 +156,8 @@ export function LogDayViewController({
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlotState | null>(
     null,
   );
+  /** Tracks which day the auto-select effect last applied to; avoids reopening the editor after the user closes it on the same day. */
+  const prevSelectedDayKeyForEditorRef = useRef<string | null>(null);
   const [removeDayWarning, setRemoveDayWarning] =
     useState<RemoveDayWarningState | null>(null);
   const [isSaving, startSavingTransition] = useTransition();
@@ -191,12 +194,22 @@ export function LogDayViewController({
       return;
     }
 
-    if (selectedSlot?.dayKey === selectedDayKey) {
+    const activeDay = days.find((day) => day.dateKey === selectedDayKey);
+    if (!activeDay) {
       return;
     }
 
-    const activeDay = days.find((day) => day.dateKey === selectedDayKey);
-    if (!activeDay) {
+    // Selection already matches this day — keep ref in sync for the "dismiss on same day" case below.
+    if (selectedSlot?.dayKey === selectedDayKey) {
+      prevSelectedDayKeyForEditorRef.current = selectedDayKey;
+      return;
+    }
+
+    const dayKeyChanged =
+      prevSelectedDayKeyForEditorRef.current !== selectedDayKey;
+
+    // User dismissed the details panel on this day; do not immediately re-select the first entry.
+    if (!dayKeyChanged && selectedSlot === null) {
       return;
     }
 
@@ -206,6 +219,7 @@ export function LogDayViewController({
       }
 
       const firstRecipe = slot.recipes[0];
+      prevSelectedDayKeyForEditorRef.current = selectedDayKey;
       setSelectedSlot({
         dayKey: activeDay.dateKey,
         mealType: slot.mealType,
@@ -255,6 +269,25 @@ export function LogDayViewController({
   ) => {
     if (!recipe.entryId) {
       toast.error("Cannot edit this recipe yet");
+      return;
+    }
+
+    // Second click on the same card closes the details panel (selection toggles).
+    if (
+      selectedSlot &&
+      isLogRecipeCardSelected(
+        {
+          dayKey: selectedSlot.dayKey,
+          mealType: selectedSlot.mealType,
+          entryRecipeId: selectedSlot.entryRecipeId,
+          selectedRecipeId: selectedSlot.selectedRecipeId,
+        },
+        day.dateKey,
+        slot,
+        recipe,
+      )
+    ) {
+      setSelectedSlot(null);
       return;
     }
 
