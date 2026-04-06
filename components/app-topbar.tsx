@@ -43,8 +43,9 @@ export function AppTopbar() {
         ) : null}
         {shouldShowLogTopbarSkeleton ? (
           <>
-            {/* Mirror log topbar controls: selector + delete + view-plan icon. */}
+            {/* Mirror log topbar: log switcher + person + delete + view-plan icon. */}
             <Skeleton className="h-9 w-48 rounded-md" />
+            <Skeleton className="h-9 w-32 rounded-md" />
             <Skeleton className="h-9 w-9 rounded-md" />
             <Skeleton className="h-9 w-9 rounded-md" />
           </>

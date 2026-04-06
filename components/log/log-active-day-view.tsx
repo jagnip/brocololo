@@ -43,7 +43,6 @@ export type LogActiveDayViewProps = {
   isAddingDay: boolean;
   isRemovingDay: boolean;
   logId?: string;
-  person?: "PRIMARY" | "SECONDARY";
   onSelectDay: (dateKey: string) => void;
   onAddDay: () => void;
   onRemoveDay: () => void;
@@ -102,7 +101,6 @@ export function LogActiveDayView({
   isAddingDay,
   isRemovingDay,
   logId,
-  person,
   onSelectDay,
   onAddDay,
   onRemoveDay,
@@ -125,7 +123,6 @@ export function LogActiveDayView({
         selectedDayKey={day.dateKey}
         onSelectDay={onSelectDay}
         logId={logId}
-        person={person}
         isAddingDay={isAddingDay}
         onAddDay={onAddDay}
         isRemovingDay={isRemovingDay}

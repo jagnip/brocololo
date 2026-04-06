@@ -746,7 +746,6 @@ export function LogDayViewController({
             isAddingDay={isAddingDay}
             isRemovingDay={isRemovingDay}
             logId={logId}
-            person={person}
             onSelectDay={handleSelectDay}
             onAddDay={handleAddDay}
             onRemoveDay={() => handleRemoveDay(activeDay.dateKey)}
