@@ -136,7 +136,8 @@ export function LogActiveDayView({
         <div className="2xl:col-span-2 2xl:min-h-0">
           <LogPool items={groupedPlannerPool} />
         </div>
-        <div className="flex min-h-0 flex-col gap-y-2 lg:grid lg:grid-cols-5 lg:gap-x-2 lg:gap-y-2 2xl:col-span-6">
+        {/* `content-start`: when the log column is stretched to the pool height (2xl), avoid stretching grid rows so the Log subheader doesn’t grow with empty space. */}
+        <div className="flex min-h-0 flex-col gap-y-2 lg:grid lg:grid-cols-5 lg:content-start lg:gap-x-2 lg:gap-y-2 2xl:col-span-6">
           <Subheader className="lg:col-span-5">Log</Subheader>
           <div className="lg:col-span-2">
             <div className="grid items-stretch gap-4 sm:grid-cols-2 sm:gap-2 lg:grid-cols-1 lg:gap-2">
