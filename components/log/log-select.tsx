@@ -38,8 +38,9 @@ export function LogSelect({ logs, currentLogId }: LogSelectProps) {
       onValueChange={handleValueChange}
       allowInlineClear={false}
     >
-      <SelectTrigger className="min-w-48 max-w-md">
-        <SelectValue placeholder="Select a log" />
+      {/* Let the trigger shrink on small screens and truncate label text instead of growing layout gaps. */}
+      <SelectTrigger className="w-40 min-w-0 sm:w-48 md:max-w-md">
+        <SelectValue className="truncate" placeholder="Select a log" />
       </SelectTrigger>
       <SelectContent>
         {logs.map((log) => (

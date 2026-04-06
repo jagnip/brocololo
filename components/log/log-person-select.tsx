@@ -38,7 +38,8 @@ export function LogPersonSelect({ value }: LogPersonSelectProps) {
   };
 
   return (
-    <Select value={value} onValueChange={handleValueChange}>
+    // Person is always PRIMARY or SECONDARY — never empty; hide Select’s inline clear (X).
+    <Select value={value} onValueChange={handleValueChange} allowInlineClear={false}>
       {/* Narrow trigger on small screens; top bar also has log switcher + actions. */}
       <SelectTrigger className="w-32 shrink-0 sm:w-44">
         <SelectValue />

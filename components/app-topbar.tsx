@@ -24,10 +24,13 @@ export function AppTopbar() {
   const shouldShowPlanTopbarSkeleton = isPlanDetailRoute && !config;
 
   // z-20: stay above page controls that use z-10 (e.g. log card remove buttons) while scrolling.
+  // `gap-2` between the nav trigger and the controls row matches inner `gap-2` and prevents selects
+  // from sitting flush against the icon when the row is cramped (mobile, sidebar closed).
   return (
-    <header className="flex h-14 items-center border-b px-4 sticky top-0 z-20 bg-background">
-      <SidebarTrigger className="lg:hidden" />
-      <div className="ml-auto flex items-center gap-2">
+    <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b bg-background px-4">
+      <SidebarTrigger className="shrink-0 lg:hidden" />
+      {/* Same as `ml-auto`: group stays right; `flex-1` + `min-w-0` lets selects truncate instead of overlapping the trigger. */}
+      <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
         {shouldShowRecipeTopbarSkeleton ? (
           <>
             {/* Mirror only action buttons while detail page topbar config loads. */}
