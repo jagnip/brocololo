@@ -244,43 +244,19 @@ export function LogIngredientsForm({
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Recipe (optional)
               </p>
-              {/* Single row on all breakpoints: select shrinks (min-w-0), actions stay put (shrink-0). */}
-              <div className="flex min-w-0 flex-row flex-nowrap items-center gap-2 sm:gap-3">
-                <div className="min-w-0 flex-1">
-                  <SearchableSelect
-                    options={recipeOptions.map((recipe) => ({
-                      value: recipe.id,
-                      label: recipe.name,
-                    }))}
-                    value={selectedRecipeId}
-                    onValueChange={onSelectedRecipeIdChange}
-                    placeholder="Select a recipe..."
-                    searchPlaceholder="Search recipe..."
-                    emptyLabel="No recipe found."
-                    allowClear
-                    clearLabel="Clear recipe"
-                  />
-                </div>
-                <div className="flex shrink-0 flex-nowrap gap-2">
-                  {onCancel ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={onCancel}
-                      disabled={isSaving}
-                    >
-                      Cancel
-                    </Button>
-                  ) : null}
-                  <Button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={isSaving || !hasUnsavedChanges}
-                  >
-                    {isSaving ? "Saving..." : saveLabel}
-                  </Button>
-                </div>
-              </div>
+              <SearchableSelect
+                options={recipeOptions.map((recipe) => ({
+                  value: recipe.id,
+                  label: recipe.name,
+                }))}
+                value={selectedRecipeId}
+                onValueChange={onSelectedRecipeIdChange}
+                placeholder="Select a recipe..."
+                searchPlaceholder="Search recipe..."
+                emptyLabel="No recipe found."
+                allowClear
+                clearLabel="Clear recipe"
+              />
             </div>
           </div>
 
@@ -302,156 +278,177 @@ export function LogIngredientsForm({
           <section
             className={cn(
               "flex flex-col px-4 py-4 md:px-6 md:py-6",
-              // Only gap between the list and "Add ingredient" when rows exist; avoids extra space above the button when empty.
-              rows.length > 0 && "gap-2",
+              // 24px between ingredient rows and the action row; only when rows exist (no extra gap when empty).
+              rows.length > 0 && "gap-4",
             )}
           >
             {rows.length > 0 ? (
               <div className="space-y-2">
                 {rows.map((row) => {
-                const selectedIngredient = row.ingredientId
-                  ? ingredientById.get(row.ingredientId)
-                  : null;
-                const availableUnits =
-                  selectedIngredient?.unitConversions ?? [];
+                  const selectedIngredient = row.ingredientId
+                    ? ingredientById.get(row.ingredientId)
+                    : null;
+                  const availableUnits =
+                    selectedIngredient?.unitConversions ?? [];
 
-                return (
-                  <div
-                    key={row.key}
-                    // Mobile-only row framing mirrors recipe-page ingredient cards.
-                    className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 rounded-md border border-border/60 p-2 sm:rounded-none sm:border-0 sm:p-0 sm:gap-2 sm:grid-cols-[minmax(0,1fr)_96px_128px_auto] lg:grid-cols-[minmax(0,32rem)_96px_128px_auto]"
-                  >
-                    <div className="min-w-0 col-span-3 sm:col-span-1">
-                      <SearchableSelect
-                        className="min-w-0 w-full font-normal"
-                        options={ingredientSelectOptions}
-                        value={row.ingredientId}
-                        onValueChange={(nextValue) => {
-                          if (!nextValue) {
+                  return (
+                    <div
+                      key={row.key}
+                      // Mobile-only row framing mirrors recipe-page ingredient cards.
+                      className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 rounded-md border border-border/60 p-2 sm:rounded-none sm:border-0 sm:p-0 sm:gap-2 sm:grid-cols-[minmax(0,1fr)_96px_128px_auto] lg:grid-cols-[minmax(0,32rem)_96px_128px_auto]"
+                    >
+                      <div className="min-w-0 col-span-3 sm:col-span-1">
+                        <SearchableSelect
+                          className="min-w-0 w-full font-normal"
+                          options={ingredientSelectOptions}
+                          value={row.ingredientId}
+                          onValueChange={(nextValue) => {
+                            if (!nextValue) {
+                              setRows((prev) =>
+                                prev.map((item) =>
+                                  item.key === row.key
+                                    ? {
+                                        ...item,
+                                        ingredientId: null,
+                                        unitId: null,
+                                        amount: null,
+                                      }
+                                    : item,
+                                ),
+                              );
+                              return;
+                            }
+
+                            const ingredient = ingredientById.get(nextValue);
+                            const defaultUnitId = ingredient
+                              ? getDefaultUnitIdForIngredient({
+                                  defaultUnitId: ingredient.defaultUnitId,
+                                  unitConversions:
+                                    ingredient.unitConversions.map(
+                                      (conversion) => ({
+                                        unitId: conversion.unitId,
+                                        unit: { name: conversion.unitName },
+                                      }),
+                                    ),
+                                })
+                              : null;
+
                             setRows((prev) =>
                               prev.map((item) =>
                                 item.key === row.key
                                   ? {
                                       ...item,
-                                      ingredientId: null,
-                                      unitId: null,
-                                      amount: null,
+                                      ingredientId: nextValue,
+                                      unitId: defaultUnitId,
                                     }
                                   : item,
                               ),
                             );
-                            return;
-                          }
+                          }}
+                          placeholder="Select ingredient..."
+                          searchPlaceholder="Search ingredient..."
+                          emptyLabel="No ingredient found."
+                          allowClear
+                          clearLabel="Clear ingredient"
+                        />
+                      </div>
 
-                          const ingredient = ingredientById.get(nextValue);
-                          const defaultUnitId = ingredient
-                            ? getDefaultUnitIdForIngredient({
-                                defaultUnitId: ingredient.defaultUnitId,
-                                unitConversions: ingredient.unitConversions.map(
-                                  (conversion) => ({
-                                    unitId: conversion.unitId,
-                                    unit: { name: conversion.unitName },
-                                  }),
-                                ),
-                              })
-                            : null;
-
+                      <Input
+                        type="number"
+                        min={0}
+                        step="any"
+                        placeholder="0"
+                        className="w-full sm:w-24 sm:min-w-24 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        value={row.amount == null ? "" : row.amount}
+                        onChange={(event) => {
+                          const amount =
+                            event.target.value === ""
+                              ? null
+                              : Number(event.target.value);
                           setRows((prev) =>
                             prev.map((item) =>
-                              item.key === row.key
-                                ? {
-                                    ...item,
-                                    ingredientId: nextValue,
-                                    unitId: defaultUnitId,
-                                  }
-                                : item,
+                              item.key === row.key ? { ...item, amount } : item,
                             ),
                           );
                         }}
-                        placeholder="Select ingredient..."
-                        searchPlaceholder="Search ingredient..."
-                        emptyLabel="No ingredient found."
-                        allowClear
-                        clearLabel="Clear ingredient"
                       />
-                    </div>
 
-                    <Input
-                      type="number"
-                      min={0}
-                      step="any"
-                      placeholder="0"
-                      className="w-full sm:w-24 sm:min-w-24 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      value={row.amount == null ? "" : row.amount}
-                      onChange={(event) => {
-                        const amount =
-                          event.target.value === ""
-                            ? null
-                            : Number(event.target.value);
-                        setRows((prev) =>
-                          prev.map((item) =>
-                            item.key === row.key ? { ...item, amount } : item,
-                          ),
-                        );
-                      }}
-                    />
+                      <div className="min-w-0">
+                        <Select
+                          value={row.unitId ?? ""}
+                          onValueChange={(nextUnitId) => {
+                            setRows((prev) =>
+                              prev.map((item) =>
+                                item.key === row.key
+                                  ? { ...item, unitId: nextUnitId }
+                                  : item,
+                              ),
+                            );
+                          }}
+                          disabled={!selectedIngredient}
+                        >
+                          <SelectTrigger className="min-w-0 w-full sm:w-32 sm:min-w-32 [&>svg]:hidden">
+                            <SelectValue placeholder="Unit" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableUnits.map((unit) => (
+                              <SelectItem key={unit.unitId} value={unit.unitId}>
+                                {getUnitDisplayName({
+                                  amount: row.amount,
+                                  unitName: unit.unitName,
+                                  unitNamePlural: unit.unitNamePlural,
+                                })}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                    <div className="min-w-0">
-                      <Select
-                        value={row.unitId ?? ""}
-                        onValueChange={(nextUnitId) => {
-                          setRows((prev) =>
-                            prev.map((item) =>
-                              item.key === row.key
-                                ? { ...item, unitId: nextUnitId }
-                                : item,
-                            ),
-                          );
-                        }}
-                        disabled={!selectedIngredient}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="justify-self-start"
+                        aria-label="Remove ingredient row"
+                        onClick={() => handleRemoveRow(row.key)}
                       >
-                        <SelectTrigger className="min-w-0 w-full sm:w-32 sm:min-w-32 [&>svg]:hidden">
-                          <SelectValue placeholder="Unit" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableUnits.map((unit) => (
-                            <SelectItem key={unit.unitId} value={unit.unitId}>
-                              {getUnitDisplayName({
-                                amount: row.amount,
-                                unitName: unit.unitName,
-                                unitNamePlural: unit.unitNamePlural,
-                              })}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="justify-self-start"
-                      aria-label="Remove ingredient row"
-                      onClick={() => handleRemoveRow(row.key)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                );
-              })}
+                  );
+                })}
               </div>
             ) : null}
 
-            <Button
-              type="button"
-              variant="outline"
-              // Mobile keeps a large touch target; larger viewports use content width.
-              className="w-full sm:w-auto sm:self-start"
-              onClick={handleAddRow}
-            >
-              Add ingredient
-            </Button>
+            <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-start">
+              {onCancel ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full shrink-0 sm:w-auto"
+                  onClick={onCancel}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </Button>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto sm:self-start"
+                onClick={handleAddRow}
+              >
+                Add ingredient
+              </Button>
+              <Button
+                type="button"
+                className="w-full sm:w-auto"
+                onClick={handleSave}
+                disabled={isSaving || !hasUnsavedChanges}
+              >
+                {isSaving ? "Saving..." : saveLabel}
+              </Button>
+            </div>
           </section>
         </div>
       </div>

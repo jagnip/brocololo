@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { SlotInputType, SlotSaveData } from "@/types/planner";
 import { getPersonIngredientAmountPerMeal } from "@/lib/log/helpers";
 import { FIXED_SNACK_RECIPE_ID } from "@/lib/constants";
@@ -75,6 +76,9 @@ export async function getPlans() {
     select: { id: true, startDate: true, endDate: true },
   });
 }
+
+/** Dedupes within a single RSC request (e.g. layout + page both need the plan list). */
+export const getPlansCached = cache(getPlans);
 
 export async function getLatestPlanId() {
   const plan = await prisma.plan.findFirst({

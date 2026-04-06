@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { LogPerson } from "@/src/generated/enums";
-import { getLogById, getLogs } from "@/lib/db/logs";
+import { getLogById } from "@/lib/db/logs";
 import { getPlannerPoolItemsForPlan } from "@/lib/db/planner";
 import { getIngredients } from "@/lib/db/ingredients";
 import { getRecipes } from "@/lib/db/recipes";
@@ -12,24 +12,11 @@ import {
 } from "@/lib/log/view-model";
 import { LogDayViewController } from "@/components/log/log-day-view";
 import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
-import { LogTopbarConfig } from "@/components/log/log-topbar-config";
-
 type LogDetailPageContainerProps = {
   logId: string;
   person?: string;
   day?: string;
 };
-
-function formatDateRange(start: Date, end: Date): string {
-  const options: Intl.DateTimeFormatOptions = {
-    month: "short",
-    day: "numeric",
-  };
-
-  const startStr = start.toLocaleDateString("en-US", options);
-  const endStr = end.toLocaleDateString("en-US", options);
-  return `${startStr} - ${endStr}`;
-}
 
 function parsePerson(input?: string): "PRIMARY" | "SECONDARY" {
   if (input === LogPerson.SECONDARY) return LogPerson.SECONDARY;
@@ -90,20 +77,14 @@ export async function LogPage({
 }: LogDetailPageContainerProps) {
   const person = parsePerson(rawPerson);
 
-  const [log, ingredients, recipes, ingredientFormDependencies, allLogs] =
+  const [log, ingredients, recipes, ingredientFormDependencies] =
     await Promise.all([
       getLogById(logId, person),
       getIngredients(),
       getRecipes(undefined),
       getIngredientFormDependencies(),
-      getLogs(),
     ]);
   if (!log) notFound();
-
-  const logOptions = allLogs.map((entry) => ({
-    id: entry.id,
-    label: formatDateRange(entry.plan.startDate, entry.plan.endDate),
-  }));
 
   const days = buildLogDays(log.entries);
   const poolItemsRaw = await getPlannerPoolItemsForPlan({
@@ -150,19 +131,15 @@ export async function LogPage({
   }));
 
   return (
-    <>
-      <LogTopbarConfig planId={log.plan.id} logOptions={logOptions} logId={logId} />
-
-      <LogDayViewController
-        days={days}
-        plannerPool={plannerPool}
-        initialSelectedDayKey={day}
-        logId={logId}
-        person={person}
-        recipeOptions={recipeOptions}
-        ingredientOptions={ingredientOptions}
-        ingredientFormDependencies={ingredientFormDependencies}
-      />
-    </>
+    <LogDayViewController
+      days={days}
+      plannerPool={plannerPool}
+      initialSelectedDayKey={day}
+      logId={logId}
+      person={person}
+      recipeOptions={recipeOptions}
+      ingredientOptions={ingredientOptions}
+      ingredientFormDependencies={ingredientFormDependencies}
+    />
   );
 }

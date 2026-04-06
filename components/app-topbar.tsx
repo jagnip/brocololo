@@ -23,10 +23,14 @@ export function AppTopbar() {
     isIngredientsIndexRoute && !config;
   const shouldShowPlanTopbarSkeleton = isPlanDetailRoute && !config;
 
+  // z-20: stay above page controls that use z-10 (e.g. log card remove buttons) while scrolling.
+  // `gap-2` between the nav trigger and the controls row matches inner `gap-2` and prevents selects
+  // from sitting flush against the icon when the row is cramped (mobile, sidebar closed).
   return (
-    <header className="flex h-14 items-center border-b px-4 sticky top-0 bg-background z-10">
-      <SidebarTrigger className="lg:hidden" />
-      <div className="ml-auto flex items-center gap-2">
+    <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b bg-background px-4">
+      <SidebarTrigger className="shrink-0 lg:hidden" />
+      {/* Same as `ml-auto`: group stays right; `flex-1` + `min-w-0` lets selects truncate instead of overlapping the trigger. */}
+      <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
         {shouldShowRecipeTopbarSkeleton ? (
           <>
             {/* Mirror only action buttons while detail page topbar config loads. */}
@@ -42,8 +46,9 @@ export function AppTopbar() {
         ) : null}
         {shouldShowLogTopbarSkeleton ? (
           <>
-            {/* Mirror log topbar controls: selector + delete + view-plan icon. */}
+            {/* Mirror log topbar: log switcher + person + delete + view-plan icon. */}
             <Skeleton className="h-9 w-48 rounded-md" />
+            <Skeleton className="h-9 w-32 rounded-md" />
             <Skeleton className="h-9 w-9 rounded-md" />
             <Skeleton className="h-9 w-9 rounded-md" />
           </>
@@ -56,7 +61,8 @@ export function AppTopbar() {
         ) : null}
         {shouldShowPlanTopbarSkeleton ? (
           <>
-            {/* Mirror “New plan” secondary action while plan topbar config hydrates. */}
+            {/* Mirror plan switcher + New plan while top bar config hydrates. */}
+            <Skeleton className="h-9 w-48 rounded-md" />
             <Skeleton className="h-9 w-28 rounded-md" />
           </>
         ) : null}

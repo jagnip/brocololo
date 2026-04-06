@@ -13,7 +13,6 @@ import {
 import type { LogDayData } from "@/lib/log/view-model";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import { PageHeader } from "../page-header";
-import { LogPersonSelect } from "./log-person-select";
 
 function toDayMacros(day: LogDayData) {
   return day.slots.reduce(
@@ -37,7 +36,6 @@ export type LogDayPanelHeaderProps = {
   selectedDayKey: string;
   onSelectDay: (dateKey: string) => void;
   logId?: string;
-  person?: "PRIMARY" | "SECONDARY";
   isAddingDay: boolean;
   onAddDay: () => void;
   isRemovingDay: boolean;
@@ -50,7 +48,6 @@ export function LogDayHeader({
   selectedDayKey,
   onSelectDay,
   logId,
-  person,
   isAddingDay,
   onAddDay,
   isRemovingDay,
@@ -64,7 +61,7 @@ export function LogDayHeader({
 
       <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-2">
         <div className="flex flex-nowrap items-center gap-1.5 md:flex-wrap md:gap-2">
-          {/* Inputs order: day selector → person selector; single row on mobile (md+ may wrap). */}
+          {/* Day selector; person lives in the app top bar next to the log switcher. */}
 
           {/* Mobile: grows in the one-row toolbar; md+: fixed width like desktop (12rem). */}
           <div className="min-w-0 flex-1 md:flex-none md:w-48">
@@ -81,8 +78,6 @@ export function LogDayHeader({
               </SelectContent>
             </Select>
           </div>
-
-          {person ? <LogPersonSelect value={person} /> : null}
 
           {/* Actions order: add day → delete day → delete log */}
           <Button
