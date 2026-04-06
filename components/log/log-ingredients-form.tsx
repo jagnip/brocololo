@@ -278,8 +278,8 @@ export function LogIngredientsForm({
           <section
             className={cn(
               "flex flex-col px-4 py-4 md:px-6 md:py-6",
-              // Only gap between the list and "Add ingredient" when rows exist; avoids extra space above the button when empty.
-              rows.length > 0 && "gap-2",
+              // 24px between ingredient rows and the action row; only when rows exist (no extra gap when empty).
+              rows.length > 0 && "gap-4",
             )}
           >
             {rows.length > 0 ? (
