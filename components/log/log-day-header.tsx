@@ -65,7 +65,12 @@ export function LogDayHeader({
 
           {/* Mobile: grows in the one-row toolbar; md+: fixed width like desktop (12rem). */}
           <div className="min-w-0 flex-1 md:flex-none md:w-48">
-            <Select value={selectedDayKey} onValueChange={onSelectDay}>
+            {/* Day is always required; disable shared Select inline clear (X). */}
+            <Select
+              value={selectedDayKey}
+              onValueChange={onSelectDay}
+              allowInlineClear={false}
+            >
               <SelectTrigger className="w-full min-w-0">
                 <SelectValue placeholder="Select a day" />
               </SelectTrigger>

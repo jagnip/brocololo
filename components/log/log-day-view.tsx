@@ -40,6 +40,21 @@ type IngredientFormDependencies = {
   iconOptions: string[];
 };
 
+/** Tri-state phone check prevents one-frame desktop fallback on initial mobile render. */
+function useIsPhoneViewport() {
+  const [isPhone, setIsPhone] = useState<boolean | undefined>(undefined);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const sync = () => setIsPhone(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  return isPhone;
+}
+
 function toRecipeMacros(
   rows: EditableIngredientRow[],
   ingredientOptions: LogIngredientOption[],
@@ -144,6 +159,7 @@ export function LogDayViewController({
   ingredientOptions = [],
 }: LogDayViewProps) {
   const router = useRouter();
+  const isPhoneViewport = useIsPhoneViewport();
   const defaultDayKey =
     initialSelectedDayKey &&
     days.some((day) => day.dateKey === initialSelectedDayKey)
@@ -177,6 +193,25 @@ export function LogDayViewController({
   }, [days]);
 
   useEffect(() => {
+    if (!initialSelectedDayKey) {
+      return;
+    }
+
+    const existsInDays = days.some((day) => day.dateKey === initialSelectedDayKey);
+    if (!existsInDays) {
+      return;
+    }
+
+    // Keep client selection in sync with URL day changes (e.g. after adding a new day).
+    setSelectedDayKey((prev) =>
+      prev === initialSelectedDayKey ? prev : initialSelectedDayKey,
+    );
+    setSelectedSlot((prev) =>
+      prev?.dayKey === initialSelectedDayKey ? prev : null,
+    );
+  }, [days, initialSelectedDayKey]);
+
+  useEffect(() => {
     if (!selectedDayKey || days.length === 0) {
       setSelectedDayKey(days[0]?.dateKey ?? null);
       return;
@@ -190,6 +225,16 @@ export function LogDayViewController({
   }, [days, selectedDayKey]);
 
   useEffect(() => {
+    // Wait for viewport detection; prevents opening details by default on phones.
+    if (isPhoneViewport === undefined) {
+      return;
+    }
+
+    // Phone-only behavior: details stay closed until the user explicitly opens one.
+    if (isPhoneViewport) {
+      return;
+    }
+
     if (!selectedDayKey) {
       return;
     }
@@ -238,7 +283,7 @@ export function LogDayViewController({
       });
       return;
     }
-  }, [days, selectedDayKey, selectedSlot]);
+  }, [days, isPhoneViewport, selectedDayKey, selectedSlot]);
 
   const selectEmptySlot = (
     day: LogDayData,
@@ -246,6 +291,19 @@ export function LogDayViewController({
   ) => {
     if (!slot.entryId) {
       toast.error("Cannot edit this slot yet");
+      return;
+    }
+
+    // Match recipe-card UX: second click on the same empty slot closes details.
+    if (
+      selectedSlot &&
+      selectedSlot.dayKey === day.dateKey &&
+      selectedSlot.mealType === slot.mealType &&
+      selectedSlot.entryId === slot.entryId &&
+      selectedSlot.selectedRecipeId === null &&
+      selectedSlot.entryRecipeId === null
+    ) {
+      setSelectedSlot(null);
       return;
     }
 
