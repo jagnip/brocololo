@@ -31,7 +31,10 @@ import {
   upsertLogSlotAction,
 } from "@/actions/log-actions";
 import { isLogRecipeCardSelected } from "@/lib/log/is-log-recipe-card-selected";
-import { LogActiveDayView, type SelectedSlotState } from "./log-active-day-view";
+import {
+  LogActiveDayView,
+  type SelectedSlotState,
+} from "./log-active-day-view";
 import { LogRemoveDayAlertDialog } from "./log-remove-day-alert-dialog";
 
 type IngredientFormDependencies = {
@@ -181,8 +184,7 @@ export function LogDayViewController({
   const [isSaving, startSavingTransition] = useTransition();
   const [isAddingDay, startAddDayTransition] = useTransition();
   const [isRemovingDay, startRemoveDayTransition] = useTransition();
-  const isContentPending =
-    isLogFilterPending || isAddingDay || isRemovingDay;
+  const isContentPending = isLogFilterPending;
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor),
@@ -201,7 +203,9 @@ export function LogDayViewController({
       return;
     }
 
-    const existsInDays = days.some((day) => day.dateKey === initialSelectedDayKey);
+    const existsInDays = days.some(
+      (day) => day.dateKey === initialSelectedDayKey,
+    );
     if (!existsInDays) {
       return;
     }
@@ -677,7 +681,9 @@ export function LogDayViewController({
       const result = await appendNextLogDayAction({ logId });
       if (result.type === "date_conflict") {
         // Keep collision feedback explicit: hard-block without destructive override.
-        toast.error(`Cannot add day. Date conflict: ${result.dates.join(", ")}`);
+        toast.error(
+          `Cannot add day. Date conflict: ${result.dates.join(", ")}`,
+        );
         return;
       }
       if (result.type === "error") {
@@ -709,10 +715,10 @@ export function LogDayViewController({
       : removeDayWarning.impactedLogMealsCount === 0 &&
           removeDayWarning.impactedPlanMealsCount === 0
         ? null
-      : {
-          impactedLogMealsCount: removeDayWarning.impactedLogMealsCount,
-          impactedPlanMealsCount: removeDayWarning.impactedPlanMealsCount,
-        };
+        : {
+            impactedLogMealsCount: removeDayWarning.impactedLogMealsCount,
+            impactedPlanMealsCount: removeDayWarning.impactedPlanMealsCount,
+          };
 
   const handleRemoveDayDialogOpenChange = (open: boolean) => {
     if (!open) setRemoveDayWarning(null);
@@ -749,8 +755,7 @@ export function LogDayViewController({
     });
   };
 
-  const activeDay =
-    localDays.find((d) => d.dateKey === selectedDayKey) ?? null;
+  const activeDay = localDays.find((d) => d.dateKey === selectedDayKey) ?? null;
   const editorSlot =
     activeDay && selectedSlot?.dayKey === activeDay.dateKey
       ? selectedSlot

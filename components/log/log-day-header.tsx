@@ -107,7 +107,8 @@ export function LogDayHeader({
             aria-label={`Remove day ${formatDayLabel(day.date)}`}
             onClick={onRemoveDay}
           >
-            <Trash2 />
+            {/* Match add-day UX: spinner while remove-day request is running. */}
+            {isRemovingDay ? <Loader2 className="animate-spin" /> : <Trash2 />}
           </Button>
 
         </div>
