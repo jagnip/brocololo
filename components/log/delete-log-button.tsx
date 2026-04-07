@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Loader2, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { deleteLogAction } from "@/actions/log-actions";
 import { ROUTES } from "@/lib/constants";
-import { useTopbar } from "@/components/context/topbar-context";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -27,12 +26,6 @@ export function DeleteLogButton({ logId }: DeleteLogButtonProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { setLogFilterPending } = useTopbar();
-
-  useEffect(() => {
-    setLogFilterPending("log-delete", isDeleting);
-    return () => setLogFilterPending("log-delete", false);
-  }, [isDeleting, setLogFilterPending]);
 
   return (
     <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -45,8 +38,12 @@ export function DeleteLogButton({ logId }: DeleteLogButtonProps) {
           setIsDialogOpen(true);
         }}
       >
-        <Trash2 className="h-4 w-4" />
-        {isDeleting ? "Deleting..." : ""}
+        {/* Match day-delete button UX: spinner icon only while deleting. */}
+        {isDeleting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Trash2 className="h-4 w-4" />
+        )}
       </Button>
       <AlertDialogContent>
         <AlertDialogHeader>
