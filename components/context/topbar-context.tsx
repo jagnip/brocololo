@@ -29,12 +29,17 @@ type TopbarContextValue = {
   config: TopbarConfig | null;
   setConfig: (config: TopbarConfig) => void;
   clearConfig: () => void;
+  isLogFilterPending: boolean;
+  setLogFilterPending: (source: string, pending: boolean) => void;
 };
 
 const TopbarContext = createContext<TopbarContextValue | null>(null);
 
 export function TopbarProvider({ children }: { children: ReactNode }) {
   const [config, setConfigState] = useState<TopbarConfig | null>(null);
+  const [logPendingSources, setLogPendingSources] = useState<
+    Record<string, boolean>
+  >({});
 
   const setConfig = useCallback((next: TopbarConfig) => {
     setConfigState(next);
@@ -44,9 +49,29 @@ export function TopbarProvider({ children }: { children: ReactNode }) {
     setConfigState(null);
   }, []);
 
+  const setLogFilterPending = useCallback((source: string, pending: boolean) => {
+    setLogPendingSources((prev) => {
+      if (pending) {
+        return { ...prev, [source]: true };
+      }
+      if (!(source in prev)) {
+        return prev;
+      }
+      const next = { ...prev };
+      delete next[source];
+      return next;
+    });
+  }, []);
+
   const value = useMemo(
-    () => ({ config, setConfig, clearConfig }),
-    [config, setConfig, clearConfig],
+    () => ({
+      config,
+      setConfig,
+      clearConfig,
+      isLogFilterPending: Object.keys(logPendingSources).length > 0,
+      setLogFilterPending,
+    }),
+    [config, setConfig, clearConfig, logPendingSources, setLogFilterPending],
   );
 
   return <TopbarContext.Provider value={value}>{children}</TopbarContext.Provider>;

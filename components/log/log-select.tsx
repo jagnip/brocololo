@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useTransition } from "react";
+import { useEffect, useOptimistic, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Select,
@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTopbar } from "@/components/context/topbar-context";
 import { ROUTES } from "@/lib/constants";
 
 export type LogSelectOption = {
@@ -24,8 +25,15 @@ type LogSelectProps = {
 export function LogSelect({ logs, currentLogId }: LogSelectProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
   const [optimisticLogId, setOptimisticLogId] = useOptimistic(currentLogId);
+  const { setLogFilterPending } = useTopbar();
+
+  useEffect(() => {
+    // Share selector transition state with page content so only log body pulses.
+    setLogFilterPending("log-select", isPending);
+    return () => setLogFilterPending("log-select", false);
+  }, [isPending, setLogFilterPending]);
 
   const handleValueChange = (nextLogId: string) => {
     if (nextLogId === optimisticLogId) return;

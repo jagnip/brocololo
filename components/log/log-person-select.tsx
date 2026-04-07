@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useTransition } from "react";
+import { useEffect, useOptimistic, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { LogPerson } from "@/src/generated/enums";
 import {
@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTopbar } from "@/components/context/topbar-context";
 
 type LogPersonSelectProps = {
   value: "PRIMARY" | "SECONDARY";
@@ -31,8 +32,15 @@ export function LogPersonSelect({ value }: LogPersonSelectProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
   const [optimisticPerson, setOptimisticPerson] = useOptimistic(value);
+  const { setLogFilterPending } = useTopbar();
+
+  useEffect(() => {
+    // Share person-selector transition state with log page body pulse feedback.
+    setLogFilterPending("log-person-select", isPending);
+    return () => setLogFilterPending("log-person-select", false);
+  }, [isPending, setLogFilterPending]);
 
   const handleValueChange = (nextValue: string) => {
     if (nextValue === optimisticPerson) return;

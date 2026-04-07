@@ -11,6 +11,7 @@ import {
 } from "@dnd-kit/core";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useTopbar } from "@/components/context/topbar-context";
 import { ROUTES } from "@/lib/constants";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import {
@@ -159,6 +160,7 @@ export function LogDayViewController({
   ingredientOptions = [],
 }: LogDayViewProps) {
   const router = useRouter();
+  const { isLogFilterPending } = useTopbar();
   const isPhoneViewport = useIsPhoneViewport();
   const defaultDayKey =
     initialSelectedDayKey &&
@@ -772,7 +774,10 @@ export function LogDayViewController({
 
   if (days.length === 0) {
     return (
-      <section className="rounded-lg border p-6 space-y-3">
+      <section
+        className="rounded-lg border p-6 space-y-3 data-[pending=true]:animate-pulse"
+        data-pending={isLogFilterPending}
+      >
         <h2 className="text-lg font-medium">
           No log entries for selected person
         </h2>
@@ -785,7 +790,10 @@ export function LogDayViewController({
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      <section className="space-y-8">
+      <section
+        className="space-y-8 data-[pending=true]:animate-pulse"
+        data-pending={isLogFilterPending}
+      >
         <LogRemoveDayAlertDialog
           open={removeDayWarning != null}
           warning={removeDayDialogWarning}
