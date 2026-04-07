@@ -181,6 +181,8 @@ export function LogDayViewController({
   const [isSaving, startSavingTransition] = useTransition();
   const [isAddingDay, startAddDayTransition] = useTransition();
   const [isRemovingDay, startRemoveDayTransition] = useTransition();
+  const isContentPending =
+    isLogFilterPending || isAddingDay || isRemovingDay;
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor),
@@ -694,37 +696,19 @@ export function LogDayViewController({
     if (!logId) {
       return;
     }
-    startRemoveDayTransition(async () => {
-      const result = await removeLogDayAction({
-        logId,
-        dateKey,
-      });
-      if (result.type === "impact_warning") {
-        setRemoveDayWarning({
-          dateKey,
-          impactedLogMealsCount: result.impactedLogMealsCount,
-          impactedPlanMealsCount: result.impactedPlanMealsCount,
-        });
-        return;
-      }
-      if (result.type === "error") {
-        toast.error(result.message);
-        return;
-      }
-      const nextPerson = person ?? "PRIMARY";
-      if (result.nextDayKey) {
-        const nextUrl = `${ROUTES.logView(logId)}?person=${nextPerson}&day=${result.nextDayKey}`;
-        router.push(nextUrl);
-      } else {
-        router.push(`${ROUTES.logView(logId)}?person=${nextPerson}`);
-      }
-      router.refresh();
+    setRemoveDayWarning({
+      dateKey,
+      impactedLogMealsCount: 0,
+      impactedPlanMealsCount: 0,
     });
   };
 
   const removeDayDialogWarning =
     removeDayWarning == null
       ? null
+      : removeDayWarning.impactedLogMealsCount === 0 &&
+          removeDayWarning.impactedPlanMealsCount === 0
+        ? null
       : {
           impactedLogMealsCount: removeDayWarning.impactedLogMealsCount,
           impactedPlanMealsCount: removeDayWarning.impactedPlanMealsCount,
@@ -776,7 +760,7 @@ export function LogDayViewController({
     return (
       <section
         className="rounded-lg border p-6 space-y-3 data-[pending=true]:animate-pulse"
-        data-pending={isLogFilterPending}
+        data-pending={isContentPending}
       >
         <h2 className="text-lg font-medium">
           No log entries for selected person
@@ -792,7 +776,7 @@ export function LogDayViewController({
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <section
         className="space-y-8 data-[pending=true]:animate-pulse"
-        data-pending={isLogFilterPending}
+        data-pending={isContentPending}
       >
         <LogRemoveDayAlertDialog
           open={removeDayWarning != null}

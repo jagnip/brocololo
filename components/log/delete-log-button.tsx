@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { deleteLogAction } from "@/actions/log-actions";
 import { ROUTES } from "@/lib/constants";
+import { useTopbar } from "@/components/context/topbar-context";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -26,6 +27,12 @@ export function DeleteLogButton({ logId }: DeleteLogButtonProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { setLogFilterPending } = useTopbar();
+
+  useEffect(() => {
+    setLogFilterPending("log-delete", isDeleting);
+    return () => setLogFilterPending("log-delete", false);
+  }, [isDeleting, setLogFilterPending]);
 
   return (
     <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -60,7 +67,11 @@ export function DeleteLogButton({ logId }: DeleteLogButtonProps) {
                     toast.error(result.message);
                     return;
                   }
-                  router.push(ROUTES.recipes);
+                  if (result.nextLogId) {
+                    router.push(ROUTES.logView(result.nextLogId));
+                  } else {
+                    router.push(ROUTES.logCurrent);
+                  }
                   router.refresh();
                 } finally {
                   setIsDeleting(false);

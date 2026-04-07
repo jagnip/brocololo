@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -94,7 +94,8 @@ export function LogDayHeader({
             onClick={onAddDay}
             aria-label="Add day"
           >
-            <Plus />
+            {/* Show in-button progress while add-day request is in flight. */}
+            {isAddingDay ? <Loader2 className="animate-spin" /> : <Plus />}
           </Button>
 
           <Button
