@@ -193,6 +193,25 @@ export function LogDayViewController({
   }, [days]);
 
   useEffect(() => {
+    if (!initialSelectedDayKey) {
+      return;
+    }
+
+    const existsInDays = days.some((day) => day.dateKey === initialSelectedDayKey);
+    if (!existsInDays) {
+      return;
+    }
+
+    // Keep client selection in sync with URL day changes (e.g. after adding a new day).
+    setSelectedDayKey((prev) =>
+      prev === initialSelectedDayKey ? prev : initialSelectedDayKey,
+    );
+    setSelectedSlot((prev) =>
+      prev?.dayKey === initialSelectedDayKey ? prev : null,
+    );
+  }, [days, initialSelectedDayKey]);
+
+  useEffect(() => {
     if (!selectedDayKey || days.length === 0) {
       setSelectedDayKey(days[0]?.dateKey ?? null);
       return;
