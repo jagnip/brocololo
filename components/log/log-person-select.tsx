@@ -1,5 +1,6 @@
 "use client";
 
+import { useOptimistic, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { LogPerson } from "@/src/generated/enums";
 import {
@@ -30,16 +31,25 @@ export function LogPersonSelect({ value }: LogPersonSelectProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [, startTransition] = useTransition();
+  const [optimisticPerson, setOptimisticPerson] = useOptimistic(value);
 
   const handleValueChange = (nextValue: string) => {
+    if (nextValue === optimisticPerson) return;
+    setOptimisticPerson(nextValue as "PRIMARY" | "SECONDARY");
     const params = new URLSearchParams(searchParams.toString());
     params.set("person", nextValue);
-    router.push(`${pathname}?${params.toString()}`);
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`);
+    });
   };
 
   return (
-    // Person is always PRIMARY or SECONDARY — never empty; hide Select’s inline clear (X).
-    <Select value={value} onValueChange={handleValueChange} allowInlineClear={false}>
+    <Select
+      value={optimisticPerson}
+      onValueChange={handleValueChange}
+      allowInlineClear={false}
+    >
       {/* Narrow trigger on small screens; top bar also has log switcher + actions. */}
       <SelectTrigger className="w-32 shrink-0 sm:w-44">
         <SelectValue />
