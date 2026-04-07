@@ -275,6 +275,19 @@ export function LogDayViewController({
       return;
     }
 
+    // Match recipe-card UX: second click on the same empty slot closes details.
+    if (
+      selectedSlot &&
+      selectedSlot.dayKey === day.dateKey &&
+      selectedSlot.mealType === slot.mealType &&
+      selectedSlot.entryId === slot.entryId &&
+      selectedSlot.selectedRecipeId === null &&
+      selectedSlot.entryRecipeId === null
+    ) {
+      setSelectedSlot(null);
+      return;
+    }
+
     setSelectedSlot({
       dayKey: day.dateKey,
       mealType: slot.mealType,
