@@ -171,6 +171,7 @@ export function LogDayViewController({
       ? initialSelectedDayKey
       : (days[0]?.dateKey ?? null);
   const [localDays, setLocalDays] = useState(days);
+  const [localPlannerPool, setLocalPlannerPool] = useState(plannerPool);
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(
     defaultDayKey,
   );
@@ -190,13 +191,16 @@ export function LogDayViewController({
     useSensor(KeyboardSensor),
   );
 
-  // Pool list comes from the server only (unused plan slots + buildVisiblePlannerPoolCards).
-
-  const groupedPlannerPool = buildGroupedPlannerPoolCards(plannerPool);
+  // Pool list is local so drag-drop can remove cards optimistically before refresh.
+  const groupedPlannerPool = buildGroupedPlannerPoolCards(localPlannerPool);
 
   useEffect(() => {
     setLocalDays(days);
   }, [days]);
+
+  useEffect(() => {
+    setLocalPlannerPool(plannerPool);
+  }, [plannerPool]);
 
   useEffect(() => {
     if (!initialSelectedDayKey) {
@@ -545,7 +549,94 @@ export function LogDayViewController({
     }
 
     const plannerItem = activeData.item as PlannerPoolCardData;
+    const targetDayKey = (overData.dateKey as string) ?? null;
+    const targetMealType =
+      (overData.mealType as LogDayData["slots"][number]["mealType"] | undefined) ??
+      null;
     const targetEntryId = overData.entryId as string;
+    const previousDays = localDays;
+    const previousPlannerPool = localPlannerPool;
+    const previousSelectedDayKey = selectedDayKey;
+    const previousSelectedSlot = selectedSlot;
+    const targetDay = previousDays.find((day) => day.dateKey === targetDayKey) ?? null;
+    const targetSlot =
+      targetDay?.slots.find((slot) => slot.mealType === targetMealType) ?? null;
+
+    if (!targetDay || !targetSlot?.entryId) {
+      toast.error("Cannot place meal into this slot");
+      return;
+    }
+
+    const initialRows = plannerItem.ingredients.map((ingredient) => ({
+      ingredientId: ingredient.ingredientId,
+      unitId: ingredient.unitId,
+      amount: ingredient.amount,
+    }));
+
+    // Optimistic card shown immediately on drop to avoid snap-back before server confirms.
+    const optimisticRecipe = {
+      id: `placed-${targetEntryId}-${plannerItem.id}`,
+      entryId: targetEntryId,
+      entryRecipeId: null,
+      sourceRecipeId: plannerItem.sourceRecipeId,
+      mealLabel: targetSlot.label,
+      cardKind: "recipe" as const,
+      title: plannerItem.title,
+      slug: null,
+      imageUrl: plannerItem.imageUrl,
+      calories: 0,
+      proteins: 0,
+      fats: 0,
+      carbs: 0,
+      ingredients: initialRows.map((ingredient) => ({
+        ingredientId: ingredient.ingredientId,
+        ingredientName: null,
+        unitId: ingredient.unitId,
+        unitName: null,
+        amount: ingredient.amount,
+      })),
+    };
+
+    setLocalDays((prev) =>
+      prev.map((day) => ({
+        ...day,
+        slots: day.slots.map((slot) => {
+          if (slot.entryId !== targetEntryId) return slot;
+          const existingIndex = slot.recipes.findIndex(
+            (recipe) => recipe.entryId === targetEntryId,
+          );
+          const nextRecipes = [...slot.recipes];
+          if (existingIndex >= 0) {
+            nextRecipes[existingIndex] = optimisticRecipe;
+          } else {
+            nextRecipes.unshift(optimisticRecipe);
+          }
+          return {
+            ...slot,
+            recipes: nextRecipes,
+          };
+        }),
+      })),
+    );
+
+    // Remove the dropped card from the planner pool immediately to avoid flash-back.
+    setLocalPlannerPool((prev) =>
+      prev.filter((poolItem) => poolItem.id !== plannerItem.id),
+    );
+
+    // Open details immediately for the dropped meal.
+    setSelectedDayKey(targetDay.dateKey);
+    setSelectedSlot({
+      dayKey: targetDay.dateKey,
+      mealType: targetSlot.mealType,
+      entryId: targetSlot.entryId,
+      entryRecipeId: null,
+      mealLabel: targetSlot.label,
+      selectedRecipeId: plannerItem.sourceRecipeId,
+      initialSelectedRecipeId: plannerItem.sourceRecipeId,
+      subtitle: `${formatDayLabel(targetDay.date)}`,
+      initialRows,
+    });
 
     startSavingTransition(async () => {
       const result = await placePlannerPoolItemAction({
@@ -557,77 +648,13 @@ export function LogDayViewController({
       });
 
       if (result.type === "error") {
+        // Roll back optimistic card/selection if persistence fails.
+        setLocalDays(previousDays);
+        setLocalPlannerPool(previousPlannerPool);
+        setSelectedDayKey(previousSelectedDayKey);
+        setSelectedSlot(previousSelectedSlot);
         toast.error(result.message);
         return;
-      }
-
-      setLocalDays((prev) =>
-        prev.map((day) => ({
-          ...day,
-          slots: day.slots.map((slot) => {
-            if (slot.entryId !== targetEntryId) return slot;
-            return {
-              ...slot,
-              recipes: [
-                {
-                  id: `placed-${targetEntryId}-${plannerItem.id}`,
-                  entryId: targetEntryId,
-                  entryRecipeId: null,
-                  sourceRecipeId: plannerItem.sourceRecipeId,
-                  mealLabel: slot.label,
-                  cardKind: "recipe",
-                  title: plannerItem.title,
-                  slug: null,
-                  imageUrl: plannerItem.imageUrl,
-                  calories: 0,
-                  proteins: 0,
-                  fats: 0,
-                  carbs: 0,
-                  ingredients: plannerItem.ingredients.map((ingredient) => ({
-                    ingredientId: ingredient.ingredientId,
-                    ingredientName: null,
-                    unitId: ingredient.unitId,
-                    unitName: null,
-                    amount: ingredient.amount,
-                  })),
-                },
-              ],
-            };
-          }),
-        })),
-      );
-
-      const targetDayKey = (overData.dateKey as string) ?? null;
-      const targetMealType =
-        (overData.mealType as
-          | LogDayData["slots"][number]["mealType"]
-          | undefined) ?? null;
-      const targetDay =
-        localDays.find((day) => day.dateKey === targetDayKey) ?? null;
-      const targetSlot =
-        targetDay?.slots.find((slot) => slot.mealType === targetMealType) ??
-        null;
-
-      if (targetDay && targetSlot?.entryId) {
-        const initialRows = plannerItem.ingredients.map((ingredient) => ({
-          ingredientId: ingredient.ingredientId,
-          unitId: ingredient.unitId,
-          amount: ingredient.amount,
-        }));
-
-        // Auto-open details for the just-dropped recipe so ingredients are immediately editable.
-        setSelectedDayKey(targetDay.dateKey);
-        setSelectedSlot({
-          dayKey: targetDay.dateKey,
-          mealType: targetSlot.mealType,
-          entryId: targetSlot.entryId,
-          entryRecipeId: null,
-          mealLabel: targetSlot.label,
-          selectedRecipeId: plannerItem.sourceRecipeId,
-          initialSelectedRecipeId: plannerItem.sourceRecipeId,
-          subtitle: `${formatDayLabel(targetDay.date)}`,
-          initialRows,
-        });
       }
 
       router.refresh();
