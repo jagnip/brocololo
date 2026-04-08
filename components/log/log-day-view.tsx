@@ -661,13 +661,77 @@ export function LogDayViewController({
     });
   };
 
-  const handleRemovePlacedRecipe = async (
-    slot: LogDayData["slots"][number],
-  ) => {
+  const handleRemovePlacedRecipe = (slot: LogDayData["slots"][number]) => {
     if (!logId || !person || !slot.entryId) {
       toast.error("Missing log context for this action");
       return;
     }
+
+    const previousDays = localDays;
+    const previousPlannerPool = localPlannerPool;
+    const previousSelectedDayKey = selectedDayKey;
+    const previousSelectedSlot = selectedSlot;
+    const targetDay = previousDays.find((day) =>
+      day.slots.some((candidateSlot) => candidateSlot.entryId === slot.entryId),
+    );
+    const targetDate = targetDay?.date ?? new Date();
+    const targetDateKey = targetDay?.dateKey ?? targetDate.toISOString().slice(0, 10);
+    const removedRecipe = slot.recipes[0] ?? null;
+    const optimisticPoolIngredients =
+      removedRecipe?.ingredients?.flatMap((ingredient) => {
+        if (
+          ingredient.ingredientId == null ||
+          ingredient.unitId == null ||
+          ingredient.amount == null
+        ) {
+          return [];
+        }
+        return [
+          {
+            ingredientId: ingredient.ingredientId,
+            unitId: ingredient.unitId,
+            amount: ingredient.amount,
+          },
+        ];
+      }) ?? [];
+
+    const optimisticPoolItem =
+      removedRecipe?.sourceRecipeId &&
+      optimisticPoolIngredients.length > 0 &&
+      targetDay != null
+        ? {
+            id: removedRecipe.id,
+            date: targetDate,
+            dateKey: targetDateKey,
+            mealType: slot.mealType,
+            mealLabel: slot.label,
+            title: removedRecipe.title,
+            sourceRecipeId: removedRecipe.sourceRecipeId,
+            imageUrl: removedRecipe.imageUrl,
+            ingredients: optimisticPoolIngredients,
+          }
+        : null;
+
+    // Optimistically clear slot and close details immediately.
+    setLocalDays((prev) =>
+      prev.map((day) => ({
+        ...day,
+        slots: day.slots.map((s) =>
+          s.entryId === slot.entryId ? { ...s, recipes: [] } : s,
+        ),
+      })),
+    );
+
+    if (optimisticPoolItem) {
+      setLocalPlannerPool((prev) => {
+        if (prev.some((poolItem) => poolItem.id === optimisticPoolItem.id)) {
+          return prev;
+        }
+        return [optimisticPoolItem, ...prev];
+      });
+    }
+
+    setSelectedSlot(null);
 
     startSavingTransition(async () => {
       const result = await clearLogEntryAssignmentAction({
@@ -677,20 +741,14 @@ export function LogDayViewController({
       });
 
       if (result.type === "error") {
+        // Restore slot/pool/selection state when optimistic remove fails.
+        setLocalDays(previousDays);
+        setLocalPlannerPool(previousPlannerPool);
+        setSelectedDayKey(previousSelectedDayKey);
+        setSelectedSlot(previousSelectedSlot);
         toast.error(result.message);
         return;
       }
-
-      setLocalDays((prev) =>
-        prev.map((day) => ({
-          ...day,
-          slots: day.slots.map((s) =>
-            s.entryId === slot.entryId ? { ...s, recipes: [] } : s,
-          ),
-        })),
-      );
-
-      setSelectedSlot((prev) => (prev?.entryId === slot.entryId ? null : prev));
 
       router.refresh();
     });
