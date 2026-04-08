@@ -13,6 +13,8 @@ export type TopbarActionConfig = {
   label: string;
   href?: string;
   onClick?: () => void;
+  disabled?: boolean;
+  ariaBusy?: boolean;
   variant?: "default" | "outline" | "secondary" | "ghost";
   size?: "default" | "sm" | "lg" | "icon";
   ariaLabel?: string;

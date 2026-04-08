@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PlanInputType, SlotSaveData, type SlotInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PlanView } from "./plan-view";
@@ -22,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { usePlanTopbarState } from "@/components/planner/plan-topbar-state-context";
 
 type PlanEditorProps = {
   planId: string;
@@ -39,8 +39,6 @@ type SyncConflictState = {
 
 export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
   const [plan, setPlan] = useState<PlanInputType>(initialPlan);
-  // Buffer that keeps shifted recipes while the editor is "dirty" (before Save).
-  // `plan` is the visible subset for the currently selected date range.
   const allSlotsRef = useRef<PlanInputType>(initialPlan);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [isDirty, setIsDirty] = useState(false);
@@ -50,6 +48,7 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
   const [deleteStatus, setDeleteStatus] = useState<"idle" | "deleting">("idle");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [syncConflict, setSyncConflict] = useState<SyncConflictState | null>(null);
+  const { setState: setPlanTopbarState, resetState: resetPlanTopbarState } = usePlanTopbarState();
 
   function formatDateKeysForToast(dateKeys: string[]) {
     // Format YYYY-MM-DD as a readable UTC date string to avoid timezone drift.
@@ -277,6 +276,62 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
     );
   }, []);
 
+  const handleGenerateLog = useCallback(async () => {
+    if (isDirty) {
+      toast.info("Save your plan before generating a log.");
+      return;
+    }
+
+    setLogStatus("generating");
+    try {
+      const result = await generateLogFromPlan(planId);
+      if (result.type === "date_conflict") {
+        const formattedDates = formatDateKeysForToast(result.dates);
+        toast.info(
+          `Cannot generate log. These dates already exist in a log: ${formattedDates.join(", ")}`,
+        );
+        return;
+      }
+      if (result.type === "already_exists") {
+        toast.info("Log already generated for this plan.");
+        return;
+      }
+      if (result.type === "error") {
+        toast.error(result.message);
+        return;
+      }
+
+      router.push(ROUTES.logView(result.logId));
+    } finally {
+      setLogStatus("idle");
+    }
+  }, [isDirty, planId, router]);
+
+  useEffect(() => {
+    // Keep plan topbar action state in sync with editor runtime state.
+    setPlanTopbarState({
+      isGenerateDisabled: isDirty || saveStatus === "saving" || logStatus === "generating",
+      isGenerating: logStatus === "generating",
+      isDeleteDisabled:
+        saveStatus === "saving" || logStatus === "generating" || deleteStatus === "deleting",
+      isDeleting: deleteStatus === "deleting",
+      onGenerateLog: () => void handleGenerateLog(),
+      onDeletePlan: () => setIsDeleteDialogOpen(true),
+    });
+
+    return () => {
+      resetPlanTopbarState();
+    };
+  }, [
+    deleteStatus,
+    handleGenerateLog,
+    isDirty,
+    logStatus,
+    resetPlanTopbarState,
+    saveStatus,
+    setPlanTopbarState,
+  ]);
+
   return (
     <>
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
@@ -393,57 +448,6 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
             }}
           >
             {saveStatus === "saving" ? "Saving..." : "Save"}
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isDirty || saveStatus === "saving" || logStatus === "generating"}
-            aria-busy={logStatus === "generating"}
-            onClick={async () => {
-              if (isDirty) {
-                toast.info("Save your plan before generating a log.");
-                return;
-              }
-
-              setLogStatus("generating");
-              try {
-                const result = await generateLogFromPlan(planId);
-                if (result.type === "date_conflict") {
-                  const formattedDates = formatDateKeysForToast(result.dates);
-                  toast.info(
-                    `Cannot generate log. These dates already exist in a log: ${formattedDates.join(", ")}`,
-                  );
-                  return;
-                }
-                if (result.type === "already_exists") {
-                  toast.info("Log already generated for this plan.");
-                  return;
-                }
-                if (result.type === "error") {
-                  toast.error(result.message);
-                  return;
-                }
-
-                router.push(ROUTES.logView(result.logId));
-              } finally {
-                setLogStatus("idle");
-              }
-            }}
-          >
-            {logStatus === "generating" ? "Generating log..." : "Generate log"}
-          </Button>
-
-          <Button
-            type="button"
-            variant="destructive"
-            disabled={saveStatus === "saving" || logStatus === "generating" || deleteStatus === "deleting"}
-            onClick={() => {
-              setIsDeleteDialogOpen(true);
-            }}
-          >
-            <Trash2 className="h-4 w-4" />
-            {deleteStatus === "deleting" ? "Deleting..." : "Delete plan"}
           </Button>
         </div>
       </div>

@@ -8,10 +8,8 @@ type PlanEditorContainerProps = {
 };
 
 export async function PlanEditorContainer({ planId }: PlanEditorContainerProps) {
-  // Keep page.tsx thin by loading data in the container.
   const [plan, recipes] = await Promise.all([
     getPlanById(planId),
-    // No flavour filter in planner context; include only planner-eligible recipes.
     getRecipes(undefined, undefined, false),
   ]);
 
