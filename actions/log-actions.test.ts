@@ -3,6 +3,7 @@ import {
   appendNextLogDay,
   clearLogEntryAssignment,
   deleteLogById,
+  getLogs,
   placePlannerPoolItemInEntry,
   removeLogDay,
   replaceMealSlotWithRecipe,
@@ -29,6 +30,7 @@ vi.mock("@/lib/db/logs", () => ({
   appendNextLogDay: vi.fn(),
   removeLogDay: vi.fn(),
   deleteLogById: vi.fn(),
+  getLogs: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -283,8 +285,19 @@ describe("deleteLogAction", () => {
 
   it("deletes log and returns success", async () => {
     vi.mocked(deleteLogById).mockResolvedValue(undefined);
+    vi.mocked(getLogs).mockResolvedValue([
+      {
+        id: "log-2",
+        createdAt: new Date("2026-04-10T00:00:00.000Z"),
+        plan: {
+          id: "plan-2",
+          startDate: new Date("2026-04-10T00:00:00.000Z"),
+          endDate: new Date("2026-04-16T00:00:00.000Z"),
+        },
+      },
+    ]);
     const result = await deleteLogAction("log-1");
-    expect(result).toEqual({ type: "success" });
+    expect(result).toEqual({ type: "success", nextLogId: "log-2" });
     expect(deleteLogById).toHaveBeenCalledWith("log-1");
   });
 });

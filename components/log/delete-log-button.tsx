@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { deleteLogAction } from "@/actions/log-actions";
@@ -38,8 +38,12 @@ export function DeleteLogButton({ logId }: DeleteLogButtonProps) {
           setIsDialogOpen(true);
         }}
       >
-        <Trash2 className="h-4 w-4" />
-        {isDeleting ? "Deleting..." : ""}
+        {/* Match day-delete button UX: spinner icon only while deleting. */}
+        {isDeleting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Trash2 className="h-4 w-4" />
+        )}
       </Button>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -60,7 +64,11 @@ export function DeleteLogButton({ logId }: DeleteLogButtonProps) {
                     toast.error(result.message);
                     return;
                   }
-                  router.push(ROUTES.recipes);
+                  if (result.nextLogId) {
+                    router.push(ROUTES.logView(result.nextLogId));
+                  } else {
+                    router.push(ROUTES.logCurrent);
+                  }
                   router.refresh();
                 } finally {
                   setIsDeleting(false);

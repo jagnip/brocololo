@@ -11,6 +11,7 @@ import {
 } from "@dnd-kit/core";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useTopbar } from "@/components/context/topbar-context";
 import { ROUTES } from "@/lib/constants";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import {
@@ -30,7 +31,10 @@ import {
   upsertLogSlotAction,
 } from "@/actions/log-actions";
 import { isLogRecipeCardSelected } from "@/lib/log/is-log-recipe-card-selected";
-import { LogActiveDayView, type SelectedSlotState } from "./log-active-day-view";
+import {
+  LogActiveDayView,
+  type SelectedSlotState,
+} from "./log-active-day-view";
 import { LogRemoveDayAlertDialog } from "./log-remove-day-alert-dialog";
 
 type IngredientFormDependencies = {
@@ -159,6 +163,7 @@ export function LogDayViewController({
   ingredientOptions = [],
 }: LogDayViewProps) {
   const router = useRouter();
+  const { isLogFilterPending } = useTopbar();
   const isPhoneViewport = useIsPhoneViewport();
   const defaultDayKey =
     initialSelectedDayKey &&
@@ -166,6 +171,7 @@ export function LogDayViewController({
       ? initialSelectedDayKey
       : (days[0]?.dateKey ?? null);
   const [localDays, setLocalDays] = useState(days);
+  const [localPlannerPool, setLocalPlannerPool] = useState(plannerPool);
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(
     defaultDayKey,
   );
@@ -179,25 +185,31 @@ export function LogDayViewController({
   const [isSaving, startSavingTransition] = useTransition();
   const [isAddingDay, startAddDayTransition] = useTransition();
   const [isRemovingDay, startRemoveDayTransition] = useTransition();
+  const isContentPending = isLogFilterPending;
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor),
   );
 
-  // Pool list comes from the server only (unused plan slots + buildVisiblePlannerPoolCards).
-
-  const groupedPlannerPool = buildGroupedPlannerPoolCards(plannerPool);
+  // Pool list is local so drag-drop can remove cards optimistically before refresh.
+  const groupedPlannerPool = buildGroupedPlannerPoolCards(localPlannerPool);
 
   useEffect(() => {
     setLocalDays(days);
   }, [days]);
 
   useEffect(() => {
+    setLocalPlannerPool(plannerPool);
+  }, [plannerPool]);
+
+  useEffect(() => {
     if (!initialSelectedDayKey) {
       return;
     }
 
-    const existsInDays = days.some((day) => day.dateKey === initialSelectedDayKey);
+    const existsInDays = days.some(
+      (day) => day.dateKey === initialSelectedDayKey,
+    );
     if (!existsInDays) {
       return;
     }
@@ -537,7 +549,94 @@ export function LogDayViewController({
     }
 
     const plannerItem = activeData.item as PlannerPoolCardData;
+    const targetDayKey = (overData.dateKey as string) ?? null;
+    const targetMealType =
+      (overData.mealType as LogDayData["slots"][number]["mealType"] | undefined) ??
+      null;
     const targetEntryId = overData.entryId as string;
+    const previousDays = localDays;
+    const previousPlannerPool = localPlannerPool;
+    const previousSelectedDayKey = selectedDayKey;
+    const previousSelectedSlot = selectedSlot;
+    const targetDay = previousDays.find((day) => day.dateKey === targetDayKey) ?? null;
+    const targetSlot =
+      targetDay?.slots.find((slot) => slot.mealType === targetMealType) ?? null;
+
+    if (!targetDay || !targetSlot?.entryId) {
+      toast.error("Cannot place meal into this slot");
+      return;
+    }
+
+    const initialRows = plannerItem.ingredients.map((ingredient) => ({
+      ingredientId: ingredient.ingredientId,
+      unitId: ingredient.unitId,
+      amount: ingredient.amount,
+    }));
+
+    // Optimistic card shown immediately on drop to avoid snap-back before server confirms.
+    const optimisticRecipe = {
+      id: `placed-${targetEntryId}-${plannerItem.id}`,
+      entryId: targetEntryId,
+      entryRecipeId: null,
+      sourceRecipeId: plannerItem.sourceRecipeId,
+      mealLabel: targetSlot.label,
+      cardKind: "recipe" as const,
+      title: plannerItem.title,
+      slug: null,
+      imageUrl: plannerItem.imageUrl,
+      calories: 0,
+      proteins: 0,
+      fats: 0,
+      carbs: 0,
+      ingredients: initialRows.map((ingredient) => ({
+        ingredientId: ingredient.ingredientId,
+        ingredientName: null,
+        unitId: ingredient.unitId,
+        unitName: null,
+        amount: ingredient.amount,
+      })),
+    };
+
+    setLocalDays((prev) =>
+      prev.map((day) => ({
+        ...day,
+        slots: day.slots.map((slot) => {
+          if (slot.entryId !== targetEntryId) return slot;
+          const existingIndex = slot.recipes.findIndex(
+            (recipe) => recipe.entryId === targetEntryId,
+          );
+          const nextRecipes = [...slot.recipes];
+          if (existingIndex >= 0) {
+            nextRecipes[existingIndex] = optimisticRecipe;
+          } else {
+            nextRecipes.unshift(optimisticRecipe);
+          }
+          return {
+            ...slot,
+            recipes: nextRecipes,
+          };
+        }),
+      })),
+    );
+
+    // Remove the dropped card from the planner pool immediately to avoid flash-back.
+    setLocalPlannerPool((prev) =>
+      prev.filter((poolItem) => poolItem.id !== plannerItem.id),
+    );
+
+    // Open details immediately for the dropped meal.
+    setSelectedDayKey(targetDay.dateKey);
+    setSelectedSlot({
+      dayKey: targetDay.dateKey,
+      mealType: targetSlot.mealType,
+      entryId: targetSlot.entryId,
+      entryRecipeId: null,
+      mealLabel: targetSlot.label,
+      selectedRecipeId: plannerItem.sourceRecipeId,
+      initialSelectedRecipeId: plannerItem.sourceRecipeId,
+      subtitle: `${formatDayLabel(targetDay.date)}`,
+      initialRows,
+    });
 
     startSavingTransition(async () => {
       const result = await placePlannerPoolItemAction({
@@ -549,90 +648,90 @@ export function LogDayViewController({
       });
 
       if (result.type === "error") {
+        // Roll back optimistic card/selection if persistence fails.
+        setLocalDays(previousDays);
+        setLocalPlannerPool(previousPlannerPool);
+        setSelectedDayKey(previousSelectedDayKey);
+        setSelectedSlot(previousSelectedSlot);
         toast.error(result.message);
         return;
-      }
-
-      setLocalDays((prev) =>
-        prev.map((day) => ({
-          ...day,
-          slots: day.slots.map((slot) => {
-            if (slot.entryId !== targetEntryId) return slot;
-            return {
-              ...slot,
-              recipes: [
-                {
-                  id: `placed-${targetEntryId}-${plannerItem.id}`,
-                  entryId: targetEntryId,
-                  entryRecipeId: null,
-                  sourceRecipeId: plannerItem.sourceRecipeId,
-                  mealLabel: slot.label,
-                  cardKind: "recipe",
-                  title: plannerItem.title,
-                  slug: null,
-                  imageUrl: plannerItem.imageUrl,
-                  calories: 0,
-                  proteins: 0,
-                  fats: 0,
-                  carbs: 0,
-                  ingredients: plannerItem.ingredients.map((ingredient) => ({
-                    ingredientId: ingredient.ingredientId,
-                    ingredientName: null,
-                    unitId: ingredient.unitId,
-                    unitName: null,
-                    amount: ingredient.amount,
-                  })),
-                },
-              ],
-            };
-          }),
-        })),
-      );
-
-      const targetDayKey = (overData.dateKey as string) ?? null;
-      const targetMealType =
-        (overData.mealType as
-          | LogDayData["slots"][number]["mealType"]
-          | undefined) ?? null;
-      const targetDay =
-        localDays.find((day) => day.dateKey === targetDayKey) ?? null;
-      const targetSlot =
-        targetDay?.slots.find((slot) => slot.mealType === targetMealType) ??
-        null;
-
-      if (targetDay && targetSlot?.entryId) {
-        const initialRows = plannerItem.ingredients.map((ingredient) => ({
-          ingredientId: ingredient.ingredientId,
-          unitId: ingredient.unitId,
-          amount: ingredient.amount,
-        }));
-
-        // Auto-open details for the just-dropped recipe so ingredients are immediately editable.
-        setSelectedDayKey(targetDay.dateKey);
-        setSelectedSlot({
-          dayKey: targetDay.dateKey,
-          mealType: targetSlot.mealType,
-          entryId: targetSlot.entryId,
-          entryRecipeId: null,
-          mealLabel: targetSlot.label,
-          selectedRecipeId: plannerItem.sourceRecipeId,
-          initialSelectedRecipeId: plannerItem.sourceRecipeId,
-          subtitle: `${formatDayLabel(targetDay.date)}`,
-          initialRows,
-        });
       }
 
       router.refresh();
     });
   };
 
-  const handleRemovePlacedRecipe = async (
-    slot: LogDayData["slots"][number],
-  ) => {
+  const handleRemovePlacedRecipe = (slot: LogDayData["slots"][number]) => {
     if (!logId || !person || !slot.entryId) {
       toast.error("Missing log context for this action");
       return;
     }
+
+    const previousDays = localDays;
+    const previousPlannerPool = localPlannerPool;
+    const previousSelectedDayKey = selectedDayKey;
+    const previousSelectedSlot = selectedSlot;
+    const targetDay = previousDays.find((day) =>
+      day.slots.some((candidateSlot) => candidateSlot.entryId === slot.entryId),
+    );
+    const targetDate = targetDay?.date ?? new Date();
+    const targetDateKey = targetDay?.dateKey ?? targetDate.toISOString().slice(0, 10);
+    const removedRecipe = slot.recipes[0] ?? null;
+    const optimisticPoolIngredients =
+      removedRecipe?.ingredients?.flatMap((ingredient) => {
+        if (
+          ingredient.ingredientId == null ||
+          ingredient.unitId == null ||
+          ingredient.amount == null
+        ) {
+          return [];
+        }
+        return [
+          {
+            ingredientId: ingredient.ingredientId,
+            unitId: ingredient.unitId,
+            amount: ingredient.amount,
+          },
+        ];
+      }) ?? [];
+
+    const optimisticPoolItem =
+      removedRecipe?.sourceRecipeId &&
+      optimisticPoolIngredients.length > 0 &&
+      targetDay != null
+        ? {
+            id: removedRecipe.id,
+            date: targetDate,
+            dateKey: targetDateKey,
+            mealType: slot.mealType,
+            mealLabel: slot.label,
+            title: removedRecipe.title,
+            sourceRecipeId: removedRecipe.sourceRecipeId,
+            imageUrl: removedRecipe.imageUrl,
+            ingredients: optimisticPoolIngredients,
+          }
+        : null;
+
+    // Optimistically clear slot and close details immediately.
+    setLocalDays((prev) =>
+      prev.map((day) => ({
+        ...day,
+        slots: day.slots.map((s) =>
+          s.entryId === slot.entryId ? { ...s, recipes: [] } : s,
+        ),
+      })),
+    );
+
+    if (optimisticPoolItem) {
+      setLocalPlannerPool((prev) => {
+        if (prev.some((poolItem) => poolItem.id === optimisticPoolItem.id)) {
+          return prev;
+        }
+        return [optimisticPoolItem, ...prev];
+      });
+    }
+
+    setSelectedSlot(null);
 
     startSavingTransition(async () => {
       const result = await clearLogEntryAssignmentAction({
@@ -642,20 +741,14 @@ export function LogDayViewController({
       });
 
       if (result.type === "error") {
+        // Restore slot/pool/selection state when optimistic remove fails.
+        setLocalDays(previousDays);
+        setLocalPlannerPool(previousPlannerPool);
+        setSelectedDayKey(previousSelectedDayKey);
+        setSelectedSlot(previousSelectedSlot);
         toast.error(result.message);
         return;
       }
-
-      setLocalDays((prev) =>
-        prev.map((day) => ({
-          ...day,
-          slots: day.slots.map((s) =>
-            s.entryId === slot.entryId ? { ...s, recipes: [] } : s,
-          ),
-        })),
-      );
-
-      setSelectedSlot((prev) => (prev?.entryId === slot.entryId ? null : prev));
 
       router.refresh();
     });
@@ -673,7 +766,9 @@ export function LogDayViewController({
       const result = await appendNextLogDayAction({ logId });
       if (result.type === "date_conflict") {
         // Keep collision feedback explicit: hard-block without destructive override.
-        toast.error(`Cannot add day. Date conflict: ${result.dates.join(", ")}`);
+        toast.error(
+          `Cannot add day. Date conflict: ${result.dates.join(", ")}`,
+        );
         return;
       }
       if (result.type === "error") {
@@ -692,41 +787,23 @@ export function LogDayViewController({
     if (!logId) {
       return;
     }
-    startRemoveDayTransition(async () => {
-      const result = await removeLogDayAction({
-        logId,
-        dateKey,
-      });
-      if (result.type === "impact_warning") {
-        setRemoveDayWarning({
-          dateKey,
-          impactedLogMealsCount: result.impactedLogMealsCount,
-          impactedPlanMealsCount: result.impactedPlanMealsCount,
-        });
-        return;
-      }
-      if (result.type === "error") {
-        toast.error(result.message);
-        return;
-      }
-      const nextPerson = person ?? "PRIMARY";
-      if (result.nextDayKey) {
-        const nextUrl = `${ROUTES.logView(logId)}?person=${nextPerson}&day=${result.nextDayKey}`;
-        router.push(nextUrl);
-      } else {
-        router.push(`${ROUTES.logView(logId)}?person=${nextPerson}`);
-      }
-      router.refresh();
+    setRemoveDayWarning({
+      dateKey,
+      impactedLogMealsCount: 0,
+      impactedPlanMealsCount: 0,
     });
   };
 
   const removeDayDialogWarning =
     removeDayWarning == null
       ? null
-      : {
-          impactedLogMealsCount: removeDayWarning.impactedLogMealsCount,
-          impactedPlanMealsCount: removeDayWarning.impactedPlanMealsCount,
-        };
+      : removeDayWarning.impactedLogMealsCount === 0 &&
+          removeDayWarning.impactedPlanMealsCount === 0
+        ? null
+        : {
+            impactedLogMealsCount: removeDayWarning.impactedLogMealsCount,
+            impactedPlanMealsCount: removeDayWarning.impactedPlanMealsCount,
+          };
 
   const handleRemoveDayDialogOpenChange = (open: boolean) => {
     if (!open) setRemoveDayWarning(null);
@@ -763,8 +840,7 @@ export function LogDayViewController({
     });
   };
 
-  const activeDay =
-    localDays.find((d) => d.dateKey === selectedDayKey) ?? null;
+  const activeDay = localDays.find((d) => d.dateKey === selectedDayKey) ?? null;
   const editorSlot =
     activeDay && selectedSlot?.dayKey === activeDay.dateKey
       ? selectedSlot
@@ -772,7 +848,10 @@ export function LogDayViewController({
 
   if (days.length === 0) {
     return (
-      <section className="rounded-lg border p-6 space-y-3">
+      <section
+        className="rounded-lg border p-6 space-y-3 data-[pending=true]:animate-pulse"
+        data-pending={isContentPending}
+      >
         <h2 className="text-lg font-medium">
           No log entries for selected person
         </h2>
@@ -785,7 +864,10 @@ export function LogDayViewController({
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      <section className="space-y-8">
+      <section
+        className="space-y-8 data-[pending=true]:animate-pulse"
+        data-pending={isContentPending}
+      >
         <LogRemoveDayAlertDialog
           open={removeDayWarning != null}
           warning={removeDayDialogWarning}

@@ -5,6 +5,7 @@ import { ROUTES } from "@/lib/constants";
 import {
   appendNextLogDay,
   deleteLogById,
+  getLogs,
   removeLogDay,
   replaceMealSlotWithRecipe,
   clearLogEntryAssignment,
@@ -215,19 +216,23 @@ export async function removeLogDayAction(input: RemoveLogDayInput) {
 
 export async function deleteLogAction(
   logId: string,
-): Promise<{ type: "success" } | { type: "error"; message: string }> {
+): Promise<
+  | { type: "success"; nextLogId: string | null }
+  | { type: "error"; message: string }
+> {
   if (!logId) {
     return { type: "error", message: "Missing log id." };
   }
 
   try {
     await deleteLogById(logId);
+    const remainingLogs = await getLogs();
+    const nextLogId = remainingLogs[0]?.id ?? null;
+    revalidatePath(ROUTES.log);
+    revalidatePath("/");
+    return { type: "success", nextLogId };
   } catch (error) {
     console.error("Error deleting log", error);
     return { type: "error", message: "Failed to delete log." };
   }
-
-  revalidatePath(ROUTES.log);
-  revalidatePath("/");
-  return { type: "success" };
 }

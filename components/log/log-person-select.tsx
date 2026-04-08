@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useOptimistic, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { LogPerson } from "@/src/generated/enums";
 import {
@@ -9,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTopbar } from "@/components/context/topbar-context";
 
 type LogPersonSelectProps = {
   value: "PRIMARY" | "SECONDARY";
@@ -30,16 +32,32 @@ export function LogPersonSelect({ value }: LogPersonSelectProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+  const [optimisticPerson, setOptimisticPerson] = useOptimistic(value);
+  const { setLogFilterPending } = useTopbar();
+
+  useEffect(() => {
+    // Share person-selector transition state with log page body pulse feedback.
+    setLogFilterPending("log-person-select", isPending);
+    return () => setLogFilterPending("log-person-select", false);
+  }, [isPending, setLogFilterPending]);
 
   const handleValueChange = (nextValue: string) => {
+    if (nextValue === optimisticPerson) return;
+    setOptimisticPerson(nextValue as "PRIMARY" | "SECONDARY");
     const params = new URLSearchParams(searchParams.toString());
     params.set("person", nextValue);
-    router.push(`${pathname}?${params.toString()}`);
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`);
+    });
   };
 
   return (
-    // Person is always PRIMARY or SECONDARY — never empty; hide Select’s inline clear (X).
-    <Select value={value} onValueChange={handleValueChange} allowInlineClear={false}>
+    <Select
+      value={optimisticPerson}
+      onValueChange={handleValueChange}
+      allowInlineClear={false}
+    >
       {/* Narrow trigger on small screens; top bar also has log switcher + actions. */}
       <SelectTrigger className="w-32 shrink-0 sm:w-44">
         <SelectValue />
