@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { PlanInputType, SlotSaveData, type SlotInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PlanView } from "./plan-view";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import { deletePlanAction, generateLogFromPlan, updateSavedPlan } from "@/actions/planner-actions";
@@ -38,6 +38,7 @@ type SyncConflictState = {
 };
 
 export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
+  const AUTOSAVE_DELAY_MS = 1000;
   const [plan, setPlan] = useState<PlanInputType>(initialPlan);
   const allSlotsRef = useRef<PlanInputType>(initialPlan);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -48,6 +49,7 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
   const [deleteStatus, setDeleteStatus] = useState<"idle" | "deleting">("idle");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [syncConflict, setSyncConflict] = useState<SyncConflictState | null>(null);
+  const blockedAutosaveVersionRef = useRef<number | null>(null);
   const { setState: setPlanTopbarState, resetState: resetPlanTopbarState } = usePlanTopbarState();
 
   function formatDateKeysForToast(dateKeys: string[]) {
@@ -112,6 +114,8 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
     const result = await updateSavedPlan(planId, saveData);
     if (result.type === "date_conflict") {
       setSaveStatus("idle");
+      // Avoid retry-toasts in a loop: wait for a new user edit before autosave retries.
+      blockedAutosaveVersionRef.current = saveEditVersion;
       // Surface blocked extension dates so user can pick a non-colliding range.
       toast.error(
         `Cannot save. Date conflict: ${formatDateKeysForToast(result.dates).join(", ")}`,
@@ -136,12 +140,32 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
 
     setSaveStatus("idle");
     if (saveEditVersion === editVersionRef.current) {
+      blockedAutosaveVersionRef.current = null;
       setIsDirty(false);
       // After successful save, it's safe to drop shifted-out-of-range recipes
       // because the database persisted only the visible `plan` subset.
       allSlotsRef.current = plan;
     }
   }, [isDirty, plan, planId, saveStatus]);
+
+  useEffect(() => {
+    // Debounced autosave reuses the existing save pipeline and conflict handling.
+    if (!isDirty || saveStatus === "saving" || syncConflict != null) {
+      return;
+    }
+    // If latest attempt hit date conflict, wait for a new edit before retrying.
+    if (blockedAutosaveVersionRef.current === editVersionRef.current) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      void handleSave();
+    }, AUTOSAVE_DELAY_MS);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [AUTOSAVE_DELAY_MS, handleSave, isDirty, saveStatus, syncConflict]);
 
   const handleDateRangeChange = useCallback(
     (next: DateRangeValue) => {
@@ -437,18 +461,13 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
 
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-lg font-semibold">Edit plan</h1>
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={!isDirty || saveStatus === "saving"}
-            aria-busy={saveStatus === "saving"}
-            onClick={() => {
-              void handleSave();
-            }}
-          >
-            {saveStatus === "saving" ? "Saving..." : "Save"}
-          </Button>
+        <div className="flex items-center justify-end">
+          {saveStatus === "saving" ? (
+            <Loader2
+              className="h-4 w-4 animate-spin text-muted-foreground"
+              aria-label="Saving plan"
+            />
+          ) : null}
         </div>
       </div>
 

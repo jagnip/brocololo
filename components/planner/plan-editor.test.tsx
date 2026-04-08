@@ -81,6 +81,7 @@ vi.mock("next/navigation", async () => {
 
 import { toast } from "sonner";
 import { deletePlanAction, generateLogFromPlan, updateSavedPlan } from "@/actions/planner-actions";
+import { PlanTopbarStateProvider } from "@/components/planner/plan-topbar-state-context";
 import { PlanEditor } from "./plan-editor";
 
 function createRecipe(id: string) {
@@ -102,14 +103,22 @@ function createRecipe(id: string) {
   } as any;
 }
 
-describe("PlanEditor manual save", () => {
+function renderPlanEditor(props: React.ComponentProps<typeof PlanEditor>) {
+  return render(
+    <PlanTopbarStateProvider>
+      <PlanEditor {...props} />
+    </PlanTopbarStateProvider>,
+  );
+}
+
+describe("PlanEditor autosave", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     pushMock.mockClear();
     refreshMock.mockClear();
   });
 
-  it("does not auto-save when the user edits the plan", async () => {
+  it("auto-saves after a short debounce when user edits the plan", async () => {
     const user = userEvent.setup();
 
     const recipeA = createRecipe("recipe-a");
@@ -126,18 +135,17 @@ describe("PlanEditor manual save", () => {
       },
     ];
 
-    render(<PlanEditor planId="plan-1" initialPlan={initialPlan} recipes={[]} />);
-
-    const saveButton = screen.getByRole("button", { name: "Save" });
-    expect(saveButton).toBeDisabled();
+    renderPlanEditor({ planId: "plan-1", initialPlan, recipes: [] });
 
     await user.click(screen.getByRole("button", { name: "Shuffle" }));
 
     expect(updateSavedPlan).not.toHaveBeenCalled();
-    expect(saveButton).toBeEnabled();
+    await waitFor(() => {
+      expect(updateSavedPlan).toHaveBeenCalledTimes(1);
+    }, { timeout: 2500 });
   });
 
-  it("shows Saving... and persists the whole plan when Save is clicked", async () => {
+  it("persists the whole plan payload via autosave", async () => {
     const user = userEvent.setup();
 
     let resolveSave: (value: any) => void = () => {};
@@ -161,14 +169,12 @@ describe("PlanEditor manual save", () => {
       },
     ];
 
-    render(<PlanEditor planId="plan-1" initialPlan={initialPlan} recipes={[]} />);
+    renderPlanEditor({ planId: "plan-1", initialPlan, recipes: [] });
 
     await user.click(screen.getByRole("button", { name: "Shuffle" }));
-    const saveButton = screen.getByRole("button", { name: "Save" });
-    expect(saveButton).toBeEnabled();
-
-    await user.click(saveButton);
-    expect(screen.getByRole("button", { name: "Saving..." })).toBeDisabled();
+    await waitFor(() => {
+      expect(vi.mocked(updateSavedPlan)).toHaveBeenCalledTimes(1);
+    }, { timeout: 2500 });
 
     const [planIdArg, slotsArg] = vi.mocked(updateSavedPlan).mock.calls[0]!;
     expect(planIdArg).toBe("plan-1");
@@ -178,11 +184,11 @@ describe("PlanEditor manual save", () => {
 
     resolveSave({ type: "success" });
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Generate log" })).toBeEnabled();
     });
   });
 
-  it("keeps the plan dirty if edits happen while Save is in-flight", async () => {
+  it("keeps the plan dirty if edits happen while autosave is in-flight", async () => {
     const user = userEvent.setup();
 
     let resolveSave: (value: any) => void = () => {};
@@ -206,19 +212,19 @@ describe("PlanEditor manual save", () => {
       },
     ];
 
-    render(<PlanEditor planId="plan-1" initialPlan={initialPlan} recipes={[]} />);
+    renderPlanEditor({ planId: "plan-1", initialPlan, recipes: [] });
 
     await user.click(screen.getByRole("button", { name: "Shuffle" }));
-    const saveButton = screen.getByRole("button", { name: "Save" });
-
-    await user.click(saveButton);
-    expect(screen.getByRole("button", { name: "Saving..." })).toBeDisabled();
+    await waitFor(() => {
+      expect(vi.mocked(updateSavedPlan)).toHaveBeenCalledTimes(1);
+    }, { timeout: 2500 });
+    expect(screen.getByRole("button", { name: "Generate log" })).toBeDisabled();
 
     await user.click(screen.getByRole("button", { name: "Shuffle" }));
 
     resolveSave({ type: "success" });
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+      expect(screen.getByRole("button", { name: "Generate log" })).toBeDisabled();
     });
   });
 
@@ -237,26 +243,25 @@ describe("PlanEditor manual save", () => {
       } as any)
       .mockResolvedValueOnce({ type: "success" } as any);
 
-    render(
-      <PlanEditor
-        planId="plan-1"
-        initialPlan={[
-          {
-            date: new Date("2026-03-17T00:00:00.000Z"),
-            mealType: "DINNER" as any,
-            recipe: recipeA,
-            alternatives: [recipeB, recipeC],
-            used: false,
-          },
-        ]}
-        recipes={[]}
-      />,
-    );
+    renderPlanEditor({
+      planId: "plan-1",
+      initialPlan: [
+        {
+          date: new Date("2026-03-17T00:00:00.000Z"),
+          mealType: "DINNER" as any,
+          recipe: recipeA,
+          alternatives: [recipeB, recipeC],
+          used: false,
+        },
+      ],
+      recipes: [],
+    });
 
     await user.click(screen.getByRole("button", { name: "Shuffle" }));
-    await user.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(screen.getByText(/sync will remove existing meals/i)).toBeInTheDocument();
+    }, { timeout: 2500 });
 
-    expect(screen.getByText(/sync will remove existing meals/i)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Save and sync" }));
 
     expect(vi.mocked(updateSavedPlan).mock.calls[1]?.[2]).toEqual({
@@ -277,37 +282,42 @@ describe("PlanEditor manual save", () => {
       conflictingPlanIds: ["plan-2"],
     } as any);
 
-    render(
-      <PlanEditor
-        planId="plan-1"
-        initialPlan={[
-          {
-            date: new Date("2026-03-17T00:00:00.000Z"),
-            mealType: "DINNER" as any,
-            recipe: recipeA,
-            alternatives: [recipeB, recipeC],
-            used: false,
-          },
-        ]}
-        recipes={[]}
-      />,
-    );
+    renderPlanEditor({
+      planId: "plan-1",
+      initialPlan: [
+        {
+          date: new Date("2026-03-17T00:00:00.000Z"),
+          mealType: "DINNER" as any,
+          recipe: recipeA,
+          alternatives: [recipeB, recipeC],
+          used: false,
+        },
+      ],
+      recipes: [],
+    });
 
     await user.click(screen.getByRole("button", { name: "Shuffle" }));
-    await user.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
-    });
+      expect(toast.error).toHaveBeenCalledWith(
+        "Cannot save. Date conflict: Mar 18, 2026",
+      );
+    }, { timeout: 2500 });
+    expect(screen.getByRole("button", { name: "Generate log" })).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Shuffle" }));
+    await waitFor(() => {
+      expect(vi.mocked(updateSavedPlan)).toHaveBeenCalledTimes(2);
+    }, { timeout: 2500 });
   });
 
   it("rebase creates empty slots and marks editor dirty when date range changes", async () => {
     const user = userEvent.setup();
 
-    render(<PlanEditor planId="plan-1" initialPlan={initialPlanForTests()} recipes={[]} />);
+    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlanForTests(), recipes: [] });
 
     // When the range expands, the editor should create empty meal slots for the new days,
-    // and enable "Save" because the editor becomes dirty.
+    // and mark editor dirty so generation is blocked until autosave finishes.
     const beforeCount = Number(screen.getByLabelText("slot-count").textContent);
 
     await user.click(screen.getByRole("button", { name: "Range extend" }));
@@ -315,7 +325,7 @@ describe("PlanEditor manual save", () => {
     const afterCount = Number(screen.getByLabelText("slot-count").textContent);
     expect(afterCount).toBeGreaterThan(beforeCount);
 
-    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Generate log" })).toBeDisabled();
   });
 
   it("preserves recipes in memory when shrinking then restoring before Save", async () => {
@@ -349,7 +359,7 @@ describe("PlanEditor manual save", () => {
       },
     ];
 
-    render(<PlanEditor planId="plan-1" initialPlan={initialPlan3Days} recipes={[]} />);
+    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlan3Days, recipes: [] });
 
     // Before shrinking, we should see dinner recipes for all 3 days.
     expect(screen.getByLabelText("dinner-by-day").textContent).toContain("2026-03-17:recipe-17");
@@ -367,13 +377,13 @@ describe("PlanEditor manual save", () => {
     expect(dinnerAfterRestore).toContain("2026-03-18:recipe-18");
     expect(dinnerAfterRestore).toContain("2026-03-19:recipe-19");
 
-    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Generate log" })).toBeDisabled();
   });
 
   it("disables Generate log when the editor is dirty", async () => {
     const user = userEvent.setup();
 
-    render(<PlanEditor planId="plan-1" initialPlan={initialPlanForTests()} recipes={[]} />);
+    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlanForTests(), recipes: [] });
 
     const generateButton = screen.getByRole("button", { name: "Generate log" });
     expect(generateButton).toBeEnabled();
@@ -391,7 +401,7 @@ describe("PlanEditor manual save", () => {
       logId: "log-1",
     });
 
-    render(<PlanEditor planId="plan-1" initialPlan={initialPlanForTests()} recipes={[]} />);
+    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlanForTests(), recipes: [] });
 
     await user.click(screen.getByRole("button", { name: "Generate log" }));
 
@@ -407,7 +417,7 @@ describe("PlanEditor manual save", () => {
       logId: "log-1",
     });
 
-    render(<PlanEditor planId="plan-1" initialPlan={initialPlanForTests()} recipes={[]} />);
+    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlanForTests(), recipes: [] });
 
     await user.click(screen.getByRole("button", { name: "Generate log" }));
 
@@ -423,7 +433,7 @@ describe("PlanEditor manual save", () => {
       dates: ["2026-04-10", "2026-04-12"],
     });
 
-    render(<PlanEditor planId="plan-1" initialPlan={initialPlanForTests()} recipes={[]} />);
+    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlanForTests(), recipes: [] });
 
     await user.click(screen.getByRole("button", { name: "Generate log" }));
 
