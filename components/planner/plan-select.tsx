@@ -36,8 +36,10 @@ export function PlanSelect({ plans, currentPlanId }: PlanSelectProps) {
 
   return (
     <Select value={currentPlanId} onValueChange={handleValueChange} allowInlineClear={false}>
-      <SelectTrigger className="w-full min-w-48 max-w-md">
-        <SelectValue placeholder="Select a plan" />
+      {/* On tight viewports allow the trigger to shrink; keep larger minimum from `sm` up. */}
+      <SelectTrigger className="w-36 min-w-0 max-w-[45vw] sm:w-full sm:min-w-48 sm:max-w-md">
+        {/* Explicit truncate helps long date ranges stay readable in constrained topbars. */}
+        <SelectValue className="truncate" placeholder="Select a plan" />
       </SelectTrigger>
       <SelectContent>
         {plans.map((plan) => (

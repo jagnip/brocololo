@@ -61,9 +61,11 @@ export function AppTopbar() {
         ) : null}
         {shouldShowPlanTopbarSkeleton ? (
           <>
-            {/* Mirror plan switcher + New plan while top bar config hydrates. */}
+            {/* Mirror plan topbar: switcher + generate + new/delete icon actions while config hydrates. */}
             <Skeleton className="h-9 w-48 rounded-md" />
             <Skeleton className="h-9 w-28 rounded-md" />
+            <Skeleton className="h-9 w-9 rounded-md" />
+            <Skeleton className="h-9 w-9 rounded-md" />
           </>
         ) : null}
         {config?.badge ? (
@@ -86,6 +88,8 @@ export function AppTopbar() {
                 variant={variant}
                 size={size}
                 aria-label={action.ariaLabel}
+                aria-busy={action.ariaBusy}
+                disabled={action.disabled}
               >
                 <Link href={action.href}>{content}</Link>
               </Button>
@@ -99,6 +103,8 @@ export function AppTopbar() {
               size={size}
               onClick={action.onClick}
               aria-label={action.ariaLabel}
+              aria-busy={action.ariaBusy}
+              disabled={action.disabled}
             >
               {content}
             </Button>

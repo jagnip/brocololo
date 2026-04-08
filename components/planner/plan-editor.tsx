@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { PlanInputType, SlotSaveData, type SlotInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PlanView } from "./plan-view";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import { deletePlanAction, generateLogFromPlan, updateSavedPlan } from "@/actions/planner-actions";
@@ -22,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { usePlanTopbarState } from "@/components/planner/plan-topbar-state-context";
 
 type PlanEditorProps = {
   planId: string;
@@ -38,9 +38,8 @@ type SyncConflictState = {
 };
 
 export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
+  const AUTOSAVE_DELAY_MS = 1000;
   const [plan, setPlan] = useState<PlanInputType>(initialPlan);
-  // Buffer that keeps shifted recipes while the editor is "dirty" (before Save).
-  // `plan` is the visible subset for the currently selected date range.
   const allSlotsRef = useRef<PlanInputType>(initialPlan);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [isDirty, setIsDirty] = useState(false);
@@ -50,6 +49,8 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
   const [deleteStatus, setDeleteStatus] = useState<"idle" | "deleting">("idle");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [syncConflict, setSyncConflict] = useState<SyncConflictState | null>(null);
+  const blockedAutosaveVersionRef = useRef<number | null>(null);
+  const { setState: setPlanTopbarState, resetState: resetPlanTopbarState } = usePlanTopbarState();
 
   function formatDateKeysForToast(dateKeys: string[]) {
     // Format YYYY-MM-DD as a readable UTC date string to avoid timezone drift.
@@ -113,6 +114,8 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
     const result = await updateSavedPlan(planId, saveData);
     if (result.type === "date_conflict") {
       setSaveStatus("idle");
+      // Avoid retry-toasts in a loop: wait for a new user edit before autosave retries.
+      blockedAutosaveVersionRef.current = saveEditVersion;
       // Surface blocked extension dates so user can pick a non-colliding range.
       toast.error(
         `Cannot save. Date conflict: ${formatDateKeysForToast(result.dates).join(", ")}`,
@@ -137,12 +140,32 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
 
     setSaveStatus("idle");
     if (saveEditVersion === editVersionRef.current) {
+      blockedAutosaveVersionRef.current = null;
       setIsDirty(false);
       // After successful save, it's safe to drop shifted-out-of-range recipes
       // because the database persisted only the visible `plan` subset.
       allSlotsRef.current = plan;
     }
   }, [isDirty, plan, planId, saveStatus]);
+
+  useEffect(() => {
+    // Debounced autosave reuses the existing save pipeline and conflict handling.
+    if (!isDirty || saveStatus === "saving" || syncConflict != null) {
+      return;
+    }
+    // If latest attempt hit date conflict, wait for a new edit before retrying.
+    if (blockedAutosaveVersionRef.current === editVersionRef.current) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      void handleSave();
+    }, AUTOSAVE_DELAY_MS);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [AUTOSAVE_DELAY_MS, handleSave, isDirty, saveStatus, syncConflict]);
 
   const handleDateRangeChange = useCallback(
     (next: DateRangeValue) => {
@@ -277,6 +300,62 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
     );
   }, []);
 
+  const handleGenerateLog = useCallback(async () => {
+    if (isDirty) {
+      toast.info("Save your plan before generating a log.");
+      return;
+    }
+
+    setLogStatus("generating");
+    try {
+      const result = await generateLogFromPlan(planId);
+      if (result.type === "date_conflict") {
+        const formattedDates = formatDateKeysForToast(result.dates);
+        toast.info(
+          `Cannot generate log. These dates already exist in a log: ${formattedDates.join(", ")}`,
+        );
+        return;
+      }
+      if (result.type === "already_exists") {
+        toast.info("Log already generated for this plan.");
+        return;
+      }
+      if (result.type === "error") {
+        toast.error(result.message);
+        return;
+      }
+
+      router.push(ROUTES.logView(result.logId));
+    } finally {
+      setLogStatus("idle");
+    }
+  }, [isDirty, planId, router]);
+
+  useEffect(() => {
+    // Keep plan topbar action state in sync with editor runtime state.
+    setPlanTopbarState({
+      isGenerateDisabled: isDirty || saveStatus === "saving" || logStatus === "generating",
+      isGenerating: logStatus === "generating",
+      isDeleteDisabled:
+        saveStatus === "saving" || logStatus === "generating" || deleteStatus === "deleting",
+      isDeleting: deleteStatus === "deleting",
+      onGenerateLog: () => void handleGenerateLog(),
+      onDeletePlan: () => setIsDeleteDialogOpen(true),
+    });
+
+    return () => {
+      resetPlanTopbarState();
+    };
+  }, [
+    deleteStatus,
+    handleGenerateLog,
+    isDirty,
+    logStatus,
+    resetPlanTopbarState,
+    saveStatus,
+    setPlanTopbarState,
+  ]);
+
   return (
     <>
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
@@ -382,69 +461,13 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
 
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-lg font-semibold">Edit plan</h1>
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={!isDirty || saveStatus === "saving"}
-            aria-busy={saveStatus === "saving"}
-            onClick={() => {
-              void handleSave();
-            }}
-          >
-            {saveStatus === "saving" ? "Saving..." : "Save"}
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isDirty || saveStatus === "saving" || logStatus === "generating"}
-            aria-busy={logStatus === "generating"}
-            onClick={async () => {
-              if (isDirty) {
-                toast.info("Save your plan before generating a log.");
-                return;
-              }
-
-              setLogStatus("generating");
-              try {
-                const result = await generateLogFromPlan(planId);
-                if (result.type === "date_conflict") {
-                  const formattedDates = formatDateKeysForToast(result.dates);
-                  toast.info(
-                    `Cannot generate log. These dates already exist in a log: ${formattedDates.join(", ")}`,
-                  );
-                  return;
-                }
-                if (result.type === "already_exists") {
-                  toast.info("Log already generated for this plan.");
-                  return;
-                }
-                if (result.type === "error") {
-                  toast.error(result.message);
-                  return;
-                }
-
-                router.push(ROUTES.logView(result.logId));
-              } finally {
-                setLogStatus("idle");
-              }
-            }}
-          >
-            {logStatus === "generating" ? "Generating log..." : "Generate log"}
-          </Button>
-
-          <Button
-            type="button"
-            variant="destructive"
-            disabled={saveStatus === "saving" || logStatus === "generating" || deleteStatus === "deleting"}
-            onClick={() => {
-              setIsDeleteDialogOpen(true);
-            }}
-          >
-            <Trash2 className="h-4 w-4" />
-            {deleteStatus === "deleting" ? "Deleting..." : "Delete plan"}
-          </Button>
+        <div className="flex items-center justify-end">
+          {saveStatus === "saving" ? (
+            <Loader2
+              className="h-4 w-4 animate-spin text-muted-foreground"
+              aria-label="Saving plan"
+            />
+          ) : null}
         </div>
       </div>
 
