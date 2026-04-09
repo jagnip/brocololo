@@ -21,6 +21,8 @@ export type DateRangeValue = { start: string; end: string };
 type WeekPickerProps = {
   value: DateRangeValue;
   onChange: (value: DateRangeValue) => void;
+  compact?: boolean;
+  className?: string;
 };
 
 export function getDefaultDateRange(): DateRangeValue {
@@ -36,7 +38,7 @@ export function getDefaultDateRange(): DateRangeValue {
     return d.toLocaleDateString("en-CA");
   }
 
-export function WeekPicker({ value, onChange }: WeekPickerProps) {
+export function WeekPicker({ value, onChange, compact = false, className }: WeekPickerProps) {
     
     //parse the field.value from the form to a RangeValue<CalendarDate>
   const rangeValue: RangeValue<CalendarDate> | undefined =
@@ -56,11 +58,14 @@ export function WeekPicker({ value, onChange }: WeekPickerProps) {
           });
         }
       }}
-      className="space-y-2"
+      className={cn(compact ? "w-full" : "space-y-2", className)}
     >
-      <Label className="text-sm font-medium text-foreground">Plan for</Label>
+      {/* Compact mode hides the visible label to match log selector layout. */}
+      <Label className={cn("text-sm font-medium text-foreground", compact && "sr-only")}>
+        Plan for
+      </Label>
       <div className="flex">
-        <Group className={cn(dateInputStyle, "pe-9")}>
+        <Group className={cn(dateInputStyle, "w-full min-w-0 pe-9")}>
           <DateInput slot="start" unstyled />
           <span aria-hidden="true" className="px-2 text-muted-foreground/70">
             -
