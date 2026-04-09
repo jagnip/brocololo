@@ -61,9 +61,8 @@ export function AppTopbar() {
         ) : null}
         {shouldShowPlanTopbarSkeleton ? (
           <>
-            {/* Mirror plan topbar: switcher + generate + new/delete icon actions while config hydrates. */}
+            {/* Mirror plan topbar: switcher + new/delete icon actions while config hydrates. */}
             <Skeleton className="h-9 w-48 rounded-md" />
-            <Skeleton className="h-9 w-28 rounded-md" />
             <Skeleton className="h-9 w-9 rounded-md" />
             <Skeleton className="h-9 w-9 rounded-md" />
           </>

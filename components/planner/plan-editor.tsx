@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { usePlanTopbarState } from "@/components/planner/plan-topbar-state-context";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 
 type PlanEditorProps = {
   planId: string;
@@ -472,6 +473,17 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
                 className="w-full"
               />
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isDirty || saveStatus === "saving" || logStatus === "generating"}
+              aria-busy={logStatus === "generating"}
+              onClick={() => {
+                void handleGenerateLog();
+              }}
+            >
+              {logStatus === "generating" ? "Generating log..." : "Generate log"}
+            </Button>
           </div>
 
           {saveStatus === "saving" ? (

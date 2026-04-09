@@ -66,11 +66,20 @@ export function WeekPicker({ value, onChange, compact = false, className }: Week
       </Label>
       <div className="flex">
         <Group className={cn(dateInputStyle, "w-full min-w-0 pe-9")}>
-          <DateInput slot="start" unstyled />
+          {/* Allow each side of the range to shrink and clip on narrow mobile widths. */}
+          <DateInput
+            slot="start"
+            unstyled
+            className="shrink-0"
+          />
           <span aria-hidden="true" className="px-2 text-muted-foreground/70">
             -
           </span>
-          <DateInput slot="end" unstyled />
+          <DateInput
+            slot="end"
+            unstyled
+            className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
+          />
         </Group>
         <Button className="z-10 -me-px -ms-9 flex w-9 items-center justify-center rounded-e-lg text-muted-foreground/80 outline-offset-2 transition-colors hover:text-foreground focus-visible:outline-none data-[focus-visible]:outline data-[focus-visible]:outline-2 data-[focus-visible]:outline-ring/70">
           <CalendarIcon size={16} strokeWidth={2} />
