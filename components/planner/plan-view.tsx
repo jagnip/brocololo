@@ -82,21 +82,16 @@ export function PlanView({ plan, fridgeIngredientIds = [], recipes, onShuffle, o
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
               {breakfast && (
                 <div>
-                  <p className="mb-2 text-sm text-muted-foreground">
-                    Breakfast
-                  </p>
                   {renderSlot(breakfast)}
                 </div>
               )}
               {lunch && (
                 <div>
-                  <p className="mb-2 text-sm text-muted-foreground">Lunch</p>
                   {renderSlot(lunch)}
                 </div>
               )}
               {dinner && (
                 <div>
-                  <p className="mb-2 text-sm text-muted-foreground">Dinner</p>
                   {renderSlot(dinner)}
                 </div>
               )}
