@@ -22,6 +22,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { usePlanTopbarState } from "@/components/planner/plan-topbar-state-context";
+import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 
 type PlanEditorProps = {
   planId: string;
@@ -459,9 +461,31 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-lg font-semibold">Edit plan</h1>
-        <div className="flex items-center justify-end">
+      <div>
+        <PageHeader title="Plan details" />
+        <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-2">
+          <div className="flex min-w-0 flex-nowrap items-center gap-1.5 md:flex-wrap md:gap-2">
+            <div className="min-w-0 flex-1 md:flex-none md:w-80">
+              <WeekPicker
+                value={dateRange}
+                onChange={handleDateRangeChange}
+                compact
+                className="w-full"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isDirty || saveStatus === "saving" || logStatus === "generating"}
+              aria-busy={logStatus === "generating"}
+              onClick={() => {
+                void handleGenerateLog();
+              }}
+            >
+              {logStatus === "generating" ? "Generating log..." : "Generate log"}
+            </Button>
+          </div>
+
           {saveStatus === "saving" ? (
             <Loader2
               className="h-4 w-4 animate-spin text-muted-foreground"
@@ -469,10 +493,6 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
             />
           ) : null}
         </div>
-      </div>
-
-      <div className="mt-4">
-        <WeekPicker value={dateRange} onChange={handleDateRangeChange} />
       </div>
 
       <PlanView

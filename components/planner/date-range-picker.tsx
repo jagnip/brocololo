@@ -21,6 +21,8 @@ export type DateRangeValue = { start: string; end: string };
 type WeekPickerProps = {
   value: DateRangeValue;
   onChange: (value: DateRangeValue) => void;
+  compact?: boolean;
+  className?: string;
 };
 
 export function getDefaultDateRange(): DateRangeValue {
@@ -36,7 +38,7 @@ export function getDefaultDateRange(): DateRangeValue {
     return d.toLocaleDateString("en-CA");
   }
 
-export function WeekPicker({ value, onChange }: WeekPickerProps) {
+export function WeekPicker({ value, onChange, compact = false, className }: WeekPickerProps) {
     
     //parse the field.value from the form to a RangeValue<CalendarDate>
   const rangeValue: RangeValue<CalendarDate> | undefined =
@@ -56,16 +58,28 @@ export function WeekPicker({ value, onChange }: WeekPickerProps) {
           });
         }
       }}
-      className="space-y-2"
+      className={cn(compact ? "w-full" : "space-y-2", className)}
     >
-      <Label className="text-sm font-medium text-foreground">Plan for</Label>
+      {/* Compact mode hides the visible label to match log selector layout. */}
+      <Label className={cn("text-sm font-medium text-foreground", compact && "sr-only")}>
+        Plan for
+      </Label>
       <div className="flex">
-        <Group className={cn(dateInputStyle, "pe-9")}>
-          <DateInput slot="start" unstyled />
+        <Group className={cn(dateInputStyle, "w-full min-w-0 pe-9")}>
+          {/* Allow each side of the range to shrink and clip on narrow mobile widths. */}
+          <DateInput
+            slot="start"
+            unstyled
+            className="shrink-0"
+          />
           <span aria-hidden="true" className="px-2 text-muted-foreground/70">
             -
           </span>
-          <DateInput slot="end" unstyled />
+          <DateInput
+            slot="end"
+            unstyled
+            className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
+          />
         </Group>
         <Button className="z-10 -me-px -ms-9 flex w-9 items-center justify-center rounded-e-lg text-muted-foreground/80 outline-offset-2 transition-colors hover:text-foreground focus-visible:outline-none data-[focus-visible]:outline data-[focus-visible]:outline-2 data-[focus-visible]:outline-ring/70">
           <CalendarIcon size={16} strokeWidth={2} />
