@@ -10,6 +10,7 @@ import { PlanInputType, SlotInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PROTEIN_COLORS } from "@/lib/constants";
 import { PlannerSlotCard } from "./planner-slot-card";
+import { Subheader } from "@/components/recipes/recipe-page/subheader";
 
 function getFridgeMatchIngredients(
   recipe: RecipeType,
@@ -68,8 +69,7 @@ export function PlanView({ plan, fridgeIngredientIds = [], recipes, onShuffle, o
   }
 
   return (
-    <section className="mt-8 space-y-8">
-      <h2 className="text-lg font-semibold">Your plan</h2>
+    <section className="space-y-8">
       {sortedDates.map((dateKey) => {
         const { date, breakfast, lunch, dinner } = getMealsForDate(
           slotsByDate,
@@ -78,7 +78,7 @@ export function PlanView({ plan, fridgeIngredientIds = [], recipes, onShuffle, o
 
         return (
           <article key={dateKey} className="space-y-4">
-            <h3 className="text-base font-medium">{formatDayLabel(date)}</h3>
+            <Subheader>{formatDayLabel(date)}</Subheader>
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
               {breakfast && (
                 <div>

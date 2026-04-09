@@ -464,7 +464,6 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
         <PageHeader title="Plan details" />
         <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-2">
           <div className="flex min-w-0 flex-nowrap items-center gap-1.5 md:flex-wrap md:gap-2">
-            {/* Match log day-selector behavior: grow on mobile, fixed width from md up. */}
             <div className="min-w-0 flex-1 md:flex-none md:w-80">
               <WeekPicker
                 value={dateRange}
