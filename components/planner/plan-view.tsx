@@ -4,11 +4,9 @@ import {
   formatDayLabel,
   getMealsForDate,
   groupSlotsByDate,
-  getProteinKey,
 } from "@/lib/planner/helpers";
 import { PlanInputType, SlotInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
-import { PROTEIN_COLORS } from "@/lib/constants";
 import { PlannerSlotCard } from "./planner-slot-card";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 
@@ -20,12 +18,6 @@ function getFridgeMatchIngredients(
   return recipe.ingredients
     .filter((ri) => fridgeIngredientIds.includes(ri.ingredientId))
     .map((ri) => ri.ingredient.name);
-}
-
-function getProteinAccentColor(recipe: RecipeType): string | undefined {
-  const key = getProteinKey(recipe);
-  if (!key) return undefined;
-  return PROTEIN_COLORS[key];
 }
 
 function getSlotKey(slot: SlotInputType): string {
@@ -58,7 +50,6 @@ export function PlanView({ plan, fridgeIngredientIds = [], recipes, onShuffle, o
         fridgeMatchIngredients={
           slot.recipe ? getFridgeMatchIngredients(slot.recipe, fridgeIngredientIds) : []
         }
-        proteinColor={slot.recipe ? getProteinAccentColor(slot.recipe) : undefined}
         onShuffle={onShuffle ? () => onShuffle(slotKey) : undefined}
         onReplace={onReplace ? (recipe) => onReplace(slotKey, recipe) : undefined}
         onRemove={onRemove ? () => onRemove(slotKey) : undefined}
