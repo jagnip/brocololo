@@ -126,7 +126,10 @@ export function PlannerSlotCard({
                   size="icon"
                   onClick={onToggleUsed}
                 >
-                  <Check className="h-4 w-4" />
+                  <Check
+                    className={cn("h-4 w-4", slot.used && "text-white")}
+                    strokeWidth={2}
+                  />
                 </Button>
               )}
               {canShuffle && (
