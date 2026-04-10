@@ -13,17 +13,26 @@ import {
 import { Button } from "@/components/ui/button";
 import { ArrowLeftRight, Plus } from "lucide-react";
 import { RecipeType } from "@/types/recipe";
+import { cn } from "@/lib/utils";
 
 type RecipeReplacePopoverProps = {
   currentRecipeId: string;
   recipes: RecipeType[];
   onReplace: (recipe: RecipeType) => void;
+  buttonClassName?: string;
+  buttonVariant?: React.ComponentProps<typeof Button>["variant"];
+  buttonSize?: React.ComponentProps<typeof Button>["size"];
+  triggerContent?: React.ReactNode;
 };
 
 export function RecipeReplacePopover({
   currentRecipeId,
   recipes,
   onReplace,
+  buttonClassName,
+  buttonVariant = "outline",
+  buttonSize = "icon",
+  triggerContent,
 }: RecipeReplacePopoverProps) {
   const [open, setOpen] = useState(false);
   const isEmpty = !currentRecipeId;
@@ -33,11 +42,11 @@ export function RecipeReplacePopover({
       <PopoverTrigger asChild>
         <Button
           type="button"
-          variant="secondary"
-          size="icon"
-          className="h-8 w-8 rounded-full shadow-sm"
+          variant={buttonVariant}
+          size={buttonSize}
+          className={cn(buttonClassName)}
         >
-          {isEmpty ? <Plus className="h-4 w-4" /> : <ArrowLeftRight className="h-4 w-4" />}
+          {triggerContent ?? (isEmpty ? <Plus className="h-4 w-4" /> : <ArrowLeftRight className="h-4 w-4" />)}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0" side="right" align="start" sideOffset={8}>

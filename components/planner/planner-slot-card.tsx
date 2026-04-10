@@ -14,7 +14,6 @@ import { RecipeReplacePopover } from "./recipe-replace-popover";
 type PlannerSlotCardProps = {
   slot: SlotInputType;
   fridgeMatchIngredients?: string[];
-  proteinColor?: string;
   onShuffle?: () => void;
   onReplace?: (recipe: RecipeType) => void;
   onRemove?: () => void;
@@ -25,7 +24,6 @@ type PlannerSlotCardProps = {
 export function PlannerSlotCard({
   slot,
   fridgeMatchIngredients,
-  proteinColor: accentColor,
   onShuffle,
   onReplace,
   onRemove,
@@ -36,119 +34,135 @@ export function PlannerSlotCard({
 
   if (!recipe) {
     const canAdd = onReplace && recipes && recipes.length > 0;
+    const mealLabel =
+      slot.mealType === "BREAKFAST"
+        ? "Breakfast"
+        : slot.mealType === "LUNCH"
+          ? "Lunch"
+          : "Dinner";
+
     return (
-      <Card className="relative flex items-center justify-center min-h-[120px] border-dashed">
-        {canAdd && (
+      <div className="flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed border-border/60 bg-card p-0 py-0 shadow-none transition-colors">
+        {canAdd ? (
           <RecipeReplacePopover
             currentRecipeId=""
             recipes={recipes}
             onReplace={onReplace}
+            buttonVariant="ghost"
+            buttonSize="default"
+            buttonClassName="flex min-h-0 h-full flex-1 flex-col items-center justify-center gap-2 rounded-none p-3 text-center shadow-none hover:bg-muted/40"
+            triggerContent={
+              <>
+                <span
+                  className="flex size-7 shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground"
+                  aria-hidden
+                >
+                  <span className="text-base leading-none">+</span>
+                </span>
+                <p className="text-sm font-medium leading-snug text-foreground">
+                  {mealLabel}
+                </p>
+                <span className="text-xs text-muted-foreground">Add recipe</span>
+              </>
+            }
           />
-        )}
-      </Card>
+        ) : null}
+      </div>
     );
   }
 
   const coverImage = recipe.images?.find((img) => img.isCover);
-  const proteinCategories = recipe.categories.filter(
-    (category) => category.type === "PROTEIN",
-  );
   const canShuffle = onShuffle && slot.alternatives.length > 0;
   const canReplace = onReplace && recipes && recipes.length > 0;
 
   return (
     <Card
       className={cn(
-        "relative transition-shadow",
-        accentColor && `border-l-4 ${accentColor}`,
+        "h-full overflow-hidden py-0 gap-0 transition-shadow",
         slot.used && "opacity-50",
       )}
     >
       {coverImage && (
-        <Image
-          src={coverImage.url}
-          alt={recipe.name}
-          width={300}
-          height={300}
-          className="w-full h-auto rounded-xl"
-        />
+        <div className="relative w-full overflow-hidden aspect-2/1 sm:aspect-3/2">
+          <Image
+            src={coverImage.url}
+            alt={recipe.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          />
+        </div>
       )}
-      <CardHeader>
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1">
-            <Link href={`/recipes/${recipe.slug}`} className="hover:underline">
-              <h3 className="font-medium">{recipe.name}</h3>
+      <CardHeader className="px-card-x py-card-y">
+        <div className="min-w-0">
+          <div className="flex items-start gap-2">
+            <Link href={`/recipes/${recipe.slug}`} className="min-w-0 flex-1 hover:underline">
+              <h3 className="truncate type-h3" title={recipe.name}>
+                {recipe.name}
+              </h3>
             </Link>
-            <div className="flex flex-wrap gap-1 mt-2">
-              <Badge variant="outline">{recipe.handsOnTime} min</Badge>
-              {proteinCategories.length > 0 &&
-                proteinCategories.map((category) => (
-                  <Badge
-                    key={category.id}
-                    variant="secondary"
-                    className="text-xs"
-                  >
-                    {category.name}
-                  </Badge>
-                ))}
-              {fridgeMatchIngredients &&
-                fridgeMatchIngredients.length > 0 &&
-                fridgeMatchIngredients.map((name) => (
-                  <Badge
-                    key={name}
-                    className="bg-green-100 text-green-800 border-green-200 text-xs"
-                  >
-                    {name}
-                  </Badge>
-                ))}
-            </div>
+            <Badge variant="outline" className="shrink-0">
+              {recipe.handsOnTime} min
+            </Badge>
           </div>
+          <div className="mt-item flex flex-wrap items-start gap-2">
+            {fridgeMatchIngredients &&
+              fridgeMatchIngredients.length > 0 &&
+              fridgeMatchIngredients.map((name) => (
+                <Badge
+                  key={name}
+                  className="border-green-200 bg-green-100 text-green-800 text-xs"
+                >
+                  {name}
+                </Badge>
+              ))}
+          </div>
+          {(canShuffle || canReplace || onRemove || onToggleUsed) && (
+            <div className="mt-item flex w-full justify-start gap-1">
+              {onToggleUsed && (
+                <Button
+                  type="button"
+                  variant={slot.used ? "default" : "outline"}
+                  size="icon"
+                  onClick={onToggleUsed}
+                >
+                  <Check
+                    className={cn("h-4 w-4", slot.used && "text-white")}
+                    strokeWidth={2}
+                  />
+                </Button>
+              )}
+              {canShuffle && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={onShuffle}
+                >
+                  <Shuffle className="h-4 w-4" />
+                </Button>
+              )}
+              {canReplace && (
+                <RecipeReplacePopover
+                  currentRecipeId={recipe.id}
+                  recipes={recipes}
+                  onReplace={onReplace}
+                />
+              )}
+              {onRemove && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={onRemove}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </CardHeader>
-      {(canShuffle || canReplace || onRemove || onToggleUsed) && (
-        <div className="absolute bottom-2 right-2 flex gap-1">
-          {onToggleUsed && (
-            <Button
-              type="button"
-              variant={slot.used ? "default" : "secondary"}
-              size="icon"
-              className="h-8 w-8 rounded-full shadow-sm"
-              onClick={onToggleUsed}
-            >
-              <Check className="h-4 w-4" />
-            </Button>
-          )}
-          {canShuffle && (
-            <Button
-              type="button"
-              variant="secondary"
-              size="icon"
-              className="h-8 w-8 rounded-full shadow-sm"
-              onClick={onShuffle}
-            >
-              <Shuffle className="h-4 w-4" />
-            </Button>
-          )}
-          {canReplace && (
-            <RecipeReplacePopover
-              currentRecipeId={recipe.id}
-              recipes={recipes}
-              onReplace={onReplace}
-            />
-          )}
-          {onRemove && (
-            <Button
-              type="button"
-              variant="secondary"
-              size="icon"
-              className="h-8 w-8 rounded-full shadow-sm"
-              onClick={onRemove}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      )}
     </Card>
   );
 }
