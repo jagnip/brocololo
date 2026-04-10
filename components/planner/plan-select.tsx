@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { useOptimistic, useTransition } from "react";
 import {
   Select,
   SelectContent,
@@ -23,19 +24,24 @@ type PlanSelectProps = {
 export function PlanSelect({ plans, currentPlanId }: PlanSelectProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [, startTransition] = useTransition();
+  const [optimisticPlanId, setOptimisticPlanId] = useOptimistic(currentPlanId);
 
   const handleValueChange = (nextPlanId: string) => {
-    if (nextPlanId === currentPlanId) return;
+    if (nextPlanId === optimisticPlanId) return;
+    setOptimisticPlanId(nextPlanId);
 
     // Preserve existing query params (e.g. day/person-like filters) while switching plan id.
     const params = new URLSearchParams(searchParams.toString());
     const query = params.toString();
     const nextPath = ROUTES.planView(nextPlanId);
-    router.push(query ? `${nextPath}?${query}` : nextPath);
+    startTransition(() => {
+      router.push(query ? `${nextPath}?${query}` : nextPath);
+    });
   };
 
   return (
-    <Select value={currentPlanId} onValueChange={handleValueChange} allowInlineClear={false}>
+    <Select value={optimisticPlanId} onValueChange={handleValueChange} allowInlineClear={false}>
       {/* On tight viewports allow the trigger to shrink; keep larger minimum from `sm` up. */}
       <SelectTrigger className="w-36 min-w-0 max-w-[45vw] sm:w-full sm:min-w-48 sm:max-w-md">
         {/* Explicit truncate helps long date ranges stay readable in constrained topbars. */}
