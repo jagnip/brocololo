@@ -207,6 +207,8 @@ const MultipleSelector = React.forwardRef<
     }: MultipleSelectorProps,
     ref: React.Ref<MultipleSelectorRef>
   ) => {
+    const shouldHidePlaceholderWhenSelected =
+      hidePlaceholderWhenSelected ?? true;
     const inputRef = React.useRef<HTMLInputElement>(null);
     const [open, setOpen] = React.useState(false);
     const [onScrollbar, setOnScrollbar] = React.useState(false);
@@ -457,7 +459,7 @@ const MultipleSelector = React.forwardRef<
       >
         <div
           className={cn(
-            "flex items-start justify-between rounded-md border border-input px-3 py-2 text-base ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 md:text-sm",
+            "flex min-h-9 items-center justify-between rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
             {
               "cursor-text": !disabled && selected.length !== 0,
             },
@@ -468,11 +470,12 @@ const MultipleSelector = React.forwardRef<
             inputRef?.current?.focus();
           }}
         >
-          <div className="relative flex flex-wrap gap-1">
+          <div className="relative flex min-w-0 flex-1 flex-wrap gap-1">
             {selected.map((option) => {
               return (
                 <Badge
                   key={option.value}
+                  variant="secondary"
                   className={cn(
                     "data-[disabled]:bg-muted-foreground data-[disabled]:text-muted data-[disabled]:hover:bg-muted-foreground",
                     "data-[fixed]:bg-muted-foreground data-[fixed]:text-muted data-[fixed]:hover:bg-muted-foreground",
@@ -485,7 +488,7 @@ const MultipleSelector = React.forwardRef<
                   <button
                     type="button"
                     className={cn(
-                      "ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                      "ml-1 inline-flex items-center justify-center rounded-sm p-0.5 text-muted-foreground outline-none ring-offset-background hover:text-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2",
                       (disabled || option.fixed) && "hidden"
                     )}
                     onKeyDown={(e) => {
@@ -499,7 +502,7 @@ const MultipleSelector = React.forwardRef<
                     }}
                     onClick={() => handleUnselect(option)}
                   >
-                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                    <X className="size-3.5" />
                   </button>
                 </Badge>
               );
@@ -525,14 +528,16 @@ const MultipleSelector = React.forwardRef<
                 inputProps?.onFocus?.(event);
               }}
               placeholder={
-                hidePlaceholderWhenSelected && selected.length !== 0
+                shouldHidePlaceholderWhenSelected && selected.length !== 0
                   ? ""
                   : placeholder
               }
               className={cn(
-                "flex-1 self-baseline bg-transparent outline-none placeholder:text-muted-foreground",
+                "min-w-0 flex-1 self-baseline bg-transparent outline-none placeholder:text-muted-foreground",
                 {
-                  "w-full": hidePlaceholderWhenSelected,
+                  // Keep placeholder fully visible when no chips are selected.
+                  "w-full":
+                    shouldHidePlaceholderWhenSelected || selected.length === 0,
                   "ml-1": selected.length !== 0,
                 },
                 inputProps?.className
@@ -546,7 +551,7 @@ const MultipleSelector = React.forwardRef<
               onChange?.(selected.filter((s) => s.fixed));
             }}
             className={cn(
-              "size-5",
+              "inline-flex size-5 items-center justify-center rounded-sm p-0.5 text-muted-foreground hover:text-foreground",
               (hideClearAllButton ||
                 disabled ||
                 selected.length < 1 ||
@@ -554,7 +559,7 @@ const MultipleSelector = React.forwardRef<
                 "hidden"
             )}
           >
-            <X />
+            <X className="size-3.5" />
           </button>
           <ChevronDownIcon
             className={cn(

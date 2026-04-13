@@ -78,7 +78,7 @@ export function WeekPicker({ value, onChange, compact = false, className }: Week
             className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
           />
         </Group>
-        <Button className="z-10 -me-px -ms-9 flex w-9 items-center justify-center rounded-e-lg text-muted-foreground/80 outline-offset-2 transition-colors hover:text-foreground focus-visible:outline-none data-[focus-visible]:outline data-[focus-visible]:outline-2 data-[focus-visible]:outline-ring/70">
+        <Button className="z-10 -me-px -ms-9 flex w-9 items-center justify-center rounded-e-lg text-muted-foreground opacity-50 outline-offset-2 transition-colors hover:text-foreground hover:opacity-100 focus-visible:outline-none data-[focus-visible]:outline data-[focus-visible]:outline-2 data-[focus-visible]:outline-ring/70">
           <CalendarIcon size={16} strokeWidth={2} />
         </Button>
       </div>

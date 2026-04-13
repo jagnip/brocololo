@@ -175,7 +175,9 @@ export function SearchableSelect({
             }) ? (
               <span className="shrink-0">{renderIcon?.(selectedOption!)}</span>
             ) : null}
-            <span className="truncate">{selectedOption?.label ?? placeholder}</span>
+            <span className={cn("truncate", !selectedOption && "font-normal")}>
+              {selectedOption?.label ?? placeholder}
+            </span>
           </span>
           <span className="ml-2 inline-flex items-center gap-1 shrink-0">
             {showInlineClearButton ? (
