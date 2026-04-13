@@ -2,13 +2,14 @@
 
 import { cn } from "@/lib/utils";
 import { DateInput, dateInputStyle } from "@/components/ui/datefield-rac";
+import { Label } from "@/components/ui/label";
 import { CalendarIcon } from "lucide-react";
 import {
   Button,
   DateRangePicker,
   Dialog,
   Group,
-  Label,
+  Label as AriaLabel,
   Popover,
 } from "react-aria-components";
 import { RangeCalendar } from "../ui/calendar-rac";
@@ -61,17 +62,13 @@ export function WeekPicker({ value, onChange, compact = false, className }: Week
       className={cn(compact ? "w-full" : "space-y-2", className)}
     >
       {/* Compact mode hides the visible label to match log selector layout. */}
-      <Label className={cn("text-sm font-medium text-foreground", compact && "sr-only")}>
-        Plan for
-      </Label>
+      <AriaLabel className={compact ? "sr-only" : undefined}>
+        <Label className="pb-1">Plan for</Label>
+      </AriaLabel>
       <div className="flex">
         <Group className={cn(dateInputStyle, "w-full min-w-0 pe-9")}>
           {/* Allow each side of the range to shrink and clip on narrow mobile widths. */}
-          <DateInput
-            slot="start"
-            unstyled
-            className="shrink-0"
-          />
+          <DateInput slot="start" unstyled className="shrink-0" />
           <span aria-hidden="true" className="px-2 text-muted-foreground/70">
             -
           </span>

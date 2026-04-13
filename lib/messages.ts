@@ -13,7 +13,7 @@ export const MESSAGES = {
   },
   planner: {
     generated: "Plan generated",
-    generatePending: "Generating meals...",
+    generatePending: "Finding...",
     saved: "Plan saved",
     savePending: "Saving plan...",
   },
