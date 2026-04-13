@@ -467,12 +467,12 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
           actions: topbarActions,
         }}
       />
-      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-5 lg:items-start lg:gap-x-2 lg:gap-y-6">
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-5 lg:items-start lg:gap-x-4 lg:gap-y-6">
         <div className="lg:col-span-2">
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="flex w-full flex-col lg:max-w-md"
+              className="flex w-full flex-col"
             >
               <FormField
                 control={form.control}
@@ -490,7 +490,7 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
                 )}
               />
               {fields.length > 0 && (
-                <div className="mt-4">
+                <div className="mt-4 rounded-xl border border-border bg-background p-4">
                   <div className="mb-3 flex items-center gap-1.5">
                     <Button
                       type="button"
