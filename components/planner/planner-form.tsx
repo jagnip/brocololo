@@ -2,6 +2,7 @@
 
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus } from "lucide-react";
 import {
   Form,
   FormField,
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   plannerCriteriaSchema,
   type PlannerCriteriaInputType,
@@ -191,8 +193,6 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
   const dateRange = form.watch("dateRange");
   // Keep a narrowed generated plan reference so callback closures stay non-null-safe.
   const generatedPlan = shouldShowGeneratedPlan(plan, isGenerating) ? plan : null;
-  // Only split into two columns when results are visible/loading.
-  const hasGeneratedPanel = isGenerating || generatedPlan !== null;
   // Keep plan/create actions in the global top bar so controls stay in one place.
   const topbarActions = [
     {
@@ -356,18 +356,12 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
           actions: topbarActions,
         }}
       />
-      <div
-        className={
-          hasGeneratedPanel
-            ? "flex flex-col gap-6 lg:grid lg:grid-cols-5 lg:items-start"
-            : "flex flex-col"
-        }
-      >
-        <div className={hasGeneratedPanel ? "lg:col-span-2" : undefined}>
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-5 lg:items-start lg:gap-x-2 lg:gap-y-6">
+        <div className="lg:col-span-2">
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="flex flex-col max-w-md"
+              className="flex w-full flex-col lg:max-w-md"
             >
               <FormField
                 control={form.control}
@@ -729,15 +723,43 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
           </Form>
         </div>
 
-        {hasGeneratedPanel ? (
-          <div className="lg:col-span-3">
-            {isGenerating && (
-              // While generating a new plan, hide previous results and show loading state.
+        <div className="hidden lg:block lg:col-span-3">
+          {isGenerating ? (
+            // While generating a new plan, hide previous results and show loading state.
+            <PlanViewSkeleton />
+          ) : generatedPlan ? (
+            <PlanView
+              plan={generatedPlan}
+              fridgeIngredientIds={(form.watch("fridgeIngredientIds") ?? []) as string[]}
+              recipes={recipes}
+              onShuffle={handleShuffle}
+              onReplace={handleReplace}
+              onRemove={handleRemove}
+            />
+          ) : (
+            <Card className="flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed p-0 py-0 shadow-none">
+              <div className="flex min-h-[220px] flex-1 flex-col items-center justify-center gap-2 p-3 text-center">
+                {/* Mirror log empty slot styling and wording for the plan empty panel. */}
+                <span
+                  className="flex size-7 shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground"
+                  aria-hidden
+                >
+                  <Plus className="size-3" />
+                </span>
+                <p className="text-sm font-medium leading-snug text-foreground">Nothing planned yet</p>
+                <span className="text-xs text-muted-foreground">Find meals to start</span>
+              </div>
+            </Card>
+          )}
+        </div>
+
+        {isGenerating || generatedPlan ? (
+          <div className="lg:hidden">
+            {isGenerating ? (
               <PlanViewSkeleton />
-            )}
-            {generatedPlan && (
+            ) : (
               <PlanView
-                plan={generatedPlan}
+                plan={generatedPlan!}
                 fridgeIngredientIds={(form.watch("fridgeIngredientIds") ?? []) as string[]}
                 recipes={recipes}
                 onShuffle={handleShuffle}
