@@ -32,14 +32,16 @@ export function PlannerSlotCard({
 }: PlannerSlotCardProps) {
   const { recipe } = slot;
 
+  // Human-readable meal for slot header (matches empty-slot label).
+  const mealLabel =
+    slot.mealType === "BREAKFAST"
+      ? "Breakfast"
+      : slot.mealType === "LUNCH"
+        ? "Lunch"
+        : "Dinner";
+
   if (!recipe) {
     const canAdd = onReplace && recipes && recipes.length > 0;
-    const mealLabel =
-      slot.mealType === "BREAKFAST"
-        ? "Breakfast"
-        : slot.mealType === "LUNCH"
-          ? "Lunch"
-          : "Dinner";
 
     return (
       <div className="flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed border-border/60 bg-card p-0 py-0 shadow-none transition-colors">
@@ -96,11 +98,15 @@ export function PlannerSlotCard({
       <CardHeader className="px-card-x py-card-y">
         <div className="min-w-0">
           <div className="flex items-start gap-2">
-            <Link href={`/recipes/${recipe.slug}`} className="min-w-0 flex-1 hover:underline">
-              <h3 className="truncate type-h3" title={recipe.name}>
-                {recipe.name}
-              </h3>
-            </Link>
+            <div className="min-w-0 flex-1">
+              <Link href={`/recipes/${recipe.slug}`} className="block hover:underline">
+                <h3 className="truncate type-h3" title={recipe.name}>
+                  {recipe.name}
+                </h3>
+              </Link>
+              {/* Secondary line under title so each card shows which meal the slot is for */}
+              <p className="type-body mt-0.5 text-sm text-muted-foreground">{mealLabel}</p>
+            </div>
             <Badge variant="outline" className="shrink-0">
               {recipe.handsOnTime} min
             </Badge>

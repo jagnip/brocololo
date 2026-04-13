@@ -596,7 +596,7 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
                             );
                           }}
                         >
-                          Add unused from previous plan
+                          Add unused meals from previous plan
                         </Button>
                         <FormLabel className="mt-4">Rolling recipes</FormLabel>
                         <FormControl>
@@ -631,7 +631,7 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
                               value: r.id,
                               label: r.name,
                             }))}
-                            placeholder="Select recipes to include in plan"
+                            placeholder="Select recipes"
                             emptyIndicator={
                               <p className="text-center text-sm text-muted-foreground">
                                 No recipes found.
@@ -679,8 +679,8 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
                                     );
                                   }}
                                 />
-                                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                  meals (max {maxMeals})
+                              <span className="type-body text-muted-foreground whitespace-nowrap">
+                                meals (max {maxMeals})
                                 </span>
                               </div>
                             );
@@ -710,7 +710,7 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
                           value: ing.id,
                           label: ing.name,
                         }))}
-                        placeholder="Select ingredients in your fridge"
+                        placeholder="Select ingredients"
                         emptyIndicator={
                           <p className="text-center text-sm text-muted-foreground">
                             No ingredients found.
