@@ -354,7 +354,7 @@ export function RecipeAddToLogForm({
                       }}
                       disabled={!selectedIngredient}
                     >
-                      <SelectTrigger className="min-w-0 w-full sm:w-32 sm:min-w-32 [&>svg]:hidden">
+                      <SelectTrigger className="min-w-0 w-full sm:w-32 sm:min-w-32">
                         <SelectValue placeholder="Unit" />
                       </SelectTrigger>
                       <SelectContent>

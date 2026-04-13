@@ -253,7 +253,7 @@ export function IngredientItem({
               <SelectTrigger
                 size="default"
                 // Keep tablet fluid; slightly widen desktop unit control.
-                className="inline-flex items-center [&>svg]:hidden w-24 min-w-24 md:w-full md:min-w-0 lg:w-26 lg:min-w-26"
+                className="inline-flex items-center w-24 min-w-24 md:w-full md:min-w-0 lg:w-26 lg:min-w-26"
               >
                 <SelectValue />
               </SelectTrigger>
