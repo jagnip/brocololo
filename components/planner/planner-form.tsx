@@ -34,6 +34,7 @@ import { RecipeType } from "@/types/recipe";
 import MultipleSelector from "@/components/ui/multiselect";
 import { MESSAGES } from "@/lib/messages";
 import { PlanViewSkeleton } from "./plan-view-skeleton";
+import { TopbarConfigController } from "@/components/topbar-config";
 import {
   getRangeGroupAvailability,
   mapGroupLimitsToDailyLimits,
@@ -190,6 +191,33 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
   const dateRange = form.watch("dateRange");
   // Keep a narrowed generated plan reference so callback closures stay non-null-safe.
   const generatedPlan = shouldShowGeneratedPlan(plan, isGenerating) ? plan : null;
+  // Keep plan/create actions in the global top bar so controls stay in one place.
+  const topbarActions = [
+    {
+      id: "save-plan",
+      label: isSaving ? MESSAGES.planner.savePending : "Save plan",
+      onClick: () => {
+        if (!generatedPlan) return;
+        void handleSavePlan(generatedPlan);
+      },
+      // Keep action visible for discoverability; enable only when plan exists.
+      disabled: !generatedPlan || isSaving,
+      ariaBusy: isSaving,
+      variant: "secondary" as const,
+      size: "default" as const,
+    },
+    {
+      id: "find-meals",
+      label: isGenerating ? MESSAGES.planner.generatePending : "Find meals",
+      onClick: () => {
+        void form.handleSubmit(onSubmit)();
+      },
+      disabled: isGenerating,
+      ariaBusy: isGenerating,
+      variant: "default" as const,
+      size: "default" as const,
+    },
+  ];
 
   useEffect(() => {
     if (!dateRange?.start || !dateRange?.end) return;
@@ -321,6 +349,11 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
 
   return (
     <>
+      <TopbarConfigController
+        config={{
+          actions: topbarActions,
+        }}
+      />
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -682,14 +715,6 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
               </FormItem>
             )}
           />
-          <Button
-            type="submit"
-            className="w-max mt-4"
-            disabled={isGenerating}
-            aria-busy={isGenerating}
-          >
-            {isGenerating ? MESSAGES.planner.generatePending : "Find meals"}
-          </Button>
         </form>
       </Form>
       {isGenerating && (
@@ -698,16 +723,6 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
       )}
       {generatedPlan && (
         <>
-          <div className="mt-4">
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={isSaving}
-              onClick={() => handleSavePlan(generatedPlan)}
-            >
-              {isSaving ? MESSAGES.planner.savePending : "Save plan"}
-            </Button>
-          </div>
           <PlanView
             plan={generatedPlan}
             fridgeIngredientIds={(form.watch("fridgeIngredientIds") ?? []) as string[]}
