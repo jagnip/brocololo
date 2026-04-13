@@ -16,12 +16,14 @@ export function AppTopbar() {
   const isLogDetailRoute = /^\/log\/[^/]+$/.test(pathname);
   const isIngredientsIndexRoute = pathname === "/ingredients";
   const isPlanDetailRoute = /^\/plan\/(?!create$)[^/]+$/.test(pathname);
+  const isPlanCreateRoute = pathname === "/plan/create";
   const shouldShowRecipeTopbarSkeleton = isRecipeDetailRoute && !config;
   const shouldShowRecipesIndexTopbarSkeleton = isRecipesIndexRoute && !config;
   const shouldShowLogTopbarSkeleton = isLogDetailRoute && !config;
   const shouldShowIngredientsTopbarSkeleton =
     isIngredientsIndexRoute && !config;
   const shouldShowPlanTopbarSkeleton = isPlanDetailRoute && !config;
+  const shouldShowPlanCreateTopbarSkeleton = isPlanCreateRoute && !config;
 
   // z-20: stay above page controls that use z-10 (e.g. log card remove buttons) while scrolling.
   // `gap-2` between the nav trigger and the controls row matches inner `gap-2` and prevents selects
@@ -65,6 +67,13 @@ export function AppTopbar() {
             <Skeleton className="h-9 w-48 rounded-md" />
             <Skeleton className="h-9 w-9 rounded-md" />
             <Skeleton className="h-9 w-9 rounded-md" />
+          </>
+        ) : null}
+        {shouldShowPlanCreateTopbarSkeleton ? (
+          <>
+            {/* Mirror plan/create: Save plan + Find meals while client form mounts. */}
+            <Skeleton className="h-9 w-24 rounded-md" />
+            <Skeleton className="h-9 w-28 rounded-md" />
           </>
         ) : null}
         {config?.badge ? (
