@@ -37,6 +37,7 @@ import { RecipeType } from "@/types/recipe";
 import MultipleSelector from "@/components/ui/multiselect";
 import { MESSAGES } from "@/lib/messages";
 import { PlanViewSkeleton } from "./plan-view-skeleton";
+import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { TopbarConfigController } from "@/components/topbar-config";
 import {
   getRangeGroupAvailability,
@@ -269,12 +270,12 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
     return (
       <div className="flex flex-col gap-2">
         {/* Shared matrix header: meal rows on left, time dimensions on top. */}
-        <div className="grid grid-cols-[68px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
+        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
           <div />
           <Label>Hands-on</Label>
           <Label>Total</Label>
         </div>
-        <div className="grid grid-cols-[68px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
+        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
           <Label>Breakfast</Label>
           <Input
             type="number"
@@ -291,7 +292,7 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
             onChange={(e) => updateGroupLimit(group, "breakfastTotalMax", e.target.value)}
           />
         </div>
-        <div className="grid grid-cols-[68px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
+        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
           <Label>Lunch</Label>
           <Input
             type="number"
@@ -308,7 +309,7 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
             onChange={(e) => updateGroupLimit(group, "lunchTotalMax", e.target.value)}
           />
         </div>
-        <div className="grid grid-cols-[68px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
+        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
           <Label>Dinner</Label>
           <Input
             type="number"
@@ -333,12 +334,12 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
     return (
       <div className="flex flex-col gap-2">
         {/* Keep daily mode matrix identical to grouped mode layout. */}
-        <div className="grid grid-cols-[68px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
+        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
           <div />
           <Label>Hands-on</Label>
           <Label>Total</Label>
         </div>
-        <div className="grid grid-cols-[68px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
+        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
           <Label>Breakfast</Label>
           <FormField
             control={form.control}
@@ -377,7 +378,7 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
             )}
           />
         </div>
-        <div className="grid grid-cols-[68px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
+        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
           <Label>Lunch</Label>
           <FormField
             control={form.control}
@@ -416,7 +417,7 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
             )}
           />
         </div>
-        <div className="grid grid-cols-[68px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
+        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
           <Label>Dinner</Label>
           <FormField
             control={form.control}
@@ -489,7 +490,7 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
                 )}
               />
               {fields.length > 0 && (
-                <div className="mt-4 rounded-xl border border-border bg-background p-4">
+                <div className="mt-4">
                   <div className="mb-3 flex items-center gap-1.5">
                     <Button
                       type="button"
@@ -528,24 +529,33 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
                   {timeLimitsMode === "grouped" ? (
                     <div className="flex flex-col gap-4">
                       {hasWeekdays ? (
-                        <div className="flex flex-col gap-2">
-                          <FormLabel>Weekdays</FormLabel>
-                          {renderGroupedMatrix("weekday")}
+                        <div className="flex flex-col gap-1">
+                          {/* Recipe-like section subtitle, smaller than Subheader. */}
+                          <Subheader className="text-sm">Weekdays</Subheader>
+                          <div className="rounded-lg border border-border/60 bg-card p-3">
+                            {renderGroupedMatrix("weekday")}
+                          </div>
                         </div>
                       ) : null}
                       {hasWeekend ? (
-                        <div className="flex flex-col gap-2">
-                          <FormLabel>Weekends</FormLabel>
-                          {renderGroupedMatrix("weekend")}
+                        <div className="flex flex-col gap-1">
+                          <Subheader className="text-sm">Weekends</Subheader>
+                          <div className="rounded-lg border border-border/60 bg-card p-3">
+                            {renderGroupedMatrix("weekend")}
+                          </div>
                         </div>
                       ) : null}
                     </div>
                   ) : (
                     <div className="flex flex-col gap-4">
                       {fields.map((fieldItem, index) => (
-                        <div key={fieldItem.id} className="flex flex-col gap-2">
-                          <FormLabel>{formatDayLabel(new Date(fieldItem.date))}</FormLabel>
-                          {renderDailyMatrix(index)}
+                        <div key={fieldItem.id} className="flex flex-col gap-1">
+                          <Subheader className="text-sm">
+                            {formatDayLabel(new Date(fieldItem.date))}
+                          </Subheader>
+                          <div className="rounded-lg border border-border/60 bg-card p-3">
+                            {renderDailyMatrix(index)}
+                          </div>
                         </div>
                       ))}
                     </div>
