@@ -1,26 +1,59 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { FormControl, FormItem, FormLabel } from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import type { RollingRecipeType } from "@/lib/validations/planner";
+import type {
+  PlannerCriteriaInputType,
+  RollingRecipeType,
+} from "@/lib/validations/planner";
+import type { IngredientType } from "@/types/ingredient";
 import type { RecipeType } from "@/types/recipe";
 import MultipleSelector from "@/components/ui/multiselect";
+import type { Control } from "react-hook-form";
 
 type PlannerRollingRecipesSectionProps = {
+  control: Control<PlannerCriteriaInputType>;
   selected: RollingRecipeType[];
   onChange: (next: RollingRecipeType[]) => void;
+  ingredients: IngredientType[];
   recipes: RecipeType[];
   previousPlanUnusedRecipes: RollingRecipeType[];
+  onInvalidStateChange?: (hasInvalid: boolean) => void;
 };
 
 export function PlannerRollingRecipesSection({
+  control,
   selected,
   onChange,
+  ingredients,
   recipes,
   previousPlanUnusedRecipes,
+  onInvalidStateChange,
 }: PlannerRollingRecipesSectionProps) {
+  const [mealsDraft, setMealsDraft] = useState<Record<string, string>>({});
+  const [blurredRecipeIds, setBlurredRecipeIds] = useState<Record<string, true>>({});
+
+  const hasInvalid = useMemo(
+    () =>
+      selected.some((entry) => {
+        const draft = mealsDraft[entry.recipeId] ?? String(entry.meals);
+        if (draft.trim() === "") return true;
+        const parsed = Number(draft);
+        return !Number.isInteger(parsed) || parsed < 1;
+      }),
+    [mealsDraft, selected],
+  );
+
+  useEffect(() => {
+    onInvalidStateChange?.(hasInvalid);
+  }, [hasInvalid, onInvalidStateChange]);
+
+  const inputErrorClass =
+    "border-destructive focus-visible:ring-destructive/30 focus-visible:border-destructive";
+
   return (
     <FormItem>
       {/* Bulk-add action sits above the rolling recipes selector. */}
@@ -99,13 +132,15 @@ export function PlannerRollingRecipesSection({
                 type="number"
                 min={1}
                 max={maxMeals}
-                className="w-20"
-                value={r.meals}
+                value={mealsDraft[r.recipeId] ?? String(r.meals)}
+                onBlur={() =>
+                  setBlurredRecipeIds((prev) => ({ ...prev, [r.recipeId]: true }))
+                }
                 onChange={(e) => {
-                  const newMeals = Math.min(
-                    Math.max(Number(e.target.value) || 1, 1),
-                    maxMeals,
-                  );
+                  const raw = e.target.value;
+                  setMealsDraft((prev) => ({ ...prev, [r.recipeId]: raw }));
+                  if (raw === "" || !/^-?\d+$/.test(raw)) return;
+                  const newMeals = Number(raw);
                   onChange(
                     selected.map((s) =>
                       s.recipeId === r.recipeId
@@ -114,13 +149,56 @@ export function PlannerRollingRecipesSection({
                     ),
                   );
                 }}
+                // Red only after blur for invalid values; keep value untouched.
+                className={
+                  blurredRecipeIds[r.recipeId] &&
+                  (() => {
+                    const draft = mealsDraft[r.recipeId] ?? String(r.meals);
+                    if (draft.trim() === "") return true;
+                    const parsed = Number(draft);
+                    return !Number.isInteger(parsed) || parsed < 1;
+                  })()
+                    ? `w-20 ${inputErrorClass}`
+                    : "w-20"
+                }
               />
               <span className="type-body whitespace-nowrap text-muted-foreground">
-                meals (max {maxMeals})
+                meals
               </span>
             </div>
           );
         })}
+      <FormField
+        control={control}
+        name="fridgeIngredientIds"
+        render={({ field }) => (
+          <FormItem className="mt-4">
+            <FormLabel>Fridge ingredients</FormLabel>
+            <FormControl>
+              <MultipleSelector
+                value={ingredients
+                  .filter((ing) =>
+                    (field.value as string[])?.includes(ing.id),
+                  )
+                  .map((ing) => ({ value: ing.id, label: ing.name }))}
+                onChange={(options) =>
+                  field.onChange(options.map((o) => o.value))
+                }
+                defaultOptions={ingredients.map((ing) => ({
+                  value: ing.id,
+                  label: ing.name,
+                }))}
+                placeholder="Select ingredients"
+                emptyIndicator={
+                  <p className="text-center text-sm text-muted-foreground">
+                    No ingredients found.
+                  </p>
+                }
+              />
+            </FormControl>
+          </FormItem>
+        )}
+      />
     </FormItem>
   );
 }

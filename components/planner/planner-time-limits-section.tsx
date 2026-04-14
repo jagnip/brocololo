@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import type { MealTimeLimits } from "@/lib/constants";
 import type { TimeLimitGroups } from "@/lib/planner/time-limit-mapping";
-import type { PlannerCriteriaInputType } from "@/lib/validations/planner";
+import type {
+  DayTimeLimitsType,
+  PlannerCriteriaInputType,
+} from "@/lib/validations/planner";
 import type { Control } from "react-hook-form";
 
 type TimeLimitsMode = "grouped" | "daily";
@@ -20,6 +24,7 @@ type TimeLimitsField = {
 type PlannerTimeLimitsSectionProps = {
   fields: TimeLimitsField[];
   control: Control<PlannerCriteriaInputType>;
+  dailyTimeLimits: DayTimeLimitsType[];
   timeLimitsMode: TimeLimitsMode;
   groupTimeLimits: TimeLimitGroups;
   hasWeekdays: boolean;
@@ -32,11 +37,13 @@ type PlannerTimeLimitsSectionProps = {
     rawValue: string,
   ) => void;
   getDayLabel: (date: Date) => string;
+  onInvalidStateChange?: (hasInvalid: boolean) => void;
 };
 
 export function PlannerTimeLimitsSection({
   fields,
   control,
+  dailyTimeLimits,
   timeLimitsMode,
   groupTimeLimits,
   hasWeekdays,
@@ -45,7 +52,45 @@ export function PlannerTimeLimitsSection({
   onSwitchToDaily,
   onUpdateGroupLimit,
   getDayLabel,
+  onInvalidStateChange,
 }: PlannerTimeLimitsSectionProps) {
+  const [blurredKeys, setBlurredKeys] = useState<Record<string, true>>({});
+
+  const markBlurred = (key: string) => {
+    setBlurredKeys((prev) => ({ ...prev, [key]: true }));
+  };
+
+  const isInvalidTimeValue = (value: number | null) =>
+    value !== null && (!Number.isInteger(value) || value < 1);
+
+  const hasInvalid = useMemo(() => {
+    const groupedInvalid = () =>
+      Object.values(groupTimeLimits).some((group) =>
+        Object.values(group).some((value) => isInvalidTimeValue(value as number | null)),
+      );
+    const dailyInvalid = () =>
+      dailyTimeLimits.some((day) =>
+      (
+        [
+          day.breakfastHandsOnMax,
+          day.breakfastTotalMax,
+          day.lunchHandsOnMax,
+          day.lunchTotalMax,
+          day.dinnerHandsOnMax,
+          day.dinnerTotalMax,
+        ] as Array<number | null>
+      ).some((value) => isInvalidTimeValue(value)),
+    );
+    return timeLimitsMode === "grouped" ? groupedInvalid() : dailyInvalid();
+  }, [dailyTimeLimits, groupTimeLimits, timeLimitsMode]);
+
+  useEffect(() => {
+    onInvalidStateChange?.(hasInvalid);
+  }, [hasInvalid, onInvalidStateChange]);
+
+  const inputErrorClass =
+    "border-destructive focus-visible:ring-destructive/30 focus-visible:border-destructive";
+
   function renderGroupedMatrix(group: keyof TimeLimitGroups) {
     const limits = groupTimeLimits[group];
     return (
@@ -63,6 +108,13 @@ export function PlannerTimeLimitsSection({
             min={1}
             placeholder="∞"
             value={limits.breakfastHandsOnMax ?? ""}
+            onBlur={() => markBlurred(`${group}-breakfastHandsOnMax`)}
+            className={
+              blurredKeys[`${group}-breakfastHandsOnMax`] &&
+              isInvalidTimeValue(limits.breakfastHandsOnMax)
+                ? inputErrorClass
+                : undefined
+            }
             onChange={(e) =>
               onUpdateGroupLimit(group, "breakfastHandsOnMax", e.target.value)
             }
@@ -72,6 +124,13 @@ export function PlannerTimeLimitsSection({
             min={1}
             placeholder="∞"
             value={limits.breakfastTotalMax ?? ""}
+            onBlur={() => markBlurred(`${group}-breakfastTotalMax`)}
+            className={
+              blurredKeys[`${group}-breakfastTotalMax`] &&
+              isInvalidTimeValue(limits.breakfastTotalMax)
+                ? inputErrorClass
+                : undefined
+            }
             onChange={(e) =>
               onUpdateGroupLimit(group, "breakfastTotalMax", e.target.value)
             }
@@ -84,6 +143,13 @@ export function PlannerTimeLimitsSection({
             min={1}
             placeholder="∞"
             value={limits.lunchHandsOnMax ?? ""}
+            onBlur={() => markBlurred(`${group}-lunchHandsOnMax`)}
+            className={
+              blurredKeys[`${group}-lunchHandsOnMax`] &&
+              isInvalidTimeValue(limits.lunchHandsOnMax)
+                ? inputErrorClass
+                : undefined
+            }
             onChange={(e) =>
               onUpdateGroupLimit(group, "lunchHandsOnMax", e.target.value)
             }
@@ -93,6 +159,13 @@ export function PlannerTimeLimitsSection({
             min={1}
             placeholder="∞"
             value={limits.lunchTotalMax ?? ""}
+            onBlur={() => markBlurred(`${group}-lunchTotalMax`)}
+            className={
+              blurredKeys[`${group}-lunchTotalMax`] &&
+              isInvalidTimeValue(limits.lunchTotalMax)
+                ? inputErrorClass
+                : undefined
+            }
             onChange={(e) => onUpdateGroupLimit(group, "lunchTotalMax", e.target.value)}
           />
         </div>
@@ -103,6 +176,13 @@ export function PlannerTimeLimitsSection({
             min={1}
             placeholder="∞"
             value={limits.dinnerHandsOnMax ?? ""}
+            onBlur={() => markBlurred(`${group}-dinnerHandsOnMax`)}
+            className={
+              blurredKeys[`${group}-dinnerHandsOnMax`] &&
+              isInvalidTimeValue(limits.dinnerHandsOnMax)
+                ? inputErrorClass
+                : undefined
+            }
             onChange={(e) =>
               onUpdateGroupLimit(group, "dinnerHandsOnMax", e.target.value)
             }
@@ -112,6 +192,13 @@ export function PlannerTimeLimitsSection({
             min={1}
             placeholder="∞"
             value={limits.dinnerTotalMax ?? ""}
+            onBlur={() => markBlurred(`${group}-dinnerTotalMax`)}
+            className={
+              blurredKeys[`${group}-dinnerTotalMax`] &&
+              isInvalidTimeValue(limits.dinnerTotalMax)
+                ? inputErrorClass
+                : undefined
+            }
             onChange={(e) => onUpdateGroupLimit(group, "dinnerTotalMax", e.target.value)}
           />
         </div>
@@ -140,6 +227,16 @@ export function PlannerTimeLimitsSection({
                 min={1}
                 placeholder="∞"
                 value={(value as number | null) ?? ""}
+                onBlur={() => {
+                  field.onBlur();
+                  markBlurred(`daily-${index}-breakfastHandsOnMax`);
+                }}
+                className={
+                  blurredKeys[`daily-${index}-breakfastHandsOnMax`] &&
+                  isInvalidTimeValue((value as number | null) ?? null)
+                    ? inputErrorClass
+                    : undefined
+                }
                 onChange={(e) =>
                   field.onChange(e.target.value === "" ? null : Number(e.target.value))
                 }
@@ -156,6 +253,16 @@ export function PlannerTimeLimitsSection({
                 min={1}
                 placeholder="∞"
                 value={(value as number | null) ?? ""}
+                onBlur={() => {
+                  field.onBlur();
+                  markBlurred(`daily-${index}-breakfastTotalMax`);
+                }}
+                className={
+                  blurredKeys[`daily-${index}-breakfastTotalMax`] &&
+                  isInvalidTimeValue((value as number | null) ?? null)
+                    ? inputErrorClass
+                    : undefined
+                }
                 onChange={(e) =>
                   field.onChange(e.target.value === "" ? null : Number(e.target.value))
                 }
@@ -175,6 +282,16 @@ export function PlannerTimeLimitsSection({
                 min={1}
                 placeholder="∞"
                 value={(value as number | null) ?? ""}
+                onBlur={() => {
+                  field.onBlur();
+                  markBlurred(`daily-${index}-lunchHandsOnMax`);
+                }}
+                className={
+                  blurredKeys[`daily-${index}-lunchHandsOnMax`] &&
+                  isInvalidTimeValue((value as number | null) ?? null)
+                    ? inputErrorClass
+                    : undefined
+                }
                 onChange={(e) =>
                   field.onChange(e.target.value === "" ? null : Number(e.target.value))
                 }
@@ -191,6 +308,16 @@ export function PlannerTimeLimitsSection({
                 min={1}
                 placeholder="∞"
                 value={(value as number | null) ?? ""}
+                onBlur={() => {
+                  field.onBlur();
+                  markBlurred(`daily-${index}-lunchTotalMax`);
+                }}
+                className={
+                  blurredKeys[`daily-${index}-lunchTotalMax`] &&
+                  isInvalidTimeValue((value as number | null) ?? null)
+                    ? inputErrorClass
+                    : undefined
+                }
                 onChange={(e) =>
                   field.onChange(e.target.value === "" ? null : Number(e.target.value))
                 }
@@ -210,6 +337,16 @@ export function PlannerTimeLimitsSection({
                 min={1}
                 placeholder="∞"
                 value={(value as number | null) ?? ""}
+                onBlur={() => {
+                  field.onBlur();
+                  markBlurred(`daily-${index}-dinnerHandsOnMax`);
+                }}
+                className={
+                  blurredKeys[`daily-${index}-dinnerHandsOnMax`] &&
+                  isInvalidTimeValue((value as number | null) ?? null)
+                    ? inputErrorClass
+                    : undefined
+                }
                 onChange={(e) =>
                   field.onChange(e.target.value === "" ? null : Number(e.target.value))
                 }
@@ -226,6 +363,16 @@ export function PlannerTimeLimitsSection({
                 min={1}
                 placeholder="∞"
                 value={(value as number | null) ?? ""}
+                onBlur={() => {
+                  field.onBlur();
+                  markBlurred(`daily-${index}-dinnerTotalMax`);
+                }}
+                className={
+                  blurredKeys[`daily-${index}-dinnerTotalMax`] &&
+                  isInvalidTimeValue((value as number | null) ?? null)
+                    ? inputErrorClass
+                    : undefined
+                }
                 onChange={(e) =>
                   field.onChange(e.target.value === "" ? null : Number(e.target.value))
                 }

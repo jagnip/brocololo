@@ -7,7 +7,6 @@ import {
   Form,
   FormField,
   FormItem,
-  FormLabel,
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
@@ -31,7 +30,6 @@ import {
 } from "@/lib/constants";
 import { IngredientType } from "@/types/ingredient";
 import { RecipeType } from "@/types/recipe";
-import MultipleSelector from "@/components/ui/multiselect";
 import { MESSAGES } from "@/lib/messages";
 import { PlanViewSkeleton } from "./plan-view-skeleton";
 import { TopbarConfigController } from "@/components/topbar-config";
@@ -73,6 +71,8 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
   const [plan, setPlan] = useState<PlanInputType | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasInvalidTimeLimitInputs, setHasInvalidTimeLimitInputs] = useState(false);
+  const [hasInvalidRollingMealsInputs, setHasInvalidRollingMealsInputs] = useState(false);
   // Default mode is grouped editing; users can expand to per-day limits.
   const [timeLimitsMode, setTimeLimitsMode] = useState<TimeLimitsMode>("grouped");
   // Preserve all user edits made in per-day mode across mode toggles.
@@ -93,6 +93,10 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
   });
 
   async function onSubmit(values: PlannerCriteriaInputType) {
+    // Block generation while numeric fields are invalid (red state in sections).
+    if (hasInvalidTimeLimitInputs || hasInvalidRollingMealsInputs) {
+      return;
+    }
     setIsGenerating(true);
     try {
       const result = await generatePlan(
@@ -189,6 +193,8 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
     control: form.control,
     name: "dailyTimeLimits",
   });
+  const watchedDailyTimeLimits =
+    (form.watch("dailyTimeLimits") as DayTimeLimitsType[] | undefined) ?? [];
 
   const dateRange = form.watch("dateRange");
   // Keep a narrowed generated plan reference so callback closures stay non-null-safe.
@@ -214,7 +220,7 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
       onClick: () => {
         void form.handleSubmit(onSubmit)();
       },
-      disabled: isGenerating,
+      disabled: isGenerating || hasInvalidTimeLimitInputs || hasInvalidRollingMealsInputs,
       ariaBusy: isGenerating,
       variant: "default" as const,
       size: "default" as const,
@@ -251,9 +257,8 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
     key: keyof MealTimeLimits,
     rawValue: string,
   ): void {
-    // Empty value means "no limit"; positive integers stay as numeric limits.
-    const parsed =
-      rawValue === "" ? null : Math.max(1, Math.trunc(Number(rawValue) || 1));
+    // Keep raw numeric intent (including 0) so UI can show invalid states instead of coercing.
+    const parsed = rawValue === "" ? null : Number(rawValue);
     setGroupTimeLimits((prev) => ({
       ...prev,
       [group]: {
@@ -314,6 +319,7 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
               <PlannerTimeLimitsSection
                 fields={fields}
                 control={form.control}
+                dailyTimeLimits={watchedDailyTimeLimits}
                 timeLimitsMode={timeLimitsMode}
                 groupTimeLimits={groupTimeLimits}
                 hasWeekdays={hasWeekdays}
@@ -322,6 +328,7 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
                 onSwitchToDaily={handleSwitchToDailyTimeLimits}
                 onUpdateGroupLimit={updateGroupLimit}
                 getDayLabel={formatDayLabel}
+                onInvalidStateChange={setHasInvalidTimeLimitInputs}
               />
               <div className="mt-4 rounded-xl border border-border bg-background p-4">
                 <FormField
@@ -331,46 +338,18 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
                     const selected = (field.value ?? []) as RollingRecipeType[];
                     return (
                       <PlannerRollingRecipesSection
+                        control={form.control}
                         selected={selected}
                         onChange={field.onChange}
+                        ingredients={ingredients}
                         recipes={recipes}
                         previousPlanUnusedRecipes={previousPlanUnusedRecipes}
+                        onInvalidStateChange={setHasInvalidRollingMealsInputs}
                       />
                     );
                   }}
                 />
               </div>
-              <FormField
-                control={form.control}
-                name="fridgeIngredientIds"
-                render={({ field }) => (
-                  <FormItem className="mt-4">
-                    <FormLabel>Fridge ingredients</FormLabel>
-                    <FormControl>
-                      <MultipleSelector
-                        value={ingredients
-                          .filter((ing) =>
-                            (field.value as string[])?.includes(ing.id),
-                          )
-                          .map((ing) => ({ value: ing.id, label: ing.name }))}
-                        onChange={(options) =>
-                          field.onChange(options.map((o) => o.value))
-                        }
-                        defaultOptions={ingredients.map((ing) => ({
-                          value: ing.id,
-                          label: ing.name,
-                        }))}
-                        placeholder="Select ingredients"
-                        emptyIndicator={
-                          <p className="text-center text-sm text-muted-foreground">
-                            No ingredients found.
-                          </p>
-                        }
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
             </form>
           </Form>
         </div>
