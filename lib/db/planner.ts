@@ -80,6 +80,25 @@ export async function getPlans() {
 /** Dedupes within a single RSC request (e.g. layout + page both need the plan list). */
 export const getPlansCached = cache(getPlans);
 
+/**
+ * Occupied day keys across planner/log owners used to disable dates in create-plan picker.
+ * Returns canonical UTC keys in YYYY-MM-DD format.
+ */
+export async function getOccupiedDateKeysForPlanning() {
+  const [slotRows, logRows] = await Promise.all([
+    prisma.planSlot.findMany({
+      select: { date: true },
+      distinct: ["date"],
+    }),
+    prisma.logEntry.findMany({
+      select: { date: true },
+      distinct: ["date"],
+    }),
+  ]);
+
+  return [...new Set([...slotRows, ...logRows].map((row) => toDateKey(row.date)))].sort();
+}
+
 export async function getLatestPlanId() {
   const plan = await prisma.plan.findFirst({
     orderBy: { createdAt: "desc" },

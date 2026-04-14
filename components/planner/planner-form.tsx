@@ -46,6 +46,7 @@ type PlannerFormProps = {
   ingredients: IngredientType[];
   recipes: RecipeType[];
   previousPlanUnusedRecipes: RollingRecipeType[];
+  occupiedDateKeys: string[];
 };
 
 type TimeLimitsMode = "grouped" | "daily";
@@ -67,7 +68,12 @@ export function getDailyLimitsForPlanAllDaysToggle(
   return mergeDailyLimitsByDate(daysInRange, dailyDraft ?? [], groupTimeLimits);
 }
 
-export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }: PlannerFormProps) {
+export function PlannerForm({
+  ingredients,
+  recipes,
+  previousPlanUnusedRecipes,
+  occupiedDateKeys,
+}: PlannerFormProps) {
   const [plan, setPlan] = useState<PlanInputType | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -310,6 +316,7 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
                       <WeekPicker
                         value={field.value}
                         onChange={field.onChange}
+                        occupiedDateKeys={occupiedDateKeys}
                       />
                     </FormControl>
                     <FormMessage />

@@ -14,6 +14,7 @@ import {
 } from "react-aria-components";
 import { RangeCalendar } from "../ui/calendar-rac";
 import { parseDate } from "@internationalized/date";
+import { useMemo } from "react";
 import type { RangeValue } from "react-aria-components";
 import type { CalendarDate } from "@internationalized/date";
 
@@ -22,6 +23,7 @@ export type DateRangeValue = { start: string; end: string };
 type WeekPickerProps = {
   value: DateRangeValue;
   onChange: (value: DateRangeValue) => void;
+  occupiedDateKeys?: string[];
   compact?: boolean;
   className?: string;
 };
@@ -39,7 +41,13 @@ export function getDefaultDateRange(): DateRangeValue {
     return d.toLocaleDateString("en-CA");
   }
 
-export function WeekPicker({ value, onChange, compact = false, className }: WeekPickerProps) {
+export function WeekPicker({
+  value,
+  onChange,
+  occupiedDateKeys = [],
+  compact = false,
+  className,
+}: WeekPickerProps) {
     
     //parse the field.value from the form to a RangeValue<CalendarDate>
   const rangeValue: RangeValue<CalendarDate> | undefined =
@@ -47,10 +55,15 @@ export function WeekPicker({ value, onChange, compact = false, className }: Week
       ? { start: parseDate(value.start), end: parseDate(value.end) }
       : undefined;
 
+  const occupiedSet = useMemo(
+    () => new Set(occupiedDateKeys),
+    [occupiedDateKeys],
+  );
 
   return (
     <DateRangePicker
       value={rangeValue}
+      isDateUnavailable={(date) => occupiedSet.has(date.toString())}
       onChange={(range) => {
         if (range) {
           onChange({
@@ -87,7 +100,7 @@ export function WeekPicker({ value, onChange, compact = false, className }: Week
         offset={4}
       >
         <Dialog className="max-h-[inherit] overflow-auto p-2">
-          <RangeCalendar />
+          <RangeCalendar isDateUnavailable={(date) => occupiedSet.has(date.toString())} />
         </Dialog>
       </Popover>
     </DateRangePicker>
