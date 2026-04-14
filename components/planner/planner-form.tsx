@@ -11,10 +11,7 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import {
   plannerCriteriaSchema,
   type PlannerCriteriaInputType,
@@ -37,8 +34,9 @@ import { RecipeType } from "@/types/recipe";
 import MultipleSelector from "@/components/ui/multiselect";
 import { MESSAGES } from "@/lib/messages";
 import { PlanViewSkeleton } from "./plan-view-skeleton";
-import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { TopbarConfigController } from "@/components/topbar-config";
+import { PlannerTimeLimitsSection } from "./planner-time-limits-section";
+import { PlannerRollingRecipesSection } from "./planner-rolling-recipes-section";
 import {
   getRangeGroupAvailability,
   mapGroupLimitsToDailyLimits,
@@ -265,199 +263,23 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
     }));
   }
 
-  function renderGroupedMatrix(group: keyof TimeLimitGroups) {
-    const limits = groupTimeLimits[group];
-    return (
-      <div className="flex flex-col gap-2">
-        {/* Shared matrix header: meal rows on left, time dimensions on top. */}
-        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
-          <div />
-          <Label>Hands-on</Label>
-          <Label>Total</Label>
-        </div>
-        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
-          <Label>Breakfast</Label>
-          <Input
-            type="number"
-            min={1}
-            placeholder="∞"
-            value={limits.breakfastHandsOnMax ?? ""}
-            onChange={(e) => updateGroupLimit(group, "breakfastHandsOnMax", e.target.value)}
-          />
-          <Input
-            type="number"
-            min={1}
-            placeholder="∞"
-            value={limits.breakfastTotalMax ?? ""}
-            onChange={(e) => updateGroupLimit(group, "breakfastTotalMax", e.target.value)}
-          />
-        </div>
-        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
-          <Label>Lunch</Label>
-          <Input
-            type="number"
-            min={1}
-            placeholder="∞"
-            value={limits.lunchHandsOnMax ?? ""}
-            onChange={(e) => updateGroupLimit(group, "lunchHandsOnMax", e.target.value)}
-          />
-          <Input
-            type="number"
-            min={1}
-            placeholder="∞"
-            value={limits.lunchTotalMax ?? ""}
-            onChange={(e) => updateGroupLimit(group, "lunchTotalMax", e.target.value)}
-          />
-        </div>
-        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
-          <Label>Dinner</Label>
-          <Input
-            type="number"
-            min={1}
-            placeholder="∞"
-            value={limits.dinnerHandsOnMax ?? ""}
-            onChange={(e) => updateGroupLimit(group, "dinnerHandsOnMax", e.target.value)}
-          />
-          <Input
-            type="number"
-            min={1}
-            placeholder="∞"
-            value={limits.dinnerTotalMax ?? ""}
-            onChange={(e) => updateGroupLimit(group, "dinnerTotalMax", e.target.value)}
-          />
-        </div>
-      </div>
-    );
+  function handleSwitchToGroupedTimeLimits() {
+    // Return to grouped time limits while preserving any daily edits.
+    setDailyDraft(form.getValues("dailyTimeLimits") as DayTimeLimitsType[]);
+    setTimeLimitsMode("grouped");
   }
 
-  function renderDailyMatrix(index: number) {
-    return (
-      <div className="flex flex-col gap-2">
-        {/* Keep daily mode matrix identical to grouped mode layout. */}
-        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
-          <div />
-          <Label>Hands-on</Label>
-          <Label>Total</Label>
-        </div>
-        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
-          <Label>Breakfast</Label>
-          <FormField
-            control={form.control}
-            name={`dailyTimeLimits.${index}.breakfastHandsOnMax`}
-            render={({ field: { value, ...field } }) => (
-              <Input
-                {...field}
-                type="number"
-                min={1}
-                placeholder="∞"
-                value={(value as number | null) ?? ""}
-                onChange={(e) =>
-                  field.onChange(
-                    e.target.value === "" ? null : Number(e.target.value),
-                  )
-                }
-              />
-            )}
-          />
-          <FormField
-            control={form.control}
-            name={`dailyTimeLimits.${index}.breakfastTotalMax`}
-            render={({ field: { value, ...field } }) => (
-              <Input
-                {...field}
-                type="number"
-                min={1}
-                placeholder="∞"
-                value={(value as number | null) ?? ""}
-                onChange={(e) =>
-                  field.onChange(
-                    e.target.value === "" ? null : Number(e.target.value),
-                  )
-                }
-              />
-            )}
-          />
-        </div>
-        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
-          <Label>Lunch</Label>
-          <FormField
-            control={form.control}
-            name={`dailyTimeLimits.${index}.lunchHandsOnMax`}
-            render={({ field: { value, ...field } }) => (
-              <Input
-                {...field}
-                type="number"
-                min={1}
-                placeholder="∞"
-                value={(value as number | null) ?? ""}
-                onChange={(e) =>
-                  field.onChange(
-                    e.target.value === "" ? null : Number(e.target.value),
-                  )
-                }
-              />
-            )}
-          />
-          <FormField
-            control={form.control}
-            name={`dailyTimeLimits.${index}.lunchTotalMax`}
-            render={({ field: { value, ...field } }) => (
-              <Input
-                {...field}
-                type="number"
-                min={1}
-                placeholder="∞"
-                value={(value as number | null) ?? ""}
-                onChange={(e) =>
-                  field.onChange(
-                    e.target.value === "" ? null : Number(e.target.value),
-                  )
-                }
-              />
-            )}
-          />
-        </div>
-        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
-          <Label>Dinner</Label>
-          <FormField
-            control={form.control}
-            name={`dailyTimeLimits.${index}.dinnerHandsOnMax`}
-            render={({ field: { value, ...field } }) => (
-              <Input
-                {...field}
-                type="number"
-                min={1}
-                placeholder="∞"
-                value={(value as number | null) ?? ""}
-                onChange={(e) =>
-                  field.onChange(
-                    e.target.value === "" ? null : Number(e.target.value),
-                  )
-                }
-              />
-            )}
-          />
-          <FormField
-            control={form.control}
-            name={`dailyTimeLimits.${index}.dinnerTotalMax`}
-            render={({ field: { value, ...field } }) => (
-              <Input
-                {...field}
-                type="number"
-                min={1}
-                placeholder="∞"
-                value={(value as number | null) ?? ""}
-                onChange={(e) =>
-                  field.onChange(
-                    e.target.value === "" ? null : Number(e.target.value),
-                  )
-                }
-              />
-            )}
-          />
-        </div>
-      </div>
+  function handleSwitchToDailyTimeLimits() {
+    // First entry into daily mode starts from grouped limits;
+    // later entries restore the previously edited daily draft.
+    const dailyLimits = getDailyLimitsForPlanAllDaysToggle(
+      daysInRange,
+      dailyDraft,
+      groupTimeLimits,
     );
+    setDailyDraft(dailyLimits);
+    replace(dailyLimits);
+    setTimeLimitsMode("daily");
   }
 
   return (
@@ -489,79 +311,18 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
                   </FormItem>
                 )}
               />
-              {fields.length > 0 && (
-                <div className="mt-4 rounded-xl border border-border bg-background p-4">
-                  <div className="mb-3 flex items-center gap-1.5">
-                    <Button
-                      type="button"
-                      size="default"
-                      variant={timeLimitsMode === "grouped" ? "default" : "outline"}
-                      onClick={() => {
-                        // Return to grouped time limits while preserving any daily edits.
-                        setDailyDraft(
-                          form.getValues("dailyTimeLimits") as DayTimeLimitsType[],
-                        );
-                        setTimeLimitsMode("grouped");
-                      }}
-                    >
-                      Weekdays & weekends
-                    </Button>
-                    <Button
-                      type="button"
-                      size="default"
-                      variant={timeLimitsMode === "daily" ? "default" : "outline"}
-                      onClick={() => {
-                        // First entry into daily mode starts from grouped limits;
-                        // later entries restore the previously edited daily draft.
-                        const dailyLimits = getDailyLimitsForPlanAllDaysToggle(
-                          daysInRange,
-                          dailyDraft,
-                          groupTimeLimits,
-                        );
-                        setDailyDraft(dailyLimits);
-                        replace(dailyLimits);
-                        setTimeLimitsMode("daily");
-                      }}
-                    >
-                      All days
-                    </Button>
-                  </div>
-                  {timeLimitsMode === "grouped" ? (
-                    <div className="flex flex-col gap-4">
-                      {hasWeekdays ? (
-                        <div className="flex flex-col gap-1">
-                          {/* Recipe-like section subtitle, smaller than Subheader. */}
-                          <Subheader className="text-sm">Weekdays</Subheader>
-                          <div className="rounded-lg border border-border/60 bg-card p-3">
-                            {renderGroupedMatrix("weekday")}
-                          </div>
-                        </div>
-                      ) : null}
-                      {hasWeekend ? (
-                        <div className="flex flex-col gap-1">
-                          <Subheader className="text-sm">Weekends</Subheader>
-                          <div className="rounded-lg border border-border/60 bg-card p-3">
-                            {renderGroupedMatrix("weekend")}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-4">
-                      {fields.map((fieldItem, index) => (
-                        <div key={fieldItem.id} className="flex flex-col gap-1">
-                          <Subheader className="text-sm">
-                            {formatDayLabel(new Date(fieldItem.date))}
-                          </Subheader>
-                          <div className="rounded-lg border border-border/60 bg-card p-3">
-                            {renderDailyMatrix(index)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  </div>
-              )}
+              <PlannerTimeLimitsSection
+                fields={fields}
+                control={form.control}
+                timeLimitsMode={timeLimitsMode}
+                groupTimeLimits={groupTimeLimits}
+                hasWeekdays={hasWeekdays}
+                hasWeekend={hasWeekend}
+                onSwitchToGrouped={handleSwitchToGroupedTimeLimits}
+                onSwitchToDaily={handleSwitchToDailyTimeLimits}
+                onUpdateGroupLimit={updateGroupLimit}
+                getDayLabel={formatDayLabel}
+              />
               <div className="mt-4 rounded-xl border border-border bg-background p-4">
                 <FormField
                   control={form.control}
@@ -569,123 +330,12 @@ export function PlannerForm({ ingredients, recipes, previousPlanUnusedRecipes }:
                   render={({ field }) => {
                     const selected = (field.value ?? []) as RollingRecipeType[];
                     return (
-                      <FormItem>
-                        {/* Bulk-add action sits above the rolling recipes selector. */}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="default"
-                          className="w-max"
-                          disabled={previousPlanUnusedRecipes.length === 0}
-                          onClick={() => {
-                            const currentIds = new Set(
-                              selected.map((r) => r.recipeId),
-                            );
-                            const toAdd = previousPlanUnusedRecipes.filter(
-                              (r) => !currentIds.has(r.recipeId),
-                            );
-
-                            if (toAdd.length === 0) {
-                              toast.info("All unused recipes already added.");
-                              return;
-                            }
-
-                            field.onChange([...selected, ...toAdd]);
-                            toast.success(
-                              `Added ${toAdd.length} unused recipe${toAdd.length > 1 ? "s" : ""}.`,
-                            );
-                          }}
-                        >
-                          Add unused meals from previous plan
-                        </Button>
-                        <FormLabel className="mt-4">Rolling recipes</FormLabel>
-                        <FormControl>
-                          <MultipleSelector
-                            value={selected.map((r) => {
-                              const recipe = recipes.find(
-                                (rec) => rec.id === r.recipeId,
-                              );
-                              return {
-                                value: r.recipeId,
-                                label: recipe?.name ?? r.recipeId,
-                              };
-                            })}
-                            onChange={(options) => {
-                              const updated = options.map((o) => {
-                                const existing = selected.find(
-                                  (r) => r.recipeId === o.value,
-                                );
-                                if (existing) return existing;
-                                const recipe = recipes.find(
-                                  (r) => r.id === o.value,
-                                );
-                                const defaultMeals =
-                                  recipe && recipe.servings > 2
-                                    ? Math.floor(recipe.servings / 2)
-                                    : 1;
-                                return { recipeId: o.value, meals: defaultMeals };
-                              });
-                              field.onChange(updated);
-                            }}
-                            defaultOptions={recipes.map((r) => ({
-                              value: r.id,
-                              label: r.name,
-                            }))}
-                            placeholder="Select recipes"
-                            emptyIndicator={
-                              <p className="text-center text-sm text-muted-foreground">
-                                No recipes found.
-                              </p>
-                            }
-                          />
-                        </FormControl>
-                        {selected
-                          .filter((r) => {
-                            const recipe = recipes.find(
-                              (rec) => rec.id === r.recipeId,
-                            );
-                            return recipe && recipe.servings > 2;
-                          })
-                          .map((r) => {
-                            const recipe = recipes.find(
-                              (rec) => rec.id === r.recipeId,
-                            )!;
-                            const maxMeals = Math.floor(recipe.servings / 2);
-                            return (
-                              <div
-                                key={r.recipeId}
-                                className="flex items-center gap-2 mt-2"
-                              >
-                                <span className="text-sm truncate flex-1">
-                                  {recipe.name}
-                                </span>
-                                <Input
-                                  type="number"
-                                  min={1}
-                                  max={maxMeals}
-                                  className="w-20"
-                                  value={r.meals}
-                                  onChange={(e) => {
-                                    const newMeals = Math.min(
-                                      Math.max(Number(e.target.value) || 1, 1),
-                                      maxMeals,
-                                    );
-                                    field.onChange(
-                                      selected.map((s) =>
-                                        s.recipeId === r.recipeId
-                                          ? { ...s, meals: newMeals }
-                                          : s,
-                                      ),
-                                    );
-                                  }}
-                                />
-                              <span className="type-body text-muted-foreground whitespace-nowrap">
-                                meals (max {maxMeals})
-                                </span>
-                              </div>
-                            );
-                          })}
-                      </FormItem>
+                      <PlannerRollingRecipesSection
+                        selected={selected}
+                        onChange={field.onChange}
+                        recipes={recipes}
+                        previousPlanUnusedRecipes={previousPlanUnusedRecipes}
+                      />
                     );
                   }}
                 />
