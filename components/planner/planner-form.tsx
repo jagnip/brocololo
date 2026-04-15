@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/form";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import {
   plannerCriteriaSchema,
   type PlannerCriteriaInputType,
@@ -25,7 +25,6 @@ import { generatePlan, savePlan } from "@/actions/planner-actions";
 import type { DayTimeLimitsType, RollingRecipeType } from "@/lib/validations/planner";
 import { getDaysInRange, formatDayLabel } from "@/lib/planner/helpers";
 import {
-  MEAL_TYPES,
   type MealTimeLimits,
   WEEKDAY_TIME_LIMIT_DEFAULTS,
   WEEKEND_TIME_LIMIT_DEFAULTS,
@@ -37,7 +36,6 @@ import { PlanViewSkeleton } from "./plan-view-skeleton";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { PlannerTimeLimitsSection } from "./planner-time-limits-section";
 import { PlannerRollingRecipesSection } from "./planner-rolling-recipes-section";
-import { PlannerPool } from "./planner-pool";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import {
   getRangeGroupAvailability,
@@ -84,10 +82,10 @@ export function PlannerForm({
   const [hasInvalidTimeLimitInputs, setHasInvalidTimeLimitInputs] = useState(false);
   const [hasInvalidRollingMealsInputs, setHasInvalidRollingMealsInputs] = useState(false);
   const [isFormCollapsed, setIsFormCollapsed] = useState(false);
-  // Keep desktop gaps consistent while shrinking only the left rail when collapsed.
+  // Desktop split: form(2) + plan(4), with collapsible left rail.
   const desktopGridColumns = isFormCollapsed
-    ? "lg:grid-cols-[2rem_minmax(0,1fr)_16rem]"
-    : "lg:grid-cols-[minmax(306px,1fr)_minmax(0,2fr)_16rem]";
+    ? "lg:grid-cols-[2rem_minmax(0,1fr)]"
+    : "lg:grid-cols-[minmax(306px,1fr)_minmax(0,2fr)]";
   // Default mode is grouped editing; users can expand to per-day limits.
   const [timeLimitsMode, setTimeLimitsMode] = useState<TimeLimitsMode>("grouped");
   // Preserve all user edits made in per-day mode across mode toggles.
@@ -100,7 +98,7 @@ export function PlannerForm({
   const form = useForm<PlannerCriteriaInputType>({
     resolver: zodResolver(plannerCriteriaSchema),
     defaultValues: {
-      // Prefill to today+7 when no occupancy exists, otherwise first free 7-day window.
+      // Prefill to next 4 days (inclusive) or first free 4-day window.
       dateRange: getDefaultDateRange(occupiedDateKeys),
       dailyTimeLimits: [],
       fridgeIngredientIds: [],
@@ -266,16 +264,6 @@ export function PlannerForm({
   const daysInRange = dateRange?.start && dateRange?.end
     ? getDaysInRange(new Date(dateRange.start), new Date(dateRange.end))
     : [];
-  // Mirror final plan shape so empty slots can reuse PlanView before generation.
-  const placeholderPlan: PlanInputType = daysInRange.flatMap((date) =>
-    MEAL_TYPES.map((mealType) => ({
-      date,
-      mealType,
-      recipe: null,
-      alternatives: [],
-      used: false,
-    })),
-  );
   const { hasWeekdays, hasWeekend } = getRangeGroupAvailability(daysInRange);
 
   function updateGroupLimit(
@@ -320,8 +308,8 @@ export function PlannerForm({
           actions: topbarActions,
         }}
       />
-      {/* Desktop layout follows the selected 2/4/2 split: form | plan | pool rail. */}
-      <div className={`flex flex-col gap-6 lg:grid ${desktopGridColumns} lg:items-start lg:gap-x-2 lg:gap-y-6`}>
+      {/* Desktop layout follows a 2/4 split: form | plan. */}
+      <div className={`flex flex-col gap-6 lg:grid ${desktopGridColumns} lg:items-start lg:gap-x-4 lg:gap-y-6`}>
         <div className="lg:sticky lg:top-20">
           <Form {...form}>
             <form
@@ -418,22 +406,25 @@ export function PlannerForm({
               onReplace={handleReplace}
               onRemove={handleRemove}
             />
-          ) : placeholderPlan.length > 0 ? (
-            <PlanView
-              plan={placeholderPlan}
-              fridgeIngredientIds={
-                (form.watch("fridgeIngredientIds") ?? []) as string[]
-              }
-              recipes={recipes}
-              onReplace={handleReplace}
-            />
-          ) : null}
+          ) : (
+            <Card className="flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed p-0 py-0 shadow-none">
+              <div className="flex min-h-[220px] flex-1 flex-col items-center justify-center gap-2 p-3 text-center">
+                <span
+                  className="flex size-7 shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground"
+                  aria-hidden
+                >
+                  <Plus className="size-3" />
+                </span>
+                <p className="text-sm font-medium leading-snug text-foreground">
+                  Nothing planned yet
+                </p>
+                <span className="text-xs text-muted-foreground">
+                  Find meals to start
+                </span>
+              </div>
+            </Card>
+          )}
         </div>
-        {/* Pool rail placeholder keeps space for upcoming drag source without changing existing form/plan features. */}
-        <div className="hidden lg:block lg:sticky lg:top-20">
-          <PlannerPool />
-        </div>
-
         {isGenerating || generatedPlan ? (
           <div className="lg:hidden">
             {isGenerating ? (
