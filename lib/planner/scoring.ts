@@ -24,7 +24,7 @@ type Scorer = {
 const scorers: Scorer[] = [
   { name: "lastUsed", fn: scoreLastUsed, weight: 2 },
   { name: "alreadyInPlan", fn: scoreAlreadyInPlan, weight: 3 },
-  { name: "proteinBalance", fn: scoreProteinBalance, weight: 2 },
+  // { name: "proteinBalance", fn: scoreProteinBalance, weight: 2 },
   { name: "fridgeIngredients", fn: scoreFridgeIngredients, weight: 3 },
   { name: "rollingRecipe", fn: scoreRollingRecipe, weight: 10 },
 ];
