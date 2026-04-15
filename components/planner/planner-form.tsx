@@ -37,7 +37,7 @@ import { PlanViewSkeleton } from "./plan-view-skeleton";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { PlannerTimeLimitsSection } from "./planner-time-limits-section";
 import { PlannerRollingRecipesSection } from "./planner-rolling-recipes-section";
-import { PlannerPoolPlaceholder } from "./planner-pool-placeholder";
+import { PlannerPool } from "./planner-pool";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import {
   getRangeGroupAvailability,
@@ -321,7 +321,7 @@ export function PlannerForm({
         }}
       />
       {/* Desktop layout follows the selected 2/4/2 split: form | plan | pool rail. */}
-      <div className={`flex flex-col gap-6 lg:grid ${desktopGridColumns} lg:items-start lg:gap-x-4 lg:gap-y-6`}>
+      <div className={`flex flex-col gap-6 lg:grid ${desktopGridColumns} lg:items-start lg:gap-x-2 lg:gap-y-6`}>
         <div className="lg:sticky lg:top-20">
           <Form {...form}>
             <form
@@ -431,7 +431,7 @@ export function PlannerForm({
         </div>
         {/* Pool rail placeholder keeps space for upcoming drag source without changing existing form/plan features. */}
         <div className="hidden lg:block lg:sticky lg:top-20">
-          <PlannerPoolPlaceholder />
+          <PlannerPool />
         </div>
 
         {isGenerating || generatedPlan ? (
