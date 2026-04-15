@@ -87,14 +87,13 @@ export default function RecipePage({
 
       <div className="grid grid-cols-1 gap-block md:grid-cols-5 md:gap-block">
         <div className="order-1 md:order-0 md:col-span-5 flex flex-col ">
-          <PageHeader title={recipe.name} />
+          <PageHeader title={recipe.name} className="pb-2"/>
           <Breadcrumbs
             // Keep list context when users navigate back to the recipes index.
             items={[
               {
                 label: "Recipes",
                 href: ROUTES.recipes,
-                preserveQuery: ["q", "flavour", "protein", "type", "time"],
               },
               // Keep detail crumb stable across recipe renames and long titles.
               { label: "This recipe" },
