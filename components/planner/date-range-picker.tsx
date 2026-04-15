@@ -32,22 +32,22 @@ export function getDefaultDateRange(occupiedDateKeys: string[] = []): DateRangeV
   const today = new Date();
   const occupiedSet = new Set(occupiedDateKeys);
 
-  // Keep previous behavior when no occupied dates exist: today through +7 days.
+  // Keep previous behavior when no occupied dates exist: today through +4 days.
   if (occupiedSet.size === 0) {
-    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const nextWindowEnd = new Date(today.getTime() + 4 * 24 * 60 * 60 * 1000);
     return {
       start: toDateInputValue(today),
-      end: toDateInputValue(nextWeek),
+      end: toDateInputValue(nextWindowEnd),
     };
   }
 
-  // Otherwise pick the first available contiguous 7-day window.
+  // Otherwise pick the first available contiguous 4-day window.
   const candidateStart = new Date(today);
   const maxLookaheadDays = 3650; // 10 years safeguard
   for (let i = 0; i < maxLookaheadDays; i++) {
     const start = new Date(candidateStart);
     start.setDate(candidateStart.getDate() + i);
-    const end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const end = new Date(start.getTime() + 4 * 24 * 60 * 60 * 1000);
 
     let blocked = false;
     for (let day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) {
@@ -65,10 +65,10 @@ export function getDefaultDateRange(occupiedDateKeys: string[] = []): DateRangeV
   }
 
   // Fallback to today window if no free range found.
-  const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const nextWindowEnd = new Date(today.getTime() + 4 * 24 * 60 * 60 * 1000);
   return {
     start: toDateInputValue(today),
-    end: toDateInputValue(nextWeek),
+    end: toDateInputValue(nextWindowEnd),
   };
 }
 
@@ -148,7 +148,7 @@ export function WeekPicker({
         className="z-50 rounded-lg border border-border bg-background text-popover-foreground shadow-lg shadow-black/5 outline-none data-[entering]:animate-in data-[exiting]:animate-out data-[entering]:fade-in-0 data-[exiting]:fade-out-0 data-[placement=bottom]:slide-in-from-top-2 data-[placement=left]:slide-in-from-right-2 data-[placement=right]:slide-in-from-left-2 data-[placement=top]:slide-in-from-bottom-2"
         offset={4}
       >
-        <Dialog className="max-h-[inherit] overflow-auto p-2">
+        <Dialog className="p-2">
           <RangeCalendar isDateUnavailable={(date) => occupiedSet.has(date.toString())} />
         </Dialog>
       </Popover>
