@@ -9,6 +9,9 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   plannerCriteriaSchema,
   type PlannerCriteriaInputType,
@@ -34,6 +37,8 @@ import { PlanViewSkeleton } from "./plan-view-skeleton";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { PlannerTimeLimitsSection } from "./planner-time-limits-section";
 import { PlannerRollingRecipesSection } from "./planner-rolling-recipes-section";
+import { PlannerPoolPlaceholder } from "./planner-pool-placeholder";
+import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import {
   getRangeGroupAvailability,
   mapGroupLimitsToDailyLimits,
@@ -78,6 +83,11 @@ export function PlannerForm({
   const [isSaving, setIsSaving] = useState(false);
   const [hasInvalidTimeLimitInputs, setHasInvalidTimeLimitInputs] = useState(false);
   const [hasInvalidRollingMealsInputs, setHasInvalidRollingMealsInputs] = useState(false);
+  const [isFormCollapsed, setIsFormCollapsed] = useState(false);
+  // Keep desktop gaps consistent while shrinking only the left rail when collapsed.
+  const desktopGridColumns = isFormCollapsed
+    ? "lg:grid-cols-[2rem_minmax(0,1fr)] xl:grid-cols-[2rem_minmax(0,1fr)_16rem]"
+    : "lg:grid-cols-[minmax(306px,1fr)_minmax(0,2fr)] xl:grid-cols-[minmax(306px,1fr)_minmax(0,2fr)_16rem]";
   // Default mode is grouped editing; users can expand to per-day limits.
   const [timeLimitsMode, setTimeLimitsMode] = useState<TimeLimitsMode>("grouped");
   // Preserve all user edits made in per-day mode across mode toggles.
@@ -310,68 +320,94 @@ export function PlannerForm({
           actions: topbarActions,
         }}
       />
-      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-5 lg:items-start lg:gap-x-4 lg:gap-y-6">
-        <div className="lg:col-span-2">
+      {/* Desktop layout follows the selected 2/4/2 split: form | plan | pool rail. */}
+      <div className={`flex flex-col gap-6 lg:grid ${desktopGridColumns} lg:items-start lg:gap-x-4 lg:gap-y-6`}>
+        <div className="lg:sticky lg:top-20">
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
               className="flex w-full flex-col"
             >
-              <FormField
-                control={form.control}
-                name="dateRange"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <WeekPicker
-                        value={field.value}
-                        onChange={field.onChange}
-                        occupiedDateKeys={occupiedDateKeys}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              {/* Left-rail collapse shrinks column width, not just content height. */}
+              <div className="mb-2 hidden lg:flex lg:items-center lg:justify-between">
+                {!isFormCollapsed ? (
+                  <Subheader className="text-base">Planner</Subheader>
+                ) : (
+                  <span className="sr-only">Planner section collapsed</span>
                 )}
-              />
-              <PlannerTimeLimitsSection
-                fields={fields}
-                control={form.control}
-                dailyTimeLimits={watchedDailyTimeLimits}
-                timeLimitsMode={timeLimitsMode}
-                groupTimeLimits={groupTimeLimits}
-                hasWeekdays={hasWeekdays}
-                hasWeekend={hasWeekend}
-                onSwitchToGrouped={handleSwitchToGroupedTimeLimits}
-                onSwitchToDaily={handleSwitchToDailyTimeLimits}
-                onUpdateGroupLimit={updateGroupLimit}
-                getDayLabel={formatDayLabel}
-                onInvalidStateChange={setHasInvalidTimeLimitInputs}
-              />
-              <div className="mt-4 rounded-xl border border-border bg-background p-4">
-                <FormField
-                  control={form.control}
-                  name="rollingRecipes"
-                  render={({ field }) => {
-                    const selected = (field.value ?? []) as RollingRecipeType[];
-                    return (
-                      <PlannerRollingRecipesSection
-                        control={form.control}
-                        selected={selected}
-                        onChange={field.onChange}
-                        ingredients={ingredients}
-                        recipes={recipes}
-                        previousPlanUnusedRecipes={previousPlanUnusedRecipes}
-                        onInvalidStateChange={setHasInvalidRollingMealsInputs}
-                      />
-                    );
-                  }}
-                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setIsFormCollapsed((prev) => !prev)}
+                  aria-expanded={!isFormCollapsed}
+                  aria-label={isFormCollapsed ? "Expand planner form" : "Collapse planner form"}
+                  className="size-8"
+                >
+                  {isFormCollapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+                </Button>
+              </div>
+              <div className={`block ${isFormCollapsed ? "lg:hidden" : ""}`}>
+                  <FormField
+                    control={form.control}
+                    name="dateRange"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <WeekPicker
+                            value={field.value}
+                            onChange={field.onChange}
+                            occupiedDateKeys={occupiedDateKeys}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <PlannerTimeLimitsSection
+                    fields={fields}
+                    control={form.control}
+                    dailyTimeLimits={watchedDailyTimeLimits}
+                    timeLimitsMode={timeLimitsMode}
+                    groupTimeLimits={groupTimeLimits}
+                    hasWeekdays={hasWeekdays}
+                    hasWeekend={hasWeekend}
+                    onSwitchToGrouped={handleSwitchToGroupedTimeLimits}
+                    onSwitchToDaily={handleSwitchToDailyTimeLimits}
+                    onUpdateGroupLimit={updateGroupLimit}
+                    getDayLabel={formatDayLabel}
+                    onInvalidStateChange={setHasInvalidTimeLimitInputs}
+                  />
+                  <div className="mt-4 rounded-xl border border-border bg-background p-4">
+                    <FormField
+                      control={form.control}
+                      name="rollingRecipes"
+                      render={({ field }) => {
+                        const selected = (field.value ?? []) as RollingRecipeType[];
+                        return (
+                          <PlannerRollingRecipesSection
+                            control={form.control}
+                            selected={selected}
+                            onChange={field.onChange}
+                            ingredients={ingredients}
+                            recipes={recipes}
+                            previousPlanUnusedRecipes={previousPlanUnusedRecipes}
+                            onInvalidStateChange={setHasInvalidRollingMealsInputs}
+                          />
+                        );
+                      }}
+                    />
+                  </div>
               </div>
             </form>
           </Form>
         </div>
 
-        <div className="hidden lg:block lg:col-span-3">
+        <div className="hidden lg:block">
+          {/* On lg, move pool above plan (log-style). On xl, pool returns to right rail. */}
+          <div className="mb-4 xl:hidden">
+            <PlannerPoolPlaceholder />
+          </div>
           {isGenerating ? (
             // While generating a new plan, hide previous results and show loading state.
             <PlanViewSkeleton />
@@ -395,8 +431,11 @@ export function PlannerForm({
               recipes={recipes}
               onReplace={handleReplace}
             />
-          ) : null
-          }
+          ) : null}
+        </div>
+        {/* Pool rail placeholder keeps space for upcoming drag source without changing existing form/plan features. */}
+        <div className="hidden xl:block xl:sticky xl:top-20">
+          <PlannerPoolPlaceholder />
         </div>
 
         {isGenerating || generatedPlan ? (
