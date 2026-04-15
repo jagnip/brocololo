@@ -86,8 +86,8 @@ export function PlannerForm({
   const [isFormCollapsed, setIsFormCollapsed] = useState(false);
   // Keep desktop gaps consistent while shrinking only the left rail when collapsed.
   const desktopGridColumns = isFormCollapsed
-    ? "lg:grid-cols-[2rem_minmax(0,1fr)] xl:grid-cols-[2rem_minmax(0,1fr)_16rem]"
-    : "lg:grid-cols-[minmax(306px,1fr)_minmax(0,2fr)] xl:grid-cols-[minmax(306px,1fr)_minmax(0,2fr)_16rem]";
+    ? "lg:grid-cols-[2rem_minmax(0,1fr)_16rem]"
+    : "lg:grid-cols-[minmax(306px,1fr)_minmax(0,2fr)_16rem]";
   // Default mode is grouped editing; users can expand to per-day limits.
   const [timeLimitsMode, setTimeLimitsMode] = useState<TimeLimitsMode>("grouped");
   // Preserve all user edits made in per-day mode across mode toggles.
@@ -404,10 +404,6 @@ export function PlannerForm({
         </div>
 
         <div className="hidden lg:block">
-          {/* On lg, move pool above plan (log-style). On xl, pool returns to right rail. */}
-          <div className="mb-4 xl:hidden">
-            <PlannerPoolPlaceholder />
-          </div>
           {isGenerating ? (
             // While generating a new plan, hide previous results and show loading state.
             <PlanViewSkeleton />
@@ -434,7 +430,7 @@ export function PlannerForm({
           ) : null}
         </div>
         {/* Pool rail placeholder keeps space for upcoming drag source without changing existing form/plan features. */}
-        <div className="hidden xl:block xl:sticky xl:top-20">
+        <div className="hidden lg:block lg:sticky lg:top-20">
           <PlannerPoolPlaceholder />
         </div>
 
