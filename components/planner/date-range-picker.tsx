@@ -28,7 +28,9 @@ type WeekPickerProps = {
   className?: string;
 };
 
-export function getDefaultDateRange(occupiedDateKeys: string[] = []): DateRangeValue {
+export function getDefaultDateRange(
+  occupiedDateKeys: string[] = [],
+): DateRangeValue {
   const today = new Date();
   const occupiedSet = new Set(occupiedDateKeys);
 
@@ -50,7 +52,11 @@ export function getDefaultDateRange(occupiedDateKeys: string[] = []): DateRangeV
     const end = new Date(start.getTime() + 3 * 24 * 60 * 60 * 1000);
 
     let blocked = false;
-    for (let day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) {
+    for (
+      let day = new Date(start);
+      day <= end;
+      day.setDate(day.getDate() + 1)
+    ) {
       if (occupiedSet.has(toDateInputValue(day))) {
         blocked = true;
         break;
@@ -72,9 +78,9 @@ export function getDefaultDateRange(occupiedDateKeys: string[] = []): DateRangeV
   };
 }
 
-  function toDateInputValue(d: Date): string {
-    return d.toLocaleDateString("en-CA");
-  }
+function toDateInputValue(d: Date): string {
+  return d.toLocaleDateString("en-CA");
+}
 
 export function WeekPicker({
   value,
@@ -83,16 +89,17 @@ export function WeekPicker({
   compact = false,
   className,
 }: WeekPickerProps) {
-    
-    //parse the field.value from the form to a RangeValue<CalendarDate>
+  //parse the field.value from the form to a RangeValue<CalendarDate>
   const rangeValue: RangeValue<CalendarDate> | undefined =
     value?.start && value?.end
       ? { start: parseDate(value.start), end: parseDate(value.end) }
       : undefined;
   const hasSelectedRange = Boolean(value?.start && value?.end);
 
-  const occupiedSet = useMemo(() => new Set(occupiedDateKeys), [occupiedDateKeys]);
-
+  const occupiedSet = useMemo(
+    () => new Set(occupiedDateKeys),
+    [occupiedDateKeys],
+  );
 
   return (
     <DateRangePicker
@@ -127,7 +134,10 @@ export function WeekPicker({
           />
           <span
             aria-hidden="true"
-            className={cn("px-2 text-muted-foreground/70", !hasSelectedRange && "opacity-0")}
+            className={cn(
+              "px-2 text-muted-foreground/70",
+              !hasSelectedRange && "opacity-0",
+            )}
           >
             -
           </span>
@@ -145,11 +155,15 @@ export function WeekPicker({
         </Button>
       </div>
       <Popover
+        // Keep page scrollbar state stable when opening the picker to avoid layout shifts.
+        isNonModal
         className="z-50 rounded-lg border border-border bg-background text-popover-foreground shadow-lg shadow-black/5 outline-none data-[entering]:animate-in data-[exiting]:animate-out data-[entering]:fade-in-0 data-[exiting]:fade-out-0 data-[placement=bottom]:slide-in-from-top-2 data-[placement=left]:slide-in-from-right-2 data-[placement=right]:slide-in-from-left-2 data-[placement=top]:slide-in-from-bottom-2"
         offset={4}
       >
         <Dialog className="p-2">
-          <RangeCalendar isDateUnavailable={(date) => occupiedSet.has(date.toString())} />
+          <RangeCalendar
+            isDateUnavailable={(date) => occupiedSet.has(date.toString())}
+          />
         </Dialog>
       </Popover>
     </DateRangePicker>

@@ -2,7 +2,6 @@
 
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus } from "lucide-react";
 import {
   Form,
   FormField,
@@ -10,7 +9,6 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { Card } from "@/components/ui/card";
 import {
   plannerCriteriaSchema,
   type PlannerCriteriaInputType,
@@ -24,6 +22,7 @@ import { generatePlan, savePlan } from "@/actions/planner-actions";
 import type { DayTimeLimitsType, RollingRecipeType } from "@/lib/validations/planner";
 import { getDaysInRange, formatDayLabel } from "@/lib/planner/helpers";
 import {
+  MEAL_TYPES,
   type MealTimeLimits,
   WEEKDAY_TIME_LIMIT_DEFAULTS,
   WEEKEND_TIME_LIMIT_DEFAULTS,
@@ -257,6 +256,16 @@ export function PlannerForm({
   const daysInRange = dateRange?.start && dateRange?.end
     ? getDaysInRange(new Date(dateRange.start), new Date(dateRange.end))
     : [];
+  // Mirror final plan shape so empty slots can reuse PlanView before generation.
+  const placeholderPlan: PlanInputType = daysInRange.flatMap((date) =>
+    MEAL_TYPES.map((mealType) => ({
+      date,
+      mealType,
+      recipe: null,
+      alternatives: [],
+      used: false,
+    })),
+  );
   const { hasWeekdays, hasWeekend } = getRangeGroupAvailability(daysInRange);
 
   function updateGroupLimit(
@@ -377,25 +386,17 @@ export function PlannerForm({
               onReplace={handleReplace}
               onRemove={handleRemove}
             />
-          ) : (
-            <Card className="flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed p-0 py-0 shadow-none">
-              <div className="flex min-h-[220px] flex-1 flex-col items-center justify-center gap-2 p-3 text-center">
-                {/* Mirror log empty slot styling and wording for the plan empty panel. */}
-                <span
-                  className="flex size-7 shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground"
-                  aria-hidden
-                >
-                  <Plus className="size-3" />
-                </span>
-                <p className="text-sm font-medium leading-snug text-foreground">
-                  Nothing planned yet
-                </p>
-                <span className="text-xs text-muted-foreground">
-                  Find meals to start
-                </span>
-              </div>
-            </Card>
-          )}
+          ) : placeholderPlan.length > 0 ? (
+            <PlanView
+              plan={placeholderPlan}
+              fridgeIngredientIds={
+                (form.watch("fridgeIngredientIds") ?? []) as string[]
+              }
+              recipes={recipes}
+              onReplace={handleReplace}
+            />
+          ) : null
+          }
         </div>
 
         {isGenerating || generatedPlan ? (
