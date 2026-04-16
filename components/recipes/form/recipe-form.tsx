@@ -54,6 +54,8 @@ import { EditIngredientDialog } from "./edit-ingredient-dialog";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { reconcileIngredientUnitsAfterUpdate } from "./ingredient-row-adjustments";
 import { MESSAGES } from "@/lib/messages";
+import { TopbarConfigController } from "@/components/topbar-config";
+import { Trash2 } from "lucide-react";
 import { Subheader } from "../recipe-page/subheader";
 
 
@@ -356,9 +358,47 @@ export default function RecipeForm({
     }
   }, [availableRecipeTypes, form, isSweetFlavour]);
   const isSubmitting = form.formState.isSubmitting;
+  const isEditMode = Boolean(recipe);
+  const topbarSubmitLabel = isEditMode ? "Update recipe" : "Create recipe";
 
   return (
     <Form {...form}>
+      <TopbarConfigController
+        config={{
+          actions: [
+            {
+              id: "submit-recipe",
+              label: topbarSubmitLabel,
+              onClick: () => {
+                // Keep topbar action aligned with the same RHF submit pipeline as the form button.
+                void form.handleSubmit(onSubmit)();
+              },
+              disabled: isSubmitting,
+              ariaBusy: isSubmitting,
+              variant: "default",
+              size: "default",
+            },
+            ...(isEditMode
+              ? [
+                  {
+                    id: "delete-recipe",
+                    label: "Delete recipe",
+                    onClick: () => {
+                      // Keep delete confirmation flow centralized in the existing dialog state.
+                      setIsDeleteOpen(true);
+                    },
+                    disabled: isDeleting,
+                    ariaBusy: isDeleting,
+                    ariaLabel: "Delete recipe",
+                    icon: <Trash2 className="h-4 w-4" />,
+                    variant: "outline" as const,
+                    size: "icon" as const,
+                  },
+                ]
+              : []),
+          ],
+        }}
+      />
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-block">
         <section className="section-container rounded-xl border border-border bg-card p-nest md:p-sheet">
           <div className="mb-item">
@@ -718,61 +758,37 @@ export default function RecipeForm({
           </div>
         </section>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
-            {isSubmitting
-              ? recipe
-                ? MESSAGES.recipe.updating
-                : MESSAGES.recipe.creating
-              : recipe
-                ? "Update recipe"
-                : "Create recipe"}
-          </Button>
-
-          {recipe ? (
-            <>
-              {/* Keep delete near update for edit-mode workflows. */}
-              <Button
-                type="button"
-                variant="destructive"
-                disabled={isDeleting}
-                onClick={() => setIsDeleteOpen(true)}
-              >
-                Delete recipe
-              </Button>
-
-              <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Delete recipe?</DialogTitle>
-                    <DialogDescription>
-                      Are you sure you want to delete <strong>{recipe.name}</strong>?
-                      This action cannot be undone.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={isDeleting}
-                      onClick={() => setIsDeleteOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      disabled={isDeleting}
-                      onClick={onConfirmDelete}
-                    >
-                      {isDeleting ? "Deleting..." : "Yes, delete"}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </>
-          ) : null}
-        </div>
+        {isEditMode ? (
+          <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete recipe?</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete <strong>{recipe?.name ?? "this recipe"}</strong>?
+                  This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isDeleting}
+                  onClick={() => setIsDeleteOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={isDeleting}
+                  onClick={onConfirmDelete}
+                >
+                  {isDeleting ? "Deleting..." : "Yes, delete"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        ) : null}
 
         <CreateIngredientDialog
           open={Boolean(createIngredientState)}

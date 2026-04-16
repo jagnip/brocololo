@@ -14,7 +14,6 @@ export default async function EditRecipePage({ params }: PageProps) {
     <div className="page-container">
       <TopbarConfigController
         config={{
-          badge: { label: "Edit recipe", variant: "secondary" },
           actions: [],
         }}
       />

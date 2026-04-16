@@ -8,7 +8,6 @@ export default async function CreateRecipePage() {
     <div className="page-container">
       <TopbarConfigController
         config={{
-          badge: { label: "Create recipe", variant: "secondary" },
           actions: [],
         }}
       />
