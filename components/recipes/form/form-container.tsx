@@ -9,21 +9,20 @@ export default async function RecipeFormContainer({
 }: {
   recipeSlug?: string;
 }) {
-  const [categories, ingredients, ingredientFormDependencies, recipe] = await Promise.all([
-    getCategories(),
-    getIngredients(),
-    getIngredientFormDependencies(),
-    recipeSlug ? getRecipeBySlug(recipeSlug) : null,
-  ]);
+  const [categories, ingredients, ingredientFormDependencies, recipe] =
+    await Promise.all([
+      getCategories(),
+      getIngredients(),
+      getIngredientFormDependencies(),
+      recipeSlug ? getRecipeBySlug(recipeSlug) : null,
+    ]);
 
   return (
-    <div className="max-w-3xl mx-auto mt-10">
-      <RecipeForm
-        categories={categories}
-        ingredients={ingredients}
-        ingredientFormDependencies={ingredientFormDependencies}
-        recipe={recipe ?? undefined}
-      />
-    </div>
+    <RecipeForm
+      categories={categories}
+      ingredients={ingredients}
+      ingredientFormDependencies={ingredientFormDependencies}
+      recipe={recipe ?? undefined}
+    />
   );
 }
