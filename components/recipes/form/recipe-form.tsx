@@ -399,12 +399,13 @@ export default function RecipeForm({
           ],
         }}
       />
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-block">
-        <section className="section-container rounded-xl border border-border bg-card p-nest md:p-sheet">
-          <div className="mb-item">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
+        <section>
+          <div className="mb-3">
             <Subheader>Basics</Subheader>
           </div>
-          <div className="flex flex-col gap-item">
+          <div className="section-container">
+            <div className="flex flex-col gap-item">
             <div className="grid grid-cols-1 gap-item md:grid-cols-12">
               <div className="md:col-span-8">
                 <FormField
@@ -532,14 +533,30 @@ export default function RecipeForm({
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="excludeFromPlanner"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Exclude from meal planner</FormLabel>
+                  <FormControl>
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            </div>
           </div>
         </section>
 
-        <section className="section-container rounded-xl border border-border bg-card p-nest md:p-sheet">
-          <div className="mb-item">
+        <section>
+          <div className="mb-3">
             <Subheader>Timing & Portions</Subheader>
           </div>
-          <div className="flex flex-col gap-item">
+          <div className="section-container">
+            <div className="flex flex-col gap-item">
             <div className="grid grid-cols-1 gap-item sm:grid-cols-2 lg:grid-cols-12">
               <div className="lg:col-span-4">
                 <FormField
@@ -654,107 +671,99 @@ export default function RecipeForm({
                 </FormItem>
               )}
             />
+            </div>
           </div>
         </section>
 
-        <section className="section-container rounded-xl border border-border bg-card p-nest md:p-sheet">
-          <div className="mb-item">
+        <section>
+          <div className="mb-3">
             <Subheader>Ingredients</Subheader>
           </div>
-          <FormField
-            control={form.control}
-            name="ingredients"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <IngredientSelector
-                    ingredients={localIngredients}
-                    groups={ingredientGroups}
-                    value={field.value}
-                    onChange={field.onChange}
-                    onGroupsChange={(nextGroups) => {
-                      form.setValue("ingredientGroups", nextGroups, {
-                        shouldValidate: true,
-                      });
-                    }}
-                    onCreateIngredientRequested={(params) => {
-                      setCreateIngredientState(params);
-                    }}
-                    onEditIngredientRequested={(params) => {
-                      setEditIngredientState({ ingredientId: params });
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </section>
-
-        <section className="section-container rounded-xl border border-border bg-card p-nest md:p-sheet">
-          <div className="mb-item">
-            <Subheader>Instructions</Subheader>
-          </div>
-          <FormField
-            control={form.control}
-            name="instructions"
-            render={({ field }) => {
-              const ingredientRows = form.watch("ingredients");
-              const ingredientOptions = ingredientRows.map((row) => ({
-                tempIngredientKey: row.tempIngredientKey,
-                label: getIngredientOptionLabel(row),
-              }));
-
-              return (
+          <div className="section-container">
+            <FormField
+              control={form.control}
+              name="ingredients"
+              render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <InstructionStepsEditor
+                    <IngredientSelector
+                      ingredients={localIngredients}
+                      groups={ingredientGroups}
                       value={field.value}
                       onChange={field.onChange}
-                      ingredientOptions={ingredientOptions}
+                      onGroupsChange={(nextGroups) => {
+                        form.setValue("ingredientGroups", nextGroups, {
+                          shouldValidate: true,
+                        });
+                      }}
+                      onCreateIngredientRequested={(params) => {
+                        setCreateIngredientState(params);
+                      }}
+                      onEditIngredientRequested={(params) => {
+                        setEditIngredientState({ ingredientId: params });
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-              );
-            }}
-          />
+              )}
+            />
+          </div>
         </section>
 
-        <section className="section-container rounded-xl border border-border bg-card p-nest md:p-sheet">
-          <div className="mb-item">
+        <section>
+          <div className="mb-3">
+            <Subheader>Instructions</Subheader>
+          </div>
+          <div className="section-container">
+            <FormField
+              control={form.control}
+              name="instructions"
+              render={({ field }) => {
+                const ingredientRows = form.watch("ingredients");
+                const ingredientOptions = ingredientRows.map((row) => ({
+                  tempIngredientKey: row.tempIngredientKey,
+                  label: getIngredientOptionLabel(row),
+                }));
+
+                return (
+                  <FormItem>
+                    <FormControl>
+                      <InstructionStepsEditor
+                        value={field.value}
+                        onChange={field.onChange}
+                        ingredientOptions={ingredientOptions}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+          </div>
+        </section>
+
+        <section>
+          <div className="mb-3">
             <Subheader>Notes</Subheader>
           </div>
-          <div className="flex flex-col gap-item">
-            <FormField
-              control={form.control}
-              name="excludeFromPlanner"
-              render={({ field }) => (
-                <FormItem>
-                  {/* Optional field marker keeps label-level guidance consistent. */}
-                  <FormLabel>Exclude from meal planner (optional)</FormLabel>
-                  <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  {/* Optional field marker keeps label-level guidance consistent. */}
-                  <FormLabel>Notes (optional)</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="section-container">
+            <div className="flex flex-col gap-item">
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    {/* Optional field marker keeps label-level guidance consistent. */}
+                    <FormLabel>Notes (optional)</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
         </section>
 
