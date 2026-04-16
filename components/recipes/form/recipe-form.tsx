@@ -54,6 +54,9 @@ import { EditIngredientDialog } from "./edit-ingredient-dialog";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { reconcileIngredientUnitsAfterUpdate } from "./ingredient-row-adjustments";
 import { MESSAGES } from "@/lib/messages";
+import { TopbarConfigController } from "@/components/topbar-config";
+import { Trash2 } from "lucide-react";
+import { Subheader } from "../recipe-page/subheader";
 
 
 type RecipeFormProps = {
@@ -355,381 +358,446 @@ export default function RecipeForm({
     }
   }, [availableRecipeTypes, form, isSweetFlavour]);
   const isSubmitting = form.formState.isSubmitting;
+  const isEditMode = Boolean(recipe);
+  const topbarSubmitLabel = isEditMode ? "Update recipe" : "Create recipe";
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="flavourCategoryId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Flavour</FormLabel>
-              <FormControl>
-                <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Flavour">
-                  {flavourCategories.map((category) => {
-                    const checked = field.value === category.id;
-                    return (
-                      <Button
-                        key={category.id}
-                        type="button"
-                        role="radio"
-                        aria-checked={checked}
-                        variant={checked ? "default" : "outline"}
-                        onClick={() => field.onChange(category.id)}
-                      >
-                        {category.name}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="proteinCategoryId"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex items-center justify-between gap-2">
-                {/* Protein can be omitted for savoury recipes by design. */}
-                <FormLabel>Protein (optional)</FormLabel>
-                {/* Inline create flow keeps users inside the recipe form. */}
-                <CreateCategoryDialog onCreated={handleCategoryCreated} />
+      <TopbarConfigController
+        config={{
+          actions: [
+            {
+              id: "submit-recipe",
+              label: topbarSubmitLabel,
+              onClick: () => {
+                // Keep topbar action aligned with the same RHF submit pipeline as the form button.
+                void form.handleSubmit(onSubmit)();
+              },
+              disabled: isSubmitting,
+              ariaBusy: isSubmitting,
+              variant: "default",
+              size: "default",
+            },
+            ...(isEditMode
+              ? [
+                  {
+                    id: "delete-recipe",
+                    label: "Delete recipe",
+                    onClick: () => {
+                      // Keep delete confirmation flow centralized in the existing dialog state.
+                      setIsDeleteOpen(true);
+                    },
+                    disabled: isDeleting,
+                    ariaBusy: isDeleting,
+                    ariaLabel: "Delete recipe",
+                    icon: <Trash2 className="h-4 w-4" />,
+                    variant: "outline" as const,
+                    size: "icon" as const,
+                  },
+                ]
+              : []),
+          ],
+        }}
+      />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
+        <section>
+          <div className="mb-3">
+            <Subheader>Basics</Subheader>
+          </div>
+          <div className="section-container">
+            <div className="flex flex-col gap-item">
+            <div className="grid grid-cols-1 gap-item md:grid-cols-12">
+              <div className="md:col-span-8">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-              <FormControl>
-                <SearchableSelect
-                  options={proteinOptions}
-                  value={field.value}
-                  onValueChange={(next) => field.onChange(next)}
-                  placeholder="Select protein"
-                  searchPlaceholder="Search proteins..."
-                  emptyLabel="No protein found."
-                  allowClear
-                  clearLabel="Clear protein"
-                  disabled={!selectedFlavourId || isSweetFlavour}
+              <div className="md:col-span-4">
+                <FormField
+                  control={form.control}
+                  name="flavourCategoryId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Flavour</FormLabel>
+                      <FormControl>
+                        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Flavour">
+                          {flavourCategories.map((category) => {
+                            const checked = field.value === category.id;
+                            return (
+                              <Button
+                                key={category.id}
+                                type="button"
+                                role="radio"
+                                aria-checked={checked}
+                                variant={checked ? "default" : "outline"}
+                                onClick={() => field.onChange(category.id)}
+                              >
+                                {category.name}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+              </div>
+            </div>
 
-        <FormField
-          control={form.control}
-          name="typeCategoryId"
-          render={({ field }) => (
-            <FormItem>
-              {/* Optional field marker keeps label-level guidance consistent. */}
-              <FormLabel>Type (optional)</FormLabel>
-              <FormControl>
-                <SearchableSelect
-                  options={availableRecipeTypeOptions}
-                  value={field.value}
-                  onValueChange={(next) => field.onChange(next)}
-                  placeholder="Select recipe type"
-                  searchPlaceholder="Search recipe types..."
-                  emptyLabel="No recipe type found."
-                  allowClear
-                  clearLabel="Clear recipe type"
-                  disabled={!selectedFlavourId}
+            <div className="grid grid-cols-1 gap-item md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="proteinCategoryId"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between gap-2">
+                      {/* Protein can be omitted for savoury recipes by design. */}
+                      <FormLabel>Protein (optional)</FormLabel>
+                      {/* Inline create flow keeps users inside the recipe form. */}
+                      <CreateCategoryDialog onCreated={handleCategoryCreated} />
+                    </div>
+                    <FormControl>
+                      <SearchableSelect
+                        options={proteinOptions}
+                        value={field.value}
+                        onValueChange={(next) => field.onChange(next)}
+                        placeholder="Select protein"
+                        searchPlaceholder="Search proteins..."
+                        emptyLabel="No protein found."
+                        allowClear
+                        clearLabel="Clear protein"
+                        disabled={!selectedFlavourId || isSweetFlavour}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="typeCategoryId"
+                render={({ field }) => (
+                  <FormItem>
+                    {/* Optional field marker keeps label-level guidance consistent. */}
+                    <FormLabel>Type (optional)</FormLabel>
+                    <FormControl>
+                      <SearchableSelect
+                        options={availableRecipeTypeOptions}
+                        value={field.value}
+                        onValueChange={(next) => field.onChange(next)}
+                        placeholder="Select recipe type"
+                        searchPlaceholder="Search recipe types..."
+                        emptyLabel="No recipe type found."
+                        allowClear
+                        clearLabel="Clear recipe type"
+                        disabled={!selectedFlavourId}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="images"
+              render={({ field }) => (
+                <FormItem>
+                  {/* Optional field marker keeps label-level guidance consistent. */}
+                  <FormLabel>Add photo (optional)</FormLabel>
+                  <FormControl>
+                    <ImageUploader
+                      value={
+                        field.value?.map((img) => ({
+                          url: img.url,
+                          isCover: img.isCover ?? false,
+                        })) || []
+                      }
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="excludeFromPlanner"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Exclude from meal planner</FormLabel>
+                  <FormControl>
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div className="mb-3">
+            <Subheader>Timing & Portions</Subheader>
+          </div>
+          <div className="section-container">
+            <div className="flex flex-col gap-item">
+            <div className="grid grid-cols-1 gap-item sm:grid-cols-2 lg:grid-cols-12">
+              <div className="lg:col-span-4">
+                <FormField
+                  control={form.control}
+                  name="handsOnTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hands-on time</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          min={0}
+                          // Keep explicit prompt text for blank numeric input.
+                          placeholder="Enter hands on time"
+                          // Keep controlled input behavior while still allowing an empty state.
+                          value={(field.value as number | undefined) ?? ""}
+                          onChange={(event) => handleNumericFieldChange(field.onChange, event)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+              </div>
 
-        <FormField
-          control={form.control}
-          name="images"
-          render={({ field }) => (
-            <FormItem>
-              {/* Optional field marker keeps label-level guidance consistent. */}
-              <FormLabel>Add photo (optional)</FormLabel>
-              <FormControl>
-                <ImageUploader
-                  value={
-                    field.value?.map((img) => ({
-                      url: img.url,
-                      isCover: img.isCover ?? false,
-                    })) || []
-                  }
-                  onChange={field.onChange}
+              <div className="lg:col-span-4">
+                <FormField
+                  control={form.control}
+                  name="totalTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Total time</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          min={0}
+                          // Keep explicit prompt text for blank numeric input.
+                          placeholder="Enter total time"
+                          // Keep controlled input behavior while still allowing an empty state.
+                          value={(field.value as number | undefined) ?? ""}
+                          onChange={(event) => handleNumericFieldChange(field.onChange, event)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+              </div>
 
-        <FormField
-          control={form.control}
-          name="handsOnTime"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Hands-on time</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  type="number"
-                  min={0}
-                  // Keep explicit prompt text for blank numeric input.
-                  placeholder="Enter hands on time"
-                  // Keep controlled input behavior while still allowing an empty state.
-                  value={(field.value as number | undefined) ?? ""}
-                  onChange={(event) => handleNumericFieldChange(field.onChange, event)}
+              <div className="lg:col-span-4">
+                <FormField
+                  control={form.control}
+                  name="servings"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Portions</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          min={2}
+                          step={2}
+                          // Keep explicit prompt text for blank numeric input.
+                          placeholder="Enter portions"
+                          // Keep controlled input behavior while still allowing an empty state.
+                          value={(field.value as number | undefined) ?? ""}
+                          onChange={(event) => handleNumericFieldChange(field.onChange, event)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+              </div>
+            </div>
 
-        <FormField
-          control={form.control}
-          name="totalTime"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Total time</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  type="number"
-                  min={0}
-                  // Keep explicit prompt text for blank numeric input.
-                  placeholder="Enter total time"
-                  // Keep controlled input behavior while still allowing an empty state.
-                  value={(field.value as number | undefined) ?? ""}
-                  onChange={(event) => handleNumericFieldChange(field.onChange, event)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <FormField
+              control={form.control}
+              name="servingMultiplierForNelson"
+              render={({ field }) => (
+                <FormItem>
+                  {/* Optional field marker keeps label-level guidance consistent. */}
+                  <FormLabel>Nelson&apos;s serving multiplier (optional)</FormLabel>
+                  <FormControl>
+                    <div
+                      className="flex flex-wrap gap-2"
+                      role="radiogroup"
+                      aria-label="Nelson serving multiplier"
+                    >
+                      {nelsonMultiplierOptions.map((multiplier) => {
+                        // Keep the UI default selected at 1 without changing backend validation rules.
+                        const selectedMultiplier = (field.value as number | null | undefined) ?? 1;
+                        const checked = selectedMultiplier === multiplier;
+                        return (
+                          <Button
+                            key={multiplier}
+                            type="button"
+                            role="radio"
+                            aria-checked={checked}
+                            variant={checked ? "default" : "outline"}
+                            onClick={() => field.onChange(multiplier)}
+                          >
+                            {multiplier}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            </div>
+          </div>
+        </section>
 
-        <FormField
-          control={form.control}
-          name="servings"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Portions</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  type="number"
-                  min={2}
-                  step={2}
-                  // Keep explicit prompt text for blank numeric input.
-                  placeholder="Enter portions"
-                  // Keep controlled input behavior while still allowing an empty state.
-                  value={(field.value as number | undefined) ?? ""}
-                  onChange={(event) => handleNumericFieldChange(field.onChange, event)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <section>
+          <div className="mb-3">
+            <Subheader>Ingredients</Subheader>
+          </div>
+          <div className="section-container">
+            <FormField
+              control={form.control}
+              name="ingredients"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <IngredientSelector
+                      ingredients={localIngredients}
+                      groups={ingredientGroups}
+                      value={field.value}
+                      onChange={field.onChange}
+                      onGroupsChange={(nextGroups) => {
+                        form.setValue("ingredientGroups", nextGroups, {
+                          shouldValidate: true,
+                        });
+                      }}
+                      onCreateIngredientRequested={(params) => {
+                        setCreateIngredientState(params);
+                      }}
+                      onEditIngredientRequested={(params) => {
+                        setEditIngredientState({ ingredientId: params });
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </section>
 
-        <FormField
-          control={form.control}
-          name="servingMultiplierForNelson"
-          render={({ field }) => (
-            <FormItem>
-              {/* Optional field marker keeps label-level guidance consistent. */}
-              <FormLabel>Nelson&apos;s serving multiplier (optional)</FormLabel>
-              <FormControl>
-                <div
-                  className="flex flex-wrap gap-2"
-                  role="radiogroup"
-                  aria-label="Nelson serving multiplier"
+        <section>
+          <div className="mb-3">
+            <Subheader>Instructions</Subheader>
+          </div>
+          <div className="section-container">
+            <FormField
+              control={form.control}
+              name="instructions"
+              render={({ field }) => {
+                const ingredientRows = form.watch("ingredients");
+                const ingredientOptions = ingredientRows.map((row) => ({
+                  tempIngredientKey: row.tempIngredientKey,
+                  label: getIngredientOptionLabel(row),
+                }));
+
+                return (
+                  <FormItem>
+                    <FormControl>
+                      <InstructionStepsEditor
+                        value={field.value}
+                        onChange={field.onChange}
+                        ingredientOptions={ingredientOptions}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
+            />
+          </div>
+        </section>
+
+        <section>
+          <div className="mb-3">
+            <Subheader>Notes</Subheader>
+          </div>
+          <div className="section-container">
+            <div className="flex flex-col gap-item">
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    {/* Optional field marker keeps label-level guidance consistent. */}
+                    <FormLabel>Notes (optional)</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        </section>
+
+        {isEditMode ? (
+          <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete recipe?</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete <strong>{recipe?.name ?? "this recipe"}</strong>?
+                  This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isDeleting}
+                  onClick={() => setIsDeleteOpen(false)}
                 >
-                  {nelsonMultiplierOptions.map((multiplier) => {
-                    // Keep the UI default selected at 1 without changing backend validation rules.
-                    const selectedMultiplier = (field.value as number | null | undefined) ?? 1;
-                    const checked = selectedMultiplier === multiplier;
-                    return (
-                      <Button
-                        key={multiplier}
-                        type="button"
-                        role="radio"
-                        aria-checked={checked}
-                        variant={checked ? "default" : "outline"}
-                        onClick={() => field.onChange(multiplier)}
-                      >
-                        {multiplier}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="ingredients"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Ingredients</FormLabel>
-              <FormControl>
-                <IngredientSelector
-                  ingredients={localIngredients}
-                  groups={ingredientGroups}
-                  value={field.value}
-                  onChange={field.onChange}
-                  onGroupsChange={(nextGroups) => {
-                    form.setValue("ingredientGroups", nextGroups, {
-                      shouldValidate: true,
-                    });
-                  }}
-                  onCreateIngredientRequested={(params) => {
-                    setCreateIngredientState(params);
-                  }}
-                  onEditIngredientRequested={(params) => {
-                    setEditIngredientState({ ingredientId: params });
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="instructions"
-          render={({ field }) => {
-            const ingredientRows = form.watch("ingredients");
-            const ingredientOptions = ingredientRows.map((row) => ({
-              tempIngredientKey: row.tempIngredientKey,
-              label: getIngredientOptionLabel(row),
-            }));
-
-            return (
-              <FormItem>
-                <FormLabel>Instructions</FormLabel>
-                <FormControl>
-                  <InstructionStepsEditor
-                    value={field.value}
-                    onChange={field.onChange}
-                    ingredientOptions={ingredientOptions}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            );
-          }}
-        />
-
-        <FormField
-          control={form.control}
-          name="excludeFromPlanner"
-          render={({ field }) => (
-            <FormItem>
-              {/* Optional field marker keeps label-level guidance consistent. */}
-              <FormLabel>Exlude from meal planner (optional)</FormLabel>
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              {/* Optional field marker keeps label-level guidance consistent. */}
-              <FormLabel>Notes (optional)</FormLabel>
-              <FormControl>
-                <Textarea {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="flex items-center gap-2">
-          <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
-            {isSubmitting
-              ? recipe
-                ? MESSAGES.recipe.updating
-                : MESSAGES.recipe.creating
-              : recipe
-                ? "Update recipe"
-                : "Create recipe"}
-          </Button>
-
-          {recipe ? (
-            <>
-              {/* Keep delete near update for edit-mode workflows. */}
-              <Button
-                type="button"
-                variant="destructive"
-                disabled={isDeleting}
-                onClick={() => setIsDeleteOpen(true)}
-              >
-                Delete recipe
-              </Button>
-
-              <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Delete recipe?</DialogTitle>
-                    <DialogDescription>
-                      Are you sure you want to delete <strong>{recipe.name}</strong>?
-                      This action cannot be undone.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={isDeleting}
-                      onClick={() => setIsDeleteOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      disabled={isDeleting}
-                      onClick={onConfirmDelete}
-                    >
-                      {isDeleting ? "Deleting..." : "Yes, delete"}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </>
-          ) : null}
-        </div>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={isDeleting}
+                  onClick={onConfirmDelete}
+                >
+                  {isDeleting ? "Deleting..." : "Yes, delete"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        ) : null}
 
         <CreateIngredientDialog
           open={Boolean(createIngredientState)}
