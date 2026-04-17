@@ -25,7 +25,7 @@ export function ImageUploader({
   } = useImageUpload(value, onChange);
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-item">
       <div className="flex gap-4 items-center">
         <Button
           type="button"
