@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
-import { X } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { RecipeImageType } from "@/types/images";
 import { useImageUpload } from "@/hooks/use-image-upload";
 
@@ -33,7 +34,7 @@ export function ImageUploader({
           variant="outline"
           disabled={uploadingIndexes.size > 0}
         >
-          Add Images
+          {uploadingIndexes.size > 0 ? "Uploading..." : "Upload images"}
         </Button>
       </div>
 
@@ -47,9 +48,8 @@ export function ImageUploader({
         disabled={uploadingIndexes.size > 0}
       />
 
-      {/* NEW: Image Grid - shows all uploaded images */}
       {value.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-item">
           {value.map((image, index) => {
             const isUploading = uploadingIndexes.has(index);
             const error = errors[index];
@@ -67,42 +67,41 @@ export function ImageUploader({
                     className="object-cover"
                   />
 
-                  {/* NEW: Hover overlay with action buttons */}
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+         
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 p-1 sm:flex-row sm:gap-2">
                     <Button
                       type="button"
                       variant="secondary"
-                      size="default"
+                      size="sm"
                       onClick={() => setCoverImage(index)}
                       disabled={image.isCover}
                     >
-                      {image.isCover ? "Cover" : "Set Cover"}
+                      {image.isCover ? "Cover" : "Set cover"}
                     </Button>
                     <Button
                       type="button"
-                      variant="destructive"
-                      size="default"
+                      variant="secondary"
+                      size="sm"
                       onClick={() => removeImage(index)}
+                      aria-label="Remove image"
                     >
-                      <X className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
 
-                  {/* NEW: Cover badge */}
+  
                   {image.isCover && (
-                    <div className="absolute top-2 left-2 bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-semibold">
+                    <Badge className="absolute top-2 left-2" variant="default">
                       Cover
-                    </div>
+                    </Badge>
                   )}
-
-                  {/* NEW: Uploading indicator */}
+{/* 
                   {isUploading && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                       <div className="text-white text-sm">Uploading...</div>
                     </div>
-                  )}
+                  )} */}
 
-                  {/* NEW: Error indicator */}
                   {error && (
                     <div className="absolute inset-0 bg-red-500/50 flex items-center justify-center">
                       <div className="text-white text-xs text-center px-2">
