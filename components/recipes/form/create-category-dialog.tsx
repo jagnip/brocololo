@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -91,9 +90,6 @@ export function CreateCategoryDialog({ onCreated }: CreateCategoryDialogProps) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create category</DialogTitle>
-          <DialogDescription>
-            Add a missing category without leaving the recipe form.
-          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -149,9 +145,9 @@ export function CreateCategoryDialog({ onCreated }: CreateCategoryDialogProps) {
               name="kind"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category kind</FormLabel>
+                  <FormLabel>Category type</FormLabel>
                   <FormControl>
-                    <div className="flex gap-2" role="radiogroup" aria-label="Category kind">
+                    <div className="flex gap-2" role="radiogroup" aria-label="Category type">
                       {allowedKinds.map((kind) => {
                         const checked = selectedKind === kind;
                         return (
@@ -163,7 +159,7 @@ export function CreateCategoryDialog({ onCreated }: CreateCategoryDialogProps) {
                             variant={checked ? "default" : "outline"}
                             onClick={() => field.onChange(kind)}
                           >
-                            {kind === CategoryTypeEnum.PROTEIN ? "Protein" : "Type"}
+                            {kind === CategoryTypeEnum.PROTEIN ? "Protein" : "Recipe type"}
                           </Button>
                         );
                       })}
@@ -184,7 +180,7 @@ export function CreateCategoryDialog({ onCreated }: CreateCategoryDialogProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category name</FormLabel>
+                  <FormLabel>Name</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Enter category name" />
                   </FormControl>
@@ -198,7 +194,7 @@ export function CreateCategoryDialog({ onCreated }: CreateCategoryDialogProps) {
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : "Save category"}
+                {isSubmitting ? "Creating..." : "Create category"}
               </Button>
             </DialogFooter>
           </form>

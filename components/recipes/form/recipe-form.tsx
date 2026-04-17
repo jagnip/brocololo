@@ -48,7 +48,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { CreateCategoryDialog } from "./create-category-dialog";
-import { SearchableSelect, SearchableSelectOption } from "@/components/ui/searchable-select";
+import {
+  SearchableSelect,
+  SearchableSelectOption,
+} from "@/components/ui/searchable-select";
 import { CreateIngredientDialog } from "./create-ingredient-dialog";
 import { EditIngredientDialog } from "./edit-ingredient-dialog";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
@@ -57,7 +60,6 @@ import { MESSAGES } from "@/lib/messages";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { Trash2 } from "lucide-react";
 import { Subheader } from "../recipe-page/subheader";
-
 
 type RecipeFormProps = {
   categories: CategoryType[];
@@ -117,6 +119,14 @@ export default function RecipeForm({
       })),
     [proteinCategories],
   );
+  const flavourOptions = useMemo<SearchableSelectOption[]>(
+    () =>
+      flavourCategories.map((category) => ({
+        value: category.id,
+        label: category.name,
+      })),
+    [flavourCategories],
+  );
 
   const getIngredientOptionLabel = (row: {
     ingredientId: string;
@@ -124,13 +134,16 @@ export default function RecipeForm({
     amount?: number | null;
     additionalInfo?: string | null;
   }) => {
-    const ingredient = localIngredients.find((ing) => ing.id === row.ingredientId);
+    const ingredient = localIngredients.find(
+      (ing) => ing.id === row.ingredientId,
+    );
     const selectedUnit =
-      ingredient?.unitConversions.find((unit) => unit.unitId === row.unitId)?.unit ??
-      null;
+      ingredient?.unitConversions.find((unit) => unit.unitId === row.unitId)
+        ?.unit ?? null;
     const ingredientName = ingredient?.name ?? "Select ingredient";
     // Keep amount labels consistent with recipe page formatting (no trailing .0).
-    const amountLabel = row.amount == null ? null : formatIngredientAmount(row.amount, 2);
+    const amountLabel =
+      row.amount == null ? null : formatIngredientAmount(row.amount, 2);
     const unitName = getUnitDisplayName({
       amount: row.amount,
       unitName: selectedUnit?.name ?? "",
@@ -147,7 +160,9 @@ export default function RecipeForm({
 
   const form = useForm<CreateRecipeFormValues>({
     // Keep resolver type aligned to current form value shape.
-    resolver: zodResolver(formSchema) as unknown as Resolver<CreateRecipeFormValues>,
+    resolver: zodResolver(
+      formSchema,
+    ) as unknown as Resolver<CreateRecipeFormValues>,
     defaultValues: recipe
       ? recipeToFormData(recipe)
       : {
@@ -239,12 +254,16 @@ export default function RecipeForm({
       if (prev.some((category) => category.id === createdCategory.id)) {
         return prev;
       }
-      return [...prev, createdCategory].sort((a, b) => a.name.localeCompare(b.name));
+      return [...prev, createdCategory].sort((a, b) =>
+        a.name.localeCompare(b.name),
+      );
     });
 
     // Select the newly created category in the relevant recipe field.
     if (createdCategory.type === "PROTEIN") {
-      form.setValue("proteinCategoryId", createdCategory.id, { shouldValidate: true });
+      form.setValue("proteinCategoryId", createdCategory.id, {
+        shouldValidate: true,
+      });
       return;
     }
 
@@ -257,7 +276,9 @@ export default function RecipeForm({
           shouldValidate: true,
         });
       }
-      form.setValue("typeCategoryId", createdCategory.id, { shouldValidate: true });
+      form.setValue("typeCategoryId", createdCategory.id, {
+        shouldValidate: true,
+      });
     }
   }
 
@@ -267,7 +288,9 @@ export default function RecipeForm({
       if (prev.some((ingredient) => ingredient.id === createdIngredient.id)) {
         return prev;
       }
-      return [...prev, createdIngredient].sort((a, b) => a.name.localeCompare(b.name));
+      return [...prev, createdIngredient].sort((a, b) =>
+        a.name.localeCompare(b.name),
+      );
     });
 
     if (!createIngredientState) {
@@ -352,7 +375,9 @@ export default function RecipeForm({
     const selectedTypeCategoryId = form.getValues("typeCategoryId");
     if (
       selectedTypeCategoryId &&
-      !availableRecipeTypes.some((category) => category.id === selectedTypeCategoryId)
+      !availableRecipeTypes.some(
+        (category) => category.id === selectedTypeCategoryId,
+      )
     ) {
       form.setValue("typeCategoryId", null, { shouldValidate: true });
     }
@@ -399,74 +424,176 @@ export default function RecipeForm({
           ],
         }}
       />
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="flex flex-col gap-6"
+      >
         <section>
           <div className="mb-3">
             <Subheader>Basics</Subheader>
           </div>
           <div className="section-container">
-            <div className="flex flex-col gap-item">
-            <div className="grid grid-cols-1 gap-item md:grid-cols-12">
-              <div className="md:col-span-8">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-1 gap-item lg:grid-cols-3 lg:items-end">
+                <div className="lg:col-span-2">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="hidden lg:block" aria-hidden />
               </div>
-              <div className="md:col-span-4">
-                <FormField
-                  control={form.control}
-                  name="flavourCategoryId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Flavour</FormLabel>
-                      <FormControl>
-                        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Flavour">
-                          {flavourCategories.map((category) => {
-                            const checked = field.value === category.id;
-                            return (
-                              <Button
-                                key={category.id}
-                                type="button"
-                                role="radio"
-                                aria-checked={checked}
-                                variant={checked ? "default" : "outline"}
-                                onClick={() => field.onChange(category.id)}
-                              >
-                                {category.name}
-                              </Button>
-                            );
-                          })}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 gap-item md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-item md:grid-cols-3">
+                <div>
+                  <FormField
+                    control={form.control}
+                    name="handsOnTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Hands-on time</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            min={0}
+                            // Keep explicit prompt text for blank numeric input.
+                            placeholder="Enter hands on time"
+                            // Keep controlled input behavior while still allowing an empty state.
+                            value={(field.value as number | undefined) ?? ""}
+                            onChange={(event) =>
+                              handleNumericFieldChange(field.onChange, event)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div>
+                  <FormField
+                    control={form.control}
+                    name="totalTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Total time</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            min={0}
+                            // Keep explicit prompt text for blank numeric input.
+                            placeholder="Enter total time"
+                            // Keep controlled input behavior while still allowing an empty state.
+                            value={(field.value as number | undefined) ?? ""}
+                            onChange={(event) =>
+                              handleNumericFieldChange(field.onChange, event)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="hidden md:block" aria-hidden />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="images"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Photos (optional)</FormLabel>
+                    <FormControl>
+                      <ImageUploader
+                        value={
+                          field.value?.map((img) => ({
+                            url: img.url,
+                            isCover: img.isCover ?? false,
+                          })) || []
+                        }
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="excludeFromPlanner"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center gap-2">
+                      <FormControl>
+                        <Checkbox
+                          id="exclude-from-planner"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <label
+                        htmlFor="exclude-from-planner"
+                        className="type-body cursor-pointer text-foreground"
+                      >
+                        Exclude from planner
+                      </label>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div className="mb-3">
+            <Subheader>Categories</Subheader>
+          </div>
+          <div className="section-container">
+            <div className="grid grid-cols-1 gap-item md:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="flavourCategoryId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Flavour</FormLabel>
+                    <FormControl>
+                      <SearchableSelect
+                        options={flavourOptions}
+                        value={field.value}
+                        onValueChange={(next) => field.onChange(next ?? "")}
+                        placeholder="Select flavour"
+                        searchPlaceholder="Search flavours..."
+                        emptyLabel="No flavour found."
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="proteinCategoryId"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex items-center justify-between gap-2">
-                      {/* Protein can be omitted for savoury recipes by design. */}
-                      <FormLabel>Protein (optional)</FormLabel>
-                      {/* Inline create flow keeps users inside the recipe form. */}
-                      <CreateCategoryDialog onCreated={handleCategoryCreated} />
-                    </div>
+                    {/* Protein can be omitted for savoury recipes by design. */}
+                    <FormLabel>Protein (optional)</FormLabel>
                     <FormControl>
                       <SearchableSelect
                         options={proteinOptions}
@@ -490,8 +617,7 @@ export default function RecipeForm({
                 name="typeCategoryId"
                 render={({ field }) => (
                   <FormItem>
-                    {/* Optional field marker keeps label-level guidance consistent. */}
-                    <FormLabel>Type (optional)</FormLabel>
+                    <FormLabel>Recipe type (optional)</FormLabel>
                     <FormControl>
                       <SearchableSelect
                         options={availableRecipeTypeOptions}
@@ -510,167 +636,84 @@ export default function RecipeForm({
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="images"
-              render={({ field }) => (
-                <FormItem>
-                  {/* Optional field marker keeps label-level guidance consistent. */}
-                  <FormLabel>Add photo (optional)</FormLabel>
-                  <FormControl>
-                    <ImageUploader
-                      value={
-                        field.value?.map((img) => ({
-                          url: img.url,
-                          isCover: img.isCover ?? false,
-                        })) || []
-                      }
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="excludeFromPlanner"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Exclude from meal planner</FormLabel>
-                  <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="mt-2">
+              {/* Keep inline create flow beneath taxonomy row to avoid field label crowding. */}
+              <CreateCategoryDialog onCreated={handleCategoryCreated} />
             </div>
           </div>
         </section>
 
         <section>
           <div className="mb-3">
-            <Subheader>Timing & Portions</Subheader>
+            <Subheader>Portions</Subheader>
           </div>
           <div className="section-container">
-            <div className="flex flex-col gap-item">
-            <div className="grid grid-cols-1 gap-item sm:grid-cols-2 lg:grid-cols-12">
-              <div className="lg:col-span-4">
-                <FormField
-                  control={form.control}
-                  name="handsOnTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Hands-on time</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          min={0}
-                          // Keep explicit prompt text for blank numeric input.
-                          placeholder="Enter hands on time"
-                          // Keep controlled input behavior while still allowing an empty state.
-                          value={(field.value as number | undefined) ?? ""}
-                          onChange={(event) => handleNumericFieldChange(field.onChange, event)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+            <div className="grid grid-cols-1 gap-item md:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="servings"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Portions</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="number"
+                        min={2}
+                        step={2}
+                        // Keep explicit prompt text for blank numeric input.
+                        placeholder="Enter portions"
+                        // Keep controlled input behavior while still allowing an empty state.
+                        value={(field.value as number | undefined) ?? ""}
+                        onChange={(event) =>
+                          handleNumericFieldChange(field.onChange, event)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-              <div className="lg:col-span-4">
-                <FormField
-                  control={form.control}
-                  name="totalTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Total time</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          min={0}
-                          // Keep explicit prompt text for blank numeric input.
-                          placeholder="Enter total time"
-                          // Keep controlled input behavior while still allowing an empty state.
-                          value={(field.value as number | undefined) ?? ""}
-                          onChange={(event) => handleNumericFieldChange(field.onChange, event)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="lg:col-span-4">
-                <FormField
-                  control={form.control}
-                  name="servings"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Portions</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          min={2}
-                          step={2}
-                          // Keep explicit prompt text for blank numeric input.
-                          placeholder="Enter portions"
-                          // Keep controlled input behavior while still allowing an empty state.
-                          value={(field.value as number | undefined) ?? ""}
-                          onChange={(event) => handleNumericFieldChange(field.onChange, event)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
-            <FormField
-              control={form.control}
-              name="servingMultiplierForNelson"
-              render={({ field }) => (
-                <FormItem>
-                  {/* Optional field marker keeps label-level guidance consistent. */}
-                  <FormLabel>Nelson&apos;s serving multiplier (optional)</FormLabel>
-                  <FormControl>
-                    <div
-                      className="flex flex-wrap gap-2"
-                      role="radiogroup"
-                      aria-label="Nelson serving multiplier"
-                    >
-                      {nelsonMultiplierOptions.map((multiplier) => {
-                        // Keep the UI default selected at 1 without changing backend validation rules.
-                        const selectedMultiplier = (field.value as number | null | undefined) ?? 1;
-                        const checked = selectedMultiplier === multiplier;
-                        return (
-                          <Button
-                            key={multiplier}
-                            type="button"
-                            role="radio"
-                            aria-checked={checked}
-                            variant={checked ? "default" : "outline"}
-                            onClick={() => field.onChange(multiplier)}
-                          >
-                            {multiplier}
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="servingMultiplierForNelson"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    {/* Optional field marker keeps label-level guidance consistent. */}
+                    <FormLabel>
+                      Nelson&apos;s serving multiplier (optional)
+                    </FormLabel>
+                    <FormControl>
+                      <div
+                        className="flex flex-wrap gap-2"
+                        role="radiogroup"
+                        aria-label="Nelson serving multiplier"
+                      >
+                        {nelsonMultiplierOptions.map((multiplier) => {
+                          // Keep the UI default selected at 1 without changing backend validation rules.
+                          const selectedMultiplier =
+                            (field.value as number | null | undefined) ?? 1;
+                          const checked = selectedMultiplier === multiplier;
+                          return (
+                            <Button
+                              key={multiplier}
+                              type="button"
+                              role="radio"
+                              aria-checked={checked}
+                              variant={checked ? "default" : "outline"}
+                              onClick={() => field.onChange(multiplier)}
+                            >
+                              {multiplier}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
         </section>
@@ -708,6 +751,25 @@ export default function RecipeForm({
                 </FormItem>
               )}
             />
+
+              <FormField
+                control={form.control}
+                name="excludeFromPlanner"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center gap-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Exclude from planner</FormLabel>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
           </div>
         </section>
 
@@ -773,8 +835,9 @@ export default function RecipeForm({
               <DialogHeader>
                 <DialogTitle>Delete recipe?</DialogTitle>
                 <DialogDescription>
-                  Are you sure you want to delete <strong>{recipe?.name ?? "this recipe"}</strong>?
-                  This action cannot be undone.
+                  Are you sure you want to delete{" "}
+                  <strong>{recipe?.name ?? "this recipe"}</strong>? This action
+                  cannot be undone.
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
@@ -819,7 +882,8 @@ export default function RecipeForm({
           ingredient={
             editIngredientState
               ? localIngredients.find(
-                  (ingredient) => ingredient.id === editIngredientState.ingredientId,
+                  (ingredient) =>
+                    ingredient.id === editIngredientState.ingredientId,
                 )
               : undefined
           }
