@@ -452,138 +452,8 @@ export default function RecipeForm({
                 </div>
               </div>
 
-              <div>
-                <div className="grid grid-cols-1 gap-item md:grid-cols-3">
-                  <FormField
-                    control={form.control}
-                    name="flavourCategoryId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Flavour</FormLabel>
-                        <FormControl>
-                          <SearchableSelect
-                            options={flavourOptions}
-                            value={field.value}
-                            onValueChange={(next) => field.onChange(next ?? "")}
-                            placeholder="Select flavour"
-                            searchPlaceholder="Search flavours..."
-                            emptyLabel="No flavour found."
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="proteinCategoryId"
-                    render={({ field }) => (
-                      <FormItem>
-                        {/* Protein can be omitted for savoury recipes by design. */}
-                        <FormLabel>Protein (optional)</FormLabel>
-                        <FormControl>
-                          <SearchableSelect
-                            options={proteinOptions}
-                            value={field.value}
-                            onValueChange={(next) => field.onChange(next)}
-                            placeholder="Select protein"
-                            searchPlaceholder="Search proteins..."
-                            emptyLabel="No protein found."
-                            allowClear
-                            clearLabel="Clear protein"
-                            disabled={!selectedFlavourId || isSweetFlavour}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="typeCategoryId"
-                    render={({ field }) => (
-                      <FormItem>
-                        {/* Optional field marker keeps label-level guidance consistent. */}
-                        <FormLabel>Type (optional)</FormLabel>
-                        <FormControl>
-                          <SearchableSelect
-                            options={availableRecipeTypeOptions}
-                            value={field.value}
-                            onValueChange={(next) => field.onChange(next)}
-                            placeholder="Select recipe type"
-                            searchPlaceholder="Search recipe types..."
-                            emptyLabel="No recipe type found."
-                            allowClear
-                            clearLabel="Clear recipe type"
-                            disabled={!selectedFlavourId}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="mt-2">
-                  {/* Keep inline create flow beneath taxonomy row to avoid field label crowding. */}
-                  <CreateCategoryDialog onCreated={handleCategoryCreated} />
-                </div>
-                <div className="mt-3">
-                  <FormField
-                    control={form.control}
-                    name="excludeFromPlanner"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center gap-2">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <FormLabel>Exclude from meal planner</FormLabel>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <FormField
-                control={form.control}
-                name="images"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Add photo (optional)</FormLabel>
-                    <FormControl>
-                      <ImageUploader
-                        value={
-                          field.value?.map((img) => ({
-                            url: img.url,
-                            isCover: img.isCover ?? false,
-                          })) || []
-                        }
-                        onChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <div className="mb-3">
-            <Subheader>Timing & Portions</Subheader>
-          </div>
-          <div className="section-container">
-            <div className="flex flex-col gap-item">
-              <div className="grid grid-cols-1 gap-item sm:grid-cols-2 lg:grid-cols-12">
-                <div className="lg:col-span-4">
+              <div className="grid grid-cols-1 gap-item md:grid-cols-3">
+                <div>
                   <FormField
                     control={form.control}
                     name="handsOnTime"
@@ -610,7 +480,7 @@ export default function RecipeForm({
                   />
                 </div>
 
-                <div className="lg:col-span-4">
+                <div>
                   <FormField
                     control={form.control}
                     name="totalTime"
@@ -636,41 +506,179 @@ export default function RecipeForm({
                     )}
                   />
                 </div>
-
-                <div className="lg:col-span-4">
-                  <FormField
-                    control={form.control}
-                    name="servings"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Portions</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="number"
-                            min={2}
-                            step={2}
-                            // Keep explicit prompt text for blank numeric input.
-                            placeholder="Enter portions"
-                            // Keep controlled input behavior while still allowing an empty state.
-                            value={(field.value as number | undefined) ?? ""}
-                            onChange={(event) =>
-                              handleNumericFieldChange(field.onChange, event)
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <div className="hidden md:block" aria-hidden />
               </div>
+
+              <FormField
+                control={form.control}
+                name="images"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Photos (optional)</FormLabel>
+                    <FormControl>
+                      <ImageUploader
+                        value={
+                          field.value?.map((img) => ({
+                            url: img.url,
+                            isCover: img.isCover ?? false,
+                          })) || []
+                        }
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="excludeFromPlanner"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center gap-2">
+                      <FormControl>
+                        <Checkbox
+                          id="exclude-from-planner"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <label
+                        htmlFor="exclude-from-planner"
+                        className="type-body cursor-pointer text-foreground"
+                      >
+                        Exclude from planner
+                      </label>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div className="mb-3">
+            <Subheader>Categories</Subheader>
+          </div>
+          <div className="section-container">
+            <div className="grid grid-cols-1 gap-item md:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="flavourCategoryId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Flavour</FormLabel>
+                    <FormControl>
+                      <SearchableSelect
+                        options={flavourOptions}
+                        value={field.value}
+                        onValueChange={(next) => field.onChange(next ?? "")}
+                        placeholder="Select flavour"
+                        searchPlaceholder="Search flavours..."
+                        emptyLabel="No flavour found."
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="proteinCategoryId"
+                render={({ field }) => (
+                  <FormItem>
+                    {/* Protein can be omitted for savoury recipes by design. */}
+                    <FormLabel>Protein (optional)</FormLabel>
+                    <FormControl>
+                      <SearchableSelect
+                        options={proteinOptions}
+                        value={field.value}
+                        onValueChange={(next) => field.onChange(next)}
+                        placeholder="Select protein"
+                        searchPlaceholder="Search proteins..."
+                        emptyLabel="No protein found."
+                        allowClear
+                        clearLabel="Clear protein"
+                        disabled={!selectedFlavourId || isSweetFlavour}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="typeCategoryId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Recipe type (optional)</FormLabel>
+                    <FormControl>
+                      <SearchableSelect
+                        options={availableRecipeTypeOptions}
+                        value={field.value}
+                        onValueChange={(next) => field.onChange(next)}
+                        placeholder="Select recipe type"
+                        searchPlaceholder="Search recipe types..."
+                        emptyLabel="No recipe type found."
+                        allowClear
+                        clearLabel="Clear recipe type"
+                        disabled={!selectedFlavourId}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="mt-2">
+              {/* Keep inline create flow beneath taxonomy row to avoid field label crowding. */}
+              <CreateCategoryDialog onCreated={handleCategoryCreated} />
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div className="mb-3">
+            <Subheader>Portions</Subheader>
+          </div>
+          <div className="section-container">
+            <div className="grid grid-cols-1 gap-item md:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="servings"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Portions</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="number"
+                        min={2}
+                        step={2}
+                        // Keep explicit prompt text for blank numeric input.
+                        placeholder="Enter portions"
+                        // Keep controlled input behavior while still allowing an empty state.
+                        value={(field.value as number | undefined) ?? ""}
+                        onChange={(event) =>
+                          handleNumericFieldChange(field.onChange, event)
+                        }
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
                 name="servingMultiplierForNelson"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="md:col-span-2">
                     {/* Optional field marker keeps label-level guidance consistent. */}
                     <FormLabel>
                       Nelson&apos;s serving multiplier (optional)
@@ -742,6 +750,25 @@ export default function RecipeForm({
                 </FormItem>
               )}
             />
+
+              <FormField
+                control={form.control}
+                name="excludeFromPlanner"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center gap-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel>Exclude from planner</FormLabel>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
           </div>
         </section>
 
