@@ -434,8 +434,8 @@ export default function RecipeForm({
           </div>
           <div className="section-container">
             <div className="flex flex-col gap-3">
-              <div className="grid grid-cols-1 gap-item lg:grid-cols-12 lg:items-end">
-                <div className="lg:col-span-12">
+              <div className="grid grid-cols-1 gap-item lg:grid-cols-3 lg:items-end">
+                <div className="lg:col-span-2">
                   <FormField
                     control={form.control}
                     name="name"
@@ -450,6 +450,7 @@ export default function RecipeForm({
                     )}
                   />
                 </div>
+                <div className="hidden lg:block" aria-hidden />
               </div>
 
               <div className="grid grid-cols-1 gap-item md:grid-cols-3">
