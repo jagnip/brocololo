@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
-import { GripVertical, X } from "lucide-react";
+import { GripVertical, Pencil, Trash2 } from "lucide-react";
 import { IngredientType } from "@/types/ingredient";
 import {
   RecipeIngredientGroupInputType,
@@ -27,6 +27,9 @@ import {
   getDefaultUnitIdForIngredient as resolveDefaultUnitIdForIngredient,
   getFallbackUnitIdFromConversions,
 } from "@/lib/ingredients/default-unit";
+import { Subheader } from "@/components/recipes/recipe-page/subheader";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 type IngredientSelectorProps = {
   ingredients: IngredientType[];
@@ -43,17 +46,40 @@ type IngredientSelectorProps = {
 
 // Keep row layout tokens centralized so primary/secondary line UX stays consistent.
 export const INGREDIENT_ROW_LAYOUT_CLASSES = {
-  rowContainer: "rounded-md border p-2 space-y-2",
-  primaryLine: "flex flex-wrap items-center gap-2 lg:flex-nowrap",
-  secondaryLine: "flex flex-wrap items-center gap-2",
+  // min-w-0: grid/flex parents default to min-width:auto; without this, nested inputs can widen past the viewport (e.g. iPhone SE).
+  rowContainer: "min-w-0 max-w-full space-y-2 rounded-md border p-2",
+  // Phone: col (row1 drag+ingredient; row2–3 qty). Tablet md–lg: row2 = amount|unit|additional one line. Desktop lg+: flattened primary row + additional line.
+  primaryLine:
+    "flex w-full min-w-0 max-w-full flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center lg:gap-2",
+  primaryLineMobileIngredientRow:
+    "flex w-full min-w-0 items-start gap-2 lg:contents",
+  // Phone: col [amount+unit sub-row][additional]. Tablet: single row (inner amountUnitRow uses md:contents). lg:contents for desktop order.
+  primaryLineMobileQtyRow:
+    "flex w-full min-w-0 flex-col gap-2 md:flex-row md:flex-nowrap md:items-center md:gap-2 lg:contents",
+  // Phone: amount|unit only. md+: contents so amount, unit, additional sit in one row (tablet) or flatten to primaryLine (lg).
+  amountUnitRow:
+    "flex w-full min-w-0 flex-row items-stretch gap-2 md:contents",
+  unitSelectWrapper:
+    "flex min-h-0 min-w-0 w-full flex-1 md:w-32 md:flex-none md:shrink-0 lg:order-3",
+  ingredientWithActionsRow:
+    "flex w-full min-w-0 flex-1 items-center gap-2 lg:order-4 lg:min-w-0 lg:flex-1",
+  ingredientRowActions: "flex shrink-0 items-center gap-2",
+  // Nutrition-only row under additional info / actions.
+  nutritionTargetRow:
+    "flex min-w-0 max-w-full flex-wrap items-center gap-x-3 gap-y-2 lg:flex-nowrap",
   // Bigger handle improves drag start reliability on mouse/touch.
   dragHandle: "h-8 w-8 shrink-0 touch-none cursor-grab active:cursor-grabbing",
-  amountInput: "w-28 shrink-0",
-  unitTrigger: "w-32 shrink-0",
-  ingredientContainer: "flex-1 basis-full lg:basis-auto min-w-[320px]",
-  additionalInfoInput: "flex-1 min-w-[200px]",
+  // Phone: flex-1 beside unit. md+: fixed narrow field (tablet one-row + desktop) — flex-none stops amount from growing in the lg row.
+  amountInput:
+    "min-w-0 w-full max-w-full flex-1 basis-0 md:w-20 md:flex-none md:shrink-0 md:basis-auto lg:order-2",
+  unitTrigger:
+    "min-w-0 w-full max-w-full md:w-32 md:shrink-0 lg:shrink-0",
+  ingredientContainer: "min-w-0 w-full flex-1",
+  // Phone: own row, full width. Tablet: same row as amount+unit (flex-1). Desktop: full-width line under primary row (lg:flex-none overrides md:flex-1).
+  additionalInfoInput:
+    "min-w-0 w-full max-w-full md:w-auto md:min-w-0 md:flex-1 md:basis-0 lg:order-5 lg:basis-full lg:w-full lg:flex-none",
   utilityButton: "shrink-0",
-  secondaryRemoveButton: "ml-auto shrink-0",
+  secondaryRemoveButton: "shrink-0",
 } as const;
 
 const UNGROUPED_LANE_KEY = "__ungrouped__";
@@ -118,7 +144,10 @@ export function normalizeGroupedIngredients(input: {
     index,
   }));
 
-  const groupedByLane = new Map<string, Array<(typeof indexedIngredients)[number]>>();
+  const groupedByLane = new Map<
+    string,
+    Array<(typeof indexedIngredients)[number]>
+  >();
   for (const row of indexedIngredients) {
     const laneKey = toLaneKey(row.ingredient.groupTempKey);
     const rows = groupedByLane.get(laneKey) ?? [];
@@ -300,14 +329,17 @@ export function IngredientSelector({
 }: IngredientSelectorProps) {
   const AUTO_SCROLL_EDGE_THRESHOLD_PX = 96;
   const AUTO_SCROLL_MAX_STEP_PX = 18;
-  const [draggingIngredientKey, setDraggingIngredientKey] = React.useState<string | null>(
+  const [draggingIngredientKey, setDraggingIngredientKey] = React.useState<
+    string | null
+  >(null);
+  const [draggingLaneKey, setDraggingLaneKey] = React.useState<string | null>(
     null,
   );
-  const [draggingLaneKey, setDraggingLaneKey] = React.useState<string | null>(null);
-  const [activeIngredientDropSlot, setActiveIngredientDropSlot] = React.useState<string | null>(
-    null,
-  );
-  const [activeLaneDropIndex, setActiveLaneDropIndex] = React.useState<number | null>(null);
+  const [activeIngredientDropSlot, setActiveIngredientDropSlot] =
+    React.useState<string | null>(null);
+  const [activeLaneDropIndex, setActiveLaneDropIndex] = React.useState<
+    number | null
+  >(null);
   const dragPointerYRef = React.useRef<number | null>(null);
   const autoScrollFrameRef = React.useRef<number | null>(null);
   const isDraggingRef = React.useRef(false);
@@ -329,10 +361,14 @@ export function IngredientSelector({
     [groups],
   );
   const canonicalLaneOrder = React.useMemo(
-    () => [UNGROUPED_LANE_KEY, ...normalizedGroups.map((group) => group.tempGroupKey)],
+    () => [
+      UNGROUPED_LANE_KEY,
+      ...normalizedGroups.map((group) => group.tempGroupKey),
+    ],
     [normalizedGroups],
   );
-  const [laneOrder, setLaneOrder] = React.useState<string[]>(canonicalLaneOrder);
+  const [laneOrder, setLaneOrder] =
+    React.useState<string[]>(canonicalLaneOrder);
 
   const normalizedValue = React.useMemo(
     () =>
@@ -388,19 +424,18 @@ export function IngredientSelector({
     }
     const pointerY = dragPointerYRef.current;
     if (pointerY == null) {
-      autoScrollFrameRef.current = window.requestAnimationFrame(runAutoScrollFrame);
+      autoScrollFrameRef.current =
+        window.requestAnimationFrame(runAutoScrollFrame);
       return;
     }
     let deltaY = 0;
     // Auto-scroll viewport near top/bottom edges so long drags are possible.
     if (pointerY <= AUTO_SCROLL_EDGE_THRESHOLD_PX) {
       const intensity =
-        (AUTO_SCROLL_EDGE_THRESHOLD_PX - pointerY) / AUTO_SCROLL_EDGE_THRESHOLD_PX;
+        (AUTO_SCROLL_EDGE_THRESHOLD_PX - pointerY) /
+        AUTO_SCROLL_EDGE_THRESHOLD_PX;
       deltaY = -Math.ceil(Math.max(1, intensity * AUTO_SCROLL_MAX_STEP_PX));
-    } else if (
-      pointerY >=
-      window.innerHeight - AUTO_SCROLL_EDGE_THRESHOLD_PX
-    ) {
+    } else if (pointerY >= window.innerHeight - AUTO_SCROLL_EDGE_THRESHOLD_PX) {
       const intensity =
         (pointerY - (window.innerHeight - AUTO_SCROLL_EDGE_THRESHOLD_PX)) /
         AUTO_SCROLL_EDGE_THRESHOLD_PX;
@@ -409,14 +444,16 @@ export function IngredientSelector({
     if (deltaY !== 0) {
       window.scrollBy(0, deltaY);
     }
-    autoScrollFrameRef.current = window.requestAnimationFrame(runAutoScrollFrame);
+    autoScrollFrameRef.current =
+      window.requestAnimationFrame(runAutoScrollFrame);
   }, [stopAutoScroll]);
 
   const trackDragPointer = React.useCallback(
     (clientY: number) => {
       dragPointerYRef.current = clientY;
       if (autoScrollFrameRef.current == null) {
-        autoScrollFrameRef.current = window.requestAnimationFrame(runAutoScrollFrame);
+        autoScrollFrameRef.current =
+          window.requestAnimationFrame(runAutoScrollFrame);
       }
     },
     [runAutoScrollFrame],
@@ -437,7 +474,12 @@ export function IngredientSelector({
       window.removeEventListener("dragover", handleWindowDragOver);
       stopAutoScroll();
     };
-  }, [draggingIngredientKey, draggingLaneKey, stopAutoScroll, trackDragPointer]);
+  }, [
+    draggingIngredientKey,
+    draggingLaneKey,
+    stopAutoScroll,
+    trackDragPointer,
+  ]);
 
   const syncIngredients = React.useCallback(
     (nextIngredients: RecipeIngredientInputType[]) => {
@@ -536,7 +578,7 @@ export function IngredientSelector({
 
   const updateIngredient = (
     tempIngredientKey: string,
-    patch: Partial<RecipeIngredientInputType>
+    patch: Partial<RecipeIngredientInputType>,
   ) => {
     const updated = normalizedValue.map((ingredient) =>
       ingredient.tempIngredientKey === tempIngredientKey
@@ -553,7 +595,9 @@ export function IngredientSelector({
 
   // Export helper for unit tests so default-unit behavior remains locked down.
   const getDefaultUnitIdForIngredient = (ingredientId: string) => {
-    const ingredient = ingredients.find((candidate) => candidate.id === ingredientId);
+    const ingredient = ingredients.find(
+      (candidate) => candidate.id === ingredientId,
+    );
     if (!ingredient) {
       return null;
     }
@@ -583,47 +627,60 @@ export function IngredientSelector({
     stopAutoScroll();
   };
 
-  const renderDropSlot = (targetGroupTempKey: string | null, targetPosition: number) => {
+  const renderDropSlot = (
+    targetGroupTempKey: string | null,
+    targetPosition: number,
+  ) => {
     const slotKey = `${targetGroupTempKey ?? UNGROUPED_LANE_KEY}-${targetPosition}`;
-    const isIngredientDragging = Boolean(draggingIngredientKey) && !draggingLaneKey;
+    const isIngredientDragging =
+      Boolean(draggingIngredientKey) && !draggingLaneKey;
     const isActiveSlot = activeIngredientDropSlot === slotKey;
+    // Zero layout height: the real target is an absolutely positioned band (h-10) centered on the seam,
+    // overlapping adjacent rows so drops are easy while idle spacing stays flush (pointer-events off).
     return (
       <div
         key={slotKey}
-        // Keep slots visible during drag so users can drop with less precision.
-        className={`h-4 rounded border border-dashed transition-colors ${
-          isIngredientDragging
-            ? "border-muted-foreground/30 bg-muted/30"
-            : "border-transparent bg-transparent"
-        } ${isActiveSlot ? "border-primary/70 bg-primary/10" : ""}`}
-        onDragOver={(event) => {
-          event.preventDefault();
-          if (isIngredientDragging) {
-            trackDragPointer(event.clientY);
-            setActiveIngredientDropSlot(slotKey);
-          }
-        }}
-        onDragEnter={(event) => {
-          event.preventDefault();
-          if (isIngredientDragging) {
-            trackDragPointer(event.clientY);
-            setActiveIngredientDropSlot(slotKey);
-          }
-        }}
-        onDragLeave={() => {
-          if (activeIngredientDropSlot === slotKey) {
-            setActiveIngredientDropSlot(null);
-          }
-        }}
-        onDrop={(event) => {
-          event.preventDefault();
-          if (draggingLaneKey) {
-            return;
-          }
-          onDropToSlot(targetGroupTempKey, targetPosition);
-        }}
-        aria-hidden
-      />
+        className="relative h-0 w-full shrink-0 overflow-visible"
+      >
+        <div
+          className={cn(
+            "absolute left-0 right-0 top-0 z-10 -translate-y-1/2 rounded border border-dashed transition-colors",
+            isIngredientDragging
+              ? "pointer-events-auto h-10 border-muted-foreground/30 bg-muted/30"
+              : "pointer-events-none h-px border-transparent bg-transparent",
+            isActiveSlot &&
+              isIngredientDragging &&
+              "border-primary/70 bg-primary/10",
+          )}
+          onDragOver={(event) => {
+            event.preventDefault();
+            if (isIngredientDragging) {
+              trackDragPointer(event.clientY);
+              setActiveIngredientDropSlot(slotKey);
+            }
+          }}
+          onDragEnter={(event) => {
+            event.preventDefault();
+            if (isIngredientDragging) {
+              trackDragPointer(event.clientY);
+              setActiveIngredientDropSlot(slotKey);
+            }
+          }}
+          onDragLeave={() => {
+            if (activeIngredientDropSlot === slotKey) {
+              setActiveIngredientDropSlot(null);
+            }
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            if (draggingLaneKey) {
+              return;
+            }
+            onDropToSlot(targetGroupTempKey, targetPosition);
+          }}
+          aria-hidden
+        />
+      </div>
     );
   };
 
@@ -640,140 +697,208 @@ export function IngredientSelector({
           draggingIngredientKey === item.tempIngredientKey ? "opacity-60" : ""
         }`}
       >
-        {/* Primary editing row: drag handle, amount/unit, ingredient lookup. */}
+        {/* Primary: phone = 3 bands; tablet md–lg = row1 drag+ingredient, row2 amount|unit|additional; lg+ = flat row + additional line. */}
         <div className={INGREDIENT_ROW_LAYOUT_CLASSES.primaryLine}>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className={INGREDIENT_ROW_LAYOUT_CLASSES.dragHandle}
-            aria-label="Drag ingredient"
-            draggable
-            onDragStart={(event) => {
-              event.stopPropagation();
-              setDraggingIngredientKey(item.tempIngredientKey);
-            }}
-            onDragEnd={() => {
-              setActiveIngredientDropSlot(null);
-              setDraggingIngredientKey(null);
-              stopAutoScroll();
-            }}
+          <div
+            className={INGREDIENT_ROW_LAYOUT_CLASSES.primaryLineMobileIngredientRow}
           >
-            <GripVertical className="h-4 w-4" />
-          </Button>
-          <Input
-            type="number"
-            placeholder="Amount"
-            value={item.amount == null ? "" : item.amount.toString()}
-            onChange={(e) => {
-              const numValue = e.target.value === "" ? null : parseFloat(e.target.value);
-              updateIngredient(item.tempIngredientKey, { amount: numValue });
-            }}
-            className={INGREDIENT_ROW_LAYOUT_CLASSES.amountInput}
-            min={0}
-            // Allow arbitrary decimal precision (e.g. 0.75) in ingredient amounts.
-            step="any"
-            disabled={isAmountDisabled}
-          />
-
-          <Select
-            key={`${item.ingredientId}-${rowIndex}`}
-            // Keep Select controlled with empty-string sentinel to avoid stale Radix trigger text.
-            value={item.unitId ?? ""}
-            onValueChange={(unitId) => {
-              if (!unitId) {
-                // Clearing unit must also clear amount for nullable-unit flow.
-                updateIngredient(item.tempIngredientKey, { unitId: null, amount: null });
-                return;
-              }
-              updateIngredient(item.tempIngredientKey, { unitId });
-            }}
-            disabled={!item.ingredientId}
-          >
-            <SelectTrigger className={INGREDIENT_ROW_LAYOUT_CLASSES.unitTrigger}>
-              <SelectValue placeholder="Unit" />
-            </SelectTrigger>
-            <SelectContent>
-              {units.map((uc) => (
-                <SelectItem key={uc.unitId} value={uc.unitId}>
-                  {getUnitDisplayName({
-                    amount: item.amount,
-                    unitName: uc.unit.name,
-                    unitNamePlural: uc.unit.namePlural ?? null,
-                  })}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <div className={INGREDIENT_ROW_LAYOUT_CLASSES.ingredientContainer}>
-            <SearchableSelect
-              options={ingredientOptions}
-              value={item.ingredientId || null}
-              onValueChange={(next) => {
-                if (!next) {
-                  // Clearing ingredient should fully reset ingredient/unit/amount state.
-                  updateIngredient(item.tempIngredientKey, buildClearIngredientPatch());
-                  return;
-                }
-                const unitId = getDefaultUnitIdForIngredient(next);
-                updateIngredient(item.tempIngredientKey, { ingredientId: next, unitId });
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className={cn(
+                INGREDIENT_ROW_LAYOUT_CLASSES.dragHandle,
+                "lg:order-1",
+              )}
+              aria-label="Drag ingredient"
+              draggable
+              onDragStart={(event) => {
+                event.stopPropagation();
+                setDraggingIngredientKey(item.tempIngredientKey);
               }}
-              onCreateOption={(typedName) => {
-                if (rowIndex < 0) {
-                  return;
-                }
-                onCreateIngredientRequested?.({
-                  rowIndex,
-                  initialName: typedName,
+              onDragEnd={() => {
+                setActiveIngredientDropSlot(null);
+                setDraggingIngredientKey(null);
+                stopAutoScroll();
+              }}
+            >
+              <GripVertical className="h-4 w-4" />
+            </Button>
+
+            <div
+              className={INGREDIENT_ROW_LAYOUT_CLASSES.ingredientWithActionsRow}
+            >
+              <div
+                className={INGREDIENT_ROW_LAYOUT_CLASSES.ingredientContainer}
+              >
+                <SearchableSelect
+                  className="min-w-0 max-w-full"
+                  options={ingredientOptions}
+                  value={item.ingredientId || null}
+                  onValueChange={(next) => {
+                    if (!next) {
+                      // Clearing ingredient should fully reset ingredient/unit/amount state.
+                      updateIngredient(
+                        item.tempIngredientKey,
+                        buildClearIngredientPatch(),
+                      );
+                      return;
+                    }
+                    const unitId = getDefaultUnitIdForIngredient(next);
+                    updateIngredient(item.tempIngredientKey, {
+                      ingredientId: next,
+                      unitId,
+                    });
+                  }}
+                  onCreateOption={(typedName) => {
+                    if (rowIndex < 0) {
+                      return;
+                    }
+                    onCreateIngredientRequested?.({
+                      rowIndex,
+                      initialName: typedName,
+                    });
+                  }}
+                  placeholder="Select ingredient..."
+                  searchPlaceholder="Search ingredients..."
+                  emptyLabel="No ingredient found."
+                  allowClear
+                  clearLabel="Clear ingredient"
+                  renderIcon={(option) => (
+                    <IngredientIcon
+                      icon={option.icon ?? null}
+                      name={option.label}
+                      size={16}
+                    />
+                  )}
+                />
+              </div>
+              <div
+                className={INGREDIENT_ROW_LAYOUT_CLASSES.ingredientRowActions}
+              >
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  disabled={!item.ingredientId}
+                  className={INGREDIENT_ROW_LAYOUT_CLASSES.utilityButton}
+                  aria-label="Edit ingredient"
+                  onClick={() => {
+                    if (!item.ingredientId) {
+                      return;
+                    }
+                    onEditIngredientRequested?.(item.ingredientId);
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className={
+                    INGREDIENT_ROW_LAYOUT_CLASSES.secondaryRemoveButton
+                  }
+                  aria-label="Remove ingredient"
+                  onClick={() => removeIngredient(item.tempIngredientKey)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className={INGREDIENT_ROW_LAYOUT_CLASSES.primaryLineMobileQtyRow}
+          >
+            <div
+              className={INGREDIENT_ROW_LAYOUT_CLASSES.amountUnitRow}
+            >
+              <Input
+                type="number"
+                placeholder="Amount"
+                value={item.amount == null ? "" : item.amount.toString()}
+                onChange={(e) => {
+                  const numValue =
+                    e.target.value === "" ? null : parseFloat(e.target.value);
+                  updateIngredient(item.tempIngredientKey, { amount: numValue });
+                }}
+                className={INGREDIENT_ROW_LAYOUT_CLASSES.amountInput}
+                min={0}
+                // Allow arbitrary decimal precision (e.g. 0.75) in ingredient amounts.
+                step="any"
+                disabled={isAmountDisabled}
+              />
+
+              <div
+                className={INGREDIENT_ROW_LAYOUT_CLASSES.unitSelectWrapper}
+              >
+                <Select
+                  key={`${item.ingredientId}-${rowIndex}`}
+                  // Keep Select controlled with empty-string sentinel to avoid stale Radix trigger text.
+                  value={item.unitId ?? ""}
+                  onValueChange={(unitId) => {
+                    if (!unitId) {
+                      // Clearing unit must also clear amount for nullable-unit flow.
+                      updateIngredient(item.tempIngredientKey, {
+                        unitId: null,
+                        amount: null,
+                      });
+                      return;
+                    }
+                    updateIngredient(item.tempIngredientKey, { unitId });
+                  }}
+                  disabled={!item.ingredientId}
+                >
+                  <SelectTrigger
+                    className={INGREDIENT_ROW_LAYOUT_CLASSES.unitTrigger}
+                  >
+                    <SelectValue placeholder="Unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {units.map((uc) => (
+                      <SelectItem key={uc.unitId} value={uc.unitId}>
+                        {getUnitDisplayName({
+                          amount: item.amount,
+                          unitName: uc.unit.name,
+                          unitNamePlural: uc.unit.namePlural ?? null,
+                        })}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Phone: third row. Tablet: same row as amount+unit. Desktop: line under primary controls. */}
+            <Input
+              type="text"
+              placeholder="Additional info"
+              value={item.additionalInfo || ""}
+              onChange={(e) => {
+                updateIngredient(item.tempIngredientKey, {
+                  additionalInfo: e.target.value,
                 });
               }}
-              placeholder="Select ingredient..."
-              searchPlaceholder="Search ingredients..."
-              emptyLabel="No ingredient found."
-              allowClear
-              clearLabel="Clear ingredient"
-              renderIcon={(option) => (
-                <IngredientIcon
-                  icon={option.icon ?? null}
-                  name={option.label}
-                  size={16}
-                />
-              )}
+              className={INGREDIENT_ROW_LAYOUT_CLASSES.additionalInfoInput}
+              maxLength={50}
             />
           </div>
         </div>
 
-        {/* Secondary row: utility actions and metadata fields. */}
-        <div className={INGREDIENT_ROW_LAYOUT_CLASSES.secondaryLine}>
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={!item.ingredientId}
-            className={INGREDIENT_ROW_LAYOUT_CLASSES.utilityButton}
-            onClick={() => {
-              if (!item.ingredientId) {
-                return;
-              }
-              onEditIngredientRequested?.(item.ingredientId);
-            }}
+        {/* Third row: nutrition target — label + person toggles. */}
+        <div className={INGREDIENT_ROW_LAYOUT_CLASSES.nutritionTargetRow}>
+          <Label
+            id={`nutrition-target-label-${item.tempIngredientKey}`}
+            className="shrink-0 normal-case tracking-normal"
           >
-            Edit
-          </Button>
-
-          <Input
-            type="text"
-            placeholder="Additional info"
-            value={item.additionalInfo || ""}
-            onChange={(e) => {
-              updateIngredient(item.tempIngredientKey, { additionalInfo: e.target.value });
-            }}
-            className={INGREDIENT_ROW_LAYOUT_CLASSES.additionalInfoInput}
-            maxLength={50}
-          />
-
-          <div className="flex items-center gap-2 text-sm whitespace-nowrap">
-            <span className="text-muted-foreground">Nutrition target:</span>
+            Only use for:
+          </Label>
+          <div
+            className="flex flex-wrap items-center gap-2"
+            role="radiogroup"
+            aria-labelledby={`nutrition-target-label-${item.tempIngredientKey}`}
+          >
             <Button
               type="button"
               size="default"
@@ -782,6 +907,8 @@ export function IngredientSelector({
                   ? "default"
                   : "outline"
               }
+              role="radio"
+              aria-checked={(item.nutritionTarget ?? "BOTH") === "PRIMARY_ONLY"}
               onClick={() =>
                 updateIngredient(item.tempIngredientKey, {
                   nutritionTarget: getNextNutritionTarget(
@@ -801,6 +928,10 @@ export function IngredientSelector({
                   ? "default"
                   : "outline"
               }
+              role="radio"
+              aria-checked={
+                (item.nutritionTarget ?? "BOTH") === "SECONDARY_ONLY"
+              }
               onClick={() =>
                 updateIngredient(item.tempIngredientKey, {
                   nutritionTarget: getNextNutritionTarget(
@@ -813,16 +944,6 @@ export function IngredientSelector({
               Nelson
             </Button>
           </div>
-
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className={INGREDIENT_ROW_LAYOUT_CLASSES.secondaryRemoveButton}
-            onClick={() => removeIngredient(item.tempIngredientKey)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </div>
       </div>
     );
@@ -836,8 +957,11 @@ export function IngredientSelector({
   }) => {
     const laneRows = getLaneRows(lane.groupTempKey);
     return (
-      <section key={lane.groupTempKey ?? UNGROUPED_LANE_KEY} className="space-y-2 rounded-md border p-3">
-        <div className="flex items-center gap-2">
+      <section
+        key={lane.groupTempKey ?? UNGROUPED_LANE_KEY}
+        className="min-w-0 max-w-full space-y-1 rounded-md border p-2"
+      >
+        <div className="flex min-w-0 items-center gap-2">
           <Button
             type="button"
             variant="ghost"
@@ -867,7 +991,7 @@ export function IngredientSelector({
                 renameGroup(lane.groupTempKey, event.target.value);
               }}
               placeholder="Group name"
-              className="max-w-sm"
+              className="min-w-0 max-w-full flex-1 sm:max-w-sm"
             />
           ) : (
             <h4 className="text-sm font-semibold">{lane.title}</h4>
@@ -876,17 +1000,18 @@ export function IngredientSelector({
           {lane.allowRename && lane.groupTempKey ? (
             <Button
               type="button"
-              variant="ghost"
-              size="default"
-              className="ml-auto"
+              variant="outline"
+              size="icon"
+              className="ml-auto shrink-0"
+              aria-label="Remove group"
               onClick={() => deleteGroup(lane.groupTempKey!)}
             >
-              Remove group
+              <Trash2 className="h-4 w-4" />
             </Button>
           ) : null}
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-1">
           {renderDropSlot(lane.groupTempKey, 0)}
           {laneRows.map((row, index) => (
             <React.Fragment key={row.tempIngredientKey}>
@@ -909,7 +1034,8 @@ export function IngredientSelector({
 
   const ungroupedRows = getLaneRows(null);
   const shouldRenderUngroupedLane =
-    ungroupedRows.length > 0 || (normalizedGroups.length === 0 && normalizedValue.length > 0);
+    ungroupedRows.length > 0 ||
+    (normalizedGroups.length === 0 && normalizedValue.length > 0);
   const visibleLanes = laneOrder
     .map((laneKey) => {
       if (laneKey === UNGROUPED_LANE_KEY) {
@@ -918,12 +1044,14 @@ export function IngredientSelector({
         }
         return {
           laneKey,
-          title: normalizedGroups.length === 0 ? "Ingredients" : "Ungrouped",
+          title: "Ungrouped",
           groupTempKey: null,
           allowRename: false,
         };
       }
-      const group = normalizedGroups.find((entry) => entry.tempGroupKey === laneKey);
+      const group = normalizedGroups.find(
+        (entry) => entry.tempGroupKey === laneKey,
+      );
       if (!group) {
         return null;
       }
@@ -934,7 +1062,16 @@ export function IngredientSelector({
         allowRename: true,
       };
     })
-    .filter((lane): lane is { laneKey: string; title: string; groupTempKey: string | null; allowRename: boolean } => Boolean(lane));
+    .filter(
+      (
+        lane,
+      ): lane is {
+        laneKey: string;
+        title: string;
+        groupTempKey: string | null;
+        allowRename: boolean;
+      } => Boolean(lane),
+    );
 
   const onDropLane = (targetIndex: number) => {
     if (!draggingLaneKey) {
@@ -958,62 +1095,71 @@ export function IngredientSelector({
     return (
       <div
         key={`lane-drop-slot-${index}`}
-        // Larger lane slots make group reordering easier to target.
-        className={`h-4 rounded border border-dashed transition-colors ${
-          isLaneDragging
-            ? "border-muted-foreground/30 bg-muted/30"
-            : "border-transparent bg-transparent"
-        } ${isActiveLaneSlot ? "border-primary/70 bg-primary/10" : ""}`}
-        onDragOver={(event) => {
-          event.preventDefault();
-          if (isLaneDragging) {
-            trackDragPointer(event.clientY);
-            setActiveLaneDropIndex(index);
-          }
-        }}
-        onDragEnter={(event) => {
-          event.preventDefault();
-          if (isLaneDragging) {
-            trackDragPointer(event.clientY);
-            setActiveLaneDropIndex(index);
-          }
-        }}
-        onDragLeave={() => {
-          if (activeLaneDropIndex === index) {
-            setActiveLaneDropIndex(null);
-          }
-        }}
-        onDrop={(event) => {
-          event.preventDefault();
-          onDropLane(index);
-        }}
-        aria-hidden
-      />
+        className="relative h-0 w-full shrink-0 overflow-visible"
+      >
+        <div
+          className={cn(
+            "absolute left-0 right-0 top-0 z-10 -translate-y-1/2 rounded border border-dashed transition-colors",
+            isLaneDragging
+              ? "pointer-events-auto h-10 border-muted-foreground/30 bg-muted/30"
+              : "pointer-events-none h-px border-transparent bg-transparent",
+            isActiveLaneSlot &&
+              isLaneDragging &&
+              "border-primary/70 bg-primary/10",
+          )}
+          onDragOver={(event) => {
+            event.preventDefault();
+            if (isLaneDragging) {
+              trackDragPointer(event.clientY);
+              setActiveLaneDropIndex(index);
+            }
+          }}
+          onDragEnter={(event) => {
+            event.preventDefault();
+            if (isLaneDragging) {
+              trackDragPointer(event.clientY);
+              setActiveLaneDropIndex(index);
+            }
+          }}
+          onDragLeave={() => {
+            if (activeLaneDropIndex === index) {
+              setActiveLaneDropIndex(null);
+            }
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            onDropLane(index);
+          }}
+          aria-hidden
+        />
+      </div>
     );
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold">Ingredient groups</h3>
-        <div className="flex items-center gap-2">
-          {/* Keep ungrouped flow available without forcing groups first. */}
-          <Button type="button" variant="outline" onClick={() => addIngredient(null)}>
-            Add Ingredient
-          </Button>
-          <Button type="button" variant="outline" onClick={addGroup}>
-            Add Group
-          </Button>
-        </div>
+    <div className="min-w-0 w-full max-w-full">
+      <div className="mb-3">
+        <Subheader>Ingredients</Subheader>
       </div>
 
-      {renderLaneDropSlot(0)}
-      {visibleLanes.map((lane, index) => (
-        <React.Fragment key={`lane-${lane.laneKey}`}>
-          {renderLane(lane)}
-          {renderLaneDropSlot(index + 1)}
-        </React.Fragment>
-      ))}
+      <div className="flex min-w-0 flex-col gap-2">
+        {visibleLanes.map((lane, index) => (
+          <div
+            key={`lane-${lane.laneKey}`}
+            className="flex min-w-0 flex-col gap-0"
+          >
+            {index === 0 ? renderLaneDropSlot(0) : null}
+            {renderLane(lane)}
+            {renderLaneDropSlot(index + 1)}
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 flex justify-start">
+        <Button type="button" variant="outline" onClick={addGroup}>
+          Add group
+        </Button>
+      </div>
     </div>
   );
 }
