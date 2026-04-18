@@ -57,6 +57,7 @@ import { EditIngredientDialog } from "./edit-ingredient-dialog";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { reconcileIngredientUnitsAfterUpdate } from "./ingredient-row-adjustments";
 import { MESSAGES } from "@/lib/messages";
+import { Label } from "@/components/ui/label";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { Trash2 } from "lucide-react";
 import { Subheader } from "../recipe-page/subheader";
@@ -545,12 +546,12 @@ export default function RecipeForm({
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
-                      <label
+                      <Label
                         htmlFor="exclude-from-planner"
-                        className="type-body cursor-pointer text-foreground"
+                        className="shrink-0 normal-case tracking-normal"
                       >
                         Exclude from planner
-                      </label>
+                      </Label>
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -648,66 +649,78 @@ export default function RecipeForm({
             <Subheader>Portions</Subheader>
           </div>
           <div className="section-container">
-            <div className="grid grid-cols-1 gap-item md:grid-cols-3">
-              <FormField
-                control={form.control}
-                name="servings"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Portions</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="number"
-                        min={2}
-                        step={2}
-                        // Keep explicit prompt text for blank numeric input.
-                        placeholder="Enter portions"
-                        // Keep controlled input behavior while still allowing an empty state.
-                        value={(field.value as number | undefined) ?? ""}
-                        onChange={(event) =>
-                          handleNumericFieldChange(field.onChange, event)
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Match Basics: `gap-3` between stacked field groups (same as name row → timing row). */}
+            <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-1 gap-item md:grid-cols-3">
+                <div>
+                  <FormField
+                    control={form.control}
+                    name="servings"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Portions</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            min={2}
+                            step={2}
+                            // Keep explicit prompt text for blank numeric input.
+                            placeholder="Enter portions"
+                            // Keep controlled input behavior while still allowing an empty state.
+                            value={(field.value as number | undefined) ?? ""}
+                            onChange={(event) =>
+                              handleNumericFieldChange(field.onChange, event)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="hidden md:block" aria-hidden />
+                <div className="hidden md:block" aria-hidden />
+              </div>
 
+              {/* One row per household member; add more columns here when multi-person UI ships. */}
               <FormField
                 control={form.control}
                 name="servingMultiplierForNelson"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    {/* Optional field marker keeps label-level guidance consistent. */}
-                    <FormLabel>
-                      Nelson&apos;s serving multiplier (optional)
+                  <FormItem>
+                    <FormLabel className="text-muted-foreground">
+                      Serving multiplier
                     </FormLabel>
                     <FormControl>
-                      <div
-                        className="flex flex-wrap gap-2"
-                        role="radiogroup"
-                        aria-label="Nelson serving multiplier"
-                      >
-                        {nelsonMultiplierOptions.map((multiplier) => {
-                          // Keep the UI default selected at 1 without changing backend validation rules.
-                          const selectedMultiplier =
-                            (field.value as number | null | undefined) ?? 1;
-                          const checked = selectedMultiplier === multiplier;
-                          return (
-                            <Button
-                              key={multiplier}
-                              type="button"
-                              role="radio"
-                              aria-checked={checked}
-                              variant={checked ? "default" : "outline"}
-                              onClick={() => field.onChange(multiplier)}
-                            >
-                              {multiplier}
-                            </Button>
-                          );
-                        })}
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-item">
+                        <Label className="shrink-0 ">
+                          Nelson
+                        </Label>
+                        <div
+                          className="flex min-w-0 flex-1 flex-wrap gap-2"
+                          role="radiogroup"
+                          aria-label="Nelson serving multiplier"
+                        >
+                          {nelsonMultiplierOptions.map((multiplier) => {
+                            // Keep the UI default selected at 1 without changing backend validation rules.
+                            const selectedMultiplier =
+                              (field.value as number | null | undefined) ?? 1;
+                            const checked = selectedMultiplier === multiplier;
+                            return (
+                              <Button
+                                key={multiplier}
+                                type="button"
+                                role="radio"
+                                aria-checked={checked}
+                                variant={checked ? "default" : "outline"}
+                                onClick={() => field.onChange(multiplier)}
+                              >
+                                {multiplier}
+                              </Button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -719,15 +732,13 @@ export default function RecipeForm({
         </section>
 
         <section>
-          <div className="mb-3">
-            <Subheader>Ingredients</Subheader>
-          </div>
-          <div className="section-container">
+          <div className="section-container min-w-0">
             <FormField
               control={form.control}
               name="ingredients"
               render={({ field }) => (
-                <FormItem>
+                // min-w-0 lets the grid shrink on narrow viewports so flex children don’t force horizontal scroll.
+                <FormItem className="min-w-0">
                   <FormControl>
                     <IngredientSelector
                       ingredients={localIngredients}
@@ -751,25 +762,6 @@ export default function RecipeForm({
                 </FormItem>
               )}
             />
-
-              <FormField
-                control={form.control}
-                name="excludeFromPlanner"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center gap-2">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel>Exclude from planner</FormLabel>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
           </div>
         </section>
 
@@ -778,39 +770,33 @@ export default function RecipeForm({
             <Subheader>Instructions</Subheader>
           </div>
           <div className="section-container">
-            <FormField
-              control={form.control}
-              name="instructions"
-              render={({ field }) => {
-                const ingredientRows = form.watch("ingredients");
-                const ingredientOptions = ingredientRows.map((row) => ({
-                  tempIngredientKey: row.tempIngredientKey,
-                  label: getIngredientOptionLabel(row),
-                }));
+            {/* Steps first, then notes — same vertical rhythm as Basics (`gap-3`). */}
+            <div className="flex flex-col gap-3">
+              <FormField
+                control={form.control}
+                name="instructions"
+                render={({ field }) => {
+                  const ingredientRows = form.watch("ingredients");
+                  const ingredientOptions = ingredientRows.map((row) => ({
+                    tempIngredientKey: row.tempIngredientKey,
+                    label: getIngredientOptionLabel(row),
+                  }));
 
-                return (
-                  <FormItem>
-                    <FormControl>
-                      <InstructionStepsEditor
-                        value={field.value}
-                        onChange={field.onChange}
-                        ingredientOptions={ingredientOptions}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
-          </div>
-        </section>
+                  return (
+                    <FormItem>
+                      <FormControl>
+                        <InstructionStepsEditor
+                          value={field.value}
+                          onChange={field.onChange}
+                          ingredientOptions={ingredientOptions}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
 
-        <section>
-          <div className="mb-3">
-            <Subheader>Notes</Subheader>
-          </div>
-          <div className="section-container">
-            <div className="flex flex-col gap-item">
               <FormField
                 control={form.control}
                 name="notes"
