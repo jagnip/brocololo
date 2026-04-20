@@ -1036,6 +1036,8 @@ export function IngredientSelector({
   const shouldRenderUngroupedLane =
     ungroupedRows.length > 0 ||
     (normalizedGroups.length === 0 && normalizedValue.length > 0);
+  // When the ungrouped lane is hidden, expose a footer action to add back an ungrouped row.
+  const shouldShowFooterUngroupedAdd = !shouldRenderUngroupedLane;
   const visibleLanes = laneOrder
     .map((laneKey) => {
       if (laneKey === UNGROUPED_LANE_KEY) {
@@ -1155,7 +1157,16 @@ export function IngredientSelector({
         ))}
       </div>
 
-      <div className="mt-3 flex justify-start">
+      <div className="mt-3 flex justify-start gap-2">
+        {shouldShowFooterUngroupedAdd ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => addIngredient(null)}
+          >
+            Add ingredient
+          </Button>
+        ) : null}
         <Button type="button" variant="outline" onClick={addGroup}>
           Add group
         </Button>
