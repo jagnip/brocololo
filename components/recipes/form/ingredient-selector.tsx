@@ -959,7 +959,7 @@ export function IngredientSelector({
     return (
       <section
         key={lane.groupTempKey ?? UNGROUPED_LANE_KEY}
-        className="min-w-0 max-w-full space-y-1 rounded-md border p-2"
+        className="min-w-0 max-w-full space-y-1 rounded-md p-2"
       >
         <div className="flex min-w-0 items-center gap-2">
           <Button

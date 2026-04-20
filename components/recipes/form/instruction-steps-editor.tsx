@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Trash2 } from "lucide-react";
 
 type IngredientOption = {
   tempIngredientKey: string;
@@ -57,7 +58,8 @@ export function InstructionStepsEditor({
       {value.map((step, index) => (
         <div
           key={step.id ?? `new-step-${index}`}
-          className="border rounded-md p-3 space-y-2"
+          // Match ingredient-row container spacing so both editors feel consistent.
+          className="border rounded-md p-2 space-y-2"
         >
           <Textarea
             value={step.text}
@@ -88,8 +90,15 @@ export function InstructionStepsEditor({
             })}
           </div>
 
-          <Button type="button" variant="ghost" onClick={() => removeStep(index)}>
-            Remove step
+          {/* Keep destructive affordance compact and consistent with other icon-only row actions. */}
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label={`Remove step ${index + 1}`}
+            onClick={() => removeStep(index)}
+          >
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       ))}

@@ -34,6 +34,7 @@ import {
   formatIngredientLabel,
   getUnitDisplayName,
   recipeToFormData,
+  toSentenceCaseIngredientName,
 } from "@/lib/recipes/helpers";
 import { IngredientType } from "@/types/ingredient";
 import { IngredientSelector } from "./ingredient-selector";
@@ -141,7 +142,9 @@ export default function RecipeForm({
     const selectedUnit =
       ingredient?.unitConversions.find((unit) => unit.unitId === row.unitId)
         ?.unit ?? null;
-    const ingredientName = ingredient?.name ?? "Select ingredient";
+    const ingredientName = ingredient
+      ? toSentenceCaseIngredientName(ingredient.name)
+      : "Select ingredient";
     // Keep amount labels consistent with recipe page formatting (no trailing .0).
     const amountLabel =
       row.amount == null ? null : formatIngredientAmount(row.amount, 2);
