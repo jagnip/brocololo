@@ -302,7 +302,7 @@ export default function IngredientForm({
         />
 
         {/* Tablet+ layout: brand/category share row at 50/50. */}
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-x-3 gap-y-4 md:grid-cols-2">
           <FormField
             control={form.control}
             name="brand"
@@ -344,7 +344,7 @@ export default function IngredientForm({
         </div>
 
         {/* Tablet+ layout: icon/url share row at 1/3 + 2/3. */}
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-3 gap-y-4 md:grid-cols-3">
           <FormField
             control={form.control}
             name="icon"
@@ -384,7 +384,7 @@ export default function IngredientForm({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-4 md:grid-cols-4">
           <FormField
             control={form.control}
             name="calories"
@@ -502,7 +502,7 @@ export default function IngredientForm({
             return (
               <div
                 key={row.id}
-                className="grid grid-cols-1 items-end gap-2 md:grid-cols-4"
+                className="grid grid-cols-1 items-end gap-x-3 gap-y-4 md:grid-cols-4"
               >
                 <div className="md:col-span-1">
                   <FormField
@@ -627,11 +627,13 @@ export default function IngredientForm({
           <FormField
             control={form.control}
             name="unitConversions"
-            render={() => (
-              <FormItem>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ fieldState }) =>
+              fieldState.error ? (
+                <FormItem>
+                  <FormMessage />
+                </FormItem>
+              ) : null
+            }
           />
         </div>
 
