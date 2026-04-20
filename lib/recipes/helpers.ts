@@ -73,6 +73,17 @@ export function formatIngredientLabel(input: {
   return input.additionalInfo ? `${base} (${input.additionalInfo})` : base;
 }
 
+/**
+ * Converts leading Title Case ingredient names to sentence case for inline labels.
+ * Examples: "Egg" -> "egg", "Egg (L)" -> "egg (L)", "BBQ sauce" stays unchanged.
+ */
+export function toSentenceCaseIngredientName(name: string): string {
+  if (!/^[A-Z][a-z]/.test(name)) {
+    return name;
+  }
+  return `${name.charAt(0).toLowerCase()}${name.slice(1)}`;
+}
+
 function normalizeUnitToken(unitName: string | null | undefined): string {
   return (unitName ?? "").trim().toLowerCase();
 }
@@ -288,7 +299,7 @@ export function formatInstructionIngredientBadge(input: {
     amountText,
     shouldHideUnit ? null : resolvedUnitName,
     gramsText ? `(${gramsText})` : null,
-    ingredientName,
+    toSentenceCaseIngredientName(ingredientName),
   ]
     .filter((token): token is string => Boolean(token))
     .join(" ");

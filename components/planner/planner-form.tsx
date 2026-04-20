@@ -22,7 +22,10 @@ import { PlanView } from "./plan-view";
 import { useCallback, useEffect, useState } from "react";
 import { PlanInputType } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
-import type { DayTimeLimitsType, RollingRecipeType } from "@/lib/validations/planner";
+import type {
+  DayTimeLimitsType,
+  RollingRecipeType,
+} from "@/lib/validations/planner";
 import { getDaysInRange, formatDayLabel } from "@/lib/planner/helpers";
 import {
   type MealTimeLimits,
@@ -79,17 +82,22 @@ export function PlannerForm({
   const [plan, setPlan] = useState<PlanInputType | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [hasInvalidTimeLimitInputs, setHasInvalidTimeLimitInputs] = useState(false);
-  const [hasInvalidRollingMealsInputs, setHasInvalidRollingMealsInputs] = useState(false);
+  const [hasInvalidTimeLimitInputs, setHasInvalidTimeLimitInputs] =
+    useState(false);
+  const [hasInvalidRollingMealsInputs, setHasInvalidRollingMealsInputs] =
+    useState(false);
   const [isFormCollapsed, setIsFormCollapsed] = useState(false);
   // Desktop split: form(2) + plan(4), with collapsible left rail.
   const desktopGridColumns = isFormCollapsed
     ? "lg:grid-cols-[2rem_minmax(0,1fr)]"
     : "lg:grid-cols-[minmax(306px,1fr)_minmax(0,2fr)]";
   // Default mode is grouped editing; users can expand to per-day limits.
-  const [timeLimitsMode, setTimeLimitsMode] = useState<TimeLimitsMode>("grouped");
+  const [timeLimitsMode, setTimeLimitsMode] =
+    useState<TimeLimitsMode>("grouped");
   // Preserve all user edits made in per-day mode across mode toggles.
-  const [dailyDraft, setDailyDraft] = useState<DayTimeLimitsType[] | null>(null);
+  const [dailyDraft, setDailyDraft] = useState<DayTimeLimitsType[] | null>(
+    null,
+  );
   const [groupTimeLimits, setGroupTimeLimits] = useState<TimeLimitGroups>({
     weekday: { ...WEEKDAY_TIME_LIMIT_DEFAULTS },
     weekend: { ...WEEKEND_TIME_LIMIT_DEFAULTS },
@@ -145,7 +153,8 @@ export function PlannerForm({
       if (!prev) return prev;
       return prev.map((slot) => {
         const key = `${slot.date.toISOString()}-${slot.mealType}`;
-        if (key !== slotKey || !slot.recipe || slot.alternatives.length === 0) return slot;
+        if (key !== slotKey || !slot.recipe || slot.alternatives.length === 0)
+          return slot;
 
         // Rotate: current recipe goes to end of alternatives, first alternative becomes recipe
         const [nextRecipe, ...restAlternatives] = slot.alternatives;
@@ -169,20 +178,25 @@ export function PlannerForm({
     });
   }, []);
 
-  const handleReplace = useCallback((slotKey: string, newRecipe: RecipeType) => {
-    setPlan((prev) => {
-      if (!prev) return prev;
-      return prev.map((slot) => {
-        const key = `${slot.date.toISOString()}-${slot.mealType}`;
-        if (key !== slotKey) return slot;
-        return {
-          ...slot,
-          recipe: newRecipe,
-          alternatives: slot.alternatives.filter((r) => r.id !== newRecipe.id),
-        };
+  const handleReplace = useCallback(
+    (slotKey: string, newRecipe: RecipeType) => {
+      setPlan((prev) => {
+        if (!prev) return prev;
+        return prev.map((slot) => {
+          const key = `${slot.date.toISOString()}-${slot.mealType}`;
+          if (key !== slotKey) return slot;
+          return {
+            ...slot,
+            recipe: newRecipe,
+            alternatives: slot.alternatives.filter(
+              (r) => r.id !== newRecipe.id,
+            ),
+          };
+        });
       });
-    });
-  }, []);
+    },
+    [],
+  );
 
   async function handleSavePlan(plan: PlanInputType) {
     setIsSaving(true);
@@ -190,7 +204,9 @@ export function PlannerForm({
       const result = await savePlan(plan);
       if (result.type === "date_conflict") {
         // Hard-block collisions so one plan/log owner exists per date globally.
-        toast.error(`Cannot save plan. Date conflict: ${result.dates.join(", ")}`);
+        toast.error(
+          `Cannot save plan. Date conflict: ${result.dates.join(", ")}`,
+        );
         return;
       }
       if (result.type === "error") {
@@ -212,7 +228,9 @@ export function PlannerForm({
 
   const dateRange = form.watch("dateRange");
   // Keep a narrowed generated plan reference so callback closures stay non-null-safe.
-  const generatedPlan = shouldShowGeneratedPlan(plan, isGenerating) ? plan : null;
+  const generatedPlan = shouldShowGeneratedPlan(plan, isGenerating)
+    ? plan
+    : null;
   // Keep plan/create actions in the global top bar so controls stay in one place.
   const topbarActions = [
     {
@@ -234,7 +252,10 @@ export function PlannerForm({
       onClick: () => {
         void form.handleSubmit(onSubmit)();
       },
-      disabled: isGenerating || hasInvalidTimeLimitInputs || hasInvalidRollingMealsInputs,
+      disabled:
+        isGenerating ||
+        hasInvalidTimeLimitInputs ||
+        hasInvalidRollingMealsInputs,
       ariaBusy: isGenerating,
       variant: "default" as const,
       size: "default" as const,
@@ -247,7 +268,9 @@ export function PlannerForm({
       new Date(dateRange.start),
       new Date(dateRange.end),
     );
-    const previousDaily = form.getValues("dailyTimeLimits") as DayTimeLimitsType[];
+    const previousDaily = form.getValues(
+      "dailyTimeLimits",
+    ) as DayTimeLimitsType[];
 
     // Keep form payload always as per-day limits, regardless of visible mode.
     if (timeLimitsMode === "grouped") {
@@ -255,15 +278,27 @@ export function PlannerForm({
       return;
     }
 
-    const mergedDaily = mergeDailyLimitsByDate(days, previousDaily, groupTimeLimits);
+    const mergedDaily = mergeDailyLimitsByDate(
+      days,
+      previousDaily,
+      groupTimeLimits,
+    );
     replace(mergedDaily);
     // Keep draft aligned with current range while user is in daily mode.
     setDailyDraft(mergedDaily);
-  }, [dateRange?.start, dateRange?.end, groupTimeLimits, timeLimitsMode, form, replace]);
+  }, [
+    dateRange?.start,
+    dateRange?.end,
+    groupTimeLimits,
+    timeLimitsMode,
+    form,
+    replace,
+  ]);
 
-  const daysInRange = dateRange?.start && dateRange?.end
-    ? getDaysInRange(new Date(dateRange.start), new Date(dateRange.end))
-    : [];
+  const daysInRange =
+    dateRange?.start && dateRange?.end
+      ? getDaysInRange(new Date(dateRange.start), new Date(dateRange.end))
+      : [];
   const { hasWeekdays, hasWeekend } = getRangeGroupAvailability(daysInRange);
 
   function updateGroupLimit(
@@ -309,7 +344,9 @@ export function PlannerForm({
         }}
       />
       {/* Desktop layout follows a 2/4 split: form | plan. */}
-      <div className={`flex flex-col gap-6 lg:grid ${desktopGridColumns} lg:items-start lg:gap-x-4 lg:gap-y-6`}>
+      <div
+        className={`flex flex-col gap-6 lg:grid ${desktopGridColumns} lg:items-start lg:gap-x-4 lg:gap-y-6`}
+      >
         <div className="lg:sticky lg:top-20">
           <Form {...form}>
             <form
@@ -329,63 +366,72 @@ export function PlannerForm({
                   size="icon"
                   onClick={() => setIsFormCollapsed((prev) => !prev)}
                   aria-expanded={!isFormCollapsed}
-                  aria-label={isFormCollapsed ? "Expand planner form" : "Collapse planner form"}
+                  aria-label={
+                    isFormCollapsed
+                      ? "Expand planner form"
+                      : "Collapse planner form"
+                  }
                   className="size-8"
                 >
-                  {isFormCollapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+                  {isFormCollapsed ? (
+                    <ChevronRight className="size-4" />
+                  ) : (
+                    <ChevronLeft className="size-4" />
+                  )}
                 </Button>
               </div>
               <div className={`block ${isFormCollapsed ? "lg:hidden" : ""}`}>
+                <FormField
+                  control={form.control}
+                  name="dateRange"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <WeekPicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          occupiedDateKeys={occupiedDateKeys}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <PlannerTimeLimitsSection
+                  fields={fields}
+                  control={form.control}
+                  dailyTimeLimits={watchedDailyTimeLimits}
+                  timeLimitsMode={timeLimitsMode}
+                  groupTimeLimits={groupTimeLimits}
+                  hasWeekdays={hasWeekdays}
+                  hasWeekend={hasWeekend}
+                  onSwitchToGrouped={handleSwitchToGroupedTimeLimits}
+                  onSwitchToDaily={handleSwitchToDailyTimeLimits}
+                  onUpdateGroupLimit={updateGroupLimit}
+                  getDayLabel={formatDayLabel}
+                  onInvalidStateChange={setHasInvalidTimeLimitInputs}
+                />
+                <div className="mt-4 rounded-xl border border-border bg-background p-4">
                   <FormField
                     control={form.control}
-                    name="dateRange"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <WeekPicker
-                            value={field.value}
-                            onChange={field.onChange}
-                            occupiedDateKeys={occupiedDateKeys}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    name="rollingRecipes"
+                    render={({ field }) => {
+                      const selected = (field.value ??
+                        []) as RollingRecipeType[];
+                      return (
+                        <PlannerRollingRecipesSection
+                          control={form.control}
+                          selected={selected}
+                          onChange={field.onChange}
+                          ingredients={ingredients}
+                          recipes={recipes}
+                          previousPlanUnusedRecipes={previousPlanUnusedRecipes}
+                          onInvalidStateChange={setHasInvalidRollingMealsInputs}
+                        />
+                      );
+                    }}
                   />
-                  <PlannerTimeLimitsSection
-                    fields={fields}
-                    control={form.control}
-                    dailyTimeLimits={watchedDailyTimeLimits}
-                    timeLimitsMode={timeLimitsMode}
-                    groupTimeLimits={groupTimeLimits}
-                    hasWeekdays={hasWeekdays}
-                    hasWeekend={hasWeekend}
-                    onSwitchToGrouped={handleSwitchToGroupedTimeLimits}
-                    onSwitchToDaily={handleSwitchToDailyTimeLimits}
-                    onUpdateGroupLimit={updateGroupLimit}
-                    getDayLabel={formatDayLabel}
-                    onInvalidStateChange={setHasInvalidTimeLimitInputs}
-                  />
-                  <div className="mt-4 rounded-xl border border-border bg-background p-4">
-                    <FormField
-                      control={form.control}
-                      name="rollingRecipes"
-                      render={({ field }) => {
-                        const selected = (field.value ?? []) as RollingRecipeType[];
-                        return (
-                          <PlannerRollingRecipesSection
-                            control={form.control}
-                            selected={selected}
-                            onChange={field.onChange}
-                            ingredients={ingredients}
-                            recipes={recipes}
-                            previousPlanUnusedRecipes={previousPlanUnusedRecipes}
-                            onInvalidStateChange={setHasInvalidRollingMealsInputs}
-                          />
-                        );
-                      }}
-                    />
-                  </div>
+                </div>
               </div>
             </form>
           </Form>

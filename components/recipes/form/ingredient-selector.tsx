@@ -71,7 +71,7 @@ export const INGREDIENT_ROW_LAYOUT_CLASSES = {
   dragHandle: "h-8 w-8 shrink-0 touch-none cursor-grab active:cursor-grabbing",
   // Phone: flex-1 beside unit. md+: fixed narrow field (tablet one-row + desktop) — flex-none stops amount from growing in the lg row.
   amountInput:
-    "min-w-0 w-full max-w-full flex-1 basis-0 md:w-20 md:flex-none md:shrink-0 md:basis-auto lg:order-2",
+    "min-w-0 w-full max-w-full flex-1 basis-0 md:w-24 md:flex-none md:shrink-0 md:basis-auto lg:order-2",
   unitTrigger:
     "min-w-0 w-full max-w-full md:w-32 md:shrink-0 lg:shrink-0",
   ingredientContainer: "min-w-0 w-full flex-1",
@@ -959,7 +959,7 @@ export function IngredientSelector({
     return (
       <section
         key={lane.groupTempKey ?? UNGROUPED_LANE_KEY}
-        className="min-w-0 max-w-full space-y-1 rounded-md border p-2"
+        className="min-w-0 max-w-full space-y-1 rounded-md p-2"
       >
         <div className="flex min-w-0 items-center gap-2">
           <Button
