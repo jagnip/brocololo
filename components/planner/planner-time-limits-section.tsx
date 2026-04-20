@@ -66,21 +66,23 @@ export function PlannerTimeLimitsSection({
   const hasInvalid = useMemo(() => {
     const groupedInvalid = () =>
       Object.values(groupTimeLimits).some((group) =>
-        Object.values(group).some((value) => isInvalidTimeValue(value as number | null)),
+        Object.values(group).some((value) =>
+          isInvalidTimeValue(value as number | null),
+        ),
       );
     const dailyInvalid = () =>
       dailyTimeLimits.some((day) =>
-      (
-        [
-          day.breakfastHandsOnMax,
-          day.breakfastTotalMax,
-          day.lunchHandsOnMax,
-          day.lunchTotalMax,
-          day.dinnerHandsOnMax,
-          day.dinnerTotalMax,
-        ] as Array<number | null>
-      ).some((value) => isInvalidTimeValue(value)),
-    );
+        (
+          [
+            day.breakfastHandsOnMax,
+            day.breakfastTotalMax,
+            day.lunchHandsOnMax,
+            day.lunchTotalMax,
+            day.dinnerHandsOnMax,
+            day.dinnerTotalMax,
+          ] as Array<number | null>
+        ).some((value) => isInvalidTimeValue(value)),
+      );
     return timeLimitsMode === "grouped" ? groupedInvalid() : dailyInvalid();
   }, [dailyTimeLimits, groupTimeLimits, timeLimitsMode]);
 
@@ -166,7 +168,9 @@ export function PlannerTimeLimitsSection({
                 ? inputErrorClass
                 : undefined
             }
-            onChange={(e) => onUpdateGroupLimit(group, "lunchTotalMax", e.target.value)}
+            onChange={(e) =>
+              onUpdateGroupLimit(group, "lunchTotalMax", e.target.value)
+            }
           />
         </div>
         <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
@@ -199,7 +203,9 @@ export function PlannerTimeLimitsSection({
                 ? inputErrorClass
                 : undefined
             }
-            onChange={(e) => onUpdateGroupLimit(group, "dinnerTotalMax", e.target.value)}
+            onChange={(e) =>
+              onUpdateGroupLimit(group, "dinnerTotalMax", e.target.value)
+            }
           />
         </div>
       </div>
@@ -238,7 +244,9 @@ export function PlannerTimeLimitsSection({
                     : undefined
                 }
                 onChange={(e) =>
-                  field.onChange(e.target.value === "" ? null : Number(e.target.value))
+                  field.onChange(
+                    e.target.value === "" ? null : Number(e.target.value),
+                  )
                 }
               />
             )}
@@ -264,7 +272,9 @@ export function PlannerTimeLimitsSection({
                     : undefined
                 }
                 onChange={(e) =>
-                  field.onChange(e.target.value === "" ? null : Number(e.target.value))
+                  field.onChange(
+                    e.target.value === "" ? null : Number(e.target.value),
+                  )
                 }
               />
             )}
@@ -293,7 +303,9 @@ export function PlannerTimeLimitsSection({
                     : undefined
                 }
                 onChange={(e) =>
-                  field.onChange(e.target.value === "" ? null : Number(e.target.value))
+                  field.onChange(
+                    e.target.value === "" ? null : Number(e.target.value),
+                  )
                 }
               />
             )}
@@ -319,7 +331,9 @@ export function PlannerTimeLimitsSection({
                     : undefined
                 }
                 onChange={(e) =>
-                  field.onChange(e.target.value === "" ? null : Number(e.target.value))
+                  field.onChange(
+                    e.target.value === "" ? null : Number(e.target.value),
+                  )
                 }
               />
             )}
@@ -348,7 +362,9 @@ export function PlannerTimeLimitsSection({
                     : undefined
                 }
                 onChange={(e) =>
-                  field.onChange(e.target.value === "" ? null : Number(e.target.value))
+                  field.onChange(
+                    e.target.value === "" ? null : Number(e.target.value),
+                  )
                 }
               />
             )}
@@ -374,7 +390,9 @@ export function PlannerTimeLimitsSection({
                     : undefined
                 }
                 onChange={(e) =>
-                  field.onChange(e.target.value === "" ? null : Number(e.target.value))
+                  field.onChange(
+                    e.target.value === "" ? null : Number(e.target.value),
+                  )
                 }
               />
             )}
@@ -414,7 +432,8 @@ export function PlannerTimeLimitsSection({
             <div className="flex flex-col gap-1">
               {/* Recipe-like section subtitle, smaller than Subheader. */}
               <Subheader className="text-sm">Weekdays</Subheader>
-              <div className="rounded-lg border border-border/60 bg-card p-3">
+              {/* No inner frame/padding around breakfast/lunch/dinner rows. */}
+              <div>
                 {renderGroupedMatrix("weekday")}
               </div>
             </div>
@@ -422,7 +441,8 @@ export function PlannerTimeLimitsSection({
           {hasWeekend ? (
             <div className="flex flex-col gap-1">
               <Subheader className="text-sm">Weekends</Subheader>
-              <div className="rounded-lg border border-border/60 bg-card p-3">
+              {/* No inner frame/padding around breakfast/lunch/dinner rows. */}
+              <div>
                 {renderGroupedMatrix("weekend")}
               </div>
             </div>
@@ -435,7 +455,8 @@ export function PlannerTimeLimitsSection({
               <Subheader className="text-sm">
                 {getDayLabel(new Date(fieldItem.date))}
               </Subheader>
-              <div className="rounded-lg border border-border/60 bg-card p-3">
+              {/* No inner frame/padding around breakfast/lunch/dinner rows. */}
+              <div>
                 {renderDailyMatrix(index)}
               </div>
             </div>
