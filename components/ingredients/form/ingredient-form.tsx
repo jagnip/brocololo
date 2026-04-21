@@ -42,7 +42,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SearchableSelect, SearchableSelectOption } from "@/components/ui/searchable-select";
+import {
+  SearchableSelect,
+  SearchableSelectOption,
+} from "@/components/ui/searchable-select";
 import type { IngredientType } from "@/types/ingredient";
 import type { UnitType } from "@/types/unit";
 import { MESSAGES } from "@/lib/messages";
@@ -188,7 +191,9 @@ export default function IngredientForm({
     const nextValue = rawValue === "" ? null : Number(rawValue);
     onChange(nextValue);
   };
-  const defaultUnitOptions = useMemo<Array<{ value: string; label: string }>>(() => {
+  const defaultUnitOptions = useMemo<
+    Array<{ value: string; label: string }>
+  >(() => {
     // Keep options list in sync with current conversion rows.
     return buildDefaultUnitOptions({
       conversions: watchedConversions,
@@ -302,7 +307,7 @@ export default function IngredientForm({
         />
 
         {/* Tablet+ layout: brand/category share row at 50/50. */}
-        <div className="grid grid-cols-1 gap-x-3 gap-y-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           <FormField
             control={form.control}
             name="brand"
@@ -344,7 +349,7 @@ export default function IngredientForm({
         </div>
 
         {/* Tablet+ layout: icon/url share row at 1/3 + 2/3. */}
-        <div className="grid grid-cols-1 gap-x-3 gap-y-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           <FormField
             control={form.control}
             name="icon"
@@ -384,7 +389,7 @@ export default function IngredientForm({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-x-3 gap-y-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
           <FormField
             control={form.control}
             name="calories"
@@ -400,7 +405,9 @@ export default function IngredientForm({
                     placeholder="Enter calories"
                     // Keep controlled input behavior while still allowing an empty state.
                     value={(field.value as number | undefined) ?? ""}
-                    onChange={(event) => handleNutritionChange(field.onChange, event)}
+                    onChange={(event) =>
+                      handleNutritionChange(field.onChange, event)
+                    }
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}
@@ -425,7 +432,9 @@ export default function IngredientForm({
                     placeholder="Enter proteins"
                     // Keep controlled input behavior while still allowing an empty state.
                     value={(field.value as number | undefined) ?? ""}
-                    onChange={(event) => handleNutritionChange(field.onChange, event)}
+                    onChange={(event) =>
+                      handleNutritionChange(field.onChange, event)
+                    }
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}
@@ -450,7 +459,9 @@ export default function IngredientForm({
                     placeholder="Enter fats"
                     // Keep controlled input behavior while still allowing an empty state.
                     value={(field.value as number | undefined) ?? ""}
-                    onChange={(event) => handleNutritionChange(field.onChange, event)}
+                    onChange={(event) =>
+                      handleNutritionChange(field.onChange, event)
+                    }
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}
@@ -475,7 +486,9 @@ export default function IngredientForm({
                     placeholder="Enter carbs"
                     // Keep controlled input behavior while still allowing an empty state.
                     value={(field.value as number | undefined) ?? ""}
-                    onChange={(event) => handleNutritionChange(field.onChange, event)}
+                    onChange={(event) =>
+                      handleNutritionChange(field.onChange, event)
+                    }
                     onBlur={field.onBlur}
                     name={field.name}
                     ref={field.ref}
@@ -487,12 +500,14 @@ export default function IngredientForm({
           />
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* Match section heading style used across recipe-related forms. */}
-          <Subheader>Unit conversions</Subheader>
+          <Subheader className="mb-3">Unit conversions</Subheader>
 
           {fields.map((row, index) => {
-            const selectedUnitId = form.watch(`unitConversions.${index}.unitId`);
+            const selectedUnitId = form.watch(
+              `unitConversions.${index}.unitId`,
+            );
             const isGramsConversion = selectedUnitId === gramsUnitId;
             if (isGramsConversion) {
               // Keep canonical grams conversion hidden from manual editing.
@@ -502,9 +517,10 @@ export default function IngredientForm({
             return (
               <div
                 key={row.id}
-                className="grid grid-cols-1 items-end gap-x-3 gap-y-4 md:grid-cols-4"
+                // Mobile: frame conversion controls as one card; md+: keep flat row layout.
+                className="grid grid-cols-2 items-end gap-2 rounded-md md:grid-cols-4"
               >
-                <div className="md:col-span-1">
+                <div className="col-span-1 md:col-span-1">
                   <FormField
                     control={form.control}
                     name={`unitConversions.${index}.unitId`}
@@ -535,7 +551,7 @@ export default function IngredientForm({
                   />
                 </div>
 
-                <div className="md:col-span-1">
+                <div className="col-span-1 md:col-span-1">
                   <FormField
                     control={form.control}
                     name={`unitConversions.${index}.gramsPerUnit`}
@@ -560,40 +576,42 @@ export default function IngredientForm({
                   />
                 </div>
 
-                <div className="md:col-span-1 flex items-end gap-2">
-                  {/* Keep icon actions fixed-size and evenly spaced. */}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => {
-                      if (!selectedUnitId) {
-                        return;
-                      }
-                      const selectedUnit =
-                        availableUnits.find((unit) => unit.id === selectedUnitId) ??
-                        null;
-                      if (!selectedUnit) {
-                        return;
-                      }
+                <div className="col-span-2 flex items-end gap-2 md:col-span-2">
+                  {/* Phone: actions on second row; md+: keep existing inline layout. */}
+                  {mode === "page" ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        if (!selectedUnitId) {
+                          return;
+                        }
+                        const selectedUnit =
+                          availableUnits.find(
+                            (unit) => unit.id === selectedUnitId,
+                          ) ?? null;
+                        if (!selectedUnit) {
+                          return;
+                        }
 
-                      setRenameUnitState({
-                        rowIndex: index,
-                        unit: selectedUnit,
-                      });
-                    }}
-                    disabled={!selectedUnitId || selectedUnitId === gramsUnitId}
-                    title={
-                      !selectedUnitId
-                        ? "Select a unit first"
-                        : selectedUnitId === gramsUnitId
-                          ? "Unit 'g' cannot be renamed"
-                          : "Rename selected unit"
-                    }
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-
+                        setRenameUnitState({
+                          rowIndex: index,
+                          unit: selectedUnit,
+                        });
+                      }}
+                      disabled={!selectedUnitId || selectedUnitId === gramsUnitId}
+                      title={
+                        !selectedUnitId
+                          ? "Select a unit first"
+                          : selectedUnitId === gramsUnitId
+                            ? "Unit 'g' cannot be renamed"
+                            : "Rename selected unit"
+                      }
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  ) : null}
                   {/* Prevent removing grams conversion directly in the form UI. */}
                   <Button
                     type="button"
@@ -627,47 +645,51 @@ export default function IngredientForm({
           <FormField
             control={form.control}
             name="unitConversions"
-            render={({ fieldState }) =>
-              fieldState.error ? (
+            render={() => (
+              <FormItem>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="w-full md:w-1/4">
+            <FormField
+              control={form.control}
+              name="defaultUnitId"
+              render={({ field }) => (
                 <FormItem>
+                  <FormLabel>Default unit</FormLabel>
+                  <FormControl>
+                    <Select
+                      value={field.value ?? ""}
+                      onValueChange={(next) => field.onChange(next)}
+                      disabled={defaultUnitOptions.length === 0}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select default unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {defaultUnitOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
-              ) : null
-            }
-          />
+              )}
+            />
+          </div>
         </div>
 
-        <FormField
-          control={form.control}
-          name="defaultUnitId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Default unit</FormLabel>
-              <FormControl>
-                <Select
-                  value={field.value ?? ""}
-                  onValueChange={(next) => field.onChange(next)}
-                  disabled={defaultUnitOptions.length === 0}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select default unit" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {defaultUnitOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <div className="flex items-center gap-2">
-          <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
+          >
             {isSubmitting
               ? ingredient
                 ? MESSAGES.ingredient.updating
@@ -689,11 +711,13 @@ export default function IngredientForm({
               {/* Keep delete near update for edit-mode workflows. */}
               <Button
                 type="button"
-                variant="destructive"
+                variant="outline"
+                size="icon"
                 disabled={isDeleting}
                 onClick={() => setIsDeleteOpen(true)}
+                aria-label="Delete ingredient"
               >
-                Delete ingredient
+                <Trash2 className="h-4 w-4" />
               </Button>
 
               <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
@@ -742,21 +766,29 @@ export default function IngredientForm({
         onCreated={(createdUnit) => {
           // Merge and sort so the unit list stays deterministic after creation.
           setAvailableUnits((previousUnits) => {
-            const alreadyExists = previousUnits.some((unit) => unit.id === createdUnit.id);
+            const alreadyExists = previousUnits.some(
+              (unit) => unit.id === createdUnit.id,
+            );
             if (alreadyExists) {
               return previousUnits;
             }
 
-            return [...previousUnits, createdUnit].sort((a, b) => a.name.localeCompare(b.name));
+            return [...previousUnits, createdUnit].sort((a, b) =>
+              a.name.localeCompare(b.name),
+            );
           });
 
           if (createUnitState) {
             const conversionRows = form.getValues("unitConversions");
             if (createUnitState.rowIndex < conversionRows.length) {
-              form.setValue(`unitConversions.${createUnitState.rowIndex}.unitId`, createdUnit.id, {
-                shouldDirty: true,
-                shouldValidate: true,
-              });
+              form.setValue(
+                `unitConversions.${createUnitState.rowIndex}.unitId`,
+                createdUnit.id,
+                {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                },
+              );
             }
             toast.success(`Unit "${createdUnit.name}" created`);
           }

@@ -75,6 +75,14 @@ type RecipeFormProps = {
   recipe?: RecipeType;
 };
 
+function createTempKey() {
+  // Safari compatibility: randomUUID may be missing in older WebKit builds.
+  if (typeof globalThis !== "undefined" && globalThis.crypto?.randomUUID) {
+    return globalThis.crypto.randomUUID();
+  }
+  return `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export default function RecipeForm({
   categories,
   ingredients,
@@ -182,7 +190,7 @@ export default function RecipeForm({
           ingredients: [
             {
               id: undefined,
-              tempIngredientKey: crypto.randomUUID(),
+              tempIngredientKey: createTempKey(),
               ingredientId: "",
               amount: null,
               unitId: null,
