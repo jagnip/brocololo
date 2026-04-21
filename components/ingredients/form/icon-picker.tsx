@@ -36,31 +36,24 @@ export function IconPicker({ value, onChange, options }: IconPickerProps) {
   );
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        {/* Live preview helps validate the selected icon quickly. */}
-        <IngredientIcon icon={value} name={value ?? "fallback"} size={24} />
-
-        <div className="w-48">
-          <SearchableSelect
-            options={iconOptions}
-            value={value}
-            onValueChange={onChange}
-            placeholder="Select icon..."
-            searchPlaceholder="Search icons..."
-            emptyLabel="No icon found."
-            allowClear
-            clearLabel="Clear icon"
-            renderIcon={(option) => (
-              <IngredientIcon
-                icon={option.icon ?? option.value}
-                name={option.label}
-                size={18}
-              />
-            )}
-          />
-        </div>
-      </div>
-    </div>
+    // Keep the picker width fluid so it aligns cleanly with adjacent fields.
+    <SearchableSelect
+      className="w-full"
+      options={iconOptions}
+      value={value}
+      onValueChange={onChange}
+      placeholder="Select icon..."
+      searchPlaceholder="Search icons..."
+      emptyLabel="No icon found."
+      allowClear
+      clearLabel="Clear icon"
+      renderIcon={(option) => (
+        <IngredientIcon
+          icon={option.icon ?? option.value}
+          name={option.label}
+          size={18}
+        />
+      )}
+    />
   );
 }

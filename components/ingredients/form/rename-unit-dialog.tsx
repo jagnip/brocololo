@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { UnitType } from "@/types/unit";
 
 type RenameUnitDialogProps = {
@@ -62,25 +63,31 @@ export function RenameUnitDialog({
         <DialogHeader>
           <DialogTitle>Rename unit</DialogTitle>
           <DialogDescription>
-            Change this unit name globally for all ingredient and recipe references.
+            Change this unit name globally for all ingredient references.
           </DialogDescription>
         </DialogHeader>
 
-        <Input
-          key={unit?.id ?? "unit-rename-input"}
-          defaultValue={unit?.name ?? ""}
-          ref={nameInputRef}
-          placeholder="Enter unit name"
-          disabled={isRenaming}
-        />
+        <div className="space-y-2">
+          <Label>Singular name</Label>
+          <Input
+            key={unit?.id ?? "unit-rename-input"}
+            defaultValue={unit?.name ?? ""}
+            ref={nameInputRef}
+            placeholder="Enter singular name, e.g. piece"
+            disabled={isRenaming}
+          />
+        </div>
         {/* Optional plural keeps unit wording correct for amounts > 1. */}
-        <Input
-          key={`${unit?.id ?? "unit-rename-input"}-plural`}
-          defaultValue={unit?.namePlural ?? ""}
-          ref={pluralInputRef}
-          placeholder="Plural (optional), e.g. pieces"
-          disabled={isRenaming}
-        />
+        <div className="space-y-2">
+          <Label>Plural name (optional)</Label>
+          <Input
+            key={`${unit?.id ?? "unit-rename-input"}-plural`}
+            defaultValue={unit?.namePlural ?? ""}
+            ref={pluralInputRef}
+            placeholder="Enter plural, e.g. pieces"
+            disabled={isRenaming}
+          />
+        </div>
 
         <DialogFooter>
           <Button

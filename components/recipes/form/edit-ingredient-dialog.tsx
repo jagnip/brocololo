@@ -4,9 +4,6 @@ import type { IngredientType } from "@/types/ingredient";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import IngredientForm from "@/components/ingredients/form/ingredient-form";
 
@@ -40,14 +37,9 @@ export function EditIngredientDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>Edit ingredient</DialogTitle>
-          <DialogDescription>
-            Update the selected ingredient without leaving recipe editing.
-          </DialogDescription>
-        </DialogHeader>
-
+      <DialogContent
+        className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-[min(48rem,calc(100vw-3rem))] sm:max-w-3xl max-h-[90vh] overflow-y-auto"
+      >
         <IngredientForm
           mode="dialog"
           ingredient={ingredient}
