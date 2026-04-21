@@ -1154,7 +1154,9 @@ export function IngredientSelector({
         ))}
       </div>
 
-      <div className="mt-3 flex justify-start gap-2">
+      <div
+        className={`${normalizedValue.length === 0 ? "mt-0" : "mt-3"} flex justify-start gap-2`}
+      >
         {shouldShowFooterUngroupedAdd ? (
           <Button
             type="button"
