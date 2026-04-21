@@ -17,17 +17,21 @@ const preprocessRequiredNumberInput = (
 ) =>
   z.preprocess((value) => {
     if (value === "" || value === null || value === undefined) {
-      return Number.NaN;
+      return undefined;
     }
     if (typeof value === "string") {
       return Number(value);
     }
     return value;
   },
-  // Zod v4-compatible required/type fallback before numeric constraints.
+  // Force a single friendly message for empty/invalid numeric input first.
   z
-    .number()
-    .refine((value) => Number.isFinite(value), { message })
+    .any()
+    .refine(
+      (val) => typeof val === "number" && Number.isFinite(val),
+      { message },
+    )
+    .transform((val) => val as number)
     .pipe(schema));
 
 // Guard against floating-point artifacts while enforcing 0.5 increments.
