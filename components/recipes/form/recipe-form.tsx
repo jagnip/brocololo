@@ -57,7 +57,6 @@ import { CreateIngredientDialog } from "./create-ingredient-dialog";
 import { EditIngredientDialog } from "./edit-ingredient-dialog";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { reconcileIngredientUnitsAfterUpdate } from "./ingredient-row-adjustments";
-import { MESSAGES } from "@/lib/messages";
 import { Label } from "@/components/ui/label";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { Trash2 } from "lucide-react";
@@ -74,14 +73,6 @@ type RecipeFormProps = {
   };
   recipe?: RecipeType;
 };
-
-function createTempKey() {
-  // Safari compatibility: randomUUID may be missing in older WebKit builds.
-  if (typeof globalThis !== "undefined" && globalThis.crypto?.randomUUID) {
-    return globalThis.crypto.randomUUID();
-  }
-  return `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
 
 export default function RecipeForm({
   categories,
@@ -186,22 +177,10 @@ export default function RecipeForm({
           // Keep targeted numeric fields empty so placeholders guide first input.
           // Start in no-group mode; grouping is optional.
           ingredientGroups: [],
-          // Pre-seed the first required ingredient row to remove one click.
-          ingredients: [
-            {
-              id: undefined,
-              tempIngredientKey: createTempKey(),
-              ingredientId: "",
-              amount: null,
-              unitId: null,
-              nutritionTarget: "BOTH",
-              additionalInfo: null,
-              groupTempKey: null,
-              position: 0,
-            },
-          ],
-          // Pre-seed the first required instruction step to remove one click.
-          instructions: [{ text: "", linkedTempIngredientKeys: [] }],
+          // Start with a clean slate; ingredients are optional.
+          ingredients: [],
+          // Start with a clean slate; instructions are optional.
+          instructions: [],
           notes: "",
           excludeFromPlanner: false,
         },

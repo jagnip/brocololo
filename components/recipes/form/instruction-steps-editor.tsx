@@ -103,7 +103,12 @@ export function InstructionStepsEditor({
         </div>
       ))}
 
-      <Button type="button" variant="outline" onClick={addStep}>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={addStep}
+        className={value.length === 0 ? "mt-3" : undefined}
+      >
         Add step
       </Button>
     </div>

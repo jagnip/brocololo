@@ -417,7 +417,7 @@ export function IngredientSelector({
     dragPointerYRef.current = null;
   }, []);
 
-  const runAutoScrollFrame = React.useCallback(() => {
+  function runAutoScrollFrame() {
     if (!isDraggingRef.current) {
       stopAutoScroll();
       return;
@@ -446,18 +446,15 @@ export function IngredientSelector({
     }
     autoScrollFrameRef.current =
       window.requestAnimationFrame(runAutoScrollFrame);
-  }, [stopAutoScroll]);
+  }
 
-  const trackDragPointer = React.useCallback(
-    (clientY: number) => {
-      dragPointerYRef.current = clientY;
-      if (autoScrollFrameRef.current == null) {
-        autoScrollFrameRef.current =
-          window.requestAnimationFrame(runAutoScrollFrame);
-      }
-    },
-    [runAutoScrollFrame],
-  );
+  function trackDragPointer(clientY: number) {
+    dragPointerYRef.current = clientY;
+    if (autoScrollFrameRef.current == null) {
+      autoScrollFrameRef.current =
+        window.requestAnimationFrame(runAutoScrollFrame);
+    }
+  }
 
   React.useEffect(() => {
     isDraggingRef.current = Boolean(draggingIngredientKey || draggingLaneKey);

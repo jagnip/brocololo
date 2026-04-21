@@ -26,7 +26,9 @@ export async function createRecipeCategoryAction(
   if (!parsed.success) {
     return {
       type: "error",
-      message: parsed.error.issues[0]?.message ?? "Invalid category data",
+      message:
+        parsed.error.issues[0]?.message ??
+        "Check category details and try again",
     };
   }
 
@@ -47,7 +49,10 @@ export async function createRecipeCategoryAction(
     console.error("Error creating category", error);
     return {
       type: "error",
-      message: error instanceof Error ? error.message : "Failed to create category",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Couldn't create category. Try again",
     };
   }
 }

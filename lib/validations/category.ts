@@ -20,7 +20,7 @@ export const createRecipeCategorySchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, { message: "Category name is required" })
+    .min(1, { message: "Enter a category name" })
     // Normalize repeated whitespace at validation boundary.
     .transform((value) => value.replace(/\s+/g, " ")),
 });
