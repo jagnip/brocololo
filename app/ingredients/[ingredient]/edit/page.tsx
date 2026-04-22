@@ -8,7 +8,7 @@ export default async function EditIngredientPage({ params }: PageProps) {
   const { ingredient: ingredientSlug } = await params;
 
   return (
-    <div className="mx-auto mt-10">
+    <div className="page-container">
       {/* Use the shared container with slug for edit mode. */}
       <IngredientFormContainer ingredientSlug={ingredientSlug} />
     </div>

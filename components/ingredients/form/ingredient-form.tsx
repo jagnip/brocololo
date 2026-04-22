@@ -307,7 +307,8 @@ export default function IngredientForm({
         />
 
         {/* Tablet+ layout: brand/category share row at 50/50. */}
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+        {/* Keep mobile vertical rhythm consistent with the form's spacing scale. */}
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-2">
           <FormField
             control={form.control}
             name="brand"
@@ -349,7 +350,8 @@ export default function IngredientForm({
         </div>
 
         {/* Tablet+ layout: icon/url share row at 1/3 + 2/3. */}
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+        {/* Keep mobile vertical rhythm consistent with the form's spacing scale. */}
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-2">
           <FormField
             control={form.control}
             name="icon"
@@ -389,7 +391,8 @@ export default function IngredientForm({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+        {/* Match mobile vertical rhythm used by other field groups. */}
+        <div className="grid grid-cols-2 gap-x-2 gap-y-5 md:grid-cols-4 md:gap-2">
           <FormField
             control={form.control}
             name="calories"
