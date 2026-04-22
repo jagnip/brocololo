@@ -33,14 +33,14 @@ export const createRecipeAction = async (
       if (error.code === "P2002") {
         return {
           type: "error",
-          message: "A recipe with this name already exists",
+          message: "A recipe with this name already exists. Try another name",
         };
       }
     }
 
     return {
       type: "error",
-      message: "Failed to create recipe",
+      message: "Couldn't create recipe. Try again",
     };
   }
 
@@ -69,14 +69,14 @@ export const updateRecipeAction = async (
       if (error.code === "P2002") {
         return {
           type: "error",
-          message: "A recipe with this name already exists",
+          message: "A recipe with this name already exists. Try another name",
         };
       }
     }
 
     return {
       type: "error",
-      message: "Failed to update recipe",
+      message: "Couldn't update recipe. Try again",
     };
   }
 
@@ -93,14 +93,14 @@ export const deleteRecipeAction = async (recipeId: string) => {
       if (error.code === "P2025") {
         return {
           type: "error",
-          message: "Recipe was not found (it may already be deleted).",
+          message: "Recipe no longer exists",
         };
       }
     }
 
     return {
       type: "error",
-      message: "Failed to delete recipe",
+      message: "Couldn't delete recipe. Try again",
     };
   }
 

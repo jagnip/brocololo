@@ -1,6 +1,6 @@
 import { RecipeDetailSkeleton } from "@/components/recipes/recipe-detail-skeleton";
 
 export default function Loading() {
-  // Dedicated recipe detail skeleton for dynamic recipe route.
+  // Keep detail skeleton scoped to the detail route group branch.
   return <RecipeDetailSkeleton />;
 }

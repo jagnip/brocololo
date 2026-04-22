@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { PlannerPoolGroupedCardData } from "@/lib/log/view-model";
+import { RecipeImagePlaceholder } from "@/components/recipes/recipe-image-placeholder";
 
 export type LogPlannerPoolCardProps = {
   item: PlannerPoolGroupedCardData;
@@ -46,10 +47,8 @@ export function LogPlannerPoolCard({ item }: LogPlannerPoolCardProps) {
             quality={85}
           />
         ) : (
-          <div
-            className="absolute inset-0 bg-linear-to-br from-muted via-muted to-muted-foreground/25"
-            aria-hidden
-          />
+          // Reuse the same fallback used by other recipe image surfaces.
+          <RecipeImagePlaceholder showLabel={false} />
         )}
       </div>
 

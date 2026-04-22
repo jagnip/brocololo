@@ -36,6 +36,7 @@ export default async function Page({ searchParams }: RecipesPageProps) {
         }}
       />
       <Suspense fallback={<RecipesPageSkeleton />}>
+        {/* Keep tab and grid composition unchanged while moving to route group. */}
         <div className="group">
           <RecipeTabsContainer />
           <RecipeGridContainer

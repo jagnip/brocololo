@@ -11,6 +11,29 @@ const preprocessNumberInput = <T extends z.ZodTypeAny>(schema: T) =>
     return value;
   }, schema);
 
+const preprocessRequiredNumberInput = (
+  message: string,
+  schema: z.ZodNumber,
+) =>
+  z.preprocess((value) => {
+    if (value === "" || value === null || value === undefined) {
+      return undefined;
+    }
+    if (typeof value === "string") {
+      return Number(value);
+    }
+    return value;
+  },
+  // Force a single friendly message for empty/invalid numeric input first.
+  z
+    .any()
+    .refine(
+      (val) => typeof val === "number" && Number.isFinite(val),
+      { message },
+    )
+    .transform((val) => val as number)
+    .pipe(schema));
+
 // Guard against floating-point artifacts while enforcing 0.5 increments.
 const isHalfStepValue = (value: number): boolean => {
   const doubled = value * 2;
@@ -19,11 +42,12 @@ const isHalfStepValue = (value: number): boolean => {
 
 const recipeIngredientGroupSchema = z.object({
   id: z.string().min(1).optional(),
-  tempGroupKey: z.string().min(1, { message: "Temp group key is required" }),
+  tempGroupKey: z.string().min(1, { message: "Group key is required" }),
   name: z
     .string()
-    .min(1, { message: "Group name is required" })
-    .max(50, { message: "Group name must be 50 characters or less" })
+    // Keep validation copy short and action-oriented.
+    .min(1, { message: "Enter a group name" })
+    .max(50, { message: "Keep group name under 50 characters" })
     .transform((val) => val.trim()),
   // Keep ingredient group ordering explicit and always 0-based.
   position: z.coerce.number().int().min(0).default(0),
@@ -41,22 +65,22 @@ const recipeIngredientSchema = z
     id: z.string().min(1).optional(),
     tempIngredientKey: z
       .string()
-      .min(1, { message: "Temp ingredient key is required" }),
-    ingredientId: z.string().min(1, { message: "Ingredient is required" }),
+      .min(1, { message: "Ingredient key is required" }),
+    ingredientId: z.string().min(1, { message: "Choose an ingredient" }),
     amount: z
       .number()
       .positive()
-      .min(0.01, { message: "Amount must be a positive number" })
+      .min(0.01, { message: "Enter an amount above 0" })
       .nullish(),
     unitId: z
       .string()
-      .min(1, { message: "Unit is required" })
+      .min(1, { message: "Choose a unit" })
       .nullish()
       .transform((val) => val ?? null),
     nutritionTarget: nutritionTargetSchema.default("BOTH"),
     additionalInfo: z
       .string()
-      .max(50, { message: "Additional info must be 50 characters or less" })
+      .max(50, { message: "Keep additional info under 50 characters" })
       .nullish()
       .transform((val) => {
         if (!val) return null;
@@ -77,7 +101,7 @@ const recipeIngredientSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["amount"],
-        message: "Amount must be empty when unit is not selected",
+        message: "Choose a unit before entering an amount",
       });
     }
   });
@@ -86,7 +110,7 @@ const recipeInstructionSchema = z.object({
   id: z.string().min(1).optional(),
   text: z
     .string()
-    .min(1, { message: "Step text is required" })
+    .min(1, { message: "Enter step text" })
     .transform((val) => val.trim()),
   linkedTempIngredientKeys: z.array(z.string().min(1)).default([]),
 });
@@ -97,9 +121,9 @@ const recipeImageSchema = z.object({
 });
 
 const recipeBaseSchema = z.object({
-  name: z.string().min(1, { message: "Name is required" }),
+  name: z.string().min(1, { message: "Enter a recipe name" }),
   // Category form fields are explicit to keep UI semantics clear.
-  flavourCategoryId: z.string().min(1, { message: "Flavour is required" }),
+  flavourCategoryId: z.string().min(1, { message: "Choose a flavour" }),
   proteinCategoryId: z.string().nullish(),
   typeCategoryId: z.string().nullish(),
   images: z
@@ -113,24 +137,27 @@ const recipeBaseSchema = z.object({
     })
     .default([]),
   // Keep empty string values as missing so required checks trigger.
-  handsOnTime: preprocessNumberInput(
+  handsOnTime: preprocessRequiredNumberInput(
+    "Enter a hands-on time above 0",
     z.number()
-      .int({ message: "Hands-on time must be a positive number" })
-      .positive({ message: "Hands-on time must be a positive number" }),
+      .int({ message: "Enter a hands-on time above 0" })
+      .positive({ message: "Enter a hands-on time above 0" }),
   ),
   // Keep empty string values as missing so required checks trigger.
-  totalTime: preprocessNumberInput(
+  totalTime: preprocessRequiredNumberInput(
+    "Enter a total time above 0",
     z.number()
-      .int({ message: "Total time must be a positive number" })
-      .positive({ message: "Total time must be a positive number" }),
+      .int({ message: "Enter a total time above 0" })
+      .positive({ message: "Enter a total time above 0" }),
   ),
   // Keep empty string values as missing so required checks trigger.
-  servings: preprocessNumberInput(
+  servings: preprocessRequiredNumberInput(
+    "Enter an even number of portions above 0",
     z.number()
-      .int({ message: "Portions must be a positive number" })
-      .min(2, { message: "Portions must be at least 2" })
+      .int({ message: "Enter an even number of portions above 0" })
+      .min(2, { message: "Enter an even number of portions above 0" })
       .refine((value) => value % 2 === 0, {
-        message: "Portions must be an even number",
+        message: "Enter an even number of portions above 0",
       }),
   ),
   // Keep this optional in the form and normalize missing/blank input to 1.
@@ -146,11 +173,13 @@ const recipeBaseSchema = z.object({
     .number()
     .min(1)
     .refine((value) => isHalfStepValue(value), {
-      message: "Nelson's serving multiplier must be in increments of 0.5",
+      message: "Choose a multiplier in 0.5 steps",
     })),
   ingredientGroups: z.array(recipeIngredientGroupSchema).default([]),
-  ingredients: z.array(recipeIngredientSchema).min(1, { message: "At least one ingredient is required" }),
-  instructions: z.array(recipeInstructionSchema).min(1, { message: "At least one instruction step is required" }),
+  // Keep arrays required but allow empty collections for draft-like recipes.
+  ingredients: z.array(recipeIngredientSchema),
+  // Keep arrays required but allow empty collections for draft-like recipes.
+  instructions: z.array(recipeInstructionSchema),
   notes: z.string().transform((val) => {
     if (!val || val.trim() === "") return [];
     const lines = val.split("\n").map(line => line.trim()).filter(line => line !== "");

@@ -65,7 +65,7 @@ async function saveIngredient(
   if (!gramsUnit) {
     return {
       type: "error",
-      message: "Required base unit 'g' does not exist in database",
+      message: "Base unit 'g' is missing. Contact support",
     };
   }
 
@@ -73,7 +73,9 @@ async function saveIngredient(
   if (!parsed.success) {
     return {
       type: "error",
-      message: parsed.error.issues[0]?.message ?? "Invalid ingredient data",
+      message:
+        parsed.error.issues[0]?.message ??
+        "Check ingredient details and try again.",
     };
   }
 
@@ -121,7 +123,8 @@ async function saveIngredient(
       if (error.code === "P2002") {
         return {
           type: "error",
-          message: "An ingredient with this slug already exists. Try a different name.",
+          message:
+            "An ingredient with this name already exists. Try another name.",
         };
       }
     }
@@ -129,8 +132,8 @@ async function saveIngredient(
     return {
       type: "error",
       message: params.ingredientId
-        ? "Failed to update ingredient"
-        : "Failed to create ingredient",
+        ? "Couldn't update ingredient. Try again."
+        : "Couldn't create ingredient. Try again.",
     };
   }
 
@@ -188,7 +191,7 @@ export const deleteIngredientAction = async (ingredientId: string) => {
 
     return {
       type: "error",
-      message: `Cannot delete ingredient because it is used by recipes: ${recipeList}${suffix}.`,
+      message: `Can't delete this ingredient because it's used in: ${recipeList}${suffix}.`,
     };
   }
 
@@ -201,22 +204,21 @@ export const deleteIngredientAction = async (ingredientId: string) => {
       if (error.code === "P2003") {
         return {
           type: "error",
-          message:
-            "Cannot delete ingredient because it is referenced by other records.",
+          message: "Can't delete this ingredient because it's used elsewhere",
         };
       }
 
       if (error.code === "P2025") {
         return {
           type: "error",
-          message: "Ingredient was not found (it may already be deleted).",
+          message: "Ingredient no longer exists",
         };
       }
     }
 
     return {
       type: "error",
-      message: "Failed to delete ingredient",
+      message: "Couldn't delete ingredient. Try again",
     };
   }
 

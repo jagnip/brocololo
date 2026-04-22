@@ -9,6 +9,7 @@ import {
   Prisma,
 } from "@/src/generated/client";
 import { getDaysInRange } from "@/lib/planner/helpers";
+import { getRecipeDisplayImageUrl } from "@/lib/recipes/helpers";
 import { prisma } from "./index";
 
 const recipeInclude = {
@@ -467,7 +468,8 @@ export async function getPlannerPoolItemsForPlan(params: {
       mealType,
       title: slot.recipe.name,
       sourceRecipeId: slot.recipe.id,
-      imageUrl: slot.recipe.images.find((image) => image.isCover)?.url ?? null,
+      // Share the same cover-first fallback as all recipe image surfaces.
+      imageUrl: getRecipeDisplayImageUrl(slot.recipe.images),
       ingredients: slot.recipe.ingredients
         .map((ri) => {
           const personAmount = getPersonIngredientAmountPerMeal({

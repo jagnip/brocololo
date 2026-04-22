@@ -165,13 +165,23 @@ describe("createRecipeSchema", () => {
     expect(parsed.instructions[0]?.text).toBe("Simmer for 5 min");
   });
 
-  it("rejects an empty instructions array", () => {
+  it("accepts an empty instructions array", () => {
     const result = createRecipeSchema.safeParse({
       ...baseRecipeInput,
       instructions: [],
     });
 
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts an empty ingredients array", () => {
+    const result = createRecipeSchema.safeParse({
+      ...baseRecipeInput,
+      ingredients: [],
+      ingredientGroups: [],
+    });
+
+    expect(result.success).toBe(true);
   });
 
   it("requires tempIngredientKey for each ingredient", () => {
@@ -308,6 +318,17 @@ describe("updateRecipeSchema", () => {
     expect(parsed.images[0]?.isCover).toBe(true);
     expect(parsed.ingredients[0]?.additionalInfo).toBe("chopped");
   });
+
+  it("accepts empty ingredients and instructions", () => {
+    const result = updateRecipeSchema.safeParse({
+      ...baseRecipeInput,
+      ingredientGroups: [],
+      ingredients: [],
+      instructions: [],
+    });
+
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("formatInstructionIngredientBadge", () => {
@@ -387,7 +408,7 @@ describe("formatInstructionIngredientBadge", () => {
       additionalInfo: null,
     });
 
-    expect(label).toBe("6 (600g) Egg (L)");
+    expect(label).toBe("6 (600g) egg (L)");
   });
 
   it("shows less-than floor for tiny gram parenthetical", () => {

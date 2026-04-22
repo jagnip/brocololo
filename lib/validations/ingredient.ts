@@ -12,20 +12,21 @@ const preprocessNumberInput = <T extends z.ZodTypeAny>(schema: T) =>
   }, schema);
 
 const ingredientUnitConversionSchema = z.object({
-  unitId: z.string().min(1, { message: "Unit is required" }),
+  unitId: z.string().min(1, { message: "Choose a unit" }),
   gramsPerUnit: z.coerce
     .number()
-    .positive({ message: "Grams per unit must be greater than 0" }),
+    .positive({ message: "Enter grams per unit above 0" }),
 });
 
 const ingredientBaseSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, { message: "Name is required" }),
+    // Keep messages simple and user-focused.
+    .min(1, { message: "Enter an ingredient name" }),
   brand: z
     .string()
-    .max(100, { message: "Brand name is too long" })
+    .max(100, { message: "Keep brand name under 100 characters" })
     .nullish()
     .transform((value) => {
       if (!value) return null;
@@ -44,7 +45,7 @@ const ingredientBaseSchema = z.object({
   supermarketUrl: z
     .string()
     .trim()
-    .url({ message: "Supermarket URL must be a valid URL" })
+    .url({ message: "Enter a valid URL (include https://)" })
     .nullish()
     .transform((value) => {
       if (!value) return null;
@@ -53,37 +54,37 @@ const ingredientBaseSchema = z.object({
   // Keep empty string values as missing so required checks trigger.
   calories: preprocessNumberInput(
     z.number().min(0, {
-      message: "Calories must be greater than or equal to 0",
+      message: "Enter calories as 0 or more",
     }),
   ),
   // Keep empty string values as missing so required checks trigger.
   proteins: preprocessNumberInput(
     z.number().min(0, {
-      message: "Proteins must be greater than or equal to 0",
+      message: "Enter proteins as 0 or more",
     }),
   ),
   // Keep empty string values as missing so required checks trigger.
   fats: preprocessNumberInput(
     z.number().min(0, {
-      message: "Fats must be greater than or equal to 0",
+      message: "Enter fats as 0 or more",
     }),
   ),
   // Keep empty string values as missing so required checks trigger.
   carbs: preprocessNumberInput(
     z.number().min(0, {
-      message: "Carbs must be greater than or equal to 0",
+      message: "Enter carbs as 0 or more",
     }),
   ),
-  categoryId: z.string().min(1, { message: "Category is required" }),
+  categoryId: z.string().min(1, { message: "Choose a category" }),
   // Optional for backward compatibility while frontend wiring is added.
   defaultUnitId: z
     .string()
-    .min(1, { message: "Default unit is required" })
+    .min(1, { message: "Choose a default unit" })
     .nullish()
     .transform((value) => value ?? null),
   unitConversions: z
     .array(ingredientUnitConversionSchema)
-    .min(1, { message: "At least one unit conversion is required" }),
+    .min(1, { message: "Add at least one unit conversion" }),
 });
 
 export function makeIngredientSchema(gramsUnitId: string) {
@@ -94,7 +95,7 @@ export function makeIngredientSchema(gramsUnitId: string) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["unitConversions"],
-        message: "Conversion for unit 'g' is required",
+        message: "Add a grams (g) conversion",
       });
     }
 
@@ -105,7 +106,7 @@ export function makeIngredientSchema(gramsUnitId: string) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["unitConversions", index, "unitId"],
-          message: "Duplicate unit conversion is not allowed",
+          message: "This unit is already added",
         });
       }
       seenUnits.add(conversion.unitId);
@@ -115,7 +116,7 @@ export function makeIngredientSchema(gramsUnitId: string) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["defaultUnitId"],
-        message: "Default unit is required",
+        message: "Choose a default unit",
       });
     }
 
@@ -126,7 +127,7 @@ export function makeIngredientSchema(gramsUnitId: string) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["defaultUnitId"],
-        message: "Default unit must be one of the configured unit conversions",
+        message: "Default unit must match your conversions",
       });
     }
   });

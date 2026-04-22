@@ -5,7 +5,6 @@ import { Subheader } from "@/components/recipes/recipe-page/subheader";
 
 export function NutritionSection() {
   const {
-    currentServings,
     targetCaloriesPerPortion,
     jagodaNutrition,
     nelsonNutrition,

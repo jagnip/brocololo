@@ -7,5 +7,6 @@ type PageProps = {
 export default async function RecipePage({ params }: PageProps) {
   const { recipe: recipeSlug } = await params;
 
+  // Keep recipe detail route behavior unchanged in grouped structure.
   return <RecipePageContainer recipeSlug={recipeSlug} />;
 }

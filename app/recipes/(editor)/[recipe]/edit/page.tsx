@@ -4,7 +4,13 @@ import { TopbarConfigController } from "@/components/topbar-config";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { ROUTES } from "@/lib/constants";
 
-export default async function CreateRecipePage() {
+type PageProps = {
+  params: Promise<{ recipe: string }>;
+};
+
+export default async function EditRecipePage({ params }: PageProps) {
+  const { recipe: recipeSlug } = await params;
+
   return (
     <div className="page-container">
       <TopbarConfigController
@@ -12,15 +18,16 @@ export default async function CreateRecipePage() {
           actions: [],
         }}
       />
-      <PageHeader title="Create recipe" className="pb-2" />
+      <PageHeader title="Update recipe" className="pb-2" />
       <Breadcrumbs
         items={[
           { label: "Recipes", href: ROUTES.recipes },
-          { label: "Create recipe" },
+          { label: "Edit recipe" },
         ]}
         className="pb-4"
       />
-      <RecipeFormContainer />
+      {/* Keep edit form behavior unchanged while isolating loading boundaries. */}
+      <RecipeFormContainer recipeSlug={recipeSlug} />
     </div>
   );
 }

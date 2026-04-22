@@ -57,7 +57,6 @@ import { CreateIngredientDialog } from "./create-ingredient-dialog";
 import { EditIngredientDialog } from "./edit-ingredient-dialog";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { reconcileIngredientUnitsAfterUpdate } from "./ingredient-row-adjustments";
-import { MESSAGES } from "@/lib/messages";
 import { Label } from "@/components/ui/label";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { Trash2 } from "lucide-react";
@@ -75,12 +74,42 @@ type RecipeFormProps = {
   recipe?: RecipeType;
 };
 
-function createTempKey() {
-  // Safari compatibility: randomUUID may be missing in older WebKit builds.
-  if (typeof globalThis !== "undefined" && globalThis.crypto?.randomUUID) {
-    return globalThis.crypto.randomUUID();
-  }
-  return `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+export function sanitizeInstructionRows<
+  T extends { text: string; linkedTempIngredientKeys?: string[]; id?: string },
+>(rows: T[]): T[] {
+  // Remove placeholder rows that have no meaningful instruction text.
+  return rows.filter((row) => row.text.trim().length > 0);
+}
+
+export function sanitizeRecipeFormValuesForSubmit(
+  values: Pick<
+    CreateRecipeFormValues,
+    "instructions" | "ingredients" | "ingredientGroups"
+  >,
+) {
+  const ingredientGroups = values.ingredientGroups ?? [];
+  const sanitizedIngredientGroups = ingredientGroups.filter(
+    (group) => group.name.trim().length > 0,
+  );
+  const validGroupKeys = new Set(
+    sanitizedIngredientGroups.map((group) => group.tempGroupKey),
+  );
+
+  return {
+    ingredientGroups: sanitizedIngredientGroups,
+    // Drop placeholder rows with no selected ingredient; keep ingredient-only rows.
+    ingredients: values.ingredients.filter(
+      (row) => row.ingredientId.trim().length > 0,
+    ).map((row) => ({
+      ...row,
+      // Ungroup rows that referenced groups removed by submit sanitization.
+      groupTempKey:
+        row.groupTempKey && validGroupKeys.has(row.groupTempKey)
+          ? row.groupTempKey
+          : null,
+    })),
+    instructions: sanitizeInstructionRows(values.instructions),
+  };
 }
 
 export default function RecipeForm({
@@ -186,22 +215,10 @@ export default function RecipeForm({
           // Keep targeted numeric fields empty so placeholders guide first input.
           // Start in no-group mode; grouping is optional.
           ingredientGroups: [],
-          // Pre-seed the first required ingredient row to remove one click.
-          ingredients: [
-            {
-              id: undefined,
-              tempIngredientKey: createTempKey(),
-              ingredientId: "",
-              amount: null,
-              unitId: null,
-              nutritionTarget: "BOTH",
-              additionalInfo: null,
-              groupTempKey: null,
-              position: 0,
-            },
-          ],
-          // Pre-seed the first required instruction step to remove one click.
-          instructions: [{ text: "", linkedTempIngredientKeys: [] }],
+          // Start with a clean slate; ingredients are optional.
+          ingredients: [],
+          // Start with a clean slate; instructions are optional.
+          instructions: [],
           notes: "",
           excludeFromPlanner: false,
         },
@@ -242,6 +259,51 @@ export default function RecipeForm({
     if (result?.type === "error") {
       toast.error(result.message);
     }
+  }
+
+  function submitWithSanitizedInstructions() {
+    const currentIngredientGroups = form.getValues("ingredientGroups") ?? [];
+    const currentIngredients = form.getValues("ingredients") ?? [];
+    const currentInstructions = form.getValues("instructions") ?? [];
+    const {
+      ingredientGroups: sanitizedIngredientGroups,
+      ingredients: sanitizedIngredients,
+      instructions: sanitizedInstructions,
+    } = sanitizeRecipeFormValuesForSubmit({
+      ingredientGroups: currentIngredientGroups,
+      ingredients: currentIngredients,
+      instructions: currentInstructions,
+    });
+    if (sanitizedIngredientGroups.length !== currentIngredientGroups.length) {
+      form.setValue("ingredientGroups", sanitizedIngredientGroups, {
+        shouldValidate: false,
+        shouldDirty: true,
+      });
+    }
+    if (sanitizedIngredients.length !== currentIngredients.length) {
+      form.setValue("ingredients", sanitizedIngredients, {
+        shouldValidate: false,
+        shouldDirty: true,
+      });
+    } else {
+      const changedGroupLinks = sanitizedIngredients.some(
+        (row, index) => row.groupTempKey !== currentIngredients[index]?.groupTempKey,
+      );
+      if (changedGroupLinks) {
+        form.setValue("ingredients", sanitizedIngredients, {
+          shouldValidate: false,
+          shouldDirty: true,
+        });
+      }
+    }
+    if (sanitizedInstructions.length !== currentInstructions.length) {
+      // Keep resolver input aligned with the payload by removing blank placeholders first.
+      form.setValue("instructions", sanitizedInstructions, {
+        shouldValidate: false,
+        shouldDirty: true,
+      });
+    }
+    void form.handleSubmit(onSubmit)();
   }
 
   function onConfirmDelete() {
@@ -407,8 +469,8 @@ export default function RecipeForm({
               id: "submit-recipe",
               label: topbarSubmitLabel,
               onClick: () => {
-                // Keep topbar action aligned with the same RHF submit pipeline as the form button.
-                void form.handleSubmit(onSubmit)();
+                // Keep topbar action aligned with the form submit pipeline.
+                submitWithSanitizedInstructions();
               },
               disabled: isSubmitting,
               ariaBusy: isSubmitting,
@@ -437,7 +499,10 @@ export default function RecipeForm({
         }}
       />
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={(event) => {
+          event.preventDefault();
+          submitWithSanitizedInstructions();
+        }}
         className="flex flex-col gap-6"
       >
         <section>

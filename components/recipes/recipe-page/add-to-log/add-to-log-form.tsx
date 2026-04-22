@@ -252,6 +252,11 @@ export function RecipeAddToLogForm({
         </section>
 
         <section className="px-4 py-4 md:px-6 md:py-6 border-b flex flex-col gap-2">
+          {rows.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No ingredients were prefilled for this recipe. You can add rows manually or save without ingredients.
+            </p>
+          ) : null}
           <div className="space-y-2">
             {rows.map((row) => {
               const selectedIngredient = row.ingredientId

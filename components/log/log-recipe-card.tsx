@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 import type { LogSlotData } from "@/lib/log/view-model";
 import { cn } from "@/lib/utils";
+import { RecipeImagePlaceholder } from "@/components/recipes/recipe-image-placeholder";
 
 type LogRecipeCardProps = {
   cardKind?: "recipe" | "custom" | "removed";
@@ -104,10 +105,8 @@ export function LogRecipeCard({
             quality={85}
           />
         ) : (
-          <div
-            className="absolute inset-0 bg-linear-to-br from-muted via-muted to-muted-foreground/25"
-            aria-hidden
-          />
+          // Shared placeholder keeps all recipe image fallbacks visually consistent.
+          <RecipeImagePlaceholder showLabel={false} />
         )}
       </div>
 

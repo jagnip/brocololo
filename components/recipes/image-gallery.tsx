@@ -2,16 +2,16 @@
 
 import Image from "next/image";
 import { RecipeImageType } from "@/types/images";
+import { getRecipeDisplayImageUrl } from "@/lib/recipes/helpers";
+import { RecipeImagePlaceholder } from "./recipe-image-placeholder";
 
 type ImageGalleryProps = {
   images: RecipeImageType[];
 };
 
 export function ImageGallery({ images }: ImageGalleryProps) {
-  if (!images || images.length === 0) return null;
-
-  const coverImage = images.find((img) => img.isCover) || images[0];
-  const otherImages = images.filter((img) => img.url !== coverImage?.url);
+  const coverImageUrl = getRecipeDisplayImageUrl(images);
+  const otherImages = images.filter((img) => img.url !== coverImageUrl);
 
   const handleImageClick = (url: string) => {
     window.open(url, "_blank", "noopener,noreferrer");
@@ -19,18 +19,20 @@ export function ImageGallery({ images }: ImageGalleryProps) {
 
   return (
     <div className="space-y-block">
-      {/* Cover image */}
-      {coverImage && (
-        <div className="relative w-full aspect-video rounded-xl overflow-hidden">
+      <div className="relative w-full aspect-video rounded-xl overflow-hidden">
+        {/* Show a first-class fallback so the detail layout stays aligned without uploads. */}
+        {coverImageUrl ? (
           <Image
-            src={coverImage.url}
+            src={coverImageUrl}
             alt={"Recipe cover image"}
             fill
             className="object-cover cursor-pointer"
-            onClick={() => handleImageClick(coverImage.url)}
+            onClick={() => handleImageClick(coverImageUrl)}
           />
-        </div>
-      )}
+        ) : (
+          <RecipeImagePlaceholder />
+        )}
+      </div>
 
       {/* Additional images grid */}
       {otherImages.length > 0 && (
