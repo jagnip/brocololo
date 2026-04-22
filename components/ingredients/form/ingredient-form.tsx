@@ -57,6 +57,7 @@ import { CreateUnitDialog } from "./create-unit-dialog";
 import { RenameUnitDialog } from "./rename-unit-dialog";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { TopbarConfigController } from "@/components/topbar-config";
+import { PageHeader } from "@/components/page-header";
 
 type IngredientFormProps = {
   categories: Array<{ id: string; name: string }>;
@@ -354,32 +355,54 @@ export default function IngredientForm({
         }}
         className="space-y-5"
       >
-        <h1 className="text-2xl font-semibold">
-          {ingredient ? "Edit ingredient" : "Create ingredient"}
-        </h1>
+        {mode === "page" ? (
+          // Keep page title typography consistent with shared page header rules.
+          <PageHeader
+            title={ingredient ? "Edit ingredient" : "Create ingredient"}
+            className="pb-0"
+          />
+        ) : (
+          <h1 className="text-2xl font-semibold">
+            {ingredient ? "Edit ingredient" : "Create ingredient"}
+          </h1>
+        )}
 
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div
+          className={
+            mode === "page"
+              ? "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-2 lg:grid-cols-4"
+              : ""
+          }
+        >
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem className={mode === "page" ? "lg:col-span-2" : ""}>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {/* Tablet+ layout: brand/category share row at 50/50. */}
         {/* Keep mobile vertical rhythm consistent with the form's spacing scale. */}
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-2">
+        <div
+          className={
+            mode === "page"
+              ? "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-2 lg:grid-cols-4"
+              : "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-2"
+          }
+        >
           <FormField
             control={form.control}
             name="brand"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className={mode === "page" ? "lg:col-span-1" : ""}>
                 <FormLabel>Brand (optional)</FormLabel>
                 <FormControl>
                   <Input
@@ -397,7 +420,7 @@ export default function IngredientForm({
             control={form.control}
             name="categoryId"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className={mode === "page" ? "lg:col-span-1" : ""}>
                 <FormLabel>Category</FormLabel>
                 <FormControl>
                   <SearchableSelect
@@ -417,12 +440,20 @@ export default function IngredientForm({
 
         {/* Tablet+ layout: icon/url share row at 1/3 + 2/3. */}
         {/* Keep mobile vertical rhythm consistent with the form's spacing scale. */}
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-2">
+        <div
+          className={
+            mode === "page"
+              ? "grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-2 lg:grid-cols-4"
+              : "grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-2"
+          }
+        >
           <FormField
             control={form.control}
             name="icon"
             render={({ field }) => (
-              <FormItem className="md:col-span-1">
+              <FormItem
+                className={mode === "page" ? "md:col-span-1 lg:col-span-1" : "md:col-span-1"}
+              >
                 {/* Optional field marker keeps label-level guidance consistent. */}
                 <FormLabel>Icon (optional)</FormLabel>
                 <FormControl>
@@ -441,7 +472,9 @@ export default function IngredientForm({
             control={form.control}
             name="supermarketUrl"
             render={({ field }) => (
-              <FormItem className="md:col-span-2">
+              <FormItem
+                className={mode === "page" ? "md:col-span-2 lg:col-span-2" : "md:col-span-2"}
+              >
                 {/* Optional field marker keeps label-level guidance consistent. */}
                 <FormLabel>Supermarket URL (optional)</FormLabel>
                 <FormControl>
