@@ -1,5 +1,5 @@
 import { LogMealType } from "@/src/generated/enums";
-import { getRecipeDisplayImageUrl } from "@/lib/recipes/helpers";
+import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
 
 type LogIngredientRow = {
   entryRecipeId: string | null;
