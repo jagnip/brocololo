@@ -152,12 +152,12 @@ const recipeBaseSchema = z.object({
   ),
   // Keep empty string values as missing so required checks trigger.
   servings: preprocessRequiredNumberInput(
-    "Enter a valid number of portions",
+    "Enter an even number of portions above 0",
     z.number()
-      .int({ message: "Enter a valid number of portions" })
-      .min(2, { message: "Enter at least 2 portions" })
+      .int({ message: "Enter an even number of portions above 0" })
+      .min(2, { message: "Enter an even number of portions above 0" })
       .refine((value) => value % 2 === 0, {
-        message: "Enter an even number of portions",
+        message: "Enter an even number of portions above 0",
       }),
   ),
   // Keep this optional in the form and normalize missing/blank input to 1.
