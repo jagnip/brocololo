@@ -20,8 +20,8 @@ export default async function IngredientFormContainer({
   }
 
   return (
-    <div className="max-w-3xl mx-auto mt-10">
-      {/* Share one form component for both create and edit flows. */}
+    <>
+      {/* Let page routes control layout so ingredient pages match recipe page rules. */}
       <IngredientForm
         categories={categories}
         units={units}
@@ -29,6 +29,6 @@ export default async function IngredientFormContainer({
         iconOptions={iconOptions}
         ingredient={ingredient ?? undefined}
       />
-    </div>
+    </>
   );
 }
