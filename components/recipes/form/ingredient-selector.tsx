@@ -1000,7 +1000,13 @@ export function IngredientSelector({
                   size="icon"
                   className="shrink-0"
                   aria-label="Remove group"
-                  onClick={() => deleteGroup(lane.groupTempKey)}
+                  onClick={() => {
+                    // Re-check at click time so deleteGroup always receives a string.
+                    if (!lane.groupTempKey) {
+                      return;
+                    }
+                    deleteGroup(lane.groupTempKey);
+                  }}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
