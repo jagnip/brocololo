@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -56,6 +56,7 @@ import {
 import { CreateUnitDialog } from "./create-unit-dialog";
 import { RenameUnitDialog } from "./rename-unit-dialog";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
+import { TopbarConfigController } from "@/components/topbar-config";
 
 type IngredientFormProps = {
   categories: Array<{ id: string; name: string }>;
@@ -274,9 +275,74 @@ export default function IngredientForm({
     });
   }
   const isSubmitting = form.formState.isSubmitting;
+  const isPageCreateMode = mode === "page" && !ingredient;
+  const isPageEditMode = mode === "page" && Boolean(ingredient);
+  const handleTopbarCreateClick = useCallback(() => {
+    // Keep topbar submit behavior in sync with form validation + submit flow.
+    void form.handleSubmit(onSubmit)();
+  }, [form, onSubmit]);
+  const handleTopbarUpdateClick = useCallback(() => {
+    // Keep topbar submit behavior in sync with form validation + submit flow.
+    void form.handleSubmit(onSubmit)();
+  }, [form, onSubmit]);
+  const topbarConfig = useMemo(
+    () => ({
+      actions: [
+        ...(isPageCreateMode
+          ? [
+              {
+                id: "create-ingredient-submit",
+                label: isSubmitting
+                  ? MESSAGES.ingredient.creating
+                  : "Create ingredient",
+                // Match standard primary button sizing used on other pages.
+                size: "default" as const,
+                onClick: handleTopbarCreateClick,
+                disabled: isSubmitting,
+                ariaBusy: isSubmitting,
+              },
+            ]
+          : []),
+        ...(isPageEditMode
+          ? [
+              {
+                id: "update-ingredient-submit",
+                label: isSubmitting
+                  ? MESSAGES.ingredient.updating
+                  : "Update ingredient",
+                // Match standard primary button sizing used on other pages.
+                size: "default" as const,
+                onClick: handleTopbarUpdateClick,
+                disabled: isSubmitting,
+                ariaBusy: isSubmitting,
+              },
+              {
+                id: "delete-ingredient",
+                label: "Delete ingredient",
+                icon: <Trash2 className="h-4 w-4" />,
+                size: "icon" as const,
+                variant: "outline" as const,
+                ariaLabel: "Delete ingredient",
+                disabled: isDeleting,
+                onClick: () => setIsDeleteOpen(true),
+              },
+            ]
+          : []),
+      ],
+    }),
+    [
+      handleTopbarCreateClick,
+      handleTopbarUpdateClick,
+      isDeleting,
+      isPageCreateMode,
+      isPageEditMode,
+      isSubmitting,
+    ],
+  );
 
   return (
     <Form {...form}>
+      {mode === "page" ? <TopbarConfigController config={topbarConfig} /> : null}
       <form
         onSubmit={(event) => {
           if (mode === "dialog") {
@@ -687,19 +753,21 @@ export default function IngredientForm({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            aria-busy={isSubmitting}
-          >
-            {isSubmitting
-              ? ingredient
-                ? MESSAGES.ingredient.updating
-                : MESSAGES.ingredient.creating
-              : ingredient
-                ? "Update ingredient"
-                : "Create ingredient"}
-          </Button>
+          {mode === "page" ? null : (
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              aria-busy={isSubmitting}
+            >
+              {isSubmitting
+                ? ingredient
+                  ? MESSAGES.ingredient.updating
+                  : MESSAGES.ingredient.creating
+                : ingredient
+                  ? "Update ingredient"
+                  : "Create ingredient"}
+            </Button>
+          )}
 
           {mode === "dialog" ? (
             // Keep escape hatch explicit for dialog flows.
@@ -707,54 +775,40 @@ export default function IngredientForm({
               Cancel
             </Button>
           ) : null}
-
-          {mode === "page" && ingredient ? (
-            <>
-              {/* Keep delete near update for edit-mode workflows. */}
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                disabled={isDeleting}
-                onClick={() => setIsDeleteOpen(true)}
-                aria-label="Delete ingredient"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-
-              <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Delete ingredient?</DialogTitle>
-                    <DialogDescription>
-                      Are you sure you want to delete{" "}
-                      <strong>{ingredient.name}</strong>? This action cannot be
-                      undone.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={isDeleting}
-                      onClick={() => setIsDeleteOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      disabled={isDeleting}
-                      onClick={onConfirmDelete}
-                    >
-                      {isDeleting ? "Deleting..." : "Yes, delete"}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </>
-          ) : null}
         </div>
+
+        {mode === "page" && ingredient ? (
+          <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete ingredient?</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete{" "}
+                  <strong>{ingredient.name}</strong>? This action cannot be
+                  undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isDeleting}
+                  onClick={() => setIsDeleteOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={isDeleting}
+                  onClick={onConfirmDelete}
+                >
+                  {isDeleting ? "Deleting..." : "Yes, delete"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        ) : null}
       </form>
 
       <CreateUnitDialog
