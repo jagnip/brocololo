@@ -1,6 +1,6 @@
 import { RecipeFormSkeleton } from "@/components/recipes/recipe-form-skeleton";
 
 export default function Loading() {
-  // Overrides parent recipes loading to match create form route.
+  // Keep editor skeleton scoped to create route only.
   return <RecipeFormSkeleton />;
 }
