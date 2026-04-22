@@ -1,4 +1,5 @@
 import { LogMealType } from "@/src/generated/enums";
+import { getRecipeDisplayImageUrl } from "@/lib/recipes/helpers";
 
 type LogIngredientRow = {
   entryRecipeId: string | null;
@@ -209,7 +210,8 @@ export function buildLogDays(entries: LogEntryRow[]): LogDayData[] {
         cardKind: recipe.sourceRecipe ? "recipe" : "removed",
         title: recipe.sourceRecipe?.name ?? "Recipe removed",
         slug: recipe.sourceRecipe?.slug ?? null,
-        imageUrl: recipe.sourceRecipe?.images?.[0]?.url ?? null,
+        // Keep image selection consistent with recipe cards/details.
+        imageUrl: getRecipeDisplayImageUrl(recipe.sourceRecipe?.images),
         ...macros,
         ingredients: linkedIngredients.map((ingredient) => ({
           ingredientId: ingredient.ingredient?.id ?? null,

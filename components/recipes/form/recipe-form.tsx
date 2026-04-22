@@ -74,6 +74,25 @@ type RecipeFormProps = {
   recipe?: RecipeType;
 };
 
+export function sanitizeInstructionRows<
+  T extends { text: string; linkedTempIngredientKeys?: string[]; id?: string },
+>(rows: T[]): T[] {
+  // Remove placeholder rows that have no meaningful instruction text.
+  return rows.filter((row) => row.text.trim().length > 0);
+}
+
+export function sanitizeRecipeFormValuesForSubmit(
+  values: Pick<CreateRecipeFormValues, "instructions" | "ingredients">,
+) {
+  return {
+    // Drop placeholder rows with no selected ingredient; keep ingredient-only rows.
+    ingredients: values.ingredients.filter(
+      (row) => row.ingredientId.trim().length > 0,
+    ),
+    instructions: sanitizeInstructionRows(values.instructions),
+  };
+}
+
 export default function RecipeForm({
   categories,
   ingredients,
@@ -221,6 +240,32 @@ export default function RecipeForm({
     if (result?.type === "error") {
       toast.error(result.message);
     }
+  }
+
+  function submitWithSanitizedInstructions() {
+    const currentIngredients = form.getValues("ingredients") ?? [];
+    const currentInstructions = form.getValues("instructions") ?? [];
+    const {
+      ingredients: sanitizedIngredients,
+      instructions: sanitizedInstructions,
+    } = sanitizeRecipeFormValuesForSubmit({
+      ingredients: currentIngredients,
+      instructions: currentInstructions,
+    });
+    if (sanitizedIngredients.length !== currentIngredients.length) {
+      form.setValue("ingredients", sanitizedIngredients, {
+        shouldValidate: false,
+        shouldDirty: true,
+      });
+    }
+    if (sanitizedInstructions.length !== currentInstructions.length) {
+      // Keep resolver input aligned with the payload by removing blank placeholders first.
+      form.setValue("instructions", sanitizedInstructions, {
+        shouldValidate: false,
+        shouldDirty: true,
+      });
+    }
+    void form.handleSubmit(onSubmit)();
   }
 
   function onConfirmDelete() {
@@ -386,8 +431,8 @@ export default function RecipeForm({
               id: "submit-recipe",
               label: topbarSubmitLabel,
               onClick: () => {
-                // Keep topbar action aligned with the same RHF submit pipeline as the form button.
-                void form.handleSubmit(onSubmit)();
+                // Keep topbar action aligned with the form submit pipeline.
+                submitWithSanitizedInstructions();
               },
               disabled: isSubmitting,
               ariaBusy: isSubmitting,
@@ -416,7 +461,10 @@ export default function RecipeForm({
         }}
       />
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={(event) => {
+          event.preventDefault();
+          submitWithSanitizedInstructions();
+        }}
         className="flex flex-col gap-6"
       >
         <section>

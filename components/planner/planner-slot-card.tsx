@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Check, Shuffle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RecipeReplacePopover } from "./recipe-replace-popover";
+import { getRecipeDisplayImageUrl } from "@/lib/recipes/helpers";
+import { RecipeImagePlaceholder } from "@/components/recipes/recipe-image-placeholder";
 
 type PlannerSlotCardProps = {
   slot: SlotInputType;
@@ -73,7 +75,7 @@ export function PlannerSlotCard({
     );
   }
 
-  const coverImage = recipe.images?.find((img) => img.isCover);
+  const imageUrl = getRecipeDisplayImageUrl(recipe.images);
   const canShuffle = onShuffle && slot.alternatives.length > 0;
   const canReplace = onReplace && recipes && recipes.length > 0;
 
@@ -84,17 +86,20 @@ export function PlannerSlotCard({
         slot.used && "opacity-50",
       )}
     >
-      {coverImage && (
-        <div className="relative w-full overflow-hidden aspect-2/1 sm:aspect-3/2">
+      <div className="relative w-full overflow-hidden aspect-2/1 sm:aspect-3/2">
+        {/* Always render a media header for visual rhythm across slot cards. */}
+        {imageUrl ? (
           <Image
-            src={coverImage.url}
+            src={imageUrl}
             alt={recipe.name}
             fill
             className="object-cover"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
-        </div>
-      )}
+        ) : (
+          <RecipeImagePlaceholder />
+        )}
+      </div>
       <CardHeader className="px-card-x py-card-y">
         <div className="min-w-0">
           <div className="flex items-start gap-2">

@@ -101,12 +101,12 @@ export default function RecipePage({
           />
         </div>
 
-        <div className="contents md:col-span-3 md:block md:space-y-block">
-          <div className="order-2 md:order-0 overflow-hidden rounded-xl">
+        <div className="contents md:col-span-3 md:block">
+          <div className="order-2 md:order-0 overflow-hidden rounded-xl md:mb-block">
             <ImageGallery images={recipe.images || []} />
           </div>
 
-          <div className="order-5 md:order-0">
+          <div className="order-5 md:order-0 md:mb-block">
             <InstructionsSection />
           </div>
 
