@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -638,7 +638,6 @@ export default function IngredientForm({
             size="default"
             onClick={() => append({ unitId: "", gramsPerUnit: 1 })}
           >
-            <Plus className="h-4 w-4" />
             Add conversion
           </Button>
 
