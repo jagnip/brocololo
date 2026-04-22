@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Card, CardHeader } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { useSearchParams } from "next/navigation";
-import { getRecipeDisplayImageUrl } from "@/lib/recipes/helpers";
+import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
 import { RecipeImagePlaceholder } from "./recipe-image-placeholder";
 
 type RecipeCardProps = {

@@ -9,7 +9,7 @@ import {
   Prisma,
 } from "@/src/generated/client";
 import { getDaysInRange } from "@/lib/planner/helpers";
-import { getRecipeDisplayImageUrl } from "@/lib/recipes/helpers";
+import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
 import { prisma } from "./index";
 
 const recipeInclude = {

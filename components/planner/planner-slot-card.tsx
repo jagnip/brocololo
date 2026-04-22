@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Check, Shuffle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RecipeReplacePopover } from "./recipe-replace-popover";
-import { getRecipeDisplayImageUrl } from "@/lib/recipes/helpers";
+import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
 import { RecipeImagePlaceholder } from "@/components/recipes/recipe-image-placeholder";
 
 type PlannerSlotCardProps = {

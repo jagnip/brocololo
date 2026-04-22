@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { RecipeImageType } from "@/types/images";
-import { getRecipeDisplayImageUrl } from "@/lib/recipes/helpers";
+import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
 import { RecipeImagePlaceholder } from "./recipe-image-placeholder";
 
 type ImageGalleryProps = {
