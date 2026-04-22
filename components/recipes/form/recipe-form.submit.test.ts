@@ -31,6 +31,7 @@ describe("recipe form submit sanitization", () => {
       position: 0,
     };
     const values = {
+      ingredientGroups: [],
       ingredients: [ingredientOnlyRow],
       instructions: [
         { text: "", linkedTempIngredientKeys: [] as string[] },
@@ -48,6 +49,7 @@ describe("recipe form submit sanitization", () => {
 
   it("drops ingredient placeholders without selected ingredient", () => {
     const values = {
+      ingredientGroups: [],
       ingredients: [
         {
           tempIngredientKey: "tmp-empty",
@@ -77,5 +79,53 @@ describe("recipe form submit sanitization", () => {
 
     expect(result.ingredients).toHaveLength(1);
     expect(result.ingredients[0]?.ingredientId).toBe("ing-1");
+  });
+
+  it("drops blank-named groups and ungroups their ingredient rows", () => {
+    const values = {
+      ingredientGroups: [
+        {
+          tempGroupKey: "grp-empty",
+          name: "   ",
+          position: 0,
+        },
+        {
+          tempGroupKey: "grp-valid",
+          name: "Sauce",
+          position: 1,
+        },
+      ],
+      ingredients: [
+        {
+          tempIngredientKey: "tmp-1",
+          ingredientId: "ing-1",
+          amount: null,
+          unitId: null,
+          nutritionTarget: "BOTH" as const,
+          additionalInfo: null,
+          groupTempKey: "grp-empty",
+          position: 0,
+        },
+        {
+          tempIngredientKey: "tmp-2",
+          ingredientId: "ing-2",
+          amount: null,
+          unitId: null,
+          nutritionTarget: "BOTH" as const,
+          additionalInfo: null,
+          groupTempKey: "grp-valid",
+          position: 1,
+        },
+      ],
+      instructions: [],
+    };
+
+    const result = sanitizeRecipeFormValuesForSubmit(values);
+
+    expect(result.ingredientGroups).toEqual([
+      { tempGroupKey: "grp-valid", name: "Sauce", position: 1 },
+    ]);
+    expect(result.ingredients[0]?.groupTempKey).toBeNull();
+    expect(result.ingredients[1]?.groupTempKey).toBe("grp-valid");
   });
 });

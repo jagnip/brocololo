@@ -82,13 +82,32 @@ export function sanitizeInstructionRows<
 }
 
 export function sanitizeRecipeFormValuesForSubmit(
-  values: Pick<CreateRecipeFormValues, "instructions" | "ingredients">,
+  values: Pick<
+    CreateRecipeFormValues,
+    "instructions" | "ingredients" | "ingredientGroups"
+  >,
 ) {
+  const ingredientGroups = values.ingredientGroups ?? [];
+  const sanitizedIngredientGroups = ingredientGroups.filter(
+    (group) => group.name.trim().length > 0,
+  );
+  const validGroupKeys = new Set(
+    sanitizedIngredientGroups.map((group) => group.tempGroupKey),
+  );
+
   return {
+    ingredientGroups: sanitizedIngredientGroups,
     // Drop placeholder rows with no selected ingredient; keep ingredient-only rows.
     ingredients: values.ingredients.filter(
       (row) => row.ingredientId.trim().length > 0,
-    ),
+    ).map((row) => ({
+      ...row,
+      // Ungroup rows that referenced groups removed by submit sanitization.
+      groupTempKey:
+        row.groupTempKey && validGroupKeys.has(row.groupTempKey)
+          ? row.groupTempKey
+          : null,
+    })),
     instructions: sanitizeInstructionRows(values.instructions),
   };
 }
@@ -243,20 +262,39 @@ export default function RecipeForm({
   }
 
   function submitWithSanitizedInstructions() {
+    const currentIngredientGroups = form.getValues("ingredientGroups") ?? [];
     const currentIngredients = form.getValues("ingredients") ?? [];
     const currentInstructions = form.getValues("instructions") ?? [];
     const {
+      ingredientGroups: sanitizedIngredientGroups,
       ingredients: sanitizedIngredients,
       instructions: sanitizedInstructions,
     } = sanitizeRecipeFormValuesForSubmit({
+      ingredientGroups: currentIngredientGroups,
       ingredients: currentIngredients,
       instructions: currentInstructions,
     });
+    if (sanitizedIngredientGroups.length !== currentIngredientGroups.length) {
+      form.setValue("ingredientGroups", sanitizedIngredientGroups, {
+        shouldValidate: false,
+        shouldDirty: true,
+      });
+    }
     if (sanitizedIngredients.length !== currentIngredients.length) {
       form.setValue("ingredients", sanitizedIngredients, {
         shouldValidate: false,
         shouldDirty: true,
       });
+    } else {
+      const changedGroupLinks = sanitizedIngredients.some(
+        (row, index) => row.groupTempKey !== currentIngredients[index]?.groupTempKey,
+      );
+      if (changedGroupLinks) {
+        form.setValue("ingredients", sanitizedIngredients, {
+          shouldValidate: false,
+          shouldDirty: true,
+        });
+      }
     }
     if (sanitizedInstructions.length !== currentInstructions.length) {
       // Keep resolver input aligned with the payload by removing blank placeholders first.

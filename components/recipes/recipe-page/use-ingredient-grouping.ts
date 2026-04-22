@@ -42,9 +42,9 @@ export function useIngredientGrouping({
       })),
     [ingredients, orderedIngredientGroups],
   );
-  // Hide empty groups on detail page to keep sections focused on actual items.
+  // Keep group headers visible even when currently empty.
   const visibleGroupedIngredients = useMemo(
-    () => groupedIngredients.filter((group) => group.ingredients.length > 0),
+    () => groupedIngredients,
     [groupedIngredients],
   );
 

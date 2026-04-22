@@ -530,7 +530,7 @@ export function IngredientSelector({
       {
         id: undefined,
         tempGroupKey: crypto.randomUUID(),
-        name: "New group",
+        name: "",
         position: normalizedGroups.length,
       },
     ];
@@ -953,10 +953,12 @@ export function IngredientSelector({
     allowRename?: boolean;
   }) => {
     const laneRows = getLaneRows(lane.groupTempKey);
+    const laneContainerClassName =
+      "min-w-0 max-w-full space-y-1 rounded-md border border-border/60 bg-card p-2";
     return (
       <section
         key={lane.groupTempKey ?? UNGROUPED_LANE_KEY}
-        className="min-w-0 max-w-full space-y-1 rounded-md p-2"
+        className={laneContainerClassName}
       >
         <div className="flex min-w-0 items-center gap-2">
           <Button
@@ -979,33 +981,34 @@ export function IngredientSelector({
             <GripVertical className="h-4 w-4" />
           </Button>
           {lane.allowRename ? (
-            <Input
-              value={lane.title}
-              onChange={(event) => {
-                if (!lane.groupTempKey) {
-                  return;
-                }
-                renameGroup(lane.groupTempKey, event.target.value);
-              }}
-              placeholder="Group name"
-              className="min-w-0 max-w-full flex-1 sm:max-w-sm"
-            />
+            <div className="flex min-w-0 flex-1 items-center gap-2 sm:max-w-sm">
+              <Input
+                value={lane.title}
+                onChange={(event) => {
+                  if (!lane.groupTempKey) {
+                    return;
+                  }
+                  renameGroup(lane.groupTempKey, event.target.value);
+                }}
+              placeholder="Enter group name"
+                className="min-w-0 max-w-full flex-1"
+              />
+              {lane.groupTempKey ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                  aria-label="Remove group"
+                  onClick={() => deleteGroup(lane.groupTempKey)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              ) : null}
+            </div>
           ) : (
             <h4 className="text-sm font-semibold">{lane.title}</h4>
           )}
-
-          {lane.allowRename && lane.groupTempKey ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="ml-auto shrink-0"
-              aria-label="Remove group"
-              onClick={() => deleteGroup(lane.groupTempKey!)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          ) : null}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -1155,7 +1158,7 @@ export function IngredientSelector({
       </div>
 
       <div
-        className={`${normalizedValue.length === 0 ? "mt-0" : "mt-3"} flex justify-start gap-2`}
+        className={`${visibleLanes.length === 0 ? "mt-0" : "mt-3"} flex justify-start gap-2`}
       >
         {shouldShowFooterUngroupedAdd ? (
           <Button
