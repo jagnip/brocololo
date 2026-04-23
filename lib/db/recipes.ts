@@ -506,6 +506,16 @@ export async function updateRecipe(
         .map((step) => step.id)
         .filter((id): id is string => Boolean(id)),
     );
+    const stepIdsToDelete = [...existingStepIds].filter(
+      (id) => !incomingStepIds.has(id),
+    );
+    if (stepIdsToDelete.length > 0) {
+      // Remove dropped steps before reindexing survivors to avoid transient
+      // UNIQUE(recipe_id, position) collisions during sequential updates.
+      await tx.recipeInstruction.deleteMany({
+        where: { id: { in: stepIdsToDelete } },
+      });
+    }
 
     for (let position = 0; position < instructions.length; position += 1) {
       const step = instructions[position];
@@ -551,15 +561,6 @@ export async function updateRecipe(
           skipDuplicates: true,
         });
       }
-    }
-
-    const stepIdsToDelete = [...existingStepIds].filter(
-      (id) => !incomingStepIds.has(id),
-    );
-    if (stepIdsToDelete.length > 0) {
-      await tx.recipeInstruction.deleteMany({
-        where: { id: { in: stepIdsToDelete } },
-      });
     }
 
     return tx.recipe.findUniqueOrThrow({
