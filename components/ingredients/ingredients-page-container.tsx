@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { SearchInput } from "@/components/search";
 import { IngredientIcon } from "@/components/ingredient-icon";
-import { getIngredientDisplayName } from "@/lib/ingredients/format";
+import { getIngredientTitleParts } from "@/lib/ingredients/format";
 import { getIngredientsPage } from "@/lib/db/ingredients";
 import { ROUTES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
@@ -62,15 +62,25 @@ export async function IngredientsPageContainer({
 
       <div className="rounded-lg border">
         <ul className="divide-y">
-          {data.items.map((ingredient) => (
-            <li key={ingredient.id} className="p-4">
+          {data.items.map((ingredient) => {
+            const title = getIngredientTitleParts(ingredient);
+
+            return (
+              <li key={ingredient.id} className="p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex items-start gap-3">
                   <IngredientIcon icon={ingredient.icon} name={ingredient.name} />
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="truncate font-medium">
-                        {getIngredientDisplayName(ingredient.name, ingredient.brand)}
+                        {title.name}
+                        {title.descriptor ? (
+                          <span className="text-muted-foreground">
+                            {" "}
+                            {title.descriptor}
+                          </span>
+                        ) : null}
+                        {title.brand ? ` ${title.brand}` : null}
                       </p>
                       <Link
                         href={ROUTES.ingredientEdit(ingredient.slug)}
@@ -136,7 +146,8 @@ export async function IngredientsPageContainer({
                 )}
               </div>
             </li>
-          ))}
+            );
+          })}
 
           {data.items.length === 0 && (
             <li className="p-6 text-sm text-muted-foreground">

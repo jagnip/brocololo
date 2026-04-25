@@ -49,6 +49,7 @@ export function createMockIngredient(overrides?: Partial<{
   id: string;
   name: string;
   brand: string | null;
+  descriptor: string | null;
   slug: string;
   icon: string | null;
   calories: number;
@@ -72,6 +73,7 @@ export function createMockIngredient(overrides?: Partial<{
     id: defaultId,
     name: 'Chicken Breast',
     brand: null,
+    descriptor: null,
     slug: 'chicken-breast',
     icon: null,
     calories: 165, 

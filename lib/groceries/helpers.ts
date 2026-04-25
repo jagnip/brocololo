@@ -1,4 +1,5 @@
 import { calculateServingScalingFactor } from "@/lib/recipes/helpers";
+import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import { GroceryItem } from "@/types/groceries";
 
 export type PlanSlotData = {
@@ -10,6 +11,8 @@ export type PlanSlotData = {
       ingredient: {
         id: string;
         name: string;
+        brand?: string | null;
+        descriptor?: string | null;
         icon: string | null;
         supermarketUrl: string | null;
         unitConversions: Array<{ unitId: string; gramsPerUnit: number }>;
@@ -58,7 +61,11 @@ function scaleIngredients(slots: PlanSlotData[]): ScaledIngredient[] {
 
       return {
         ingredientId: ri.ingredient.id,
-        ingredientName: ri.ingredient.name,
+        ingredientName: getIngredientDisplayName(
+          ri.ingredient.name,
+          ri.ingredient.brand ?? null,
+          ri.ingredient.descriptor ?? null,
+        ),
         ingredientIcon: ri.ingredient.icon,
         supermarketUrl: ri.ingredient.supermarketUrl,
         unitId: unit?.id ?? null,

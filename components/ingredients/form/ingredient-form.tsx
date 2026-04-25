@@ -68,6 +68,7 @@ type IngredientFormProps = {
     id: string;
     name: string;
     brand: string | null;
+    descriptor: string | null;
     icon: string | null;
     supermarketUrl: string | null;
     calories: number;
@@ -146,6 +147,7 @@ export default function IngredientForm({
       ? {
           name: ingredient.name,
           brand: ingredient.brand,
+          descriptor: ingredient.descriptor,
           icon: ingredient.icon,
           supermarketUrl: ingredient.supermarketUrl,
           calories: ingredient.calories,
@@ -163,6 +165,7 @@ export default function IngredientForm({
           // Prefill from selector create flow when provided.
           name: initialName ?? "",
           brand: null,
+          descriptor: null,
           icon: null,
           supermarketUrl: null,
           // Keep targeted nutrition fields empty so placeholders guide first input.
@@ -371,7 +374,7 @@ export default function IngredientForm({
           className={
             mode === "page"
               ? "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-2 lg:grid-cols-4"
-              : ""
+              : "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-2"
           }
         >
           <FormField
@@ -382,6 +385,25 @@ export default function IngredientForm({
                 <FormLabel>Name</FormLabel>
                 <FormControl>
                   <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="descriptor"
+            render={({ field }) => (
+              <FormItem className={mode === "page" ? "lg:col-span-1" : ""}>
+                {/* Descriptor stores qualifier text; brackets are added only when displayed. */}
+                <FormLabel>Description (optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    value={field.value ?? ""}
+                    onChange={(event) => field.onChange(event.target.value)}
+                    placeholder="e.g. frozen, skinless"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -408,7 +430,7 @@ export default function IngredientForm({
                   <Input
                     value={field.value ?? ""}
                     onChange={(event) => field.onChange(event.target.value)}
-                    placeholder="e.g. Lidl, Tesco..."
+                    placeholder="e.g. Lidl, Tesco"
                   />
                 </FormControl>
                 <FormMessage />
@@ -428,8 +450,8 @@ export default function IngredientForm({
                     value={field.value || null}
                     onValueChange={(next) => field.onChange(next ?? "")}
                     placeholder="Select category"
-                    searchPlaceholder="Search categories..."
-                    emptyLabel="No category found."
+                    searchPlaceholder="Search categories"
+                    emptyLabel="No category found"
                   />
                 </FormControl>
                 <FormMessage />
@@ -481,7 +503,7 @@ export default function IngredientForm({
                   <Input
                     value={field.value ?? ""}
                     onChange={(event) => field.onChange(event.target.value)}
-                    placeholder="https://..."
+                    placeholder="https://"
                   />
                 </FormControl>
                 <FormMessage />
@@ -643,8 +665,8 @@ export default function IngredientForm({
                               });
                             }}
                             placeholder="Select unit"
-                            searchPlaceholder="Search units..."
-                            emptyLabel="No unit found."
+                            searchPlaceholder="Search units"
+                            emptyLabel="No unit found"
                           />
                         </FormControl>
                         <FormMessage />

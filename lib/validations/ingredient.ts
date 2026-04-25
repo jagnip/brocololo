@@ -33,6 +33,17 @@ const ingredientBaseSchema = z.object({
       const trimmed = value.trim();
       return trimmed === "" ? null : trimmed;
     }),
+  descriptor: z
+    .string()
+    .max(100, { message: "Keep description under 100 characters" })
+    .nullish()
+    .transform((value) => {
+      if (!value) return null;
+      const trimmed = value.trim();
+      if (trimmed === "") return null;
+      // Store descriptor text without the display brackets users may type.
+      return trimmed.replace(/^\((.*)\)$/, "$1").trim() || null;
+    }),
   icon: z
     .string()
     .max(200, { message: "Icon filename is too long" })

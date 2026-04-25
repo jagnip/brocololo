@@ -121,6 +121,7 @@ model Ingredient {
   slug            String   @unique
   icon            String?
   brand           String?
+  descriptor      String?
   supermarketUrl  String?  @map("supermarket_url")
   calories        Float
   proteins        Float

@@ -10,6 +10,7 @@ import {
   isGramUnit,
   isInstructionIngredientVisibleForPerson,
 } from "@/lib/recipes/helpers";
+import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import { useRecipePageInstructionsSectionData } from "@/components/context/recipe-page-context";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 
@@ -188,7 +189,11 @@ export function InstructionsSection() {
                       displayAmount: display.displayAmount,
                       displayUnitName: display.displayUnitName,
                       displayUnitNamePlural: display.displayUnitNamePlural,
-                      ingredientName: recipeIngredient.ingredient.name,
+                      ingredientName: getIngredientDisplayName(
+                        recipeIngredient.ingredient.name,
+                        recipeIngredient.ingredient.brand,
+                        recipeIngredient.ingredient.descriptor,
+                      ),
                       additionalInfo: recipeIngredient.additionalInfo,
                     });
                     const shouldShowMutedGrams =

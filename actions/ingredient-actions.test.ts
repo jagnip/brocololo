@@ -48,6 +48,7 @@ function makeValidIngredientFormValues(): IngredientFormValues {
   return {
     name: "Chicken Breast",
     brand: null,
+    descriptor: null,
     icon: null,
     supermarketUrl: null,
     calories: 100,
@@ -69,6 +70,7 @@ function makeIngredientRecord() {
     id: "ingredient-1",
     name: "Chicken Breast",
     brand: null,
+    descriptor: null,
     slug: "chicken-breast",
     icon: null,
     supermarketUrl: null,
@@ -77,6 +79,7 @@ function makeIngredientRecord() {
     fats: 1,
     carbs: 0,
     categoryId: "category-1",
+    defaultUnitId: "unit-g",
     createdAt: new Date(),
     updatedAt: new Date(),
     unitConversions: [
@@ -89,6 +92,7 @@ function makeIngredientRecord() {
         unit: {
           id: "unit-g",
           name: "g",
+          namePlural: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         },
@@ -114,6 +118,19 @@ describe("inline ingredient save actions", () => {
       expect(result.ingredient.id).toBe("ingredient-1");
     }
     expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it("normalizes descriptor before creating ingredient inline", async () => {
+    vi.mocked(createIngredient).mockResolvedValue(makeIngredientRecord());
+
+    await createIngredientInlineAction({
+      ...makeValidIngredientFormValues(),
+      descriptor: " (skinless) ",
+    });
+
+    expect(createIngredient).toHaveBeenCalledWith(
+      expect.objectContaining({ descriptor: "skinless" }),
+    );
   });
 
   it("updates ingredient inline and returns success payload", async () => {

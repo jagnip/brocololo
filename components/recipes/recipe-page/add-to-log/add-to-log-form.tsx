@@ -178,7 +178,11 @@ export function RecipeAddToLogForm({
     () =>
       localIngredientOptions.map((ingredient) => ({
         value: ingredient.id,
-        label: getIngredientDisplayName(ingredient.name, ingredient.brand),
+        label: getIngredientDisplayName(
+          ingredient.name,
+          ingredient.brand,
+          ingredient.descriptor,
+        ),
       })),
     [localIngredientOptions],
   );

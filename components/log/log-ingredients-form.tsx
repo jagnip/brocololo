@@ -23,6 +23,7 @@ export type LogIngredientOption = {
   id: string;
   name: string;
   brand: string | null;
+  descriptor?: string | null;
   defaultUnitId: string | null;
   calories: number;
   proteins: number;
@@ -178,7 +179,11 @@ export function LogIngredientsForm({
     () =>
       localIngredientOptions.map((ingredient) => ({
         value: ingredient.id,
-        label: getIngredientDisplayName(ingredient.name, ingredient.brand),
+        label: getIngredientDisplayName(
+          ingredient.name,
+          ingredient.brand,
+          ingredient.descriptor,
+        ),
       })),
     [localIngredientOptions],
   );

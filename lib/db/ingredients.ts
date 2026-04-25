@@ -38,6 +38,7 @@ export async function getIngredientsPage({
     ? {
         OR: [
           { name: { contains: trimmedQuery, mode: "insensitive" as const } },
+          { descriptor: { contains: trimmedQuery, mode: "insensitive" as const } },
           { brand: { contains: trimmedQuery, mode: "insensitive" as const } },
         ],
       }
