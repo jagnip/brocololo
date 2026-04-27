@@ -10,7 +10,6 @@ import {
   isGramUnit,
   isInstructionIngredientVisibleForPerson,
 } from "@/lib/recipes/helpers";
-import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import { useRecipePageInstructionsSectionData } from "@/components/context/recipe-page-context";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 
@@ -189,11 +188,8 @@ export function InstructionsSection() {
                       displayAmount: display.displayAmount,
                       displayUnitName: display.displayUnitName,
                       displayUnitNamePlural: display.displayUnitNamePlural,
-                      ingredientName: getIngredientDisplayName(
-                        recipeIngredient.ingredient.name,
-                        recipeIngredient.ingredient.brand,
-                        recipeIngredient.ingredient.descriptor,
-                      ),
+                      // Recipe pages should keep instruction badges to the ingredient name only.
+                      ingredientName: recipeIngredient.ingredient.name,
                       additionalInfo: recipeIngredient.additionalInfo,
                     });
                     const shouldShowMutedGrams =

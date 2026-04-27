@@ -10,7 +10,7 @@ import {
   isGramUnit,
   scaleIngredientNutritionForGrams,
 } from "@/lib/recipes/helpers";
-import { getIngredientDisplayName } from "@/lib/ingredients/format";
+import { getIngredientSelectorDisplay } from "@/lib/ingredients/format";
 import {
   Select,
   SelectContent,
@@ -77,11 +77,12 @@ export function IngredientItem({
     servingScalingFactor,
     calorieScalingFactor,
   );
-  const ingredientDisplayName = getIngredientDisplayName(
-    ingredient.name,
-    ingredient.brand,
-    ingredient.descriptor,
-  );
+  // Keep selector labels and control accessibility matching the richer ingredient display.
+  const ingredientDisplayName = getIngredientSelectorDisplay({
+    name: ingredient.name,
+    brand: ingredient.brand,
+    descriptor: ingredient.descriptor,
+  }).label;
 
   const getUnitOptionLabel = (unitId: string) => {
     // Recompute per target unit so option labels pluralize against converted amounts.
@@ -209,15 +210,21 @@ export function IngredientItem({
   ];
   // Reuse shared searchable-select model so this row matches form behavior.
   const ingredientOptions: SearchableSelectOption[] = ingredientCandidates.map(
-    (candidate) => ({
-      value: candidate.id,
-      label: getIngredientDisplayName(
-        candidate.name,
-        candidate.brand,
-        candidate.descriptor,
-      ),
-      icon: candidate.icon,
-    }),
+    (candidate) => {
+      const display = getIngredientSelectorDisplay({
+        name: candidate.name,
+        brand: candidate.brand,
+        descriptor: candidate.descriptor,
+      });
+
+      return {
+        value: candidate.id,
+        label: display.label,
+        // Store the muted tail as metadata for this selector's custom renderer.
+        detailsText: display.detailsText ?? undefined,
+        icon: candidate.icon,
+      };
+    },
   );
 
   return (

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
-import { getIngredientDisplayName } from "@/lib/ingredients/format";
+import { getIngredientSelectorDisplay } from "@/lib/ingredients/format";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
 import type {
   EditableIngredientRow,
@@ -176,14 +176,20 @@ export function RecipeAddToLogForm({
 
   const ingredientSelectOptions = useMemo(
     () =>
-      localIngredientOptions.map((ingredient) => ({
-        value: ingredient.id,
-        label: getIngredientDisplayName(
-          ingredient.name,
-          ingredient.brand,
-          ingredient.descriptor,
-        ),
-      })),
+      localIngredientOptions.map((ingredient) => {
+        const display = getIngredientSelectorDisplay({
+          name: ingredient.name,
+          brand: ingredient.brand,
+          descriptor: ingredient.descriptor,
+        });
+
+        return {
+          value: ingredient.id,
+          label: display.label,
+          // SearchableSelect renders detailsText as muted metadata in the label.
+          detailsText: display.detailsText ?? undefined,
+        };
+      }),
     [localIngredientOptions],
   );
   const hasUnsavedChanges = useMemo(() => {
