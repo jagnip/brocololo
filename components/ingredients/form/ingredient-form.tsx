@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import { Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -296,9 +296,7 @@ export default function IngredientForm({
           ? [
               {
                 id: "create-ingredient-submit",
-                label: isSubmitting
-                  ? MESSAGES.ingredient.creating
-                  : "Create ingredient",
+                label: isSubmitting ? "Creating..." : "Create ingredient",
                 // Match standard primary button sizing used on other pages.
                 size: "default" as const,
                 onClick: handleTopbarCreateClick,
@@ -311,9 +309,7 @@ export default function IngredientForm({
           ? [
               {
                 id: "update-ingredient-submit",
-                label: isSubmitting
-                  ? MESSAGES.ingredient.updating
-                  : "Update ingredient",
+                label: isSubmitting ? "Editing..." : "Update ingredient",
                 // Match standard primary button sizing used on other pages.
                 size: "default" as const,
                 onClick: handleTopbarUpdateClick,
@@ -323,7 +319,12 @@ export default function IngredientForm({
               {
                 id: "delete-ingredient",
                 label: "Delete ingredient",
-                icon: <Trash2 className="h-4 w-4" />,
+                // Match planner/log delete UX: show spinner icon while delete is pending.
+                icon: isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                ),
                 size: "icon" as const,
                 variant: "outline" as const,
                 ariaLabel: "Delete ingredient",
@@ -855,8 +856,8 @@ export default function IngredientForm({
             >
               {isSubmitting
                 ? ingredient
-                  ? MESSAGES.ingredient.updating
-                  : MESSAGES.ingredient.creating
+                  ? "Editing..."
+                  : "Creating..."
                 : ingredient
                   ? "Update ingredient"
                   : "Create ingredient"}
@@ -897,7 +898,14 @@ export default function IngredientForm({
                   disabled={isDeleting}
                   onClick={onConfirmDelete}
                 >
-                  {isDeleting ? "Deleting..." : "Yes, delete"}
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    "Yes, delete"
+                  )}
                 </Button>
               </DialogFooter>
             </DialogContent>

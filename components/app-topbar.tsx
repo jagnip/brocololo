@@ -17,6 +17,8 @@ export function AppTopbar() {
   const isRecipeEditRoute = /^\/recipes\/[^/]+\/edit$/.test(pathname);
   const isLogDetailRoute = /^\/log\/[^/]+$/.test(pathname);
   const isIngredientsIndexRoute = pathname === "/ingredients";
+  const isIngredientCreateRoute = pathname === "/ingredients/create";
+  const isIngredientEditRoute = /^\/ingredients\/[^/]+\/edit$/.test(pathname);
   const isPlanDetailRoute = /^\/plan\/(?!create$)[^/]+$/.test(pathname);
   const isPlanCreateRoute = pathname === "/plan/create";
   const shouldShowRecipeTopbarSkeleton = isRecipeDetailRoute && !config;
@@ -26,6 +28,10 @@ export function AppTopbar() {
   const shouldShowLogTopbarSkeleton = isLogDetailRoute && !config;
   const shouldShowIngredientsTopbarSkeleton =
     isIngredientsIndexRoute && !config;
+  const shouldShowIngredientCreateTopbarSkeleton =
+    isIngredientCreateRoute && !config;
+  const shouldShowIngredientEditTopbarSkeleton =
+    isIngredientEditRoute && !config;
   const shouldShowPlanTopbarSkeleton = isPlanDetailRoute && !config;
   const shouldShowPlanCreateTopbarSkeleton = isPlanCreateRoute && !config;
 
@@ -76,6 +82,19 @@ export function AppTopbar() {
           <>
             {/* Mirror “Create ingredient” secondary action while ingredients topbar config hydrates. */}
             <Skeleton className="h-9 w-44 rounded-md" />
+          </>
+        ) : null}
+        {shouldShowIngredientCreateTopbarSkeleton ? (
+          <>
+            {/* Mirror ingredient/create topbar: single primary submit action. */}
+            <Skeleton className="h-9 w-32 rounded-md" />
+          </>
+        ) : null}
+        {shouldShowIngredientEditTopbarSkeleton ? (
+          <>
+            {/* Mirror ingredient/edit topbar: submit action plus delete icon. */}
+            <Skeleton className="h-9 w-32 rounded-md" />
+            <Skeleton className="h-9 w-9 rounded-md" />
           </>
         ) : null}
         {shouldShowPlanTopbarSkeleton ? (
