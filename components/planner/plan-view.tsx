@@ -9,6 +9,7 @@ import { PlanInputType, SlotInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PlannerSlotCard } from "./planner-slot-card";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
+import { getIngredientDisplayName } from "@/lib/ingredients/format";
 
 function getFridgeMatchIngredients(
   recipe: RecipeType,
@@ -17,7 +18,13 @@ function getFridgeMatchIngredients(
   if (fridgeIngredientIds.length === 0) return [];
   return recipe.ingredients
     .filter((ri) => fridgeIngredientIds.includes(ri.ingredientId))
-    .map((ri) => ri.ingredient.name);
+    .map((ri) =>
+      getIngredientDisplayName(
+        ri.ingredient.name,
+        ri.ingredient.brand,
+        ri.ingredient.descriptor,
+      ),
+    );
 }
 
 function getSlotKey(slot: SlotInputType): string {

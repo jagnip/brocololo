@@ -46,6 +46,7 @@ export type IngredientMinAggregateOutputType = {
   slug: string | null
   icon: string | null
   brand: string | null
+  descriptor: string | null
   supermarketUrl: string | null
   calories: number | null
   proteins: number | null
@@ -61,6 +62,7 @@ export type IngredientMaxAggregateOutputType = {
   slug: string | null
   icon: string | null
   brand: string | null
+  descriptor: string | null
   supermarketUrl: string | null
   calories: number | null
   proteins: number | null
@@ -76,6 +78,7 @@ export type IngredientCountAggregateOutputType = {
   slug: number
   icon: number
   brand: number
+  descriptor: number
   supermarketUrl: number
   calories: number
   proteins: number
@@ -107,6 +110,7 @@ export type IngredientMinAggregateInputType = {
   slug?: true
   icon?: true
   brand?: true
+  descriptor?: true
   supermarketUrl?: true
   calories?: true
   proteins?: true
@@ -122,6 +126,7 @@ export type IngredientMaxAggregateInputType = {
   slug?: true
   icon?: true
   brand?: true
+  descriptor?: true
   supermarketUrl?: true
   calories?: true
   proteins?: true
@@ -137,6 +142,7 @@ export type IngredientCountAggregateInputType = {
   slug?: true
   icon?: true
   brand?: true
+  descriptor?: true
   supermarketUrl?: true
   calories?: true
   proteins?: true
@@ -239,6 +245,7 @@ export type IngredientGroupByOutputType = {
   slug: string
   icon: string | null
   brand: string | null
+  descriptor: string | null
   supermarketUrl: string | null
   calories: number
   proteins: number
@@ -277,6 +284,7 @@ export type IngredientWhereInput = {
   slug?: Prisma.StringFilter<"Ingredient"> | string
   icon?: Prisma.StringNullableFilter<"Ingredient"> | string | null
   brand?: Prisma.StringNullableFilter<"Ingredient"> | string | null
+  descriptor?: Prisma.StringNullableFilter<"Ingredient"> | string | null
   supermarketUrl?: Prisma.StringNullableFilter<"Ingredient"> | string | null
   calories?: Prisma.FloatFilter<"Ingredient"> | number
   proteins?: Prisma.FloatFilter<"Ingredient"> | number
@@ -297,6 +305,7 @@ export type IngredientOrderByWithRelationInput = {
   slug?: Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
   brand?: Prisma.SortOrderInput | Prisma.SortOrder
+  descriptor?: Prisma.SortOrderInput | Prisma.SortOrder
   supermarketUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   calories?: Prisma.SortOrder
   proteins?: Prisma.SortOrder
@@ -320,6 +329,7 @@ export type IngredientWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"Ingredient"> | string
   icon?: Prisma.StringNullableFilter<"Ingredient"> | string | null
   brand?: Prisma.StringNullableFilter<"Ingredient"> | string | null
+  descriptor?: Prisma.StringNullableFilter<"Ingredient"> | string | null
   supermarketUrl?: Prisma.StringNullableFilter<"Ingredient"> | string | null
   calories?: Prisma.FloatFilter<"Ingredient"> | number
   proteins?: Prisma.FloatFilter<"Ingredient"> | number
@@ -340,6 +350,7 @@ export type IngredientOrderByWithAggregationInput = {
   slug?: Prisma.SortOrder
   icon?: Prisma.SortOrderInput | Prisma.SortOrder
   brand?: Prisma.SortOrderInput | Prisma.SortOrder
+  descriptor?: Prisma.SortOrderInput | Prisma.SortOrder
   supermarketUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   calories?: Prisma.SortOrder
   proteins?: Prisma.SortOrder
@@ -363,6 +374,7 @@ export type IngredientScalarWhereWithAggregatesInput = {
   slug?: Prisma.StringWithAggregatesFilter<"Ingredient"> | string
   icon?: Prisma.StringNullableWithAggregatesFilter<"Ingredient"> | string | null
   brand?: Prisma.StringNullableWithAggregatesFilter<"Ingredient"> | string | null
+  descriptor?: Prisma.StringNullableWithAggregatesFilter<"Ingredient"> | string | null
   supermarketUrl?: Prisma.StringNullableWithAggregatesFilter<"Ingredient"> | string | null
   calories?: Prisma.FloatWithAggregatesFilter<"Ingredient"> | number
   proteins?: Prisma.FloatWithAggregatesFilter<"Ingredient"> | number
@@ -378,6 +390,7 @@ export type IngredientCreateInput = {
   slug: string
   icon?: string | null
   brand?: string | null
+  descriptor?: string | null
   supermarketUrl?: string | null
   calories: number
   proteins: number
@@ -396,6 +409,7 @@ export type IngredientUncheckedCreateInput = {
   slug: string
   icon?: string | null
   brand?: string | null
+  descriptor?: string | null
   supermarketUrl?: string | null
   calories: number
   proteins: number
@@ -414,6 +428,7 @@ export type IngredientUpdateInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   brand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calories?: Prisma.FloatFieldUpdateOperationsInput | number
   proteins?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -432,6 +447,7 @@ export type IngredientUncheckedUpdateInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   brand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calories?: Prisma.FloatFieldUpdateOperationsInput | number
   proteins?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -450,6 +466,7 @@ export type IngredientCreateManyInput = {
   slug: string
   icon?: string | null
   brand?: string | null
+  descriptor?: string | null
   supermarketUrl?: string | null
   calories: number
   proteins: number
@@ -465,6 +482,7 @@ export type IngredientUpdateManyMutationInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   brand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calories?: Prisma.FloatFieldUpdateOperationsInput | number
   proteins?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -478,6 +496,7 @@ export type IngredientUncheckedUpdateManyInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   brand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calories?: Prisma.FloatFieldUpdateOperationsInput | number
   proteins?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -493,6 +512,7 @@ export type IngredientCountOrderByAggregateInput = {
   slug?: Prisma.SortOrder
   icon?: Prisma.SortOrder
   brand?: Prisma.SortOrder
+  descriptor?: Prisma.SortOrder
   supermarketUrl?: Prisma.SortOrder
   calories?: Prisma.SortOrder
   proteins?: Prisma.SortOrder
@@ -515,6 +535,7 @@ export type IngredientMaxOrderByAggregateInput = {
   slug?: Prisma.SortOrder
   icon?: Prisma.SortOrder
   brand?: Prisma.SortOrder
+  descriptor?: Prisma.SortOrder
   supermarketUrl?: Prisma.SortOrder
   calories?: Prisma.SortOrder
   proteins?: Prisma.SortOrder
@@ -530,6 +551,7 @@ export type IngredientMinOrderByAggregateInput = {
   slug?: Prisma.SortOrder
   icon?: Prisma.SortOrder
   brand?: Prisma.SortOrder
+  descriptor?: Prisma.SortOrder
   supermarketUrl?: Prisma.SortOrder
   calories?: Prisma.SortOrder
   proteins?: Prisma.SortOrder
@@ -700,6 +722,7 @@ export type IngredientCreateWithoutDefaultUnitInput = {
   slug: string
   icon?: string | null
   brand?: string | null
+  descriptor?: string | null
   supermarketUrl?: string | null
   calories: number
   proteins: number
@@ -717,6 +740,7 @@ export type IngredientUncheckedCreateWithoutDefaultUnitInput = {
   slug: string
   icon?: string | null
   brand?: string | null
+  descriptor?: string | null
   supermarketUrl?: string | null
   calories: number
   proteins: number
@@ -763,6 +787,7 @@ export type IngredientScalarWhereInput = {
   slug?: Prisma.StringFilter<"Ingredient"> | string
   icon?: Prisma.StringNullableFilter<"Ingredient"> | string | null
   brand?: Prisma.StringNullableFilter<"Ingredient"> | string | null
+  descriptor?: Prisma.StringNullableFilter<"Ingredient"> | string | null
   supermarketUrl?: Prisma.StringNullableFilter<"Ingredient"> | string | null
   calories?: Prisma.FloatFilter<"Ingredient"> | number
   proteins?: Prisma.FloatFilter<"Ingredient"> | number
@@ -778,6 +803,7 @@ export type IngredientCreateWithoutUnitConversionsInput = {
   slug: string
   icon?: string | null
   brand?: string | null
+  descriptor?: string | null
   supermarketUrl?: string | null
   calories: number
   proteins: number
@@ -795,6 +821,7 @@ export type IngredientUncheckedCreateWithoutUnitConversionsInput = {
   slug: string
   icon?: string | null
   brand?: string | null
+  descriptor?: string | null
   supermarketUrl?: string | null
   calories: number
   proteins: number
@@ -828,6 +855,7 @@ export type IngredientUpdateWithoutUnitConversionsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   brand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calories?: Prisma.FloatFieldUpdateOperationsInput | number
   proteins?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -845,6 +873,7 @@ export type IngredientUncheckedUpdateWithoutUnitConversionsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   brand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calories?: Prisma.FloatFieldUpdateOperationsInput | number
   proteins?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -862,6 +891,7 @@ export type IngredientCreateWithoutRecipesInput = {
   slug: string
   icon?: string | null
   brand?: string | null
+  descriptor?: string | null
   supermarketUrl?: string | null
   calories: number
   proteins: number
@@ -879,6 +909,7 @@ export type IngredientUncheckedCreateWithoutRecipesInput = {
   slug: string
   icon?: string | null
   brand?: string | null
+  descriptor?: string | null
   supermarketUrl?: string | null
   calories: number
   proteins: number
@@ -912,6 +943,7 @@ export type IngredientUpdateWithoutRecipesInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   brand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calories?: Prisma.FloatFieldUpdateOperationsInput | number
   proteins?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -929,6 +961,7 @@ export type IngredientUncheckedUpdateWithoutRecipesInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   brand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calories?: Prisma.FloatFieldUpdateOperationsInput | number
   proteins?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -946,6 +979,7 @@ export type IngredientCreateWithoutCategoryInput = {
   slug: string
   icon?: string | null
   brand?: string | null
+  descriptor?: string | null
   supermarketUrl?: string | null
   calories: number
   proteins: number
@@ -963,6 +997,7 @@ export type IngredientUncheckedCreateWithoutCategoryInput = {
   slug: string
   icon?: string | null
   brand?: string | null
+  descriptor?: string | null
   supermarketUrl?: string | null
   calories: number
   proteins: number
@@ -1006,6 +1041,7 @@ export type IngredientCreateWithoutLogIngredientsInput = {
   slug: string
   icon?: string | null
   brand?: string | null
+  descriptor?: string | null
   supermarketUrl?: string | null
   calories: number
   proteins: number
@@ -1023,6 +1059,7 @@ export type IngredientUncheckedCreateWithoutLogIngredientsInput = {
   slug: string
   icon?: string | null
   brand?: string | null
+  descriptor?: string | null
   supermarketUrl?: string | null
   calories: number
   proteins: number
@@ -1056,6 +1093,7 @@ export type IngredientUpdateWithoutLogIngredientsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   brand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calories?: Prisma.FloatFieldUpdateOperationsInput | number
   proteins?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1073,6 +1111,7 @@ export type IngredientUncheckedUpdateWithoutLogIngredientsInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   brand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calories?: Prisma.FloatFieldUpdateOperationsInput | number
   proteins?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1090,6 +1129,7 @@ export type IngredientCreateManyDefaultUnitInput = {
   slug: string
   icon?: string | null
   brand?: string | null
+  descriptor?: string | null
   supermarketUrl?: string | null
   calories: number
   proteins: number
@@ -1104,6 +1144,7 @@ export type IngredientUpdateWithoutDefaultUnitInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   brand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calories?: Prisma.FloatFieldUpdateOperationsInput | number
   proteins?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1121,6 +1162,7 @@ export type IngredientUncheckedUpdateWithoutDefaultUnitInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   brand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calories?: Prisma.FloatFieldUpdateOperationsInput | number
   proteins?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1138,6 +1180,7 @@ export type IngredientUncheckedUpdateManyWithoutDefaultUnitInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   brand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calories?: Prisma.FloatFieldUpdateOperationsInput | number
   proteins?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1152,6 +1195,7 @@ export type IngredientCreateManyCategoryInput = {
   slug: string
   icon?: string | null
   brand?: string | null
+  descriptor?: string | null
   supermarketUrl?: string | null
   calories: number
   proteins: number
@@ -1166,6 +1210,7 @@ export type IngredientUpdateWithoutCategoryInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   brand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calories?: Prisma.FloatFieldUpdateOperationsInput | number
   proteins?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1183,6 +1228,7 @@ export type IngredientUncheckedUpdateWithoutCategoryInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   brand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calories?: Prisma.FloatFieldUpdateOperationsInput | number
   proteins?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1200,6 +1246,7 @@ export type IngredientUncheckedUpdateManyWithoutCategoryInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   icon?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   brand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  descriptor?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   calories?: Prisma.FloatFieldUpdateOperationsInput | number
   proteins?: Prisma.FloatFieldUpdateOperationsInput | number
@@ -1263,6 +1310,7 @@ export type IngredientSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   slug?: boolean
   icon?: boolean
   brand?: boolean
+  descriptor?: boolean
   supermarketUrl?: boolean
   calories?: boolean
   proteins?: boolean
@@ -1284,6 +1332,7 @@ export type IngredientSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   slug?: boolean
   icon?: boolean
   brand?: boolean
+  descriptor?: boolean
   supermarketUrl?: boolean
   calories?: boolean
   proteins?: boolean
@@ -1301,6 +1350,7 @@ export type IngredientSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   slug?: boolean
   icon?: boolean
   brand?: boolean
+  descriptor?: boolean
   supermarketUrl?: boolean
   calories?: boolean
   proteins?: boolean
@@ -1318,6 +1368,7 @@ export type IngredientSelectScalar = {
   slug?: boolean
   icon?: boolean
   brand?: boolean
+  descriptor?: boolean
   supermarketUrl?: boolean
   calories?: boolean
   proteins?: boolean
@@ -1327,7 +1378,7 @@ export type IngredientSelectScalar = {
   defaultUnitId?: boolean
 }
 
-export type IngredientOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "slug" | "icon" | "brand" | "supermarketUrl" | "calories" | "proteins" | "fats" | "carbs" | "categoryId" | "defaultUnitId", ExtArgs["result"]["ingredient"]>
+export type IngredientOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "slug" | "icon" | "brand" | "descriptor" | "supermarketUrl" | "calories" | "proteins" | "fats" | "carbs" | "categoryId" | "defaultUnitId", ExtArgs["result"]["ingredient"]>
 export type IngredientInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   category?: boolean | Prisma.IngredientCategoryDefaultArgs<ExtArgs>
   defaultUnit?: boolean | Prisma.Ingredient$defaultUnitArgs<ExtArgs>
@@ -1360,6 +1411,7 @@ export type $IngredientPayload<ExtArgs extends runtime.Types.Extensions.Internal
     slug: string
     icon: string | null
     brand: string | null
+    descriptor: string | null
     supermarketUrl: string | null
     calories: number
     proteins: number
@@ -1800,6 +1852,7 @@ export interface IngredientFieldRefs {
   readonly slug: Prisma.FieldRef<"Ingredient", 'String'>
   readonly icon: Prisma.FieldRef<"Ingredient", 'String'>
   readonly brand: Prisma.FieldRef<"Ingredient", 'String'>
+  readonly descriptor: Prisma.FieldRef<"Ingredient", 'String'>
   readonly supermarketUrl: Prisma.FieldRef<"Ingredient", 'String'>
   readonly calories: Prisma.FieldRef<"Ingredient", 'Float'>
   readonly proteins: Prisma.FieldRef<"Ingredient", 'Float'>

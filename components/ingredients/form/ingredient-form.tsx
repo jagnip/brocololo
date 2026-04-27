@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import { Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -68,6 +68,7 @@ type IngredientFormProps = {
     id: string;
     name: string;
     brand: string | null;
+    descriptor: string | null;
     icon: string | null;
     supermarketUrl: string | null;
     calories: number;
@@ -146,6 +147,7 @@ export default function IngredientForm({
       ? {
           name: ingredient.name,
           brand: ingredient.brand,
+          descriptor: ingredient.descriptor,
           icon: ingredient.icon,
           supermarketUrl: ingredient.supermarketUrl,
           calories: ingredient.calories,
@@ -163,6 +165,7 @@ export default function IngredientForm({
           // Prefill from selector create flow when provided.
           name: initialName ?? "",
           brand: null,
+          descriptor: null,
           icon: null,
           supermarketUrl: null,
           // Keep targeted nutrition fields empty so placeholders guide first input.
@@ -293,9 +296,7 @@ export default function IngredientForm({
           ? [
               {
                 id: "create-ingredient-submit",
-                label: isSubmitting
-                  ? MESSAGES.ingredient.creating
-                  : "Create ingredient",
+                label: isSubmitting ? "Creating..." : "Create ingredient",
                 // Match standard primary button sizing used on other pages.
                 size: "default" as const,
                 onClick: handleTopbarCreateClick,
@@ -308,9 +309,7 @@ export default function IngredientForm({
           ? [
               {
                 id: "update-ingredient-submit",
-                label: isSubmitting
-                  ? MESSAGES.ingredient.updating
-                  : "Update ingredient",
+                label: isSubmitting ? "Editing..." : "Update ingredient",
                 // Match standard primary button sizing used on other pages.
                 size: "default" as const,
                 onClick: handleTopbarUpdateClick,
@@ -320,7 +319,12 @@ export default function IngredientForm({
               {
                 id: "delete-ingredient",
                 label: "Delete ingredient",
-                icon: <Trash2 className="h-4 w-4" />,
+                // Match planner/log delete UX: show spinner icon while delete is pending.
+                icon: isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                ),
                 size: "icon" as const,
                 variant: "outline" as const,
                 ariaLabel: "Delete ingredient",
@@ -371,14 +375,14 @@ export default function IngredientForm({
           className={
             mode === "page"
               ? "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-2 lg:grid-cols-4"
-              : ""
+              : "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-2"
           }
         >
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
-              <FormItem className={mode === "page" ? "lg:col-span-2" : ""}>
+              <FormItem>
                 <FormLabel>Name</FormLabel>
                 <FormControl>
                   <Input {...field} />
@@ -387,28 +391,19 @@ export default function IngredientForm({
               </FormItem>
             )}
           />
-        </div>
 
-        {/* Tablet+ layout: brand/category share row at 50/50. */}
-        {/* Keep mobile vertical rhythm consistent with the form's spacing scale. */}
-        <div
-          className={
-            mode === "page"
-              ? "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-2 lg:grid-cols-4"
-              : "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-2"
-          }
-        >
           <FormField
             control={form.control}
-            name="brand"
+            name="descriptor"
             render={({ field }) => (
               <FormItem className={mode === "page" ? "lg:col-span-1" : ""}>
-                <FormLabel>Brand (optional)</FormLabel>
+                {/* Descriptor stores qualifier text; brackets are added only when displayed. */}
+                <FormLabel>Description (optional)</FormLabel>
                 <FormControl>
                   <Input
                     value={field.value ?? ""}
                     onChange={(event) => field.onChange(event.target.value)}
-                    placeholder="e.g. Lidl, Tesco..."
+                    placeholder="e.g. frozen, skinless"
                   />
                 </FormControl>
                 <FormMessage />
@@ -416,27 +411,94 @@ export default function IngredientForm({
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="categoryId"
-            render={({ field }) => (
-              <FormItem className={mode === "page" ? "lg:col-span-1" : ""}>
-                <FormLabel>Category</FormLabel>
-                <FormControl>
-                  <SearchableSelect
-                    options={categoryOptions}
-                    value={field.value || null}
-                    onValueChange={(next) => field.onChange(next ?? "")}
-                    placeholder="Select category"
-                    searchPlaceholder="Search categories..."
-                    emptyLabel="No category found."
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {mode === "page" ? (
+            <>
+              <FormField
+                control={form.control}
+                name="brand"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Brand (optional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        value={field.value ?? ""}
+                        onChange={(event) => field.onChange(event.target.value)}
+                        placeholder="e.g. Lidl, Tesco"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="categoryId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <FormControl>
+                      <SearchableSelect
+                        options={categoryOptions}
+                        value={field.value || null}
+                        onValueChange={(next) => field.onChange(next ?? "")}
+                        placeholder="Select category"
+                        searchPlaceholder="Search categories"
+                        emptyLabel="No category found"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
+          ) : null}
         </div>
+
+        {/* Tablet+ layout: brand/category share row at 50/50. */}
+        {/* Keep mobile vertical rhythm consistent with the form's spacing scale. */}
+        {mode === "dialog" ? (
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-2">
+            <FormField
+              control={form.control}
+              name="brand"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Brand (optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      value={field.value ?? ""}
+                      onChange={(event) => field.onChange(event.target.value)}
+                      placeholder="e.g. Lidl, Tesco"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="categoryId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <FormControl>
+                    <SearchableSelect
+                      options={categoryOptions}
+                      value={field.value || null}
+                      onValueChange={(next) => field.onChange(next ?? "")}
+                      placeholder="Select category"
+                      searchPlaceholder="Search categories"
+                      emptyLabel="No category found"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        ) : null}
 
         {/* Tablet+ layout: icon/url share row at 1/3 + 2/3. */}
         {/* Keep mobile vertical rhythm consistent with the form's spacing scale. */}
@@ -481,7 +543,7 @@ export default function IngredientForm({
                   <Input
                     value={field.value ?? ""}
                     onChange={(event) => field.onChange(event.target.value)}
-                    placeholder="https://..."
+                    placeholder="https://"
                   />
                 </FormControl>
                 <FormMessage />
@@ -643,8 +705,8 @@ export default function IngredientForm({
                               });
                             }}
                             placeholder="Select unit"
-                            searchPlaceholder="Search units..."
-                            emptyLabel="No unit found."
+                            searchPlaceholder="Search units"
+                            emptyLabel="No unit found"
                           />
                         </FormControl>
                         <FormMessage />
@@ -794,8 +856,8 @@ export default function IngredientForm({
             >
               {isSubmitting
                 ? ingredient
-                  ? MESSAGES.ingredient.updating
-                  : MESSAGES.ingredient.creating
+                  ? "Editing..."
+                  : "Creating..."
                 : ingredient
                   ? "Update ingredient"
                   : "Create ingredient"}
@@ -836,7 +898,14 @@ export default function IngredientForm({
                   disabled={isDeleting}
                   onClick={onConfirmDelete}
                 >
-                  {isDeleting ? "Deleting..." : "Yes, delete"}
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    "Yes, delete"
+                  )}
                 </Button>
               </DialogFooter>
             </DialogContent>

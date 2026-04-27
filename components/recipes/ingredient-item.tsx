@@ -10,6 +10,7 @@ import {
   isGramUnit,
   scaleIngredientNutritionForGrams,
 } from "@/lib/recipes/helpers";
+import { getIngredientSelectorDisplay } from "@/lib/ingredients/format";
 import {
   Select,
   SelectContent,
@@ -19,7 +20,6 @@ import {
 } from "../ui/select";
 import {
   ArrowLeftRight,
-  ChevronDownIcon,
   Info,
   ShoppingBasket,
 } from "lucide-react";
@@ -27,7 +27,6 @@ import { IngredientIcon } from "../ingredient-icon";
 import { useEffect, useRef, useState } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
 import { IngredientNutritionalInfo } from "./ingredient-nutritional-info";
 import {
   SearchableSelect,
@@ -78,6 +77,12 @@ export function IngredientItem({
     servingScalingFactor,
     calorieScalingFactor,
   );
+  // Keep selector labels and control accessibility matching the richer ingredient display.
+  const ingredientDisplayName = getIngredientSelectorDisplay({
+    name: ingredient.name,
+    brand: ingredient.brand,
+    descriptor: ingredient.descriptor,
+  }).label;
 
   const getUnitOptionLabel = (unitId: string) => {
     // Recompute per target unit so option labels pluralize against converted amounts.
@@ -205,11 +210,21 @@ export function IngredientItem({
   ];
   // Reuse shared searchable-select model so this row matches form behavior.
   const ingredientOptions: SearchableSelectOption[] = ingredientCandidates.map(
-    (candidate) => ({
-      value: candidate.id,
-      label: candidate.name,
-      icon: candidate.icon,
-    }),
+    (candidate) => {
+      const display = getIngredientSelectorDisplay({
+        name: candidate.name,
+        brand: candidate.brand,
+        descriptor: candidate.descriptor,
+      });
+
+      return {
+        value: candidate.id,
+        label: display.label,
+        // Store the muted tail as metadata for this selector's custom renderer.
+        detailsText: display.detailsText ?? undefined,
+        icon: candidate.icon,
+      };
+    },
   );
 
   return (
@@ -234,7 +249,7 @@ export function IngredientItem({
                   onKeyDown={handleKeyDown}
                   // Keep width compact; rely on DS defaults for spacing/typography.
                   className="w-16 min-w-16 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  aria-label={`Amount of ${ingredient.name}`}
+                  aria-label={`Amount of ${ingredientDisplayName}`}
                 />
               </div>
             ) : (
@@ -293,7 +308,7 @@ export function IngredientItem({
             variant="outline"
             // Use icon size variant so global icon-color rules apply.
             size="icon-sm"
-            aria-label={`Nutrition details for ${ingredient.name}`}
+            aria-label={`Nutrition details for ${ingredientDisplayName}`}
             aria-expanded={showNutritionDetails}
             onClick={() => setShowNutritionDetails((prev) => !prev)}
           >
@@ -311,7 +326,7 @@ export function IngredientItem({
                 href={ingredient.supermarketUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={`Open supermarket link for ${ingredient.name}`}
+                aria-label={`Open supermarket link for ${ingredientDisplayName}`}
                 title="Open supermarket link"
               >
                 <ShoppingBasket className="h-4 w-4" />
@@ -326,7 +341,7 @@ export function IngredientItem({
               size="icon-sm"
               // One-click action: apply this row's ratio to every ingredient row.
               onClick={onApplyScaleToAll}
-              aria-label={`Scale all ingredients based on ${ingredient.name}`}
+              aria-label={`Scale all ingredients based on ${ingredientDisplayName}`}
               title="Apply this amount change to all ingredients"
             >
               <ArrowLeftRight className="h-4 w-4" />

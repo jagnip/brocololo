@@ -188,6 +188,7 @@ export function InstructionsSection() {
                       displayAmount: display.displayAmount,
                       displayUnitName: display.displayUnitName,
                       displayUnitNamePlural: display.displayUnitNamePlural,
+                      // Recipe pages should keep instruction badges to the ingredient name only.
                       ingredientName: recipeIngredient.ingredient.name,
                       additionalInfo: recipeIngredient.additionalInfo,
                     });

@@ -265,6 +265,8 @@ export async function getPlanForGroceries(planId: string) {
                     select: {
                       id: true,
                       name: true,
+                      brand: true,
+                      descriptor: true,
                       icon: true,
                       supermarketUrl: true,
                       unitConversions: true,

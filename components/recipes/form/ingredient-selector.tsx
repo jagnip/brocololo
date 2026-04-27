@@ -348,10 +348,17 @@ export function IngredientSelector({
     () =>
       ingredients.map((ingredient) => ({
         value: ingredient.id,
-        label: getIngredientDisplayName(ingredient.name, ingredient.brand),
+        label: getIngredientDisplayName(
+          ingredient.name,
+          ingredient.brand,
+          ingredient.descriptor,
+        ),
         icon: ingredient.icon,
-        // Keep raw name as search text so brand doesn't interfere with name-only searches.
-        searchText: ingredient.brand ? ingredient.name : undefined,
+        // Search both canonical name and descriptor while keeping brand secondary.
+        searchText:
+          ingredient.brand || ingredient.descriptor
+            ? [ingredient.name, ingredient.descriptor].filter(Boolean).join(" ")
+            : undefined,
       })),
     [ingredients],
   );

@@ -7,6 +7,7 @@ import {
   createIngredient,
   deleteIngredient,
   findAvailableSlug,
+  findIngredientIdentityDuplicate,
   getGramsUnit,
   getIngredientDeleteUsages,
   updateIngredient,
@@ -17,6 +18,7 @@ import {
 } from "@/lib/validations/ingredient";
 import type { IngredientType } from "@/types/ingredient";
 import { appendRedirectToastToPath } from "@/lib/messages";
+import { getIngredientDisplayName } from "@/lib/ingredients/format";
 
 type IngredientActionError = {
   type: "error";
@@ -57,6 +59,14 @@ function resolveDefaultUnitId(input: {
   return input.unitConversions[0]?.unitId ?? null;
 }
 
+function getIngredientAlreadyExistsMessage(input: {
+  name: string;
+  descriptor: string | null;
+  brand: string | null;
+}) {
+  return `${getIngredientDisplayName(input.name, input.brand, input.descriptor)} already exists`;
+}
+
 async function saveIngredient(
   formData: IngredientFormValues,
   params: { ingredientId?: string },
@@ -89,7 +99,28 @@ async function saveIngredient(
     }),
   };
 
-  const slug = await findAvailableSlug(parsed.data.name, params.ingredientId);
+  const duplicate = await findIngredientIdentityDuplicate({
+    name: parsed.data.name,
+    descriptor: parsed.data.descriptor,
+    brand: parsed.data.brand,
+    excludeIngredientId: params.ingredientId,
+  });
+
+  if (duplicate) {
+    return {
+      type: "error",
+      message: getIngredientAlreadyExistsMessage(parsed.data),
+    };
+  }
+
+  const slug = await findAvailableSlug(
+    {
+      name: parsed.data.name,
+      descriptor: parsed.data.descriptor,
+      brand: parsed.data.brand,
+    },
+    params.ingredientId,
+  );
 
   let ingredient: IngredientType;
   let conversionFallback: IngredientActionSuccess["conversionFallback"];
@@ -123,8 +154,7 @@ async function saveIngredient(
       if (error.code === "P2002") {
         return {
           type: "error",
-          message:
-            "An ingredient with this name already exists. Try another name.",
+          message: getIngredientAlreadyExistsMessage(parsed.data),
         };
       }
     }

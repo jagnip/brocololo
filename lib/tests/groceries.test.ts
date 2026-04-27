@@ -75,6 +75,33 @@ describe("transformPlanToGroceryItems", () => {
     ]);
   });
 
+  it("includes ingredient descriptor in grocery item names", () => {
+    const slots = [
+      createSlot({
+        ingredients: [
+          {
+            ingredient: {
+              id: "ing-edamame",
+              name: "Edamame",
+              brand: null,
+              descriptor: "frozen",
+              icon: "edamame.svg",
+              supermarketUrl: null,
+              unitConversions: [{ unitId: "unit-grams", gramsPerUnit: 1 }],
+              category: { name: "Produce", sortOrder: 1 },
+            },
+            unit: { id: "unit-grams", name: "grams" },
+            amount: 200,
+          },
+        ],
+      }),
+    ];
+
+    expect(transformPlanToGroceryItems(slots)[0]?.ingredientName).toBe(
+      "Edamame (frozen)",
+    );
+  });
+
   it("skips null-recipe slots while processing slots with recipes", () => {
     const slots = [
       createSlot({ hasRecipe: false }),

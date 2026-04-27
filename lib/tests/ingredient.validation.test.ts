@@ -191,6 +191,34 @@ describe("makeIngredientSchema", () => {
     expect(parsedBlank.brand).toBeNull();
   });
 
+  it("trims descriptor and stores it without display brackets", () => {
+    const schema = makeIngredientSchema(gramsUnitId);
+
+    const parsed = schema.parse({
+      ...baseIngredientInput,
+      descriptor: "  (frozen)  ",
+    });
+
+    expect(parsed.descriptor).toBe("frozen");
+  });
+
+  it("normalizes empty descriptor to null", () => {
+    const schema = makeIngredientSchema(gramsUnitId);
+    const parsed = schema.parse({ ...baseIngredientInput, descriptor: "   " });
+
+    expect(parsed.descriptor).toBeNull();
+  });
+
+  it("rejects descriptor longer than 100 characters", () => {
+    const schema = makeIngredientSchema(gramsUnitId);
+    const result = schema.safeParse({
+      ...baseIngredientInput,
+      descriptor: "A".repeat(101),
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   it("rejects brand longer than 100 characters", () => {
     const schema = makeIngredientSchema(gramsUnitId);
     const result = schema.safeParse({

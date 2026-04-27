@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronDownIcon, ChevronsUpDown, X } from "lucide-react";
+import { Check, ChevronsUpDown, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 export type SearchableSelectOption = {
   value: string;
   label: string;
+  detailsText?: string;
   searchText?: string;
   icon?: string | null;
 };
@@ -35,6 +36,7 @@ type SearchableSelectProps = {
   onCreateOption?: (searchTerm: string) => void;
   createOptionLabel?: (searchTerm: string) => string;
   renderIcon?: (option: SearchableSelectOption) => React.ReactNode;
+  renderLabel?: (option: SearchableSelectOption) => React.ReactNode;
   triggerIcon?: React.ReactNode;
   size?: "default" | "sm";
   className?: string;
@@ -94,6 +96,29 @@ export function shouldShowCreateOption(params: {
   );
 }
 
+function DefaultSearchableSelectLabel({
+  option,
+}: {
+  option: SearchableSelectOption;
+}) {
+  const detailsText = option.detailsText;
+  const detailsSuffix = detailsText ? ` (${detailsText})` : "";
+  const name =
+    detailsSuffix && option.label.endsWith(detailsSuffix)
+      ? option.label.slice(0, -detailsSuffix.length)
+      : option.label;
+
+  return (
+    <>
+      {name}
+      {detailsText ? (
+        // Muted detail text mirrors the design-system treatment for secondary metadata.
+        <span className="text-muted-foreground"> ({detailsText})</span>
+      ) : null}
+    </>
+  );
+}
+
 export function SearchableSelect({
   options,
   value,
@@ -107,6 +132,7 @@ export function SearchableSelect({
   onCreateOption,
   createOptionLabel = (searchTerm) => `Create "${searchTerm}"`,
   renderIcon,
+  renderLabel,
   triggerIcon,
   size = "default",
   className,
@@ -176,7 +202,11 @@ export function SearchableSelect({
               <span className="shrink-0">{renderIcon?.(selectedOption!)}</span>
             ) : null}
             <span className={cn("truncate", !selectedOption && "font-normal")}>
-              {selectedOption?.label ?? placeholder}
+              {selectedOption
+                ? renderLabel?.(selectedOption) ?? (
+                    <DefaultSearchableSelectLabel option={selectedOption} />
+                  )
+                : placeholder}
             </span>
           </span>
           <span className="ml-2 inline-flex items-center gap-1 shrink-0">
@@ -251,7 +281,11 @@ export function SearchableSelect({
                     )}
                   />
                   {renderIcon ? <span className="mr-2 shrink-0">{renderIcon(option)}</span> : null}
-                  <span className="truncate">{option.label}</span>
+                  <span className="truncate">
+                    {renderLabel?.(option) ?? (
+                      <DefaultSearchableSelectLabel option={option} />
+                    )}
+                  </span>
                 </CommandItem>
               ))}
             </CommandGroup>

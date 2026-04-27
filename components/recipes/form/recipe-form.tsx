@@ -458,7 +458,13 @@ export default function RecipeForm({
   }, [availableRecipeTypes, form, isSweetFlavour]);
   const isSubmitting = form.formState.isSubmitting;
   const isEditMode = Boolean(recipe);
-  const topbarSubmitLabel = isEditMode ? "Update recipe" : "Create recipe";
+  const topbarSubmitLabel = isSubmitting
+    ? isEditMode
+      ? "Editing..."
+      : "Creating..."
+    : isEditMode
+      ? "Update recipe"
+      : "Create recipe";
 
   return (
     <Form {...form}>
