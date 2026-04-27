@@ -5,6 +5,7 @@ import {
   createIngredient,
   deleteIngredient,
   findAvailableSlug,
+  findIngredientIdentityDuplicate,
   getGramsUnit,
   getIngredientDeleteUsages,
   updateIngredient,
@@ -30,6 +31,7 @@ vi.mock("@/lib/db/ingredients", () => ({
   deleteIngredient: vi.fn(),
   createIngredient: vi.fn(),
   findAvailableSlug: vi.fn(),
+  findIngredientIdentityDuplicate: vi.fn(),
   getGramsUnit: vi.fn(),
   updateIngredient: vi.fn(),
 }));
@@ -106,6 +108,7 @@ describe("inline ingredient save actions", () => {
     vi.clearAllMocks();
     vi.mocked(getGramsUnit).mockResolvedValue({ id: "unit-g", name: "g" });
     vi.mocked(findAvailableSlug).mockResolvedValue("chicken-breast");
+    vi.mocked(findIngredientIdentityDuplicate).mockResolvedValue(null);
   });
 
   it("creates ingredient inline and returns success payload", async () => {
@@ -131,6 +134,77 @@ describe("inline ingredient save actions", () => {
     expect(createIngredient).toHaveBeenCalledWith(
       expect.objectContaining({ descriptor: "skinless" }),
     );
+  });
+
+  it("uses name, descriptor, and brand when generating slugs", async () => {
+    vi.mocked(createIngredient).mockResolvedValue(makeIngredientRecord());
+
+    await createIngredientInlineAction({
+      ...makeValidIngredientFormValues(),
+      brand: "Tesco",
+      descriptor: "boneless",
+    });
+
+    expect(findAvailableSlug).toHaveBeenCalledWith(
+      {
+        name: "Chicken Breast",
+        descriptor: "boneless",
+        brand: "Tesco",
+      },
+      undefined,
+    );
+  });
+
+  it("blocks duplicate ingredient identity on create", async () => {
+    vi.mocked(findIngredientIdentityDuplicate).mockResolvedValue({
+      id: "existing-ingredient",
+    });
+
+    const result = await createIngredientInlineAction({
+      ...makeValidIngredientFormValues(),
+      descriptor: "boneless",
+    });
+
+    expect(result).toEqual({
+      type: "error",
+      message: "Chicken Breast (boneless) already exists",
+    });
+    expect(createIngredient).not.toHaveBeenCalled();
+  });
+
+  it("allows same name with a different descriptor", async () => {
+    vi.mocked(createIngredient).mockResolvedValue(makeIngredientRecord());
+
+    await createIngredientInlineAction({
+      ...makeValidIngredientFormValues(),
+      descriptor: "skinless",
+    });
+
+    expect(findIngredientIdentityDuplicate).toHaveBeenCalledWith({
+      name: "Chicken Breast",
+      descriptor: "skinless",
+      brand: null,
+      excludeIngredientId: undefined,
+    });
+    expect(createIngredient).toHaveBeenCalled();
+  });
+
+  it("allows same name and descriptor with a different brand", async () => {
+    vi.mocked(createIngredient).mockResolvedValue(makeIngredientRecord());
+
+    await createIngredientInlineAction({
+      ...makeValidIngredientFormValues(),
+      brand: "Tesco",
+      descriptor: "boneless",
+    });
+
+    expect(findIngredientIdentityDuplicate).toHaveBeenCalledWith({
+      name: "Chicken Breast",
+      descriptor: "boneless",
+      brand: "Tesco",
+      excludeIngredientId: undefined,
+    });
+    expect(createIngredient).toHaveBeenCalled();
   });
 
   it("updates ingredient inline and returns success payload", async () => {
@@ -177,6 +251,7 @@ describe("page ingredient save actions", () => {
     vi.clearAllMocks();
     vi.mocked(getGramsUnit).mockResolvedValue({ id: "unit-g", name: "g" });
     vi.mocked(findAvailableSlug).mockResolvedValue("chicken-breast");
+    vi.mocked(findIngredientIdentityDuplicate).mockResolvedValue(null);
   });
 
   it("redirects after successful create in page flow", async () => {
@@ -208,6 +283,55 @@ describe("page ingredient save actions", () => {
       appendRedirectToastToPath(ROUTES.ingredients, "ingredientUpdated"),
     );
   });
+
+  it("blocks update when identity collides with another ingredient", async () => {
+    vi.mocked(findIngredientIdentityDuplicate).mockResolvedValue({
+      id: "other-ingredient",
+    });
+
+    const result = await updateIngredientAction("ingredient-1", {
+      ...makeValidIngredientFormValues(),
+      descriptor: "boneless",
+    });
+
+    expect(result).toEqual({
+      type: "error",
+      message: "Chicken Breast (boneless) already exists",
+    });
+    expect(updateIngredient).not.toHaveBeenCalled();
+  });
+
+  it("does not block an update against its own identity", async () => {
+    vi.mocked(updateIngredient).mockResolvedValue({
+      ingredient: makeIngredientRecord(),
+      fallbackStats: { updatedRows: 0, updatedRecipes: 0 },
+    });
+
+    await updateIngredientAction("ingredient-1", makeValidIngredientFormValues());
+
+    expect(findIngredientIdentityDuplicate).toHaveBeenCalledWith({
+      name: "Chicken Breast",
+      descriptor: null,
+      brand: null,
+      excludeIngredientId: "ingredient-1",
+    });
+    expect(updateIngredient).toHaveBeenCalled();
+  });
+
+  it("returns duplicate identity message for Prisma unique constraint races", async () => {
+    vi.mocked(createIngredient).mockRejectedValue(makeKnownPrismaError("P2002"));
+
+    const result = await createIngredientAction({
+      ...makeValidIngredientFormValues(),
+      brand: "Tesco",
+      descriptor: "boneless",
+    });
+
+    expect(result).toEqual({
+      type: "error",
+      message: "Chicken Breast (boneless) (Tesco) already exists",
+    });
+  });
 });
 
 describe("deleteIngredientAction", () => {
@@ -227,8 +351,7 @@ describe("deleteIngredientAction", () => {
 
     expect(result).toEqual({
       type: "error",
-      message:
-        "Cannot delete ingredient because it is used by recipes: Pasta, Soup.",
+      message: "Can't delete this ingredient because it's used in: Pasta, Soup.",
     });
     expect(deleteIngredient).not.toHaveBeenCalled();
     expect(redirect).not.toHaveBeenCalled();
@@ -249,7 +372,7 @@ describe("deleteIngredientAction", () => {
     expect(result).toEqual({
       type: "error",
       message:
-        "Cannot delete ingredient because it is used by recipes: A, B, C, D, E and 1 more.",
+        "Can't delete this ingredient because it's used in: A, B, C, D, E and 1 more.",
     });
     expect(deleteIngredient).not.toHaveBeenCalled();
     expect(redirect).not.toHaveBeenCalled();
@@ -275,8 +398,7 @@ describe("deleteIngredientAction", () => {
 
     expect(result).toEqual({
       type: "error",
-      message:
-        "Cannot delete ingredient because it is referenced by other records.",
+      message: "Can't delete this ingredient because it's used elsewhere",
     });
     expect(redirect).not.toHaveBeenCalled();
   });
@@ -289,7 +411,7 @@ describe("deleteIngredientAction", () => {
 
     expect(result).toEqual({
       type: "error",
-      message: "Ingredient was not found (it may already be deleted).",
+      message: "Ingredient no longer exists",
     });
     expect(redirect).not.toHaveBeenCalled();
   });
@@ -302,7 +424,7 @@ describe("deleteIngredientAction", () => {
 
     expect(result).toEqual({
       type: "error",
-      message: "Failed to delete ingredient",
+      message: "Couldn't delete ingredient. Try again",
     });
     expect(redirect).not.toHaveBeenCalled();
   });

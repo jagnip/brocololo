@@ -106,6 +106,29 @@ export async function getGramsUnit() {
   });
 }
 
+export async function findIngredientIdentityDuplicate(input: {
+  name: string;
+  descriptor: string | null;
+  brand: string | null;
+  excludeIngredientId?: string;
+}) {
+  return prisma.ingredient.findFirst({
+    where: {
+      name: { equals: input.name, mode: "insensitive" },
+      descriptor:
+        input.descriptor == null
+          ? null
+          : { equals: input.descriptor, mode: "insensitive" },
+      brand:
+        input.brand == null
+          ? null
+          : { equals: input.brand, mode: "insensitive" },
+      ...(input.excludeIngredientId ? { id: { not: input.excludeIngredientId } } : {}),
+    },
+    select: { id: true },
+  });
+}
+
 export async function createIngredient(
   data: IngredientPayload & { slug: string },
 ) {
@@ -337,15 +360,24 @@ export async function updateIngredient(
   });
 }
 
+type IngredientSlugIdentity = {
+  name: string;
+  descriptor: string | null;
+  brand: string | null;
+};
+
 /**
- * Generates a unique slug from a name, appending a random suffix
- * if the base slug is already taken by another ingredient.
+ * Generates a unique slug from an ingredient identity, appending a random suffix
+ * if the readable base slug is already taken by another ingredient.
  */
 export async function findAvailableSlug(
-  name: string,
+  identity: IngredientSlugIdentity,
   excludeIngredientId?: string,
 ): Promise<string> {
-  const baseSlug = slugify(name, { lower: true, strict: true, trim: true });
+  const slugSource = [identity.name, identity.descriptor, identity.brand]
+    .filter(Boolean)
+    .join(" ");
+  const baseSlug = slugify(slugSource, { lower: true, strict: true, trim: true });
 
   const collision = await prisma.ingredient.findFirst({
     where: {

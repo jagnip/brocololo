@@ -381,7 +381,7 @@ export default function IngredientForm({
             control={form.control}
             name="name"
             render={({ field }) => (
-              <FormItem className={mode === "page" ? "lg:col-span-2" : ""}>
+              <FormItem>
                 <FormLabel>Name</FormLabel>
                 <FormControl>
                   <Input {...field} />
@@ -409,56 +409,95 @@ export default function IngredientForm({
               </FormItem>
             )}
           />
+
+          {mode === "page" ? (
+            <>
+              <FormField
+                control={form.control}
+                name="brand"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Brand (optional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        value={field.value ?? ""}
+                        onChange={(event) => field.onChange(event.target.value)}
+                        placeholder="e.g. Lidl, Tesco"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="categoryId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <FormControl>
+                      <SearchableSelect
+                        options={categoryOptions}
+                        value={field.value || null}
+                        onValueChange={(next) => field.onChange(next ?? "")}
+                        placeholder="Select category"
+                        searchPlaceholder="Search categories"
+                        emptyLabel="No category found"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
+          ) : null}
         </div>
 
         {/* Tablet+ layout: brand/category share row at 50/50. */}
         {/* Keep mobile vertical rhythm consistent with the form's spacing scale. */}
-        <div
-          className={
-            mode === "page"
-              ? "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-2 lg:grid-cols-4"
-              : "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-2"
-          }
-        >
-          <FormField
-            control={form.control}
-            name="brand"
-            render={({ field }) => (
-              <FormItem className={mode === "page" ? "lg:col-span-1" : ""}>
-                <FormLabel>Brand (optional)</FormLabel>
-                <FormControl>
-                  <Input
-                    value={field.value ?? ""}
-                    onChange={(event) => field.onChange(event.target.value)}
-                    placeholder="e.g. Lidl, Tesco"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        {mode === "dialog" ? (
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-2">
+            <FormField
+              control={form.control}
+              name="brand"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Brand (optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      value={field.value ?? ""}
+                      onChange={(event) => field.onChange(event.target.value)}
+                      placeholder="e.g. Lidl, Tesco"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="categoryId"
-            render={({ field }) => (
-              <FormItem className={mode === "page" ? "lg:col-span-1" : ""}>
-                <FormLabel>Category</FormLabel>
-                <FormControl>
-                  <SearchableSelect
-                    options={categoryOptions}
-                    value={field.value || null}
-                    onValueChange={(next) => field.onChange(next ?? "")}
-                    placeholder="Select category"
-                    searchPlaceholder="Search categories"
-                    emptyLabel="No category found"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+            <FormField
+              control={form.control}
+              name="categoryId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <FormControl>
+                    <SearchableSelect
+                      options={categoryOptions}
+                      value={field.value || null}
+                      onValueChange={(next) => field.onChange(next ?? "")}
+                      placeholder="Select category"
+                      searchPlaceholder="Search categories"
+                      emptyLabel="No category found"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        ) : null}
 
         {/* Tablet+ layout: icon/url share row at 1/3 + 2/3. */}
         {/* Keep mobile vertical rhythm consistent with the form's spacing scale. */}
