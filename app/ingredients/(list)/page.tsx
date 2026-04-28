@@ -11,7 +11,6 @@ export default async function IngredientsPage({
 
   return (
     <div className="page-container">
-      {/* Use the shared non-recipe page shell for consistent app spacing. */}
       <TopbarConfigController
         config={{
           actions: [

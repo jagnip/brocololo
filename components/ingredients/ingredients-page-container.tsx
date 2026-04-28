@@ -38,22 +38,20 @@ export async function IngredientsPageContainer({
   return (
     <>
       {/* Page spacing is owned by the route-level page-container. */}
-      <header className="flex w-full flex-wrap items-center justify-between gap-3">
-        <PageHeader title="Ingredients" className="pb-0" />
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-          <SearchInput
-            placeholder="Search ingredient names..."
-            pathOverride={INGREDIENTS_ROUTE}
-            queryParam="q"
-            resetParamsOnChange={["page"]}
-            className="min-w-0 flex-1"
-          />
-        </div>
+      <header className="w-full">
+        {/* Match recipe-page header bottom spacing for consistent vertical rhythm. */}
+        <PageHeader title="Ingredients" className="pb-2" />
       </header>
-
-      <p className="text-sm text-muted-foreground">
-        Showing {data.items.length} of {data.total} ingredients
-      </p>
+      {/* Keep search directly under the page header for clearer hierarchy. */}
+      <div className="w-full">
+        <SearchInput
+          placeholder="Search by ingredient names"
+          pathOverride={INGREDIENTS_ROUTE}
+          queryParam="q"
+          resetParamsOnChange={["page"]}
+          className="w-full"
+        />
+      </div>
 
       <div className="rounded-lg border">
         <ul className="divide-y">
