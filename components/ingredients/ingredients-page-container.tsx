@@ -5,7 +5,7 @@ import { IngredientIcon } from "@/components/ingredient-icon";
 import { getIngredientTitleParts } from "@/lib/ingredients/format";
 import { getIngredientsPage } from "@/lib/db/ingredients";
 import { ROUTES } from "@/lib/constants";
-import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/page-header";
 
 type IngredientsPageContainerProps = {
   q?: string;
@@ -36,22 +36,17 @@ export async function IngredientsPageContainer({
   };
 
   return (
-    <div className="space-y-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Ingredients</h1>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Button asChild>
-            {/* Top-level entry point for ingredient creation. */}
-            <Link href={ROUTES.ingredientCreate}>
-              Create ingredient
-            </Link>
-          </Button>
+    <>
+      {/* Page spacing is owned by the route-level page-container. */}
+      <header className="flex w-full flex-wrap items-center justify-between gap-3">
+        <PageHeader title="Ingredients" className="pb-0" />
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
           <SearchInput
             placeholder="Search ingredient names..."
             pathOverride={INGREDIENTS_ROUTE}
             queryParam="q"
             resetParamsOnChange={["page"]}
-            className="w-full max-w-sm"
+            className="min-w-0 flex-1"
           />
         </div>
       </header>
@@ -67,10 +62,11 @@ export async function IngredientsPageContainer({
 
             return (
               <li key={ingredient.id} className="p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0 flex items-start gap-3">
+              {/* Let each row use the full container width while keeping nutrition aligned right. */}
+              <div className="flex w-full items-start justify-between gap-4">
+                <div className="flex min-w-0 flex-1 items-start gap-3">
                   <IngredientIcon icon={ingredient.icon} name={ingredient.name} />
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="truncate font-medium">
                         {title.name}
@@ -109,7 +105,7 @@ export async function IngredientsPageContainer({
                   </div>
                 </div>
 
-                <div className="text-xs">
+                <div className="shrink-0 text-xs">
                   {/* Show nutrition details clearly per ingredient. */}
                   <p className="font-medium mb-1">Nutrition (per 100g)</p>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-muted-foreground">
@@ -182,6 +178,6 @@ export async function IngredientsPageContainer({
           Next
         </Link>
       </nav>
-    </div>
+    </>
   );
 }

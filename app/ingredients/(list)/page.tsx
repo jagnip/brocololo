@@ -10,7 +10,8 @@ export default async function IngredientsPage({
   const params = await searchParams;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <div className="page-container">
+      {/* Use the shared non-recipe page shell for consistent app spacing. */}
       <TopbarConfigController
         config={{
           actions: [
