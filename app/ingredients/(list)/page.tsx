@@ -5,12 +5,12 @@ import { ROUTES } from "@/lib/constants";
 export default async function IngredientsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; category?: string }>;
 }) {
   const params = await searchParams;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <div className="page-container">
       <TopbarConfigController
         config={{
           actions: [
@@ -24,7 +24,8 @@ export default async function IngredientsPage({
           ],
         }}
       />
-      <IngredientsPageContainer q={params.q} page={params.page} />
+      {/* Forward both filter inputs (`q`, `category`) so the server fetches a consistent first page. */}
+      <IngredientsPageContainer q={params.q} categorySlug={params.category} />
     </div>
   );
 }
