@@ -117,6 +117,15 @@ export async function getIngredientCategories() {
   });
 }
 
+// Tiny accessor so the action layer doesn't need to make inline prisma calls just to get a slug.
+export async function getIngredientCategorySlugById(categoryId: string) {
+  const row = await prisma.ingredientCategory.findUnique({
+    where: { id: categoryId },
+    select: { slug: true },
+  });
+  return row?.slug ?? null;
+}
+
 export async function getGramsUnit() {
   return prisma.unit.findUnique({
     where: { name: "g" },
@@ -128,6 +137,8 @@ export async function findIngredientIdentityDuplicate(input: {
   name: string;
   descriptor: string | null;
   brand: string | null;
+  // Identity is now scoped per category so the same name+descriptor+brand can exist in different categories.
+  categoryId: string;
   excludeIngredientId?: string;
 }) {
   return prisma.ingredient.findFirst({
@@ -141,6 +152,8 @@ export async function findIngredientIdentityDuplicate(input: {
         input.brand == null
           ? null
           : { equals: input.brand, mode: "insensitive" },
+      // Only treat as a duplicate when the category matches.
+      categoryId: input.categoryId,
       ...(input.excludeIngredientId ? { id: { not: input.excludeIngredientId } } : {}),
     },
     select: { id: true },
@@ -382,6 +395,8 @@ type IngredientSlugIdentity = {
   name: string;
   descriptor: string | null;
   brand: string | null;
+  // Joined into the slug source so the same name+descriptor+brand in different categories yields distinct, meaningful slugs.
+  categorySlug: string | null;
 };
 
 /**
@@ -392,7 +407,12 @@ export async function findAvailableSlug(
   identity: IngredientSlugIdentity,
   excludeIngredientId?: string,
 ): Promise<string> {
-  const slugSource = [identity.name, identity.descriptor, identity.brand]
+  const slugSource = [
+    identity.name,
+    identity.descriptor,
+    identity.brand,
+    identity.categorySlug,
+  ]
     .filter(Boolean)
     .join(" ");
   const baseSlug = slugify(slugSource, { lower: true, strict: true, trim: true });
