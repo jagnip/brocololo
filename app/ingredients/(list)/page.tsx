@@ -5,7 +5,7 @@ import { ROUTES } from "@/lib/constants";
 export default async function IngredientsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; category?: string }>;
 }) {
   const params = await searchParams;
 
@@ -24,7 +24,8 @@ export default async function IngredientsPage({
           ],
         }}
       />
-      <IngredientsPageContainer q={params.q} />
+      {/* Forward both filter inputs (`q`, `category`) so the server fetches a consistent first page. */}
+      <IngredientsPageContainer q={params.q} categorySlug={params.category} />
     </div>
   );
 }

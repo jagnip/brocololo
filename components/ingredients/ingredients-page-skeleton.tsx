@@ -8,7 +8,11 @@ export function IngredientsPageSkeleton() {
         <Skeleton className="h-8 w-40" />
       </header>
 
-      <Skeleton className="h-9 w-full" />
+      {/* Mirror the new filter bar: search input + category select on `sm+`. */}
+      <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-[1fr_minmax(12rem,18rem)]">
+        <Skeleton className="h-9 w-full rounded-md" />
+        <Skeleton className="h-9 w-full rounded-md" />
+      </div>
 
       {/* Match the card/list feel of the ingredients results section. */}
       <div className="rounded-lg border">

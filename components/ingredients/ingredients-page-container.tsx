@@ -1,23 +1,33 @@
-import { SearchInput } from "@/components/search";
-import { getIngredientsPage } from "@/lib/db/ingredients";
+import {
+  getIngredientCategories,
+  getIngredientsPage,
+} from "@/lib/db/ingredients";
 import { PageHeader } from "@/components/page-header";
 import { IngredientsInfiniteList } from "@/components/ingredients/ingredients-infinite-list";
+import { IngredientsFilterBar } from "@/components/ingredients/ingredients-filter-bar";
 
 type IngredientsPageContainerProps = {
   q?: string;
+  // Optional category filter slug coming from the URL (`?category=<slug>`).
+  categorySlug?: string;
 };
 
 const PAGE_SIZE = 25;
-const INGREDIENTS_ROUTE = "/ingredients";
 
 export async function IngredientsPageContainer({
   q,
+  categorySlug,
 }: IngredientsPageContainerProps) {
-  const data = await getIngredientsPage({
-    q,
-    page: 1,
-    pageSize: PAGE_SIZE,
-  });
+  // Run the page fetch and the category list in parallel; they have no data dependency.
+  const [data, categories] = await Promise.all([
+    getIngredientsPage({
+      q,
+      categorySlug,
+      page: 1,
+      pageSize: PAGE_SIZE,
+    }),
+    getIngredientCategories(),
+  ]);
 
   return (
     <>
@@ -26,18 +36,21 @@ export async function IngredientsPageContainer({
         {/* Match recipe-page header bottom spacing for consistent vertical rhythm. */}
         <PageHeader title="Ingredients" className="pb-2" />
       </header>
-      {/* Keep search directly under the page header for clearer hierarchy. */}
-      <div className="w-full">
-        <SearchInput
-          placeholder="Search by ingredient names"
-          pathOverride={INGREDIENTS_ROUTE}
-          queryParam="q"
-          resetParamsOnChange={["page"]}
-          className="w-full"
+
+      {/* `group` wires descendant `data-pending=true` (from SearchInput + filter bar)
+          to the list pulse selector — same pattern as /recipes. */}
+      <div className="group">
+        <IngredientsFilterBar
+          categories={categories}
+          selectedSlug={categorySlug}
+        />
+
+        <IngredientsInfiniteList
+          initialData={data}
+          q={q}
+          categorySlug={categorySlug}
         />
       </div>
-
-      <IngredientsInfiniteList initialData={data} q={q} />
     </>
   );
 }

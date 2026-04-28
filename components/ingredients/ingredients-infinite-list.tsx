@@ -14,6 +14,8 @@ import type {
 type IngredientsInfiniteListProps = {
   initialData: IngredientsPageData;
   q?: string;
+  // Active category slug from the URL; used to keep paged fetches aligned with the server's first page.
+  categorySlug?: string;
 };
 
 function IngredientRow({ ingredient }: { ingredient: IngredientsPageItem }) {
@@ -107,6 +109,7 @@ function IngredientRow({ ingredient }: { ingredient: IngredientsPageItem }) {
 export function IngredientsInfiniteList({
   initialData,
   q,
+  categorySlug,
 }: IngredientsInfiniteListProps) {
   const [items, setItems] = useState(() => initialData.items);
   const [page, setPage] = useState(initialData.page);
@@ -119,7 +122,7 @@ export function IngredientsInfiniteList({
   const hasMore = page < totalPages;
 
   useEffect(() => {
-    // Search changes remount the server data; replace the list instead of appending stale rows.
+    // Filter changes (search OR category) remount server data; replace rows instead of appending stale ones.
     requestRef.current?.abort();
     requestRef.current = null;
     isLoadingRef.current = false;
@@ -128,7 +131,7 @@ export function IngredientsInfiniteList({
     setTotalPages(initialData.totalPages);
     setIsLoading(false);
     setError(null);
-  }, [initialData, q]);
+  }, [initialData, q, categorySlug]);
 
   useEffect(() => {
     return () => {
@@ -140,9 +143,11 @@ export function IngredientsInfiniteList({
   const requestUrl = useMemo(() => {
     const params = new URLSearchParams();
     if (q?.trim()) params.set("q", q.trim());
+    // Forward the active category to the API so paged fetches stay consistent with the first page.
+    if (categorySlug?.trim()) params.set("category", categorySlug.trim());
     params.set("page", String(page + 1));
     return `/api/ingredients?${params.toString()}`;
-  }, [page, q]);
+  }, [categorySlug, page, q]);
 
   const loadNextPage = useCallback(async () => {
     if (isLoadingRef.current || !hasMore) {
@@ -216,18 +221,22 @@ export function IngredientsInfiniteList({
 
   return (
     <>
-      <div className="rounded-lg border">
-        <ul className="divide-y">
-          {items.map((ingredient) => (
-            <IngredientRow key={ingredient.id} ingredient={ingredient} />
-          ))}
+      {/* Pulse only the rendered rows during route transitions (search/category change). */}
+      {/* The sentinel + aria-live spinner stay outside so infinite-scroll loads don't double-pulse. */}
+      <div className="group-has-[[data-pending='true']]:animate-pulse">
+        <div className="rounded-lg border">
+          <ul className="divide-y">
+            {items.map((ingredient) => (
+              <IngredientRow key={ingredient.id} ingredient={ingredient} />
+            ))}
 
-          {items.length === 0 && (
-            <li className="p-6 text-sm text-muted-foreground">
-              No ingredients found.
-            </li>
-          )}
-        </ul>
+            {items.length === 0 && (
+              <li className="p-6 text-sm text-muted-foreground">
+                No ingredients found.
+              </li>
+            )}
+          </ul>
+        </div>
       </div>
 
       <div ref={sentinelRef} aria-hidden="true" className="h-1" />

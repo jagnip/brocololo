@@ -16,12 +16,14 @@ export async function getIngredients() {
 
 type GetIngredientsPageInput = {
   q?: string;
+  categorySlug?: string;
   page?: number;
   pageSize?: number;
 };
 
 export async function getIngredientsPage({
   q,
+  categorySlug,
   page = 1,
   pageSize = 25,
 }: GetIngredientsPageInput) {
@@ -32,9 +34,12 @@ export async function getIngredientsPage({
       ? pageSize
       : 25;
 
-  // Apply case-insensitive search across name and brand when query is present.
+  // Treat empty / whitespace-only filter slugs as "no filter" so URL noise doesn't break queries.
+  const trimmedCategorySlug = categorySlug?.trim();
   const trimmedQuery = q?.trim();
-  const where = trimmedQuery
+
+  // Combine search and category filters with AND so both narrow the result set together.
+  const searchClause = trimmedQuery
     ? {
         OR: [
           { name: { contains: trimmedQuery, mode: "insensitive" as const } },
@@ -43,6 +48,16 @@ export async function getIngredientsPage({
         ],
       }
     : undefined;
+
+  const categoryClause = trimmedCategorySlug
+    ? { category: { slug: trimmedCategorySlug } }
+    : undefined;
+
+  // Build the final where only with the clauses we actually have, so an empty filter stays unset.
+  const where =
+    searchClause || categoryClause
+      ? { ...(searchClause ?? {}), ...(categoryClause ?? {}) }
+      : undefined;
 
   const [total, items] = await Promise.all([
     prisma.ingredient.count({ where }),
