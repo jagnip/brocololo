@@ -3,16 +3,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function IngredientsPageSkeleton() {
   return (
     <div className="page-container">
-      {/* Keep loading layout aligned with ingredients list header/actions. */}
-      <header className="flex w-full flex-wrap items-center justify-between gap-3">
+      {/* Keep loading layout aligned with the ingredients header and search. */}
+      <header className="w-full">
         <Skeleton className="h-8 w-40" />
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-          <Skeleton className="h-9 w-40" />
-          <Skeleton className="h-9 min-w-0 flex-1" />
-        </div>
       </header>
 
-      <Skeleton className="h-4 w-52" />
+      <Skeleton className="h-9 w-full" />
 
       {/* Match the card/list feel of the ingredients results section. */}
       <div className="rounded-lg border">
@@ -40,11 +36,7 @@ export function IngredientsPageSkeleton() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-4 w-16" />
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-4 w-10" />
-      </div>
+      <Skeleton className="h-5 w-44" />
     </div>
   );
 }

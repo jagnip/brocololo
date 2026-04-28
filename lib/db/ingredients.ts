@@ -74,6 +74,9 @@ export async function getIngredientsPage({
   };
 }
 
+export type IngredientsPageData = Awaited<ReturnType<typeof getIngredientsPage>>;
+export type IngredientsPageItem = IngredientsPageData["items"][number];
+
 export async function getIngredientBySlug(slug: string) {
   return prisma.ingredient.findUnique({
     where: { slug },

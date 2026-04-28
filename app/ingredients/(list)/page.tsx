@@ -5,7 +5,7 @@ import { ROUTES } from "@/lib/constants";
 export default async function IngredientsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string }>;
 }) {
   const params = await searchParams;
 
@@ -24,7 +24,7 @@ export default async function IngredientsPage({
           ],
         }}
       />
-      <IngredientsPageContainer q={params.q} page={params.page} />
+      <IngredientsPageContainer q={params.q} />
     </div>
   );
 }
