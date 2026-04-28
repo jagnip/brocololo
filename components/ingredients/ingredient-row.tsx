@@ -24,12 +24,12 @@ export function IngredientRow({ ingredient }: IngredientRowProps) {
   return (
     <li className="group/row flex flex-col gap-item rounded-md border border-border/60 p-nest transition-colors hover:bg-muted/30 focus-within:bg-muted/30">
       {/* Top row: identity/meta (left) + nutrition (md+ right). */}
-      <div className="flex items-center justify-between gap-item">
-        <div className="flex min-w-0 flex-1 items-center gap-item">
+      <div className="flex items-start justify-between gap-item md:items-center">
+        <div className="flex min-w-0 flex-1 items-start gap-item md:items-center">
           {/* Slightly larger icon to improve scanability and match the requested emphasis. */}
           <IngredientIcon icon={ingredient.icon} name={ingredient.name} size={28} />
           {/* Identity row wraps so descriptor/brand/category badge fit on small screens. */}
-          <div className="flex min-w-0 flex-wrap items-center gap-item">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 sm:gap-item">
             <p className="min-w-0 truncate font-medium">
               {title.name}
               {combinedMeta ? (
