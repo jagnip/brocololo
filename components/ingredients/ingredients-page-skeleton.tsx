@@ -14,31 +14,48 @@ export function IngredientsPageSkeleton() {
         <Skeleton className="h-9 w-full rounded-md" />
       </div>
 
-      {/* Match the card/list feel of the ingredients results section. */}
-      <div className="rounded-lg border">
-        <div className="divide-y">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className="p-4 space-y-3">
-              <div className="flex w-full items-start justify-between gap-4">
-                <div className="flex min-w-0 flex-1 items-start gap-3">
-                  <Skeleton className="h-8 w-8 rounded-full" />
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <Skeleton className="h-4 w-44" />
-                    <Skeleton className="h-3 w-56" />
-                    <Skeleton className="h-3 w-48" />
-                  </div>
-                </div>
-                <div className="shrink-0 space-y-1">
-                  <Skeleton className="h-3 w-28" />
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-3 w-24" />
+      {/* Mirror the new card-based ingredient rows: bordered card with icon + identity, nutrition badges, edit button, and an optional conversions row. */}
+      <ul className="flex flex-col gap-item">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <li
+            key={index}
+            className="flex flex-col gap-item rounded-md border border-border/60 p-nest"
+          >
+            {/* Top row: identity + nutrition badges (md+) + edit icon button. */}
+            <div className="flex items-start justify-between gap-item">
+              <div className="flex min-w-0 flex-1 items-center gap-item">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <div className="flex min-w-0 flex-wrap items-center gap-item">
+                  <Skeleton className="h-5 w-44" />
+                  {/* Outline category badge placeholder. */}
+                  <Skeleton className="h-5 w-20 rounded-full" />
                 </div>
               </div>
-              <Skeleton className="h-3 w-40" />
+
+              {/* Four nutrition badge placeholders sit on the right at md+. */}
+              <ul className="hidden shrink-0 items-center gap-1 md:flex">
+                <li>
+                  <Skeleton className="h-5 w-20 rounded-full" />
+                </li>
+                <li>
+                  <Skeleton className="h-5 w-20 rounded-full" />
+                </li>
+                <li>
+                  <Skeleton className="h-5 w-20 rounded-full" />
+                </li>
+                <li>
+                  <Skeleton className="h-5 w-20 rounded-full" />
+                </li>
+              </ul>
+
+              {/* Edit button placeholder (icon-sm = size-8). */}
+              <Skeleton className="size-8 rounded-md" />
             </div>
-          ))}
-        </div>
-      </div>
+
+            {/* No conversions row for now; kept intentionally empty to mirror real row. */}
+          </li>
+        ))}
+      </ul>
 
       <Skeleton className="h-5 w-44" />
     </div>
