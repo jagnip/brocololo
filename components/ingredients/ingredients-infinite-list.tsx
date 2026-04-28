@@ -1,15 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Pencil } from "lucide-react";
-import { IngredientIcon } from "@/components/ingredient-icon";
-import { ROUTES } from "@/lib/constants";
-import { getIngredientTitleParts } from "@/lib/ingredients/format";
-import type {
-  IngredientsPageData,
-  IngredientsPageItem,
-} from "@/lib/db/ingredients";
+import { Loader2 } from "lucide-react";
+import { IngredientRow } from "@/components/ingredients/ingredient-row";
+import type { IngredientsPageData } from "@/lib/db/ingredients";
 
 type IngredientsInfiniteListProps = {
   initialData: IngredientsPageData;
@@ -17,94 +11,6 @@ type IngredientsInfiniteListProps = {
   // Active category slug from the URL; used to keep paged fetches aligned with the server's first page.
   categorySlug?: string;
 };
-
-function IngredientRow({ ingredient }: { ingredient: IngredientsPageItem }) {
-  const title = getIngredientTitleParts(ingredient);
-
-  return (
-    <li className="p-4">
-      {/* Let each row use the full container width while keeping nutrition aligned right. */}
-      <div className="flex w-full items-start justify-between gap-4">
-        <div className="flex min-w-0 flex-1 items-start gap-3">
-          <IngredientIcon icon={ingredient.icon} name={ingredient.name} />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <p className="truncate font-medium">
-                {title.name}
-                {title.descriptor ? (
-                  <span className="text-muted-foreground">
-                    {" "}
-                    {title.descriptor}
-                  </span>
-                ) : null}
-                {title.brand ? ` ${title.brand}` : null}
-              </p>
-              <Link
-                href={ROUTES.ingredientEdit(ingredient.slug)}
-                aria-label={`Edit ${ingredient.name}`}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-            <p className="truncate text-xs text-muted-foreground">
-              Category: {ingredient.category.name}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              Slug: {ingredient.slug}
-            </p>
-            {ingredient.supermarketUrl && (
-              <a
-                href={ingredient.supermarketUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-blue-600 hover:underline"
-              >
-                Supermarket link
-              </a>
-            )}
-          </div>
-        </div>
-
-        <div className="shrink-0 text-xs">
-          {/* Show nutrition details clearly per ingredient. */}
-          <p className="font-medium mb-1">Nutrition (per 100g)</p>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-muted-foreground">
-            <span>Calories</span>
-            <span>{ingredient.calories}</span>
-            <span>Protein</span>
-            <span>{ingredient.proteins}g</span>
-            <span>Fat</span>
-            <span>{ingredient.fats}g</span>
-            <span>Carbs</span>
-            <span>{ingredient.carbs}g</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-3">
-        {/* Show exact conversion values as grams per unit. */}
-        <p className="text-xs font-medium mb-1">Conversions</p>
-        {ingredient.unitConversions.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            No conversions configured
-          </p>
-        ) : (
-          <ul className="flex flex-wrap gap-2">
-            {ingredient.unitConversions.map((uc) => (
-              <li
-                key={`${ingredient.id}-${uc.unitId}`}
-                className="text-xs rounded bg-muted px-2 py-1"
-              >
-                1 {uc.unit.name} = {uc.gramsPerUnit} g
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </li>
-  );
-}
 
 export function IngredientsInfiniteList({
   initialData,
@@ -224,19 +130,18 @@ export function IngredientsInfiniteList({
       {/* Pulse only the rendered rows during route transitions (search/category change). */}
       {/* The sentinel + aria-live spinner stay outside so infinite-scroll loads don't double-pulse. */}
       <div className="group-has-[[data-pending='true']]:animate-pulse">
-        <div className="rounded-lg border">
-          <ul className="divide-y">
-            {items.map((ingredient) => (
-              <IngredientRow key={ingredient.id} ingredient={ingredient} />
-            ))}
+        {/* Each row is now its own bordered card; space them with `gap-item` instead of dividers. */}
+        <ul className="flex flex-col gap-item">
+          {items.map((ingredient) => (
+            <IngredientRow key={ingredient.id} ingredient={ingredient} />
+          ))}
 
-            {items.length === 0 && (
-              <li className="p-6 text-sm text-muted-foreground">
-                No ingredients found.
-              </li>
-            )}
-          </ul>
-        </div>
+          {items.length === 0 && (
+            <li className="rounded-md border border-border/60 p-nest text-sm text-muted-foreground">
+              No ingredients found.
+            </li>
+          )}
+        </ul>
       </div>
 
       <div ref={sentinelRef} aria-hidden="true" className="h-1" />

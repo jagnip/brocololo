@@ -25,6 +25,7 @@ describe("findIngredientIdentityDuplicate", () => {
       name: "Chicken thighs",
       descriptor: "Boneless",
       brand: "Tesco",
+      categoryId: "category-1",
     });
 
     expect(findFirstMock).toHaveBeenCalledWith({
@@ -32,6 +33,7 @@ describe("findIngredientIdentityDuplicate", () => {
         name: { equals: "Chicken thighs", mode: "insensitive" },
         descriptor: { equals: "Boneless", mode: "insensitive" },
         brand: { equals: "Tesco", mode: "insensitive" },
+        categoryId: "category-1",
       },
       select: { id: true },
     });
@@ -45,6 +47,7 @@ describe("findIngredientIdentityDuplicate", () => {
       name: "Chicken thighs",
       descriptor: null,
       brand: null,
+      categoryId: "category-1",
       excludeIngredientId: "current-ingredient",
     });
 
@@ -53,9 +56,27 @@ describe("findIngredientIdentityDuplicate", () => {
         name: { equals: "Chicken thighs", mode: "insensitive" },
         descriptor: null,
         brand: null,
+        categoryId: "category-1",
         id: { not: "current-ingredient" },
       },
       select: { id: true },
     });
+  });
+
+  it("scopes duplicate check by categoryId", async () => {
+    findFirstMock.mockResolvedValue(null);
+
+    await findIngredientIdentityDuplicate({
+      name: "Apple",
+      descriptor: null,
+      brand: null,
+      categoryId: "cat-fruits",
+    });
+
+    expect(findFirstMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ categoryId: "cat-fruits" }),
+      }),
+    );
   });
 });

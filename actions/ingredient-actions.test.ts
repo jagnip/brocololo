@@ -7,6 +7,7 @@ import {
   findAvailableSlug,
   findIngredientIdentityDuplicate,
   getGramsUnit,
+  getIngredientCategorySlugById,
   getIngredientDeleteUsages,
   updateIngredient,
 } from "@/lib/db/ingredients";
@@ -33,6 +34,8 @@ vi.mock("@/lib/db/ingredients", () => ({
   findAvailableSlug: vi.fn(),
   findIngredientIdentityDuplicate: vi.fn(),
   getGramsUnit: vi.fn(),
+  // New: action layer now resolves the category slug to fold it into slug generation.
+  getIngredientCategorySlugById: vi.fn(),
   updateIngredient: vi.fn(),
 }));
 
@@ -109,6 +112,8 @@ describe("inline ingredient save actions", () => {
     vi.mocked(getGramsUnit).mockResolvedValue({ id: "unit-g", name: "g" });
     vi.mocked(findAvailableSlug).mockResolvedValue("chicken-breast");
     vi.mocked(findIngredientIdentityDuplicate).mockResolvedValue(null);
+    // Default category slug used by slug generation; tests that care override per-call.
+    vi.mocked(getIngredientCategorySlugById).mockResolvedValue("poultry");
   });
 
   it("creates ingredient inline and returns success payload", async () => {
@@ -136,7 +141,7 @@ describe("inline ingredient save actions", () => {
     );
   });
 
-  it("uses name, descriptor, and brand when generating slugs", async () => {
+  it("uses name, descriptor, brand, and category slug when generating slugs", async () => {
     vi.mocked(createIngredient).mockResolvedValue(makeIngredientRecord());
 
     await createIngredientInlineAction({
@@ -150,6 +155,8 @@ describe("inline ingredient save actions", () => {
         name: "Chicken Breast",
         descriptor: "boneless",
         brand: "Tesco",
+        // Category slug is folded into slug source so URLs reflect the new identity.
+        categorySlug: "poultry",
       },
       undefined,
     );
@@ -184,6 +191,7 @@ describe("inline ingredient save actions", () => {
       name: "Chicken Breast",
       descriptor: "skinless",
       brand: null,
+      categoryId: "category-1",
       excludeIngredientId: undefined,
     });
     expect(createIngredient).toHaveBeenCalled();
@@ -202,6 +210,29 @@ describe("inline ingredient save actions", () => {
       name: "Chicken Breast",
       descriptor: "boneless",
       brand: "Tesco",
+      categoryId: "category-1",
+      excludeIngredientId: undefined,
+    });
+    expect(createIngredient).toHaveBeenCalled();
+  });
+
+  it("allows same name+descriptor+brand in a different category", async () => {
+    // Same identity in another category should not be treated as a duplicate.
+    vi.mocked(findIngredientIdentityDuplicate).mockResolvedValue(null);
+    vi.mocked(createIngredient).mockResolvedValue(makeIngredientRecord());
+
+    await createIngredientInlineAction({
+      ...makeValidIngredientFormValues(),
+      brand: "Tesco",
+      descriptor: "boneless",
+      categoryId: "category-2",
+    });
+
+    expect(findIngredientIdentityDuplicate).toHaveBeenCalledWith({
+      name: "Chicken Breast",
+      descriptor: "boneless",
+      brand: "Tesco",
+      categoryId: "category-2",
       excludeIngredientId: undefined,
     });
     expect(createIngredient).toHaveBeenCalled();
@@ -252,6 +283,8 @@ describe("page ingredient save actions", () => {
     vi.mocked(getGramsUnit).mockResolvedValue({ id: "unit-g", name: "g" });
     vi.mocked(findAvailableSlug).mockResolvedValue("chicken-breast");
     vi.mocked(findIngredientIdentityDuplicate).mockResolvedValue(null);
+    // Default category slug used by slug generation; tests that care override per-call.
+    vi.mocked(getIngredientCategorySlugById).mockResolvedValue("poultry");
   });
 
   it("redirects after successful create in page flow", async () => {
@@ -313,6 +346,7 @@ describe("page ingredient save actions", () => {
       name: "Chicken Breast",
       descriptor: null,
       brand: null,
+      categoryId: "category-1",
       excludeIngredientId: "ingredient-1",
     });
     expect(updateIngredient).toHaveBeenCalled();

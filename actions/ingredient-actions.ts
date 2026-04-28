@@ -9,6 +9,7 @@ import {
   findAvailableSlug,
   findIngredientIdentityDuplicate,
   getGramsUnit,
+  getIngredientCategorySlugById,
   getIngredientDeleteUsages,
   updateIngredient,
 } from "@/lib/db/ingredients";
@@ -99,10 +100,12 @@ async function saveIngredient(
     }),
   };
 
+  // Identity is now scoped per category, so we forward categoryId into the duplicate check.
   const duplicate = await findIngredientIdentityDuplicate({
     name: parsed.data.name,
     descriptor: parsed.data.descriptor,
     brand: parsed.data.brand,
+    categoryId: parsed.data.categoryId,
     excludeIngredientId: params.ingredientId,
   });
 
@@ -113,11 +116,15 @@ async function saveIngredient(
     };
   }
 
+  // Look up the category slug once so it can be folded into slug generation.
+  const categorySlug = await getIngredientCategorySlugById(parsed.data.categoryId);
+
   const slug = await findAvailableSlug(
     {
       name: parsed.data.name,
       descriptor: parsed.data.descriptor,
       brand: parsed.data.brand,
+      categorySlug,
     },
     params.ingredientId,
   );

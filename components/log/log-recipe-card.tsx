@@ -46,9 +46,10 @@ export function LogRecipeCard({
       className={cn(
         // Height follows content (text + wrapping macros); image column stretches to match (LogPlannerPoolCard pattern).
         "flex flex-row items-stretch gap-0 overflow-hidden rounded-lg border p-0 py-0 shadow-none transition-colors",
+        // Scope hover/focus interactions (like remove icon reveal) to this specific card.
+        "group/row",
         onRemove && "relative",
         isSelected ? "border-foreground bg-muted/60" : "border-border/60 bg-card",
-        onClick && "group",
         onClick && !isSelected && "cursor-pointer hover:bg-muted/40",
         onClick && isSelected && "cursor-pointer",
       )}
@@ -70,9 +71,9 @@ export function LogRecipeCard({
       {onRemove ? (
         <Button
           type="button"
-          variant="ghost"
-          size="icon"
-          className="absolute right-1.5 top-1.5 z-10 h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          variant="outline"
+          size="icon-sm"
+          className="absolute right-1.5 top-1.5 z-10 text-muted-foreground opacity-0 pointer-events-none transition-opacity duration-150 group-hover/row:opacity-100 group-hover/row:pointer-events-auto group-focus-within/row:opacity-100 group-focus-within/row:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto hover:text-destructive"
           aria-label="Remove from slot"
           onClick={(e) => {
             e.stopPropagation();
@@ -89,7 +90,7 @@ export function LogRecipeCard({
           isSelected
             ? "bg-transparent"
             : onClick
-              ? "bg-muted group-hover:bg-transparent"
+              ? "bg-muted group-hover/row:bg-transparent"
               : "bg-muted",
         )}
       >
