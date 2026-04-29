@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   DndContext,
   type DragEndEvent,
@@ -36,6 +36,7 @@ import {
   type SelectedSlotState,
 } from "./log-active-day-view";
 import { LogRemoveDayAlertDialog } from "./log-remove-day-alert-dialog";
+import type { DateRangeValue } from "@/components/planner/date-range-picker";
 
 type IngredientFormDependencies = {
   categories: Array<{ id: string; name: string }>;
@@ -138,6 +139,8 @@ type LogDayViewProps = {
   initialSelectedDayKey?: string;
   logId?: string;
   person?: "PRIMARY" | "SECONDARY";
+  dateRange?: DateRangeValue;
+  allowDayManagement?: boolean;
   recipeOptions?: Array<{
     id: string;
     name: string;
@@ -159,17 +162,23 @@ export function LogDayViewController({
   initialSelectedDayKey,
   logId,
   person,
+  dateRange,
+  allowDayManagement = true,
   recipeOptions = [],
   ingredientOptions = [],
 }: LogDayViewProps) {
   const router = useRouter();
   const { isLogFilterPending } = useTopbar();
   const isPhoneViewport = useIsPhoneViewport();
+  const initialVisibleDays = days.filter((day) => {
+    if (!dateRange) return true;
+    return day.dateKey >= dateRange.start && day.dateKey <= dateRange.end;
+  });
   const defaultDayKey =
     initialSelectedDayKey &&
-    days.some((day) => day.dateKey === initialSelectedDayKey)
+    initialVisibleDays.some((day) => day.dateKey === initialSelectedDayKey)
       ? initialSelectedDayKey
-      : (days[0]?.dateKey ?? null);
+      : (initialVisibleDays[0]?.dateKey ?? null);
   const [localDays, setLocalDays] = useState(days);
   const [localPlannerPool, setLocalPlannerPool] = useState(plannerPool);
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(
@@ -190,9 +199,26 @@ export function LogDayViewController({
     useSensor(PointerSensor),
     useSensor(KeyboardSensor),
   );
+  const visibleDays = useMemo(
+    () =>
+      localDays.filter((day) => {
+        if (!dateRange) return true;
+        return day.dateKey >= dateRange.start && day.dateKey <= dateRange.end;
+      }),
+    [dateRange, localDays],
+  );
 
+  const visiblePlannerPool = useMemo(
+    () =>
+      localPlannerPool.filter((item) => {
+        if (!dateRange) return true;
+        const dateKey = item.date.toISOString().slice(0, 10);
+        return dateKey >= dateRange.start && dateKey <= dateRange.end;
+      }),
+    [dateRange, localPlannerPool],
+  );
   // Pool list is local so drag-drop can remove cards optimistically before refresh.
-  const groupedPlannerPool = buildGroupedPlannerPoolCards(localPlannerPool);
+  const groupedPlannerPool = buildGroupedPlannerPoolCards(visiblePlannerPool);
 
   useEffect(() => {
     setLocalDays(days);
@@ -207,7 +233,7 @@ export function LogDayViewController({
       return;
     }
 
-    const existsInDays = days.some(
+    const existsInDays = visibleDays.some(
       (day) => day.dateKey === initialSelectedDayKey,
     );
     if (!existsInDays) {
@@ -221,20 +247,20 @@ export function LogDayViewController({
     setSelectedSlot((prev) =>
       prev?.dayKey === initialSelectedDayKey ? prev : null,
     );
-  }, [days, initialSelectedDayKey]);
+  }, [initialSelectedDayKey, visibleDays]);
 
   useEffect(() => {
-    if (!selectedDayKey || days.length === 0) {
-      setSelectedDayKey(days[0]?.dateKey ?? null);
+    if (!selectedDayKey || visibleDays.length === 0) {
+      setSelectedDayKey(visibleDays[0]?.dateKey ?? null);
       return;
     }
 
-    const stillExists = days.some((day) => day.dateKey === selectedDayKey);
+    const stillExists = visibleDays.some((day) => day.dateKey === selectedDayKey);
     if (!stillExists) {
-      setSelectedDayKey(days[0]?.dateKey ?? null);
+      setSelectedDayKey(visibleDays[0]?.dateKey ?? null);
       setSelectedSlot(null);
     }
-  }, [days, selectedDayKey]);
+  }, [selectedDayKey, visibleDays]);
 
   useEffect(() => {
     // Wait for viewport detection; prevents opening details by default on phones.
@@ -251,7 +277,7 @@ export function LogDayViewController({
       return;
     }
 
-    const activeDay = days.find((day) => day.dateKey === selectedDayKey);
+    const activeDay = visibleDays.find((day) => day.dateKey === selectedDayKey);
     if (!activeDay) {
       return;
     }
@@ -295,7 +321,7 @@ export function LogDayViewController({
       });
       return;
     }
-  }, [days, isPhoneViewport, selectedDayKey, selectedSlot]);
+  }, [isPhoneViewport, selectedDayKey, selectedSlot, visibleDays]);
 
   const selectEmptySlot = (
     day: LogDayData,
@@ -760,6 +786,7 @@ export function LogDayViewController({
   };
 
   const handleAddDay = () => {
+    if (!allowDayManagement) return;
     if (!logId) return;
 
     startAddDayTransition(async () => {
@@ -784,6 +811,7 @@ export function LogDayViewController({
   };
 
   const handleRemoveDay = (dateKey: string) => {
+    if (!allowDayManagement) return;
     if (!logId) {
       return;
     }
@@ -840,23 +868,21 @@ export function LogDayViewController({
     });
   };
 
-  const activeDay = localDays.find((d) => d.dateKey === selectedDayKey) ?? null;
+  const activeDay = visibleDays.find((d) => d.dateKey === selectedDayKey) ?? null;
   const editorSlot =
     activeDay && selectedSlot?.dayKey === activeDay.dateKey
       ? selectedSlot
       : null;
 
-  if (days.length === 0) {
+  if (visibleDays.length === 0) {
     return (
       <section
         className="rounded-lg border p-6 space-y-3 data-[pending=true]:animate-pulse"
         data-pending={isContentPending}
       >
-        <h2 className="text-lg font-medium">
-          No log entries for selected person
-        </h2>
+        <h2 className="text-lg font-medium">No log entries in selected range</h2>
         <p className="text-sm text-muted-foreground">
-          Switch person or create a plan to generate baseline log entries.
+          Adjust the shared date range or switch person.
         </p>
       </section>
     );
@@ -877,7 +903,7 @@ export function LogDayViewController({
         {activeDay ? (
           <LogActiveDayView
             day={activeDay}
-            days={localDays}
+            days={visibleDays}
             groupedPlannerPool={groupedPlannerPool}
             editorSlot={editorSlot}
             ingredientOptions={ingredientOptions}
@@ -886,6 +912,8 @@ export function LogDayViewController({
             isAddingDay={isAddingDay}
             isRemovingDay={isRemovingDay}
             logId={logId}
+            showDayControls
+            showDayManagementActions={allowDayManagement}
             onSelectDay={handleSelectDay}
             onAddDay={handleAddDay}
             onRemoveDay={() => handleRemoveDay(activeDay.dateKey)}

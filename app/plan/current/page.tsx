@@ -15,10 +15,15 @@ function isWithinDateRange(date: Date, start: Date, end: Date) {
 }
 
 /**
- * Sidebar “Planner” entry: jump straight to the active plan (today in range) or latest.
+ * Sidebar “Planner”/“Log” entry: jump straight to the active plan (today in range) or latest.
  */
-export default async function PlanCurrentPage() {
+export default async function PlanCurrentPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string; person?: string }>;
+}) {
   const plans = await getPlans();
+  const { tab, person } = await searchParams;
   if (plans.length === 0) {
     // Render an actionable empty state instead of redirecting back to /plan.
     return <PlanCurrentEmpty />;
@@ -28,5 +33,13 @@ export default async function PlanCurrentPage() {
     plans.find((plan) => isWithinDateRange(today, plan.startDate, plan.endDate)) ??
     plans[0];
 
-  redirect(ROUTES.planView(targetPlan.id));
+  // Preserve tab/person context when resolving "current plan".
+  const nextTab = tab === "log" ? "log" : "plan";
+  const params = new URLSearchParams();
+  params.set("tab", nextTab);
+  if (person) {
+    params.set("person", person);
+  }
+
+  redirect(`${ROUTES.planView(targetPlan.id)}?${params.toString()}`);
 }

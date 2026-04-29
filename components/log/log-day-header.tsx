@@ -3,6 +3,7 @@
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { LogPersonSelectFromUrl } from "@/components/log/log-person-select";
 import {
   Select,
   SelectContent,
@@ -40,6 +41,8 @@ export type LogDayPanelHeaderProps = {
   onAddDay: () => void;
   isRemovingDay: boolean;
   onRemoveDay: () => void;
+  showDayControls?: boolean;
+  showDayManagementActions?: boolean;
 };
 
 export function LogDayHeader({
@@ -52,6 +55,8 @@ export function LogDayHeader({
   onAddDay,
   isRemovingDay,
   onRemoveDay,
+  showDayControls = true,
+  showDayManagementActions = true,
 }: LogDayPanelHeaderProps) {
   const dayMacros = toDayMacros(day);
 
@@ -60,58 +65,62 @@ export function LogDayHeader({
       <PageHeader title="Log details"/>
 
       <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-2">
-        <div className="flex flex-nowrap items-center gap-1.5 md:flex-wrap md:gap-2">
-          {/* Day selector; person lives in the app top bar next to the log switcher. */}
+        {showDayControls ? (
+          <div className="flex flex-nowrap items-center gap-1.5 md:flex-wrap md:gap-2">
+            {/* Day selector; person lives in the app top bar next to the log switcher. */}
+            <div className="min-w-0 flex-1 md:flex-none md:w-48">
+              {/* Day is always required; disable shared Select inline clear (X). */}
+              <Select
+                value={selectedDayKey}
+                onValueChange={onSelectDay}
+                allowInlineClear={false}
+              >
+                <SelectTrigger className="w-full min-w-0">
+                  <SelectValue placeholder="Select a day" />
+                </SelectTrigger>
+                <SelectContent>
+                  {days.map((d) => (
+                    <SelectItem key={d.dateKey} value={d.dateKey}>
+                      {formatDayLabel(d.date)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Mobile: grows in the one-row toolbar; md+: fixed width like desktop (12rem). */}
-          <div className="min-w-0 flex-1 md:flex-none md:w-48">
-            {/* Day is always required; disable shared Select inline clear (X). */}
-            <Select
-              value={selectedDayKey}
-              onValueChange={onSelectDay}
-              allowInlineClear={false}
-            >
-              <SelectTrigger className="w-full min-w-0">
-                <SelectValue placeholder="Select a day" />
-              </SelectTrigger>
-              <SelectContent>
-                {days.map((d) => (
-                  <SelectItem key={d.dateKey} value={d.dateKey}>
-                    {formatDayLabel(d.date)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Person selector belongs under Log details in combined view. */}
+            <LogPersonSelectFromUrl />
+
+            {showDayManagementActions ? (
+              <>
+                {/* Actions order: add day → delete day */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                  disabled={isAddingDay || !logId}
+                  onClick={onAddDay}
+                  aria-label="Add day"
+                >
+                  {isAddingDay ? <Loader2 className="animate-spin" /> : <Plus />}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                  disabled={isRemovingDay || !logId}
+                  aria-label={`Remove day ${formatDayLabel(day.date)}`}
+                  onClick={onRemoveDay}
+                >
+                  {isRemovingDay ? <Loader2 className="animate-spin" /> : <Trash2 />}
+                </Button>
+              </>
+            ) : null}
           </div>
-
-          {/* Actions order: add day → delete day → delete log */}
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="shrink-0"
-            disabled={isAddingDay || !logId}
-            onClick={onAddDay}
-            aria-label="Add day"
-          >
-            {/* Show in-button progress while add-day request is in flight. */}
-            {isAddingDay ? <Loader2 className="animate-spin" /> : <Plus />}
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="shrink-0"
-            disabled={isRemovingDay || !logId}
-            aria-label={`Remove day ${formatDayLabel(day.date)}`}
-            onClick={onRemoveDay}
-          >
-            {/* Match add-day UX: spinner while remove-day request is running. */}
-            {isRemovingDay ? <Loader2 className="animate-spin" /> : <Trash2 />}
-          </Button>
-
-        </div>
+        ) : null}
 
         {/* Macro badges */}
         <div className="flex flex-wrap items-center gap-2">

@@ -8,7 +8,7 @@ import { PlanView } from "./plan-view";
 import { toast } from "sonner";
 import { ROUTES } from "@/lib/constants";
 import { useRouter } from "next/navigation";
-import { deletePlanAction, generateLogFromPlan, updateSavedPlan } from "@/actions/planner-actions";
+import { deletePlanAction, updateSavedPlan } from "@/actions/planner-actions";
 import { WeekPicker, getDefaultDateRange, type DateRangeValue } from "./date-range-picker";
 import { rebasePlanSlotsByDateRangeDelta } from "@/lib/planner/plan-date-rebase";
 import {
@@ -23,12 +23,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { usePlanTopbarState } from "@/components/planner/plan-topbar-state-context";
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 
 type PlanEditorProps = {
   planId: string;
   initialPlan: PlanInputType;
   recipes: RecipeType[];
+  sharedDateRange?: DateRangeValue;
+  hideInlineControls?: boolean;
 };
 
 type SaveStatus = "idle" | "saving";
@@ -39,7 +40,13 @@ type SyncConflictState = {
   saveData: SlotSaveData[];
 };
 
-export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
+export function PlanEditor({
+  planId,
+  initialPlan,
+  recipes,
+  sharedDateRange,
+  hideInlineControls = false,
+}: PlanEditorProps) {
   const AUTOSAVE_DELAY_MS = 1000;
   const [plan, setPlan] = useState<PlanInputType>(initialPlan);
   const allSlotsRef = useRef<PlanInputType>(initialPlan);
@@ -47,7 +54,6 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
   const [isDirty, setIsDirty] = useState(false);
   const editVersionRef = useRef(0);
   const router = useRouter();
-  const [logStatus, setLogStatus] = useState<"idle" | "generating">("idle");
   const [deleteStatus, setDeleteStatus] = useState<"idle" | "deleting">("idle");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [syncConflict, setSyncConflict] = useState<SyncConflictState | null>(null);
@@ -96,7 +102,9 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
     return { start, end } satisfies DateRangeValue;
   })();
 
-  const [dateRange, setDateRange] = useState<DateRangeValue>(initialDateRange);
+  const [dateRange, setDateRange] = useState<DateRangeValue>(
+    sharedDateRange ?? initialDateRange,
+  );
 
   const handleSave = useCallback(async () => {
     if (!isDirty) return;
@@ -302,46 +310,28 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
     );
   }, []);
 
-  const handleGenerateLog = useCallback(async () => {
-    if (isDirty) {
-      toast.info("Save your plan before generating a log.");
+  useEffect(() => {
+    if (!sharedDateRange) {
       return;
     }
-
-    setLogStatus("generating");
-    try {
-      const result = await generateLogFromPlan(planId);
-      if (result.type === "date_conflict") {
-        const formattedDates = formatDateKeysForToast(result.dates);
-        toast.info(
-          `Cannot generate log. These dates already exist in a log: ${formattedDates.join(", ")}`,
-        );
-        return;
-      }
-      if (result.type === "already_exists") {
-        toast.info("Log already generated for this plan.");
-        return;
-      }
-      if (result.type === "error") {
-        toast.error(result.message);
-        return;
-      }
-
-      router.push(ROUTES.logView(result.logId));
-    } finally {
-      setLogStatus("idle");
+    if (
+      sharedDateRange.start === dateRange.start &&
+      sharedDateRange.end === dateRange.end
+    ) {
+      return;
     }
-  }, [isDirty, planId, router]);
+    // Shared page picker drives planner range from outside this component.
+    handleDateRangeChange(sharedDateRange);
+  }, [dateRange.end, dateRange.start, handleDateRangeChange, sharedDateRange]);
 
   useEffect(() => {
     // Keep plan topbar action state in sync with editor runtime state.
     setPlanTopbarState({
-      isGenerateDisabled: isDirty || saveStatus === "saving" || logStatus === "generating",
-      isGenerating: logStatus === "generating",
-      isDeleteDisabled:
-        saveStatus === "saving" || logStatus === "generating" || deleteStatus === "deleting",
+      isGenerateDisabled: true,
+      isGenerating: false,
+      isDeleteDisabled: saveStatus === "saving" || deleteStatus === "deleting",
       isDeleting: deleteStatus === "deleting",
-      onGenerateLog: () => void handleGenerateLog(),
+      onGenerateLog: undefined,
       onDeletePlan: () => setIsDeleteDialogOpen(true),
     });
 
@@ -350,9 +340,6 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
     };
   }, [
     deleteStatus,
-    handleGenerateLog,
-    isDirty,
-    logStatus,
     resetPlanTopbarState,
     saveStatus,
     setPlanTopbarState,
@@ -464,27 +451,18 @@ export function PlanEditor({ planId, initialPlan, recipes }: PlanEditorProps) {
       <div>
         <PageHeader title="Plan details" />
         <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-2">
-          <div className="flex min-w-0 flex-nowrap items-center gap-1.5 md:flex-wrap md:gap-2">
-            <div className="min-w-0 flex-1 md:flex-none md:w-80">
-              <WeekPicker
-                value={dateRange}
-                onChange={handleDateRangeChange}
-                compact
-                className="w-full"
-              />
+          {hideInlineControls ? null : (
+            <div className="flex min-w-0 flex-nowrap items-center gap-1.5 md:flex-wrap md:gap-2">
+              <div className="min-w-0 flex-1 md:flex-none md:w-80">
+                <WeekPicker
+                  value={dateRange}
+                  onChange={handleDateRangeChange}
+                  compact
+                  className="w-full"
+                />
+              </div>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isDirty || saveStatus === "saving" || logStatus === "generating"}
-              aria-busy={logStatus === "generating"}
-              onClick={() => {
-                void handleGenerateLog();
-              }}
-            >
-              {logStatus === "generating" ? "Generating log..." : "Generate log"}
-            </Button>
-          </div>
+          )}
 
           {saveStatus === "saving" ? (
             <Loader2

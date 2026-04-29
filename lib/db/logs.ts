@@ -158,6 +158,17 @@ export async function getLogById(logId: string, person: LogPerson) {
   });
 }
 
+export async function getLogByPlanId(planId: string, person: LogPerson) {
+  const log = await prisma.log.findUnique({
+    where: { planId },
+    select: { id: true },
+  });
+  if (!log) {
+    return null;
+  }
+  return getLogById(log.id, person);
+}
+
 export type AppendNextLogDayResult =
   | {
       type: "success";

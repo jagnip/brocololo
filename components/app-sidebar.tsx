@@ -52,7 +52,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isPlanner} tooltip="Planner">
               <Link
-                href={ROUTES.planCurrent}
+                href={`${ROUTES.planCurrent}?tab=plan`}
                 onClick={() => {
                   if (!isMobile) return;
                   setOpenMobile(false);
@@ -84,8 +84,8 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isLog} tooltip="Log">
               <Link
-                // Open current log from left-nav quick access.
-                href={ROUTES.logCurrent}
+                // Open current shared Planner/Log view on the Log tab.
+                href={`${ROUTES.planCurrent}?tab=log`}
                 onClick={() => {
                   if (!isMobile) return;
                   setOpenMobile(false);
