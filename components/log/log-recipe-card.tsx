@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Trash2 } from "lucide-react";
+import { Copy, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -25,6 +25,8 @@ type LogRecipeCardProps = {
   onClick?: () => void;
   /** Top-right icon control; kept separate from primary card click (open editor). */
   onRemove?: () => void;
+  /** Top-right duplicate control; used to copy this card to another day/meal. */
+  onCopy?: () => void;
 };
 
 export function LogRecipeCard({
@@ -40,7 +42,10 @@ export function LogRecipeCard({
   isSelected = false,
   onClick,
   onRemove,
+  onCopy,
 }: LogRecipeCardProps) {
+  const hasActions = onRemove || onCopy;
+
   return (
     <Card
       className={cn(
@@ -48,7 +53,7 @@ export function LogRecipeCard({
         "flex flex-row items-stretch gap-0 overflow-hidden rounded-lg border p-0 py-0 shadow-none transition-colors",
         // Scope hover/focus interactions (like remove icon reveal) to this specific card.
         "group/row",
-        onRemove && "relative",
+        hasActions && "relative",
         isSelected ? "border-foreground bg-muted/60" : "border-border/60 bg-card",
         onClick && !isSelected && "cursor-pointer hover:bg-muted/40",
         onClick && isSelected && "cursor-pointer",
@@ -68,20 +73,40 @@ export function LogRecipeCard({
           : undefined
       }
     >
-      {onRemove ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="icon-sm"
-          className="absolute right-1.5 top-1.5 z-10 text-muted-foreground opacity-0 pointer-events-none transition-opacity duration-150 group-hover/row:opacity-100 group-hover/row:pointer-events-auto group-focus-within/row:opacity-100 group-focus-within/row:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto hover:text-destructive"
-          aria-label="Remove from slot"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+      {hasActions ? (
+        <div className="absolute right-1.5 top-1.5 z-10 flex items-center gap-1 opacity-0 pointer-events-none transition-opacity duration-150 group-hover/row:opacity-100 group-hover/row:pointer-events-auto group-focus-within/row:opacity-100 group-focus-within/row:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto">
+          {onCopy ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="Duplicate to another date"
+              onClick={(e) => {
+                // Keep card click bound to editor-open only; action buttons own their interaction.
+                e.stopPropagation();
+                onCopy();
+              }}
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          ) : null}
+          {onRemove ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-destructive"
+              aria-label="Remove from slot"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          ) : null}
+        </div>
       ) : null}
 
       <div
@@ -115,7 +140,7 @@ export function LogRecipeCard({
       <div
         className={cn(
           "flex min-w-0 flex-1 flex-col justify-center gap-2 p-3",
-          onRemove && "pr-10",
+          hasActions && "pr-20",
         )}
       >
         <p className="type-micro uppercase tracking-wide text-muted-foreground">

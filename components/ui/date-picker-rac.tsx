@@ -14,6 +14,7 @@ type DatePickerProps = {
   disabled?: boolean;
   placeholder?: string;
   className?: string;
+  availableDateKeys?: string[];
 };
 
 function DatePicker({
@@ -22,8 +23,12 @@ function DatePicker({
   disabled = false,
   placeholder = "Pick a date",
   className,
+  availableDateKeys,
 }: DatePickerProps) {
   const calendarValue = toCalendarDateOrNull(value);
+  const availableDateKeySet = availableDateKeys
+    ? new Set(availableDateKeys)
+    : null;
 
   return (
     <Popover>
@@ -48,6 +53,12 @@ function DatePicker({
       <PopoverContent className="w-auto p-2" align="start">
         <Calendar
           value={calendarValue ?? undefined}
+          // When provided, allow choosing only dates explicitly listed by caller.
+          isDateUnavailable={
+            availableDateKeySet
+              ? (date) => !availableDateKeySet.has(date.toString())
+              : undefined
+          }
           onChange={(nextValue) => {
             onChange(nextValue.toString());
           }}

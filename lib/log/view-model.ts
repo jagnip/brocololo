@@ -45,6 +45,8 @@ export type LogRecipeCardData = {
   id: string;
   entryId?: string;
   entryRecipeId: string | null;
+  /** Present only when this card consumed a planned pool slot. */
+  planSlotId?: string | null;
   sourceRecipeId: string | null;
   mealLabel: LogSlotData["label"];
   cardKind: "recipe" | "custom" | "removed";
@@ -205,6 +207,7 @@ export function buildLogDays(entries: LogEntryRow[]): LogDayData[] {
         id: recipe.id,
         entryId: entry.id,
         entryRecipeId: recipe.id,
+        planSlotId: recipe.planSlotId ?? null,
         sourceRecipeId: recipe.sourceRecipe?.id ?? null,
         mealLabel: LOG_MEAL_LABELS[entry.mealType],
         cardKind: recipe.sourceRecipe ? "recipe" : "removed",

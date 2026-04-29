@@ -13,6 +13,7 @@ type LogSlotCardProps = {
   onRecipeClick?: (recipe: LogSlotData["recipes"][number]) => void;
   onEmptyClick?: () => void;
   onRecipeRemove?: (recipe: LogSlotData["recipes"][number]) => void;
+  onRecipeCopy?: (recipe: LogSlotData["recipes"][number]) => void;
 };
 
 export function LogSlots({
@@ -22,6 +23,7 @@ export function LogSlots({
   onRecipeClick,
   onEmptyClick,
   onRecipeRemove,
+  onRecipeCopy,
 }: LogSlotCardProps) {
   if (slot.recipes.length === 0) {
     const isEmptyEditorActive =
@@ -81,6 +83,7 @@ export function LogSlots({
           isSelected={isLogRecipeCardSelected(editorSlot, dayKey, slot, recipe)}
           onClick={onRecipeClick ? () => onRecipeClick(recipe) : undefined}
           onRemove={onRecipeRemove ? () => onRecipeRemove(recipe) : undefined}
+          onCopy={onRecipeCopy ? () => onRecipeCopy(recipe) : undefined}
         />
       ))}
     </div>
