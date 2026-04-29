@@ -1,11 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { Loader2, Trash2 } from "lucide-react";
 import { PlanTopbarControls } from "@/components/planner/plan-topbar-controls";
 import type { PlanSelectOption } from "@/components/planner/plan-select";
 import { TopbarConfigController } from "@/components/topbar-config";
-import { usePlanTopbarState } from "@/components/planner/plan-topbar-state-context";
 import { ROUTES } from "@/lib/constants";
 
 type PlanTopbarConfigProps = {
@@ -15,8 +13,6 @@ type PlanTopbarConfigProps = {
 
 /** Registers plan detail top bar: plan switcher + New plan (mirrors previous `PlanPageHeader` actions). */
 export function PlanTopbarConfig({ planOptions, planId }: PlanTopbarConfigProps) {
-  const { state } = usePlanTopbarState();
-
   const config = useMemo(
     () => ({
       rightContent: (
@@ -31,24 +27,9 @@ export function PlanTopbarConfig({ planOptions, planId }: PlanTopbarConfigProps)
           size: "default" as const,
           ariaLabel: "Create plan",
         },
-        {
-          id: "delete-plan",
-          label: "Delete plan",
-          onClick: state.onDeletePlan,
-          disabled: state.isDeleteDisabled,
-          ariaBusy: state.isDeleting,
-          icon: state.isDeleting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Trash2 className="h-4 w-4" />
-          ),
-          variant: "outline" as const,
-          size: "icon" as const,
-          ariaLabel: "Delete plan",
-        },
       ],
     }),
-    [planId, planOptions, state],
+    [planId, planOptions],
   );
 
   return <TopbarConfigController config={config} />;

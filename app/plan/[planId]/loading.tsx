@@ -14,6 +14,7 @@ export default function Loading() {
           <div className="flex items-center gap-2 sm:min-w-[20rem] lg:min-w-[24rem]">
             <Skeleton className="h-4 w-20 rounded-md" />
             <Skeleton className="h-9 w-full rounded-md" />
+            <Skeleton className="h-9 w-9 rounded-md" />
           </div>
         </div>
       </div>
