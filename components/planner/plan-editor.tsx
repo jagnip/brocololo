@@ -31,6 +31,7 @@ type PlanEditorProps = {
   sharedDateRange?: DateRangeValue;
   hideInlineControls?: boolean;
   hidePageHeader?: boolean;
+  disableDeleteDialog?: boolean;
 };
 
 type SaveStatus = "idle" | "saving";
@@ -48,6 +49,7 @@ export function PlanEditor({
   sharedDateRange,
   hideInlineControls = false,
   hidePageHeader = false,
+  disableDeleteDialog = false,
 }: PlanEditorProps) {
   const AUTOSAVE_DELAY_MS = 1000;
   const [plan, setPlan] = useState<PlanInputType>(initialPlan);
@@ -350,38 +352,40 @@ export function PlanEditor({
   return (
     <>
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete this plan permanently?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setDeleteStatus("deleting");
-                void (async () => {
-                  try {
-                    const result = await deletePlanAction(planId);
-                    if (result.type === "error") {
-                      toast.error(result.message);
-                      return;
+        {disableDeleteDialog ? null : (
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this plan permanently?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  setDeleteStatus("deleting");
+                  void (async () => {
+                    try {
+                      const result = await deletePlanAction(planId);
+                      if (result.type === "error") {
+                        toast.error(result.message);
+                        return;
+                      }
+                      router.push(ROUTES.planCurrent);
+                      router.refresh();
+                    } finally {
+                      setDeleteStatus("idle");
+                      setIsDeleteDialogOpen(false);
                     }
-                    router.push(ROUTES.planCurrent);
-                    router.refresh();
-                  } finally {
-                    setDeleteStatus("idle");
-                    setIsDeleteDialogOpen(false);
-                  }
-                })();
-              }}
-            >
-              Delete plan
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
+                  })();
+                }}
+              >
+                Delete plan
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        )}
       </AlertDialog>
 
       <AlertDialog

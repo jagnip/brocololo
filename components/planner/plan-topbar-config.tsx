@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { PlanTopbarControls } from "@/components/planner/plan-topbar-controls";
 import type { PlanSelectOption } from "@/components/planner/plan-select";
 import { TopbarConfigController } from "@/components/topbar-config";
@@ -25,12 +25,11 @@ export function PlanTopbarConfig({ planOptions, planId }: PlanTopbarConfigProps)
       actions: [
         {
           id: "new-plan",
-          label: "Create program",
+          label: "Create plan",
           href: ROUTES.planCreate,
-          icon: <Plus className="h-4 w-4" />,
-          variant: "outline" as const,
-          size: "icon" as const,
-          ariaLabel: "Create program",
+          variant: "default" as const,
+          size: "default" as const,
+          ariaLabel: "Create plan",
         },
         {
           id: "delete-plan",
