@@ -30,6 +30,7 @@ type PlanEditorProps = {
   recipes: RecipeType[];
   sharedDateRange?: DateRangeValue;
   hideInlineControls?: boolean;
+  hidePageHeader?: boolean;
 };
 
 type SaveStatus = "idle" | "saving";
@@ -46,6 +47,7 @@ export function PlanEditor({
   recipes,
   sharedDateRange,
   hideInlineControls = false,
+  hidePageHeader = false,
 }: PlanEditorProps) {
   const AUTOSAVE_DELAY_MS = 1000;
   const [plan, setPlan] = useState<PlanInputType>(initialPlan);
@@ -449,7 +451,7 @@ export function PlanEditor({
       </AlertDialog>
 
       <div>
-        <PageHeader title="Plan details" />
+        {hidePageHeader ? null : <PageHeader title="Plan details" />}
         <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-2">
           {hideInlineControls ? null : (
             <div className="flex min-w-0 flex-nowrap items-center gap-1.5 md:flex-wrap md:gap-2">

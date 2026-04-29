@@ -2,11 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { WeekPicker, type DateRangeValue } from "@/components/planner/date-range-picker";
-import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlanEditor } from "@/components/planner/plan-editor";
 import { LogDayViewController } from "@/components/log/log-day-view";
+import { PageHeader } from "@/components/page-header";
 import type { PlanInputType } from "@/types/planner";
 import type { RecipeType } from "@/types/recipe";
 import type { LogDayData, PlannerPoolCardData } from "@/lib/log/view-model";
@@ -65,61 +65,64 @@ export function PlannerLogSharedShell({
 
   return (
     <div className="space-y-6">
+      {/* Shared top-level title for both tabs. */}
+      <PageHeader title="What's on menu?" />
       <div className="flex flex-col gap-3">
         {/* Shared date range applies to both planner and log views. */}
         <div className="w-full max-w-sm">
           <WeekPicker value={dateRange} onChange={setDateRange} compact className="w-full" />
         </div>
 
-        <div className="inline-flex w-fit items-center gap-1 rounded-lg border border-border bg-muted p-1">
-          <Button
-            type="button"
-            size="sm"
-            variant={activeTab === "plan" ? "secondary" : "ghost"}
-            onClick={() => setTab("plan")}
-            className={cn("h-8 px-3", activeTab === "plan" && "shadow-xs")}
-          >
-            Plan
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={activeTab === "log" ? "secondary" : "ghost"}
-            onClick={() => setTab("log")}
-            className={cn("h-8 px-3", activeTab === "log" && "shadow-xs")}
-          >
-            Log
-          </Button>
-        </div>
+        {/* Use shared shadcn tabs primitive for consistent DS behavior. */}
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => {
+            if (value === "plan" || value === "log") {
+              setTab(value);
+            }
+          }}
+          className="w-fit"
+        >
+          <TabsList>
+            <TabsTrigger value="plan">Plan</TabsTrigger>
+            <TabsTrigger value="log">Log</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
-      {activeTab === "plan" ? (
-        <PlanEditor
-          planId={planId}
-          initialPlan={initialPlan}
-          recipes={plannerRecipes}
-          sharedDateRange={dateRange}
-          hideInlineControls
-        />
-      ) : hasLogData && logData ? (
-        <LogDayViewController
-          days={logData.days}
-          plannerPool={logData.plannerPool}
-          logId={logData.logId}
-          person={person}
-          recipeOptions={logData.recipeOptions}
-          ingredientOptions={logData.ingredientOptions}
-          dateRange={dateRange}
-          allowDayManagement={false}
-        />
-      ) : (
-        <section className="rounded-lg border p-6">
-          <h2 className="text-lg font-medium">No log yet for this plan</h2>
-          <p className="text-sm text-muted-foreground">
-            A log will appear automatically for newly created plans.
-          </p>
-        </section>
-      )}
+      <Tabs value={activeTab} className="w-full">
+        <TabsContent value="plan">
+          <PlanEditor
+            planId={planId}
+            initialPlan={initialPlan}
+            recipes={plannerRecipes}
+            sharedDateRange={dateRange}
+            hideInlineControls
+            hidePageHeader
+          />
+        </TabsContent>
+        <TabsContent value="log">
+          {hasLogData && logData ? (
+            <LogDayViewController
+              days={logData.days}
+              plannerPool={logData.plannerPool}
+              logId={logData.logId}
+              person={person}
+              recipeOptions={logData.recipeOptions}
+              ingredientOptions={logData.ingredientOptions}
+              dateRange={dateRange}
+              allowDayManagement={false}
+            />
+          ) : (
+            <section className="rounded-lg border p-6">
+              <h2 className="text-lg font-medium">No log yet for this plan</h2>
+              <p className="text-sm text-muted-foreground">
+                A log will appear automatically for newly created plans.
+              </p>
+            </section>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

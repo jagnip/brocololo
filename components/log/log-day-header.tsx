@@ -43,6 +43,7 @@ export type LogDayPanelHeaderProps = {
   onRemoveDay: () => void;
   showDayControls?: boolean;
   showDayManagementActions?: boolean;
+  showPageHeader?: boolean;
 };
 
 export function LogDayHeader({
@@ -57,12 +58,13 @@ export function LogDayHeader({
   onRemoveDay,
   showDayControls = true,
   showDayManagementActions = true,
+  showPageHeader = true,
 }: LogDayPanelHeaderProps) {
   const dayMacros = toDayMacros(day);
 
   return (
     <div>
-      <PageHeader title="Log details"/>
+      {showPageHeader ? <PageHeader title="Log details" /> : null}
 
       <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-2">
         {showDayControls ? (

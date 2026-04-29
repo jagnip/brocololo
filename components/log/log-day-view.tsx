@@ -914,6 +914,7 @@ export function LogDayViewController({
             logId={logId}
             showDayControls
             showDayManagementActions={allowDayManagement}
+            showPageHeader={false}
             onSelectDay={handleSelectDay}
             onAddDay={handleAddDay}
             onRemoveDay={() => handleRemoveDay(activeDay.dateKey)}
