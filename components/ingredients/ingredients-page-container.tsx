@@ -2,7 +2,6 @@ import {
   getIngredientCategories,
   getIngredientsPage,
 } from "@/lib/db/ingredients";
-import { PageHeader } from "@/components/page-header";
 import { IngredientsInfiniteList } from "@/components/ingredients/ingredients-infinite-list";
 import { IngredientsFilterBar } from "@/components/ingredients/ingredients-filter-bar";
 
@@ -31,12 +30,6 @@ export async function IngredientsPageContainer({
 
   return (
     <>
-      {/* Page spacing is owned by the route-level page-container. */}
-      <header className="w-full">
-        {/* Match recipe-page header bottom spacing for consistent vertical rhythm. */}
-        <PageHeader title="Ingredients" className="pb-2" />
-      </header>
-
       {/* `group` wires descendant `data-pending=true` (from SearchInput + filter bar)
           to the list pulse selector — same pattern as /recipes. */}
       <div className="group">

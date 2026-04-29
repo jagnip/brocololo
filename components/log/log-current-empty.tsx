@@ -21,7 +21,7 @@ export function LogCurrentEmpty() {
             </h1>
           </div>
           <p className="text-sm text-muted-foreground">
-            Logs are created when you generate them from a saved planner plan.
+            Logs are created automatically when you save a new planner plan.
           </p>
         </div>
       </section>

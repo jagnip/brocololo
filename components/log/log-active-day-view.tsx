@@ -43,6 +43,9 @@ export type LogActiveDayViewProps = {
   isAddingDay: boolean;
   isRemovingDay: boolean;
   logId?: string;
+  showDayControls?: boolean;
+  showDayManagementActions?: boolean;
+  showPageHeader?: boolean;
   onSelectDay: (dateKey: string) => void;
   onAddDay: () => void;
   onRemoveDay: () => void;
@@ -101,6 +104,9 @@ export function LogActiveDayView({
   isAddingDay,
   isRemovingDay,
   logId,
+  showDayControls = true,
+  showDayManagementActions = true,
+  showPageHeader = true,
   onSelectDay,
   onAddDay,
   onRemoveDay,
@@ -127,6 +133,9 @@ export function LogActiveDayView({
         onAddDay={onAddDay}
         isRemovingDay={isRemovingDay}
         onRemoveDay={onRemoveDay}
+        showDayControls={showDayControls}
+        showDayManagementActions={showDayManagementActions}
+        showPageHeader={showPageHeader}
       />
 
       <div className="flex flex-col gap-6 2xl:grid 2xl:grid-cols-8 2xl:gap-2 2xl:items-stretch">

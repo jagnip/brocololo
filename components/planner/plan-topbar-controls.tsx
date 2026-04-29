@@ -1,6 +1,7 @@
 "use client";
 
 import { PlanSelect, type PlanSelectOption } from "@/components/planner/plan-select";
+import { Label } from "@/components/ui/label";
 
 type PlanTopbarControlsProps = {
   planOptions: PlanSelectOption[];
@@ -14,6 +15,7 @@ export function PlanTopbarControls({
 }: PlanTopbarControlsProps) {
   return (
     <div className="flex min-w-0 items-center gap-2">
+      <Label className="shrink-0 text-xs text-muted-foreground">Plan</Label>
       <PlanSelect plans={planOptions} currentPlanId={planId} />
     </div>
   );

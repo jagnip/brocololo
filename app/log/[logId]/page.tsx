@@ -1,4 +1,7 @@
-import { LogPage } from "@/components/log/log-page";
+import { notFound, redirect } from "next/navigation";
+import { LogPerson } from "@/src/generated/enums";
+import { ROUTES } from "@/lib/constants";
+import { getLogById } from "@/lib/db/logs";
 
 export default async function LogDetailPage({
   params,
@@ -8,11 +11,16 @@ export default async function LogDetailPage({
   searchParams: Promise<{ person?: string; day?: string }>;
 }) {
   const { logId } = await params;
-  const { person, day } = await searchParams;
+  const { person } = await searchParams;
+  const log = await getLogById(logId, LogPerson.PRIMARY);
+  if (!log) {
+    notFound();
+  }
 
-  return (
-    <div className="page-container">
-      <LogPage logId={logId} person={person} day={day} />
-    </div>
-  );
+  const paramsForRedirect = new URLSearchParams();
+  paramsForRedirect.set("tab", "log");
+  if (person) {
+    paramsForRedirect.set("person", person);
+  }
+  redirect(`${ROUTES.planView(log.plan.id)}?${paramsForRedirect.toString()}`);
 }

@@ -8,7 +8,7 @@ import { createPlan, deletePlanById, updatePlan } from "@/lib/db/planner";
 import { MEAL_TYPES, ROUTES } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { filterByFlavour, filterExcluded, filterByHandsOnTime, filterByTotalTime } from "@/lib/planner/filters";
+import { filterByFlavour, filterByHandsOnTime, filterByTotalTime } from "@/lib/planner/filters";
 import { DayTimeLimitsType, RollingRecipeType } from "@/lib/validations/planner";
 import { pickBestCandidate } from "@/lib/planner/scoring";
 import { generateBaselineLogForPlan } from "@/lib/db/planner";
@@ -123,7 +123,14 @@ export async function savePlan(plan: PlanInputType): Promise<
       return created;
     }
     planId = created.plan.id;
-    // return { type: "success", planId: created.id };
+    // Create paired baseline log immediately so Planner/Log shared view stays in sync.
+    const baselineLogResult = await generateBaselineLogForPlan(planId);
+    if (baselineLogResult.type === "date_conflict") {
+      console.error("Unexpected baseline log date conflict after plan creation", {
+        planId,
+        dates: baselineLogResult.dates,
+      });
+    }
   } catch (error) {
     console.error("Error saving plan", error);
     return { type: "error", message: "Failed to save plan." };

@@ -22,7 +22,7 @@ export function IngredientRow({ ingredient }: IngredientRowProps) {
   const combinedMeta = metaParts.length > 0 ? `(${metaParts.join(", ")})` : null;
 
   return (
-    <li className="group/row flex flex-col gap-item rounded-md border border-border/60 p-nest transition-colors hover:bg-muted/30 focus-within:bg-muted/30">
+    <li className="group/row flex flex-col gap-item rounded-md border border-border/60 bg-muted/20 p-nest transition-colors hover:bg-muted/30 focus-within:bg-muted/30">
       {/* Top row: identity/meta (left) + nutrition (md+ right). */}
       <div className="flex items-start justify-between gap-item md:items-center">
         <div className="flex min-w-0 flex-1 items-start gap-item md:items-center">

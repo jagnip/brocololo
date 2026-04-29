@@ -14,12 +14,12 @@ export function IngredientsPageSkeleton() {
         <Skeleton className="h-9 w-full rounded-md" />
       </div>
 
-      {/* Mirror the new card-based ingredient rows: bordered card with icon + identity, nutrition badges, edit button, and an optional conversions row. */}
+      {/* Mirror the new card-based ingredient rows: card spacing with icon + identity, nutrition badges, edit button, and an optional conversions row. */}
       <ul className="flex flex-col gap-item">
         {Array.from({ length: 5 }).map((_, index) => (
           <li
             key={index}
-            className="flex flex-col gap-item rounded-md border border-border bg-card p-nest"
+            className="flex flex-col gap-item rounded-md bg-muted/20 p-nest"
           >
             {/* Top row: identity + nutrition badges (md+) + edit icon button. */}
             <div className="flex items-start justify-between gap-item md:items-center">

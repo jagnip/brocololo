@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  CalendarDays,
   CookingPot,
   UtensilsCrossed,
   ShoppingCart,
@@ -27,9 +26,8 @@ export function AppSidebar() {
 
   const isRecipes = pathname.startsWith(ROUTES.recipes);
   const isIngredients = pathname.startsWith(ROUTES.ingredients);
-  const isPlanner = pathname.startsWith(ROUTES.plan);
+  const isProgram = pathname.startsWith(ROUTES.plan) || pathname.startsWith(ROUTES.log);
   const isGroceries = pathname.startsWith(ROUTES.groceries);
-  const isLog = pathname.startsWith(ROUTES.log);
 
   return (
     <Sidebar collapsible="icon">
@@ -50,16 +48,16 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isPlanner} tooltip="Planner">
+            <SidebarMenuButton asChild isActive={isProgram} tooltip="Meal plan">
               <Link
-                href={ROUTES.planCurrent}
+                href={`${ROUTES.planCurrent}?tab=plan`}
                 onClick={() => {
                   if (!isMobile) return;
                   setOpenMobile(false);
                 }}
               >
                 <UtensilsCrossed />
-                <span>Planner</span>
+                <span>Meal plan</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -78,21 +76,6 @@ export function AppSidebar() {
               >
                 <Apple />
                 <span>Ingredients</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isLog} tooltip="Log">
-              <Link
-                // Open current log from left-nav quick access.
-                href={ROUTES.logCurrent}
-                onClick={() => {
-                  if (!isMobile) return;
-                  setOpenMobile(false);
-                }}
-              >
-                <CalendarDays />
-                <span>Log</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
