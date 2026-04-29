@@ -11,6 +11,7 @@ import type { PlanInputType } from "@/types/planner";
 import type { RecipeType } from "@/types/recipe";
 import type { LogDayData, PlannerPoolCardData } from "@/lib/log/view-model";
 import type { LogIngredientOption, EditableIngredientRow } from "@/components/log/log-ingredients-form";
+import { useOptimistic, useTransition } from "react";
 
 type PersonType = "PRIMARY" | "SECONDARY";
 type PlannerLogTab = "plan" | "log";
@@ -52,6 +53,10 @@ export function PlannerLogSharedShell({
   const tabFromUrl = searchParams.get("tab");
   const activeTab: PlannerLogTab =
     tabFromUrl === "log" || tabFromUrl === "plan" ? tabFromUrl : initialTab;
+  const [isTabPending, startTabTransition] = useTransition();
+  const [optimisticTab, setOptimisticTab] = useOptimistic<PlannerLogTab>(activeTab);
+  // Keep the tab highlight responsive during URL transitions.
+  const displayedTab = isTabPending ? optimisticTab : activeTab;
 
   const setTab = (nextTab: PlannerLogTab) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -65,32 +70,38 @@ export function PlannerLogSharedShell({
 
   return (
     <div className="space-y-6">
-      {/* Shared top-level title for both tabs. */}
-      <PageHeader title="What's on menu?" />
       <div className="flex flex-col gap-3">
-        {/* Shared date range applies to both planner and log views. */}
-        <div className="w-full max-w-sm">
-          <WeekPicker value={dateRange} onChange={setDateRange} compact className="w-full" />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            {/* Shared top-level title for both tabs. */}
+            <PageHeader title="What's on menu?" />
+            {/* Use shared shadcn tabs primitive for consistent DS behavior. */}
+            <Tabs
+              value={displayedTab}
+              onValueChange={(value) => {
+                if (value === "plan" || value === "log") {
+                  setOptimisticTab(value);
+                  startTabTransition(() => {
+                    setTab(value);
+                  });
+                }
+              }}
+              className="w-fit"
+            >
+              <TabsList>
+                <TabsTrigger value="plan">Plan</TabsTrigger>
+                <TabsTrigger value="log">Log</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+          {/* Shared date range applies to both planner and log views. */}
+          <div className="w-full sm:w-auto sm:min-w-[18rem] sm:max-w-sm">
+            <WeekPicker value={dateRange} onChange={setDateRange} compact className="w-full" />
+          </div>
         </div>
-
-        {/* Use shared shadcn tabs primitive for consistent DS behavior. */}
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) => {
-            if (value === "plan" || value === "log") {
-              setTab(value);
-            }
-          }}
-          className="w-fit"
-        >
-          <TabsList>
-            <TabsTrigger value="plan">Plan</TabsTrigger>
-            <TabsTrigger value="log">Log</TabsTrigger>
-          </TabsList>
-        </Tabs>
       </div>
 
-      <Tabs value={activeTab} className="w-full">
+      <Tabs value={displayedTab} className="w-full">
         <TabsContent value="plan">
           <PlanEditor
             planId={planId}
