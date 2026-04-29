@@ -55,6 +55,10 @@ export type LogActiveDayViewProps = {
     recipe: LogDayData["slots"][number]["recipes"][number],
   ) => void;
   onRecipeRemove: (slot: LogDayData["slots"][number]) => void;
+  onRecipeCopy: (
+    slot: LogDayData["slots"][number],
+    recipe: LogDayData["slots"][number]["recipes"][number],
+  ) => void;
   onSelectedRecipeIdChange: (recipeId: string | null) => void;
   onSave: (rows: EditableIngredientRow[]) => Promise<void>;
 };
@@ -113,6 +117,7 @@ export function LogActiveDayView({
   onEmptySlotClick,
   onRecipeClick,
   onRecipeRemove,
+  onRecipeCopy,
   onSelectedRecipeIdChange,
   onSave,
 }: LogActiveDayViewProps) {
@@ -159,6 +164,7 @@ export function LogActiveDayView({
                     onEmptyClick={() => onEmptySlotClick(slot)}
                     onRecipeClick={(recipe) => onRecipeClick(slot, recipe)}
                     onRecipeRemove={() => onRecipeRemove(slot)}
+                    onRecipeCopy={(recipe) => onRecipeCopy(slot, recipe)}
                   />
                   {showDetailsUnderActiveSlot &&
                   editorSlot &&

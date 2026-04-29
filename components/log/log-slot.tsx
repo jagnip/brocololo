@@ -14,7 +14,8 @@ export type LogSlotProps = {
   onEmptyClick: () => void;
   onRecipeClick: (recipe: LogSlotData["recipes"][number]) => void;
   /** Shown only when the slot already has at least one recipe. */
-  onRecipeRemove?: () => void;
+  onRecipeRemove?: (recipe: LogSlotData["recipes"][number]) => void;
+  onRecipeCopy?: (recipe: LogSlotData["recipes"][number]) => void;
 };
 
 export function LogSlot({
@@ -24,6 +25,7 @@ export function LogSlot({
   onEmptyClick,
   onRecipeClick,
   onRecipeRemove,
+  onRecipeCopy,
 }: LogSlotProps) {
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -40,7 +42,12 @@ export function LogSlot({
           onRecipeClick={onRecipeClick}
           onRecipeRemove={
             slot.recipes.length > 0 && onRecipeRemove
-              ? () => onRecipeRemove()
+              ? (recipe) => onRecipeRemove(recipe)
+              : undefined
+          }
+          onRecipeCopy={
+            slot.recipes.length > 0 && onRecipeCopy
+              ? (recipe) => onRecipeCopy(recipe)
               : undefined
           }
         />

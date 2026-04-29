@@ -9,6 +9,7 @@ import {
   removeLogDay,
   replaceMealSlotWithRecipe,
   clearLogEntryAssignment,
+  duplicateLogEntryToDay,
   placePlannerPoolItemInEntry,
   updateLogRecipeIngredients,
   upsertLogSlot,
@@ -24,6 +25,8 @@ import {
   placePlannerPoolItemSchema,
   type PlacePlannerPoolItemInput,
   type ClearLogEntryAssignmentInput,
+  duplicateLogEntrySchema,
+  type DuplicateLogEntryInput,
   upsertLogSlotSchema,
   type UpsertLogSlotInput,
   updateLogRecipeIngredientsSchema,
@@ -149,6 +152,35 @@ export async function clearLogEntryAssignmentAction(input: ClearLogEntryAssignme
     return {
       type: "error" as const,
       message: "Failed to clear slot assignment",
+    };
+  }
+
+  revalidatePath(ROUTES.logView(parsed.data.logId));
+  return { type: "success" as const };
+}
+
+export async function duplicateLogEntryAction(input: DuplicateLogEntryInput) {
+  const parsed = duplicateLogEntrySchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      type: "error" as const,
+      message: parsed.error.issues[0]?.message ?? "Invalid duplicate data",
+    };
+  }
+
+  try {
+    await duplicateLogEntryToDay(parsed.data);
+  } catch (error) {
+    console.error("Error duplicating log entry", error);
+    if (error instanceof Error && error.message === "TARGET_LOG_ENTRY_NOT_FOUND") {
+      return {
+        type: "error" as const,
+        message: "Selected date does not exist in this log.",
+      };
+    }
+    return {
+      type: "error" as const,
+      message: "Failed to duplicate log entry",
     };
   }
 

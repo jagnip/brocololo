@@ -15,6 +15,7 @@ import type {
   ParsedAddRecipeToLogInput,
   PlacePlannerPoolItemInput,
   ClearLogEntryAssignmentInput,
+  DuplicateLogEntryInput,
   UpsertLogSlotInput,
   UpdateLogRecipeIngredientsInput,
 } from "@/lib/validations/log";
@@ -622,6 +623,97 @@ export async function clearLogEntryAssignment(input: ClearLogEntryAssignmentInpu
         entryId: input.entryId,
       },
     });
+  });
+}
+
+export async function duplicateLogEntryToDay(input: DuplicateLogEntryInput) {
+  await prisma.$transaction(async (tx) => {
+    const sourceEntry = await tx.logEntry.findFirst({
+      where: {
+        id: input.sourceEntryId,
+        logId: input.logId,
+        person: input.person,
+      },
+      select: { id: true },
+    });
+    if (!sourceEntry) {
+      throw new Error("LOG_ENTRY_NOT_FOUND");
+    }
+
+    const targetDate = new Date(`${input.targetDay}T00:00:00.000Z`);
+    const targetEntry = await tx.logEntry.findFirst({
+      where: {
+        logId: input.logId,
+        person: input.person,
+        date: targetDate,
+        mealType: input.targetMealType,
+      },
+      select: { id: true },
+    });
+    if (!targetEntry) {
+      throw new Error("TARGET_LOG_ENTRY_NOT_FOUND");
+    }
+
+    const log = await tx.log.findUnique({
+      where: { id: input.logId },
+      select: { planId: true },
+    });
+    if (!log) {
+      throw new Error("LOG_NOT_FOUND");
+    }
+
+    await assertIngredientRowsHaveSupportedUnits(tx, input.ingredients);
+    await releasePlanSlotsLinkedToEntryRecipes(tx, targetEntry.id);
+
+    let reservedPlanSlotId: string | null = null;
+    if (input.sourceRecipeId) {
+      // Preferred path: consume pool exactly like drag-from-pool when capacity exists.
+      reservedPlanSlotId = await reserveNextUnusedPlanSlotTx({
+        tx,
+        planId: log.planId,
+        recipeId: input.sourceRecipeId,
+      });
+      // If no unused slot exists, still duplicate as a recipe-backed entry without pool impact.
+      // This supports batch-cook/customized copies beyond planned pool count.
+    }
+
+    await tx.logIngredient.deleteMany({
+      where: {
+        entryId: targetEntry.id,
+      },
+    });
+
+    await tx.logEntryRecipe.deleteMany({
+      where: {
+        entryId: targetEntry.id,
+      },
+    });
+
+    let targetEntryRecipeId: string | null = null;
+    if (input.sourceRecipeId) {
+      const targetRecipe = await tx.logEntryRecipe.create({
+        data: {
+          entryId: targetEntry.id,
+          sourceRecipeId: input.sourceRecipeId,
+          planSlotId: reservedPlanSlotId ?? undefined,
+          position: 0,
+        },
+        select: { id: true },
+      });
+      targetEntryRecipeId = targetRecipe.id;
+    }
+
+    if (input.ingredients.length > 0) {
+      await tx.logIngredient.createMany({
+        data: input.ingredients.map((row) => ({
+          entryId: targetEntry.id,
+          entryRecipeId: targetEntryRecipeId,
+          ingredientId: row.ingredientId,
+          amount: row.amount,
+          unitId: row.unitId,
+        })),
+      });
+    }
   });
 }
 

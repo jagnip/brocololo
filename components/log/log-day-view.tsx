@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTopbar } from "@/components/context/topbar-context";
 import { ROUTES } from "@/lib/constants";
+import { LogMealType } from "@/src/generated/enums";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import {
   buildGroupedPlannerPoolCards,
@@ -26,6 +27,7 @@ import {
 import {
   appendNextLogDayAction,
   clearLogEntryAssignmentAction,
+  duplicateLogEntryAction,
   placePlannerPoolItemAction,
   removeLogDayAction,
   upsertLogSlotAction,
@@ -36,6 +38,7 @@ import {
   type SelectedSlotState,
 } from "./log-active-day-view";
 import { LogRemoveDayAlertDialog } from "./log-remove-day-alert-dialog";
+import { LogDuplicateEntryDialog } from "./log-duplicate-entry-dialog";
 import type { DateRangeValue } from "@/components/planner/date-range-picker";
 
 type IngredientFormDependencies = {
@@ -156,6 +159,16 @@ type RemoveDayWarningState = {
   impactedPlanMealsCount: number;
 };
 
+type DuplicateRecipeState = {
+  sourceEntryId: string;
+  sourceRecipeId: string | null;
+  ingredients: Array<{
+    ingredientId: string;
+    unitId: string;
+    amount: number;
+  }>;
+};
+
 export function LogDayViewController({
   days,
   plannerPool = [],
@@ -191,6 +204,9 @@ export function LogDayViewController({
   const prevSelectedDayKeyForEditorRef = useRef<string | null>(null);
   const [removeDayWarning, setRemoveDayWarning] =
     useState<RemoveDayWarningState | null>(null);
+  const [duplicateSource, setDuplicateSource] = useState<DuplicateRecipeState | null>(
+    null,
+  );
   const [isSaving, startSavingTransition] = useTransition();
   const [isAddingDay, startAddDayTransition] = useTransition();
   const [isRemovingDay, startRemoveDayTransition] = useTransition();
@@ -723,6 +739,7 @@ export function LogDayViewController({
 
     const optimisticPoolItem =
       removedRecipe?.sourceRecipeId &&
+      removedRecipe.planSlotId &&
       optimisticPoolIngredients.length > 0 &&
       targetDay != null
         ? {
@@ -777,6 +794,88 @@ export function LogDayViewController({
       }
 
       router.refresh();
+    });
+  };
+
+  const handleOpenDuplicateDialog = (
+    recipe: LogDayData["slots"][number]["recipes"][number],
+  ) => {
+    if (!recipe.entryId) {
+      toast.error("Missing source entry for duplication");
+      return;
+    }
+
+    const copyIngredients =
+      recipe.ingredients?.flatMap((ingredient) => {
+        if (
+          ingredient.ingredientId == null ||
+          ingredient.unitId == null ||
+          ingredient.amount == null
+        ) {
+          return [];
+        }
+        return [
+          {
+            ingredientId: ingredient.ingredientId,
+            unitId: ingredient.unitId,
+            amount: ingredient.amount,
+          },
+        ];
+      }) ?? [];
+
+    setDuplicateSource({
+      sourceEntryId: recipe.entryId,
+      sourceRecipeId: recipe.sourceRecipeId,
+      ingredients: copyIngredients,
+    });
+  };
+
+  const handleDuplicateEntry = (payload: {
+    targetDay: string;
+    targetMealType: LogMealType;
+  }) => {
+    if (!logId || !person || !duplicateSource) {
+      toast.error("Missing log context for this action");
+      return;
+    }
+
+    const targetDay = visibleDays.find((day) => day.dateKey === payload.targetDay);
+    if (!targetDay) {
+      toast.error("Selected date is not available in this log");
+      return;
+    }
+
+    const targetSlot = targetDay.slots.find(
+      (slot) => slot.mealType === payload.targetMealType,
+    );
+    if (!targetSlot?.entryId) {
+      toast.error("Cannot duplicate into this slot");
+      return;
+    }
+
+    startSavingTransition(async () => {
+      const result = await duplicateLogEntryAction({
+        logId,
+        person,
+        sourceEntryId: duplicateSource.sourceEntryId,
+        sourceRecipeId: duplicateSource.sourceRecipeId,
+        targetDay: payload.targetDay,
+        targetMealType: payload.targetMealType,
+        ingredients: duplicateSource.ingredients,
+      });
+
+      if (result.type === "error") {
+        toast.error(result.message);
+        return;
+      }
+
+      // Close modal before navigation so returning back does not reopen stale state.
+      setDuplicateSource(null);
+      setSelectedDayKey(payload.targetDay);
+      setSelectedSlot(null);
+      router.push(`${ROUTES.logView(logId)}?person=${person}&day=${payload.targetDay}`);
+      router.refresh();
+      toast.success("Entry duplicated");
     });
   };
 
@@ -900,6 +999,18 @@ export function LogDayViewController({
           onOpenChange={handleRemoveDayDialogOpenChange}
           onConfirm={handleConfirmRemoveDay}
         />
+        <LogDuplicateEntryDialog
+          open={duplicateSource != null}
+          availableDateKeys={visibleDays.map((day) => day.dateKey)}
+          defaultDateKey={activeDay?.dateKey ?? selectedDayKey}
+          isSubmitting={isSaving}
+          onOpenChange={(open) => {
+            if (!open) {
+              setDuplicateSource(null);
+            }
+          }}
+          onSubmit={handleDuplicateEntry}
+        />
         {activeDay ? (
           <LogActiveDayView
             day={activeDay}
@@ -923,6 +1034,7 @@ export function LogDayViewController({
               selectRecipeSlot(activeDay, slot, recipe)
             }
             onRecipeRemove={handleRemovePlacedRecipe}
+            onRecipeCopy={(_slot, recipe) => handleOpenDuplicateDialog(recipe)}
             onSelectedRecipeIdChange={handleSelectedRecipeChange}
             onSave={handleSlotSave}
           />

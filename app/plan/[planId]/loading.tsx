@@ -1,4 +1,4 @@
-import { PlanEditorSkeleton } from "@/components/planner/plan-editor-skeleton";
+import { LogPageSkeleton } from "@/components/log/log-page-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
@@ -17,7 +17,8 @@ export default function Loading() {
           </div>
         </div>
       </div>
-      <PlanEditorSkeleton />
+      {/* Shared route fallback should match Track UX to avoid flashing plan skeletons on refresh. */}
+      <LogPageSkeleton />
     </div>
   );
 }

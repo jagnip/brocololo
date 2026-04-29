@@ -63,6 +63,23 @@ export const placePlannerPoolItemSchema = z.object({
 
 export type PlacePlannerPoolItemInput = z.infer<typeof placePlannerPoolItemSchema>;
 
+export const duplicateLogEntrySchema = z.object({
+  logId: z.string().min(1),
+  person: z.enum([LogPerson.PRIMARY, LogPerson.SECONDARY]),
+  sourceEntryId: z.string().min(1),
+  sourceRecipeId: z.string().min(1).nullable(),
+  targetDay: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  targetMealType: z.enum([
+    LogMealType.BREAKFAST,
+    LogMealType.LUNCH,
+    LogMealType.SNACK,
+    LogMealType.DINNER,
+  ]),
+  ingredients: z.array(plannerPoolIngredientSchema).max(200),
+});
+
+export type DuplicateLogEntryInput = z.infer<typeof duplicateLogEntrySchema>;
+
 export const clearLogEntryAssignmentSchema = z.object({
   logId: z.string().min(1),
   person: z.enum([LogPerson.PRIMARY, LogPerson.SECONDARY]),
