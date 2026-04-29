@@ -25,12 +25,12 @@ export function PlanTopbarConfig({ planOptions, planId }: PlanTopbarConfigProps)
       actions: [
         {
           id: "new-plan",
-          label: "New plan",
+          label: "Create program",
           href: ROUTES.planCreate,
           icon: <Plus className="h-4 w-4" />,
           variant: "outline" as const,
           size: "icon" as const,
-          ariaLabel: "New plan",
+          ariaLabel: "Create program",
         },
         {
           id: "delete-plan",

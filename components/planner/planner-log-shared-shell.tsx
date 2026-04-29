@@ -69,12 +69,12 @@ export function PlannerLogSharedShell({
   const hasLogData = useMemo(() => logData != null, [logData]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <div className="flex min-w-0 items-center gap-2 whitespace-nowrap">
             {/* Shared top-level title for both tabs. */}
-            <PageHeader title="What's on menu?" />
+            <PageHeader title="Meal program" className="shrink-0" />
             {/* Use shared shadcn tabs primitive for consistent DS behavior. */}
             <Tabs
               value={displayedTab}
@@ -86,7 +86,7 @@ export function PlannerLogSharedShell({
                   });
                 }
               }}
-              className="w-fit"
+              className="w-fit shrink-0"
             >
               <TabsList>
                 <TabsTrigger value="plan">Plan</TabsTrigger>
