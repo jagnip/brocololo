@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Loader2, Trash2 } from "lucide-react";
 import {
   WeekPicker,
   type DateRangeValue,
 } from "@/components/planner/date-range-picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PlanEditor } from "@/components/planner/plan-editor";
 import { LogDayViewController } from "@/components/log/log-day-view";
@@ -186,6 +188,21 @@ export function PlannerLogSharedShell({
               compact
               className="w-full"
             />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label="Delete plan"
+              aria-busy={isDeleting}
+              disabled={isDeleting}
+              onClick={() => setIsDeleteDialogOpen(true)}
+            >
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+            </Button>
           </div>
         </div>
       </div>
