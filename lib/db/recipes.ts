@@ -3,6 +3,8 @@ import {
   UpdateRecipePayload,
 } from "../validations/recipe";
 import { prisma } from "./index";
+import { Prisma } from "@/src/generated/client";
+import { CategoryType } from "@/src/generated/enums";
 import type { RecipeType } from "@/types/recipe";
 
 const recipeInclude = {
@@ -69,7 +71,7 @@ const recipeInclude = {
     },
   },
   images: true,
-};
+} satisfies Prisma.RecipeInclude;
 
 export async function getRecipeBySlug(slug: string): Promise<RecipeType | null> {
   return await prisma.recipe.findUnique({
@@ -89,9 +91,15 @@ export async function getRecipes(
   },
 ): Promise<RecipeType[]> {
   // Build category filters as explicit AND conditions so none overwrite each other.
-  const categoryConditions = [
+  const categoryConditions: Prisma.RecipeWhereInput[] = [
     ...(occasion
-      ? [{ categories: { some: { slug: occasion, type: "MEAL_OCCASION" } } }]
+      ? [
+          {
+            categories: {
+              some: { slug: occasion, type: CategoryType.MEAL_OCCASION },
+            },
+          },
+        ]
       : []),
     ...(filters?.proteinSlug
       ? [{ categories: { some: { slug: filters.proteinSlug } } }]
@@ -101,7 +109,7 @@ export async function getRecipes(
       : []),
   ];
 
-  return prisma.recipe.findMany({
+  const recipes = await prisma.recipe.findMany({
     where: {
       ...(categoryConditions.length > 0 ? { AND: categoryConditions } : {}),
       ...(filters?.handsOnTimeMax !== undefined
@@ -117,6 +125,8 @@ export async function getRecipes(
       handsOnTime: "asc",
     },
   });
+  // Prisma inference can degrade to scalar-only shape with complex conditional `where` spreads.
+  return recipes as RecipeType[];
 }
 
 async function validateAndBuildCategoryIds(input: {
@@ -151,7 +161,10 @@ async function validateAndBuildCategoryIds(input: {
   const categoryById = new Map(categories.map((category) => [category.id, category]));
   const mealOccasionCategories = mealOccasionCategoryIds
     .map((id) => categoryById.get(id))
-    .filter((category): category is { id: string; slug: string; type: string } => Boolean(category));
+    .filter(
+      (category): category is { id: string; slug: string; type: CategoryType } =>
+        category != null,
+    );
   if (mealOccasionCategories.length !== mealOccasionCategoryIds.length) {
     throw new Error("Invalid meal occasion category selection");
   }
