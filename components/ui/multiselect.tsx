@@ -1,7 +1,7 @@
 "use client";
 
 import { Command as CommandPrimitive, useCommandState } from "cmdk";
-import { X, ChevronDownIcon } from "lucide-react";
+import { X, ChevronsUpDown } from "lucide-react";
 import * as React from "react";
 import { forwardRef, useEffect } from "react";
 
@@ -459,7 +459,8 @@ const MultipleSelector = React.forwardRef<
       >
         <div
           className={cn(
-            "flex min-h-9 items-center justify-between rounded-md border border-input px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+            // Keep control height aligned with standard text inputs in forms.
+            "flex min-h-9 items-center justify-between rounded-md border border-input px-2 py-1 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
             {
               "cursor-text": !disabled && selected.length !== 0,
             },
@@ -477,6 +478,8 @@ const MultipleSelector = React.forwardRef<
                   key={option.value}
                   variant="secondary"
                   className={cn(
+                    // Compact chips prevent one-line selections from making the field taller.
+                    "h-5 px-2 py-0 text-xs",
                     "data-[disabled]:bg-muted-foreground data-[disabled]:text-muted data-[disabled]:hover:bg-muted-foreground",
                     "data-[fixed]:bg-muted-foreground data-[fixed]:text-muted data-[fixed]:hover:bg-muted-foreground",
                     badgeClassName
@@ -561,9 +564,9 @@ const MultipleSelector = React.forwardRef<
           >
             <X className="size-3.5" />
           </button>
-          <ChevronDownIcon
+          <ChevronsUpDown
             className={cn(
-              "size-5 text-muted-foreground/50",
+              "size-4 text-muted-foreground/50",
               (hideClearAllButton ||
                 disabled ||
                 selected.length >= 1 ||

@@ -123,7 +123,7 @@ const recipeImageSchema = z.object({
 const recipeBaseSchema = z.object({
   name: z.string().min(1, { message: "Enter a recipe name" }),
   // Category form fields are explicit to keep UI semantics clear.
-  flavourCategoryId: z.string().min(1, { message: "Choose a flavour" }),
+  mealOccasionCategoryIds: z.array(z.string()).default([]),
   proteinCategoryId: z.string().nullish(),
   typeCategoryId: z.string().nullish(),
   images: z

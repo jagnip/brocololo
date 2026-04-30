@@ -2,8 +2,8 @@ import "dotenv/config";
 import slugify from "slugify";
 import { prisma } from "../lib/db/index";
 
-// Planner relies on these flavour slugs in filtering logic.
-const REQUIRED_FLAVOURS = ["Sweet", "Savoury"] as const;
+// Planner relies on these meal occasion slugs in filtering logic.
+const REQUIRED_MEAL_OCCASIONS = ["Breakfast", "Lunch", "Snack", "Dinner"] as const;
 
 // Requested baseline protein categories for planner and recipe tagging.
 const REQUIRED_PROTEINS = [
@@ -17,8 +17,7 @@ const REQUIRED_PROTEINS = [
   "Dairy",
 ] as const;
 
-// Recipe types grouped by flavour parent.
-const SAVOURY_RECIPE_TYPES = [
+const RECIPE_TYPES = [
   "Savoury pies",
   "Savoury bakes",
   "Soups",
@@ -34,9 +33,6 @@ const SAVOURY_RECIPE_TYPES = [
   "Pizzas",
   "Grilled",
   "Noodles",
-] as const;
-
-const SWEET_RECIPE_TYPES = [
   "Oats",
   "Cheesecakes",
   "Bars",
@@ -59,12 +55,10 @@ function toSlug(value: string): string {
  */
 async function ensureCategory(params: {
   name: string;
-  type: "FLAVOUR" | "RECIPE_TYPE" | "PROTEIN";
-  parentId?: string | null;
+  type: "MEAL_OCCASION" | "RECIPE_TYPE" | "PROTEIN";
 }) {
   const normalizedName = params.name.trim().replace(/\s+/g, " ");
   const slug = toSlug(normalizedName);
-  const parentId = params.parentId ?? null;
 
   const existing = await prisma.category.findUnique({
     where: { slug },
@@ -76,7 +70,6 @@ async function ensureCategory(params: {
         name: normalizedName,
         slug,
         type: params.type,
-        parentId,
       },
     });
   }
@@ -93,7 +86,6 @@ async function ensureCategory(params: {
     where: { id: existing.id },
     data: {
       name: normalizedName,
-      parentId,
     },
   });
 }
@@ -103,21 +95,12 @@ async function main() {
 
   await prisma.$transaction(
     async () => {
-      // Seed required flavours first.
-      const flavourBySlug = new Map<string, string>();
-      for (const flavourName of REQUIRED_FLAVOURS) {
-        const flavour = await ensureCategory({
-          name: flavourName,
-          type: "FLAVOUR",
-          parentId: null,
+      // Seed fixed meal occasions used by planner and recipe filtering.
+      for (const mealOccasionName of REQUIRED_MEAL_OCCASIONS) {
+        await ensureCategory({
+          name: mealOccasionName,
+          type: "MEAL_OCCASION",
         });
-        flavourBySlug.set(flavour.slug, flavour.id);
-      }
-
-      const savouryParentId = flavourBySlug.get("savoury");
-      const sweetParentId = flavourBySlug.get("sweet");
-      if (!savouryParentId || !sweetParentId) {
-        throw new Error("Missing seeded flavour parent categories.");
       }
 
       // Seed required proteins.
@@ -125,25 +108,14 @@ async function main() {
         await ensureCategory({
           name: proteinName,
           type: "PROTEIN",
-          parentId: null,
         });
       }
 
-      // Seed savoury recipe types under the "Savoury" parent category.
-      for (const recipeTypeName of SAVOURY_RECIPE_TYPES) {
+      // Seed fixed recipe types as a flat taxonomy.
+      for (const recipeTypeName of RECIPE_TYPES) {
         await ensureCategory({
           name: recipeTypeName,
           type: "RECIPE_TYPE",
-          parentId: savouryParentId,
-        });
-      }
-
-      // Seed sweet recipe types under the "Sweet" parent category.
-      for (const recipeTypeName of SWEET_RECIPE_TYPES) {
-        await ensureCategory({
-          name: recipeTypeName,
-          type: "RECIPE_TYPE",
-          parentId: sweetParentId,
         });
       }
     },

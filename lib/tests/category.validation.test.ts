@@ -1,40 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { createRecipeCategorySchema } from "../validations/category";
+import { categorySchema } from "../validations/category";
 
-describe("createRecipeCategorySchema", () => {
-  it("trims and collapses whitespace in category name", () => {
-    const parsed = createRecipeCategorySchema.parse({
-      flavourSlug: "savoury",
-      kind: "RECIPE_TYPE",
-      name: "   Stir    fry   ",
+describe("categorySchema", () => {
+  it("accepts fixed category shapes", () => {
+    const parsed = categorySchema.parse({
+      id: "meal-occasion-breakfast",
+      name: "Breakfast",
+      slug: "breakfast",
+      type: "MEAL_OCCASION",
     });
-
-    expect(parsed.name).toBe("Stir fry");
+    expect(parsed.slug).toBe("breakfast");
   });
 
-  it("rejects empty category name after trimming", () => {
-    const result = createRecipeCategorySchema.safeParse({
-      flavourSlug: "sweet",
-      kind: "RECIPE_TYPE",
-      name: "    ",
+  it("rejects unknown category types", () => {
+    const result = categorySchema.safeParse({
+      id: "cat-1",
+      name: "Legacy",
+      slug: "legacy",
+      type: "UNKNOWN_TYPE",
     });
-
     expect(result.success).toBe(false);
-  });
-
-  it("accepts both allowed category kinds", () => {
-    const protein = createRecipeCategorySchema.safeParse({
-      flavourSlug: "savoury",
-      kind: "PROTEIN",
-      name: "Chicken",
-    });
-    const recipeType = createRecipeCategorySchema.safeParse({
-      flavourSlug: "sweet",
-      kind: "RECIPE_TYPE",
-      name: "Sweet pies",
-    });
-
-    expect(protein.success).toBe(true);
-    expect(recipeType.success).toBe(true);
   });
 });

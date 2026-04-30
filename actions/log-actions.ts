@@ -75,6 +75,12 @@ export async function addRecipeToLogAction(input: AddRecipeToLogInput) {
     revalidatePath("/");
   } catch (error) {
     console.error("Error adding recipe to log", error);
+    if (error instanceof Error && error.message === "LOG_DATE_NOT_GENERATED") {
+      return {
+        type: "error" as const,
+        message: "Selected date is outside generated logs.",
+      };
+    }
     return {
       type: "error" as const,
       message: "Failed to add recipe to log",

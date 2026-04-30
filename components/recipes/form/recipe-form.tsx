@@ -48,7 +48,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CreateCategoryDialog } from "./create-category-dialog";
 import {
   SearchableSelect,
   SearchableSelectOption,
@@ -61,6 +60,7 @@ import { Label } from "@/components/ui/label";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { Trash2 } from "lucide-react";
 import { Subheader } from "../recipe-page/subheader";
+import MultipleSelector from "@/components/ui/multiselect";
 
 type RecipeFormProps = {
   categories: CategoryType[];
@@ -133,12 +133,8 @@ export default function RecipeForm({
     ingredientId: string;
   } | null>(null);
   const formSchema = recipe ? updateRecipeSchema : createRecipeSchema;
-  const categoryById = useMemo(
-    () => new Map(localCategories.map((category) => [category.id, category])),
-    [localCategories],
-  );
-  const flavourCategories = useMemo(
-    () => localCategories.filter((category) => category.type === "FLAVOUR"),
+  const mealOccasionCategories = useMemo(
+    () => localCategories.filter((category) => category.type === "MEAL_OCCASION"),
     [localCategories],
   );
   const proteinCategories = useMemo(
@@ -158,13 +154,13 @@ export default function RecipeForm({
       })),
     [proteinCategories],
   );
-  const flavourOptions = useMemo<SearchableSelectOption[]>(
+  const mealOccasionOptions = useMemo(
     () =>
-      flavourCategories.map((category) => ({
+      mealOccasionCategories.map((category) => ({
         value: category.id,
         label: category.name,
       })),
-    [flavourCategories],
+    [mealOccasionCategories],
   );
 
   const getIngredientOptionLabel = (row: {
@@ -208,7 +204,7 @@ export default function RecipeForm({
       ? recipeToFormData(recipe)
       : {
           name: "",
-          flavourCategoryId: "",
+          mealOccasionCategoryIds: [],
           proteinCategoryId: null,
           typeCategoryId: null,
           images: [],
@@ -322,40 +318,6 @@ export default function RecipeForm({
     });
   }
 
-  function handleCategoryCreated(createdCategory: CategoryType) {
-    setLocalCategories((prev) => {
-      // Avoid duplicate inserts if the category list refreshes quickly.
-      if (prev.some((category) => category.id === createdCategory.id)) {
-        return prev;
-      }
-      return [...prev, createdCategory].sort((a, b) =>
-        a.name.localeCompare(b.name),
-      );
-    });
-
-    // Select the newly created category in the relevant recipe field.
-    if (createdCategory.type === "PROTEIN") {
-      form.setValue("proteinCategoryId", createdCategory.id, {
-        shouldValidate: true,
-      });
-      return;
-    }
-
-    if (createdCategory.type === "RECIPE_TYPE") {
-      if (
-        createdCategory.parentId &&
-        createdCategory.parentId !== form.getValues("flavourCategoryId")
-      ) {
-        form.setValue("flavourCategoryId", createdCategory.parentId, {
-          shouldValidate: true,
-        });
-      }
-      form.setValue("typeCategoryId", createdCategory.id, {
-        shouldValidate: true,
-      });
-    }
-  }
-
   function handleIngredientCreated(createdIngredient: IngredientType) {
     setLocalIngredients((prev) => {
       // Avoid duplicate inserts if create callback fires more than once.
@@ -414,48 +376,15 @@ export default function RecipeForm({
     setEditIngredientState(null);
   }
 
-  const selectedFlavourId = form.watch("flavourCategoryId");
   const ingredientGroups = form.watch("ingredientGroups") ?? [];
-  const selectedFlavour = selectedFlavourId
-    ? categoryById.get(selectedFlavourId)
-    : null;
-  const isSweetFlavour = selectedFlavour?.slug === "sweet";
-  const availableRecipeTypes = useMemo(
+  const recipeTypeOptions = useMemo<SearchableSelectOption[]>(
     () =>
-      selectedFlavourId
-        ? recipeTypeCategories.filter(
-            (category) => category.parentId === selectedFlavourId,
-          )
-        : [],
-    [recipeTypeCategories, selectedFlavourId],
-  );
-  // Keep type options derived from flavour-dependent filtering.
-  const availableRecipeTypeOptions = useMemo<SearchableSelectOption[]>(
-    () =>
-      availableRecipeTypes.map((category) => ({
+      recipeTypeCategories.map((category) => ({
         value: category.id,
         label: category.name,
       })),
-    [availableRecipeTypes],
+    [recipeTypeCategories],
   );
-
-  useEffect(() => {
-    // Auto-clean dependent fields when flavour changes to keep form state valid.
-    if (isSweetFlavour && form.getValues("proteinCategoryId")) {
-      form.setValue("proteinCategoryId", null, { shouldValidate: true });
-      form.clearErrors("proteinCategoryId");
-    }
-
-    const selectedTypeCategoryId = form.getValues("typeCategoryId");
-    if (
-      selectedTypeCategoryId &&
-      !availableRecipeTypes.some(
-        (category) => category.id === selectedTypeCategoryId,
-      )
-    ) {
-      form.setValue("typeCategoryId", null, { shouldValidate: true });
-    }
-  }, [availableRecipeTypes, form, isSweetFlavour]);
   const isSubmitting = form.formState.isSubmitting;
   const isEditMode = Boolean(recipe);
   const topbarSubmitLabel = isSubmitting
@@ -652,18 +581,25 @@ export default function RecipeForm({
             <div className="grid grid-cols-1 gap-item md:grid-cols-3">
               <FormField
                 control={form.control}
-                name="flavourCategoryId"
+                name="mealOccasionCategoryIds"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Flavour</FormLabel>
+                    <FormLabel>Meals (optional)</FormLabel>
                     <FormControl>
-                      <SearchableSelect
-                        options={flavourOptions}
-                        value={field.value}
-                        onValueChange={(next) => field.onChange(next ?? "")}
-                        placeholder="Select flavour"
-                        searchPlaceholder="Search flavours..."
-                        emptyLabel="No flavour found."
+                      <MultipleSelector
+                        value={mealOccasionOptions.filter((option) =>
+                          (field.value ?? []).includes(option.value),
+                        )}
+                        onChange={(options) =>
+                          field.onChange(options.map((option) => option.value))
+                        }
+                        defaultOptions={mealOccasionOptions}
+                        placeholder="Select meals"
+                        emptyIndicator={
+                          <p className="text-center text-sm text-muted-foreground">
+                            No meal occasions found.
+                          </p>
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -675,7 +611,6 @@ export default function RecipeForm({
                 name="proteinCategoryId"
                 render={({ field }) => (
                   <FormItem>
-                    {/* Protein can be omitted for savoury recipes by design. */}
                     <FormLabel>Protein (optional)</FormLabel>
                     <FormControl>
                       <SearchableSelect
@@ -687,7 +622,6 @@ export default function RecipeForm({
                         emptyLabel="No protein found."
                         allowClear
                         clearLabel="Clear protein"
-                        disabled={!selectedFlavourId || isSweetFlavour}
                       />
                     </FormControl>
                     <FormMessage />
@@ -703,7 +637,7 @@ export default function RecipeForm({
                     <FormLabel>Recipe type (optional)</FormLabel>
                     <FormControl>
                       <SearchableSelect
-                        options={availableRecipeTypeOptions}
+                        options={recipeTypeOptions}
                         value={field.value}
                         onValueChange={(next) => field.onChange(next)}
                         placeholder="Select recipe type"
@@ -711,17 +645,12 @@ export default function RecipeForm({
                         emptyLabel="No recipe type found."
                         allowClear
                         clearLabel="Clear recipe type"
-                        disabled={!selectedFlavourId}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
-            <div className="mt-2">
-              {/* Keep inline create flow beneath taxonomy row to avoid field label crowding. */}
-              <CreateCategoryDialog onCreated={handleCategoryCreated} />
             </div>
           </div>
         </section>

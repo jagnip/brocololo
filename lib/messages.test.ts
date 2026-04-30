@@ -39,11 +39,11 @@ describe("redirect toast helpers", () => {
 
   it("appends query param to path with existing query", () => {
     const path = appendRedirectToastToPath(
-      "/recipes/soup?flavour=savoury",
+      "/recipes/soup?occasion=lunch",
       "recipeUpdated",
     );
     expect(path).toBe(
-      `/recipes/soup?flavour=savoury&${REDIRECT_TOAST_QUERY_PARAM}=recipeUpdated`,
+      `/recipes/soup?occasion=lunch&${REDIRECT_TOAST_QUERY_PARAM}=recipeUpdated`,
     );
   });
 });

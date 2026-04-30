@@ -13,7 +13,7 @@ import {
 const baseRecipeInput = {
   name: "Tomato Pasta",
   // Keep explicit fields aligned with the updated recipe form contract.
-  flavourCategoryId: "flavour-cat-id-1",
+  mealOccasionCategoryIds: ["meal-occasion-cat-id-1"],
   proteinCategoryId: "protein-cat-id-1",
   typeCategoryId: "recipe-type-cat-id-1",
   images: [

@@ -235,7 +235,9 @@ export function recipeToFormData(recipe: RecipeType): UpdateRecipeFormValues {
   );
 
   // Map typed categories into dedicated recipe form fields.
-  const flavourCategory = recipe.categories.find((cat) => cat.type === "FLAVOUR");
+  const mealOccasionCategories = recipe.categories.filter(
+    (cat) => cat.type === "MEAL_OCCASION",
+  );
   const proteinCategory = recipe.categories.find((cat) => cat.type === "PROTEIN");
   const recipeTypeCategory = recipe.categories.find(
     (cat) => cat.type === "RECIPE_TYPE",
@@ -243,7 +245,7 @@ export function recipeToFormData(recipe: RecipeType): UpdateRecipeFormValues {
 
   return {
     name: recipe.name,
-    flavourCategoryId: flavourCategory?.id ?? "",
+    mealOccasionCategoryIds: mealOccasionCategories.map((cat) => cat.id),
     proteinCategoryId: proteinCategory?.id ?? null,
     typeCategoryId: recipeTypeCategory?.id ?? null,
     images: recipe.images?.map((img) => ({

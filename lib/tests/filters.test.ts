@@ -1,6 +1,36 @@
 import { describe, it, expect } from "vitest";
-import { filterByTotalTime, filterByHandsOnTime } from "../planner/filters";
+import { PlannerMealType } from "@/src/generated/enums";
+import { filterByMealOccasion, filterByTotalTime, filterByHandsOnTime } from "../planner/filters";
 import { createMockRecipe } from "./test-helpers";
+
+describe("filterByMealOccasion", () => {
+  it("keeps recipes matching breakfast occasion", () => {
+    const recipes = [
+      createMockRecipe({
+        id: "breakfast-only",
+        categories: [{ id: "c1", name: "Breakfast", slug: "breakfast", type: "MEAL_OCCASION" }],
+      }),
+      createMockRecipe({
+        id: "dinner-only",
+        categories: [{ id: "c2", name: "Dinner", slug: "dinner", type: "MEAL_OCCASION" }],
+      }),
+    ];
+
+    const result = filterByMealOccasion(recipes, PlannerMealType.BREAKFAST);
+    expect(result.map((recipe) => recipe.id)).toEqual(["breakfast-only"]);
+  });
+
+  it("excludes recipes without any meal occasion", () => {
+    const recipes = [
+      createMockRecipe({
+        id: "untagged",
+        categories: [{ id: "protein-1", name: "Chicken", slug: "chicken", type: "PROTEIN" }],
+      }),
+    ];
+    const result = filterByMealOccasion(recipes, PlannerMealType.DINNER);
+    expect(result).toHaveLength(0);
+  });
+});
 
 // ============================================================================
 // filterByTotalTime

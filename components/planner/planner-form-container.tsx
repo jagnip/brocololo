@@ -10,7 +10,7 @@ export default async function PlannerFormContainer() {
   const [ingredients, recipes, previousPlanUnusedRecipes, occupiedDateKeys] =
     await Promise.all([
     getIngredients(),
-    // No flavour filter in planner context; include only planner-eligible recipes.
+    // Planner loads all planner-eligible recipes; slot filtering happens by meal occasion.
     getRecipes(undefined, undefined, false),
     getUnusedRecipesFromLatestPlan(),
     getOccupiedDateKeysForPlanning(),

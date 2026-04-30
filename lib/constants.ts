@@ -1,8 +1,10 @@
 import { PlannerMealType } from "@/src/generated/enums";
 
-export const FLAVOUR_BREADCRUMB_LABELS: Record<string, string> = {
-  sweet: "Sweet",
-  savoury: "Savoury",
+export const MEAL_OCCASION_BREADCRUMB_LABELS: Record<string, string> = {
+  breakfast: "Breakfast",
+  lunch: "Lunch",
+  snack: "Snack",
+  dinner: "Dinner",
 };
 
 export const MEAL_TYPES: PlannerMealType[] = [

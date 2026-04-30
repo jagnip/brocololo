@@ -10,7 +10,7 @@
 */
 
 export const CategoryType = {
-  FLAVOUR: 'FLAVOUR',
+  MEAL_OCCASION: 'MEAL_OCCASION',
   RECIPE_TYPE: 'RECIPE_TYPE',
   PROTEIN: 'PROTEIN'
 } as const

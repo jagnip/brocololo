@@ -12,7 +12,10 @@ type PlanTopbarConfigProps = {
 };
 
 /** Registers plan detail top bar: plan switcher + New plan (mirrors previous `PlanPageHeader` actions). */
-export function PlanTopbarConfig({ planOptions, planId }: PlanTopbarConfigProps) {
+export function PlanTopbarConfig({
+  planOptions,
+  planId,
+}: PlanTopbarConfigProps) {
   const config = useMemo(
     () => ({
       rightContent: (
@@ -23,7 +26,7 @@ export function PlanTopbarConfig({ planOptions, planId }: PlanTopbarConfigProps)
           id: "new-plan",
           label: "Create plan",
           href: ROUTES.planCreate,
-          variant: "default" as const,
+          variant: "outline" as const,
           size: "default" as const,
           ariaLabel: "Create plan",
         },

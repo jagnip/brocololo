@@ -3,6 +3,8 @@ import {
   UpdateRecipePayload,
 } from "../validations/recipe";
 import { prisma } from "./index";
+import { Prisma } from "@/src/generated/client";
+import { CategoryType } from "@/src/generated/enums";
 import type { RecipeType } from "@/types/recipe";
 
 const recipeInclude = {
@@ -69,7 +71,7 @@ const recipeInclude = {
     },
   },
   images: true,
-};
+} satisfies Prisma.RecipeInclude;
 
 export async function getRecipeBySlug(slug: string): Promise<RecipeType | null> {
   return await prisma.recipe.findUnique({
@@ -79,7 +81,7 @@ export async function getRecipeBySlug(slug: string): Promise<RecipeType | null> 
 }
 
 export async function getRecipes(
-  flavour?: string,
+  occasion?: string,
   q?: string,
   excludeFromPlanner?: boolean,
   filters?: {
@@ -89,9 +91,15 @@ export async function getRecipes(
   },
 ): Promise<RecipeType[]> {
   // Build category filters as explicit AND conditions so none overwrite each other.
-  const categoryConditions = [
-    ...(flavour
-      ? [{ categories: { some: { slug: flavour } } }]
+  const categoryConditions: Prisma.RecipeWhereInput[] = [
+    ...(occasion
+      ? [
+          {
+            categories: {
+              some: { slug: occasion, type: CategoryType.MEAL_OCCASION },
+            },
+          },
+        ]
       : []),
     ...(filters?.proteinSlug
       ? [{ categories: { some: { slug: filters.proteinSlug } } }]
@@ -101,7 +109,7 @@ export async function getRecipes(
       : []),
   ];
 
-  return prisma.recipe.findMany({
+  const recipes = await prisma.recipe.findMany({
     where: {
       ...(categoryConditions.length > 0 ? { AND: categoryConditions } : {}),
       ...(filters?.handsOnTimeMax !== undefined
@@ -117,15 +125,18 @@ export async function getRecipes(
       handsOnTime: "asc",
     },
   });
+  // Prisma inference can degrade to scalar-only shape with complex conditional `where` spreads.
+  return recipes as RecipeType[];
 }
 
 async function validateAndBuildCategoryIds(input: {
-  flavourCategoryId: string;
+  mealOccasionCategoryIds?: string[];
   proteinCategoryId?: string | null;
   typeCategoryId?: string | null;
 }): Promise<string[]> {
+  const mealOccasionCategoryIds = input.mealOccasionCategoryIds ?? [];
   const selectedIds = [
-    input.flavourCategoryId,
+    ...mealOccasionCategoryIds,
     input.proteinCategoryId ?? null,
     input.typeCategoryId ?? null,
   ].filter((id): id is string => Boolean(id));
@@ -140,7 +151,6 @@ async function validateAndBuildCategoryIds(input: {
       id: true,
       slug: true,
       type: true,
-      parentId: true,
     },
   });
 
@@ -149,9 +159,17 @@ async function validateAndBuildCategoryIds(input: {
   }
 
   const categoryById = new Map(categories.map((category) => [category.id, category]));
-  const flavour = categoryById.get(input.flavourCategoryId);
-  if (!flavour || flavour.type !== "FLAVOUR") {
-    throw new Error("Invalid flavour category");
+  const mealOccasionCategories = mealOccasionCategoryIds
+    .map((id) => categoryById.get(id))
+    .filter(
+      (category): category is { id: string; slug: string; type: CategoryType } =>
+        category != null,
+    );
+  if (mealOccasionCategories.length !== mealOccasionCategoryIds.length) {
+    throw new Error("Invalid meal occasion category selection");
+  }
+  if (mealOccasionCategories.some((category) => category.type !== "MEAL_OCCASION")) {
+    throw new Error("Invalid meal occasion category");
   }
 
   const protein = input.proteinCategoryId
@@ -168,17 +186,6 @@ async function validateAndBuildCategoryIds(input: {
     if (recipeType.type !== "RECIPE_TYPE") {
       throw new Error("Invalid recipe type category");
     }
-
-    // Keep type scoped to the selected flavour parent.
-    if (recipeType.parentId !== flavour.id) {
-      throw new Error("Recipe type does not match selected flavour");
-    }
-  }
-
-  // Keep sweet recipes protein-free; savoury recipes may optionally omit protein.
-  const isSweet = flavour.slug === "sweet";
-  if (isSweet && protein) {
-    throw new Error("Protein is not allowed for sweet recipes");
   }
 
   return uniqueCategoryIds;
@@ -187,7 +194,7 @@ async function validateAndBuildCategoryIds(input: {
 
 export async function createRecipe(data: CreateRecipePayload & { slug: string }) {
   const {
-    flavourCategoryId,
+    mealOccasionCategoryIds,
     proteinCategoryId,
     typeCategoryId,
     ingredientGroups,
@@ -197,7 +204,7 @@ export async function createRecipe(data: CreateRecipePayload & { slug: string })
     ...recipeData
   } = data;
   const categories = await validateAndBuildCategoryIds({
-    flavourCategoryId,
+    mealOccasionCategoryIds,
     proteinCategoryId,
     typeCategoryId,
   });
@@ -309,7 +316,7 @@ export async function updateRecipe(
   data: UpdateRecipePayload & { slug: string }
 ) {
   const {
-    flavourCategoryId,
+    mealOccasionCategoryIds,
     proteinCategoryId,
     typeCategoryId,
     ingredientGroups,
@@ -319,7 +326,7 @@ export async function updateRecipe(
     ...recipeData
   } = data;
   const categories = await validateAndBuildCategoryIds({
-    flavourCategoryId,
+    mealOccasionCategoryIds,
     proteinCategoryId,
     typeCategoryId,
   });

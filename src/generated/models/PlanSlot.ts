@@ -415,6 +415,10 @@ export type BoolFieldUpdateOperationsInput = {
   set?: boolean
 }
 
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
+}
+
 export type PlanSlotCreateNestedOneWithoutAlternativesInput = {
   create?: Prisma.XOR<Prisma.PlanSlotCreateWithoutAlternativesInput, Prisma.PlanSlotUncheckedCreateWithoutAlternativesInput>
   connectOrCreate?: Prisma.PlanSlotCreateOrConnectWithoutAlternativesInput

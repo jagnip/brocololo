@@ -15,30 +15,45 @@ async function main() {
   await prisma.unit.deleteMany();
   await prisma.category.deleteMany();
 
-  // Create FLAVOUR categories
-  const sweet = await prisma.category.create({
+  // Create MEAL_OCCASION categories
+  const breakfast = await prisma.category.create({
     data: {
-      name: 'Sweet',
-      slug: 'sweet',
-      type: 'FLAVOUR',
+      name: 'Breakfast',
+      slug: 'breakfast',
+      type: 'MEAL_OCCASION',
     },
   });
 
-  const savoury = await prisma.category.create({
+  const lunch = await prisma.category.create({
     data: {
-      name: 'Savoury',
-      slug: 'savoury',
-      type: 'FLAVOUR',
+      name: 'Lunch',
+      slug: 'lunch',
+      type: 'MEAL_OCCASION',
     },
   });
 
-  // Create RECIPE_TYPE categories with parents:
+  const dinner = await prisma.category.create({
+    data: {
+      name: 'Dinner',
+      slug: 'dinner',
+      type: 'MEAL_OCCASION',
+    },
+  });
+
+  const snack = await prisma.category.create({
+    data: {
+      name: 'Snack',
+      slug: 'snack',
+      type: 'MEAL_OCCASION',
+    },
+  });
+
+  // Create RECIPE_TYPE categories (flat taxonomy, no parent hierarchy):
   const cake = await prisma.category.create({
     data: {
       name: 'Cake',
       slug: 'cake',
       type: 'RECIPE_TYPE',
-      parentId: sweet.id,
     },
   });
 
@@ -47,7 +62,6 @@ async function main() {
       name: 'Cookies',
       slug: 'cookies',
       type: 'RECIPE_TYPE',
-      parentId: sweet.id,
     },
   });
 
@@ -56,7 +70,6 @@ async function main() {
       name: 'Pancakes',
       slug: 'pancakes',
       type: 'RECIPE_TYPE',
-      parentId: sweet.id,
     },
   });
 
@@ -65,7 +78,6 @@ async function main() {
       name: 'Oats',
       slug: 'oats',
       type: 'RECIPE_TYPE',
-      parentId: sweet.id,
     },
   });
 
@@ -74,7 +86,6 @@ async function main() {
       name: 'Wrap',
       slug: 'wrap',
       type: 'RECIPE_TYPE',
-      parentId: savoury.id,
     },
   });
 
@@ -83,7 +94,6 @@ async function main() {
       name: 'Sandwich',
       slug: 'sandwich',
       type: 'RECIPE_TYPE',
-      parentId: savoury.id,
     },
   });
 
@@ -92,7 +102,6 @@ async function main() {
       name: 'Pasta',
       slug: 'pasta',
       type: 'RECIPE_TYPE',
-      parentId: savoury.id,
     },
   });
 
@@ -322,7 +331,7 @@ async function main() {
     servings: 24,
     instructions: ['Preheat oven to 375°F', 'Cream butter and sugar', 'Add eggs and flour', 'Fold in chocolate chips', 'Bake for 10 minutes'],
     notes: ['Don\'t overmix for chewier cookies'],
-    categoryIds: [sweet.id, cookies.id],
+    categoryIds: [breakfast.id, snack.id, cookies.id],
     ingredients: [
       { ingredientId: flour.id, unitId: unitCup.id, amount: 2.25 },
       { ingredientId: sugar.id, unitId: unitCup.id, amount: 0.75 },
@@ -339,7 +348,7 @@ async function main() {
     servings: 8,
     instructions: ['Mix dry ingredients', 'Mix wet ingredients', 'Combine gently', 'Cook on griddle', 'Flip when bubbles form'],
     notes: ['Don\'t overmix - lumps are okay'],
-    categoryIds: [sweet.id, pancakes.id],
+    categoryIds: [breakfast.id, pancakes.id],
     ingredients: [
       { ingredientId: flour.id, unitId: unitCup.id, amount: 1.5 },
       { ingredientId: sugar.id, unitId: unitTbsp.id, amount: 2 },
@@ -357,7 +366,7 @@ async function main() {
     servings: 2,
     instructions: ['Combine oats and milk', 'Add sweetener', 'Refrigerate overnight', 'Stir and serve'],
     notes: ['Can be stored for up to 5 days'],
-    categoryIds: [sweet.id, oats.id],
+    categoryIds: [breakfast.id, oats.id],
     ingredients: [
       { ingredientId: rolledOats.id, unitId: unitG.id, amount: 100 },
       { ingredientId: milk.id, unitId: unitMl.id, amount: 200 },
@@ -372,7 +381,7 @@ async function main() {
     servings: 12,
     instructions: ['Preheat oven to 350°F', 'Cream butter and sugar', 'Add eggs and vanilla', 'Alternate flour and milk', 'Bake for 30 minutes'],
     notes: ['Let cool completely before frosting'],
-    categoryIds: [sweet.id, cake.id],
+    categoryIds: [breakfast.id, cake.id],
     ingredients: [
       { ingredientId: flour.id, unitId: unitCup.id, amount: 2 },
       { ingredientId: sugar.id, unitId: unitCup.id, amount: 1.5 },
@@ -390,7 +399,7 @@ async function main() {
     servings: 24,
     instructions: ['Mix dry ingredients', 'Cream butter and sugar', 'Combine and add oats', 'Bake for 12 minutes'],
     notes: ['Store in airtight container'],
-    categoryIds: [sweet.id, cookies.id],
+    categoryIds: [breakfast.id, cookies.id],
     ingredients: [
       { ingredientId: flour.id, unitId: unitCup.id, amount: 1 },
       { ingredientId: rolledOats.id, unitId: unitCup.id, amount: 2 },
@@ -407,7 +416,7 @@ async function main() {
     servings: 8,
     instructions: ['Make pancake batter', 'Add blueberries', 'Cook on griddle', 'Serve with syrup'],
     notes: ['Use fresh or frozen blueberries'],
-    categoryIds: [sweet.id, pancakes.id],
+    categoryIds: [breakfast.id, pancakes.id],
     ingredients: [
       { ingredientId: flour.id, unitId: unitCup.id, amount: 1.5 },
       { ingredientId: sugar.id, unitId: unitTbsp.id, amount: 2 },
@@ -423,7 +432,7 @@ async function main() {
     servings: 2,
     instructions: ['Cook oats with milk', 'Add diced apple', 'Simmer until tender', 'Serve warm'],
     notes: ['Add cinnamon for extra flavor'],
-    categoryIds: [sweet.id, oats.id],
+    categoryIds: [breakfast.id, oats.id],
     ingredients: [
       { ingredientId: rolledOats.id, unitId: unitG.id, amount: 100 },
       { ingredientId: milk.id, unitId: unitMl.id, amount: 300 },
@@ -437,7 +446,7 @@ async function main() {
     servings: 12,
     instructions: ['Preheat oven to 350°F', 'Mix dry ingredients', 'Combine wet ingredients', 'Bake for 35 minutes'],
     notes: ['Best served with chocolate frosting'],
-    categoryIds: [sweet.id, cake.id],
+    categoryIds: [breakfast.id, cake.id],
     ingredients: [
       { ingredientId: flour.id, unitId: unitCup.id, amount: 2 },
       { ingredientId: sugar.id, unitId: unitCup.id, amount: 1.75 },
@@ -454,7 +463,7 @@ async function main() {
     servings: 36,
     instructions: ['Cream butter and sugar', 'Add eggs and flour', 'Chill dough', 'Cut shapes and bake'],
     notes: ['Decorate with icing after cooling'],
-    categoryIds: [sweet.id, cookies.id],
+    categoryIds: [breakfast.id, cookies.id],
     ingredients: [
       { ingredientId: flour.id, unitId: unitCup.id, amount: 3 },
       { ingredientId: sugar.id, unitId: unitCup.id, amount: 1 },
@@ -470,7 +479,7 @@ async function main() {
     servings: 8,
     instructions: ['Mash banana', 'Mix with pancake batter', 'Cook on griddle', 'Serve with honey'],
     notes: ['Use ripe bananas for best flavor'],
-    categoryIds: [sweet.id, pancakes.id],
+    categoryIds: [breakfast.id, pancakes.id],
     ingredients: [
       { ingredientId: flour.id, unitId: unitCup.id, amount: 1.5 },
       { ingredientId: sugar.id, unitId: unitTbsp.id, amount: 1 },
@@ -501,7 +510,7 @@ async function main() {
       servings: 8,
       instructions: ['Prepare ingredients', 'Mix according to recipe', 'Cook or bake as directed', 'Serve and enjoy'],
       notes: ['Follow recipe instructions carefully'],
-      categoryIds: [sweet.id, recipe.type],
+      categoryIds: [breakfast.id, recipe.type],
       ingredients: [
         { ingredientId: flour.id, unitId: unitCup.id, amount: 2 },
         { ingredientId: sugar.id, unitId: unitCup.id, amount: 0.5 },
@@ -519,7 +528,7 @@ async function main() {
     servings: 4,
     instructions: ['Cook pasta', 'Season and cook chicken', 'Prepare sauce', 'Combine and serve'],
     notes: ['Cook chicken to 165°F internal temperature'],
-    categoryIds: [savoury.id, pasta.id, chicken.id],
+    categoryIds: [lunch.id, dinner.id, pasta.id, chicken.id],
     ingredients: [
       { ingredientId: pastaIngredient.id, unitId: unitG.id, amount: 400 },
       { ingredientId: chickenIngredient.id, unitId: unitG.id, amount: 300 },
@@ -536,7 +545,7 @@ async function main() {
     servings: 2,
     instructions: ['Cook chicken', 'Slice into strips', 'Warm tortillas', 'Assemble wraps'],
     notes: ['Add your favorite vegetables'],
-    categoryIds: [savoury.id, wrap.id, chicken.id],
+    categoryIds: [lunch.id, dinner.id, wrap.id, chicken.id],
     ingredients: [
       { ingredientId: chickenIngredient.id, unitId: unitG.id, amount: 200 },
       { ingredientId: tortilla.id, unitId: unitG.id, amount: 100 },
@@ -552,7 +561,7 @@ async function main() {
     servings: 2,
     instructions: ['Cook chicken', 'Toast bread', 'Add cheese and vegetables', 'Assemble sandwich'],
     notes: ['Serve with your favorite condiments'],
-    categoryIds: [savoury.id, sandwich.id, chicken.id],
+    categoryIds: [lunch.id, dinner.id, sandwich.id, chicken.id],
     ingredients: [
       { ingredientId: chickenIngredient.id, unitId: unitG.id, amount: 200 },
       { ingredientId: bread.id, unitId: unitG.id, amount: 100 },
@@ -567,7 +576,7 @@ async function main() {
     servings: 4,
     instructions: ['Brown ground beef', 'Add sauce ingredients', 'Simmer sauce', 'Cook pasta and combine'],
     notes: ['Let sauce simmer for best flavor'],
-    categoryIds: [savoury.id, pasta.id, beef.id],
+    categoryIds: [lunch.id, dinner.id, pasta.id, beef.id],
     ingredients: [
       { ingredientId: pastaIngredient.id, unitId: unitG.id, amount: 400 },
       { ingredientId: beefIngredient.id, unitId: unitG.id, amount: 400 },
@@ -583,7 +592,7 @@ async function main() {
     servings: 2,
     instructions: ['Cook ground beef', 'Season well', 'Warm tortillas', 'Assemble wraps'],
     notes: ['Add cheese and vegetables'],
-    categoryIds: [savoury.id, wrap.id, beef.id],
+    categoryIds: [lunch.id, dinner.id, wrap.id, beef.id],
     ingredients: [
       { ingredientId: beefIngredient.id, unitId: unitG.id, amount: 250 },
       { ingredientId: tortilla.id, unitId: unitG.id, amount: 100 },
@@ -598,7 +607,7 @@ async function main() {
     servings: 2,
     instructions: ['Cook ground beef', 'Toast bread', 'Layer ingredients', 'Serve hot'],
     notes: ['Great with pickles and onions'],
-    categoryIds: [savoury.id, sandwich.id, beef.id],
+    categoryIds: [lunch.id, dinner.id, sandwich.id, beef.id],
     ingredients: [
       { ingredientId: beefIngredient.id, unitId: unitG.id, amount: 250 },
       { ingredientId: bread.id, unitId: unitG.id, amount: 100 },
@@ -613,7 +622,7 @@ async function main() {
     servings: 4,
     instructions: ['Cook salmon', 'Flake into pieces', 'Cook pasta', 'Combine with sauce'],
     notes: ['Don\'t overcook the salmon'],
-    categoryIds: [savoury.id, pasta.id, fish.id],
+    categoryIds: [lunch.id, dinner.id, pasta.id, fish.id],
     ingredients: [
       { ingredientId: pastaIngredient.id, unitId: unitG.id, amount: 400 },
       { ingredientId: salmon.id, unitId: unitG.id, amount: 300 },
@@ -629,7 +638,7 @@ async function main() {
     servings: 2,
     instructions: ['Cook salmon', 'Flake into pieces', 'Warm tortillas', 'Assemble wraps'],
     notes: ['Add fresh vegetables'],
-    categoryIds: [savoury.id, wrap.id, fish.id],
+    categoryIds: [lunch.id, dinner.id, wrap.id, fish.id],
     ingredients: [
       { ingredientId: salmon.id, unitId: unitG.id, amount: 200 },
       { ingredientId: tortilla.id, unitId: unitG.id, amount: 100 },
@@ -644,7 +653,7 @@ async function main() {
     servings: 4,
     instructions: ['Cook pork tenderloin', 'Slice into strips', 'Cook pasta', 'Combine with sauce'],
     notes: ['Rest pork before slicing'],
-    categoryIds: [savoury.id, pasta.id, pork.id],
+    categoryIds: [lunch.id, dinner.id, pasta.id, pork.id],
     ingredients: [
       { ingredientId: pastaIngredient.id, unitId: unitG.id, amount: 400 },
       { ingredientId: porkIngredient.id, unitId: unitG.id, amount: 300 },
@@ -660,7 +669,7 @@ async function main() {
     servings: 2,
     instructions: ['Cook pork', 'Slice thinly', 'Toast bread', 'Assemble sandwich'],
     notes: ['Serve with barbecue sauce'],
-    categoryIds: [savoury.id, sandwich.id, pork.id],
+    categoryIds: [lunch.id, dinner.id, sandwich.id, pork.id],
     ingredients: [
       { ingredientId: porkIngredient.id, unitId: unitG.id, amount: 200 },
       { ingredientId: bread.id, unitId: unitG.id, amount: 100 },
@@ -675,7 +684,7 @@ async function main() {
     servings: 4,
     instructions: ['Press and cube tofu', 'Pan-fry until golden', 'Cook pasta', 'Combine with sauce'],
     notes: ['Press tofu to remove excess water'],
-    categoryIds: [savoury.id, pasta.id, tofu.id],
+    categoryIds: [lunch.id, dinner.id, pasta.id, tofu.id],
     ingredients: [
       { ingredientId: pastaIngredient.id, unitId: unitG.id, amount: 400 },
       { ingredientId: tofuIngredient.id, unitId: unitG.id, amount: 300 },
@@ -691,7 +700,7 @@ async function main() {
     servings: 2,
     instructions: ['Press and cook tofu', 'Warm tortillas', 'Add vegetables', 'Assemble wraps'],
     notes: ['Marinate tofu for extra flavor'],
-    categoryIds: [savoury.id, wrap.id, tofu.id],
+    categoryIds: [lunch.id, dinner.id, wrap.id, tofu.id],
     ingredients: [
       { ingredientId: tofuIngredient.id, unitId: unitG.id, amount: 200 },
       { ingredientId: tortilla.id, unitId: unitG.id, amount: 100 },
@@ -706,7 +715,7 @@ async function main() {
     servings: 2,
     instructions: ['Slice turkey', 'Toast bread', 'Layer ingredients', 'Serve'],
     notes: ['Great for lunch'],
-    categoryIds: [savoury.id, sandwich.id, turkey.id],
+    categoryIds: [lunch.id, dinner.id, sandwich.id, turkey.id],
     ingredients: [
       { ingredientId: turkeyIngredient.id, unitId: unitG.id, amount: 150 },
       { ingredientId: bread.id, unitId: unitG.id, amount: 100 },
@@ -721,7 +730,7 @@ async function main() {
     servings: 2,
     instructions: ['Slice turkey', 'Warm tortillas', 'Assemble wraps', 'Serve'],
     notes: ['Add cranberry sauce for holiday flavor'],
-    categoryIds: [savoury.id, wrap.id, turkey.id],
+    categoryIds: [lunch.id, dinner.id, wrap.id, turkey.id],
     ingredients: [
       { ingredientId: turkeyIngredient.id, unitId: unitG.id, amount: 150 },
       { ingredientId: tortilla.id, unitId: unitG.id, amount: 100 },
@@ -748,7 +757,7 @@ async function main() {
       servings: 4,
       instructions: ['Prepare protein', 'Cook as needed', 'Assemble dish', 'Serve hot'],
       notes: ['Season to taste'],
-      categoryIds: [savoury.id, recipe.type, recipe.protein],
+      categoryIds: [lunch.id, dinner.id, recipe.type, recipe.protein],
       ingredients: [
         { ingredientId: recipe.protein === chicken.id ? chickenIngredient.id : recipe.protein === beef.id ? beefIngredient.id : recipe.protein === fish.id ? salmon.id : recipe.protein === pork.id ? porkIngredient.id : recipe.protein === tofu.id ? tofuIngredient.id : turkeyIngredient.id, unitId: unitG.id, amount: 200 },
         { ingredientId: recipe.type === pasta.id ? pastaIngredient.id : recipe.type === wrap.id ? tortilla.id : bread.id, unitId: unitG.id, amount: recipe.type === pasta.id ? 400 : 100 },
