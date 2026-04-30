@@ -8,7 +8,7 @@ import { createPlan, deletePlanById, updatePlan } from "@/lib/db/planner";
 import { MEAL_TYPES, ROUTES } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { filterByFlavour, filterByHandsOnTime, filterByTotalTime } from "@/lib/planner/filters";
+import { filterByMealOccasion, filterByHandsOnTime, filterByTotalTime } from "@/lib/planner/filters";
 import { DayTimeLimitsType, RollingRecipeType } from "@/lib/validations/planner";
 import { pickBestCandidate } from "@/lib/planner/scoring";
 import { generateBaselineLogForPlan } from "@/lib/db/planner";
@@ -24,7 +24,7 @@ export async function generatePlan(
   | { type: "error"; message: string }
 > {
   try {
-    // No flavour filter in planner context; include only planner-eligible recipes.
+    // Planner candidates are narrowed by meal occasion per slot.
     const recipes = await getRecipes(undefined, undefined, false);
 
     if (recipes.length === 0) {
@@ -44,7 +44,7 @@ export async function generatePlan(
         const batchRecipe = batchFilledSlots.get(slotKey); // check if this slot is claimed by a batch carry-forward
 
         // Always run scoring to compute alternatives (even for batch slots)
-        let candidates = filterByFlavour(recipes, mealType);
+        let candidates = filterByMealOccasion(recipes, mealType);
         candidates = filterByHandsOnTime(candidates, getMealTimeLimit(dayTimeLimits, mealType, "handsOn"));
         candidates = filterByTotalTime(candidates, getMealTimeLimit(dayTimeLimits, mealType, "total"));
 

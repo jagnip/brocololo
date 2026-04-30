@@ -8,7 +8,7 @@ datasource db {
 }
 
 enum CategoryType {
-  FLAVOUR
+  MEAL_OCCASION
   RECIPE_TYPE
   PROTEIN
 }
@@ -18,15 +18,10 @@ model Category {
   name    String       @unique
   slug    String       @unique
   type    CategoryType
-  parentId String?     @map("parent_id")  
-  
-  parent   Category?   @relation("category_children", fields: [parentId], references: [id], onDelete: Cascade)
-  children Category[]  @relation("category_children")
   recipes Recipe[]     @relation("category_recipes")
 
   @@map("categories")
   @@index([type])
-  @@index([parentId])  
 }
 
 enum PlannerMealType {

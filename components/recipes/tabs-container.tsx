@@ -2,16 +2,16 @@ import { getCategoriesByType } from "@/lib/db/categories";
 import { RecipeTabs } from "./tabs";
 
 export async function RecipeTabsContainer() {
-  const [flavourCategories, proteinCategories, typeCategories] =
+  const [mealOccasionCategories, proteinCategories, typeCategories] =
     await Promise.all([
-      getCategoriesByType("FLAVOUR"),
+      getCategoriesByType("MEAL_OCCASION"),
       getCategoriesByType("PROTEIN"),
       getCategoriesByType("RECIPE_TYPE"),
     ]);
 
   return (
     <RecipeTabs
-      flavourCategories={flavourCategories}
+      mealOccasionCategories={mealOccasionCategories}
       proteinCategories={proteinCategories}
       typeCategories={typeCategories}
     />

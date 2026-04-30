@@ -21,11 +21,11 @@ const TIME_OPTIONS = [
 ] as const;
 
 export function RecipeTabs({
-  flavourCategories,
+  mealOccasionCategories,
   proteinCategories,
   typeCategories,
 }: {
-  flavourCategories: CategoryType[];
+  mealOccasionCategories: CategoryType[];
   proteinCategories: CategoryType[];
   typeCategories: CategoryType[];
 }) {
@@ -34,14 +34,14 @@ export function RecipeTabs({
   const pathname = usePathname();
 
   //selects are controlled from the URL
-  const selectedFlavour = searchParams.get("flavour") ?? "";
+  const selectedOccasion = searchParams.get("occasion") ?? "";
   const selectedProtein = searchParams.get("protein");
   const selectedType = searchParams.get("type");
   const selectedTime = searchParams.get("time") ?? "";
 
   const [isPending, startTransition] = useTransition();
-  const [optimisticFlavour, setOptimisticFlavour] =
-    useOptimistic(selectedFlavour);
+  const [optimisticOccasion, setOptimisticOccasion] =
+    useOptimistic(selectedOccasion);
   const [optimisticProtein, setOptimisticProtein] =
     useOptimistic(selectedProtein);
   const [optimisticType, setOptimisticType] = useOptimistic(selectedType);
@@ -60,7 +60,7 @@ export function RecipeTabs({
   };
 
   //set a query param (or delete it)
-  type QueryKey = "flavour" | "protein" | "type" | "time";
+  type QueryKey = "occasion" | "protein" | "type" | "time";
   const setQueryParam = (
     key: QueryKey,
     nextValue: string | null | undefined,
@@ -75,8 +75,8 @@ export function RecipeTabs({
     applyParams(params);
   };
 
-  const setFlavour = (nextValue: string | null) =>
-    setQueryParam("flavour", nextValue);
+  const setOccasion = (nextValue: string | null) =>
+    setQueryParam("occasion", nextValue);
   const setProtein = (nextValue: string | null) =>
     setQueryParam("protein", nextValue);
   const setType = (nextValue: string | null) =>
@@ -94,18 +94,18 @@ export function RecipeTabs({
       <div className="grid grid-cols-2 gap-item p-sheet md:grid-cols-3 lg:grid-cols-6">
         <div className="w-full">
           <Select
-            value={optimisticFlavour}
+            value={optimisticOccasion}
             onValueChange={(nextValue) => {
-              setFlavour(nextValue || null);
-              setOptimisticFlavour(nextValue);
+              setOccasion(nextValue || null);
+              setOptimisticOccasion(nextValue);
             }}
             allowInlineClear
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Flavour" />
+              <SelectValue placeholder="Meal occasion" />
             </SelectTrigger>
             <SelectContent align="start">
-              {flavourCategories.map((category: CategoryType) => (
+              {mealOccasionCategories.map((category: CategoryType) => (
                 <SelectItem key={category.id} value={category.slug}>
                   {category.name}
                 </SelectItem>

@@ -2,7 +2,7 @@ import { getRecipes } from "@/lib/db/recipes";
 import RecipeGrid from "./grid";
 
 export type RecipeGridContainerProps = {
-  flavour?: string;
+  occasion?: string;
   search?: string;
   protein?: string;
   type?: string;
@@ -10,7 +10,7 @@ export type RecipeGridContainerProps = {
 };
 
 export default async function RecipeGridContainer({
-  flavour,
+  occasion,
   search,
   protein,
   type,
@@ -19,7 +19,7 @@ export default async function RecipeGridContainer({
 
 const handsOnTimeMax = time ? Number(time) : undefined;
 
-  const recipes = await getRecipes(flavour, search, undefined, {
+  const recipes = await getRecipes(occasion, search, undefined, {
     proteinSlug: protein,
     typeSlug: type,
     handsOnTimeMax,

@@ -136,7 +136,7 @@ export function createMockCategory(overrides?: Partial<{
   id: string;
   name: string;
   slug: string;
-  type: 'FLAVOUR' | 'RECIPE_TYPE' | 'PROTEIN';
+  type: 'MEAL_OCCASION' | 'RECIPE_TYPE' | 'PROTEIN';
 }>) {
   return {
     id: 'category-1',

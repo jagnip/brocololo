@@ -6,7 +6,7 @@ import { TopbarConfigController } from "@/components/topbar-config";
 import { ROUTES } from "@/lib/constants";
 
 type RecipesPageSearchParams = {
-  flavour?: string;
+  occasion?: string;
   q?: string;
   protein?: string;
   type?: string;
@@ -18,7 +18,7 @@ type RecipesPageProps = {
 };
 
 export default async function Page({ searchParams }: RecipesPageProps) {
-  const { flavour, q: search, protein, type, time } = await searchParams;
+  const { occasion, q: search, protein, type, time } = await searchParams;
 
   return (
     <>
@@ -40,7 +40,7 @@ export default async function Page({ searchParams }: RecipesPageProps) {
         <div className="group">
           <RecipeTabsContainer />
           <RecipeGridContainer
-            flavour={flavour}
+            occasion={occasion}
             search={search}
             protein={protein}
             type={type}

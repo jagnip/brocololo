@@ -18,15 +18,14 @@ import { prisma } from "./index";
 type MockCategory = {
   id: string;
   slug: string;
-  type: "FLAVOUR" | "RECIPE_TYPE" | "PROTEIN";
-  parentId: string | null;
+  type: "MEAL_OCCASION" | "RECIPE_TYPE" | "PROTEIN";
 };
 
 function baseCreateRecipeInput() {
   return {
     name: "Test recipe",
     slug: "test-recipe",
-    flavourCategoryId: "flavour-id",
+    mealOccasionCategoryIds: ["meal-breakfast-id"],
     proteinCategoryId: null as string | null,
     typeCategoryId: null as string | null,
     images: [],
@@ -58,7 +57,7 @@ function baseCreateRecipeInput() {
   };
 }
 
-describe("createRecipe protein category rules", () => {
+describe("createRecipe category type rules", () => {
   const mockedPrisma = prisma as unknown as {
     category: { findMany: ReturnType<typeof vi.fn> };
     recipe: { findUniqueOrThrow: ReturnType<typeof vi.fn> };
@@ -101,13 +100,12 @@ describe("createRecipe protein category rules", () => {
     });
   });
 
-  it("allows savoury recipes without protein category", async () => {
+  it("allows recipes without protein category", async () => {
     mockedPrisma.category.findMany.mockResolvedValue([
       {
-        id: "flavour-id",
-        slug: "savoury",
-        type: "FLAVOUR",
-        parentId: null,
+        id: "meal-breakfast-id",
+        slug: "breakfast",
+        type: "MEAL_OCCASION",
       } satisfies MockCategory,
     ]);
 
@@ -116,19 +114,17 @@ describe("createRecipe protein category rules", () => {
     });
   });
 
-  it("rejects sweet recipes with protein category", async () => {
+  it("allows breakfast recipes with protein category", async () => {
     mockedPrisma.category.findMany.mockResolvedValue([
       {
-        id: "flavour-id",
-        slug: "sweet",
-        type: "FLAVOUR",
-        parentId: null,
+        id: "meal-breakfast-id",
+        slug: "breakfast",
+        type: "MEAL_OCCASION",
       } satisfies MockCategory,
       {
         id: "protein-id",
         slug: "chicken",
         type: "PROTEIN",
-        parentId: "flavour-savoury-id",
       } satisfies MockCategory,
     ]);
 
@@ -137,9 +133,8 @@ describe("createRecipe protein category rules", () => {
       proteinCategoryId: "protein-id",
     };
 
-    await expect(createRecipe(input)).rejects.toThrow(
-      "Protein is not allowed for sweet recipes",
-    );
-    expect(mockedPrisma.$transaction).not.toHaveBeenCalled();
+    await expect(createRecipe(input)).resolves.toMatchObject({
+      id: "recipe-id",
+    });
   });
 });

@@ -37,17 +37,23 @@ function buildDailyTimeLimitsFromDefaults(start: Date, end: Date): DayTimeLimits
 }
 
 function buildSimulationRecipes() {
-  const sweetFlavour = createMockCategory({
-    id: "flavour-sweet",
-    name: "Sweet",
-    slug: "sweet",
-    type: "FLAVOUR",
+  const breakfastOccasion = createMockCategory({
+    id: "occasion-breakfast",
+    name: "Breakfast",
+    slug: "breakfast",
+    type: "MEAL_OCCASION",
   });
-  const savouryFlavour = createMockCategory({
-    id: "flavour-savoury",
-    name: "Savoury",
-    slug: "savoury",
-    type: "FLAVOUR",
+  const lunchOccasion = createMockCategory({
+    id: "occasion-lunch",
+    name: "Lunch",
+    slug: "lunch",
+    type: "MEAL_OCCASION",
+  });
+  const dinnerOccasion = createMockCategory({
+    id: "occasion-dinner",
+    name: "Dinner",
+    slug: "dinner",
+    type: "MEAL_OCCASION",
   });
 
   const proteinSlugs = ["chicken", "fish", "beef", "tofu"] as const;
@@ -56,7 +62,7 @@ function buildSimulationRecipes() {
     createMockRecipe({
       id: `sweet-${index}`,
       name: `Sweet ${index}`,
-      categories: [sweetFlavour],
+      categories: [breakfastOccasion],
       servings: 2, // Avoid batch carry-forward for this baseline simulation.
       handsOnTime: 10 + (index % 2) * 5, // Always <= weekday breakfast hands-on default (15).
       totalTime: 15 + (index % 3) * 5,
@@ -69,7 +75,8 @@ function buildSimulationRecipes() {
       id: `savoury-${index}`,
       name: `Savoury ${index}`,
       categories: [
-        savouryFlavour,
+        lunchOccasion,
+        dinnerOccasion,
         createMockCategory({
           id: `protein-${index}`,
           name: proteinSlugs[index % proteinSlugs.length],
