@@ -39,6 +39,7 @@ type RecipeAddToLogDialogProps = {
   currentServings: number;
   servingScalingFactor: number;
   servingMultiplierForNelson: number;
+  availableLogDateKeys?: string[];
   ingredientOptions: LogIngredientOption[];
   ingredientFormDependencies: IngredientFormDependencies;
 };
@@ -59,6 +60,7 @@ export function RecipeAddToLogDialogContainer({
   currentServings,
   servingScalingFactor,
   servingMultiplierForNelson,
+  availableLogDateKeys,
   ingredientOptions,
   ingredientFormDependencies,
 }: RecipeAddToLogDialogProps) {
@@ -67,7 +69,11 @@ export function RecipeAddToLogDialogContainer({
   const [logPerson, setLogPerson] = useState<"PRIMARY" | "SECONDARY">(
     LogPerson.PRIMARY,
   );
-  const [logDate, setLogDate] = useState(() => toDateInputValue(new Date()));
+  // Defensive fallback: some legacy render paths/tests may omit the allowlist prop.
+  const normalizedAvailableLogDateKeys = availableLogDateKeys ?? [];
+  const [logDate, setLogDate] = useState(() =>
+    getInitialLogDateKey(normalizedAvailableLogDateKeys),
+  );
   const [logMealType, setLogMealType] = useState<
     "BREAKFAST" | "LUNCH" | "SNACK" | "DINNER"
   >(LogMealType.DINNER);
@@ -78,9 +84,9 @@ export function RecipeAddToLogDialogContainer({
       return;
     }
     setLogPerson(LogPerson.PRIMARY);
-    setLogDate(toDateInputValue(new Date()));
+    setLogDate(getInitialLogDateKey(normalizedAvailableLogDateKeys));
     setLogMealType(LogMealType.DINNER);
-  }, [open]);
+  }, [normalizedAvailableLogDateKeys, open]);
 
   const initialRows = useMemo(() => {
     const selectedPerson =
@@ -127,6 +133,11 @@ export function RecipeAddToLogDialogContainer({
   const selectedMealLabel =
     LOG_MEAL_OPTIONS.find((option) => option.value === logMealType)?.label ??
     "Dinner";
+  const availableDateKeySet = useMemo(
+    () => new Set(normalizedAvailableLogDateKeys),
+    [normalizedAvailableLogDateKeys],
+  );
+  const selectedDateAllowed = logDate !== "" && availableDateKeySet.has(logDate);
 
   return (
     <RecipeAddToLogDialog
@@ -190,14 +201,21 @@ export function RecipeAddToLogDialogContainer({
               value={logDate}
               onChange={setLogDate}
               disabled={isSaving}
+              placeholder="Pick an existing log date"
+              availableDateKeys={normalizedAvailableLogDateKeys}
             />
+            {!selectedDateAllowed ? (
+              <p className="text-xs text-destructive">
+                Pick one of the generated log dates.
+              </p>
+            ) : null}
           </div>
         </div>
       }
       onOpenChange={onOpenChange}
       onSave={async (rows: EditableIngredientRow[]) => {
-        if (!logDate) {
-          toast.error("Date is required");
+        if (!selectedDateAllowed) {
+          toast.error("Select one of the generated log dates");
           return;
         }
 
@@ -240,4 +258,13 @@ export function RecipeAddToLogDialogContainer({
 function toDateInputValue(date: Date) {
   // Keep stable ISO date format for date picker state.
   return date.toISOString().slice(0, 10);
+}
+
+function getInitialLogDateKey(availableLogDateKeys: string[]) {
+  const todayKey = toDateInputValue(new Date());
+  if (availableLogDateKeys.includes(todayKey)) {
+    return todayKey;
+  }
+  // Fallback to latest generated date when today is outside every generated range.
+  return availableLogDateKeys[availableLogDateKeys.length - 1] ?? "";
 }

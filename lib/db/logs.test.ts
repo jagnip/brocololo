@@ -32,4 +32,20 @@ describe("findLogContainingDate", () => {
     const found = findLogContainingDate(logs, new Date("2026-06-01T00:00:00.000Z"));
     expect(found).toBeUndefined();
   });
+
+  it("treats start and end dates as inclusive", () => {
+    const logs = [mockLog("active", "2026-03-10", "2026-03-16")];
+
+    const startBoundary = findLogContainingDate(
+      logs,
+      new Date("2026-03-10T00:00:00.000Z"),
+    );
+    const endBoundary = findLogContainingDate(
+      logs,
+      new Date("2026-03-16T23:59:59.999Z"),
+    );
+
+    expect(startBoundary?.id).toBe("active");
+    expect(endBoundary?.id).toBe("active");
+  });
 });

@@ -19,6 +19,7 @@ import { useIngredientGrouping } from "@/components/recipes/recipe-page/use-ingr
 type RecipePageProviderProps = {
   recipe: RecipeType;
   ingredients: IngredientType[];
+  availableLogDateKeys: string[];
   children: ReactNode;
 };
 
@@ -60,6 +61,7 @@ type RecipePageContextValue = {
   onIngredientChange: (recipeIngredientId: string, ingredientId: string) => void;
   recipeForScaledNutrition: RecipeType;
   servingScalingFactor: number;
+  availableLogDateKeys: string[];
 };
 
 const RecipePageContext = createContext<RecipePageContextValue | null>(null);
@@ -67,6 +69,7 @@ const RecipePageContext = createContext<RecipePageContextValue | null>(null);
 export function RecipePageProvider({
   recipe,
   ingredients,
+  availableLogDateKeys,
   children,
 }: RecipePageProviderProps) {
   const [selectedInstructionPerson, setSelectedInstructionPerson] = useState<
@@ -144,6 +147,7 @@ export function RecipePageProvider({
         ),
       recipeForScaledNutrition: nutrition.recipeForScaledNutrition,
       servingScalingFactor: nutrition.servingScalingFactor,
+      availableLogDateKeys,
     }),
     [
       ingredients,
@@ -172,6 +176,7 @@ export function RecipePageProvider({
       scaling.targetCaloriesPerPortion,
       selectedInstructionPerson,
       ungroupedIngredients,
+      availableLogDateKeys,
       visibleGroupedIngredients,
     ],
   );
@@ -285,8 +290,13 @@ export function useRecipePageIngredientsSectionData() {
 }
 
 export function useRecipePageAddToLogData() {
-  const { recipe, currentServings, recipeForScaledNutrition, servingScalingFactor } =
-    useRecipePageContext();
+  const {
+    recipe,
+    currentServings,
+    recipeForScaledNutrition,
+    servingScalingFactor,
+    availableLogDateKeys,
+  } = useRecipePageContext();
 
   return {
     recipeId: recipe.id,
@@ -295,5 +305,6 @@ export function useRecipePageAddToLogData() {
     currentServings,
     servingScalingFactor,
     servingMultiplierForNelson: recipe.servingMultiplierForNelson,
+    availableLogDateKeys,
   };
 }

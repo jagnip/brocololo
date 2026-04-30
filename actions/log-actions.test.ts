@@ -117,6 +117,26 @@ describe("addRecipeToLogAction", () => {
       ingredients: [{ ingredientId: "ing-1", unitId: "unit-g", amount: 120 }],
     });
   });
+
+  it("maps LOG_DATE_NOT_GENERATED to a clear user-facing error", async () => {
+    // Explicit domain error helps callers distinguish invalid date selection from generic failures.
+    vi.mocked(replaceMealSlotWithRecipe).mockRejectedValue(
+      new Error("LOG_DATE_NOT_GENERATED"),
+    );
+
+    const result = await addRecipeToLogAction({
+      recipeId: "recipe-1",
+      person: "PRIMARY",
+      date: "2026-03-19",
+      mealType: "DINNER",
+      ingredients: [{ ingredientId: "ing-1", unitId: "unit-g", amount: 120 }],
+    } as never);
+
+    expect(result).toEqual({
+      type: "error",
+      message: "Selected date is outside generated logs.",
+    });
+  });
 });
 
 describe("upsertLogSlotAction", () => {

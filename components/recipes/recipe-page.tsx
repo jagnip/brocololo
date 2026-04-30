@@ -145,6 +145,7 @@ export default function RecipePage({
           currentServings={addToLogData.currentServings}
           servingScalingFactor={addToLogData.servingScalingFactor}
           servingMultiplierForNelson={addToLogData.servingMultiplierForNelson}
+          availableLogDateKeys={addToLogData.availableLogDateKeys}
           ingredientOptions={ingredientOptionsForLogDialog}
           ingredientFormDependencies={ingredientFormDependencies}
         />

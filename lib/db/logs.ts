@@ -797,7 +797,8 @@ export async function replaceMealSlotWithRecipe(input: ParsedAddRecipeToLogInput
       },
     });
     if (!activeLog) {
-      throw new Error("ACTIVE_LOG_NOT_FOUND_FOR_DATE");
+      // Reject dates outside generated log ranges; recipe page should only submit allowed keys.
+      throw new Error("LOG_DATE_NOT_GENERATED");
     }
 
     await assertIngredientRowsHaveSupportedUnits(tx, input.ingredients);
