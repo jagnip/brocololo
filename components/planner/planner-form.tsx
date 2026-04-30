@@ -243,7 +243,8 @@ export function PlannerForm({
       // Keep action visible for discoverability; enable only when plan exists.
       disabled: !generatedPlan || isSaving,
       ariaBusy: isSaving,
-      variant: "secondary" as const,
+      // Requested UX: keep planner create-page actions outlined.
+      variant: "outline" as const,
       size: "default" as const,
     },
     {
@@ -257,7 +258,8 @@ export function PlannerForm({
         hasInvalidTimeLimitInputs ||
         hasInvalidRollingMealsInputs,
       ariaBusy: isGenerating,
-      variant: "default" as const,
+      // Requested UX: match Save/Create action style in planner topbar.
+      variant: "outline" as const,
       size: "default" as const,
     },
   ];
