@@ -14,6 +14,15 @@ function coercePreviewServings(value: unknown): number {
   return Number.isFinite(n) ? n : NaN;
 }
 
+/** `z.input` treats `z.coerce.number()` fields as `unknown` — normalize for draft rows. */
+function coerceIngredientRowPosition(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) {
+    return 0;
+  }
+  return Math.trunc(n);
+}
+
 /** Fallback to 1 while multiplier is unset or invalid (aligned with resolver preprocess). */
 function coerceNelsonMultiplier(value: unknown): number {
   if (value === "" || value === null || value === undefined) {
@@ -64,7 +73,7 @@ export function buildDraftRecipeForNutrition(
       id: row.tempIngredientKey,
       recipeId: "draft",
       groupId: null,
-      position: row.position ?? 0,
+      position: coerceIngredientRowPosition(row.position),
       ingredientId: catalogIngredient.id,
       unitId,
       amount: row.amount,
