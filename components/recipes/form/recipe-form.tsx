@@ -7,7 +7,7 @@ import {
   UpdateRecipePayload,
 } from "@/lib/validations/recipe";
 import { toast } from "sonner";
-import { Resolver, useForm } from "react-hook-form";
+import { Resolver, useForm, useWatch } from "react-hook-form";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -30,12 +30,14 @@ import {
 import { ImageUploader } from "./image-uploader";
 import { RecipeType } from "@/types/recipe";
 import {
+  calculateNutritionPerServing,
   formatIngredientAmount,
   formatIngredientLabel,
   getUnitDisplayName,
   recipeToFormData,
   toSentenceCaseIngredientName,
 } from "@/lib/recipes/helpers";
+import { buildDraftRecipeForNutrition } from "@/lib/recipes/build-draft-recipe-for-nutrition";
 import { IngredientType } from "@/types/ingredient";
 import { IngredientSelector } from "./ingredient-selector";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -61,6 +63,7 @@ import { TopbarConfigController } from "@/components/topbar-config";
 import { Trash2 } from "lucide-react";
 import { Subheader } from "../recipe-page/subheader";
 import MultipleSelector from "@/components/ui/multiselect";
+import { RecipeNutritionPreviewSection } from "./recipe-nutrition-preview-section";
 
 type RecipeFormProps = {
   categories: CategoryType[];
@@ -219,6 +222,33 @@ export default function RecipeForm({
           excludeFromPlanner: false,
         },
   });
+
+  // Live nutrition preview — subscribed fields only (see `buildDraftRecipeForNutrition`).
+  const previewServings = useWatch({ control: form.control, name: "servings" });
+  const previewMultiplier = useWatch({
+    control: form.control,
+    name: "servingMultiplierForNelson",
+  });
+  const previewIngredients =
+    useWatch({ control: form.control, name: "ingredients" }) ?? [];
+
+  const nutritionPreview = useMemo(() => {
+    const draft = buildDraftRecipeForNutrition(
+      previewServings,
+      previewMultiplier ?? 1,
+      previewIngredients,
+      localIngredients,
+    );
+    return {
+      jagoda: calculateNutritionPerServing(draft, "primary"),
+      nelson: calculateNutritionPerServing(draft, "secondary"),
+    };
+  }, [
+    previewServings,
+    previewMultiplier,
+    previewIngredients,
+    localIngredients,
+  ]);
 
   const handleNumericFieldChange = (
     onChange: (value: number | null) => void,
@@ -775,6 +805,8 @@ export default function RecipeForm({
             />
           </div>
         </section>
+
+        <RecipeNutritionPreviewSection {...nutritionPreview} />
 
         <section>
           <div className="mb-3">
