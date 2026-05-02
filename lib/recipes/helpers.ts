@@ -390,14 +390,22 @@ export function getInstructionIngredientPersonFactor(
   return selectedPerson === "jagoda" ? jagodaPortionFactor : nelsonPortionFactor;
 }
 
+/** Minimal recipe shape consumed by nutrition math — avoids building full RecipeType mocks. */
+export type RecipeForNutritionCalculation = Pick<
+  RecipeType,
+  "servings" | "servingMultiplierForNelson"
+> & {
+  ingredients: RecipeType["ingredients"];
+};
+
 function getIngredientNutritionTarget(
-  recipeIngredient: RecipeType["ingredients"][number],
+  recipeIngredient: RecipeForNutritionCalculation["ingredients"][number],
 ): NutritionTarget {
   return recipeIngredient.nutritionTarget as NutritionTarget;
 }
 
 export function calculateNutritionPerServing(
-  recipe: RecipeType,
+  recipe: RecipeForNutritionCalculation,
   person: "jagoda" | "nelson" | NutritionRole,
 ): NutritionPerPortion {
   const role = resolveNutritionRole(person);

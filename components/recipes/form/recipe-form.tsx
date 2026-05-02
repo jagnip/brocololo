@@ -7,7 +7,7 @@ import {
   UpdateRecipePayload,
 } from "@/lib/validations/recipe";
 import { toast } from "sonner";
-import { Resolver, useForm } from "react-hook-form";
+import { Resolver, useForm, useWatch } from "react-hook-form";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -30,12 +30,14 @@ import {
 import { ImageUploader } from "./image-uploader";
 import { RecipeType } from "@/types/recipe";
 import {
+  calculateNutritionPerServing,
   formatIngredientAmount,
   formatIngredientLabel,
   getUnitDisplayName,
   recipeToFormData,
   toSentenceCaseIngredientName,
 } from "@/lib/recipes/helpers";
+import { buildDraftRecipeForNutrition } from "@/lib/recipes/build-draft-recipe-for-nutrition";
 import { IngredientType } from "@/types/ingredient";
 import { IngredientSelector } from "./ingredient-selector";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -61,6 +63,8 @@ import { TopbarConfigController } from "@/components/topbar-config";
 import { Trash2 } from "lucide-react";
 import { Subheader } from "../recipe-page/subheader";
 import MultipleSelector from "@/components/ui/multiselect";
+import { RecipeNutritionPreviewSection } from "./recipe-nutrition-preview-section";
+import { RecipePortionsFormSection } from "./recipe-portions-form-section";
 
 type RecipeFormProps = {
   categories: CategoryType[];
@@ -219,6 +223,33 @@ export default function RecipeForm({
           excludeFromPlanner: false,
         },
   });
+
+  // Live nutrition preview — subscribed fields only (see `buildDraftRecipeForNutrition`).
+  const previewServings = useWatch({ control: form.control, name: "servings" });
+  const previewMultiplier = useWatch({
+    control: form.control,
+    name: "servingMultiplierForNelson",
+  });
+  const previewIngredients =
+    useWatch({ control: form.control, name: "ingredients" }) ?? [];
+
+  const nutritionPreview = useMemo(() => {
+    const draft = buildDraftRecipeForNutrition(
+      previewServings,
+      previewMultiplier ?? 1,
+      previewIngredients,
+      localIngredients,
+    );
+    return {
+      jagoda: calculateNutritionPerServing(draft, "primary"),
+      nelson: calculateNutritionPerServing(draft, "secondary"),
+    };
+  }, [
+    previewServings,
+    previewMultiplier,
+    previewIngredients,
+    localIngredients,
+  ]);
 
   const handleNumericFieldChange = (
     onChange: (value: number | null) => void,
@@ -389,7 +420,7 @@ export default function RecipeForm({
   const isEditMode = Boolean(recipe);
   const topbarSubmitLabel = isSubmitting
     ? isEditMode
-      ? "Editing..."
+      ? "Updating..."
       : "Creating..."
     : isEditMode
       ? "Update recipe"
@@ -655,92 +686,12 @@ export default function RecipeForm({
           </div>
         </section>
 
-        <section>
-          <div className="mb-3">
-            <Subheader>Portions</Subheader>
-          </div>
-          <div className="section-container">
-            {/* Match Basics: `gap-3` between stacked field groups (same as name row → timing row). */}
-            <div className="flex flex-col gap-3">
-              <div className="grid grid-cols-1 gap-item md:grid-cols-3">
-                <div>
-                  <FormField
-                    control={form.control}
-                    name="servings"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Portions</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="number"
-                            min={2}
-                            step={2}
-                            // Keep explicit prompt text for blank numeric input.
-                            placeholder="Enter portions"
-                            // Keep controlled input behavior while still allowing an empty state.
-                            value={(field.value as number | undefined) ?? ""}
-                            onChange={(event) =>
-                              handleNumericFieldChange(field.onChange, event)
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="hidden md:block" aria-hidden />
-                <div className="hidden md:block" aria-hidden />
-              </div>
-
-              {/* One row per household member; add more columns here when multi-person UI ships. */}
-              <FormField
-                control={form.control}
-                name="servingMultiplierForNelson"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-muted-foreground">
-                      Serving multiplier
-                    </FormLabel>
-                    <FormControl>
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-item">
-                        <Label className="shrink-0 ">
-                          Nelson
-                        </Label>
-                        <div
-                          className="flex min-w-0 flex-1 flex-wrap gap-2"
-                          role="radiogroup"
-                          aria-label="Nelson serving multiplier"
-                        >
-                          {nelsonMultiplierOptions.map((multiplier) => {
-                            // Keep the UI default selected at 1 without changing backend validation rules.
-                            const selectedMultiplier =
-                              (field.value as number | null | undefined) ?? 1;
-                            const checked = selectedMultiplier === multiplier;
-                            return (
-                              <Button
-                                key={multiplier}
-                                type="button"
-                                role="radio"
-                                aria-checked={checked}
-                                variant={checked ? "default" : "outline"}
-                                onClick={() => field.onChange(multiplier)}
-                              >
-                                {multiplier}
-                              </Button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-        </section>
+        <RecipePortionsFormSection
+          form={form}
+          recipe={recipe}
+          nelsonMultiplierOptions={nelsonMultiplierOptions}
+          onNumericServingsChange={handleNumericFieldChange}
+        />
 
         <section>
           <div className="section-container min-w-0">
@@ -775,6 +726,8 @@ export default function RecipeForm({
             />
           </div>
         </section>
+
+        <RecipeNutritionPreviewSection {...nutritionPreview} />
 
         <section>
           <div className="mb-3">
