@@ -274,11 +274,8 @@ function expectNutritionToMatchScaledRecipe(recipe: RecipeType): void {
   const expectedNelson = calculateNutritionPerServing(recipe, "secondary");
 
   const caloriesInput = screen.getByLabelText("Calories per portion");
-  expect(caloriesInput).toHaveAttribute(
-    "placeholder",
-    expectedJagoda.calories.toString(),
-  );
-  expect(screen.getByText(`${expectedNelson.calories} calories`)).toBeInTheDocument();
+  expect(caloriesInput).toHaveValue(expectedJagoda.calories.toString());
+  expect(screen.getByText(`${expectedNelson.calories} kcal`)).toBeInTheDocument();
 }
 
 async function setIngredientAmount(ingredientName: string, value: string): Promise<void> {
