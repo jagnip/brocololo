@@ -28,6 +28,7 @@ export type RecipeType = Prisma.RecipeGetPayload<{
         group: true;
         ingredient: {
           include: {
+            category: true;
             unitConversions: {
               include: {
                 unit: {
@@ -54,6 +55,7 @@ export type RecipeType = Prisma.RecipeGetPayload<{
               include: {
                 ingredient: {
                   include: {
+                    category: true;
                     unitConversions: {
                       include: {
                         unit: {

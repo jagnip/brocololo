@@ -12,6 +12,12 @@ import {
 } from "@/lib/recipes/helpers";
 import { getIngredientSelectorDisplay } from "@/lib/ingredients/format";
 import {
+  buildIngredientSearchSourceMap,
+  ingredientsToSearchableSelectOptions,
+  renderIngredientSearchDropdownLabel,
+  renderIngredientSearchTriggerLabel,
+} from "@/components/ingredients/ingredient-searchable-select-labels";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -24,7 +30,7 @@ import {
   ShoppingBasket,
 } from "lucide-react";
 import { IngredientIcon } from "../ingredient-icon";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { IngredientNutritionalInfo } from "./ingredient-nutritional-info";
@@ -208,23 +214,39 @@ export function IngredientItem({
       (candidate) => candidate.id !== ingredient.id,
     ),
   ];
-  // Reuse shared searchable-select model so this row matches form behavior.
-  const ingredientOptions: SearchableSelectOption[] = ingredientCandidates.map(
-    (candidate) => {
-      const display = getIngredientSelectorDisplay({
+  const ingredientSelectSources = useMemo(
+    () =>
+      ingredientCandidates.map((candidate) => ({
+        id: candidate.id,
         name: candidate.name,
         brand: candidate.brand,
         descriptor: candidate.descriptor,
-      });
-
-      return {
-        value: candidate.id,
-        label: display.label,
-        // Store the muted tail as metadata for this selector's custom renderer.
-        detailsText: display.detailsText ?? undefined,
         icon: candidate.icon,
-      };
-    },
+        category: candidate.category ?? null,
+      })),
+    [ingredientCandidates],
+  );
+
+  const ingredientByIdForSelect = useMemo(
+    () => buildIngredientSearchSourceMap(ingredientSelectSources),
+    [ingredientSelectSources],
+  );
+
+  const ingredientOptions = useMemo(
+    () => ingredientsToSearchableSelectOptions(ingredientSelectSources),
+    [ingredientSelectSources],
+  );
+
+  const renderIngredientDropdownLabel = useCallback(
+    (option: SearchableSelectOption) =>
+      renderIngredientSearchDropdownLabel(option, ingredientByIdForSelect),
+    [ingredientByIdForSelect],
+  );
+
+  const renderIngredientTriggerLabel = useCallback(
+    (option: SearchableSelectOption) =>
+      renderIngredientSearchTriggerLabel(option, ingredientByIdForSelect),
+    [ingredientByIdForSelect],
   );
 
   return (
@@ -284,6 +306,8 @@ export function IngredientItem({
         )}
         <SearchableSelect
           options={ingredientOptions}
+          renderLabel={renderIngredientDropdownLabel}
+          renderTriggerLabel={renderIngredientTriggerLabel}
           value={ingredient.id}
           onValueChange={(next) => {
             if (!next) return;

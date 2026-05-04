@@ -5,6 +5,9 @@ import type { IngredientPayload } from "@/lib/validations/ingredient";
 export async function getIngredients() {
   return await prisma.ingredient.findMany({
     include: {
+      category: {
+        select: { id: true, name: true, slug: true, sortOrder: true },
+      },
       unitConversions: {
         include: { unit: true },
         orderBy: { unit: { name: "asc" } },
@@ -182,6 +185,9 @@ export async function createIngredient(
     return tx.ingredient.findUniqueOrThrow({
       where: { id: ingredient.id },
       include: {
+        category: {
+          select: { id: true, name: true, slug: true, sortOrder: true },
+        },
         unitConversions: {
           include: { unit: true },
         },
@@ -382,6 +388,9 @@ export async function updateIngredient(
     const ingredient = await tx.ingredient.findUniqueOrThrow({
       where: { id: ingredientId },
       include: {
+        category: {
+          select: { id: true, name: true, slug: true, sortOrder: true },
+        },
         unitConversions: {
           include: { unit: true },
         },

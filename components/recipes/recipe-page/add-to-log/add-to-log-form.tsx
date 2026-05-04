@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -14,9 +14,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SearchableSelect } from "@/components/ui/searchable-select";
+import {
+  SearchableSelect,
+  type SearchableSelectOption,
+} from "@/components/ui/searchable-select";
+import {
+  buildIngredientSearchSourceMap,
+  ingredientsToSearchableSelectOptions,
+  renderIngredientSearchDropdownLabel,
+  renderIngredientSearchTriggerLabel,
+} from "@/components/ingredients/ingredient-searchable-select-labels";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
-import { getIngredientSelectorDisplay } from "@/lib/ingredients/format";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
 import type {
   EditableIngredientRow,
@@ -174,23 +182,38 @@ export function RecipeAddToLogForm({
     [localIngredientOptions, rows],
   );
 
-  const ingredientSelectOptions = useMemo(
+  const ingredientSelectSources = useMemo(
     () =>
-      localIngredientOptions.map((ingredient) => {
-        const display = getIngredientSelectorDisplay({
-          name: ingredient.name,
-          brand: ingredient.brand,
-          descriptor: ingredient.descriptor,
-        });
-
-        return {
-          value: ingredient.id,
-          label: display.label,
-          // SearchableSelect renders detailsText as muted metadata in the label.
-          detailsText: display.detailsText ?? undefined,
-        };
-      }),
+      localIngredientOptions.map((ingredient) => ({
+        id: ingredient.id,
+        name: ingredient.name,
+        brand: ingredient.brand,
+        descriptor: ingredient.descriptor,
+        category: ingredient.category ?? null,
+      })),
     [localIngredientOptions],
+  );
+
+  const ingredientByIdForSelect = useMemo(
+    () => buildIngredientSearchSourceMap(ingredientSelectSources),
+    [ingredientSelectSources],
+  );
+
+  const ingredientSelectOptions = useMemo(
+    () => ingredientsToSearchableSelectOptions(ingredientSelectSources),
+    [ingredientSelectSources],
+  );
+
+  const renderIngredientDropdownLabel = useCallback(
+    (option: SearchableSelectOption) =>
+      renderIngredientSearchDropdownLabel(option, ingredientByIdForSelect),
+    [ingredientByIdForSelect],
+  );
+
+  const renderIngredientTriggerLabel = useCallback(
+    (option: SearchableSelectOption) =>
+      renderIngredientSearchTriggerLabel(option, ingredientByIdForSelect),
+    [ingredientByIdForSelect],
   );
   const hasUnsavedChanges = useMemo(() => {
     const normalizedCurrent = toComparableRows(rows);
@@ -284,6 +307,8 @@ export function RecipeAddToLogForm({
                     <SearchableSelect
                       className="min-w-0 w-full font-normal"
                       options={ingredientSelectOptions}
+                      renderLabel={renderIngredientDropdownLabel}
+                      renderTriggerLabel={renderIngredientTriggerLabel}
                       value={row.ingredientId}
                       onValueChange={(nextValue) => {
                         if (!nextValue) {

@@ -25,6 +25,9 @@ const recipeInclude = {
       group: true,
       ingredient: {
         include: {
+          category: {
+            select: { id: true, name: true, slug: true, sortOrder: true },
+          },
           unitConversions: {
             include: {
               unit: {
@@ -50,6 +53,9 @@ const recipeInclude = {
             include: {
               ingredient: {
                 include: {
+                  category: {
+                    select: { id: true, name: true, slug: true, sortOrder: true },
+                  },
                   unitConversions: {
                     include: {
                       unit: {

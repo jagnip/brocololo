@@ -118,6 +118,7 @@ export async function LogPage({
     name: ingredient.name,
     brand: ingredient.brand,
     descriptor: ingredient.descriptor,
+    category: { name: ingredient.category.name },
     defaultUnitId: ingredient.defaultUnitId,
     calories: ingredient.calories,
     proteins: ingredient.proteins,

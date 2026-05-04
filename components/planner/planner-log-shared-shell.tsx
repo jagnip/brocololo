@@ -57,6 +57,8 @@ type PlannerLogShellProps = {
     }>;
     ingredientOptions: LogIngredientOption[];
   } | null;
+  /** When true, generating again replaces the persisted list — we confirm first. */
+  hasExistingShoppingList: boolean;
 };
 
 export function PlannerLogSharedShell({
@@ -67,6 +69,7 @@ export function PlannerLogSharedShell({
   plannerRecipes,
   person,
   logData,
+  hasExistingShoppingList,
 }: PlannerLogShellProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -81,6 +84,8 @@ export function PlannerLogSharedShell({
   const [optimisticTab, setOptimisticTab] =
     useOptimistic<PlannerLogTab>(activeTab);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isOverwriteGroceryDialogOpen, setIsOverwriteGroceryDialogOpen] =
+    useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { setState: setPlanTopbarState, resetState: resetPlanTopbarState } =
     usePlanTopbarState();
@@ -97,6 +102,19 @@ export function PlannerLogSharedShell({
 
   const hasLogData = useMemo(() => logData != null, [logData]);
   const isTrackTab = displayedTab === "log";
+
+  const runGenerateGroceries = () => {
+    startGroceryTransition(async () => {
+      const result = await generateGroceryListFromPlan(planId);
+      if (result.type === "error") {
+        toast.error(result.message);
+        return;
+      }
+      toast.success("Grocery list generated.");
+      router.push(ROUTES.groceriesView(planId));
+      router.refresh();
+    });
+  };
 
   useEffect(() => {
     // Shared shell owns delete action availability for both Manage and Track tabs.
@@ -160,6 +178,33 @@ export function PlannerLogSharedShell({
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog
+        open={isOverwriteGroceryDialogOpen}
+        onOpenChange={setIsOverwriteGroceryDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Replace existing grocery list?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This plan already has a shopping list. Generating again will
+              permanently replace its contents with a new list from your current
+              meals.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setIsOverwriteGroceryDialogOpen(false);
+                runGenerateGroceries();
+              }}
+            >
+              Replace list
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-2 whitespace-nowrap">
@@ -203,16 +248,11 @@ export function PlannerLogSharedShell({
               disabled={isGeneratingGroceries || isDeleting}
               aria-busy={isGeneratingGroceries}
               onClick={() => {
-                startGroceryTransition(async () => {
-                  const result = await generateGroceryListFromPlan(planId);
-                  if (result.type === "error") {
-                    toast.error(result.message);
-                    return;
-                  }
-                  toast.success("Grocery list generated.");
-                  router.push(ROUTES.groceriesView(planId));
-                  router.refresh();
-                });
+                if (hasExistingShoppingList) {
+                  setIsOverwriteGroceryDialogOpen(true);
+                } else {
+                  runGenerateGroceries();
+                }
               }}
             >
               <span className="whitespace-nowrap">

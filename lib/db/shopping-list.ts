@@ -241,3 +241,12 @@ export async function getShoppingListByPlanId(planId: string) {
 
   return list;
 }
+
+/** True when a persisted shopping list row exists for the plan (regenerating replaces its lines). */
+export async function planHasShoppingList(planId: string): Promise<boolean> {
+  const row = await prisma.shoppingList.findUnique({
+    where: { planId },
+    select: { id: true },
+  });
+  return row != null;
+}

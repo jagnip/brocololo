@@ -37,6 +37,8 @@ type SearchableSelectProps = {
   createOptionLabel?: (searchTerm: string) => string;
   renderIcon?: (option: SearchableSelectOption) => React.ReactNode;
   renderLabel?: (option: SearchableSelectOption) => React.ReactNode;
+  /** Closed trigger only; dropdown rows still use `renderLabel` (or default). Keeps compact one-line triggers. */
+  renderTriggerLabel?: (option: SearchableSelectOption) => React.ReactNode;
   triggerIcon?: React.ReactNode;
   size?: "default" | "sm";
   className?: string;
@@ -133,10 +135,12 @@ export function SearchableSelect({
   createOptionLabel = (searchTerm) => `Create "${searchTerm}"`,
   renderIcon,
   renderLabel,
+  renderTriggerLabel,
   triggerIcon,
   size = "default",
   className,
 }: SearchableSelectProps) {
+  const triggerUsesListStyleLabel = Boolean(renderLabel && !renderTriggerLabel);
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
   const popoverContentRef = React.useRef<HTMLDivElement | null>(null);
@@ -194,16 +198,29 @@ export function SearchableSelect({
             className,
           )}
         >
-          <span className="inline-flex min-w-0 items-center gap-2">
+          <span
+            className={cn(
+              "inline-flex min-w-0 gap-2",
+              triggerUsesListStyleLabel ? "items-start" : "items-center",
+            )}
+          >
             {shouldRenderSearchableSelectIcon({
               option: selectedOption,
               hasRenderIcon: Boolean(renderIcon),
             }) ? (
               <span className="shrink-0">{renderIcon?.(selectedOption!)}</span>
             ) : null}
-            <span className={cn("truncate", !selectedOption && "font-normal")}>
+            <span
+              className={cn(
+                triggerUsesListStyleLabel
+                  ? "min-w-0 flex-1 text-left"
+                  : "truncate",
+                !selectedOption && "font-normal",
+              )}
+            >
               {selectedOption
-                ? renderLabel?.(selectedOption) ?? (
+                ? renderTriggerLabel?.(selectedOption) ??
+                  renderLabel?.(selectedOption) ?? (
                     <DefaultSearchableSelectLabel option={selectedOption} />
                   )
                 : placeholder}
@@ -242,15 +259,22 @@ export function SearchableSelect({
       <PopoverContent
         ref={popoverContentRef}
         align="start"
-        className="w-(--radix-popover-trigger-width) p-0"
+        // Dialog scroll-lock (RemoveScroll) can eat wheel events on portaled popovers; keep scrolling here.
+        onWheel={(event) => event.stopPropagation()}
+        className={cn(
+          "flex w-(--radix-popover-trigger-width) flex-col overflow-hidden p-0",
+          // Cap height to viewport so cmdk list gets a bounded flex child and can scroll (esp. inside modals).
+          "max-h-[min(22rem,var(--radix-popover-content-available-height,22rem))]",
+        )}
       >
-        <Command>
+        {/* h-auto overrides Command’s default h-full so height follows the popover cap instead of growing unbounded. */}
+        <Command className="h-auto min-h-0 flex-1 flex-col overflow-hidden">
           <CommandInput
             placeholder={searchPlaceholder}
             value={searchValue}
             onValueChange={setSearchValue}
           />
-          <CommandList className="max-h-72">
+          <CommandList className="max-h-full min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-py-1">
             <CommandEmpty>{emptyLabel}</CommandEmpty>
             <CommandGroup>
               {showCreateAction ? (
@@ -269,6 +293,7 @@ export function SearchableSelect({
                 <CommandItem
                   key={option.value}
                   value={getCommandItemValue(option)}
+                  className={renderLabel ? "items-start" : undefined}
                   onSelect={() => {
                     onValueChange(option.value);
                     setOpen(false);
@@ -277,11 +302,20 @@ export function SearchableSelect({
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
+                      renderLabel ? "mt-0.5" : undefined,
                       option.value === value ? "opacity-100" : "opacity-0",
                     )}
                   />
-                  {renderIcon ? <span className="mr-2 shrink-0">{renderIcon(option)}</span> : null}
-                  <span className="truncate">
+                  {renderIcon ? (
+                    <span className={cn("mr-2 shrink-0", renderLabel && "mt-0.5")}>
+                      {renderIcon(option)}
+                    </span>
+                  ) : null}
+                  <span
+                    className={cn(
+                      renderLabel ? "min-w-0 flex-1 text-left" : "truncate",
+                    )}
+                  >
                     {renderLabel?.(option) ?? (
                       <DefaultSearchableSelectLabel option={option} />
                     )}
