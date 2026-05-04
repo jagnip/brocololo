@@ -270,7 +270,7 @@ export async function getPlanForGroceries(planId: string) {
                       icon: true,
                       supermarketUrl: true,
                       unitConversions: true,
-                      category: { select: { name: true, sortOrder: true } },
+                      category: { select: { id: true, name: true, sortOrder: true } },
                     },
                   },
                   unit: { select: { id: true, name: true } },

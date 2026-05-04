@@ -386,6 +386,11 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   Category: 'Category',
   Plan: 'Plan',
+  GroceryIngredient: 'GroceryIngredient',
+  ShoppingLayoutPreset: 'ShoppingLayoutPreset',
+  ShoppingLayoutPresetCategory: 'ShoppingLayoutPresetCategory',
+  ShoppingList: 'ShoppingList',
+  ShoppingListItem: 'ShoppingListItem',
   PlanSlot: 'PlanSlot',
   PlanSlotAlternative: 'PlanSlotAlternative',
   Recipe: 'Recipe',
@@ -417,7 +422,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "category" | "plan" | "planSlot" | "planSlotAlternative" | "recipe" | "ingredient" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage" | "log" | "logEntry" | "logEntryRecipe" | "logIngredient"
+    modelProps: "category" | "plan" | "groceryIngredient" | "shoppingLayoutPreset" | "shoppingLayoutPresetCategory" | "shoppingList" | "shoppingListItem" | "planSlot" | "planSlotAlternative" | "recipe" | "ingredient" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage" | "log" | "logEntry" | "logEntryRecipe" | "logIngredient"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -566,6 +571,376 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.PlanCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.PlanCountAggregateOutputType> | number
+        }
+      }
+    }
+    GroceryIngredient: {
+      payload: Prisma.$GroceryIngredientPayload<ExtArgs>
+      fields: Prisma.GroceryIngredientFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.GroceryIngredientFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GroceryIngredientPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.GroceryIngredientFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GroceryIngredientPayload>
+        }
+        findFirst: {
+          args: Prisma.GroceryIngredientFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GroceryIngredientPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.GroceryIngredientFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GroceryIngredientPayload>
+        }
+        findMany: {
+          args: Prisma.GroceryIngredientFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GroceryIngredientPayload>[]
+        }
+        create: {
+          args: Prisma.GroceryIngredientCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GroceryIngredientPayload>
+        }
+        createMany: {
+          args: Prisma.GroceryIngredientCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.GroceryIngredientCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GroceryIngredientPayload>[]
+        }
+        delete: {
+          args: Prisma.GroceryIngredientDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GroceryIngredientPayload>
+        }
+        update: {
+          args: Prisma.GroceryIngredientUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GroceryIngredientPayload>
+        }
+        deleteMany: {
+          args: Prisma.GroceryIngredientDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.GroceryIngredientUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.GroceryIngredientUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GroceryIngredientPayload>[]
+        }
+        upsert: {
+          args: Prisma.GroceryIngredientUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GroceryIngredientPayload>
+        }
+        aggregate: {
+          args: Prisma.GroceryIngredientAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGroceryIngredient>
+        }
+        groupBy: {
+          args: Prisma.GroceryIngredientGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GroceryIngredientGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.GroceryIngredientCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GroceryIngredientCountAggregateOutputType> | number
+        }
+      }
+    }
+    ShoppingLayoutPreset: {
+      payload: Prisma.$ShoppingLayoutPresetPayload<ExtArgs>
+      fields: Prisma.ShoppingLayoutPresetFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ShoppingLayoutPresetFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ShoppingLayoutPresetFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetPayload>
+        }
+        findFirst: {
+          args: Prisma.ShoppingLayoutPresetFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ShoppingLayoutPresetFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetPayload>
+        }
+        findMany: {
+          args: Prisma.ShoppingLayoutPresetFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetPayload>[]
+        }
+        create: {
+          args: Prisma.ShoppingLayoutPresetCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetPayload>
+        }
+        createMany: {
+          args: Prisma.ShoppingLayoutPresetCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ShoppingLayoutPresetCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetPayload>[]
+        }
+        delete: {
+          args: Prisma.ShoppingLayoutPresetDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetPayload>
+        }
+        update: {
+          args: Prisma.ShoppingLayoutPresetUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetPayload>
+        }
+        deleteMany: {
+          args: Prisma.ShoppingLayoutPresetDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ShoppingLayoutPresetUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ShoppingLayoutPresetUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetPayload>[]
+        }
+        upsert: {
+          args: Prisma.ShoppingLayoutPresetUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetPayload>
+        }
+        aggregate: {
+          args: Prisma.ShoppingLayoutPresetAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateShoppingLayoutPreset>
+        }
+        groupBy: {
+          args: Prisma.ShoppingLayoutPresetGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShoppingLayoutPresetGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ShoppingLayoutPresetCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShoppingLayoutPresetCountAggregateOutputType> | number
+        }
+      }
+    }
+    ShoppingLayoutPresetCategory: {
+      payload: Prisma.$ShoppingLayoutPresetCategoryPayload<ExtArgs>
+      fields: Prisma.ShoppingLayoutPresetCategoryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ShoppingLayoutPresetCategoryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetCategoryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ShoppingLayoutPresetCategoryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetCategoryPayload>
+        }
+        findFirst: {
+          args: Prisma.ShoppingLayoutPresetCategoryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetCategoryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ShoppingLayoutPresetCategoryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetCategoryPayload>
+        }
+        findMany: {
+          args: Prisma.ShoppingLayoutPresetCategoryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetCategoryPayload>[]
+        }
+        create: {
+          args: Prisma.ShoppingLayoutPresetCategoryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetCategoryPayload>
+        }
+        createMany: {
+          args: Prisma.ShoppingLayoutPresetCategoryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ShoppingLayoutPresetCategoryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetCategoryPayload>[]
+        }
+        delete: {
+          args: Prisma.ShoppingLayoutPresetCategoryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetCategoryPayload>
+        }
+        update: {
+          args: Prisma.ShoppingLayoutPresetCategoryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetCategoryPayload>
+        }
+        deleteMany: {
+          args: Prisma.ShoppingLayoutPresetCategoryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ShoppingLayoutPresetCategoryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ShoppingLayoutPresetCategoryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetCategoryPayload>[]
+        }
+        upsert: {
+          args: Prisma.ShoppingLayoutPresetCategoryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingLayoutPresetCategoryPayload>
+        }
+        aggregate: {
+          args: Prisma.ShoppingLayoutPresetCategoryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateShoppingLayoutPresetCategory>
+        }
+        groupBy: {
+          args: Prisma.ShoppingLayoutPresetCategoryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShoppingLayoutPresetCategoryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ShoppingLayoutPresetCategoryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShoppingLayoutPresetCategoryCountAggregateOutputType> | number
+        }
+      }
+    }
+    ShoppingList: {
+      payload: Prisma.$ShoppingListPayload<ExtArgs>
+      fields: Prisma.ShoppingListFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ShoppingListFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ShoppingListFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListPayload>
+        }
+        findFirst: {
+          args: Prisma.ShoppingListFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ShoppingListFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListPayload>
+        }
+        findMany: {
+          args: Prisma.ShoppingListFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListPayload>[]
+        }
+        create: {
+          args: Prisma.ShoppingListCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListPayload>
+        }
+        createMany: {
+          args: Prisma.ShoppingListCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ShoppingListCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListPayload>[]
+        }
+        delete: {
+          args: Prisma.ShoppingListDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListPayload>
+        }
+        update: {
+          args: Prisma.ShoppingListUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListPayload>
+        }
+        deleteMany: {
+          args: Prisma.ShoppingListDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ShoppingListUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ShoppingListUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListPayload>[]
+        }
+        upsert: {
+          args: Prisma.ShoppingListUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListPayload>
+        }
+        aggregate: {
+          args: Prisma.ShoppingListAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateShoppingList>
+        }
+        groupBy: {
+          args: Prisma.ShoppingListGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShoppingListGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ShoppingListCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShoppingListCountAggregateOutputType> | number
+        }
+      }
+    }
+    ShoppingListItem: {
+      payload: Prisma.$ShoppingListItemPayload<ExtArgs>
+      fields: Prisma.ShoppingListItemFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ShoppingListItemFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListItemPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ShoppingListItemFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListItemPayload>
+        }
+        findFirst: {
+          args: Prisma.ShoppingListItemFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListItemPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ShoppingListItemFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListItemPayload>
+        }
+        findMany: {
+          args: Prisma.ShoppingListItemFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListItemPayload>[]
+        }
+        create: {
+          args: Prisma.ShoppingListItemCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListItemPayload>
+        }
+        createMany: {
+          args: Prisma.ShoppingListItemCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ShoppingListItemCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListItemPayload>[]
+        }
+        delete: {
+          args: Prisma.ShoppingListItemDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListItemPayload>
+        }
+        update: {
+          args: Prisma.ShoppingListItemUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListItemPayload>
+        }
+        deleteMany: {
+          args: Prisma.ShoppingListItemDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ShoppingListItemUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ShoppingListItemUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListItemPayload>[]
+        }
+        upsert: {
+          args: Prisma.ShoppingListItemUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListItemPayload>
+        }
+        aggregate: {
+          args: Prisma.ShoppingListItemAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateShoppingListItem>
+        }
+        groupBy: {
+          args: Prisma.ShoppingListItemGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShoppingListItemGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ShoppingListItemCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShoppingListItemCountAggregateOutputType> | number
         }
       }
     }
@@ -1812,6 +2187,65 @@ export const PlanScalarFieldEnum = {
 export type PlanScalarFieldEnum = (typeof PlanScalarFieldEnum)[keyof typeof PlanScalarFieldEnum]
 
 
+export const GroceryIngredientScalarFieldEnum = {
+  id: 'id',
+  ingredientId: 'ingredientId',
+  additionalInfo: 'additionalInfo',
+  substitutionsAllowed: 'substitutionsAllowed',
+  substitutionNote: 'substitutionNote'
+} as const
+
+export type GroceryIngredientScalarFieldEnum = (typeof GroceryIngredientScalarFieldEnum)[keyof typeof GroceryIngredientScalarFieldEnum]
+
+
+export const ShoppingLayoutPresetScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  isBuiltIn: 'isBuiltIn'
+} as const
+
+export type ShoppingLayoutPresetScalarFieldEnum = (typeof ShoppingLayoutPresetScalarFieldEnum)[keyof typeof ShoppingLayoutPresetScalarFieldEnum]
+
+
+export const ShoppingLayoutPresetCategoryScalarFieldEnum = {
+  id: 'id',
+  presetId: 'presetId',
+  ingredientCategoryId: 'ingredientCategoryId',
+  position: 'position'
+} as const
+
+export type ShoppingLayoutPresetCategoryScalarFieldEnum = (typeof ShoppingLayoutPresetCategoryScalarFieldEnum)[keyof typeof ShoppingLayoutPresetCategoryScalarFieldEnum]
+
+
+export const ShoppingListScalarFieldEnum = {
+  id: 'id',
+  planId: 'planId',
+  activeLayoutPresetId: 'activeLayoutPresetId',
+  createdAt: 'createdAt'
+} as const
+
+export type ShoppingListScalarFieldEnum = (typeof ShoppingListScalarFieldEnum)[keyof typeof ShoppingListScalarFieldEnum]
+
+
+export const ShoppingListItemScalarFieldEnum = {
+  id: 'id',
+  shoppingListId: 'shoppingListId',
+  groceryIngredientId: 'groceryIngredientId',
+  ingredientCategoryId: 'ingredientCategoryId',
+  displayLabel: 'displayLabel',
+  unitId: 'unitId',
+  amount: 'amount',
+  additionalInfo: 'additionalInfo',
+  substitutionsAllowed: 'substitutionsAllowed',
+  substitutionNote: 'substitutionNote',
+  purchased: 'purchased',
+  recipeAttribution: 'recipeAttribution',
+  position: 'position'
+} as const
+
+export type ShoppingListItemScalarFieldEnum = (typeof ShoppingListItemScalarFieldEnum)[keyof typeof ShoppingListItemScalarFieldEnum]
+
+
 export const PlanSlotScalarFieldEnum = {
   id: 'id',
   planId: 'planId',
@@ -2067,20 +2501,6 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
- * Reference to a field of type 'PlannerMealType'
- */
-export type EnumPlannerMealTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlannerMealType'>
-    
-
-
-/**
- * Reference to a field of type 'PlannerMealType[]'
- */
-export type ListEnumPlannerMealTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlannerMealType[]'>
-    
-
-
-/**
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
@@ -2112,6 +2532,20 @@ export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, '
  * Reference to a field of type 'Float[]'
  */
 export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+/**
+ * Reference to a field of type 'PlannerMealType'
+ */
+export type EnumPlannerMealTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlannerMealType'>
+    
+
+
+/**
+ * Reference to a field of type 'PlannerMealType[]'
+ */
+export type ListEnumPlannerMealTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlannerMealType[]'>
     
 
 
@@ -2253,6 +2687,11 @@ export type PrismaClientOptions = ({
 export type GlobalOmitConfig = {
   category?: Prisma.CategoryOmit
   plan?: Prisma.PlanOmit
+  groceryIngredient?: Prisma.GroceryIngredientOmit
+  shoppingLayoutPreset?: Prisma.ShoppingLayoutPresetOmit
+  shoppingLayoutPresetCategory?: Prisma.ShoppingLayoutPresetCategoryOmit
+  shoppingList?: Prisma.ShoppingListOmit
+  shoppingListItem?: Prisma.ShoppingListItemOmit
   planSlot?: Prisma.PlanSlotOmit
   planSlotAlternative?: Prisma.PlanSlotAlternativeOmit
   recipe?: Prisma.RecipeOmit

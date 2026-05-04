@@ -28,6 +28,31 @@ export type Category = Prisma.CategoryModel
  */
 export type Plan = Prisma.PlanModel
 /**
+ * Model GroceryIngredient
+ * 
+ */
+export type GroceryIngredient = Prisma.GroceryIngredientModel
+/**
+ * Model ShoppingLayoutPreset
+ * 
+ */
+export type ShoppingLayoutPreset = Prisma.ShoppingLayoutPresetModel
+/**
+ * Model ShoppingLayoutPresetCategory
+ * 
+ */
+export type ShoppingLayoutPresetCategory = Prisma.ShoppingLayoutPresetCategoryModel
+/**
+ * Model ShoppingList
+ * 
+ */
+export type ShoppingList = Prisma.ShoppingListModel
+/**
+ * Model ShoppingListItem
+ * 
+ */
+export type ShoppingListItem = Prisma.ShoppingListItemModel
+/**
  * Model PlanSlot
  * 
  */

@@ -599,14 +599,6 @@ export type RecipeIngredientUncheckedUpdateManyWithoutUnitNestedInput = {
   deleteMany?: Prisma.RecipeIngredientScalarWhereInput | Prisma.RecipeIngredientScalarWhereInput[]
 }
 
-export type NullableFloatFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type EnumNutritionTargetFieldUpdateOperationsInput = {
   set?: $Enums.NutritionTarget
 }

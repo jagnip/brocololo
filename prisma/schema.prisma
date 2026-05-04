@@ -49,8 +49,84 @@ model Plan {
   createdAt DateTime   @default(now()) @map("created_at")
   slots     PlanSlot[]
   log       Log?
+  shoppingList ShoppingList?
 
   @@map("plans")
+}
+
+model GroceryIngredient {
+  id                    String @id @default(cuid())
+  ingredientId          String @unique @map("ingredient_id")
+  additionalInfo        String? @map("additional_info")
+  substitutionsAllowed  Boolean @default(false) @map("substitutions_allowed")
+  substitutionNote      String? @map("substitution_note")
+
+  ingredient            Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  shoppingListItems     ShoppingListItem[]
+
+  @@map("grocery_ingredients")
+}
+
+model ShoppingLayoutPreset {
+  id        String   @id @default(cuid())
+  name      String
+  isBuiltIn Boolean  @default(false) @map("is_built_in")
+
+  categoryOrders     ShoppingLayoutPresetCategory[]
+  listsUsingAsActive ShoppingList[]
+
+  @@map("shopping_layout_presets")
+}
+
+model ShoppingLayoutPresetCategory {
+  id                   String @id @default(cuid())
+  presetId             String @map("preset_id")
+  ingredientCategoryId String @map("ingredient_category_id")
+  position             Int
+
+  preset             ShoppingLayoutPreset @relation(fields: [presetId], references: [id], onDelete: Cascade)
+  ingredientCategory IngredientCategory   @relation(fields: [ingredientCategoryId], references: [id], onDelete: Cascade)
+
+  @@unique([presetId, ingredientCategoryId])
+  @@index([presetId, position])
+  @@map("shopping_layout_preset_categories")
+}
+
+model ShoppingList {
+  id                   String   @id @default(cuid())
+  planId               String   @unique @map("plan_id")
+  activeLayoutPresetId String?  @map("active_layout_preset_id")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  plan                 Plan                  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  activeLayoutPreset   ShoppingLayoutPreset? @relation(fields: [activeLayoutPresetId], references: [id], onDelete: SetNull)
+  items                ShoppingListItem[]
+
+  @@map("shopping_lists")
+}
+
+model ShoppingListItem {
+  id                   String   @id @default(cuid())
+  shoppingListId       String   @map("shopping_list_id")
+  groceryIngredientId  String?  @map("grocery_ingredient_id")
+  ingredientCategoryId String   @map("ingredient_category_id")
+  displayLabel         String   @map("display_label")
+  unitId               String?  @map("unit_id")
+  amount               Float?
+  additionalInfo       String?  @map("additional_info")
+  substitutionsAllowed Boolean  @default(false) @map("substitutions_allowed")
+  substitutionNote     String?  @map("substitution_note")
+  purchased            Boolean  @default(false)
+  recipeAttribution    String?  @map("recipe_attribution")
+  position             Int      @default(0)
+
+  shoppingList       ShoppingList       @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+  groceryIngredient  GroceryIngredient? @relation(fields: [groceryIngredientId], references: [id], onDelete: SetNull)
+  category           IngredientCategory @relation(fields: [ingredientCategoryId], references: [id], onDelete: Restrict)
+  unit               Unit?              @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
+  @@index([shoppingListId, ingredientCategoryId, position])
+  @@map("shopping_list_items")
 }
 
 model PlanSlot {
@@ -130,6 +206,7 @@ model Ingredient {
   recipes         RecipeIngredient[]
   unitConversions IngredientUnit[]
   logIngredients  LogIngredient[]
+  groceryIngredient GroceryIngredient?
 
   @@index([categoryId])
   @@index([defaultUnitId])
@@ -146,7 +223,8 @@ model Unit {
   defaultForIngredients Ingredient[] @relation("ingredient_default_unit")
   recipeIngredients RecipeIngredient[]
   logIngredients LogIngredient[]
-  
+  shoppingListItems ShoppingListItem[]
+
   @@map("units")
 }
 
@@ -238,7 +316,9 @@ model IngredientCategory {
   slug      String       @unique
   sortOrder Int          @default(0) @map("sort_order")
 
-  ingredients Ingredient[]
+  ingredients                     Ingredient[]
+  shoppingLayoutPresetCategories ShoppingLayoutPresetCategory[]
+  shoppingListItems              ShoppingListItem[]
 
   @@map("ingredient_categories")
 }

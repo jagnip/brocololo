@@ -11,13 +11,10 @@ export type GroceryItem = {
   categorySortOrder: number;
 };
 
-export type GrocerySlotData = {
-  date: string;
-  recipe: PlanSlotData["recipe"];
-};
-
-export type GroceryPlan = {
-  slots: GrocerySlotData[];
-  startDate: string;
-  endDate: string;
+/** Aggregated planner line with FKs for persisting shopping_list_items. */
+export type ShoppingListGeneratedLine = GroceryItem & {
+  ingredientId: string;
+  ingredientCategoryId: string;
+  /** Null when amounts were rolled up to grams; resolve unit id in DB via Unit.name === "g". */
+  unitId: string | null;
 };

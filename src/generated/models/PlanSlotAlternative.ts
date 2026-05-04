@@ -383,14 +383,6 @@ export type PlanSlotAlternativeUncheckedUpdateManyWithoutPlanSlotNestedInput = {
   deleteMany?: Prisma.PlanSlotAlternativeScalarWhereInput | Prisma.PlanSlotAlternativeScalarWhereInput[]
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type PlanSlotAlternativeCreateNestedManyWithoutRecipeInput = {
   create?: Prisma.XOR<Prisma.PlanSlotAlternativeCreateWithoutRecipeInput, Prisma.PlanSlotAlternativeUncheckedCreateWithoutRecipeInput> | Prisma.PlanSlotAlternativeCreateWithoutRecipeInput[] | Prisma.PlanSlotAlternativeUncheckedCreateWithoutRecipeInput[]
   connectOrCreate?: Prisma.PlanSlotAlternativeCreateOrConnectWithoutRecipeInput | Prisma.PlanSlotAlternativeCreateOrConnectWithoutRecipeInput[]

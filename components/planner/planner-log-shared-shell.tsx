@@ -34,6 +34,7 @@ import type {
 } from "@/components/log/log-ingredients-form";
 import { useEffect, useOptimistic, useTransition } from "react";
 import { ROUTES } from "@/lib/constants";
+import { generateGroceryListFromPlan } from "@/actions/shopping-list-actions";
 
 type PersonType = "PRIMARY" | "SECONDARY";
 type PlannerLogTab = "plan" | "log";
@@ -76,6 +77,7 @@ export function PlannerLogSharedShell({
   const activeTab: PlannerLogTab =
     tabFromUrl === "log" || tabFromUrl === "plan" ? tabFromUrl : initialTab;
   const [isTabPending, startTabTransition] = useTransition();
+  const [isGeneratingGroceries, startGroceryTransition] = useTransition();
   const [optimisticTab, setOptimisticTab] =
     useOptimistic<PlannerLogTab>(activeTab);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -114,7 +116,10 @@ export function PlannerLogSharedShell({
 
   return (
     <div className="space-y-4">
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -181,13 +186,41 @@ export function PlannerLogSharedShell({
           </div>
           {/* Shared date range applies to both planner and log views. */}
           <div className="flex w-full items-center gap-2 sm:w-auto sm:min-w-[20rem] sm:max-w-md lg:min-w-[24rem] lg:max-w-lg">
-            <Label className="shrink-0 text-xs text-muted-foreground">Plan for</Label>
+            <Label className="shrink-0 text-xs text-muted-foreground">
+              Plan for
+            </Label>
             <WeekPicker
               value={dateRange}
               onChange={setDateRange}
               compact
-              className="w-full"
+              className="min-w-0 flex-1"
             />
+            <Button
+              type="button"
+              variant="outline"
+              size="default"
+              className="shrink-0 gap-2"
+              disabled={isGeneratingGroceries || isDeleting}
+              aria-busy={isGeneratingGroceries}
+              onClick={() => {
+                startGroceryTransition(async () => {
+                  const result = await generateGroceryListFromPlan(planId);
+                  if (result.type === "error") {
+                    toast.error(result.message);
+                    return;
+                  }
+                  toast.success("Grocery list generated.");
+                  router.push(ROUTES.groceriesView(planId));
+                  router.refresh();
+                });
+              }}
+            >
+              <span className="whitespace-nowrap">
+                {isGeneratingGroceries
+                  ? "Generating…"
+                  : "Generate grocery list"}
+              </span>
+            </Button>
             <Button
               type="button"
               variant="outline"
