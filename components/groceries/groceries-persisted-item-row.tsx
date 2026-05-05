@@ -69,10 +69,10 @@ export function GroceriesPersistedItemRow({ row }: GroceriesPersistedItemRowProp
   };
 
   return (
-    <li className="px-4 py-3">
+    <li className="py-0">
       <div
         className={cn(
-          "flex items-start justify-between gap-3 rounded-md",
+          "flex items-start justify-between gap-3 py-3",
           !isPending && "cursor-pointer",
           hasMeta ? "border-b border-dashed pb-3" : "",
         )}
@@ -145,7 +145,7 @@ export function GroceriesPersistedItemRow({ row }: GroceriesPersistedItemRowProp
       </div>
 
       {hasMeta ? (
-        <div className="mt-2 space-y-1 rounded-md bg-muted/50 px-3 py-2 text-sm">
+        <div className="space-y-1 bg-muted/50 px-3 py-2 text-sm">
           {row.additionalInfo ? (
             <p
               className={cn(
