@@ -93,24 +93,38 @@ export function GroceriesPersistedItemRow({ row }: GroceriesPersistedItemRowProp
         }}
       >
         <div className="flex min-w-0 flex-1 items-start gap-3">
-          <div onClick={(event) => event.stopPropagation()}>
-            <Checkbox
-              className="mt-0.5 h-5 w-5 rounded-full"
-              checked={isPurchased}
-              onCheckedChange={(checked) => onTogglePurchased(checked === true)}
-              disabled={isPending}
-              aria-label={`Mark ${row.displayLabel} as bought`}
-            />
+          <div className="self-start -mt-0.5">
+            <IngredientIcon icon={ing?.icon ?? null} name={row.displayLabel} />
           </div>
-          <IngredientIcon icon={ing?.icon ?? null} name={row.displayLabel} />
           <div className="min-w-0 space-y-1">
-            <div
-              className={cn(
-                "font-medium text-foreground",
-                isPurchased && "text-muted-foreground line-through",
-              )}
-            >
-              {row.displayLabel}
+            <div className="flex items-start gap-1">
+              <div
+                className={cn(
+                  "font-medium text-foreground",
+                  isPurchased && "text-muted-foreground line-through",
+                )}
+              >
+                {row.displayLabel}
+              </div>
+              {ing?.supermarketUrl ? (
+                <div className="self-start -mt-0.5" onClick={(event) => event.stopPropagation()}>
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="icon-sm"
+                    className={cn("h-6 w-6 p-0", isPurchased && "opacity-60")}
+                    aria-label={`Open ${row.displayLabel} in supermarket`}
+                  >
+                    <Link
+                      href={ing.supermarketUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              ) : null}
             </div>
             <div
               className={cn(
@@ -122,26 +136,17 @@ export function GroceriesPersistedItemRow({ row }: GroceriesPersistedItemRowProp
             </div>
           </div>
         </div>
-
-        {ing?.supermarketUrl ? (
+        <div className="flex shrink-0 flex-col items-center gap-1 self-start -mt-0.5">
           <div onClick={(event) => event.stopPropagation()}>
-            <Button
-              asChild
-              variant="secondary"
-              size="icon-sm"
-              className={cn("shrink-0", isPurchased && "opacity-60")}
-              aria-label={`Open ${row.displayLabel} in supermarket`}
-            >
-              <Link
-                href={ing.supermarketUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </Link>
-            </Button>
+            <Checkbox
+              className="h-5 w-5 rounded-full"
+              checked={isPurchased}
+              onCheckedChange={(checked) => onTogglePurchased(checked === true)}
+              disabled={isPending}
+              aria-label={`Mark ${row.displayLabel} as bought`}
+            />
           </div>
-        ) : null}
+        </div>
       </div>
 
       {hasMeta ? (
