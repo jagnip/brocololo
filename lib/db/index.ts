@@ -10,7 +10,20 @@ const pool = new Pool({
 
 const adapter = new PrismaPg(pool);
 
-export const prisma =
-  globalForPrisma.prisma || new PrismaClient({ adapter });
+function createPrismaClient() {
+  return new PrismaClient({ adapter });
+}
+
+const existingPrisma = globalForPrisma.prisma;
+const hasShoppingListDelegate =
+  existingPrisma != null &&
+  "shoppingList" in existingPrisma &&
+  existingPrisma.shoppingList != null;
+
+// In dev, global singletons can survive schema/client regeneration.
+// Recreate the client when expected delegates are missing.
+export const prisma = hasShoppingListDelegate
+  ? existingPrisma
+  : createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
