@@ -10,6 +10,8 @@ import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { buildLogDays, buildVisiblePlannerPoolCards } from "@/lib/log/view-model";
 import type { DateRangeValue } from "@/components/planner/date-range-picker";
 import { PlannerLogSharedShell } from "@/components/planner/planner-log-shared-shell";
+import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
+import { planHasShoppingList } from "@/lib/db/shopping-list";
 
 type PlannerLogCombinedPageProps = {
   planId: string;
@@ -80,13 +82,15 @@ export async function PlannerLogCombinedPage({
   const initialTab = tab === "log" ? "log" : "plan";
 
   // Shared page fetches both planner and log dependencies once, then delegates interactions to client.
-  const [planSlots, plannerRecipes, log, allRecipes, ingredients] = await Promise.all([
-    getPlanById(planId),
-    getRecipes(undefined, undefined, false),
-    getLogByPlanId(planId, person),
-    getRecipes(undefined),
-    getIngredients(),
-  ]);
+  const [planSlots, plannerRecipes, log, allRecipes, ingredients, hasExistingShoppingList] =
+    await Promise.all([
+      getPlanById(planId),
+      getRecipes(undefined, undefined, false),
+      getLogByPlanId(planId, person),
+      getRecipes(undefined),
+      getIngredients(),
+      planHasShoppingList(planId),
+    ]);
 
   if (!planSlots) notFound();
 
@@ -101,23 +105,7 @@ export async function PlannerLogCombinedPage({
       name: string;
       initialRows: { ingredientId: string; unitId: string; amount: number }[];
     }>;
-    ingredientOptions: Array<{
-      id: string;
-      name: string;
-      brand: string | null;
-      descriptor: string | null;
-      defaultUnitId: string | null;
-      calories: number;
-      proteins: number;
-      fats: number;
-      carbs: number;
-      unitConversions: Array<{
-        unitId: string;
-        gramsPerUnit: number;
-        unitName: string;
-        unitNamePlural: string | null;
-      }>;
-    }>;
+    ingredientOptions: LogIngredientOption[];
   } | null = null;
 
   if (log) {
@@ -150,6 +138,7 @@ export async function PlannerLogCombinedPage({
       name: ingredient.name,
       brand: ingredient.brand,
       descriptor: ingredient.descriptor,
+      category: { name: ingredient.category.name },
       defaultUnitId: ingredient.defaultUnitId,
       calories: ingredient.calories,
       proteins: ingredient.proteins,
@@ -181,6 +170,7 @@ export async function PlannerLogCombinedPage({
       plannerRecipes={plannerRecipes}
       person={person}
       logData={logData}
+      hasExistingShoppingList={hasExistingShoppingList}
     />
   );
 }

@@ -25,6 +25,9 @@ const recipeInclude = {
       group: true,
       ingredient: {
         include: {
+          category: {
+            select: { id: true, name: true, slug: true, sortOrder: true },
+          },
           unitConversions: {
             include: {
               unit: {
@@ -49,6 +52,9 @@ const recipeInclude = {
             include: {
               ingredient: {
                 include: {
+                  category: {
+                    select: { id: true, name: true, slug: true, sortOrder: true },
+                  },
                   unitConversions: {
                     include: {
                       unit: {
@@ -270,7 +276,7 @@ export async function getPlanForGroceries(planId: string) {
                       icon: true,
                       supermarketUrl: true,
                       unitConversions: true,
-                      category: { select: { name: true, sortOrder: true } },
+                      category: { select: { id: true, name: true, sortOrder: true } },
                     },
                   },
                   unit: { select: { id: true, name: true } },

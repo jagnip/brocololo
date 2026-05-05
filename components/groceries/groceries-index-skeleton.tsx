@@ -2,18 +2,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function GroceriesIndexSkeleton() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-      {/* Keep heading shape consistent with groceries index page. */}
-      <header className="flex items-center gap-2">
-        <Skeleton className="h-5 w-5 rounded-full" />
-        <Skeleton className="h-8 w-36" />
-      </header>
+    <div className="page-container space-y-8 py-8">
+      <div className="space-y-2">
+        <Skeleton className="h-9 w-40" />
+        <Skeleton className="h-4 w-full max-w-md" />
+      </div>
 
-      <div className="rounded-lg border divide-y">
+      <div className="divide-y rounded-xl border bg-card">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="p-4 flex items-center justify-between gap-3">
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-8 w-24" />
+          <div
+            key={index}
+            className="flex items-center justify-between gap-3 px-4 py-4"
+          >
+            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-9 w-24" />
           </div>
         ))}
       </div>

@@ -34,6 +34,7 @@ import type {
 } from "@/components/log/log-ingredients-form";
 import { useEffect, useOptimistic, useTransition } from "react";
 import { ROUTES } from "@/lib/constants";
+import { generateGroceryListFromPlan } from "@/actions/shopping-list-actions";
 
 type PersonType = "PRIMARY" | "SECONDARY";
 type PlannerLogTab = "plan" | "log";
@@ -56,6 +57,8 @@ type PlannerLogShellProps = {
     }>;
     ingredientOptions: LogIngredientOption[];
   } | null;
+  /** When true, generating again replaces the persisted list — we confirm first. */
+  hasExistingShoppingList: boolean;
 };
 
 export function PlannerLogSharedShell({
@@ -66,6 +69,7 @@ export function PlannerLogSharedShell({
   plannerRecipes,
   person,
   logData,
+  hasExistingShoppingList,
 }: PlannerLogShellProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -76,9 +80,12 @@ export function PlannerLogSharedShell({
   const activeTab: PlannerLogTab =
     tabFromUrl === "log" || tabFromUrl === "plan" ? tabFromUrl : initialTab;
   const [isTabPending, startTabTransition] = useTransition();
+  const [isGeneratingGroceries, startGroceryTransition] = useTransition();
   const [optimisticTab, setOptimisticTab] =
     useOptimistic<PlannerLogTab>(activeTab);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isOverwriteGroceryDialogOpen, setIsOverwriteGroceryDialogOpen] =
+    useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { setState: setPlanTopbarState, resetState: resetPlanTopbarState } =
     usePlanTopbarState();
@@ -95,6 +102,19 @@ export function PlannerLogSharedShell({
 
   const hasLogData = useMemo(() => logData != null, [logData]);
   const isTrackTab = displayedTab === "log";
+
+  const runGenerateGroceries = () => {
+    startGroceryTransition(async () => {
+      const result = await generateGroceryListFromPlan(planId);
+      if (result.type === "error") {
+        toast.error(result.message);
+        return;
+      }
+      toast.success("Grocery list generated.");
+      router.push(ROUTES.groceriesView(planId));
+      router.refresh();
+    });
+  };
 
   useEffect(() => {
     // Shared shell owns delete action availability for both Manage and Track tabs.
@@ -114,7 +134,10 @@ export function PlannerLogSharedShell({
 
   return (
     <div className="space-y-4">
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -155,6 +178,33 @@ export function PlannerLogSharedShell({
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog
+        open={isOverwriteGroceryDialogOpen}
+        onOpenChange={setIsOverwriteGroceryDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Replace existing grocery list?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This plan already has a shopping list. Generating again will
+              permanently replace its contents with a new list from your current
+              meals.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setIsOverwriteGroceryDialogOpen(false);
+                runGenerateGroceries();
+              }}
+            >
+              Replace list
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-2 whitespace-nowrap">
@@ -181,13 +231,36 @@ export function PlannerLogSharedShell({
           </div>
           {/* Shared date range applies to both planner and log views. */}
           <div className="flex w-full items-center gap-2 sm:w-auto sm:min-w-[20rem] sm:max-w-md lg:min-w-[24rem] lg:max-w-lg">
-            <Label className="shrink-0 text-xs text-muted-foreground">Plan for</Label>
+            <Label className="shrink-0 text-xs text-muted-foreground">
+              Plan for
+            </Label>
             <WeekPicker
               value={dateRange}
               onChange={setDateRange}
               compact
-              className="w-full"
+              className="min-w-0 flex-1"
             />
+            <Button
+              type="button"
+              variant="outline"
+              size="default"
+              className="shrink-0 gap-2"
+              disabled={isGeneratingGroceries || isDeleting}
+              aria-busy={isGeneratingGroceries}
+              onClick={() => {
+                if (hasExistingShoppingList) {
+                  setIsOverwriteGroceryDialogOpen(true);
+                } else {
+                  runGenerateGroceries();
+                }
+              }}
+            >
+              <span className="whitespace-nowrap">
+                {isGeneratingGroceries
+                  ? "Generating…"
+                  : "Generate grocery list"}
+              </span>
+            </Button>
             <Button
               type="button"
               variant="outline"

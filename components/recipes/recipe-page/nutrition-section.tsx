@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useRecipePageNutritionSectionData } from "@/components/context/recipe-page-context";
 import {
@@ -49,9 +50,7 @@ export function NutritionSection() {
         <NutritionPersonSummaryRow
           personLabel="Nelson"
           caloriesArea={
-            <span className="type-body text-foreground">
-              {nelsonNutrition.calories} kcal
-            </span>
+            <Badge variant="secondary">{nelsonNutrition.calories} kcal</Badge>
           }
           protein={nelsonNutrition.protein}
           fat={nelsonNutrition.fat}

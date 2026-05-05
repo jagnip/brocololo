@@ -4,10 +4,6 @@ import type { ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
 
-/** Macro badge cluster — left-aligned with name + calories (`gap-tight` matches recipe form preview). */
-const MACRO_BADGE_ROW_CLASSNAME =
-  "flex shrink-0 flex-nowrap items-center gap-tight";
-
 /** Bordered card shell matching recipe page nutrition blocks (`border-border`, `bg-card`). */
 export function NutritionPersonCard({ children }: { children: ReactNode }) {
   return (
@@ -41,8 +37,9 @@ export function NutritionPersonSummaryRow({
       <span className="w-[52px] shrink-0 type-body leading-4 text-muted-foreground">
         {personLabel}
       </span>
-      {caloriesArea}
-      <div className={MACRO_BADGE_ROW_CLASSNAME}>
+      {/* One flex-wrap lane: kcal (or input) and each macro badge wrap to the next row one chip at a time. */}
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-tight">
+        {caloriesArea}
         <Badge variant="secondary">{protein}g protein</Badge>
         <Badge variant="secondary">{fat}g fat</Badge>
         <Badge variant="secondary">{carbs}g carbs</Badge>

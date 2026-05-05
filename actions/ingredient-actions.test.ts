@@ -84,6 +84,12 @@ function makeIngredientRecord() {
     fats: 1,
     carbs: 0,
     categoryId: "category-1",
+    category: {
+      id: "category-1",
+      name: "Meat",
+      slug: "meat",
+      sortOrder: 0,
+    },
     defaultUnitId: "unit-g",
     createdAt: new Date(),
     updatedAt: new Date(),

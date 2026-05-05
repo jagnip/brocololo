@@ -20,8 +20,13 @@ import {
   SearchableSelect,
   SearchableSelectOption,
 } from "@/components/ui/searchable-select";
+import {
+  buildIngredientSearchSourceMap,
+  ingredientsToSearchableSelectOptions,
+  renderIngredientSearchDropdownLabel,
+  renderIngredientSearchTriggerLabel,
+} from "@/components/ingredients/ingredient-searchable-select-labels";
 import { IngredientIcon } from "@/components/ingredient-icon";
-import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
 import {
   getDefaultUnitIdForIngredient as resolveDefaultUnitIdForIngredient,
@@ -343,24 +348,40 @@ export function IngredientSelector({
   const dragPointerYRef = React.useRef<number | null>(null);
   const autoScrollFrameRef = React.useRef<number | null>(null);
   const isDraggingRef = React.useRef(false);
-  // Keep option transformation memoized for smoother typing in cmdk.
-  const ingredientOptions = React.useMemo<SearchableSelectOption[]>(
+  const ingredientSelectSources = React.useMemo(
     () =>
       ingredients.map((ingredient) => ({
-        value: ingredient.id,
-        label: getIngredientDisplayName(
-          ingredient.name,
-          ingredient.brand,
-          ingredient.descriptor,
-        ),
+        id: ingredient.id,
+        name: ingredient.name,
+        brand: ingredient.brand,
+        descriptor: ingredient.descriptor,
         icon: ingredient.icon,
-        // Search both canonical name and descriptor while keeping brand secondary.
-        searchText:
-          ingredient.brand || ingredient.descriptor
-            ? [ingredient.name, ingredient.descriptor].filter(Boolean).join(" ")
-            : undefined,
+        category: ingredient.category,
       })),
     [ingredients],
+  );
+
+  const ingredientByIdForSelect = React.useMemo(
+    () => buildIngredientSearchSourceMap(ingredientSelectSources),
+    [ingredientSelectSources],
+  );
+
+  // Keep option list memoized for smoother typing in cmdk.
+  const ingredientOptions = React.useMemo(
+    () => ingredientsToSearchableSelectOptions(ingredientSelectSources),
+    [ingredientSelectSources],
+  );
+
+  const renderRecipeFormIngredientLabel = React.useCallback(
+    (option: SearchableSelectOption) =>
+      renderIngredientSearchDropdownLabel(option, ingredientByIdForSelect),
+    [ingredientByIdForSelect],
+  );
+
+  const renderRecipeFormIngredientTriggerLabel = React.useCallback(
+    (option: SearchableSelectOption) =>
+      renderIngredientSearchTriggerLabel(option, ingredientByIdForSelect),
+    [ingredientByIdForSelect],
   );
 
   const normalizedGroups = React.useMemo(
@@ -738,6 +759,8 @@ export function IngredientSelector({
                 <SearchableSelect
                   className="min-w-0 max-w-full"
                   options={ingredientOptions}
+                  renderLabel={renderRecipeFormIngredientLabel}
+                  renderTriggerLabel={renderRecipeFormIngredientTriggerLabel}
                   value={item.ingredientId || null}
                   onValueChange={(next) => {
                     if (!next) {

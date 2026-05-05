@@ -1,25 +1,22 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
+/** Loading state for persisted groceries plan view (title + category sections). */
 export function GroceriesPlanSkeleton() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-      {/* Align with groceries plan view (title + date chips + grouped list). */}
-      <Skeleton className="h-8 w-36" />
-
-      <div className="flex flex-wrap gap-2">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <Skeleton key={index} className="h-8 w-24 rounded-md" />
-        ))}
+    <div className="page-container space-y-8 py-8">
+      <div className="space-y-2">
+        <Skeleton className="h-9 w-72 max-w-full" />
+        <Skeleton className="h-4 w-96 max-w-full" />
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         {Array.from({ length: 3 }).map((_, index) => (
-          <section key={index} className="space-y-2">
-            <Skeleton className="h-6 w-40" />
-            <div className="space-y-2">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
+          <section key={index} className="space-y-3">
+            <Skeleton className="h-5 w-40" />
+            <div className="space-y-0 rounded-xl border bg-card px-4 py-2">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
             </div>
           </section>
         ))}

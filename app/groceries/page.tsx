@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, ShoppingCart } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
 import { getPlans } from "@/lib/db/planner";
 import { Button } from "@/components/ui/button";
@@ -9,41 +9,48 @@ function formatDateRange(start: Date, end: Date): string {
     month: "short",
     day: "numeric",
   };
-
   const startStr = start.toLocaleDateString("en-US", options);
   const endStr = end.toLocaleDateString("en-US", options);
-  return `${startStr} - ${endStr}`;
+  return `${startStr} – ${endStr}`;
 }
 
 export default async function GroceriesPage() {
-  // Render a real index page instead of redirecting.
   const plans = await getPlans();
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-      <header className="flex items-center gap-2">
-        <ShoppingCart className="h-5 w-5 text-muted-foreground" />
-        <h1 className="text-2xl font-semibold">Groceries</h1>
+    <div className="page-container space-y-8 py-8">
+      <header className="space-y-1">
+        <h1 className="type-h1">Groceries</h1>
+        <p className="text-sm text-muted-foreground max-w-prose">
+          Open a saved grocery list for one of your meal plans, or generate a
+          new list from the plan page.
+        </p>
       </header>
 
       {plans.length === 0 ? (
-        <section className="rounded-lg border p-6 space-y-3">
+        <section className="rounded-xl border bg-card p-8 space-y-4 max-w-lg">
           <h2 className="text-lg font-medium">No plan available</h2>
           <p className="text-sm text-muted-foreground">
-            Groceries are generated from meal plans. Create a plan first.
+            Create a meal plan first, then generate a grocery list from it.
           </p>
           <Button asChild>
             <Link href={ROUTES.planCreate}>Create a plan</Link>
           </Button>
         </section>
       ) : (
-        <ul className="rounded-lg border divide-y">
+        <ul className="divide-y rounded-xl border bg-card">
           {plans.map((plan) => {
             const label = formatDateRange(plan.startDate, plan.endDate);
             return (
-              <li key={plan.id} className="p-4 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
+              <li
+                key={plan.id}
+                className="flex flex-wrap items-center justify-between gap-3 px-4 py-4"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <CalendarDays
+                    className="h-4 w-4 shrink-0 text-muted-foreground"
+                    aria-hidden
+                  />
                   <span className="font-medium">{label}</span>
                 </div>
                 <Button asChild variant="outline" size="default">

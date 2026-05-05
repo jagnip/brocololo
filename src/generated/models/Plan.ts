@@ -176,6 +176,7 @@ export type PlanWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Plan"> | Date | string
   slots?: Prisma.PlanSlotListRelationFilter
   log?: Prisma.XOR<Prisma.LogNullableScalarRelationFilter, Prisma.LogWhereInput> | null
+  shoppingList?: Prisma.XOR<Prisma.ShoppingListNullableScalarRelationFilter, Prisma.ShoppingListWhereInput> | null
 }
 
 export type PlanOrderByWithRelationInput = {
@@ -185,6 +186,7 @@ export type PlanOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   slots?: Prisma.PlanSlotOrderByRelationAggregateInput
   log?: Prisma.LogOrderByWithRelationInput
+  shoppingList?: Prisma.ShoppingListOrderByWithRelationInput
 }
 
 export type PlanWhereUniqueInput = Prisma.AtLeast<{
@@ -197,6 +199,7 @@ export type PlanWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Plan"> | Date | string
   slots?: Prisma.PlanSlotListRelationFilter
   log?: Prisma.XOR<Prisma.LogNullableScalarRelationFilter, Prisma.LogWhereInput> | null
+  shoppingList?: Prisma.XOR<Prisma.ShoppingListNullableScalarRelationFilter, Prisma.ShoppingListWhereInput> | null
 }, "id">
 
 export type PlanOrderByWithAggregationInput = {
@@ -226,6 +229,7 @@ export type PlanCreateInput = {
   createdAt?: Date | string
   slots?: Prisma.PlanSlotCreateNestedManyWithoutPlanInput
   log?: Prisma.LogCreateNestedOneWithoutPlanInput
+  shoppingList?: Prisma.ShoppingListCreateNestedOneWithoutPlanInput
 }
 
 export type PlanUncheckedCreateInput = {
@@ -235,6 +239,7 @@ export type PlanUncheckedCreateInput = {
   createdAt?: Date | string
   slots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutPlanInput
   log?: Prisma.LogUncheckedCreateNestedOneWithoutPlanInput
+  shoppingList?: Prisma.ShoppingListUncheckedCreateNestedOneWithoutPlanInput
 }
 
 export type PlanUpdateInput = {
@@ -244,6 +249,7 @@ export type PlanUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   slots?: Prisma.PlanSlotUpdateManyWithoutPlanNestedInput
   log?: Prisma.LogUpdateOneWithoutPlanNestedInput
+  shoppingList?: Prisma.ShoppingListUpdateOneWithoutPlanNestedInput
 }
 
 export type PlanUncheckedUpdateInput = {
@@ -253,6 +259,7 @@ export type PlanUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   slots?: Prisma.PlanSlotUncheckedUpdateManyWithoutPlanNestedInput
   log?: Prisma.LogUncheckedUpdateOneWithoutPlanNestedInput
+  shoppingList?: Prisma.ShoppingListUncheckedUpdateOneWithoutPlanNestedInput
 }
 
 export type PlanCreateManyInput = {
@@ -306,6 +313,20 @@ export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
 }
 
+export type PlanCreateNestedOneWithoutShoppingListInput = {
+  create?: Prisma.XOR<Prisma.PlanCreateWithoutShoppingListInput, Prisma.PlanUncheckedCreateWithoutShoppingListInput>
+  connectOrCreate?: Prisma.PlanCreateOrConnectWithoutShoppingListInput
+  connect?: Prisma.PlanWhereUniqueInput
+}
+
+export type PlanUpdateOneRequiredWithoutShoppingListNestedInput = {
+  create?: Prisma.XOR<Prisma.PlanCreateWithoutShoppingListInput, Prisma.PlanUncheckedCreateWithoutShoppingListInput>
+  connectOrCreate?: Prisma.PlanCreateOrConnectWithoutShoppingListInput
+  upsert?: Prisma.PlanUpsertWithoutShoppingListInput
+  connect?: Prisma.PlanWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PlanUpdateToOneWithWhereWithoutShoppingListInput, Prisma.PlanUpdateWithoutShoppingListInput>, Prisma.PlanUncheckedUpdateWithoutShoppingListInput>
+}
+
 export type PlanCreateNestedOneWithoutSlotsInput = {
   create?: Prisma.XOR<Prisma.PlanCreateWithoutSlotsInput, Prisma.PlanUncheckedCreateWithoutSlotsInput>
   connectOrCreate?: Prisma.PlanCreateOrConnectWithoutSlotsInput
@@ -334,12 +355,65 @@ export type PlanUpdateOneRequiredWithoutLogNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.PlanUpdateToOneWithWhereWithoutLogInput, Prisma.PlanUpdateWithoutLogInput>, Prisma.PlanUncheckedUpdateWithoutLogInput>
 }
 
+export type PlanCreateWithoutShoppingListInput = {
+  id?: string
+  startDate: Date | string
+  endDate: Date | string
+  createdAt?: Date | string
+  slots?: Prisma.PlanSlotCreateNestedManyWithoutPlanInput
+  log?: Prisma.LogCreateNestedOneWithoutPlanInput
+}
+
+export type PlanUncheckedCreateWithoutShoppingListInput = {
+  id?: string
+  startDate: Date | string
+  endDate: Date | string
+  createdAt?: Date | string
+  slots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutPlanInput
+  log?: Prisma.LogUncheckedCreateNestedOneWithoutPlanInput
+}
+
+export type PlanCreateOrConnectWithoutShoppingListInput = {
+  where: Prisma.PlanWhereUniqueInput
+  create: Prisma.XOR<Prisma.PlanCreateWithoutShoppingListInput, Prisma.PlanUncheckedCreateWithoutShoppingListInput>
+}
+
+export type PlanUpsertWithoutShoppingListInput = {
+  update: Prisma.XOR<Prisma.PlanUpdateWithoutShoppingListInput, Prisma.PlanUncheckedUpdateWithoutShoppingListInput>
+  create: Prisma.XOR<Prisma.PlanCreateWithoutShoppingListInput, Prisma.PlanUncheckedCreateWithoutShoppingListInput>
+  where?: Prisma.PlanWhereInput
+}
+
+export type PlanUpdateToOneWithWhereWithoutShoppingListInput = {
+  where?: Prisma.PlanWhereInput
+  data: Prisma.XOR<Prisma.PlanUpdateWithoutShoppingListInput, Prisma.PlanUncheckedUpdateWithoutShoppingListInput>
+}
+
+export type PlanUpdateWithoutShoppingListInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  slots?: Prisma.PlanSlotUpdateManyWithoutPlanNestedInput
+  log?: Prisma.LogUpdateOneWithoutPlanNestedInput
+}
+
+export type PlanUncheckedUpdateWithoutShoppingListInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  slots?: Prisma.PlanSlotUncheckedUpdateManyWithoutPlanNestedInput
+  log?: Prisma.LogUncheckedUpdateOneWithoutPlanNestedInput
+}
+
 export type PlanCreateWithoutSlotsInput = {
   id?: string
   startDate: Date | string
   endDate: Date | string
   createdAt?: Date | string
   log?: Prisma.LogCreateNestedOneWithoutPlanInput
+  shoppingList?: Prisma.ShoppingListCreateNestedOneWithoutPlanInput
 }
 
 export type PlanUncheckedCreateWithoutSlotsInput = {
@@ -348,6 +422,7 @@ export type PlanUncheckedCreateWithoutSlotsInput = {
   endDate: Date | string
   createdAt?: Date | string
   log?: Prisma.LogUncheckedCreateNestedOneWithoutPlanInput
+  shoppingList?: Prisma.ShoppingListUncheckedCreateNestedOneWithoutPlanInput
 }
 
 export type PlanCreateOrConnectWithoutSlotsInput = {
@@ -372,6 +447,7 @@ export type PlanUpdateWithoutSlotsInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   log?: Prisma.LogUpdateOneWithoutPlanNestedInput
+  shoppingList?: Prisma.ShoppingListUpdateOneWithoutPlanNestedInput
 }
 
 export type PlanUncheckedUpdateWithoutSlotsInput = {
@@ -380,6 +456,7 @@ export type PlanUncheckedUpdateWithoutSlotsInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   log?: Prisma.LogUncheckedUpdateOneWithoutPlanNestedInput
+  shoppingList?: Prisma.ShoppingListUncheckedUpdateOneWithoutPlanNestedInput
 }
 
 export type PlanCreateWithoutLogInput = {
@@ -388,6 +465,7 @@ export type PlanCreateWithoutLogInput = {
   endDate: Date | string
   createdAt?: Date | string
   slots?: Prisma.PlanSlotCreateNestedManyWithoutPlanInput
+  shoppingList?: Prisma.ShoppingListCreateNestedOneWithoutPlanInput
 }
 
 export type PlanUncheckedCreateWithoutLogInput = {
@@ -396,6 +474,7 @@ export type PlanUncheckedCreateWithoutLogInput = {
   endDate: Date | string
   createdAt?: Date | string
   slots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutPlanInput
+  shoppingList?: Prisma.ShoppingListUncheckedCreateNestedOneWithoutPlanInput
 }
 
 export type PlanCreateOrConnectWithoutLogInput = {
@@ -420,6 +499,7 @@ export type PlanUpdateWithoutLogInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   slots?: Prisma.PlanSlotUpdateManyWithoutPlanNestedInput
+  shoppingList?: Prisma.ShoppingListUpdateOneWithoutPlanNestedInput
 }
 
 export type PlanUncheckedUpdateWithoutLogInput = {
@@ -428,6 +508,7 @@ export type PlanUncheckedUpdateWithoutLogInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   slots?: Prisma.PlanSlotUncheckedUpdateManyWithoutPlanNestedInput
+  shoppingList?: Prisma.ShoppingListUncheckedUpdateOneWithoutPlanNestedInput
 }
 
 
@@ -468,6 +549,7 @@ export type PlanSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   createdAt?: boolean
   slots?: boolean | Prisma.Plan$slotsArgs<ExtArgs>
   log?: boolean | Prisma.Plan$logArgs<ExtArgs>
+  shoppingList?: boolean | Prisma.Plan$shoppingListArgs<ExtArgs>
   _count?: boolean | Prisma.PlanCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["plan"]>
 
@@ -496,6 +578,7 @@ export type PlanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type PlanInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   slots?: boolean | Prisma.Plan$slotsArgs<ExtArgs>
   log?: boolean | Prisma.Plan$logArgs<ExtArgs>
+  shoppingList?: boolean | Prisma.Plan$shoppingListArgs<ExtArgs>
   _count?: boolean | Prisma.PlanCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type PlanIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -506,6 +589,7 @@ export type $PlanPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     slots: Prisma.$PlanSlotPayload<ExtArgs>[]
     log: Prisma.$LogPayload<ExtArgs> | null
+    shoppingList: Prisma.$ShoppingListPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -908,6 +992,7 @@ export interface Prisma__PlanClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   slots<T extends Prisma.Plan$slotsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Plan$slotsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlanSlotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   log<T extends Prisma.Plan$logArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Plan$logArgs<ExtArgs>>): Prisma.Prisma__LogClient<runtime.Types.Result.GetResult<Prisma.$LogPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  shoppingList<T extends Prisma.Plan$shoppingListArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Plan$shoppingListArgs<ExtArgs>>): Prisma.Prisma__ShoppingListClient<runtime.Types.Result.GetResult<Prisma.$ShoppingListPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1369,6 +1454,25 @@ export type Plan$logArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs =
    */
   include?: Prisma.LogInclude<ExtArgs> | null
   where?: Prisma.LogWhereInput
+}
+
+/**
+ * Plan.shoppingList
+ */
+export type Plan$shoppingListArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ShoppingList
+   */
+  select?: Prisma.ShoppingListSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ShoppingList
+   */
+  omit?: Prisma.ShoppingListOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShoppingListInclude<ExtArgs> | null
+  where?: Prisma.ShoppingListWhereInput
 }
 
 /**

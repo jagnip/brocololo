@@ -58,6 +58,7 @@ export function createMockIngredient(overrides?: Partial<{
   carbs: number;
   supermarketUrl: string | null;
   categoryId: string;
+  category: { id: string; name: string; slug: string; sortOrder: number };
   defaultUnitId: string | null;
   unitConversions: Array<{
     ingredientId: string;
@@ -68,7 +69,8 @@ export function createMockIngredient(overrides?: Partial<{
 }>) {
   const defaultId = 'ingredient-1';
   const defaultUnitId = 'unit-grams';
-  
+  const defaultCategoryId = 'category-1';
+
   return {
     id: defaultId,
     name: 'Chicken Breast',
@@ -76,12 +78,18 @@ export function createMockIngredient(overrides?: Partial<{
     descriptor: null,
     slug: 'chicken-breast',
     icon: null,
-    calories: 165, 
-    proteins: 31, 
-    fats: 3.6, 
-    carbs: 0, 
+    calories: 165,
+    proteins: 31,
+    fats: 3.6,
+    carbs: 0,
     supermarketUrl: null,
-    categoryId: 'category-1',
+    categoryId: defaultCategoryId,
+    category: {
+      id: defaultCategoryId,
+      name: 'Meat',
+      slug: 'meat',
+      sortOrder: 0,
+    },
     // Keep fixtures aligned with IngredientType, which now requires defaultUnitId.
     defaultUnitId,
     unitConversions: [

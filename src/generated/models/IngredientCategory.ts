@@ -209,6 +209,8 @@ export type IngredientCategoryWhereInput = {
   slug?: Prisma.StringFilter<"IngredientCategory"> | string
   sortOrder?: Prisma.IntFilter<"IngredientCategory"> | number
   ingredients?: Prisma.IngredientListRelationFilter
+  shoppingLayoutPresetCategories?: Prisma.ShoppingLayoutPresetCategoryListRelationFilter
+  shoppingListItems?: Prisma.ShoppingListItemListRelationFilter
 }
 
 export type IngredientCategoryOrderByWithRelationInput = {
@@ -217,6 +219,8 @@ export type IngredientCategoryOrderByWithRelationInput = {
   slug?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
   ingredients?: Prisma.IngredientOrderByRelationAggregateInput
+  shoppingLayoutPresetCategories?: Prisma.ShoppingLayoutPresetCategoryOrderByRelationAggregateInput
+  shoppingListItems?: Prisma.ShoppingListItemOrderByRelationAggregateInput
 }
 
 export type IngredientCategoryWhereUniqueInput = Prisma.AtLeast<{
@@ -228,6 +232,8 @@ export type IngredientCategoryWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.IngredientCategoryWhereInput | Prisma.IngredientCategoryWhereInput[]
   sortOrder?: Prisma.IntFilter<"IngredientCategory"> | number
   ingredients?: Prisma.IngredientListRelationFilter
+  shoppingLayoutPresetCategories?: Prisma.ShoppingLayoutPresetCategoryListRelationFilter
+  shoppingListItems?: Prisma.ShoppingListItemListRelationFilter
 }, "id" | "name" | "slug">
 
 export type IngredientCategoryOrderByWithAggregationInput = {
@@ -258,6 +264,8 @@ export type IngredientCategoryCreateInput = {
   slug: string
   sortOrder?: number
   ingredients?: Prisma.IngredientCreateNestedManyWithoutCategoryInput
+  shoppingLayoutPresetCategories?: Prisma.ShoppingLayoutPresetCategoryCreateNestedManyWithoutIngredientCategoryInput
+  shoppingListItems?: Prisma.ShoppingListItemCreateNestedManyWithoutCategoryInput
 }
 
 export type IngredientCategoryUncheckedCreateInput = {
@@ -266,6 +274,8 @@ export type IngredientCategoryUncheckedCreateInput = {
   slug: string
   sortOrder?: number
   ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutCategoryInput
+  shoppingLayoutPresetCategories?: Prisma.ShoppingLayoutPresetCategoryUncheckedCreateNestedManyWithoutIngredientCategoryInput
+  shoppingListItems?: Prisma.ShoppingListItemUncheckedCreateNestedManyWithoutCategoryInput
 }
 
 export type IngredientCategoryUpdateInput = {
@@ -274,6 +284,8 @@ export type IngredientCategoryUpdateInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   ingredients?: Prisma.IngredientUpdateManyWithoutCategoryNestedInput
+  shoppingLayoutPresetCategories?: Prisma.ShoppingLayoutPresetCategoryUpdateManyWithoutIngredientCategoryNestedInput
+  shoppingListItems?: Prisma.ShoppingListItemUpdateManyWithoutCategoryNestedInput
 }
 
 export type IngredientCategoryUncheckedUpdateInput = {
@@ -282,6 +294,8 @@ export type IngredientCategoryUncheckedUpdateInput = {
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutCategoryNestedInput
+  shoppingLayoutPresetCategories?: Prisma.ShoppingLayoutPresetCategoryUncheckedUpdateManyWithoutIngredientCategoryNestedInput
+  shoppingListItems?: Prisma.ShoppingListItemUncheckedUpdateManyWithoutCategoryNestedInput
 }
 
 export type IngredientCategoryCreateManyInput = {
@@ -339,6 +353,34 @@ export type IngredientCategorySumOrderByAggregateInput = {
   sortOrder?: Prisma.SortOrder
 }
 
+export type IngredientCategoryCreateNestedOneWithoutShoppingLayoutPresetCategoriesInput = {
+  create?: Prisma.XOR<Prisma.IngredientCategoryCreateWithoutShoppingLayoutPresetCategoriesInput, Prisma.IngredientCategoryUncheckedCreateWithoutShoppingLayoutPresetCategoriesInput>
+  connectOrCreate?: Prisma.IngredientCategoryCreateOrConnectWithoutShoppingLayoutPresetCategoriesInput
+  connect?: Prisma.IngredientCategoryWhereUniqueInput
+}
+
+export type IngredientCategoryUpdateOneRequiredWithoutShoppingLayoutPresetCategoriesNestedInput = {
+  create?: Prisma.XOR<Prisma.IngredientCategoryCreateWithoutShoppingLayoutPresetCategoriesInput, Prisma.IngredientCategoryUncheckedCreateWithoutShoppingLayoutPresetCategoriesInput>
+  connectOrCreate?: Prisma.IngredientCategoryCreateOrConnectWithoutShoppingLayoutPresetCategoriesInput
+  upsert?: Prisma.IngredientCategoryUpsertWithoutShoppingLayoutPresetCategoriesInput
+  connect?: Prisma.IngredientCategoryWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.IngredientCategoryUpdateToOneWithWhereWithoutShoppingLayoutPresetCategoriesInput, Prisma.IngredientCategoryUpdateWithoutShoppingLayoutPresetCategoriesInput>, Prisma.IngredientCategoryUncheckedUpdateWithoutShoppingLayoutPresetCategoriesInput>
+}
+
+export type IngredientCategoryCreateNestedOneWithoutShoppingListItemsInput = {
+  create?: Prisma.XOR<Prisma.IngredientCategoryCreateWithoutShoppingListItemsInput, Prisma.IngredientCategoryUncheckedCreateWithoutShoppingListItemsInput>
+  connectOrCreate?: Prisma.IngredientCategoryCreateOrConnectWithoutShoppingListItemsInput
+  connect?: Prisma.IngredientCategoryWhereUniqueInput
+}
+
+export type IngredientCategoryUpdateOneRequiredWithoutShoppingListItemsNestedInput = {
+  create?: Prisma.XOR<Prisma.IngredientCategoryCreateWithoutShoppingListItemsInput, Prisma.IngredientCategoryUncheckedCreateWithoutShoppingListItemsInput>
+  connectOrCreate?: Prisma.IngredientCategoryCreateOrConnectWithoutShoppingListItemsInput
+  upsert?: Prisma.IngredientCategoryUpsertWithoutShoppingListItemsInput
+  connect?: Prisma.IngredientCategoryWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.IngredientCategoryUpdateToOneWithWhereWithoutShoppingListItemsInput, Prisma.IngredientCategoryUpdateWithoutShoppingListItemsInput>, Prisma.IngredientCategoryUncheckedUpdateWithoutShoppingListItemsInput>
+}
+
 export type IngredientCategoryCreateNestedOneWithoutIngredientsInput = {
   create?: Prisma.XOR<Prisma.IngredientCategoryCreateWithoutIngredientsInput, Prisma.IngredientCategoryUncheckedCreateWithoutIngredientsInput>
   connectOrCreate?: Prisma.IngredientCategoryCreateOrConnectWithoutIngredientsInput
@@ -353,11 +395,117 @@ export type IngredientCategoryUpdateOneRequiredWithoutIngredientsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.IngredientCategoryUpdateToOneWithWhereWithoutIngredientsInput, Prisma.IngredientCategoryUpdateWithoutIngredientsInput>, Prisma.IngredientCategoryUncheckedUpdateWithoutIngredientsInput>
 }
 
+export type IngredientCategoryCreateWithoutShoppingLayoutPresetCategoriesInput = {
+  id?: string
+  name: string
+  slug: string
+  sortOrder?: number
+  ingredients?: Prisma.IngredientCreateNestedManyWithoutCategoryInput
+  shoppingListItems?: Prisma.ShoppingListItemCreateNestedManyWithoutCategoryInput
+}
+
+export type IngredientCategoryUncheckedCreateWithoutShoppingLayoutPresetCategoriesInput = {
+  id?: string
+  name: string
+  slug: string
+  sortOrder?: number
+  ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutCategoryInput
+  shoppingListItems?: Prisma.ShoppingListItemUncheckedCreateNestedManyWithoutCategoryInput
+}
+
+export type IngredientCategoryCreateOrConnectWithoutShoppingLayoutPresetCategoriesInput = {
+  where: Prisma.IngredientCategoryWhereUniqueInput
+  create: Prisma.XOR<Prisma.IngredientCategoryCreateWithoutShoppingLayoutPresetCategoriesInput, Prisma.IngredientCategoryUncheckedCreateWithoutShoppingLayoutPresetCategoriesInput>
+}
+
+export type IngredientCategoryUpsertWithoutShoppingLayoutPresetCategoriesInput = {
+  update: Prisma.XOR<Prisma.IngredientCategoryUpdateWithoutShoppingLayoutPresetCategoriesInput, Prisma.IngredientCategoryUncheckedUpdateWithoutShoppingLayoutPresetCategoriesInput>
+  create: Prisma.XOR<Prisma.IngredientCategoryCreateWithoutShoppingLayoutPresetCategoriesInput, Prisma.IngredientCategoryUncheckedCreateWithoutShoppingLayoutPresetCategoriesInput>
+  where?: Prisma.IngredientCategoryWhereInput
+}
+
+export type IngredientCategoryUpdateToOneWithWhereWithoutShoppingLayoutPresetCategoriesInput = {
+  where?: Prisma.IngredientCategoryWhereInput
+  data: Prisma.XOR<Prisma.IngredientCategoryUpdateWithoutShoppingLayoutPresetCategoriesInput, Prisma.IngredientCategoryUncheckedUpdateWithoutShoppingLayoutPresetCategoriesInput>
+}
+
+export type IngredientCategoryUpdateWithoutShoppingLayoutPresetCategoriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  ingredients?: Prisma.IngredientUpdateManyWithoutCategoryNestedInput
+  shoppingListItems?: Prisma.ShoppingListItemUpdateManyWithoutCategoryNestedInput
+}
+
+export type IngredientCategoryUncheckedUpdateWithoutShoppingLayoutPresetCategoriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutCategoryNestedInput
+  shoppingListItems?: Prisma.ShoppingListItemUncheckedUpdateManyWithoutCategoryNestedInput
+}
+
+export type IngredientCategoryCreateWithoutShoppingListItemsInput = {
+  id?: string
+  name: string
+  slug: string
+  sortOrder?: number
+  ingredients?: Prisma.IngredientCreateNestedManyWithoutCategoryInput
+  shoppingLayoutPresetCategories?: Prisma.ShoppingLayoutPresetCategoryCreateNestedManyWithoutIngredientCategoryInput
+}
+
+export type IngredientCategoryUncheckedCreateWithoutShoppingListItemsInput = {
+  id?: string
+  name: string
+  slug: string
+  sortOrder?: number
+  ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutCategoryInput
+  shoppingLayoutPresetCategories?: Prisma.ShoppingLayoutPresetCategoryUncheckedCreateNestedManyWithoutIngredientCategoryInput
+}
+
+export type IngredientCategoryCreateOrConnectWithoutShoppingListItemsInput = {
+  where: Prisma.IngredientCategoryWhereUniqueInput
+  create: Prisma.XOR<Prisma.IngredientCategoryCreateWithoutShoppingListItemsInput, Prisma.IngredientCategoryUncheckedCreateWithoutShoppingListItemsInput>
+}
+
+export type IngredientCategoryUpsertWithoutShoppingListItemsInput = {
+  update: Prisma.XOR<Prisma.IngredientCategoryUpdateWithoutShoppingListItemsInput, Prisma.IngredientCategoryUncheckedUpdateWithoutShoppingListItemsInput>
+  create: Prisma.XOR<Prisma.IngredientCategoryCreateWithoutShoppingListItemsInput, Prisma.IngredientCategoryUncheckedCreateWithoutShoppingListItemsInput>
+  where?: Prisma.IngredientCategoryWhereInput
+}
+
+export type IngredientCategoryUpdateToOneWithWhereWithoutShoppingListItemsInput = {
+  where?: Prisma.IngredientCategoryWhereInput
+  data: Prisma.XOR<Prisma.IngredientCategoryUpdateWithoutShoppingListItemsInput, Prisma.IngredientCategoryUncheckedUpdateWithoutShoppingListItemsInput>
+}
+
+export type IngredientCategoryUpdateWithoutShoppingListItemsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  ingredients?: Prisma.IngredientUpdateManyWithoutCategoryNestedInput
+  shoppingLayoutPresetCategories?: Prisma.ShoppingLayoutPresetCategoryUpdateManyWithoutIngredientCategoryNestedInput
+}
+
+export type IngredientCategoryUncheckedUpdateWithoutShoppingListItemsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutCategoryNestedInput
+  shoppingLayoutPresetCategories?: Prisma.ShoppingLayoutPresetCategoryUncheckedUpdateManyWithoutIngredientCategoryNestedInput
+}
+
 export type IngredientCategoryCreateWithoutIngredientsInput = {
   id?: string
   name: string
   slug: string
   sortOrder?: number
+  shoppingLayoutPresetCategories?: Prisma.ShoppingLayoutPresetCategoryCreateNestedManyWithoutIngredientCategoryInput
+  shoppingListItems?: Prisma.ShoppingListItemCreateNestedManyWithoutCategoryInput
 }
 
 export type IngredientCategoryUncheckedCreateWithoutIngredientsInput = {
@@ -365,6 +513,8 @@ export type IngredientCategoryUncheckedCreateWithoutIngredientsInput = {
   name: string
   slug: string
   sortOrder?: number
+  shoppingLayoutPresetCategories?: Prisma.ShoppingLayoutPresetCategoryUncheckedCreateNestedManyWithoutIngredientCategoryInput
+  shoppingListItems?: Prisma.ShoppingListItemUncheckedCreateNestedManyWithoutCategoryInput
 }
 
 export type IngredientCategoryCreateOrConnectWithoutIngredientsInput = {
@@ -388,6 +538,8 @@ export type IngredientCategoryUpdateWithoutIngredientsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  shoppingLayoutPresetCategories?: Prisma.ShoppingLayoutPresetCategoryUpdateManyWithoutIngredientCategoryNestedInput
+  shoppingListItems?: Prisma.ShoppingListItemUpdateManyWithoutCategoryNestedInput
 }
 
 export type IngredientCategoryUncheckedUpdateWithoutIngredientsInput = {
@@ -395,6 +547,8 @@ export type IngredientCategoryUncheckedUpdateWithoutIngredientsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  shoppingLayoutPresetCategories?: Prisma.ShoppingLayoutPresetCategoryUncheckedUpdateManyWithoutIngredientCategoryNestedInput
+  shoppingListItems?: Prisma.ShoppingListItemUncheckedUpdateManyWithoutCategoryNestedInput
 }
 
 
@@ -404,10 +558,14 @@ export type IngredientCategoryUncheckedUpdateWithoutIngredientsInput = {
 
 export type IngredientCategoryCountOutputType = {
   ingredients: number
+  shoppingLayoutPresetCategories: number
+  shoppingListItems: number
 }
 
 export type IngredientCategoryCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   ingredients?: boolean | IngredientCategoryCountOutputTypeCountIngredientsArgs
+  shoppingLayoutPresetCategories?: boolean | IngredientCategoryCountOutputTypeCountShoppingLayoutPresetCategoriesArgs
+  shoppingListItems?: boolean | IngredientCategoryCountOutputTypeCountShoppingListItemsArgs
 }
 
 /**
@@ -427,6 +585,20 @@ export type IngredientCategoryCountOutputTypeCountIngredientsArgs<ExtArgs extend
   where?: Prisma.IngredientWhereInput
 }
 
+/**
+ * IngredientCategoryCountOutputType without action
+ */
+export type IngredientCategoryCountOutputTypeCountShoppingLayoutPresetCategoriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ShoppingLayoutPresetCategoryWhereInput
+}
+
+/**
+ * IngredientCategoryCountOutputType without action
+ */
+export type IngredientCategoryCountOutputTypeCountShoppingListItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ShoppingListItemWhereInput
+}
+
 
 export type IngredientCategorySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -434,6 +606,8 @@ export type IngredientCategorySelect<ExtArgs extends runtime.Types.Extensions.In
   slug?: boolean
   sortOrder?: boolean
   ingredients?: boolean | Prisma.IngredientCategory$ingredientsArgs<ExtArgs>
+  shoppingLayoutPresetCategories?: boolean | Prisma.IngredientCategory$shoppingLayoutPresetCategoriesArgs<ExtArgs>
+  shoppingListItems?: boolean | Prisma.IngredientCategory$shoppingListItemsArgs<ExtArgs>
   _count?: boolean | Prisma.IngredientCategoryCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["ingredientCategory"]>
 
@@ -461,6 +635,8 @@ export type IngredientCategorySelectScalar = {
 export type IngredientCategoryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "slug" | "sortOrder", ExtArgs["result"]["ingredientCategory"]>
 export type IngredientCategoryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   ingredients?: boolean | Prisma.IngredientCategory$ingredientsArgs<ExtArgs>
+  shoppingLayoutPresetCategories?: boolean | Prisma.IngredientCategory$shoppingLayoutPresetCategoriesArgs<ExtArgs>
+  shoppingListItems?: boolean | Prisma.IngredientCategory$shoppingListItemsArgs<ExtArgs>
   _count?: boolean | Prisma.IngredientCategoryCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type IngredientCategoryIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -470,6 +646,8 @@ export type $IngredientCategoryPayload<ExtArgs extends runtime.Types.Extensions.
   name: "IngredientCategory"
   objects: {
     ingredients: Prisma.$IngredientPayload<ExtArgs>[]
+    shoppingLayoutPresetCategories: Prisma.$ShoppingLayoutPresetCategoryPayload<ExtArgs>[]
+    shoppingListItems: Prisma.$ShoppingListItemPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -871,6 +1049,8 @@ readonly fields: IngredientCategoryFieldRefs;
 export interface Prisma__IngredientCategoryClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   ingredients<T extends Prisma.IngredientCategory$ingredientsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.IngredientCategory$ingredientsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IngredientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  shoppingLayoutPresetCategories<T extends Prisma.IngredientCategory$shoppingLayoutPresetCategoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.IngredientCategory$shoppingLayoutPresetCategoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShoppingLayoutPresetCategoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  shoppingListItems<T extends Prisma.IngredientCategory$shoppingListItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.IngredientCategory$shoppingListItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShoppingListItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1313,6 +1493,54 @@ export type IngredientCategory$ingredientsArgs<ExtArgs extends runtime.Types.Ext
   take?: number
   skip?: number
   distinct?: Prisma.IngredientScalarFieldEnum | Prisma.IngredientScalarFieldEnum[]
+}
+
+/**
+ * IngredientCategory.shoppingLayoutPresetCategories
+ */
+export type IngredientCategory$shoppingLayoutPresetCategoriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ShoppingLayoutPresetCategory
+   */
+  select?: Prisma.ShoppingLayoutPresetCategorySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ShoppingLayoutPresetCategory
+   */
+  omit?: Prisma.ShoppingLayoutPresetCategoryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShoppingLayoutPresetCategoryInclude<ExtArgs> | null
+  where?: Prisma.ShoppingLayoutPresetCategoryWhereInput
+  orderBy?: Prisma.ShoppingLayoutPresetCategoryOrderByWithRelationInput | Prisma.ShoppingLayoutPresetCategoryOrderByWithRelationInput[]
+  cursor?: Prisma.ShoppingLayoutPresetCategoryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ShoppingLayoutPresetCategoryScalarFieldEnum | Prisma.ShoppingLayoutPresetCategoryScalarFieldEnum[]
+}
+
+/**
+ * IngredientCategory.shoppingListItems
+ */
+export type IngredientCategory$shoppingListItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ShoppingListItem
+   */
+  select?: Prisma.ShoppingListItemSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ShoppingListItem
+   */
+  omit?: Prisma.ShoppingListItemOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShoppingListItemInclude<ExtArgs> | null
+  where?: Prisma.ShoppingListItemWhereInput
+  orderBy?: Prisma.ShoppingListItemOrderByWithRelationInput | Prisma.ShoppingListItemOrderByWithRelationInput[]
+  cursor?: Prisma.ShoppingListItemWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ShoppingListItemScalarFieldEnum | Prisma.ShoppingListItemScalarFieldEnum[]
 }
 
 /**

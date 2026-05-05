@@ -53,6 +53,11 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   Category: 'Category',
   Plan: 'Plan',
+  GroceryIngredient: 'GroceryIngredient',
+  ShoppingLayoutPreset: 'ShoppingLayoutPreset',
+  ShoppingLayoutPresetCategory: 'ShoppingLayoutPresetCategory',
+  ShoppingList: 'ShoppingList',
+  ShoppingListItem: 'ShoppingListItem',
   PlanSlot: 'PlanSlot',
   PlanSlotAlternative: 'PlanSlotAlternative',
   Recipe: 'Recipe',
@@ -105,6 +110,65 @@ export const PlanScalarFieldEnum = {
 } as const
 
 export type PlanScalarFieldEnum = (typeof PlanScalarFieldEnum)[keyof typeof PlanScalarFieldEnum]
+
+
+export const GroceryIngredientScalarFieldEnum = {
+  id: 'id',
+  ingredientId: 'ingredientId',
+  additionalInfo: 'additionalInfo',
+  substitutionsAllowed: 'substitutionsAllowed',
+  substitutionNote: 'substitutionNote'
+} as const
+
+export type GroceryIngredientScalarFieldEnum = (typeof GroceryIngredientScalarFieldEnum)[keyof typeof GroceryIngredientScalarFieldEnum]
+
+
+export const ShoppingLayoutPresetScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  isBuiltIn: 'isBuiltIn'
+} as const
+
+export type ShoppingLayoutPresetScalarFieldEnum = (typeof ShoppingLayoutPresetScalarFieldEnum)[keyof typeof ShoppingLayoutPresetScalarFieldEnum]
+
+
+export const ShoppingLayoutPresetCategoryScalarFieldEnum = {
+  id: 'id',
+  presetId: 'presetId',
+  ingredientCategoryId: 'ingredientCategoryId',
+  position: 'position'
+} as const
+
+export type ShoppingLayoutPresetCategoryScalarFieldEnum = (typeof ShoppingLayoutPresetCategoryScalarFieldEnum)[keyof typeof ShoppingLayoutPresetCategoryScalarFieldEnum]
+
+
+export const ShoppingListScalarFieldEnum = {
+  id: 'id',
+  planId: 'planId',
+  activeLayoutPresetId: 'activeLayoutPresetId',
+  createdAt: 'createdAt'
+} as const
+
+export type ShoppingListScalarFieldEnum = (typeof ShoppingListScalarFieldEnum)[keyof typeof ShoppingListScalarFieldEnum]
+
+
+export const ShoppingListItemScalarFieldEnum = {
+  id: 'id',
+  shoppingListId: 'shoppingListId',
+  groceryIngredientId: 'groceryIngredientId',
+  ingredientCategoryId: 'ingredientCategoryId',
+  displayLabel: 'displayLabel',
+  unitId: 'unitId',
+  amount: 'amount',
+  additionalInfo: 'additionalInfo',
+  substitutionsAllowed: 'substitutionsAllowed',
+  substitutionNote: 'substitutionNote',
+  purchased: 'purchased',
+  recipeAttribution: 'recipeAttribution',
+  position: 'position'
+} as const
+
+export type ShoppingListItemScalarFieldEnum = (typeof ShoppingListItemScalarFieldEnum)[keyof typeof ShoppingListItemScalarFieldEnum]
 
 
 export const PlanSlotScalarFieldEnum = {

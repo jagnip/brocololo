@@ -10,6 +10,11 @@
  */
 export type * from './models/Category'
 export type * from './models/Plan'
+export type * from './models/GroceryIngredient'
+export type * from './models/ShoppingLayoutPreset'
+export type * from './models/ShoppingLayoutPresetCategory'
+export type * from './models/ShoppingList'
+export type * from './models/ShoppingListItem'
 export type * from './models/PlanSlot'
 export type * from './models/PlanSlotAlternative'
 export type * from './models/Recipe'
