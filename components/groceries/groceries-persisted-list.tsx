@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { getShoppingListByPlanId } from "@/lib/db/shopping-list";
 import { formatAmount } from "@/lib/groceries/helpers";
+import { getUnitDisplayName } from "@/lib/recipes/helpers";
 import { IngredientIcon } from "@/components/ingredient-icon";
 
 export type GroceriesPersistedListModel = NonNullable<
@@ -8,13 +9,25 @@ export type GroceriesPersistedListModel = NonNullable<
 >;
 
 function formatDateRange(start: Date, end: Date): string {
-  const options: Intl.DateTimeFormatOptions = {
+  const sameMonth =
+    start.getFullYear() === end.getFullYear() &&
+    start.getMonth() === end.getMonth();
+
+  if (sameMonth) {
+    // Match requested format like "2 - 7 May".
+    const month = end.toLocaleDateString("en-US", { month: "short" });
+    return `${start.getDate()} - ${end.getDate()} ${month}`;
+  }
+
+  const startStr = start.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-  };
-  const startStr = start.toLocaleDateString("en-US", options);
-  const endStr = end.toLocaleDateString("en-US", options);
-  return `${startStr} – ${endStr}`;
+  });
+  const endStr = end.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+  return `${startStr} - ${endStr}`;
 }
 
 /** Read-only groceries list from persisted `ShoppingList` rows (grouped by ingredient category). */
@@ -37,9 +50,6 @@ export function GroceriesPersistedList({ list }: { list: GroceriesPersistedListM
     <div className="space-y-8">
       <header className="space-y-1">
         <h1 className="type-h1">Groceries for {rangeLabel}</h1>
-        <p className="text-sm text-muted-foreground">
-          From your meal plan — grouped by ingredient category.
-        </p>
       </header>
 
       <div className="space-y-8">
@@ -48,15 +58,21 @@ export function GroceriesPersistedList({ list }: { list: GroceriesPersistedListM
             <h2 className="text-base font-semibold tracking-tight text-foreground">
               {section.title}
             </h2>
-            <ul className="divide-y rounded-xl border bg-card">
+            <ul className="divide-y">
               {section.rows.map((row) => {
                 const ing = row.groceryIngredient?.ingredient;
                 const icon = ing?.icon ?? null;
                 const url = ing?.supermarketUrl ?? null;
+                const displayUnit = getUnitDisplayName({
+                  amount: row.amount,
+                  unitName: row.unit?.name ?? null,
+                  // Use irregular plural labels when available.
+                  unitNamePlural: row.unit?.namePlural ?? null,
+                });
                 const amountRight =
                   row.amount !== null
-                    ? `${formatAmount(row.amount)} ${row.unit?.name ?? ""}`.trim()
-                    : (row.unit?.name ?? "—");
+                    ? `${formatAmount(row.amount)} ${displayUnit}`.trim()
+                    : (displayUnit || "—");
 
                 return (
                   <li
@@ -78,14 +94,9 @@ export function GroceriesPersistedList({ list }: { list: GroceriesPersistedListM
                         ) : (
                           <span className="font-medium">{row.displayLabel}</span>
                         )}
-                        {row.recipeAttribution ? (
-                          <p className="truncate text-sm text-muted-foreground">
-                            {row.recipeAttribution}
-                          </p>
-                        ) : null}
                       </div>
                     </div>
-                    <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+                    <span className="shrink-0 text-sm tabular-nums">
                       {amountRight}
                     </span>
                   </li>
