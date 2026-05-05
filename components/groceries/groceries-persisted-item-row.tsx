@@ -107,12 +107,12 @@ export function GroceriesPersistedItemRow({ row }: GroceriesPersistedItemRowProp
                 {row.displayLabel}
               </div>
               {ing?.supermarketUrl ? (
-                <div className="self-start -mt-0.5" onClick={(event) => event.stopPropagation()}>
+                <div className="self-start" onClick={(event) => event.stopPropagation()}>
                   <Button
                     asChild
                     variant="ghost"
                     size="icon-sm"
-                    className={cn("h-6 w-6 p-0", isPurchased && "opacity-60")}
+                  className="h-6 w-6 p-0 text-muted-foreground hover:text-muted-foreground [&_svg]:text-muted-foreground [&_svg]:opacity-70"
                     aria-label={`Open ${row.displayLabel} in supermarket`}
                   >
                     <Link
