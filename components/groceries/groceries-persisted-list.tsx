@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRightLeft, CircleAlert } from "lucide-react";
 import type { getShoppingListByPlanId } from "@/lib/db/shopping-list";
 import { formatAmount } from "@/lib/groceries/helpers";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
@@ -94,6 +95,18 @@ export function GroceriesPersistedList({ list }: { list: GroceriesPersistedListM
                         ) : (
                           <span className="font-medium">{row.displayLabel}</span>
                         )}
+                        {row.additionalInfo ? (
+                          <p className="mt-1 flex items-center gap-2 text-sm text-orange-700 dark:text-orange-400">
+                            <CircleAlert className="h-4 w-4 shrink-0" aria-hidden />
+                            {row.additionalInfo}
+                          </p>
+                        ) : null}
+                        {row.substitutionsAllowed && row.substitutionNote ? (
+                          <p className="mt-1 flex items-center gap-2 text-sm text-primary">
+                            <ArrowRightLeft className="h-4 w-4 shrink-0" aria-hidden />
+                            {row.substitutionNote}
+                          </p>
+                        ) : null}
                       </div>
                     </div>
                     <span className="shrink-0 text-sm tabular-nums">

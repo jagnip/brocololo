@@ -110,6 +110,7 @@ export async function getIngredientBySlug(slug: string) {
         },
         orderBy: { unit: { name: "asc" } },
       },
+      groceryIngredient: true,
     },
   });
 }
@@ -166,7 +167,13 @@ export async function findIngredientIdentityDuplicate(input: {
 export async function createIngredient(
   data: IngredientPayload & { slug: string },
 ) {
-  const { unitConversions, ...ingredientData } = data;
+  const {
+    unitConversions,
+    groceryAdditionalInfo,
+    grocerySubstitutionNote,
+    grocerySubstitutionsAllowed,
+    ...ingredientData
+  } = data;
 
   return prisma.$transaction(async (tx) => {
     const ingredient = await tx.ingredient.create({
@@ -182,6 +189,22 @@ export async function createIngredient(
       })),
     });
 
+    // Keep ingredient-level grocery defaults in sync with ingredient create/edit flows.
+    await tx.groceryIngredient.upsert({
+      where: { ingredientId: ingredient.id },
+      create: {
+        ingredientId: ingredient.id,
+        additionalInfo: groceryAdditionalInfo,
+        substitutionNote: grocerySubstitutionNote,
+        substitutionsAllowed: grocerySubstitutionsAllowed,
+      },
+      update: {
+        additionalInfo: groceryAdditionalInfo,
+        substitutionNote: grocerySubstitutionNote,
+        substitutionsAllowed: grocerySubstitutionsAllowed,
+      },
+    });
+
     return tx.ingredient.findUniqueOrThrow({
       where: { id: ingredient.id },
       include: {
@@ -191,6 +214,7 @@ export async function createIngredient(
         unitConversions: {
           include: { unit: true },
         },
+        groceryIngredient: true,
       },
     });
   });
@@ -302,7 +326,13 @@ export async function updateIngredient(
   data: IngredientPayload & { slug: string },
   options: { gramsUnitId: string },
 ) {
-  const { unitConversions, ...ingredientData } = data;
+  const {
+    unitConversions,
+    groceryAdditionalInfo,
+    grocerySubstitutionNote,
+    grocerySubstitutionsAllowed,
+    ...ingredientData
+  } = data;
 
   return prisma.$transaction(async (tx) => {
     const existingConversions = await tx.ingredientUnit.findMany({
@@ -385,6 +415,21 @@ export async function updateIngredient(
       })),
     });
 
+    await tx.groceryIngredient.upsert({
+      where: { ingredientId },
+      create: {
+        ingredientId,
+        additionalInfo: groceryAdditionalInfo,
+        substitutionNote: grocerySubstitutionNote,
+        substitutionsAllowed: grocerySubstitutionsAllowed,
+      },
+      update: {
+        additionalInfo: groceryAdditionalInfo,
+        substitutionNote: grocerySubstitutionNote,
+        substitutionsAllowed: grocerySubstitutionsAllowed,
+      },
+    });
+
     const ingredient = await tx.ingredient.findUniqueOrThrow({
       where: { id: ingredientId },
       include: {
@@ -394,6 +439,7 @@ export async function updateIngredient(
         unitConversions: {
           include: { unit: true },
         },
+        groceryIngredient: true,
       },
     });
     return { ingredient, fallbackStats };

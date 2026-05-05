@@ -63,6 +63,9 @@ function makeValidIngredientFormValues(): IngredientFormValues {
     categoryId: "category-1",
     // Keep fixtures aligned with current ingredient schema requirements.
     defaultUnitId: "unit-g",
+    groceryAdditionalInfo: null,
+    grocerySubstitutionNote: null,
+    grocerySubstitutionsAllowed: false,
     unitConversions: [
       { unitId: "unit-g", gramsPerUnit: 1 },
       { unitId: "unit-cup", gramsPerUnit: 120 },
@@ -144,6 +147,25 @@ describe("inline ingredient save actions", () => {
 
     expect(createIngredient).toHaveBeenCalledWith(
       expect.objectContaining({ descriptor: "skinless" }),
+    );
+  });
+
+  it("forwards grocery defaults when creating ingredient inline", async () => {
+    vi.mocked(createIngredient).mockResolvedValue(makeIngredientRecord());
+
+    await createIngredientInlineAction({
+      ...makeValidIngredientFormValues(),
+      groceryAdditionalInfo: "organic",
+      grocerySubstitutionNote: "spinach works too",
+      grocerySubstitutionsAllowed: true,
+    });
+
+    expect(createIngredient).toHaveBeenCalledWith(
+      expect.objectContaining({
+        groceryAdditionalInfo: "organic",
+        grocerySubstitutionNote: "spinach works too",
+        grocerySubstitutionsAllowed: true,
+      }),
     );
   });
 

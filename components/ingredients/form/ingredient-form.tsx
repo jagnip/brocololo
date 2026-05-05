@@ -58,6 +58,7 @@ import { RenameUnitDialog } from "./rename-unit-dialog";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { PageHeader } from "@/components/page-header";
+import { SubstitutionsAllowedControl } from "@/components/groceries/substitutions-allowed-control";
 
 type IngredientFormProps = {
   categories: Array<{ id: string; name: string }>;
@@ -77,6 +78,11 @@ type IngredientFormProps = {
     carbs: number;
     categoryId: string;
     defaultUnitId: string | null;
+    groceryIngredient?: {
+      additionalInfo: string | null;
+      substitutionsAllowed: boolean;
+      substitutionNote: string | null;
+    } | null;
     unitConversions: Array<{
       unitId: string;
       gramsPerUnit: number;
@@ -156,6 +162,11 @@ export default function IngredientForm({
           carbs: ingredient.carbs,
           categoryId: ingredient.categoryId,
           defaultUnitId: ingredient.defaultUnitId,
+          groceryAdditionalInfo: ingredient.groceryIngredient?.additionalInfo ?? null,
+          grocerySubstitutionNote:
+            ingredient.groceryIngredient?.substitutionNote ?? null,
+          grocerySubstitutionsAllowed:
+            ingredient.groceryIngredient?.substitutionsAllowed ?? false,
           unitConversions: ingredient.unitConversions.map((conversion) => ({
             unitId: conversion.unitId,
             gramsPerUnit: conversion.gramsPerUnit,
@@ -172,6 +183,9 @@ export default function IngredientForm({
           categoryId: "",
           // Keep create flow deterministic with grams-first default.
           defaultUnitId: gramsUnitId,
+          groceryAdditionalInfo: null,
+          grocerySubstitutionNote: null,
+          grocerySubstitutionsAllowed: false,
           // Keep grams conversion in form state as canonical baseline.
           unitConversions: [{ unitId: gramsUnitId, gramsPerUnit: 1 }],
         },
@@ -844,6 +858,82 @@ export default function IngredientForm({
                 </FormItem>
               )}
             />
+          </div>
+
+          <div className="space-y-2 pt-2">
+            <Subheader className="mb-3">Groceries</Subheader>
+
+            {/* Match the same responsive form rhythm: phone 1-col, tablet 2-col, desktop 4-col. */}
+            <div
+              className={
+                mode === "page"
+                  ? "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-x-2 md:gap-y-2 lg:grid-cols-4 lg:gap-2"
+                  : "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-x-2 md:gap-y-2 lg:grid-cols-2 lg:gap-2"
+              }
+            >
+              <FormField
+                control={form.control}
+                name="grocerySubstitutionNote"
+                render={({ field }) => (
+                  <FormItem
+                    className={
+                      mode === "page"
+                        ? "order-2 md:order-2 lg:col-span-2"
+                        : "order-2 md:order-2"
+                    }
+                  >
+                    <FormLabel>Substitutions (optional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        value={field.value ?? ""}
+                        onChange={(event) => field.onChange(event.target.value)}
+                        placeholder="e.g. spinach works too"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="grocerySubstitutionsAllowed"
+                render={({ field }) => (
+                  <FormItem className="order-3 self-end gap-0 md:order-3 md:col-span-1">
+                    <FormControl>
+                      <SubstitutionsAllowedControl
+                        checked={field.value ?? false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="groceryAdditionalInfo"
+                render={({ field }) => (
+                  <FormItem
+                    className={
+                      mode === "page"
+                        ? "order-1 md:order-1 md:col-span-2 lg:col-span-3"
+                        : "order-1 md:order-1 md:col-span-2 lg:col-span-2"
+                    }
+                  >
+                    <FormLabel>Notes (optional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        value={field.value ?? ""}
+                        onChange={(event) => field.onChange(event.target.value)}
+                        placeholder="e.g. ripe, organic"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
         </div>
 

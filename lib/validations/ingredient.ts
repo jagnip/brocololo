@@ -96,6 +96,26 @@ const ingredientBaseSchema = z.object({
   unitConversions: z
     .array(ingredientUnitConversionSchema)
     .min(1, { message: "Add at least one unit conversion" }),
+  // Ingredient-scoped grocery defaults that are copied to generated shopping-list rows.
+  groceryAdditionalInfo: z
+    .string()
+    .max(200, { message: "Keep notes under 200 characters" })
+    .nullish()
+    .transform((value) => {
+      if (!value) return null;
+      const trimmed = value.trim();
+      return trimmed === "" ? null : trimmed;
+    }),
+  grocerySubstitutionNote: z
+    .string()
+    .max(200, { message: "Keep substitutions under 200 characters" })
+    .nullish()
+    .transform((value) => {
+      if (!value) return null;
+      const trimmed = value.trim();
+      return trimmed === "" ? null : trimmed;
+    }),
+  grocerySubstitutionsAllowed: z.boolean().default(false),
 });
 
 export function makeIngredientSchema(gramsUnitId: string) {
