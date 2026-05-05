@@ -72,18 +72,36 @@ export function GroceriesPersistedItemRow({ row }: GroceriesPersistedItemRowProp
     <li className="px-4 py-3">
       <div
         className={cn(
-          "flex items-start justify-between gap-3",
+          "flex items-start justify-between gap-3 rounded-md",
+          !isPending && "cursor-pointer",
           hasMeta ? "border-b border-dashed pb-3" : "",
         )}
+        role="button"
+        tabIndex={0}
+        aria-label={`Toggle bought for ${row.displayLabel}`}
+        aria-pressed={isPurchased}
+        onClick={() => {
+          if (isPending) return;
+          onTogglePurchased(!isPurchased);
+        }}
+        onKeyDown={(event) => {
+          if (isPending) return;
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onTogglePurchased(!isPurchased);
+          }
+        }}
       >
         <div className="flex min-w-0 flex-1 items-start gap-3">
-          <Checkbox
-            className="mt-0.5 h-5 w-5 rounded-full"
-            checked={isPurchased}
-            onCheckedChange={(checked) => onTogglePurchased(checked === true)}
-            disabled={isPending}
-            aria-label={`Mark ${row.displayLabel} as bought`}
-          />
+          <div onClick={(event) => event.stopPropagation()}>
+            <Checkbox
+              className="mt-0.5 h-5 w-5 rounded-full"
+              checked={isPurchased}
+              onCheckedChange={(checked) => onTogglePurchased(checked === true)}
+              disabled={isPending}
+              aria-label={`Mark ${row.displayLabel} as bought`}
+            />
+          </div>
           <IngredientIcon icon={ing?.icon ?? null} name={row.displayLabel} />
           <div className="min-w-0 space-y-1">
             <div
@@ -106,34 +124,46 @@ export function GroceriesPersistedItemRow({ row }: GroceriesPersistedItemRowProp
         </div>
 
         {ing?.supermarketUrl ? (
-          <Button
-            asChild
-            variant="secondary"
-            size="icon-sm"
-            className="shrink-0"
-            aria-label={`Open ${row.displayLabel} in supermarket`}
-          >
-            <Link
-              href={ing.supermarketUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+          <div onClick={(event) => event.stopPropagation()}>
+            <Button
+              asChild
+              variant="secondary"
+              size="icon-sm"
+              className={cn("shrink-0", isPurchased && "opacity-60")}
+              aria-label={`Open ${row.displayLabel} in supermarket`}
             >
-              <ExternalLink className="h-4 w-4" />
-            </Link>
-          </Button>
+              <Link
+                href={ing.supermarketUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
         ) : null}
       </div>
 
       {hasMeta ? (
         <div className="mt-2 space-y-1 rounded-md bg-muted/50 px-3 py-2 text-sm">
           {row.additionalInfo ? (
-            <p className="flex items-start gap-2 text-muted-foreground">
+            <p
+              className={cn(
+                "flex items-start gap-2 text-muted-foreground",
+                isPurchased && "opacity-60",
+              )}
+            >
               <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
               {row.additionalInfo}
             </p>
           ) : null}
           {row.substitutionsAllowed && row.substitutionNote ? (
-            <p className="flex items-start gap-2 text-muted-foreground">
+            <p
+              className={cn(
+                "flex items-start gap-2 text-muted-foreground",
+                isPurchased && "opacity-60",
+              )}
+            >
               <ArrowRightLeft className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
               {row.substitutionNote}
             </p>
