@@ -250,3 +250,23 @@ export async function planHasShoppingList(planId: string): Promise<boolean> {
   });
   return row != null;
 }
+
+/** Updates one shopping-list item purchased flag and returns parent plan id for revalidation. */
+export async function setShoppingListItemPurchased(input: {
+  itemId: string;
+  purchased: boolean;
+}) {
+  return prisma.shoppingListItem.update({
+    where: { id: input.itemId },
+    data: { purchased: input.purchased },
+    select: {
+      id: true,
+      purchased: true,
+      shoppingList: {
+        select: {
+          planId: true,
+        },
+      },
+    },
+  });
+}
