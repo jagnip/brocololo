@@ -1,6 +1,4 @@
-import { PlanSlotData } from "@/lib/groceries/helpers";
-
-export type GroceryItem = {
+export type ShoppingListGeneratedLine = {
   ingredientName: string;
   ingredientIcon: string | null;
   supermarketUrl: string | null;
@@ -9,10 +7,6 @@ export type GroceryItem = {
   recipeNames: string[];
   categoryName: string;
   categorySortOrder: number;
-};
-
-/** Aggregated planner line with FKs for persisting shopping_list_items. */
-export type ShoppingListGeneratedLine = GroceryItem & {
   ingredientId: string;
   ingredientCategoryId: string;
   /** Null when amounts were rolled up to grams; resolve unit id in DB via Unit.name === "g". */

@@ -1,6 +1,6 @@
 import { calculateServingScalingFactor } from "@/lib/recipes/helpers";
 import { getIngredientDisplayName } from "@/lib/ingredients/format";
-import { GroceryItem, ShoppingListGeneratedLine } from "@/types/groceries";
+import { ShoppingListGeneratedLine } from "@/types/groceries";
 
 export type PlanSlotData = {
   recipe: {
@@ -204,25 +204,11 @@ function aggregateIngredients(
   return result.sort((a, b) => a.ingredientName.localeCompare(b.ingredientName));
 }
 
-function toGroceryItem(row: ShoppingListGeneratedLine): GroceryItem {
-  const {
-    ingredientId: _i,
-    ingredientCategoryId: _c,
-    unitId: _u,
-    ...rest
-  } = row;
-  return rest;
-}
-
 export function transformPlanToShoppingListRows(
   slots: PlanSlotData[],
 ): ShoppingListGeneratedLine[] {
   const scaled = scaleIngredients(slots);
   return aggregateIngredients(scaled);
-}
-
-export function transformPlanToGroceryItems(slots: PlanSlotData[]): GroceryItem[] {
-  return transformPlanToShoppingListRows(slots).map(toGroceryItem);
 }
 
 export function formatAmount(amount: number): string {
