@@ -27,7 +27,8 @@ export default async function GroceriesEditPage({
   }
 
   return (
-    <div className="page-container py-8">
+    // Match recipes list page feel: full-width content with gutter spacing, no max-width cap.
+    <div className="w-full px-gutter pb-gutter">
       <GroceriesEditList
         list={list}
         ingredients={ingredients}

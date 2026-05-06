@@ -327,7 +327,8 @@ export function GroceriesEditList({
   );
 
   return (
-    <div className="space-y-8">
+    // Keep the edit surface stretched so both main content and right panel can use page width.
+    <div className="w-full space-y-8">
       <TopbarConfigController config={topbarConfig} />
 
       {/* Full-width sticky category navigator sits above all edit content. */}
@@ -355,7 +356,7 @@ export function GroceriesEditList({
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid w-full gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-8">
           {groupedSections.map((section) => (
             <GroceriesEditCategorySection
