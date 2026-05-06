@@ -7,6 +7,7 @@ import { saveShoppingListEditsAction } from "@/actions/shopping-list-actions";
 import { GroceriesEditCategorySection } from "@/components/groceries/groceries-edit-category-section";
 import type {
   GroceriesEditableRow,
+  GroceriesEditCategoryOption,
   GroceriesEditIngredientOption,
   GroceriesEditListModel,
   GroceriesEditUnitOption,
@@ -23,6 +24,10 @@ import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 type GroceriesEditListProps = {
   list: GroceriesEditListModel;
   ingredients: GroceriesEditIngredientOption[];
+  // All ingredient categories (sorted by sortOrder asc). Drives section
+  // rendering so categories without items still appear with their "Add item"
+  // button — that's how a user can add the first item to an empty category.
+  categories: GroceriesEditCategoryOption[];
   units: GroceriesEditUnitOption[];
 };
 
@@ -95,6 +100,7 @@ export function hasGroceriesEditChanges(
 export function GroceriesEditList({
   list,
   ingredients,
+  categories,
   units,
 }: GroceriesEditListProps) {
   const router = useRouter();
@@ -111,16 +117,6 @@ export function GroceriesEditList({
   const unitById = useMemo(
     () => new Map(units.map((unit) => [unit.id, unit] as const)),
     [units],
-  );
-  const categoryById = useMemo(
-    () =>
-      new Map(
-        ingredients.map((ingredient) => [
-          ingredient.category.id,
-          ingredient.category,
-        ] as const),
-      ),
-    [ingredients],
   );
 
   const ingredientOptionsByCategoryId = useMemo(() => {
@@ -194,6 +190,8 @@ export function GroceriesEditList({
   );
 
   const groupedSections = useMemo(() => {
+    // Bucket current rows by their category id so each section can pull its
+    // rows in O(1).
     const rowsByCategory = new Map<string, GroceriesEditableRow[]>();
     for (const row of rows) {
       const bucket = rowsByCategory.get(row.ingredientCategoryId) ?? [];
@@ -201,19 +199,15 @@ export function GroceriesEditList({
       rowsByCategory.set(row.ingredientCategoryId, bucket);
     }
 
-    return [...rowsByCategory.entries()]
-      .sort((a, b) => {
-        const leftSort = categoryById.get(a[0])?.sortOrder ?? Number.MAX_SAFE_INTEGER;
-        const rightSort = categoryById.get(b[0])?.sortOrder ?? Number.MAX_SAFE_INTEGER;
-        return leftSort - rightSort;
-      })
-      .map(([categoryId, categoryRows]) => ({
-        categoryId,
-        title: categoryById.get(categoryId)?.name ?? "Uncategorized",
-        // Preserve current row order so edits don't reshuffle items alphabetically.
-        rows: [...categoryRows],
-      }));
-  }, [categoryById, rows]);
+    // categories is pre-sorted by sortOrder asc, so we render every category
+    // in canonical order. Empty categories still appear so the "Add item"
+    // button stays reachable for them.
+    return categories.map((category) => ({
+      categoryId: category.id,
+      title: category.name,
+      rows: rowsByCategory.get(category.id) ?? [],
+    }));
+  }, [categories, rows]);
 
   const hasUnsavedChanges = useMemo(
     () => hasGroceriesEditChanges(initialRows, rows),

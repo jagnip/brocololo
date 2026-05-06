@@ -1,4 +1,7 @@
-import type { getIngredients } from "@/lib/db/ingredients";
+import type {
+  getIngredientCategories,
+  getIngredients,
+} from "@/lib/db/ingredients";
 import type { getShoppingListByPlanId } from "@/lib/db/shopping-list";
 import type { getUnits } from "@/lib/db/units";
 
@@ -8,6 +11,12 @@ export type GroceriesEditListModel = NonNullable<
 
 export type GroceriesEditIngredientOption = Awaited<
   ReturnType<typeof getIngredients>
+>[number];
+
+// Full category list, sorted by sortOrder asc. Drives section rendering in
+// the edit form so empty categories still show up with their "Add item" button.
+export type GroceriesEditCategoryOption = Awaited<
+  ReturnType<typeof getIngredientCategories>
 >[number];
 
 export type GroceriesEditUnitOption = Awaited<ReturnType<typeof getUnits>>[number];
