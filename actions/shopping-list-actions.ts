@@ -72,9 +72,22 @@ export async function saveShoppingListEditsAction(input: unknown): Promise<
   }
 
   try {
+    // Partition rows by whether they still have a name. Nameless rows are
+    // dropped from the persisted list (clearing the ingredient = soft-delete).
+    const items = parsed.data.items;
+    const itemsToUpdate = items.filter(
+      (item) => Boolean(item.ingredientId) || item.displayLabel.trim().length > 0,
+    );
+    const itemIdsToDelete = items
+      .filter(
+        (item) => !item.ingredientId && item.displayLabel.trim().length === 0,
+      )
+      .map((item) => item.id);
+
     await updateShoppingListItems({
       planId: parsed.data.planId,
-      items: parsed.data.items,
+      items: itemsToUpdate,
+      itemIdsToDelete,
     });
     revalidatePath(ROUTES.groceries);
     revalidatePath(ROUTES.groceriesView(parsed.data.planId));

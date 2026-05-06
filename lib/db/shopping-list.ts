@@ -284,6 +284,9 @@ export async function updateShoppingListItems(input: {
     substitutionsAllowed: boolean;
     substitutionNote: string | null;
   }>;
+  // IDs of rows whose name was cleared on the client; these rows are removed
+  // from the persisted list as part of this transaction.
+  itemIdsToDelete: string[];
 }) {
   return prisma.$transaction(
     async (tx) => {
@@ -295,14 +298,24 @@ export async function updateShoppingListItems(input: {
         throw new Error("SHOPPING_LIST_NOT_FOUND");
       }
 
-      const itemIds = [...new Set(input.items.map((row) => row.id))];
+      const updateIds = [...new Set(input.items.map((row) => row.id))];
+      const deleteIds = [...new Set(input.itemIdsToDelete)];
+      // Validate update + delete IDs against this list in one round-trip so
+      // callers can't sneak rows from another list into either bucket.
+      const allIds = [...new Set([...updateIds, ...deleteIds])];
       const existingRows = await tx.shoppingListItem.findMany({
-        where: { shoppingListId: list.id, id: { in: itemIds } },
+        where: { shoppingListId: list.id, id: { in: allIds } },
         select: { id: true, ingredientCategoryId: true },
       });
-      if (existingRows.length !== itemIds.length) {
-        // Guard against accidentally updating rows from another list.
+      if (existingRows.length !== allIds.length) {
+        // Guard against accidentally updating/deleting rows from another list.
         throw new Error("INVALID_ITEM_SELECTION");
+      }
+
+      if (deleteIds.length > 0) {
+        await tx.shoppingListItem.deleteMany({
+          where: { shoppingListId: list.id, id: { in: deleteIds } },
+        });
       }
 
       const ingredientIds = [

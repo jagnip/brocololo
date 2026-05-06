@@ -100,7 +100,17 @@ export function GroceriesEditRow({
           value={row.ingredientId ?? (row.displayLabel.trim() ? freeTextOptionValue : null)}
           onValueChange={(nextIngredientId) => {
             if (nextIngredientId === freeTextOptionValue) return;
-            if (!nextIngredientId) return;
+            // null = user cleared the ingredient. Strip name + quantity so the
+            // row becomes "nameless" and gets dropped on save.
+            if (!nextIngredientId) {
+              onRowChange(row.id, {
+                ingredientId: null,
+                displayLabel: "",
+                unitId: null,
+                amount: null,
+              });
+              return;
+            }
             const nextIngredient = ingredientById.get(nextIngredientId);
             if (!nextIngredient) return;
 
@@ -139,7 +149,6 @@ export function GroceriesEditRow({
           placeholder="Select ingredient..."
           searchPlaceholder="Search ingredient..."
           emptyLabel="No ingredient found."
-          allowClear={false}
         />
 
         <Input

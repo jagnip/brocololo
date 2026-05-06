@@ -11,45 +11,29 @@ const nullableTrimmedText = (max: number, message: string) =>
       return trimmed === "" ? null : trimmed;
     });
 
-export const shoppingListEditableItemSchema = z
-  .object({
-    id: z.string().min(1),
-    ingredientId: z.string().min(1).nullish().transform((value) => value ?? null),
-    ingredientCategoryId: z.string().min(1),
-    displayLabel: z.string().trim().min(1).max(120),
-    unitId: z.string().min(1).nullish().transform((value) => value ?? null),
-    amount: z.number().positive().nullish().transform((value) => value ?? null),
-    additionalInfo: nullableTrimmedText(200, "Keep notes under 200 characters."),
-    substitutionsAllowed: z.boolean(),
-    substitutionNote: nullableTrimmedText(
-      200,
-      "Keep substitutions under 200 characters.",
-    ),
-  })
-  .superRefine((row, ctx) => {
-    if (!row.ingredientId && !row.displayLabel.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["displayLabel"],
-        message: "Enter an ingredient name.",
-      });
-    }
-
-    const hasAmount = row.amount != null;
-    const hasUnit = row.unitId != null;
-    // Keep quantity semantics predictable: amount and unit should travel together.
-    if (hasAmount !== hasUnit) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["amount"],
-        message: "Amount and unit must be set together.",
-      });
-    }
-  });
+// All fields are individually optional. Rows with neither ingredientId nor a
+// non-empty displayLabel are filtered out and deleted by the action layer; the
+// schema deliberately allows them through so that "cleared" rows aren't blocked
+// at validation time. Amount and unit are independent — either can be set alone.
+export const shoppingListEditableItemSchema = z.object({
+  id: z.string().min(1),
+  ingredientId: z.string().min(1).nullish().transform((value) => value ?? null),
+  ingredientCategoryId: z.string().min(1),
+  displayLabel: z.string().trim().max(120),
+  unitId: z.string().min(1).nullish().transform((value) => value ?? null),
+  amount: z.number().positive().nullish().transform((value) => value ?? null),
+  additionalInfo: nullableTrimmedText(200, "Keep notes under 200 characters."),
+  substitutionsAllowed: z.boolean(),
+  substitutionNote: nullableTrimmedText(
+    200,
+    "Keep substitutions under 200 characters.",
+  ),
+});
 
 export const saveShoppingListEditsSchema = z.object({
   planId: z.string().min(1),
-  items: z.array(shoppingListEditableItemSchema).min(1),
+  // Allow saving even when every row was cleared (results in a full delete).
+  items: z.array(shoppingListEditableItemSchema),
 });
 
 export type SaveShoppingListEditsPayload = z.infer<
