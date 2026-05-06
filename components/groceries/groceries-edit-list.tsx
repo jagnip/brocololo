@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { saveShoppingListEditsAction } from "@/actions/shopping-list-actions";
@@ -14,12 +14,14 @@ import type {
 } from "@/components/groceries/groceries-edit-types";
 import { ROUTES } from "@/lib/constants";
 import { TopbarConfigController } from "@/components/topbar-config";
+import { badgeVariants } from "@/components/ui/badge";
 import {
   buildIngredientSearchSourceMap,
   ingredientsToSearchableSelectOptions,
   type IngredientSearchSelectSource,
 } from "@/components/ingredients/ingredient-searchable-select-labels";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
+import { cn } from "@/lib/utils";
 
 type GroceriesEditListProps = {
   list: GroceriesEditListModel;
@@ -29,28 +31,8 @@ type GroceriesEditListProps = {
   // button — that's how a user can add the first item to an empty category.
   categories: GroceriesEditCategoryOption[];
   units: GroceriesEditUnitOption[];
+  sidebar?: React.ReactNode;
 };
-
-function formatDateRange(start: Date, end: Date): string {
-  const sameMonth =
-    start.getFullYear() === end.getFullYear() &&
-    start.getMonth() === end.getMonth();
-
-  if (sameMonth) {
-    const month = end.toLocaleDateString("en-US", { month: "short" });
-    return `${start.getDate()} - ${end.getDate()} ${month}`;
-  }
-
-  const startStr = start.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-  const endStr = end.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-  return `${startStr} - ${endStr}`;
-}
 
 function toEditableRows(list: GroceriesEditListModel): GroceriesEditableRow[] {
   return list.items.map((item) => ({
@@ -102,6 +84,7 @@ export function GroceriesEditList({
   ingredients,
   categories,
   units,
+  sidebar,
 }: GroceriesEditListProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -109,6 +92,11 @@ export function GroceriesEditList({
     toEditableRows(list),
   );
   const [rows, setRows] = useState<GroceriesEditableRow[]>(() => toEditableRows(list));
+  const sectionElementByCategoryIdRef = useRef(new Map<string, HTMLElement>());
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(
+    categories[0]?.id ?? null,
+  );
+  const [optimisticCategoryId, setOptimisticCategoryId] = useState<string | null>(null);
 
   const ingredientById = useMemo(
     () => new Map(ingredients.map((ingredient) => [ingredient.id, ingredient] as const)),
@@ -208,6 +196,13 @@ export function GroceriesEditList({
       rows: rowsByCategory.get(category.id) ?? [],
     }));
   }, [categories, rows]);
+  const sectionRowCountByCategoryId = useMemo(
+    () =>
+      new Map(
+        groupedSections.map((section) => [section.categoryId, section.rows.length] as const),
+      ),
+    [groupedSections],
+  );
 
   const hasUnsavedChanges = useMemo(
     () => hasGroceriesEditChanges(initialRows, rows),
@@ -239,8 +234,60 @@ export function GroceriesEditList({
       },
     ]);
   }, []);
+  const setSectionElement = useCallback((categoryId: string, node: HTMLElement | null) => {
+    if (node) {
+      sectionElementByCategoryIdRef.current.set(categoryId, node);
+      return;
+    }
+    sectionElementByCategoryIdRef.current.delete(categoryId);
+  }, []);
+  const onCategoryBadgeClick = useCallback((categoryId: string) => {
+    // Optimistically mark the clicked section active before scroll settles.
+    setOptimisticCategoryId(categoryId);
+    const sectionElement = sectionElementByCategoryIdRef.current.get(categoryId);
+    if (!sectionElement) return;
+    sectionElement.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+  useEffect(() => {
+    // Keep a valid active section when categories change.
+    if (categories.length === 0) {
+      setActiveCategoryId(null);
+      setOptimisticCategoryId(null);
+      return;
+    }
+    setActiveCategoryId((prev) =>
+      prev && categories.some((category) => category.id === prev) ? prev : categories[0].id,
+    );
+  }, [categories]);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntries = entries.filter((entry) => entry.isIntersecting);
+        if (visibleEntries.length === 0) return;
+        const mostVisibleEntry = visibleEntries.sort(
+          (left, right) => right.intersectionRatio - left.intersectionRatio,
+        )[0];
+        const nextCategoryId = mostVisibleEntry.target.getAttribute("data-category-id");
+        if (!nextCategoryId) return;
+        setActiveCategoryId(nextCategoryId);
+        // Once scrollspy catches up with the optimistic choice, drop override.
+        setOptimisticCategoryId((prev) => (prev === nextCategoryId ? null : prev));
+      },
+      {
+        // Shift active selection slightly below sticky controls.
+        root: null,
+        rootMargin: "-120px 0px -55% 0px",
+        threshold: [0.1, 0.25, 0.5, 0.75],
+      },
+    );
+    const registeredElements = [...sectionElementByCategoryIdRef.current.values()];
+    for (const element of registeredElements) {
+      observer.observe(element);
+    }
+    return () => observer.disconnect();
+  }, [groupedSections]);
+  const selectedCategoryId = optimisticCategoryId ?? activeCategoryId;
 
-  const rangeLabel = formatDateRange(list.plan.startDate, list.plan.endDate);
   const topbarConfig = useMemo(
     () => ({
       actions: [
@@ -282,32 +329,61 @@ export function GroceriesEditList({
   return (
     <div className="space-y-8">
       <TopbarConfigController config={topbarConfig} />
-      <header className="space-y-1">
-        <h1 className="type-h1">Edit groceries for {rangeLabel}</h1>
-      </header>
 
-      <div className="space-y-8">
-        {groupedSections.map((section) => (
-          <GroceriesEditCategorySection
-            key={section.categoryId}
-            title={section.title}
-            rows={section.rows}
-            categoryId={section.categoryId}
-            ingredientOptionsByCategoryId={ingredientOptionsByCategoryId}
-            renderIngredientDropdownLabel={renderIngredientDropdownLabel}
-            renderIngredientTriggerLabel={renderIngredientTriggerLabel}
-            ingredientById={ingredientById}
-            unitById={unitById}
-            onRowChange={(rowId, next) => {
-              // Row updates are centralized here so section components stay stateless.
-              setRows((prev) =>
-                prev.map((row) => (row.id === rowId ? { ...row, ...next } : row)),
-              );
-            }}
-            onRowRemove={onRowRemove}
-            onAddRow={onAddRow}
-          />
-        ))}
+      {/* Full-width sticky category navigator sits above all edit content. */}
+      <div className="supports-backdrop-filter:bg-background/80 sticky top-14 z-30 hidden w-full bg-background/95 py-2 backdrop-blur sm:block">
+        <div className="flex w-full flex-wrap gap-2">
+          {groupedSections.map((section) => {
+            const isActive = selectedCategoryId === section.categoryId;
+            const isPopulated = (sectionRowCountByCategoryId.get(section.categoryId) ?? 0) > 0;
+            const variant = isActive ? "default" : isPopulated ? "outline" : "secondary";
+            return (
+              <button
+                key={section.categoryId}
+                type="button"
+                className={cn(
+                  badgeVariants({ variant }),
+                  "cursor-pointer transition-colors focus-visible:outline-none",
+                )}
+                aria-pressed={isActive}
+                onClick={() => onCategoryBadgeClick(section.categoryId)}
+              >
+                {section.title}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="space-y-8">
+          {groupedSections.map((section) => (
+            <GroceriesEditCategorySection
+              key={section.categoryId}
+              sectionId={`groceries-category-${section.categoryId}`}
+              sectionRef={(node) => setSectionElement(section.categoryId, node)}
+              title={section.title}
+              rows={section.rows}
+              categoryId={section.categoryId}
+              ingredientOptionsByCategoryId={ingredientOptionsByCategoryId}
+              renderIngredientDropdownLabel={renderIngredientDropdownLabel}
+              renderIngredientTriggerLabel={renderIngredientTriggerLabel}
+              ingredientById={ingredientById}
+              unitById={unitById}
+              onRowChange={(rowId, next) => {
+                // Row updates are centralized here so section components stay stateless.
+                setRows((prev) =>
+                  prev.map((row) => (row.id === rowId ? { ...row, ...next } : row)),
+                );
+              }}
+              onRowRemove={onRowRemove}
+              onAddRow={onAddRow}
+            />
+          ))}
+        </div>
+
+        {/* Keep library panel visually below the sticky category badges. */}
+        <div className="hidden lg:block lg:pt-2">{sidebar}</div>
       </div>
     </div>
   );

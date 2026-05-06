@@ -11,6 +11,8 @@ import type {
 
 type GroceriesEditCategorySectionProps = {
   categoryId: string;
+  sectionId: string;
+  sectionRef?: (node: HTMLElement | null) => void;
   title: string;
   rows: GroceriesEditableRow[];
   ingredientOptionsByCategoryId: Map<string, SearchableSelectOption[]>;
@@ -27,6 +29,8 @@ type GroceriesEditCategorySectionProps = {
 
 export function GroceriesEditCategorySection({
   categoryId,
+  sectionId,
+  sectionRef,
   title,
   rows,
   ingredientOptionsByCategoryId,
@@ -41,7 +45,12 @@ export function GroceriesEditCategorySection({
   const ingredientOptions = ingredientOptionsByCategoryId.get(categoryId) ?? [];
 
   return (
-    <section className="space-y-3">
+    <section
+      id={sectionId}
+      ref={sectionRef}
+      data-category-id={categoryId}
+      className="scroll-mt-28 space-y-3"
+    >
       <h2 className="text-base font-semibold tracking-tight text-foreground">{title}</h2>
       <div className="space-y-2">
         {rows.map((row) => (

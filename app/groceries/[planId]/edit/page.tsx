@@ -28,15 +28,13 @@ export default async function GroceriesEditPage({
 
   return (
     <div className="page-container py-8">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
-        <GroceriesEditList
-          list={list}
-          ingredients={ingredients}
-          categories={categories}
-          units={units}
-        />
-        <GroceriesEditLibraryPlaceholder className="hidden lg:block" />
-      </div>
+      <GroceriesEditList
+        list={list}
+        ingredients={ingredients}
+        categories={categories}
+        units={units}
+        sidebar={<GroceriesEditLibraryPlaceholder />}
+      />
     </div>
   );
 }
