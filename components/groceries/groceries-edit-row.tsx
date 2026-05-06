@@ -118,23 +118,25 @@ export function GroceriesEditRow({
         onChange={(event) =>
           onRowChange(row.id, { additionalInfo: event.target.value || null })
         }
-        placeholder="Additional info..."
+        placeholder="Enter additional info"
       />
 
-      <div className="grid gap-2 md:grid-cols-[12rem_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-y-2 md:grid-cols-[max-content_minmax(0,1fr)] md:gap-x-2">
         <SubstitutionsAllowedControl
           checked={row.substitutionsAllowed}
           onCheckedChange={(checked) =>
             onRowChange(row.id, { substitutionsAllowed: checked })
           }
-          className="h-10"
+          // Keep this label on one line in the dense groceries edit grid.
+          labelClassName="whitespace-nowrap"
         />
         <Input
+          className="w-full"
           value={row.substitutionNote ?? ""}
           onChange={(event) =>
             onRowChange(row.id, { substitutionNote: event.target.value || null })
           }
-          placeholder="Substitution..."
+          placeholder="Enter substitutions"
           disabled={!row.substitutionsAllowed}
         />
       </div>
