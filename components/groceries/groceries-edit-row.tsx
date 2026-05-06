@@ -199,7 +199,7 @@ export function GroceriesEditRow({
             <Button
               type="button"
               variant="outline"
-              size="icon-sm"
+              size="icon"
               className="text-muted-foreground hover:text-destructive"
               aria-label={`Remove ${row.displayLabel}`}
               onClick={() => onRowRemove(row.id)}
@@ -370,7 +370,7 @@ export function GroceriesEditRow({
           <Button
             type="button"
             variant="outline"
-            size="icon-sm"
+            size="icon"
             className="text-muted-foreground hover:text-destructive"
             aria-label={`Remove ${row.displayLabel}`}
             onClick={() => onRowRemove(row.id)}
