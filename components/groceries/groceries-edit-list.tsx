@@ -135,6 +135,7 @@ export function GroceriesEditList({
     list.activeLayoutPresetId,
   );
   const [draggingCategoryId, setDraggingCategoryId] = useState<string | null>(null);
+  const [activeBadgeDropIndex, setActiveBadgeDropIndex] = useState<number | null>(null);
   const [isReorderMode, setIsReorderMode] = useState(false);
   const [isSavePresetDialogOpen, setIsSavePresetDialogOpen] = useState(false);
   const [presetNameInput, setPresetNameInput] = useState("");
@@ -304,6 +305,21 @@ export function GroceriesEditList({
     if (!sectionElement) return;
     sectionElement.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [isReorderMode]);
+  const onDropCategoryToIndex = useCallback(
+    (targetIndex: number) => {
+      if (!draggingCategoryId) return;
+      setCategoryOrderIds((prev) =>
+        moveCategoryIdToIndex({
+          categoryIds: prev,
+          movedCategoryId: draggingCategoryId,
+          targetIndex,
+        }),
+      );
+      setActiveBadgeDropIndex(null);
+      setDraggingCategoryId(null);
+    },
+    [draggingCategoryId],
+  );
   useEffect(() => {
     // Keep a valid active section when categories change.
     if (categories.length === 0) {
@@ -406,6 +422,54 @@ export function GroceriesEditList({
       await onSaveAsPreset(presetName);
     });
   }, [onSaveAsPreset, presetNameInput, startTransition]);
+  const onCancelReorder = useCallback(() => {
+    // Cancel discards unsaved reorder changes and restores persisted order.
+    setCategoryOrderIds(list.effectiveCategoryOrderIds ?? categories.map((category) => category.id));
+    setDraggingCategoryId(null);
+    setActiveBadgeDropIndex(null);
+    setIsReorderMode(false);
+  }, [categories, list.effectiveCategoryOrderIds]);
+
+  const renderBadgeDropSlot = (params: { index: number; side: "left" | "right" }) => {
+    const isDragging = Boolean(draggingCategoryId) && isReorderMode;
+    const isActiveSlot = activeBadgeDropIndex === params.index;
+    return (
+      <div
+        className={cn(
+          // Overlay-only drop area: does not affect badge layout position.
+          "absolute top-1/2 z-10 -translate-y-1/2 rounded border border-dashed transition-colors",
+          params.side === "left"
+            ? "right-full -mr-1.5"
+            : "left-full -ml-1.5",
+          isDragging
+            ? "pointer-events-auto h-9 w-14 border-muted-foreground/30 bg-muted/30"
+            : "pointer-events-none h-px w-px border-transparent bg-transparent",
+          isActiveSlot && isDragging && "border-primary/70 bg-primary/10",
+        )}
+        onDragOver={(event) => {
+          if (!isReorderMode) return;
+          event.preventDefault();
+          setActiveBadgeDropIndex(params.index);
+        }}
+        onDragEnter={(event) => {
+          if (!isReorderMode) return;
+          event.preventDefault();
+          setActiveBadgeDropIndex(params.index);
+        }}
+        onDragLeave={() => {
+          if (activeBadgeDropIndex === params.index) {
+            setActiveBadgeDropIndex(null);
+          }
+        }}
+        onDrop={(event) => {
+          if (!isReorderMode) return;
+          event.preventDefault();
+          onDropCategoryToIndex(params.index);
+        }}
+        aria-hidden
+      />
+    );
+  };
 
   const topbarConfig = useMemo(
     () => ({
@@ -457,55 +521,46 @@ export function GroceriesEditList({
             const isActive = selectedCategoryId === section.categoryId;
             const isPopulated = (sectionRowCountByCategoryId.get(section.categoryId) ?? 0) > 0;
             const variant = isActive ? "default" : isPopulated ? "outline" : "secondary";
+            const sectionIndex = groupedSections.findIndex(
+              (candidate) => candidate.categoryId === section.categoryId,
+            );
             return (
-              <button
-                key={section.categoryId}
-                type="button"
-                className={cn(
-                  badgeVariants({ variant }),
-                  "transition-colors focus-visible:outline-none",
-                  isReorderMode
-                    ? "cursor-grab active:cursor-grabbing"
-                    : "cursor-pointer",
-                  draggingCategoryId === section.categoryId && "opacity-60",
-                )}
-                draggable={isReorderMode}
-                aria-pressed={isActive}
-                onClick={() => onCategoryBadgeClick(section.categoryId)}
-                onDragStart={() => {
-                  if (!isReorderMode) return;
-                  setDraggingCategoryId(section.categoryId);
-                }}
-                onDragEnd={() => {
-                  if (!isReorderMode) return;
-                  setDraggingCategoryId(null);
-                }}
-                onDragOver={(event) => {
-                  if (!isReorderMode) return;
-                  event.preventDefault();
-                }}
-                onDrop={(event) => {
-                  if (!isReorderMode) return;
-                  event.preventDefault();
-                  if (!draggingCategoryId || draggingCategoryId === section.categoryId) return;
-                  const dropIndex = groupedSections.findIndex(
-                    (candidate) => candidate.categoryId === section.categoryId,
-                  );
-                  setCategoryOrderIds((prev) =>
-                    moveCategoryIdToIndex({
-                      categoryIds: prev,
-                      movedCategoryId: draggingCategoryId,
-                      targetIndex: dropIndex,
-                    }),
-                  );
-                  setDraggingCategoryId(null);
-                }}
-              >
-                {isReorderMode ? (
-                  <GripVertical className="h-3.5 w-3.5 opacity-70" aria-hidden />
-                ) : null}
-                {section.title}
-              </button>
+              <div key={section.categoryId} className="relative">
+                {isReorderMode && sectionIndex === 0
+                  ? renderBadgeDropSlot({ index: 0, side: "left" })
+                  : null}
+                <button
+                  type="button"
+                  className={cn(
+                    badgeVariants({ variant }),
+                    "transition-colors focus-visible:outline-none",
+                    isReorderMode
+                      ? "cursor-grab active:cursor-grabbing"
+                      : "cursor-pointer",
+                    draggingCategoryId === section.categoryId && "opacity-60",
+                  )}
+                  draggable={isReorderMode}
+                  aria-pressed={isActive}
+                  onClick={() => onCategoryBadgeClick(section.categoryId)}
+                  onDragStart={() => {
+                    if (!isReorderMode) return;
+                    setDraggingCategoryId(section.categoryId);
+                  }}
+                  onDragEnd={() => {
+                    if (!isReorderMode) return;
+                    setActiveBadgeDropIndex(null);
+                    setDraggingCategoryId(null);
+                  }}
+                >
+                  {isReorderMode ? (
+                    <GripVertical className="h-3.5 w-3.5 opacity-70" aria-hidden />
+                  ) : null}
+                  {section.title}
+                </button>
+                {isReorderMode
+                  ? renderBadgeDropSlot({ index: sectionIndex + 1, side: "right" })
+                  : null}
+              </div>
             );
           })}
         </div>
@@ -527,22 +582,35 @@ export function GroceriesEditList({
               triggerClassName="w-[220px]"
             />
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setIsSavePresetDialogOpen(true)}
-            disabled={isPending}
-          >
-            Save as preset
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setIsReorderMode((prev) => !prev)}
-            disabled={isPending}
-          >
-            {isReorderMode ? "Done reordering" : "Reorder layout"}
-          </Button>
+          {isReorderMode ? (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancelReorder}
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsSavePresetDialogOpen(true)}
+                disabled={isPending}
+              >
+                Save as preset
+              </Button>
+            </>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsReorderMode(true)}
+              disabled={isPending}
+            >
+              Reorder layout
+            </Button>
+          )}
         </div>
       </section>
 
