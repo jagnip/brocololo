@@ -22,4 +22,7 @@ export type GroceriesEditableRow = {
   substitutionsAllowed: boolean;
   substitutionNote: string | null;
   additionalInfo: string | null;
+  // Comma-joined recipe names captured when the shopping list was generated.
+  // Display-only in the edit UI; never sent in the save payload.
+  recipeAttribution: string | null;
 };

@@ -58,6 +58,9 @@ function toEditableRows(list: GroceriesEditListModel): GroceriesEditableRow[] {
     substitutionsAllowed: item.substitutionsAllowed,
     substitutionNote: item.substitutionNote,
     additionalInfo: item.additionalInfo,
+    // Carried through purely for display; intentionally omitted from
+    // toComparableRows so it never affects dirty-state or the save payload.
+    recipeAttribution: item.recipeAttribution,
   }));
 }
 

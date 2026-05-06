@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { Badge } from "@/components/ui/badge";
 import { SearchableSelect, type SearchableSelectOption } from "@/components/ui/searchable-select";
 import {
   Select,
@@ -18,6 +19,16 @@ import type {
   GroceriesEditIngredientOption,
   GroceriesEditUnitOption,
 } from "@/components/groceries/groceries-edit-types";
+
+// recipeAttribution is stored as a comma-joined string at generation time;
+// split it back into individual recipe names for badge rendering.
+function parseRecipeNames(attribution: string | null): string[] {
+  if (!attribution) return [];
+  return attribution
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
 
 type GroceriesEditRowProps = {
   row: GroceriesEditableRow;
@@ -68,6 +79,10 @@ export function GroceriesEditRow({
   const adHocUnits = useMemo(
     () => [...unitById.values()].sort((a, b) => a.name.localeCompare(b.name)),
     [unitById],
+  );
+  const recipeNames = useMemo(
+    () => parseRecipeNames(row.recipeAttribution),
+    [row.recipeAttribution],
   );
 
   return (
@@ -201,6 +216,20 @@ export function GroceriesEditRow({
           />
         </div>
       </div>
+
+      {/* Bottom badges listing every planner recipe that contributed
+          this ingredient. Kept background transparent per UI request. */}
+      {recipeNames.length > 0 ? (
+        <div className="-mx-3 -mb-3 rounded-b-lg px-3 pt-0 pb-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {recipeNames.map((name) => (
+              <Badge key={name} variant="secondary">
+                {name}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
