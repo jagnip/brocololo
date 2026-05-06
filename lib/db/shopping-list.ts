@@ -275,7 +275,8 @@ export async function updateShoppingListItems(input: {
   planId: string;
   items: Array<{
     id: string;
-    ingredientId: string;
+    ingredientId: string | null;
+    ingredientCategoryId: string;
     displayLabel: string;
     unitId: string | null;
     amount: number | null;
@@ -297,14 +298,20 @@ export async function updateShoppingListItems(input: {
       const itemIds = [...new Set(input.items.map((row) => row.id))];
       const existingRows = await tx.shoppingListItem.findMany({
         where: { shoppingListId: list.id, id: { in: itemIds } },
-        select: { id: true },
+        select: { id: true, ingredientCategoryId: true },
       });
       if (existingRows.length !== itemIds.length) {
         // Guard against accidentally updating rows from another list.
         throw new Error("INVALID_ITEM_SELECTION");
       }
 
-      const ingredientIds = [...new Set(input.items.map((row) => row.ingredientId))];
+      const ingredientIds = [
+        ...new Set(
+          input.items
+            .map((row) => row.ingredientId)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      ];
       const groceryProfiles = await ensureGroceryIngredientsForIngredientIds(
         tx,
         ingredientIds,
@@ -322,17 +329,25 @@ export async function updateShoppingListItems(input: {
       );
 
       for (const row of input.items) {
-        const groceryIngredientId = groceryIdByIngredientId.get(row.ingredientId);
-        const ingredientCategoryId = categoryIdByIngredientId.get(row.ingredientId);
-        if (!groceryIngredientId || !ingredientCategoryId) {
+        const existingRow = existingRows.find((candidate) => candidate.id === row.id);
+        if (!existingRow) throw new Error("INVALID_ITEM_SELECTION");
+        if (
+          row.ingredientId &&
+          (!groceryIdByIngredientId.has(row.ingredientId) ||
+            !categoryIdByIngredientId.has(row.ingredientId))
+        ) {
           throw new Error("INGREDIENT_NOT_FOUND");
         }
 
         await tx.shoppingListItem.update({
           where: { id: row.id },
           data: {
-            groceryIngredientId,
-            ingredientCategoryId,
+            groceryIngredientId: row.ingredientId
+              ? (groceryIdByIngredientId.get(row.ingredientId) as string)
+              : null,
+            ingredientCategoryId: row.ingredientId
+              ? (categoryIdByIngredientId.get(row.ingredientId) as string)
+              : row.ingredientCategoryId,
             displayLabel: row.displayLabel,
             unitId: row.unitId,
             amount: row.amount,

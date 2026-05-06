@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { saveShoppingListEditsAction } from "@/actions/shopping-list-actions";
@@ -14,9 +14,11 @@ import type {
 import { ROUTES } from "@/lib/constants";
 import { TopbarConfigController } from "@/components/topbar-config";
 import {
+  buildIngredientSearchSourceMap,
   ingredientsToSearchableSelectOptions,
   type IngredientSearchSelectSource,
 } from "@/components/ingredients/ingredient-searchable-select-labels";
+import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 
 type GroceriesEditListProps = {
   list: GroceriesEditListModel;
@@ -48,7 +50,7 @@ function formatDateRange(start: Date, end: Date): string {
 function toEditableRows(list: GroceriesEditListModel): GroceriesEditableRow[] {
   return list.items.map((item) => ({
     id: item.id,
-    ingredientId: item.groceryIngredient?.ingredient?.id ?? "",
+    ingredientId: item.groceryIngredient?.ingredient?.id ?? null,
     ingredientCategoryId: item.ingredientCategoryId,
     displayLabel: item.displayLabel,
     amount: item.amount,
@@ -116,23 +118,74 @@ export function GroceriesEditList({
     [ingredients],
   );
 
-  const ingredientSelectSources = useMemo(
+  const ingredientOptionsByCategoryId = useMemo(() => {
+    const sourcesByCategoryId = new Map<string, IngredientSearchSelectSource[]>();
+
+    for (const ingredient of ingredients) {
+      const bucket = sourcesByCategoryId.get(ingredient.category.id) ?? [];
+      bucket.push({
+        id: ingredient.id,
+        name: ingredient.name,
+        brand: ingredient.brand,
+        descriptor: ingredient.descriptor,
+        icon: ingredient.icon,
+      });
+      sourcesByCategoryId.set(ingredient.category.id, bucket);
+    }
+
+    return new Map(
+      [...sourcesByCategoryId.entries()].map(([categoryId, sources]) => [
+        categoryId,
+        ingredientsToSearchableSelectOptions(sources),
+      ]),
+    );
+  }, [ingredients]);
+  const ingredientByIdForSelect = useMemo(
     () =>
-      ingredients.map(
-        (ingredient): IngredientSearchSelectSource => ({
+      buildIngredientSearchSourceMap(
+        ingredients.map((ingredient) => ({
           id: ingredient.id,
           name: ingredient.name,
           brand: ingredient.brand,
           descriptor: ingredient.descriptor,
           icon: ingredient.icon,
-          category: { name: ingredient.category.name },
-        }),
+        })),
       ),
     [ingredients],
   );
-  const ingredientOptions = useMemo(
-    () => ingredientsToSearchableSelectOptions(ingredientSelectSources),
-    [ingredientSelectSources],
+  const renderIngredientDropdownLabel = useCallback(
+    (option: SearchableSelectOption) => {
+      const ingredient = ingredientByIdForSelect.get(option.value);
+      const descriptor = ingredient?.descriptor?.trim();
+      return (
+        <span className="flex min-w-0 flex-col gap-0.5 text-left">
+          <span className="truncate font-normal text-foreground">{option.label}</span>
+          {descriptor ? (
+            <span className="truncate text-xs leading-snug text-muted-foreground">
+              {descriptor}
+            </span>
+          ) : null}
+        </span>
+      );
+    },
+    [ingredientByIdForSelect],
+  );
+  const renderIngredientTriggerLabel = useCallback(
+    (option: SearchableSelectOption) => {
+      const ingredient = ingredientByIdForSelect.get(option.value);
+      const descriptor = ingredient?.descriptor?.trim();
+      return (
+        <span className="flex min-w-0 max-w-full items-baseline gap-x-1.5 truncate text-left">
+          <span className="shrink-0 font-normal text-foreground">{option.label}</span>
+          {descriptor ? (
+            <span className="min-w-0 truncate font-normal text-muted-foreground">
+              · {descriptor}
+            </span>
+          ) : null}
+        </span>
+      );
+    },
+    [ingredientByIdForSelect],
   );
 
   const groupedSections = useMemo(() => {
@@ -162,11 +215,7 @@ export function GroceriesEditList({
     () => hasGroceriesEditChanges(initialRows, rows),
     [initialRows, rows],
   );
-  const hasRowsWithoutIngredient = useMemo(
-    () => rows.some((row) => !row.ingredientId),
-    [rows],
-  );
-  const isSaveDisabled = isPending || !hasUnsavedChanges || hasRowsWithoutIngredient;
+  const isSaveDisabled = isPending || !hasUnsavedChanges;
 
   const rangeLabel = formatDateRange(list.plan.startDate, list.plan.endDate);
   const topbarConfig = useMemo(
@@ -179,7 +228,13 @@ export function GroceriesEditList({
             startTransition(async () => {
               const result = await saveShoppingListEditsAction({
                 planId: list.plan.id,
-                items: rows,
+                items: rows.map((row) => ({
+                  ...row,
+                  ingredientId:
+                    row.ingredientId && row.ingredientId.trim() !== ""
+                      ? row.ingredientId
+                      : null,
+                })),
               });
               if (result.type === "error") {
                 toast.error(result.message);
@@ -194,7 +249,7 @@ export function GroceriesEditList({
           },
           disabled: isSaveDisabled,
           variant: "default" as const,
-          size: "sm" as const,
+          size: "default" as const,
         },
       ],
     }),
@@ -208,19 +263,16 @@ export function GroceriesEditList({
         <h1 className="type-h1">Edit groceries for {rangeLabel}</h1>
       </header>
 
-      {hasRowsWithoutIngredient ? (
-        <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          Some rows cannot be edited because they are missing an ingredient reference.
-        </p>
-      ) : null}
-
       <div className="space-y-8">
         {groupedSections.map((section) => (
           <GroceriesEditCategorySection
             key={section.categoryId}
             title={section.title}
             rows={section.rows}
-            ingredientOptions={ingredientOptions}
+            categoryId={section.categoryId}
+            ingredientOptionsByCategoryId={ingredientOptionsByCategoryId}
+            renderIngredientDropdownLabel={renderIngredientDropdownLabel}
+            renderIngredientTriggerLabel={renderIngredientTriggerLabel}
             ingredientById={ingredientById}
             unitById={unitById}
             onRowChange={(rowId, next) => {

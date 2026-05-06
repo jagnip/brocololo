@@ -14,7 +14,8 @@ const nullableTrimmedText = (max: number, message: string) =>
 export const shoppingListEditableItemSchema = z
   .object({
     id: z.string().min(1),
-    ingredientId: z.string().min(1, { message: "Choose an ingredient." }),
+    ingredientId: z.string().min(1).nullish().transform((value) => value ?? null),
+    ingredientCategoryId: z.string().min(1),
     displayLabel: z.string().trim().min(1).max(120),
     unitId: z.string().min(1).nullish().transform((value) => value ?? null),
     amount: z.number().positive().nullish().transform((value) => value ?? null),
@@ -26,6 +27,14 @@ export const shoppingListEditableItemSchema = z
     ),
   })
   .superRefine((row, ctx) => {
+    if (!row.ingredientId && !row.displayLabel.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["displayLabel"],
+        message: "Enter an ingredient name.",
+      });
+    }
+
     const hasAmount = row.amount != null;
     const hasUnit = row.unitId != null;
     // Keep quantity semantics predictable: amount and unit should travel together.

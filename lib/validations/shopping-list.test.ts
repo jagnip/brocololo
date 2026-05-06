@@ -8,6 +8,7 @@ function makeValidRow() {
   return {
     id: "item-1",
     ingredientId: "ingredient-1",
+    ingredientCategoryId: "category-1",
     displayLabel: "Tomato",
     unitId: "unit-g",
     amount: 120,
@@ -47,6 +48,17 @@ describe("shoppingListEditableItemSchema", () => {
       substitutionNote: "a".repeat(201),
     });
     expect(result.success).toBe(false);
+  });
+
+  it("accepts free-text row without ingredient id", () => {
+    const result = shoppingListEditableItemSchema.safeParse({
+      ...makeValidRow(),
+      ingredientId: null,
+      displayLabel: "One-off sauce",
+      unitId: null,
+      amount: null,
+    });
+    expect(result.success).toBe(true);
   });
 });
 

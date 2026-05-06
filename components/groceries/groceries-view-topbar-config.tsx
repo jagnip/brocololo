@@ -19,7 +19,7 @@ export function GroceriesViewTopbarConfig({
           label: "Edit groceries",
           href: ROUTES.groceriesEdit(planId),
           variant: "outline" as const,
-          size: "sm" as const,
+          size: "default" as const,
         },
       ],
     }),

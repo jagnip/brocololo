@@ -22,6 +22,8 @@ import type {
 type GroceriesEditRowProps = {
   row: GroceriesEditableRow;
   ingredientOptions: SearchableSelectOption[];
+  renderIngredientDropdownLabel: (option: SearchableSelectOption) => React.ReactNode;
+  renderIngredientTriggerLabel: (option: SearchableSelectOption) => React.ReactNode;
   ingredientById: Map<string, GroceriesEditIngredientOption>;
   unitById: Map<string, GroceriesEditUnitOption>;
   onRowChange: (rowId: string, next: Partial<GroceriesEditableRow>) => void;
@@ -30,11 +32,29 @@ type GroceriesEditRowProps = {
 export function GroceriesEditRow({
   row,
   ingredientOptions,
+  renderIngredientDropdownLabel,
+  renderIngredientTriggerLabel,
   ingredientById,
   unitById,
   onRowChange,
 }: GroceriesEditRowProps) {
-  const selectedIngredient = ingredientById.get(row.ingredientId) ?? null;
+  const selectedIngredient = row.ingredientId
+    ? ingredientById.get(row.ingredientId) ?? null
+    : null;
+  const freeTextOptionValue = `__free_text__${row.id}`;
+  const resolvedIngredientOptions = useMemo(() => {
+    if (row.ingredientId || !row.displayLabel.trim()) {
+      return ingredientOptions;
+    }
+    // Keep created free-text visible in the trigger even though it's not from DB options.
+    return [
+      {
+        value: freeTextOptionValue,
+        label: row.displayLabel,
+      },
+      ...ingredientOptions,
+    ];
+  }, [freeTextOptionValue, ingredientOptions, row.displayLabel, row.ingredientId]);
   const availableUnits = useMemo(
     () => selectedIngredient?.unitConversions ?? [],
     [selectedIngredient],
@@ -44,9 +64,13 @@ export function GroceriesEditRow({
     <div className="space-y-2 rounded-lg border bg-card p-3">
       <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_7rem_10rem]">
         <SearchableSelect
-          options={ingredientOptions}
-          value={row.ingredientId}
+          className="min-w-0 w-full font-normal"
+          options={resolvedIngredientOptions}
+          renderLabel={renderIngredientDropdownLabel}
+          renderTriggerLabel={renderIngredientTriggerLabel}
+          value={row.ingredientId ?? (row.displayLabel.trim() ? freeTextOptionValue : null)}
           onValueChange={(nextIngredientId) => {
+            if (nextIngredientId === freeTextOptionValue) return;
             if (!nextIngredientId) return;
             const nextIngredient = ingredientById.get(nextIngredientId);
             if (!nextIngredient) return;
@@ -69,6 +93,19 @@ export function GroceriesEditRow({
               amount: null,
             });
           }}
+          onCreateOption={(typedName) => {
+            const label = typedName.trim();
+            if (!label) return;
+            onRowChange(row.id, {
+              ingredientId: null,
+              displayLabel: label,
+              // Keep free-text row in the current section category.
+              ingredientCategoryId: row.ingredientCategoryId,
+              unitId: null,
+              amount: null,
+            });
+          }}
+          createOptionLabel={(searchTerm) => `Add "${searchTerm}"`}
           placeholder="Select ingredient..."
           searchPlaceholder="Search ingredient..."
           emptyLabel="No ingredient found."

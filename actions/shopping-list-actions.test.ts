@@ -28,6 +28,7 @@ function makeValidInput() {
       {
         id: "item-1",
         ingredientId: "ingredient-1",
+        ingredientCategoryId: "category-1",
         displayLabel: "Tomato",
         unitId: "unit-g",
         amount: 120,

@@ -9,22 +9,30 @@ import type {
 } from "@/components/groceries/groceries-edit-types";
 
 type GroceriesEditCategorySectionProps = {
+  categoryId: string;
   title: string;
   rows: GroceriesEditableRow[];
-  ingredientOptions: SearchableSelectOption[];
+  ingredientOptionsByCategoryId: Map<string, SearchableSelectOption[]>;
+  renderIngredientDropdownLabel: (option: SearchableSelectOption) => React.ReactNode;
+  renderIngredientTriggerLabel: (option: SearchableSelectOption) => React.ReactNode;
   ingredientById: Map<string, GroceriesEditIngredientOption>;
   unitById: Map<string, GroceriesEditUnitOption>;
   onRowChange: (rowId: string, next: Partial<GroceriesEditableRow>) => void;
 };
 
 export function GroceriesEditCategorySection({
+  categoryId,
   title,
   rows,
-  ingredientOptions,
+  ingredientOptionsByCategoryId,
+  renderIngredientDropdownLabel,
+  renderIngredientTriggerLabel,
   ingredientById,
   unitById,
   onRowChange,
 }: GroceriesEditCategorySectionProps) {
+  const ingredientOptions = ingredientOptionsByCategoryId.get(categoryId) ?? [];
+
   return (
     <section className="space-y-3">
       <h2 className="text-base font-semibold tracking-tight text-foreground">{title}</h2>
@@ -34,6 +42,8 @@ export function GroceriesEditCategorySection({
             key={row.id}
             row={row}
             ingredientOptions={ingredientOptions}
+            renderIngredientDropdownLabel={renderIngredientDropdownLabel}
+            renderIngredientTriggerLabel={renderIngredientTriggerLabel}
             ingredientById={ingredientById}
             unitById={unitById}
             onRowChange={onRowChange}

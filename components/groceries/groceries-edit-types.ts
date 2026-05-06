@@ -14,7 +14,7 @@ export type GroceriesEditUnitOption = Awaited<ReturnType<typeof getUnits>>[numbe
 
 export type GroceriesEditableRow = {
   id: string;
-  ingredientId: string;
+  ingredientId: string | null;
   ingredientCategoryId: string;
   displayLabel: string;
   amount: number | null;
