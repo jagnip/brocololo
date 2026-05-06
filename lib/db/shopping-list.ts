@@ -5,6 +5,49 @@ import type { PlanSlotData } from "@/lib/groceries/helpers";
 import { prisma } from "@/lib/db/index";
 
 let cachedGramUnitId: string | null | undefined;
+const TRANSIENT_DB_MAX_ATTEMPTS = 3;
+const TRANSIENT_DB_RETRY_DELAYS_MS = [150, 400];
+const TRANSIENT_COMPUTE_NODE_PATTERNS = [
+  "couldn't connect to compute node",
+  "could not connect to compute node",
+  "connection reset",
+  "timeout",
+];
+
+function isTransientComputeNodeError(error: unknown) {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  return TRANSIENT_COMPUTE_NODE_PATTERNS.some((pattern) =>
+    message.includes(pattern),
+  );
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function withTransientDbRetry<T>(
+  run: () => Promise<T>,
+  context: string,
+): Promise<T> {
+  for (let attempt = 1; attempt <= TRANSIENT_DB_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      return await run();
+    } catch (error) {
+      const canRetry =
+        isTransientComputeNodeError(error) &&
+        attempt < TRANSIENT_DB_MAX_ATTEMPTS;
+      if (!canRetry) throw error;
+      // Compute nodes can be cold briefly; small backoff avoids surfacing a
+      // user-facing crash for transient wake-up/connect failures.
+      await delay(TRANSIENT_DB_RETRY_DELAYS_MS[attempt - 1] ?? 500);
+      console.warn(
+        `[db retry] ${context}: transient error on attempt ${attempt}, retrying.`,
+      );
+    }
+  }
+  throw new Error("UNREACHABLE_RETRY_EXIT");
+}
 
 type CategoryOrderSource = {
   ingredientCategoryId: string;
@@ -267,53 +310,65 @@ export async function generateShoppingListForPlan(planId: string): Promise<
 
 /** Shopping list with items for groceries UI (sorted by category then position). */
 export async function getShoppingListByPlanId(planId: string) {
-  const allCategories = await prisma.ingredientCategory.findMany({
-    orderBy: { sortOrder: "asc" },
-    select: { id: true, sortOrder: true },
-  });
-  const list = await prisma.shoppingList.findUnique({
-    where: { planId },
-    include: {
-      plan: { select: { id: true, startDate: true, endDate: true } },
-      activeLayoutPreset: {
+  const allCategories = await withTransientDbRetry(
+    () =>
+      prisma.ingredientCategory.findMany({
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, sortOrder: true },
+      }),
+    "getShoppingListByPlanId:ingredientCategory.findMany",
+  );
+  const list = await withTransientDbRetry(
+    () =>
+      prisma.shoppingList.findUnique({
+        where: { planId },
+        include: {
+          plan: { select: { id: true, startDate: true, endDate: true } },
+          activeLayoutPreset: {
+            include: {
+              categoryOrders: {
+                select: { ingredientCategoryId: true, position: true },
+                orderBy: { position: "asc" },
+              },
+            },
+          },
+          items: {
+            include: {
+              category: true,
+              unit: true,
+              groceryIngredient: {
+                include: {
+                  ingredient: {
+                    select: {
+                      id: true,
+                      icon: true,
+                      supermarketUrl: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
+    "getShoppingListByPlanId:shoppingList.findUnique",
+  );
+
+  if (!list) return null;
+
+  const layoutPresets = await withTransientDbRetry(
+    () =>
+      prisma.shoppingLayoutPreset.findMany({
+        orderBy: [{ isBuiltIn: "desc" }, { name: "asc" }],
         include: {
           categoryOrders: {
             select: { ingredientCategoryId: true, position: true },
             orderBy: { position: "asc" },
           },
         },
-      },
-      items: {
-        include: {
-          category: true,
-          unit: true,
-          groceryIngredient: {
-            include: {
-              ingredient: {
-                select: {
-                  id: true,
-                  icon: true,
-                  supermarketUrl: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  if (!list) return null;
-
-  const layoutPresets = await prisma.shoppingLayoutPreset.findMany({
-    orderBy: [{ isBuiltIn: "desc" }, { name: "asc" }],
-    include: {
-      categoryOrders: {
-        select: { ingredientCategoryId: true, position: true },
-        orderBy: { position: "asc" },
-      },
-    },
-  });
+      }),
+    "getShoppingListByPlanId:shoppingLayoutPreset.findMany",
+  );
   const categoryIdsByDefaultOrder = allCategories.map((category) => category.id);
   const effectiveCategoryOrderIds = buildCategoryOrderIds({
     categoryIdsByDefaultOrder,

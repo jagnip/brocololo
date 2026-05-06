@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useOptimistic, useTransition } from "react";
+import { useEffect, useMemo, useOptimistic, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { setShoppingLayoutPresetAction } from "@/actions/shopping-list-actions";
@@ -13,12 +13,14 @@ type GroceriesViewLayoutControlsProps = {
   planId: string;
   presets: GroceriesLayoutPresetOption[];
   activePresetId: string | null;
+  onPendingChange?: (isPending: boolean) => void;
 };
 
 export function GroceriesViewLayoutControls({
   planId,
   presets,
   activePresetId,
+  onPendingChange,
 }: GroceriesViewLayoutControlsProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -41,6 +43,12 @@ export function GroceriesViewLayoutControls({
       router.refresh();
     });
   };
+
+  useEffect(() => {
+    // Bubble transition state up so the persisted list can show the same
+    // pending pulse pattern used in other list/filter UIs.
+    onPendingChange?.(isPending);
+  }, [isPending, onPendingChange]);
 
   return (
     <GroceriesLayoutSelector

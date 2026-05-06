@@ -3,10 +3,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 /** Loading state for persisted groceries plan view (header + category sections). */
 export function GroceriesPlanSkeleton() {
   return (
-    <div className="space-y-8">
-      {/* Persisted list header currently renders a single H1 line only. */}
-      <header className="space-y-1">
+    <div className="space-y-6">
+      {/* Persisted list header: title left + layout control right (planner-like). */}
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <Skeleton className="h-9 w-80 max-w-full" />
+        <div className="flex items-center gap-2 sm:min-w-[20rem] lg:min-w-[24rem]">
+          <Skeleton className="h-4 w-36" />
+          <Skeleton className="h-10 w-full" />
+        </div>
       </header>
 
       <div className="space-y-8">

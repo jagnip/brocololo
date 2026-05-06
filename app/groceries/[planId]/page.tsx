@@ -28,11 +28,6 @@ export default async function GroceriesPlanPage({
       {list && list.items.length > 0 ? (
         <GroceriesViewTopbarConfig
           planId={planId}
-          presets={list.layoutPresets.map((preset) => ({
-            id: preset.id,
-            name: preset.name,
-          }))}
-          activePresetId={list.activeLayoutPresetId}
         />
       ) : null}
       {list && list.items.length > 0 ? (
