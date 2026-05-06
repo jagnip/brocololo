@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { ROUTES } from "@/lib/constants";
 import {
   generateShoppingListForPlan,
+  saveShoppingLayoutPreset,
+  setShoppingListActiveLayoutPreset,
   setShoppingListItemPurchased,
   updateShoppingListItems,
 } from "@/lib/db/shopping-list";
@@ -105,6 +107,49 @@ export async function saveShoppingListEditsAction(input: unknown): Promise<
     return {
       type: "error",
       message: "Could not save grocery edits. Try again.",
+    };
+  }
+}
+
+export async function setShoppingLayoutPresetAction(input: {
+  planId: string;
+  presetId: string;
+}): Promise<{ type: "success" } | { type: "error"; message: string }> {
+  try {
+    const updated = await setShoppingListActiveLayoutPreset(input);
+    revalidatePath(ROUTES.groceries);
+    revalidatePath(ROUTES.groceriesView(updated.planId));
+    revalidatePath(ROUTES.groceriesEdit(updated.planId));
+    return { type: "success" };
+  } catch {
+    return {
+      type: "error",
+      message: "Could not switch grocery layout. Try again.",
+    };
+  }
+}
+
+export async function saveShoppingLayoutPresetAction(input: {
+  planId: string;
+  presetName: string;
+  orderedCategoryIds: string[];
+}): Promise<{ type: "success" } | { type: "error"; message: string }> {
+  try {
+    const updated = await saveShoppingLayoutPreset(input);
+    revalidatePath(ROUTES.groceries);
+    revalidatePath(ROUTES.groceriesView(updated.planId));
+    revalidatePath(ROUTES.groceriesEdit(updated.planId));
+    return { type: "success" };
+  } catch (error) {
+    if (error instanceof Error && error.message === "SHOPPING_LAYOUT_PRESET_NAME_REQUIRED") {
+      return {
+        type: "error",
+        message: "Preset name cannot be empty.",
+      };
+    }
+    return {
+      type: "error",
+      message: "Could not save grocery layout preset. Try again.",
     };
   }
 }

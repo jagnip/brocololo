@@ -27,6 +27,7 @@ function makeValidInput() {
     items: [
       {
         id: "item-1",
+        isNew: false,
         ingredientId: "ingredient-1",
         ingredientCategoryId: "category-1",
         displayLabel: "Tomato",
@@ -64,7 +65,12 @@ describe("saveShoppingListEditsAction", () => {
     const result = await saveShoppingListEditsAction(makeValidInput());
 
     expect(result).toEqual({ type: "success" });
-    expect(updateShoppingListItems).toHaveBeenCalledWith(makeValidInput());
+    expect(updateShoppingListItems).toHaveBeenCalledWith({
+      planId: "plan-1",
+      itemsToCreate: [],
+      itemsToUpdate: makeValidInput().items,
+      itemIdsToDelete: [],
+    });
     expect(revalidatePath).toHaveBeenCalledWith(ROUTES.groceries);
     expect(revalidatePath).toHaveBeenCalledWith(ROUTES.groceriesView("plan-1"));
     expect(revalidatePath).toHaveBeenCalledWith(ROUTES.groceriesEdit("plan-1"));

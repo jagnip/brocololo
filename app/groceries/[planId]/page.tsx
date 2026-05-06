@@ -26,7 +26,14 @@ export default async function GroceriesPlanPage({
   return (
     <div className="page-container space-y-8 py-8">
       {list && list.items.length > 0 ? (
-        <GroceriesViewTopbarConfig planId={planId} />
+        <GroceriesViewTopbarConfig
+          planId={planId}
+          presets={list.layoutPresets.map((preset) => ({
+            id: preset.id,
+            name: preset.name,
+          }))}
+          activePresetId={list.activeLayoutPresetId}
+        />
       ) : null}
       {list && list.items.length > 0 ? (
         <GroceriesPersistedList list={list} />

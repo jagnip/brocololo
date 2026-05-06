@@ -6,6 +6,27 @@ import { prisma } from "@/lib/db/index";
 
 let cachedGramUnitId: string | null | undefined;
 
+type CategoryOrderSource = {
+  ingredientCategoryId: string;
+  position: number;
+};
+
+function buildCategoryOrderIds(input: {
+  categoryIdsByDefaultOrder: string[];
+  categoryOrders: CategoryOrderSource[];
+}) {
+  const knownCategoryIds = new Set(input.categoryIdsByDefaultOrder);
+  const orderedFromPreset = [...input.categoryOrders]
+    .sort((a, b) => a.position - b.position)
+    .map((row) => row.ingredientCategoryId)
+    .filter((categoryId, index, all) => all.indexOf(categoryId) === index)
+    .filter((categoryId) => knownCategoryIds.has(categoryId));
+  const missingByDefaultOrder = input.categoryIdsByDefaultOrder.filter(
+    (categoryId) => !orderedFromPreset.includes(categoryId),
+  );
+  return [...orderedFromPreset, ...missingByDefaultOrder];
+}
+
 /** Resolves the canonical gram unit id for aggregated grocery rows (unitName "g", unitId null). */
 export async function getGramUnitId(): Promise<string | null> {
   if (cachedGramUnitId !== undefined) return cachedGramUnitId;
@@ -37,21 +58,59 @@ export async function ensureDefaultShoppingLayoutPreset(
     select: { id: true },
   });
 
-  await tx.shoppingLayoutPresetCategory.deleteMany({
+  const existingRows = await tx.shoppingLayoutPresetCategory.findMany({
     where: { presetId: preset.id },
+    select: { ingredientCategoryId: true },
   });
-
-  if (categories.length > 0) {
+  const existingCategoryIds = new Set(existingRows.map((row) => row.ingredientCategoryId));
+  const missingCategories = categories.filter((category) => !existingCategoryIds.has(category.id));
+  if (missingCategories.length > 0) {
+    const nextBasePosition = existingRows.length;
     await tx.shoppingLayoutPresetCategory.createMany({
-      data: categories.map((c, position) => ({
+      data: missingCategories.map((category, index) => ({
         presetId: preset.id,
-        ingredientCategoryId: c.id,
-        position,
+        ingredientCategoryId: category.id,
+        position: nextBasePosition + index,
       })),
+      skipDuplicates: true,
     });
   }
 
   return preset.id;
+}
+
+async function appendMissingCategoriesToAllLayoutPresets(tx: Prisma.TransactionClient) {
+  const categories = await tx.ingredientCategory.findMany({
+    orderBy: { sortOrder: "asc" },
+    select: { id: true },
+  });
+  if (categories.length === 0) return;
+
+  const presets = await tx.shoppingLayoutPreset.findMany({
+    include: {
+      categoryOrders: {
+        select: { ingredientCategoryId: true, position: true },
+        orderBy: { position: "asc" },
+      },
+    },
+  });
+
+  for (const preset of presets) {
+    const mergedCategoryOrder = buildCategoryOrderIds({
+      categoryIdsByDefaultOrder: categories.map((category) => category.id),
+      categoryOrders: preset.categoryOrders,
+    });
+    await tx.shoppingLayoutPresetCategory.deleteMany({
+      where: { presetId: preset.id },
+    });
+    await tx.shoppingLayoutPresetCategory.createMany({
+      data: mergedCategoryOrder.map((ingredientCategoryId, position) => ({
+        presetId: preset.id,
+        ingredientCategoryId,
+        position,
+      })),
+    });
+  }
 }
 
 /** Batch-ensures GroceryIngredient rows exist (one round-trip per phase; avoids N sequential queries in a tx). */
@@ -118,7 +177,8 @@ export async function generateShoppingListForPlan(planId: string): Promise<
         const list = await tx.shoppingList.upsert({
           where: { planId },
           create: { planId, activeLayoutPresetId: presetId },
-          update: { activeLayoutPresetId: presetId },
+          // Preserve the user's chosen active preset for this list.
+          update: {},
         });
         await tx.shoppingListItem.deleteMany({ where: { shoppingListId: list.id } });
         return list.id;
@@ -133,6 +193,7 @@ export async function generateShoppingListForPlan(planId: string): Promise<
   const shoppingListId = await prisma.$transaction(
     async (tx) => {
       const presetId = await ensureDefaultShoppingLayoutPreset(tx);
+      await appendMissingCategoriesToAllLayoutPresets(tx);
 
       const profiles = await ensureGroceryIngredientsForIngredientIds(
         tx,
@@ -148,7 +209,8 @@ export async function generateShoppingListForPlan(planId: string): Promise<
       const list = await tx.shoppingList.upsert({
         where: { planId },
         create: { planId, activeLayoutPresetId: presetId },
-        update: { activeLayoutPresetId: presetId },
+        // Preserve previously selected layout on regeneration.
+        update: {},
       });
 
       await tx.shoppingListItem.deleteMany({ where: { shoppingListId: list.id } });
@@ -205,10 +267,22 @@ export async function generateShoppingListForPlan(planId: string): Promise<
 
 /** Shopping list with items for groceries UI (sorted by category then position). */
 export async function getShoppingListByPlanId(planId: string) {
+  const allCategories = await prisma.ingredientCategory.findMany({
+    orderBy: { sortOrder: "asc" },
+    select: { id: true, sortOrder: true },
+  });
   const list = await prisma.shoppingList.findUnique({
     where: { planId },
     include: {
       plan: { select: { id: true, startDate: true, endDate: true } },
+      activeLayoutPreset: {
+        include: {
+          categoryOrders: {
+            select: { ingredientCategoryId: true, position: true },
+            orderBy: { position: "asc" },
+          },
+        },
+      },
       items: {
         include: {
           category: true,
@@ -231,15 +305,130 @@ export async function getShoppingListByPlanId(planId: string) {
 
   if (!list) return null;
 
+  const layoutPresets = await prisma.shoppingLayoutPreset.findMany({
+    orderBy: [{ isBuiltIn: "desc" }, { name: "asc" }],
+    include: {
+      categoryOrders: {
+        select: { ingredientCategoryId: true, position: true },
+        orderBy: { position: "asc" },
+      },
+    },
+  });
+  const categoryIdsByDefaultOrder = allCategories.map((category) => category.id);
+  const effectiveCategoryOrderIds = buildCategoryOrderIds({
+    categoryIdsByDefaultOrder,
+    categoryOrders: list.activeLayoutPreset?.categoryOrders ?? [],
+  });
+  const categoryOrderRank = new Map(
+    effectiveCategoryOrderIds.map((categoryId, index) => [categoryId, index] as const),
+  );
+
   list.items.sort((a, b) => {
-    if (a.category.sortOrder !== b.category.sortOrder) {
-      return a.category.sortOrder - b.category.sortOrder;
+    const leftOrder = categoryOrderRank.get(a.ingredientCategoryId) ?? Number.MAX_SAFE_INTEGER;
+    const rightOrder = categoryOrderRank.get(b.ingredientCategoryId) ?? Number.MAX_SAFE_INTEGER;
+    if (leftOrder !== rightOrder) {
+      return leftOrder - rightOrder;
     }
     if (a.position !== b.position) return a.position - b.position;
     return a.displayLabel.localeCompare(b.displayLabel);
   });
 
-  return list;
+  return {
+    ...list,
+    effectiveCategoryOrderIds,
+    layoutPresets: layoutPresets.map((preset) => ({
+      id: preset.id,
+      name: preset.name,
+      isBuiltIn: preset.isBuiltIn,
+      categoryOrderIds: buildCategoryOrderIds({
+        categoryIdsByDefaultOrder,
+        categoryOrders: preset.categoryOrders,
+      }),
+    })),
+  };
+}
+
+export async function setShoppingListActiveLayoutPreset(input: {
+  planId: string;
+  presetId: string;
+}) {
+  return prisma.$transaction(async (tx) => {
+    const list = await tx.shoppingList.findUnique({
+      where: { planId: input.planId },
+      select: { id: true, planId: true },
+    });
+    if (!list) throw new Error("SHOPPING_LIST_NOT_FOUND");
+
+    const preset = await tx.shoppingLayoutPreset.findUnique({
+      where: { id: input.presetId },
+      select: { id: true },
+    });
+    if (!preset) throw new Error("SHOPPING_LAYOUT_PRESET_NOT_FOUND");
+
+    await tx.shoppingList.update({
+      where: { id: list.id },
+      data: { activeLayoutPresetId: preset.id },
+    });
+
+    return { planId: list.planId, presetId: preset.id };
+  });
+}
+
+export async function saveShoppingLayoutPreset(input: {
+  planId: string;
+  presetName: string;
+  orderedCategoryIds: string[];
+}) {
+  const trimmedPresetName = input.presetName.trim();
+  if (!trimmedPresetName) throw new Error("SHOPPING_LAYOUT_PRESET_NAME_REQUIRED");
+
+  return prisma.$transaction(async (tx) => {
+    const list = await tx.shoppingList.findUnique({
+      where: { planId: input.planId },
+      select: { id: true, planId: true },
+    });
+    if (!list) throw new Error("SHOPPING_LIST_NOT_FOUND");
+
+    const allCategories = await tx.ingredientCategory.findMany({
+      orderBy: { sortOrder: "asc" },
+      select: { id: true },
+    });
+    const normalizedCategoryOrder = buildCategoryOrderIds({
+      categoryIdsByDefaultOrder: allCategories.map((category) => category.id),
+      categoryOrders: input.orderedCategoryIds.map((ingredientCategoryId, position) => ({
+        ingredientCategoryId,
+        position,
+      })),
+    });
+
+    const preset =
+      (await tx.shoppingLayoutPreset.findFirst({
+        where: { name: trimmedPresetName },
+        select: { id: true, isBuiltIn: true },
+      })) ??
+      (await tx.shoppingLayoutPreset.create({
+        data: { name: trimmedPresetName, isBuiltIn: false },
+        select: { id: true, isBuiltIn: true },
+      }));
+
+    await tx.shoppingLayoutPresetCategory.deleteMany({
+      where: { presetId: preset.id },
+    });
+    await tx.shoppingLayoutPresetCategory.createMany({
+      data: normalizedCategoryOrder.map((ingredientCategoryId, position) => ({
+        presetId: preset.id,
+        ingredientCategoryId,
+        position,
+      })),
+    });
+
+    await tx.shoppingList.update({
+      where: { id: list.id },
+      data: { activeLayoutPresetId: preset.id },
+    });
+
+    return { planId: list.planId, presetId: preset.id };
+  });
 }
 
 /** True when a persisted shopping list row exists for the plan (regenerating replaces its lines). */
