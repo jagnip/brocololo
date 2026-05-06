@@ -270,3 +270,81 @@ export async function setShoppingListItemPurchased(input: {
     },
   });
 }
+
+export async function updateShoppingListItems(input: {
+  planId: string;
+  items: Array<{
+    id: string;
+    ingredientId: string;
+    displayLabel: string;
+    unitId: string | null;
+    amount: number | null;
+    additionalInfo: string | null;
+    substitutionsAllowed: boolean;
+    substitutionNote: string | null;
+  }>;
+}) {
+  return prisma.$transaction(
+    async (tx) => {
+      const list = await tx.shoppingList.findUnique({
+        where: { planId: input.planId },
+        select: { id: true, planId: true },
+      });
+      if (!list) {
+        throw new Error("SHOPPING_LIST_NOT_FOUND");
+      }
+
+      const itemIds = [...new Set(input.items.map((row) => row.id))];
+      const existingRows = await tx.shoppingListItem.findMany({
+        where: { shoppingListId: list.id, id: { in: itemIds } },
+        select: { id: true },
+      });
+      if (existingRows.length !== itemIds.length) {
+        // Guard against accidentally updating rows from another list.
+        throw new Error("INVALID_ITEM_SELECTION");
+      }
+
+      const ingredientIds = [...new Set(input.items.map((row) => row.ingredientId))];
+      const groceryProfiles = await ensureGroceryIngredientsForIngredientIds(
+        tx,
+        ingredientIds,
+      );
+      const groceryIdByIngredientId = new Map(
+        groceryProfiles.map((profile) => [profile.ingredientId, profile.id] as const),
+      );
+
+      const ingredients = await tx.ingredient.findMany({
+        where: { id: { in: ingredientIds } },
+        select: { id: true, categoryId: true },
+      });
+      const categoryIdByIngredientId = new Map(
+        ingredients.map((ingredient) => [ingredient.id, ingredient.categoryId] as const),
+      );
+
+      for (const row of input.items) {
+        const groceryIngredientId = groceryIdByIngredientId.get(row.ingredientId);
+        const ingredientCategoryId = categoryIdByIngredientId.get(row.ingredientId);
+        if (!groceryIngredientId || !ingredientCategoryId) {
+          throw new Error("INGREDIENT_NOT_FOUND");
+        }
+
+        await tx.shoppingListItem.update({
+          where: { id: row.id },
+          data: {
+            groceryIngredientId,
+            ingredientCategoryId,
+            displayLabel: row.displayLabel,
+            unitId: row.unitId,
+            amount: row.amount,
+            additionalInfo: row.additionalInfo,
+            substitutionsAllowed: row.substitutionsAllowed,
+            substitutionNote: row.substitutionNote,
+          },
+        });
+      }
+
+      return { planId: list.planId };
+    },
+    { timeout: 15_000 },
+  );
+}

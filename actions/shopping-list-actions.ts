@@ -5,7 +5,9 @@ import { ROUTES } from "@/lib/constants";
 import {
   generateShoppingListForPlan,
   setShoppingListItemPurchased,
+  updateShoppingListItems,
 } from "@/lib/db/shopping-list";
+import { saveShoppingListEditsSchema } from "@/lib/validations/shopping-list";
 
 export async function generateGroceryListFromPlan(planId: string): Promise<
   | { type: "success"; shoppingListId: string }
@@ -54,6 +56,34 @@ export async function setShoppingListItemPurchasedAction(input: {
     return {
       type: "error",
       message: "Could not update grocery item. Try again.",
+    };
+  }
+}
+
+export async function saveShoppingListEditsAction(input: unknown): Promise<
+  { type: "success" } | { type: "error"; message: string }
+> {
+  const parsed = saveShoppingListEditsSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      type: "error",
+      message: "Please fix invalid grocery rows before saving.",
+    };
+  }
+
+  try {
+    await updateShoppingListItems({
+      planId: parsed.data.planId,
+      items: parsed.data.items,
+    });
+    revalidatePath(ROUTES.groceries);
+    revalidatePath(ROUTES.groceriesView(parsed.data.planId));
+    revalidatePath(ROUTES.groceriesEdit(parsed.data.planId));
+    return { type: "success" };
+  } catch {
+    return {
+      type: "error",
+      message: "Could not save grocery edits. Try again.",
     };
   }
 }

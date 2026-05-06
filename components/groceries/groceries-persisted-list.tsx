@@ -1,5 +1,8 @@
+import Link from "next/link";
 import type { getShoppingListByPlanId } from "@/lib/db/shopping-list";
 import { GroceriesPersistedItemRow } from "@/components/groceries/groceries-persisted-item-row";
+import { Button } from "@/components/ui/button";
+import { ROUTES } from "@/lib/constants";
 
 export type GroceriesPersistedListModel = NonNullable<
   Awaited<ReturnType<typeof getShoppingListByPlanId>>
@@ -45,8 +48,12 @@ export function GroceriesPersistedList({ list }: { list: GroceriesPersistedListM
 
   return (
     <div className="space-y-8">
-      <header className="space-y-1">
+      <header className="flex items-start justify-between gap-3">
         <h1 className="type-h1">Groceries for {rangeLabel}</h1>
+        {/* Split edit mode onto a dedicated route to keep view mode focused. */}
+        <Button asChild variant="outline">
+          <Link href={ROUTES.groceriesEdit(plan.id)}>Edit list</Link>
+        </Button>
       </header>
 
       <div className="space-y-8">
