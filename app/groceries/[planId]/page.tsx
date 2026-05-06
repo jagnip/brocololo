@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getPlanDateRangeById } from "@/lib/db/planner";
 import { getShoppingListByPlanId } from "@/lib/db/shopping-list";
 import { GroceriesPersistedList } from "@/components/groceries/groceries-persisted-list";
+import { GroceriesViewTopbarConfig } from "@/components/groceries/groceries-view-topbar-config";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 
@@ -24,6 +25,9 @@ export default async function GroceriesPlanPage({
 
   return (
     <div className="page-container space-y-8 py-8">
+      {list && list.items.length > 0 ? (
+        <GroceriesViewTopbarConfig planId={planId} />
+      ) : null}
       {list && list.items.length > 0 ? (
         <GroceriesPersistedList list={list} />
       ) : (

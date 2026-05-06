@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { saveShoppingListEditsAction } from "@/actions/shopping-list-actions";
 import { GroceriesEditCategorySection } from "@/components/groceries/groceries-edit-category-section";
@@ -11,8 +11,8 @@ import type {
   GroceriesEditListModel,
   GroceriesEditUnitOption,
 } from "@/components/groceries/groceries-edit-types";
-import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
+import { TopbarConfigController } from "@/components/topbar-config";
 import {
   ingredientsToSearchableSelectOptions,
   type IngredientSearchSelectSource,
@@ -90,6 +90,7 @@ export function GroceriesEditList({
   ingredients,
   units,
 }: GroceriesEditListProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [initialRows, setInitialRows] = useState<GroceriesEditableRow[]>(() =>
     toEditableRows(list),
@@ -165,38 +166,46 @@ export function GroceriesEditList({
     () => rows.some((row) => !row.ingredientId),
     [rows],
   );
+  const isSaveDisabled = isPending || !hasUnsavedChanges || hasRowsWithoutIngredient;
 
   const rangeLabel = formatDateRange(list.plan.startDate, list.plan.endDate);
+  const topbarConfig = useMemo(
+    () => ({
+      actions: [
+        {
+          id: "save-groceries",
+          label: isPending ? "Saving groceries..." : "Save groceries",
+          onClick: () => {
+            startTransition(async () => {
+              const result = await saveShoppingListEditsAction({
+                planId: list.plan.id,
+                items: rows,
+              });
+              if (result.type === "error") {
+                toast.error(result.message);
+                return;
+              }
+              // Keep local baseline in sync in case navigation is delayed.
+              setInitialRows(rows);
+              toast.success("Grocery edits saved.");
+              router.push(ROUTES.groceriesView(list.plan.id));
+              router.refresh();
+            });
+          },
+          disabled: isSaveDisabled,
+          variant: "default" as const,
+          size: "sm" as const,
+        },
+      ],
+    }),
+    [isPending, isSaveDisabled, list.plan.id, router, rows, startTransition],
+  );
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-wrap items-start justify-between gap-3">
+      <TopbarConfigController config={topbarConfig} />
+      <header className="space-y-1">
         <h1 className="type-h1">Edit groceries for {rangeLabel}</h1>
-        <div className="flex items-center gap-2">
-          <Button asChild variant="outline">
-            <Link href={ROUTES.groceriesView(list.plan.id)}>Done</Link>
-          </Button>
-          <Button
-            onClick={() => {
-              startTransition(async () => {
-                const result = await saveShoppingListEditsAction({
-                  planId: list.plan.id,
-                  items: rows,
-                });
-                if (result.type === "error") {
-                  toast.error(result.message);
-                  return;
-                }
-                // Promote current state to baseline so Save disables after success.
-                setInitialRows(rows);
-                toast.success("Grocery edits saved.");
-              });
-            }}
-            disabled={isPending || !hasUnsavedChanges || hasRowsWithoutIngredient}
-          >
-            {isPending ? "Saving..." : "Save"}
-          </Button>
-        </div>
       </header>
 
       {hasRowsWithoutIngredient ? (
