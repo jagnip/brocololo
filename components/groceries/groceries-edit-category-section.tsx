@@ -18,6 +18,7 @@ type GroceriesEditCategorySectionProps = {
   ingredientById: Map<string, GroceriesEditIngredientOption>;
   unitById: Map<string, GroceriesEditUnitOption>;
   onRowChange: (rowId: string, next: Partial<GroceriesEditableRow>) => void;
+  onRowRemove: (rowId: string) => void;
 };
 
 export function GroceriesEditCategorySection({
@@ -30,6 +31,7 @@ export function GroceriesEditCategorySection({
   ingredientById,
   unitById,
   onRowChange,
+  onRowRemove,
 }: GroceriesEditCategorySectionProps) {
   const ingredientOptions = ingredientOptionsByCategoryId.get(categoryId) ?? [];
 
@@ -47,6 +49,7 @@ export function GroceriesEditCategorySection({
             ingredientById={ingredientById}
             unitById={unitById}
             onRowChange={onRowChange}
+            onRowRemove={onRowRemove}
           />
         ))}
       </div>

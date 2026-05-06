@@ -218,6 +218,10 @@ export function GroceriesEditList({
     [initialRows, rows],
   );
   const isSaveDisabled = isPending || !hasUnsavedChanges;
+  const onRowRemove = useCallback((rowId: string) => {
+    // Row removal is centralized with row updates to keep section components stateless.
+    setRows((prev) => prev.filter((row) => row.id !== rowId));
+  }, []);
 
   const rangeLabel = formatDateRange(list.plan.startDate, list.plan.endDate);
   const topbarConfig = useMemo(
@@ -283,6 +287,7 @@ export function GroceriesEditList({
                 prev.map((row) => (row.id === rowId ? { ...row, ...next } : row)),
               );
             }}
+            onRowRemove={onRowRemove}
           />
         ))}
       </div>

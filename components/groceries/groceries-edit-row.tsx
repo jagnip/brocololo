@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
+import { Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { SearchableSelect, type SearchableSelectOption } from "@/components/ui/searchable-select";
 import {
   Select,
@@ -38,6 +40,7 @@ type GroceriesEditRowProps = {
   ingredientById: Map<string, GroceriesEditIngredientOption>;
   unitById: Map<string, GroceriesEditUnitOption>;
   onRowChange: (rowId: string, next: Partial<GroceriesEditableRow>) => void;
+  onRowRemove: (rowId: string) => void;
 };
 
 export function GroceriesEditRow({
@@ -48,6 +51,7 @@ export function GroceriesEditRow({
   ingredientById,
   unitById,
   onRowChange,
+  onRowRemove,
 }: GroceriesEditRowProps) {
   const selectedIngredient = row.ingredientId
     ? ingredientById.get(row.ingredientId) ?? null
@@ -87,7 +91,7 @@ export function GroceriesEditRow({
 
   return (
     <div className="space-y-2 rounded-lg border bg-card p-3">
-      <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_7rem_10rem]">
+      <div className="grid items-start gap-2 md:grid-cols-[minmax(0,1fr)_7rem_10rem_auto]">
         <SearchableSelect
           className="min-w-0 w-full font-normal"
           options={resolvedIngredientOptions}
@@ -184,6 +188,20 @@ export function GroceriesEditRow({
                 ))}
           </SelectContent>
         </Select>
+
+        {/* Row-level delete action: remove this ingredient from the edit draft. */}
+        <div className="flex md:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            className="text-muted-foreground hover:text-destructive"
+            aria-label={`Remove ${row.displayLabel}`}
+            onClick={() => onRowRemove(row.id)}
+          >
+            <Trash2 className="h-4 w-4" aria-hidden />
+          </Button>
+        </div>
       </div>
 
       {/* Keep meta fields stacked by default, then align side-by-side on xl. */}
