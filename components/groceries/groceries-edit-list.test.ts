@@ -11,6 +11,7 @@ function makeRow(overrides?: Partial<ReturnType<typeof makeBaseRow>>) {
 function makeBaseRow() {
   return {
     id: "item-1",
+    isNew: false,
     ingredientId: "ingredient-1",
     ingredientCategoryId: "category-1",
     displayLabel: "Tomato",
@@ -19,6 +20,7 @@ function makeBaseRow() {
     substitutionsAllowed: false,
     substitutionNote: null,
     additionalInfo: null,
+    recipeAttribution: null,
   };
 }
 

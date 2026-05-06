@@ -50,6 +50,8 @@ function formatDateRange(start: Date, end: Date): string {
 function toEditableRows(list: GroceriesEditListModel): GroceriesEditableRow[] {
   return list.items.map((item) => ({
     id: item.id,
+    // Hydrated from the DB → not new.
+    isNew: false,
     ingredientId: item.groceryIngredient?.ingredient?.id ?? null,
     ingredientCategoryId: item.ingredientCategoryId,
     displayLabel: item.displayLabel,
@@ -222,6 +224,27 @@ export function GroceriesEditList({
     // Row removal is centralized with row updates to keep section components stateless.
     setRows((prev) => prev.filter((row) => row.id !== rowId));
   }, []);
+  const onAddRow = useCallback((categoryId: string) => {
+    // New rows live entirely in form state until save; they get a temp UUID as
+    // an id (used as React key + sent through to the action) and isNew:true so
+    // the action layer routes them to create instead of update.
+    setRows((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        isNew: true,
+        ingredientId: null,
+        ingredientCategoryId: categoryId,
+        displayLabel: "",
+        amount: null,
+        unitId: null,
+        substitutionsAllowed: false,
+        substitutionNote: null,
+        additionalInfo: null,
+        recipeAttribution: null,
+      },
+    ]);
+  }, []);
 
   const rangeLabel = formatDateRange(list.plan.startDate, list.plan.endDate);
   const topbarConfig = useMemo(
@@ -288,6 +311,7 @@ export function GroceriesEditList({
               );
             }}
             onRowRemove={onRowRemove}
+            onAddRow={onAddRow}
           />
         ))}
       </div>

@@ -72,21 +72,29 @@ export async function saveShoppingListEditsAction(input: unknown): Promise<
   }
 
   try {
-    // Partition rows by whether they still have a name. Nameless rows are
-    // dropped from the persisted list (clearing the ingredient = soft-delete).
+    // Three-bucket partition:
+    //   - itemsToCreate: rows added in the form (isNew) that have a name.
+    //   - itemsToUpdate: persisted rows that still have a name (regular edits).
+    //   - itemIdsToDelete: persisted rows whose name was cleared (soft-delete).
+    // Rows that are isNew + nameless are silently dropped (nothing to persist).
     const items = parsed.data.items;
+    const hasName = (item: (typeof items)[number]) =>
+      Boolean(item.ingredientId) || item.displayLabel.trim().length > 0;
+
+    const itemsToCreate = items.filter(
+      (item) => item.isNew && hasName(item),
+    );
     const itemsToUpdate = items.filter(
-      (item) => Boolean(item.ingredientId) || item.displayLabel.trim().length > 0,
+      (item) => !item.isNew && hasName(item),
     );
     const itemIdsToDelete = items
-      .filter(
-        (item) => !item.ingredientId && item.displayLabel.trim().length === 0,
-      )
+      .filter((item) => !item.isNew && !hasName(item))
       .map((item) => item.id);
 
     await updateShoppingListItems({
       planId: parsed.data.planId,
-      items: itemsToUpdate,
+      itemsToCreate,
+      itemsToUpdate,
       itemIdsToDelete,
     });
     revalidatePath(ROUTES.groceries);

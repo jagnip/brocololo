@@ -17,6 +17,9 @@ const nullableTrimmedText = (max: number, message: string) =>
 // at validation time. Amount and unit are independent — either can be set alone.
 export const shoppingListEditableItemSchema = z.object({
   id: z.string().min(1),
+  // True when the row was added in the edit form and hasn't been persisted yet;
+  // the action layer uses this to route the row through create instead of update.
+  isNew: z.boolean(),
   ingredientId: z.string().min(1).nullish().transform((value) => value ?? null),
   ingredientCategoryId: z.string().min(1),
   displayLabel: z.string().trim().max(120),

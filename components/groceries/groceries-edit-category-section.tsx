@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 import { GroceriesEditRow } from "@/components/groceries/groceries-edit-row";
 import type {
@@ -19,6 +20,9 @@ type GroceriesEditCategorySectionProps = {
   unitById: Map<string, GroceriesEditUnitOption>;
   onRowChange: (rowId: string, next: Partial<GroceriesEditableRow>) => void;
   onRowRemove: (rowId: string) => void;
+  // Appends a new empty row to this section. Receives the section's category
+  // id so the parent can scope the new row to the correct category.
+  onAddRow: (categoryId: string) => void;
 };
 
 export function GroceriesEditCategorySection({
@@ -32,6 +36,7 @@ export function GroceriesEditCategorySection({
   unitById,
   onRowChange,
   onRowRemove,
+  onAddRow,
 }: GroceriesEditCategorySectionProps) {
   const ingredientOptions = ingredientOptionsByCategoryId.get(categoryId) ?? [];
 
@@ -53,6 +58,15 @@ export function GroceriesEditCategorySection({
           />
         ))}
       </div>
+      {/* Per-section footer action mirrors the recipe form's "Add Ingredient"
+          button: clicking appends an empty row inside this category. */}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => onAddRow(categoryId)}
+      >
+        Add item
+      </Button>
     </section>
   );
 }

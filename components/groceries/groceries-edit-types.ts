@@ -14,6 +14,10 @@ export type GroceriesEditUnitOption = Awaited<ReturnType<typeof getUnits>>[numbe
 
 export type GroceriesEditableRow = {
   id: string;
+  // True when this row was added in the form and hasn't been persisted yet.
+  // The id is a temp UUID generated client-side; the server creates the real
+  // DB row on save. False once a row has been hydrated from the database.
+  isNew: boolean;
   ingredientId: string | null;
   ingredientCategoryId: string;
   displayLabel: string;

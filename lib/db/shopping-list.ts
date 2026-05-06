@@ -273,7 +273,20 @@ export async function setShoppingListItemPurchased(input: {
 
 export async function updateShoppingListItems(input: {
   planId: string;
-  items: Array<{
+  // Rows added in the form. They have no DB id yet (the temp client id is not
+  // sent through here); the server assigns a real id and a per-category position.
+  itemsToCreate: Array<{
+    ingredientId: string | null;
+    ingredientCategoryId: string;
+    displayLabel: string;
+    unitId: string | null;
+    amount: number | null;
+    additionalInfo: string | null;
+    substitutionsAllowed: boolean;
+    substitutionNote: string | null;
+  }>;
+  // Existing rows being edited. Each id must already belong to this list.
+  itemsToUpdate: Array<{
     id: string;
     ingredientId: string | null;
     ingredientCategoryId: string;
@@ -298,10 +311,11 @@ export async function updateShoppingListItems(input: {
         throw new Error("SHOPPING_LIST_NOT_FOUND");
       }
 
-      const updateIds = [...new Set(input.items.map((row) => row.id))];
+      const updateIds = [...new Set(input.itemsToUpdate.map((row) => row.id))];
       const deleteIds = [...new Set(input.itemIdsToDelete)];
       // Validate update + delete IDs against this list in one round-trip so
-      // callers can't sneak rows from another list into either bucket.
+      // callers can't sneak rows from another list into either bucket. New
+      // rows are not in the guard because they have no DB id yet.
       const allIds = [...new Set([...updateIds, ...deleteIds])];
       const existingRows = await tx.shoppingListItem.findMany({
         where: { shoppingListId: list.id, id: { in: allIds } },
@@ -318,9 +332,11 @@ export async function updateShoppingListItems(input: {
         });
       }
 
+      // Resolve grocery / category lookups across BOTH buckets in one round-trip
+      // so create and update share the same maps.
       const ingredientIds = [
         ...new Set(
-          input.items
+          [...input.itemsToCreate, ...input.itemsToUpdate]
             .map((row) => row.ingredientId)
             .filter((id): id is string => Boolean(id)),
         ),
@@ -341,7 +357,81 @@ export async function updateShoppingListItems(input: {
         ingredients.map((ingredient) => [ingredient.id, ingredient.categoryId] as const),
       );
 
-      for (const row of input.items) {
+      // Resolve final category id for a row: when an ingredient is selected
+      // we trust the ingredient's home category over whatever the client sent,
+      // matching the existing update path.
+      const resolveCategoryId = (row: {
+        ingredientId: string | null;
+        ingredientCategoryId: string;
+      }): string => {
+        if (!row.ingredientId) return row.ingredientCategoryId;
+        const fromIngredient = categoryIdByIngredientId.get(row.ingredientId);
+        if (!fromIngredient) {
+          throw new Error("INGREDIENT_NOT_FOUND");
+        }
+        return fromIngredient;
+      };
+
+      // Compute next position per affected category for new rows. Doing this
+      // before any creates lets us batch-insert in one createMany call.
+      if (input.itemsToCreate.length > 0) {
+        const newCategoryIds = [
+          ...new Set(input.itemsToCreate.map((row) => resolveCategoryId(row))),
+        ];
+        const maxPositions = await tx.shoppingListItem.groupBy({
+          by: ["ingredientCategoryId"],
+          where: {
+            shoppingListId: list.id,
+            ingredientCategoryId: { in: newCategoryIds },
+          },
+          _max: { position: true },
+        });
+        const nextPositionByCategory = new Map(
+          newCategoryIds.map((categoryId) => {
+            const found = maxPositions.find(
+              (entry) => entry.ingredientCategoryId === categoryId,
+            );
+            return [categoryId, (found?._max.position ?? -1) + 1] as const;
+          }),
+        );
+
+        const createPayload: Prisma.ShoppingListItemCreateManyInput[] =
+          input.itemsToCreate.map((row) => {
+            if (
+              row.ingredientId &&
+              !groceryIdByIngredientId.has(row.ingredientId)
+            ) {
+              throw new Error("INGREDIENT_NOT_FOUND");
+            }
+            const ingredientCategoryId = resolveCategoryId(row);
+            const position = nextPositionByCategory.get(ingredientCategoryId) ?? 0;
+            // Bump the running counter so multiple new rows in the same
+            // category land at distinct positions.
+            nextPositionByCategory.set(ingredientCategoryId, position + 1);
+
+            return {
+              shoppingListId: list.id,
+              groceryIngredientId: row.ingredientId
+                ? (groceryIdByIngredientId.get(row.ingredientId) as string)
+                : null,
+              ingredientCategoryId,
+              displayLabel: row.displayLabel,
+              unitId: row.unitId,
+              amount: row.amount,
+              additionalInfo: row.additionalInfo,
+              substitutionsAllowed: row.substitutionsAllowed,
+              substitutionNote: row.substitutionNote,
+              purchased: false,
+              // User-added rows have no recipe attribution.
+              recipeAttribution: null,
+              position,
+            };
+          });
+
+        await tx.shoppingListItem.createMany({ data: createPayload });
+      }
+
+      for (const row of input.itemsToUpdate) {
         const existingRow = existingRows.find((candidate) => candidate.id === row.id);
         if (!existingRow) throw new Error("INVALID_ITEM_SELECTION");
         if (
