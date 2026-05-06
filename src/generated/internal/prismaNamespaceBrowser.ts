@@ -73,7 +73,9 @@ export const ModelName = {
   Log: 'Log',
   LogEntry: 'LogEntry',
   LogEntryRecipe: 'LogEntryRecipe',
-  LogIngredient: 'LogIngredient'
+  LogIngredient: 'LogIngredient',
+  IngredientList: 'IngredientList',
+  IngredientListItem: 'IngredientListItem'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -351,6 +353,27 @@ export const LogIngredientScalarFieldEnum = {
 } as const
 
 export type LogIngredientScalarFieldEnum = (typeof LogIngredientScalarFieldEnum)[keyof typeof LogIngredientScalarFieldEnum]
+
+
+export const IngredientListScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type IngredientListScalarFieldEnum = (typeof IngredientListScalarFieldEnum)[keyof typeof IngredientListScalarFieldEnum]
+
+
+export const IngredientListItemScalarFieldEnum = {
+  id: 'id',
+  listId: 'listId',
+  ingredientId: 'ingredientId',
+  position: 'position',
+  createdAt: 'createdAt'
+} as const
+
+export type IngredientListItemScalarFieldEnum = (typeof IngredientListItemScalarFieldEnum)[keyof typeof IngredientListItemScalarFieldEnum]
 
 
 export const SortOrder = {

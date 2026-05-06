@@ -154,3 +154,13 @@ export type LogEntryRecipe = Prisma.LogEntryRecipeModel
  * 
  */
 export type LogIngredient = Prisma.LogIngredientModel
+/**
+ * Model IngredientList
+ * 
+ */
+export type IngredientList = Prisma.IngredientListModel
+/**
+ * Model IngredientListItem
+ * 
+ */
+export type IngredientListItem = Prisma.IngredientListItemModel

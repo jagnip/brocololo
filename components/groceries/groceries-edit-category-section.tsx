@@ -25,6 +25,12 @@ type GroceriesEditCategorySectionProps = {
   // Appends a new empty row to this section. Receives the section's category
   // id so the parent can scope the new row to the correct category.
   onAddRow: (categoryId: string) => void;
+  // Optional ref-registration callback per row. Lets the parent collect each
+  // row's DOM node in a Map keyed by row id, so library "+" can scroll to it.
+  registerRowRef?: (rowId: string, node: HTMLElement | null) => void;
+  // Row id that was just added via the library "+" button. The matching row
+  // briefly shows a highlight ring to draw the eye.
+  highlightedRowId?: string | null;
 };
 
 export function GroceriesEditCategorySection({
@@ -41,6 +47,8 @@ export function GroceriesEditCategorySection({
   onRowChange,
   onRowRemove,
   onAddRow,
+  registerRowRef,
+  highlightedRowId,
 }: GroceriesEditCategorySectionProps) {
   const ingredientOptions = ingredientOptionsByCategoryId.get(categoryId) ?? [];
 
@@ -64,6 +72,14 @@ export function GroceriesEditCategorySection({
             unitById={unitById}
             onRowChange={onRowChange}
             onRowRemove={onRowRemove}
+            // Wire each row's DOM node up through the section to the parent
+            // edit-list so library "+" can scrollIntoView the right element.
+            rowRef={
+              registerRowRef
+                ? (node) => registerRowRef(row.id, node)
+                : undefined
+            }
+            highlighted={highlightedRowId === row.id}
           />
         ))}
       </div>

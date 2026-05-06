@@ -19,10 +19,14 @@ const hasShoppingListDelegate =
   existingPrisma != null &&
   "shoppingList" in existingPrisma &&
   existingPrisma.shoppingList != null;
+const hasIngredientListDelegate =
+  existingPrisma != null &&
+  "ingredientList" in existingPrisma &&
+  existingPrisma.ingredientList != null;
 
 // In dev, global singletons can survive schema/client regeneration.
 // Recreate the client when expected delegates are missing.
-export const prisma = hasShoppingListDelegate
+export const prisma = hasShoppingListDelegate && hasIngredientListDelegate
   ? existingPrisma
   : createPrismaClient();
 

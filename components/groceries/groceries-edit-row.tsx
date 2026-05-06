@@ -21,6 +21,7 @@ import type {
   GroceriesEditIngredientOption,
   GroceriesEditUnitOption,
 } from "@/components/groceries/groceries-edit-types";
+import { cn } from "@/lib/utils";
 
 // recipeAttribution is stored as a comma-joined string at generation time;
 // split it back into individual recipe names for badge rendering.
@@ -41,6 +42,13 @@ type GroceriesEditRowProps = {
   unitById: Map<string, GroceriesEditUnitOption>;
   onRowChange: (rowId: string, next: Partial<GroceriesEditableRow>) => void;
   onRowRemove: (rowId: string) => void;
+  // Optional ref callback so the parent can register this row's DOM node and
+  // scroll to it (e.g. when a library-panel "+" lands on this row).
+  rowRef?: (node: HTMLElement | null) => void;
+  // When true, applies a transient ring/pulse so the user can spot the row
+  // that just received a library "+". The parent clears the flag after a
+  // short timeout.
+  highlighted?: boolean;
 };
 
 export function GroceriesEditRow({
@@ -52,6 +60,8 @@ export function GroceriesEditRow({
   unitById,
   onRowChange,
   onRowRemove,
+  rowRef,
+  highlighted = false,
 }: GroceriesEditRowProps) {
   const selectedIngredient = row.ingredientId
     ? ingredientById.get(row.ingredientId) ?? null
@@ -84,7 +94,19 @@ export function GroceriesEditRow({
   );
 
   return (
-    <div className="space-y-2 rounded-lg border bg-card p-3">
+    <div
+      // scroll-mt-28 keeps the row from being hidden behind the sticky
+      // category navigator when the parent calls scrollIntoView.
+      ref={rowRef}
+      data-row-id={row.id}
+      className={cn(
+        "scroll-mt-28 space-y-2 rounded-lg border bg-card p-3 transition-shadow",
+        // Transient highlight applied when this row was just added via the
+        // library panel. The parent clears `highlighted` after ~1.5s.
+        highlighted &&
+          "ring-2 ring-primary/70 ring-offset-2 ring-offset-background",
+      )}
+    >
       {/* Mobile/tablet layout remains stacked for readability and touch comfort. */}
       <div className="space-y-2 xl:hidden">
         <div className="grid items-start gap-2 md:grid-cols-[minmax(0,1fr)_7rem_10rem_auto]">

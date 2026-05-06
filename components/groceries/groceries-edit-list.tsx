@@ -12,6 +12,7 @@ import {
 } from "@/actions/shopping-list-actions";
 import { GroceriesEditCategorySection } from "@/components/groceries/groceries-edit-category-section";
 import { GroceriesLayoutSelector } from "@/components/groceries/groceries-layout-selector";
+import { GroceriesEditLibraryPanel } from "@/components/groceries/library/groceries-edit-library-panel";
 import type {
   GroceriesEditableRow,
   GroceriesEditCategoryOption,
@@ -19,6 +20,8 @@ import type {
   GroceriesEditListModel,
   GroceriesEditUnitOption,
 } from "@/components/groceries/groceries-edit-types";
+import type { IngredientListWithItems } from "@/lib/db/ingredient-lists";
+import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { ROUTES } from "@/lib/constants";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { badgeVariants } from "@/components/ui/badge";
@@ -40,6 +43,11 @@ import {
 } from "@/components/ingredients/ingredient-searchable-select-labels";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 import { cn } from "@/lib/utils";
+
+// How long the new-row highlight ring stays on after a library "+" lands.
+// 1.5s is long enough to grab attention without nagging the user when they
+// already know where the row is.
+const ROW_HIGHLIGHT_DURATION_MS = 1500;
 
 function moveCategoryIdToIndex(input: {
   categoryIds: string[];
@@ -63,7 +71,10 @@ type GroceriesEditListProps = {
   // button — that's how a user can add the first item to an empty category.
   categories: GroceriesEditCategoryOption[];
   units: GroceriesEditUnitOption[];
-  sidebar?: React.ReactNode;
+  // Global ingredient lists shown in the right-side library panel. Server
+  // fetches them on the edit page so initial render is hydrated; subsequent
+  // mutations go through server actions and `revalidatePath`.
+  ingredientLists: IngredientListWithItems[];
 };
 
 function toEditableRows(list: GroceriesEditListModel): GroceriesEditableRow[] {
@@ -116,7 +127,7 @@ export function GroceriesEditList({
   ingredients,
   categories,
   units,
-  sidebar,
+  ingredientLists,
 }: GroceriesEditListProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -125,6 +136,13 @@ export function GroceriesEditList({
   );
   const [rows, setRows] = useState<GroceriesEditableRow[]>(() => toEditableRows(list));
   const sectionElementByCategoryIdRef = useRef(new Map<string, HTMLElement>());
+  // Per-row DOM ref map. Mirrors the section ref pattern above so library
+  // "+" can scrollIntoView a specific row regardless of which section it's in.
+  const rowElementByRowIdRef = useRef(new Map<string, HTMLElement>());
+  // Holds the most recently-added row id that should briefly show a ring.
+  // Cleared by a setTimeout below so the highlight is genuinely transient.
+  const [highlightedRowId, setHighlightedRowId] = useState<string | null>(null);
+  const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(
     categories[0]?.id ?? null,
   );
@@ -297,6 +315,89 @@ export function GroceriesEditList({
       return;
     }
     sectionElementByCategoryIdRef.current.delete(categoryId);
+  }, []);
+  // Per-row registration callback handed down through CategorySection -> Row.
+  const registerRowRef = useCallback((rowId: string, node: HTMLElement | null) => {
+    if (node) {
+      rowElementByRowIdRef.current.set(rowId, node);
+      return;
+    }
+    rowElementByRowIdRef.current.delete(rowId);
+  }, []);
+
+  // Scroll the row into view, then briefly highlight it. Hoisted into a
+  // helper so both the duplicate-detected and freshly-added paths share the
+  // same UX.
+  const scrollAndHighlightRow = useCallback((rowId: string) => {
+    const element = rowElementByRowIdRef.current.get(rowId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    setHighlightedRowId(rowId);
+    if (highlightTimeoutRef.current) {
+      clearTimeout(highlightTimeoutRef.current);
+    }
+    highlightTimeoutRef.current = setTimeout(() => {
+      setHighlightedRowId((current) => (current === rowId ? null : current));
+      highlightTimeoutRef.current = null;
+    }, ROW_HIGHLIGHT_DURATION_MS);
+  }, []);
+
+  // Library "+" handler: if the ingredient is already in the grocery list,
+  // scroll to its existing row instead of duplicating. Otherwise append a
+  // new row with the ingredient + default unit pre-filled and scroll to it
+  // once the new DOM node is registered.
+  const onAddIngredientFromLibrary = useCallback(
+    (ingredientId: string) => {
+      const existingRow = rows.find((row) => row.ingredientId === ingredientId);
+      if (existingRow) {
+        scrollAndHighlightRow(existingRow.id);
+        return;
+      }
+      const ingredient = ingredientById.get(ingredientId);
+      if (!ingredient) return;
+
+      const nextUnitId = getDefaultUnitIdForIngredient({
+        defaultUnitId: ingredient.defaultUnitId,
+        unitConversions: ingredient.unitConversions.map((conversion) => ({
+          unitId: conversion.unitId,
+          unit: { name: conversion.unit.name },
+        })),
+      });
+
+      const newRowId = crypto.randomUUID();
+      setRows((prev) => [
+        ...prev,
+        {
+          id: newRowId,
+          // Library-added rows are unsaved drafts until the user hits Save.
+          isNew: true,
+          ingredientId: ingredient.id,
+          ingredientCategoryId: ingredient.categoryId,
+          displayLabel: ingredient.name,
+          amount: null,
+          unitId: nextUnitId,
+          substitutionsAllowed: false,
+          substitutionNote: null,
+          additionalInfo: null,
+          recipeAttribution: null,
+        },
+      ]);
+      // Wait one frame so the new row is mounted and registered before we
+      // try to scroll to it; rAF beats setTimeout(0) here for layout stability.
+      requestAnimationFrame(() => scrollAndHighlightRow(newRowId));
+    },
+    [ingredientById, rows, scrollAndHighlightRow],
+  );
+
+  // Clear any pending highlight timeout when the component unmounts so we
+  // don't update state on a stale tree.
+  useEffect(() => {
+    return () => {
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+    };
   }, []);
   const onCategoryBadgeClick = useCallback((categoryId: string) => {
     if (isReorderMode) return;
@@ -679,12 +780,24 @@ export function GroceriesEditList({
               }}
               onRowRemove={onRowRemove}
               onAddRow={onAddRow}
+              registerRowRef={registerRowRef}
+              highlightedRowId={highlightedRowId}
             />
           ))}
         </div>
 
-        {/* Keep library panel visually below the sticky category badges. */}
-        <div className="hidden lg:block lg:pt-2">{sidebar}</div>
+        {/* Library panel lives in the right column, below the sticky badges.
+            It owns its own server-action mutations; the only callback the
+            edit list provides is the duplicate-aware "+ to grocery list". */}
+        <div className="hidden lg:block lg:pt-2">
+          <GroceriesEditLibraryPanel
+            planId={list.plan.id}
+            lists={ingredientLists}
+            ingredients={ingredients}
+            categories={categories}
+            onAddIngredientToGroceries={onAddIngredientFromLibrary}
+          />
+        </div>
       </div>
 
       <Dialog open={isSavePresetDialogOpen} onOpenChange={setIsSavePresetDialogOpen}>
