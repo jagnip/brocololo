@@ -140,7 +140,7 @@ export function GroceriesEditRow({
           onValueChange={(nextUnitId) => onRowChange(row.id, { unitId: nextUnitId || null })}
           disabled={selectedIngredient ? availableUnits.length === 0 : adHocUnits.length === 0}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Unit" />
           </SelectTrigger>
           <SelectContent>
