@@ -171,32 +171,35 @@ export function GroceriesEditRow({
         </Select>
       </div>
 
-      <Input
-        value={row.additionalInfo ?? ""}
-        onChange={(event) =>
-          onRowChange(row.id, { additionalInfo: event.target.value || null })
-        }
-        placeholder="Enter additional info"
-      />
-
-      <div className="grid grid-cols-1 gap-y-2 md:grid-cols-[max-content_minmax(0,1fr)] md:gap-x-2">
-        <SubstitutionsAllowedControl
-          checked={row.substitutionsAllowed}
-          onCheckedChange={(checked) =>
-            onRowChange(row.id, { substitutionsAllowed: checked })
-          }
-          // Keep this label on one line in the dense groceries edit grid.
-          labelClassName="whitespace-nowrap"
-        />
+      {/* Keep meta fields stacked by default, then align side-by-side on xl. */}
+      <div className="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:items-start">
         <Input
-          className="w-full"
-          value={row.substitutionNote ?? ""}
+          value={row.additionalInfo ?? ""}
           onChange={(event) =>
-            onRowChange(row.id, { substitutionNote: event.target.value || null })
+            onRowChange(row.id, { additionalInfo: event.target.value || null })
           }
-          placeholder="Enter substitutions"
-          disabled={!row.substitutionsAllowed}
+          placeholder="Enter additional info"
         />
+
+        <div className="grid grid-cols-1 gap-y-2 md:grid-cols-[max-content_minmax(0,1fr)] md:gap-x-2">
+          <SubstitutionsAllowedControl
+            checked={row.substitutionsAllowed}
+            onCheckedChange={(checked) =>
+              onRowChange(row.id, { substitutionsAllowed: checked })
+            }
+            // Keep this label on one line in the dense groceries edit grid.
+            labelClassName="whitespace-nowrap"
+          />
+          <Input
+            className="w-full"
+            value={row.substitutionNote ?? ""}
+            onChange={(event) =>
+              onRowChange(row.id, { substitutionNote: event.target.value || null })
+            }
+            placeholder="Enter substitutions"
+            disabled={!row.substitutionsAllowed}
+          />
+        </div>
       </div>
     </div>
   );
