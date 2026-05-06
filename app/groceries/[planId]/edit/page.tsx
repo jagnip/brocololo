@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { GroceriesEditLibraryPlaceholder } from "@/components/groceries/groceries-edit-library-placeholder";
 import { GroceriesEditList } from "@/components/groceries/groceries-edit-list";
 import { getIngredients } from "@/lib/db/ingredients";
 import { getShoppingListByPlanId } from "@/lib/db/shopping-list";
@@ -23,8 +24,11 @@ export default async function GroceriesEditPage({
   }
 
   return (
-    <div className="page-container space-y-8 py-8">
-      <GroceriesEditList list={list} ingredients={ingredients} units={units} />
+    <div className="page-container py-8">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
+        <GroceriesEditList list={list} ingredients={ingredients} units={units} />
+        <GroceriesEditLibraryPlaceholder className="hidden lg:block" />
+      </div>
     </div>
   );
 }
