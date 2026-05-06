@@ -205,9 +205,8 @@ export function GroceriesEditList({
       .map(([categoryId, categoryRows]) => ({
         categoryId,
         title: categoryById.get(categoryId)?.name ?? "Uncategorized",
-        rows: [...categoryRows].sort((a, b) =>
-          a.displayLabel.localeCompare(b.displayLabel),
-        ),
+        // Preserve current row order so edits don't reshuffle items alphabetically.
+        rows: [...categoryRows],
       }));
   }, [categoryById, rows]);
 

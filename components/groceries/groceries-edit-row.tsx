@@ -41,6 +41,12 @@ export function GroceriesEditRow({
   const selectedIngredient = row.ingredientId
     ? ingredientById.get(row.ingredientId) ?? null
     : null;
+  const pieceUnitId = useMemo(() => {
+    const piece = [...unitById.values()].find(
+      (unit) => unit.name.trim().toLowerCase() === "piece",
+    );
+    return piece?.id ?? null;
+  }, [unitById]);
   const freeTextOptionValue = `__free_text__${row.id}`;
   const resolvedIngredientOptions = useMemo(() => {
     if (row.ingredientId || !row.displayLabel.trim()) {
@@ -58,6 +64,10 @@ export function GroceriesEditRow({
   const availableUnits = useMemo(
     () => selectedIngredient?.unitConversions ?? [],
     [selectedIngredient],
+  );
+  const adHocUnits = useMemo(
+    () => [...unitById.values()].sort((a, b) => a.name.localeCompare(b.name)),
+    [unitById],
   );
 
   return (
@@ -101,7 +111,8 @@ export function GroceriesEditRow({
               displayLabel: label,
               // Keep free-text row in the current section category.
               ingredientCategoryId: row.ingredientCategoryId,
-              unitId: null,
+              // Ad-hoc groceries default to "piece" when available.
+              unitId: pieceUnitId,
               amount: null,
             });
           }}
@@ -127,25 +138,35 @@ export function GroceriesEditRow({
         <Select
           value={row.unitId ?? ""}
           onValueChange={(nextUnitId) => onRowChange(row.id, { unitId: nextUnitId || null })}
-          disabled={availableUnits.length === 0}
+          disabled={selectedIngredient ? availableUnits.length === 0 : adHocUnits.length === 0}
         >
           <SelectTrigger>
             <SelectValue placeholder="Unit" />
           </SelectTrigger>
           <SelectContent>
-            {availableUnits.map((conversion) => {
-              const unit = unitById.get(conversion.unitId);
-              if (!unit) return null;
-              return (
-                <SelectItem key={conversion.unitId} value={conversion.unitId}>
-                  {getUnitDisplayName({
-                    amount: row.amount,
-                    unitName: unit.name,
-                    unitNamePlural: unit.namePlural,
-                  })}
-                </SelectItem>
-              );
-            })}
+            {selectedIngredient
+              ? availableUnits.map((conversion) => {
+                  const unit = unitById.get(conversion.unitId);
+                  if (!unit) return null;
+                  return (
+                    <SelectItem key={conversion.unitId} value={conversion.unitId}>
+                      {getUnitDisplayName({
+                        amount: row.amount,
+                        unitName: unit.name,
+                        unitNamePlural: unit.namePlural,
+                      })}
+                    </SelectItem>
+                  );
+                })
+              : adHocUnits.map((unit) => (
+                  <SelectItem key={unit.id} value={unit.id}>
+                    {getUnitDisplayName({
+                      amount: row.amount,
+                      unitName: unit.name,
+                      unitNamePlural: unit.namePlural,
+                    })}
+                  </SelectItem>
+                ))}
           </SelectContent>
         </Select>
       </div>
