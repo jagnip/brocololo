@@ -374,6 +374,47 @@ export async function setShoppingListActiveLayoutPreset(input: {
   });
 }
 
+export async function deleteActiveShoppingLayoutPreset(input: {
+  planId: string;
+  presetId: string;
+}) {
+  return prisma.$transaction(async (tx) => {
+    const list = await tx.shoppingList.findUnique({
+      where: { planId: input.planId },
+      select: { id: true, planId: true, activeLayoutPresetId: true },
+    });
+    if (!list) throw new Error("SHOPPING_LIST_NOT_FOUND");
+
+    if (!list.activeLayoutPresetId || list.activeLayoutPresetId !== input.presetId) {
+      throw new Error("SHOPPING_LAYOUT_PRESET_NOT_ACTIVE");
+    }
+
+    const preset = await tx.shoppingLayoutPreset.findUnique({
+      where: { id: input.presetId },
+      select: { id: true, isBuiltIn: true },
+    });
+    if (!preset) throw new Error("SHOPPING_LAYOUT_PRESET_NOT_FOUND");
+    if (preset.isBuiltIn) throw new Error("SHOPPING_LAYOUT_PRESET_BUILT_IN");
+
+    // Always transition the list back to the built-in layout before deleting.
+    const defaultPresetId = await ensureDefaultShoppingLayoutPreset(tx);
+    await tx.shoppingList.update({
+      where: { id: list.id },
+      data: { activeLayoutPresetId: defaultPresetId },
+    });
+
+    await tx.shoppingLayoutPreset.delete({
+      where: { id: preset.id },
+    });
+
+    return {
+      planId: list.planId,
+      deletedPresetId: preset.id,
+      activePresetId: defaultPresetId,
+    };
+  });
+}
+
 export async function saveShoppingLayoutPreset(input: {
   planId: string;
   presetName: string;

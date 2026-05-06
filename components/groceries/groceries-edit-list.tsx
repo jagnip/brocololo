@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
+  deleteActiveShoppingLayoutPresetAction,
   saveShoppingLayoutPresetAction,
   saveShoppingListEditsAction,
   setShoppingLayoutPresetAction,
@@ -368,6 +369,17 @@ export function GroceriesEditList({
     () => groupedSections.map((section) => section.categoryId),
     [groupedSections],
   );
+  // Resolve current active preset metadata so UI can guard destructive actions.
+  const activeLayoutPreset = useMemo(
+    () =>
+      list.layoutPresets.find((preset) => preset.id === activeLayoutPresetId) ?? null,
+    [activeLayoutPresetId, list.layoutPresets],
+  );
+  const isActivePresetBuiltIn = activeLayoutPreset?.isBuiltIn ?? false;
+  const isDeleteLayoutDisabled = isPending || !activeLayoutPreset || isActivePresetBuiltIn;
+  const deleteLayoutButtonTitle = isActivePresetBuiltIn
+    ? "Default layout cannot be removed"
+    : "Delete current custom layout and switch to default layout";
   const onLayoutPresetSelect = useCallback(
     (presetId: string) => {
       const selectedPreset = list.layoutPresets.find((preset) => preset.id === presetId);
@@ -429,6 +441,22 @@ export function GroceriesEditList({
     setActiveBadgeDropIndex(null);
     setIsReorderMode(false);
   }, [categories, list.effectiveCategoryOrderIds]);
+  const onDeleteActiveLayoutPreset = useCallback(() => {
+    if (!activeLayoutPresetId) return;
+    startTransition(async () => {
+      const result = await deleteActiveShoppingLayoutPresetAction({
+        planId: list.plan.id,
+        presetId: activeLayoutPresetId,
+      });
+      if (result.type === "error") {
+        toast.error(result.message);
+        return;
+      }
+      toast.success("Removed current custom layout and switched to Default.");
+      setIsReorderMode(false);
+      router.refresh();
+    });
+  }, [activeLayoutPresetId, list.plan.id, router, startTransition]);
 
   const renderBadgeDropSlot = (params: { index: number; side: "left" | "right" }) => {
     const isDragging = Boolean(draggingCategoryId) && isReorderMode;
@@ -602,14 +630,28 @@ export function GroceriesEditList({
               </Button>
             </>
           ) : (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsReorderMode(true)}
-              disabled={isPending}
-            >
-              Reorder layout
-            </Button>
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsReorderMode(true)}
+                disabled={isPending}
+              >
+                Reorder layout
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="text-muted-foreground hover:text-destructive"
+                aria-label="Delete current custom layout and switch to default layout"
+                title={deleteLayoutButtonTitle}
+                onClick={onDeleteActiveLayoutPreset}
+                disabled={isDeleteLayoutDisabled}
+              >
+                <Trash2 className="h-4 w-4" aria-hidden />
+              </Button>
+            </>
           )}
         </div>
       </section>

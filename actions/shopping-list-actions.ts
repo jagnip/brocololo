@@ -3,13 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { ROUTES } from "@/lib/constants";
 import {
+  deleteActiveShoppingLayoutPreset,
   generateShoppingListForPlan,
   saveShoppingLayoutPreset,
   setShoppingListActiveLayoutPreset,
   setShoppingListItemPurchased,
   updateShoppingListItems,
 } from "@/lib/db/shopping-list";
-import { saveShoppingListEditsSchema } from "@/lib/validations/shopping-list";
+import {
+  deleteActiveShoppingLayoutPresetSchema,
+  saveShoppingListEditsSchema,
+} from "@/lib/validations/shopping-list";
 
 export async function generateGroceryListFromPlan(planId: string): Promise<
   | { type: "success"; shoppingListId: string }
@@ -150,6 +154,43 @@ export async function saveShoppingLayoutPresetAction(input: {
     return {
       type: "error",
       message: "Could not save grocery layout preset. Try again.",
+    };
+  }
+}
+
+export async function deleteActiveShoppingLayoutPresetAction(input: unknown): Promise<
+  { type: "success" } | { type: "error"; message: string }
+> {
+  const parsed = deleteActiveShoppingLayoutPresetSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      type: "error",
+      message: "Could not remove grocery layout. Invalid request payload.",
+    };
+  }
+
+  try {
+    const updated = await deleteActiveShoppingLayoutPreset(parsed.data);
+    revalidatePath(ROUTES.groceries);
+    revalidatePath(ROUTES.groceriesView(updated.planId));
+    revalidatePath(ROUTES.groceriesEdit(updated.planId));
+    return { type: "success" };
+  } catch (error) {
+    if (error instanceof Error && error.message === "SHOPPING_LAYOUT_PRESET_BUILT_IN") {
+      return {
+        type: "error",
+        message: "Default layout cannot be removed.",
+      };
+    }
+    if (error instanceof Error && error.message === "SHOPPING_LAYOUT_PRESET_NOT_ACTIVE") {
+      return {
+        type: "error",
+        message: "Only the currently active custom layout can be removed.",
+      };
+    }
+    return {
+      type: "error",
+      message: "Could not remove grocery layout. Try again.",
     };
   }
 }

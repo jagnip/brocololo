@@ -39,6 +39,11 @@ export const saveShoppingListEditsSchema = z.object({
   items: z.array(shoppingListEditableItemSchema),
 });
 
+export const deleteActiveShoppingLayoutPresetSchema = z.object({
+  planId: z.string().min(1),
+  presetId: z.string().min(1),
+});
+
 export type SaveShoppingListEditsPayload = z.infer<
   typeof saveShoppingListEditsSchema
 >;
