@@ -64,7 +64,7 @@ function buildSimulationRecipes() {
       name: `Sweet ${index}`,
       categories: [breakfastOccasion],
       servings: 2, // Avoid batch carry-forward for this baseline simulation.
-      handsOnTime: 10 + (index % 2) * 5, // Always <= weekday breakfast hands-on default (15).
+      handsOnTime: 10 + (index % 2) * 5, // Always <= weekday breakfast hands-on default (30).
       totalTime: 15 + (index % 3) * 5,
       lastUsedInPlanner: null,
     }),
@@ -85,7 +85,7 @@ function buildSimulationRecipes() {
         }),
       ],
       servings: 2, // Avoid batch carry-forward for this baseline simulation.
-      handsOnTime: 15 + (index % 2) * 5, // Always <= weekday lunch hands-on default (20).
+      handsOnTime: 15 + (index % 2) * 5, // Always <= weekday lunch hands-on default (30).
       totalTime: 25 + (index % 2) * 5, // Always <= weekday lunch/dinner total default (30).
       lastUsedInPlanner: null,
     }),

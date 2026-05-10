@@ -52,9 +52,9 @@ describe("planner-form visibility helpers", () => {
 
     expect(nextDaily[0]).toMatchObject({
       date: "2026-03-06",
-      breakfastHandsOnMax: 15,
-      lunchHandsOnMax: 20,
-      dinnerHandsOnMax: 25,
+      breakfastHandsOnMax: 30,
+      lunchHandsOnMax: 30,
+      dinnerHandsOnMax: 30,
     });
     expect(nextDaily[1]).toMatchObject({
       date: "2026-03-07",

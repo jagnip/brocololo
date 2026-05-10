@@ -1,7 +1,6 @@
 import { cache } from "react";
 import { SlotInputType, SlotSaveData } from "@/types/planner";
 import { getPersonIngredientAmountPerMeal } from "@/lib/log/helpers";
-import { FIXED_SNACK_RECIPE_ID } from "@/lib/constants";
 import {
   LogMealType,
   LogPerson,
@@ -386,58 +385,14 @@ async function createBaselineLogTx(
   planId: string,
   slots: SlotInputType[],
 ) {
-  // Snack is a fixed baseline recipe that should always be prefilled for new plans.
-  const fixedSnackRecipe = await tx.recipe.findUnique({
-    where: { id: FIXED_SNACK_RECIPE_ID },
-    select: {
-      id: true,
-      servings: true,
-      servingMultiplierForNelson: true,
-      ingredients: {
-        select: {
-          ingredientId: true,
-          amount: true,
-          nutritionTarget: true,
-          unitId: true,
-        },
-      },
-    },
-  });
-
-  if (!fixedSnackRecipe) {
-    throw new Error("FIXED_SNACK_RECIPE_NOT_FOUND");
-  }
-
   const log = await tx.log.create({
     data: { planId },
     select: { id: true },
   });
 
-  const uniqueDaysByKey = new Map<string, Date>();
-  for (const slot of slots) {
-    const key = slot.date.toISOString().slice(0, 10);
-    if (!uniqueDaysByKey.has(key)) uniqueDaysByKey.set(key, new Date(slot.date));
-  }
-  const people: Array<{ person: LogPerson; role: "primary" | "secondary" }> = [
-    { person: LogPerson.PRIMARY, role: "primary" },
-    { person: LogPerson.SECONDARY, role: "secondary" },
-  ];
-
-  for (const { person, role } of people) {
-    for (const dayDate of uniqueDaysByKey.values()) {
-      const snackEntry = await tx.logEntry.create({
-        data: {
-          logId: log.id,
-          date: dayDate,
-          mealType: LogMealType.SNACK,
-          person,
-        },
-        select: { id: true },
-      });
-
-      void snackEntry;
-    }
-
+  // One log entry per plan slot per person (no automatic snack slots).
+  const people = [LogPerson.PRIMARY, LogPerson.SECONDARY] as const;
+  for (const person of people) {
     for (const slot of slots) {
       await tx.logEntry.create({
         data: {
@@ -740,7 +695,6 @@ export async function updatePlan(
       const mealTypes = [
         LogMealType.BREAKFAST,
         LogMealType.LUNCH,
-        LogMealType.SNACK,
         LogMealType.DINNER,
       ] as const;
       const people = [LogPerson.PRIMARY, LogPerson.SECONDARY] as const;

@@ -13,9 +13,6 @@ export const MEAL_TYPES: PlannerMealType[] = [
   PlannerMealType.DINNER,
 ];
 
-// Fixed recipe automatically attached to snack log entries created from a new plan.
-export const FIXED_SNACK_RECIPE_ID = "cmmxcnazf000ruqttm9nnn158";
-
 export const ROUTES = {
   recipes: "/recipes",
   recipeCreate: "/recipes/create",
@@ -50,11 +47,11 @@ export type MealTimeLimits = {
   dinnerTotalMax: number | null;
 };
 
-// Shared grouped defaults for planner time limits.
+// Shared grouped defaults for planner time limits (weekday hands-on: 30 min per meal).
 export const WEEKDAY_TIME_LIMIT_DEFAULTS: MealTimeLimits = {
-  breakfastHandsOnMax: 15,
-  lunchHandsOnMax: 20,
-  dinnerHandsOnMax: 25,
+  breakfastHandsOnMax: 30,
+  lunchHandsOnMax: 30,
+  dinnerHandsOnMax: 30,
   breakfastTotalMax: null,
   lunchTotalMax: 30,
   dinnerTotalMax: 30,
