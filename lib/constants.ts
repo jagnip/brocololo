@@ -28,6 +28,8 @@ export const ROUTES = {
   planCreate: "/plan/create",
   planView: (planId: string) => `/plan/${planId}`,
   groceries: "/groceries",
+  /** Left nav “Groceries” — opens today’s plan list (or latest), like Plan → current. */
+  groceriesCurrent: "/groceries/current",
   groceriesView: (planId: string) => `/groceries/${planId}`,
   // Dedicated edit page for a persisted grocery list.
   groceriesEdit: (planId: string) => `/groceries/${planId}/edit`,

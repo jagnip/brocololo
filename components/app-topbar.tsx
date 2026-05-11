@@ -21,6 +21,9 @@ export function AppTopbar() {
   const isIngredientEditRoute = /^\/ingredients\/[^/]+\/edit$/.test(pathname);
   const isPlanDetailRoute = /^\/plan\/(?!create$)[^/]+$/.test(pathname);
   const isPlanCreateRoute = pathname === "/plan/create";
+  const isGroceriesPlanDetailRoute =
+    /^\/groceries\/(?!current$)[^/]+$/.test(pathname);
+  const isGroceriesPlanEditRoute = /^\/groceries\/[^/]+\/edit$/.test(pathname);
   const shouldShowRecipeTopbarSkeleton = isRecipeDetailRoute && !config;
   const shouldShowRecipesIndexTopbarSkeleton = isRecipesIndexRoute && !config;
   const shouldShowRecipeCreateTopbarSkeleton = isRecipeCreateRoute && !config;
@@ -34,6 +37,10 @@ export function AppTopbar() {
     isIngredientEditRoute && !config;
   const shouldShowPlanTopbarSkeleton = isPlanDetailRoute && !config;
   const shouldShowPlanCreateTopbarSkeleton = isPlanCreateRoute && !config;
+  const shouldShowGroceriesPlanTopbarSkeleton =
+    isGroceriesPlanDetailRoute && !config;
+  const shouldShowGroceriesPlanEditTopbarSkeleton =
+    isGroceriesPlanEditRoute && !config;
 
   // z-20: stay above page controls that use z-10 (e.g. log card remove buttons) while scrolling.
   // `gap-2` between the nav trigger and the controls row matches inner `gap-2` and prevents selects
@@ -109,6 +116,20 @@ export function AppTopbar() {
             {/* Mirror plan/create: Save plan + Find meals while client form mounts. */}
             <Skeleton className="h-9 w-24 rounded-md" />
             <Skeleton className="h-9 w-28 rounded-md" />
+          </>
+        ) : null}
+        {shouldShowGroceriesPlanTopbarSkeleton ? (
+          <>
+            {/* Mirror groceries view topbar: plan switcher + Edit groceries while layout hydrates. */}
+            <Skeleton className="h-9 w-48 rounded-md" />
+            <Skeleton className="h-9 w-28 rounded-md" />
+          </>
+        ) : null}
+        {shouldShowGroceriesPlanEditTopbarSkeleton ? (
+          <>
+            {/* Mirror groceries edit topbar: plan switcher + View list while layout hydrates. */}
+            <Skeleton className="h-9 w-48 rounded-md" />
+            <Skeleton className="h-9 w-24 rounded-md" />
           </>
         ) : null}
         {config?.badge ? (
