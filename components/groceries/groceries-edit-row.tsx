@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,16 +42,18 @@ type GroceriesEditRowProps = {
   unitById: Map<string, GroceriesEditUnitOption>;
   onRowChange: (rowId: string, next: Partial<GroceriesEditableRow>) => void;
   onRowRemove: (rowId: string) => void;
-  // Optional ref callback so the parent can register this row's DOM node and
-  // scroll to it (e.g. when a library-panel "+" lands on this row).
-  rowRef?: (node: HTMLElement | null) => void;
+  // Optional ref registration callback so the parent can register this row's
+  // DOM node and scroll to it (e.g. when a library-panel "+" lands on this row).
+  registerRowRef?: (rowId: string, node: HTMLElement | null) => void;
   // When true, applies a transient ring/pulse so the user can spot the row
   // that just received a library "+". The parent clears the flag after a
   // short timeout.
   highlighted?: boolean;
 };
 
-export function GroceriesEditRow({
+const EDIT_COMMIT_DEBOUNCE_MS = 180;
+
+function GroceriesEditRowComponent({
   row,
   ingredientOptions,
   renderIngredientDropdownLabel,
@@ -60,9 +62,57 @@ export function GroceriesEditRow({
   unitById,
   onRowChange,
   onRowRemove,
-  rowRef,
+  registerRowRef,
   highlighted = false,
 }: GroceriesEditRowProps) {
+  const amountInputRef = useRef(row.amount === null ? "" : String(row.amount));
+  const additionalInfoInputRef = useRef(row.additionalInfo ?? "");
+  const substitutionNoteInputRef = useRef(row.substitutionNote ?? "");
+  const amountCommitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const additionalInfoCommitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const substitutionNoteCommitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const amountPropValue = row.amount === null ? "" : String(row.amount);
+  const additionalInfoPropValue = row.additionalInfo ?? "";
+  const substitutionNotePropValue = row.substitutionNote ?? "";
+
+  const commitAmount = useCallback(
+    (value: string) => {
+      const nextAmount = value.trim() === "" ? null : Number(value);
+      if (nextAmount !== null && Number.isNaN(nextAmount)) return;
+      if (row.amount === nextAmount) return;
+      onRowChange(row.id, { amount: nextAmount });
+    },
+    [onRowChange, row.amount, row.id],
+  );
+  const commitAdditionalInfo = useCallback(
+    (value: string) => {
+      const normalized = value || null;
+      if (row.additionalInfo === normalized) return;
+      onRowChange(row.id, { additionalInfo: normalized });
+    },
+    [onRowChange, row.additionalInfo, row.id],
+  );
+  const commitSubstitutionNote = useCallback(
+    (value: string) => {
+      const normalized = value || null;
+      if (row.substitutionNote === normalized) return;
+      onRowChange(row.id, { substitutionNote: normalized });
+    },
+    [onRowChange, row.id, row.substitutionNote],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (amountCommitTimerRef.current) clearTimeout(amountCommitTimerRef.current);
+      if (additionalInfoCommitTimerRef.current) {
+        clearTimeout(additionalInfoCommitTimerRef.current);
+      }
+      if (substitutionNoteCommitTimerRef.current) {
+        clearTimeout(substitutionNoteCommitTimerRef.current);
+      }
+    };
+  }, []);
+
   const selectedIngredient = row.ingredientId
     ? ingredientById.get(row.ingredientId) ?? null
     : null;
@@ -91,6 +141,12 @@ export function GroceriesEditRow({
   const recipeNames = useMemo(
     () => parseRecipeNames(row.recipeAttribution),
     [row.recipeAttribution],
+  );
+  const rowRef = useCallback(
+    (node: HTMLElement | null) => {
+      registerRowRef?.(row.id, node);
+    },
+    [registerRowRef, row.id],
   );
 
   return (
@@ -173,12 +229,17 @@ export function GroceriesEditRow({
             type="number"
             min={0}
             step="any"
-            value={row.amount ?? ""}
+            defaultValue={amountPropValue}
             placeholder="Amount"
             onChange={(event) => {
-              const amount = event.target.value === "" ? null : Number(event.target.value);
-              onRowChange(row.id, { amount });
+              const nextValue = event.target.value;
+              amountInputRef.current = nextValue;
+              if (amountCommitTimerRef.current) clearTimeout(amountCommitTimerRef.current);
+              amountCommitTimerRef.current = setTimeout(() => {
+                commitAmount(nextValue);
+              }, EDIT_COMMIT_DEBOUNCE_MS);
             }}
+            onBlur={() => commitAmount(amountInputRef.current)}
           />
 
           <Select
@@ -233,10 +294,18 @@ export function GroceriesEditRow({
 
         <div className="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:items-start">
           <Input
-            value={row.additionalInfo ?? ""}
-            onChange={(event) =>
-              onRowChange(row.id, { additionalInfo: event.target.value || null })
-            }
+            defaultValue={additionalInfoPropValue}
+            onChange={(event) => {
+              const nextValue = event.target.value;
+              additionalInfoInputRef.current = nextValue;
+              if (additionalInfoCommitTimerRef.current) {
+                clearTimeout(additionalInfoCommitTimerRef.current);
+              }
+              additionalInfoCommitTimerRef.current = setTimeout(() => {
+                commitAdditionalInfo(nextValue);
+              }, EDIT_COMMIT_DEBOUNCE_MS);
+            }}
+            onBlur={() => commitAdditionalInfo(additionalInfoInputRef.current)}
             placeholder="Enter additional info"
           />
 
@@ -251,10 +320,18 @@ export function GroceriesEditRow({
             />
             <Input
               className="w-full"
-              value={row.substitutionNote ?? ""}
-              onChange={(event) =>
-                onRowChange(row.id, { substitutionNote: event.target.value || null })
-              }
+              defaultValue={substitutionNotePropValue}
+              onChange={(event) => {
+                const nextValue = event.target.value;
+                substitutionNoteInputRef.current = nextValue;
+                if (substitutionNoteCommitTimerRef.current) {
+                  clearTimeout(substitutionNoteCommitTimerRef.current);
+                }
+                substitutionNoteCommitTimerRef.current = setTimeout(() => {
+                  commitSubstitutionNote(nextValue);
+                }, EDIT_COMMIT_DEBOUNCE_MS);
+              }}
+              onBlur={() => commitSubstitutionNote(substitutionNoteInputRef.current)}
               placeholder="Enter substitutions"
               disabled={!row.substitutionsAllowed}
             />
@@ -321,12 +398,17 @@ export function GroceriesEditRow({
           type="number"
           min={0}
           step="any"
-          value={row.amount ?? ""}
+          defaultValue={amountPropValue}
           placeholder="Amount"
           onChange={(event) => {
-            const amount = event.target.value === "" ? null : Number(event.target.value);
-            onRowChange(row.id, { amount });
+            const nextValue = event.target.value;
+            amountInputRef.current = nextValue;
+            if (amountCommitTimerRef.current) clearTimeout(amountCommitTimerRef.current);
+            amountCommitTimerRef.current = setTimeout(() => {
+              commitAmount(nextValue);
+            }, EDIT_COMMIT_DEBOUNCE_MS);
           }}
+          onBlur={() => commitAmount(amountInputRef.current)}
         />
 
         <Select
@@ -365,8 +447,18 @@ export function GroceriesEditRow({
         </Select>
 
         <Input
-          value={row.additionalInfo ?? ""}
-          onChange={(event) => onRowChange(row.id, { additionalInfo: event.target.value || null })}
+          defaultValue={additionalInfoPropValue}
+          onChange={(event) => {
+            const nextValue = event.target.value;
+            additionalInfoInputRef.current = nextValue;
+            if (additionalInfoCommitTimerRef.current) {
+              clearTimeout(additionalInfoCommitTimerRef.current);
+            }
+            additionalInfoCommitTimerRef.current = setTimeout(() => {
+              commitAdditionalInfo(nextValue);
+            }, EDIT_COMMIT_DEBOUNCE_MS);
+          }}
+          onBlur={() => commitAdditionalInfo(additionalInfoInputRef.current)}
           placeholder="Enter additional info"
         />
 
@@ -382,8 +474,18 @@ export function GroceriesEditRow({
 
         <Input
           className="w-full"
-          value={row.substitutionNote ?? ""}
-          onChange={(event) => onRowChange(row.id, { substitutionNote: event.target.value || null })}
+          defaultValue={substitutionNotePropValue}
+          onChange={(event) => {
+            const nextValue = event.target.value;
+            substitutionNoteInputRef.current = nextValue;
+            if (substitutionNoteCommitTimerRef.current) {
+              clearTimeout(substitutionNoteCommitTimerRef.current);
+            }
+            substitutionNoteCommitTimerRef.current = setTimeout(() => {
+              commitSubstitutionNote(nextValue);
+            }, EDIT_COMMIT_DEBOUNCE_MS);
+          }}
+          onBlur={() => commitSubstitutionNote(substitutionNoteInputRef.current)}
           placeholder="Enter substitutions"
           disabled={!row.substitutionsAllowed}
         />
@@ -418,3 +520,5 @@ export function GroceriesEditRow({
     </div>
   );
 }
+
+export const GroceriesEditRow = memo(GroceriesEditRowComponent);

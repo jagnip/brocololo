@@ -121,14 +121,14 @@ export function AppTopbar() {
         {shouldShowGroceriesPlanTopbarSkeleton ? (
           <>
             {/* Mirror groceries view topbar: plan switcher + Edit groceries while layout hydrates. */}
-            <Skeleton className="h-9 w-48 rounded-md" />
+            <Skeleton className="h-9 w-36 rounded-md sm:w-48" />
             <Skeleton className="h-9 w-28 rounded-md" />
           </>
         ) : null}
         {shouldShowGroceriesPlanEditTopbarSkeleton ? (
           <>
             {/* Mirror groceries edit topbar: plan switcher + View list while layout hydrates. */}
-            <Skeleton className="h-9 w-48 rounded-md" />
+            <Skeleton className="h-9 w-36 rounded-md sm:w-48" />
             <Skeleton className="h-9 w-24 rounded-md" />
           </>
         ) : null}

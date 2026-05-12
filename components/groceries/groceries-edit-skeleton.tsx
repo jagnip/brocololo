@@ -33,11 +33,45 @@ export function GroceriesEditSkeleton() {
               <Skeleton className="h-6 w-36" />
               <div className="space-y-2">
                 {Array.from({ length: 3 }).map((__, rowIndex) => (
-                  <Skeleton
-                    // Keep card-like row placeholders similar to groceries edit rows.
+                  <div
+                    // Mirror real groceries rows: rounded card with field-like skeletons.
                     key={rowIndex}
-                    className="h-28 w-full rounded-lg"
-                  />
+                    className="space-y-2 rounded-lg p-3"
+                  >
+                    {/* Mobile/tablet row shape (stacked controls) matches `GroceriesEditRow`. */}
+                    <div className="space-y-2 xl:hidden">
+                      <div className="grid items-start gap-2 md:grid-cols-[minmax(0,1fr)_7rem_10rem_auto]">
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-10 md:justify-self-end" />
+                      </div>
+                      <div className="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                        <Skeleton className="h-10 w-full" />
+                        <div className="grid grid-cols-1 gap-y-2 md:grid-cols-[max-content_minmax(0,1fr)] md:gap-x-2">
+                          <Skeleton className="h-10 w-36" />
+                          <Skeleton className="h-10 w-full" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Desktop row shape: single dense horizontal line of fields/actions. */}
+                    <div className="hidden xl:grid xl:grid-cols-[minmax(0,1.3fr)_7rem_10rem_minmax(0,1fr)_max-content_minmax(0,1fr)_auto] xl:items-start xl:gap-2">
+                      <Skeleton className="h-10 w-full" />
+                      <Skeleton className="h-10 w-full" />
+                      <Skeleton className="h-10 w-full" />
+                      <Skeleton className="h-10 w-full" />
+                      <Skeleton className="h-10 w-32" />
+                      <Skeleton className="h-10 w-full" />
+                      <Skeleton className="h-10 w-10 justify-self-end" />
+                    </div>
+
+                    {/* Badge strip placeholder for recipe attribution chips under a row. */}
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                      <Skeleton className="h-6 w-24" />
+                      <Skeleton className="h-6 w-20" />
+                    </div>
+                  </div>
                 ))}
               </div>
               <Skeleton className="h-10 w-24" />
@@ -46,7 +80,7 @@ export function GroceriesEditSkeleton() {
         </div>
 
         {/* Right-side ingredient library skeleton mirrors new edit sidebar panel. */}
-        <aside className="hidden rounded-xl border bg-card p-4 lg:block">
+        <aside className="hidden rounded-xl bg-card p-4 lg:block">
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-2">
               <Skeleton className="h-5 w-16" />

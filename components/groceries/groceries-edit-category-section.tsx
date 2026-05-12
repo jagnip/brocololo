@@ -74,11 +74,7 @@ export function GroceriesEditCategorySection({
             onRowRemove={onRowRemove}
             // Wire each row's DOM node up through the section to the parent
             // edit-list so library "+" can scrollIntoView the right element.
-            rowRef={
-              registerRowRef
-                ? (node) => registerRowRef(row.id, node)
-                : undefined
-            }
+            registerRowRef={registerRowRef}
             highlighted={highlightedRowId === row.id}
           />
         ))}

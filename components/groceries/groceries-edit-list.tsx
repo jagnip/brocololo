@@ -278,12 +278,40 @@ export function GroceriesEditList({
       ),
     [groupedSections],
   );
+  const rowIndexById = useMemo(
+    () =>
+      new Map(
+        rows.map((row, index) => [row.id, index] as const),
+      ),
+    [rows],
+  );
 
   const hasUnsavedChanges = useMemo(
     () => hasGroceriesEditChanges(initialRows, rows),
     [initialRows, rows],
   );
   const isSaveDisabled = isPending || !hasUnsavedChanges;
+  const onRowChange = useCallback(
+    (rowId: string, next: Partial<GroceriesEditableRow>) => {
+      const rowIndex = rowIndexById.get(rowId);
+      if (rowIndex === undefined) return;
+      setRows((prev) => {
+        const existingRow = prev[rowIndex];
+        if (!existingRow) return prev;
+        const updatedRow = { ...existingRow, ...next };
+        // Skip state writes when nothing changed to avoid extra rerenders.
+        const hasAnyChange = Object.entries(next).some(
+          ([key, value]) =>
+            existingRow[key as keyof GroceriesEditableRow] !== value,
+        );
+        if (!hasAnyChange) return prev;
+        const nextRows = [...prev];
+        nextRows[rowIndex] = updatedRow;
+        return nextRows;
+      });
+    },
+    [rowIndexById],
+  );
   const onRowRemove = useCallback((rowId: string) => {
     // Row removal is centralized with row updates to keep section components stateless.
     setRows((prev) => prev.filter((row) => row.id !== rowId));
@@ -772,12 +800,8 @@ export function GroceriesEditList({
               renderIngredientTriggerLabel={renderIngredientTriggerLabel}
               ingredientById={ingredientById}
               unitById={unitById}
-              onRowChange={(rowId, next) => {
-                // Row updates are centralized here so section components stay stateless.
-                setRows((prev) =>
-                  prev.map((row) => (row.id === rowId ? { ...row, ...next } : row)),
-                );
-              }}
+              // Row updates are centralized here so section components stay stateless.
+              onRowChange={onRowChange}
               onRowRemove={onRowRemove}
               onAddRow={onAddRow}
               registerRowRef={registerRowRef}
