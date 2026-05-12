@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { ArrowRightLeft, CircleAlert, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { setShoppingListItemPurchasedAction } from "@/actions/shopping-list-actions";
 import { IngredientIcon } from "@/components/ingredient-icon";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatAmount } from "@/lib/groceries/helpers";
@@ -31,14 +32,29 @@ type GroceriesPersistedItemRowProps = {
         supermarketUrl: string | null;
       } | null;
     } | null;
+    // Comma-joined recipe names from list generation; shown as secondary badges.
+    recipeAttribution: string | null;
   };
 };
+
+// Same split as groceries edit: attribution is stored as comma-joined names at generation time.
+function parseRecipeNames(attribution: string | null): string[] {
+  if (!attribution) return [];
+  return attribution
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
 
 export function GroceriesPersistedItemRow({ row }: GroceriesPersistedItemRowProps) {
   const [isPending, startTransition] = useTransition();
   const [isPurchased, setIsPurchased] = useState(row.purchased);
 
   const ing = row.groceryIngredient?.ingredient;
+  const recipeNames = useMemo(
+    () => parseRecipeNames(row.recipeAttribution),
+    [row.recipeAttribution],
+  );
   const hasMeta = Boolean(
     row.additionalInfo || (row.substitutionsAllowed && row.substitutionNote),
   );
@@ -128,11 +144,27 @@ export function GroceriesPersistedItemRow({ row }: GroceriesPersistedItemRowProp
             </div>
             <div
               className={cn(
-                "text-sm text-muted-foreground",
+                "flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground",
                 isPurchased && "line-through",
               )}
             >
-              {amountLabel}
+              <span className="shrink-0">{amountLabel}</span>
+              {recipeNames.length > 0 ? (
+                <span
+                  className="flex flex-wrap items-center gap-1.5"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  {recipeNames.map((name) => (
+                    <Badge
+                      key={name}
+                      variant="secondary"
+                      className="max-w-48 truncate font-normal"
+                    >
+                      {name}
+                    </Badge>
+                  ))}
+                </span>
+              ) : null}
             </div>
           </div>
         </div>

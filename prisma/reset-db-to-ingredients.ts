@@ -1,25 +1,8 @@
 import "dotenv/config";
 import slugify from "slugify";
 import { prisma } from "../lib/db/index";
+import { INGREDIENT_CATEGORY_ORDER } from "./ingredient-categories.seed";
 import { ingredientSeedObjects } from "./ingredient-seed-objects";
-
-const INGREDIENT_CATEGORY_ORDER = [
-  "Produce",
-  "Dairy & Eggs",
-  "Meat & Poultry",
-  "Fish & Seafood",
-  "Grains & Pasta",
-  "Bread & Bakery",
-  "Legumes",
-  "Nuts & Seeds",
-  "Oils & Condiments",
-  "Spices & Herbs",
-  "Canned & Jarred",
-  "Baking",
-  "Frozen",
-  "Sweeteners",
-  "Other",
-] as const;
 
 function toSlug(value: string): string {
   return slugify(value, { lower: true, strict: true, trim: true });

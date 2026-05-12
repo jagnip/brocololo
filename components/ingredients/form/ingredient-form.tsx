@@ -904,6 +904,8 @@ export default function IngredientForm({
                       <SubstitutionsAllowedControl
                         checked={field.value ?? false}
                         onCheckedChange={field.onChange}
+                        // Ingredient form keeps this control full-width in its column.
+                        className="w-full justify-between"
                       />
                     </FormControl>
                   </FormItem>

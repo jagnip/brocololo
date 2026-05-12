@@ -2,5 +2,9 @@ import { GroceriesPlanSkeleton } from "@/components/groceries/groceries-plan-ske
 
 export default function Loading() {
   // Dedicated skeleton for groceries plan detail route.
-  return <GroceriesPlanSkeleton />;
+  return (
+    <div className="page-container space-y-8 py-8">
+      <GroceriesPlanSkeleton />
+    </div>
+  );
 }

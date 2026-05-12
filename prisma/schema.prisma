@@ -207,6 +207,7 @@ model Ingredient {
   unitConversions IngredientUnit[]
   logIngredients  LogIngredient[]
   groceryIngredient GroceryIngredient?
+  ingredientLists IngredientListItem[]
 
   @@index([categoryId])
   @@index([defaultUnitId])
@@ -401,3 +402,34 @@ model LogIngredient {
   @@map("log_ingredients")
 }
 
+// Global, app-wide ingredient lists used as a quick-add library on the
+// groceries edit page. They are intentionally not scoped to a Plan or a
+// ShoppingList so they can be reused across plans.
+model IngredientList {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  items IngredientListItem[]
+
+  @@map("ingredient_lists")
+}
+
+// Many-to-many join between IngredientList and Ingredient. The unique
+// constraint guarantees each ingredient appears at most once per list,
+// so adding the same ingredient twice is a no-op (idempotent server action).
+model IngredientListItem {
+  id           String   @id @default(cuid())
+  listId       String   @map("list_id")
+  ingredientId String   @map("ingredient_id")
+  position     Int      @default(0)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  list       IngredientList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  ingredient Ingredient     @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, ingredientId])
+  @@index([listId, position])
+  @@map("ingredient_list_items")
+}

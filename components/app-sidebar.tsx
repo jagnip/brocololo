@@ -86,7 +86,7 @@ export function AppSidebar() {
               tooltip="Groceries"
             >
               <Link
-                href={ROUTES.groceries}
+                href={ROUTES.groceriesCurrent}
                 onClick={() => {
                   if (!isMobile) return;
                   setOpenMobile(false);

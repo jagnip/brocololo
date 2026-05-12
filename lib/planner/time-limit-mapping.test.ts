@@ -39,9 +39,9 @@ describe("time-limit-mapping", () => {
     // Friday uses weekday group; Saturday uses weekend group.
     expect(mapped[0]).toMatchObject({
       date: "2026-03-06",
-      breakfastHandsOnMax: 15,
-      lunchHandsOnMax: 20,
-      dinnerHandsOnMax: 25,
+      breakfastHandsOnMax: 30,
+      lunchHandsOnMax: 30,
+      dinnerHandsOnMax: 30,
       breakfastTotalMax: null,
       lunchTotalMax: 30,
       dinnerTotalMax: 30,
@@ -98,9 +98,9 @@ describe("time-limit-mapping", () => {
     // New day is initialized from weekday defaults.
     expect(merged[2]).toMatchObject({
       date: "2026-03-04",
-      breakfastHandsOnMax: 15,
-      lunchHandsOnMax: 20,
-      dinnerHandsOnMax: 25,
+      breakfastHandsOnMax: 30,
+      lunchHandsOnMax: 30,
+      dinnerHandsOnMax: 30,
       breakfastTotalMax: null,
       lunchTotalMax: 30,
       dinnerTotalMax: 30,

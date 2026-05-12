@@ -1,6 +1,10 @@
 import 'dotenv/config';
 import { prisma } from '../lib/db/index';
 import slugify from 'slugify';
+import {
+  INGREDIENT_CATEGORY_ORDER,
+  type IngredientCategorySeedName,
+} from './ingredient-categories.seed';
 
 async function main() {
   console.log('🌱 Seeding database...');
@@ -156,31 +160,29 @@ async function main() {
 
   console.log('✅ Created categories');
 
-  // Create ingredient categories
-  const icProduce = await prisma.ingredientCategory.create({
-    data: { name: 'Produce', slug: 'produce', sortOrder: 0 },
-  });
-  const icDairy = await prisma.ingredientCategory.create({
-    data: { name: 'Dairy & Eggs', slug: 'dairy-eggs', sortOrder: 1 },
-  });
-  const icMeat = await prisma.ingredientCategory.create({
-    data: { name: 'Meat & Poultry', slug: 'meat-poultry', sortOrder: 2 },
-  });
-  const icFish = await prisma.ingredientCategory.create({
-    data: { name: 'Fish & Seafood', slug: 'fish-seafood', sortOrder: 3 },
-  });
-  const icGrains = await prisma.ingredientCategory.create({
-    data: { name: 'Grains & Pasta', slug: 'grains-pasta', sortOrder: 4 },
-  });
-  const icOils = await prisma.ingredientCategory.create({
-    data: { name: 'Oils & Condiments', slug: 'oils-condiments', sortOrder: 5 },
-  });
-  const icBaking = await prisma.ingredientCategory.create({
-    data: { name: 'Baking', slug: 'baking', sortOrder: 6 },
-  });
-  const icBread = await prisma.ingredientCategory.create({
-    data: { name: 'Bread & Wraps', slug: 'bread-wraps', sortOrder: 7 },
-  });
+  // Ingredient categories: single source of truth in `ingredient-categories.seed.ts` (aisle order).
+  const ingredientCategoryIdByName = new Map<
+    IngredientCategorySeedName,
+    string
+  >();
+  for (let i = 0; i < INGREDIENT_CATEGORY_ORDER.length; i++) {
+    const name = INGREDIENT_CATEGORY_ORDER[i];
+    const row = await prisma.ingredientCategory.create({
+      data: {
+        name,
+        slug: slugify(name, { lower: true, strict: true, trim: true }),
+        sortOrder: i,
+      },
+    });
+    ingredientCategoryIdByName.set(name, row.id);
+  }
+
+  /** Resolve demo ingredient `categoryId` by canonical aisle name. */
+  function ic(name: IngredientCategorySeedName): string {
+    const id = ingredientCategoryIdByName.get(name);
+    if (!id) throw new Error(`Missing ingredient category: ${name}`);
+    return id;
+  }
 
   console.log('✅ Created ingredient categories');
 
@@ -197,64 +199,64 @@ async function main() {
 
   // Create ingredients
   const tomato = await prisma.ingredient.create({
-    data: { name: 'Tomato', slug: 'tomato', supermarketUrl, calories: 18, proteins: 0.9, fats: 0.2, carbs: 3.9, categoryId: icProduce.id },
+    data: { name: 'Tomato', slug: 'tomato', supermarketUrl, calories: 18, proteins: 0.9, fats: 0.2, carbs: 3.9, categoryId: ic('Veg') },
   });
   const onion = await prisma.ingredient.create({
-    data: { name: 'Onion', slug: 'onion', supermarketUrl, calories: 40, proteins: 1.1, fats: 0.1, carbs: 9.3, categoryId: icProduce.id },
+    data: { name: 'Onion', slug: 'onion', supermarketUrl, calories: 40, proteins: 1.1, fats: 0.1, carbs: 9.3, categoryId: ic('Veg') },
   });
   const garlic = await prisma.ingredient.create({
-    data: { name: 'Garlic', slug: 'garlic', supermarketUrl, calories: 149, proteins: 6.4, fats: 0.5, carbs: 33.1, categoryId: icProduce.id },
+    data: { name: 'Garlic', slug: 'garlic', supermarketUrl, calories: 149, proteins: 6.4, fats: 0.5, carbs: 33.1, categoryId: ic('Veg') },
   });
   const oliveOil = await prisma.ingredient.create({
-    data: { name: 'Olive Oil', slug: 'olive-oil', supermarketUrl, calories: 884, proteins: 0.0, fats: 100.0, carbs: 0.0, categoryId: icOils.id },
+    data: { name: 'Olive Oil', slug: 'olive-oil', supermarketUrl, calories: 884, proteins: 0.0, fats: 100.0, carbs: 0.0, categoryId: ic('Oils & Dressings') },
   });
   const pastaIngredient = await prisma.ingredient.create({
-    data: { name: 'Pasta', slug: 'pasta', supermarketUrl, calories: 131, proteins: 5.0, fats: 1.1, carbs: 25.0, categoryId: icGrains.id },
+    data: { name: 'Pasta', slug: 'pasta', supermarketUrl, calories: 131, proteins: 5.0, fats: 1.1, carbs: 25.0, categoryId: ic('Pasta, Rice & Beans') },
   });
   const flour = await prisma.ingredient.create({
-    data: { name: 'All-Purpose Flour', slug: 'all-purpose-flour', supermarketUrl, calories: 364, proteins: 10.3, fats: 1.0, carbs: 76.3, categoryId: icBaking.id },
+    data: { name: 'All-Purpose Flour', slug: 'all-purpose-flour', supermarketUrl, calories: 364, proteins: 10.3, fats: 1.0, carbs: 76.3, categoryId: ic('Baking Items') },
   });
   const sugar = await prisma.ingredient.create({
-    data: { name: 'Granulated Sugar', slug: 'granulated-sugar', supermarketUrl, calories: 387, proteins: 0.0, fats: 0.0, carbs: 100.0, categoryId: icBaking.id },
+    data: { name: 'Granulated Sugar', slug: 'granulated-sugar', supermarketUrl, calories: 387, proteins: 0.0, fats: 0.0, carbs: 100.0, categoryId: ic('Baking Items') },
   });
   const butter = await prisma.ingredient.create({
-    data: { name: 'Butter', slug: 'butter', supermarketUrl, calories: 717, proteins: 0.9, fats: 81.1, carbs: 0.1, categoryId: icDairy.id },
+    data: { name: 'Butter', slug: 'butter', supermarketUrl, calories: 717, proteins: 0.9, fats: 81.1, carbs: 0.1, categoryId: ic('Dairy, Eggs & Cheese') },
   });
   const eggs = await prisma.ingredient.create({
-    data: { name: 'Eggs', slug: 'eggs', supermarketUrl, calories: 155, proteins: 13.0, fats: 11.0, carbs: 1.1, categoryId: icDairy.id },
+    data: { name: 'Eggs', slug: 'eggs', supermarketUrl, calories: 155, proteins: 13.0, fats: 11.0, carbs: 1.1, categoryId: ic('Dairy, Eggs & Cheese') },
   });
   const milk = await prisma.ingredient.create({
-    data: { name: 'Whole Milk', slug: 'whole-milk', supermarketUrl, calories: 61, proteins: 3.2, fats: 3.3, carbs: 4.8, categoryId: icDairy.id },
+    data: { name: 'Whole Milk', slug: 'whole-milk', supermarketUrl, calories: 61, proteins: 3.2, fats: 3.3, carbs: 4.8, categoryId: ic('Dairy, Eggs & Cheese') },
   });
   const chickenIngredient = await prisma.ingredient.create({
-    data: { name: 'Chicken Breast', slug: 'chicken-breast', supermarketUrl, calories: 165, proteins: 31.0, fats: 3.6, carbs: 0.0, categoryId: icMeat.id },
+    data: { name: 'Chicken Breast', slug: 'chicken-breast', supermarketUrl, calories: 165, proteins: 31.0, fats: 3.6, carbs: 0.0, categoryId: ic('Meat & Poultry') },
   });
   const rolledOats = await prisma.ingredient.create({
-    data: { name: 'Rolled Oats', slug: 'rolled-oats', supermarketUrl, calories: 389, proteins: 16.9, fats: 6.9, carbs: 66.3, categoryId: icGrains.id },
+    data: { name: 'Rolled Oats', slug: 'rolled-oats', supermarketUrl, calories: 389, proteins: 16.9, fats: 6.9, carbs: 66.3, categoryId: ic('Cereal & Breakfast Foods') },
   });
   const beefIngredient = await prisma.ingredient.create({
-    data: { name: 'Ground Beef', slug: 'ground-beef', supermarketUrl, calories: 250, proteins: 26.0, fats: 17.0, carbs: 0.0, categoryId: icMeat.id },
+    data: { name: 'Ground Beef', slug: 'ground-beef', supermarketUrl, calories: 250, proteins: 26.0, fats: 17.0, carbs: 0.0, categoryId: ic('Meat & Poultry') },
   });
   const salmon = await prisma.ingredient.create({
-    data: { name: 'Salmon', slug: 'salmon', supermarketUrl, calories: 208, proteins: 20.0, fats: 12.0, carbs: 0.0, categoryId: icFish.id },
+    data: { name: 'Salmon', slug: 'salmon', supermarketUrl, calories: 208, proteins: 20.0, fats: 12.0, carbs: 0.0, categoryId: ic('Fish & Seafood') },
   });
   const porkIngredient = await prisma.ingredient.create({
-    data: { name: 'Pork Tenderloin', slug: 'pork-tenderloin', supermarketUrl, calories: 143, proteins: 22.0, fats: 5.0, carbs: 0.0, categoryId: icMeat.id },
+    data: { name: 'Pork Tenderloin', slug: 'pork-tenderloin', supermarketUrl, calories: 143, proteins: 22.0, fats: 5.0, carbs: 0.0, categoryId: ic('Meat & Poultry') },
   });
   const tofuIngredient = await prisma.ingredient.create({
-    data: { name: 'Firm Tofu', slug: 'firm-tofu', supermarketUrl, calories: 76, proteins: 8.0, fats: 4.6, carbs: 1.9, categoryId: icProduce.id },
+    data: { name: 'Firm Tofu', slug: 'firm-tofu', supermarketUrl, calories: 76, proteins: 8.0, fats: 4.6, carbs: 1.9, categoryId: ic('Veg') },
   });
   const turkeyIngredient = await prisma.ingredient.create({
-    data: { name: 'Turkey Breast', slug: 'turkey-breast', supermarketUrl, calories: 135, proteins: 30.0, fats: 1.0, carbs: 0.0, categoryId: icMeat.id },
+    data: { name: 'Turkey Breast', slug: 'turkey-breast', supermarketUrl, calories: 135, proteins: 30.0, fats: 1.0, carbs: 0.0, categoryId: ic('Meat & Poultry') },
   });
   const cheese = await prisma.ingredient.create({
-    data: { name: 'Mozzarella Cheese', slug: 'mozzarella-cheese', supermarketUrl, calories: 300, proteins: 22.0, fats: 22.0, carbs: 2.2, categoryId: icDairy.id },
+    data: { name: 'Mozzarella Cheese', slug: 'mozzarella-cheese', supermarketUrl, calories: 300, proteins: 22.0, fats: 22.0, carbs: 2.2, categoryId: ic('Dairy, Eggs & Cheese') },
   });
   const bread = await prisma.ingredient.create({
-    data: { name: 'Bread', slug: 'bread', supermarketUrl, calories: 265, proteins: 9.0, fats: 3.2, carbs: 49.0, categoryId: icBread.id },
+    data: { name: 'Bread', slug: 'bread', supermarketUrl, calories: 265, proteins: 9.0, fats: 3.2, carbs: 49.0, categoryId: ic('Bakery') },
   });
   const tortilla = await prisma.ingredient.create({
-    data: { name: 'Tortilla Wrap', slug: 'tortilla-wrap', supermarketUrl, calories: 300, proteins: 8.0, fats: 8.0, carbs: 50.0, categoryId: icBread.id },
+    data: { name: 'Tortilla Wrap', slug: 'tortilla-wrap', supermarketUrl, calories: 300, proteins: 8.0, fats: 8.0, carbs: 50.0, categoryId: ic('Bakery') },
   });
 
   console.log('✅ Created ingredients');
