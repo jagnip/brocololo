@@ -122,7 +122,14 @@ export async function ensureDefaultShoppingLayoutPreset(
   return preset.id;
 }
 
-async function appendMissingCategoriesToAllLayoutPresets(tx: Prisma.TransactionClient) {
+/**
+ * Rebuilds every shopping layout preset’s aisle list so it includes all current
+ * `IngredientCategory` rows (default `sortOrder`, preserving prior order where
+ * categories still exist). Run after bulk category changes in production.
+ */
+export async function rebuildAllShoppingLayoutPresetCategoryOrders(
+  tx: Prisma.TransactionClient,
+) {
   const categories = await tx.ingredientCategory.findMany({
     orderBy: { sortOrder: "asc" },
     select: { id: true },
@@ -236,7 +243,7 @@ export async function generateShoppingListForPlan(planId: string): Promise<
   const shoppingListId = await prisma.$transaction(
     async (tx) => {
       const presetId = await ensureDefaultShoppingLayoutPreset(tx);
-      await appendMissingCategoriesToAllLayoutPresets(tx);
+      await rebuildAllShoppingLayoutPresetCategoryOrders(tx);
 
       const profiles = await ensureGroceryIngredientsForIngredientIds(
         tx,
