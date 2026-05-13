@@ -8,7 +8,7 @@ export default function CreatePlanPage() {
       <Breadcrumbs
         items={[
           {
-            label: "Planner",
+            label: "Meal plan",
             href: ROUTES.planCurrent,
           },
           { label: "Create plan" },
