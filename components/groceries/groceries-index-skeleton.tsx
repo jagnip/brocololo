@@ -8,7 +8,7 @@ export function GroceriesIndexSkeleton() {
         <Skeleton className="h-4 w-full max-w-md" />
       </div>
 
-      <div className="divide-y rounded-xl border bg-card">
+      <div className="divide-y rounded-xl bg-card">
         {Array.from({ length: 4 }).map((_, index) => (
           <div
             key={index}

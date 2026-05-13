@@ -17,6 +17,10 @@ type LogTopbarConfigProps = {
 export function LogTopbarConfig({ planId, logOptions, logId }: LogTopbarConfigProps) {
   const config = useMemo(
     () => ({
+      breadcrumbs: [
+        { label: "Meal plan", href: ROUTES.planCurrent },
+        { label: "Log" },
+      ],
       rightContent: <LogTopbarControls logOptions={logOptions} logId={logId} />,
       actions: [
         {

@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import type { BreadcrumbsItem } from "@/components/ui/breadcrumbs";
 
 export type TopbarBadgeConfig = {
   label: string;
@@ -23,6 +24,8 @@ export type TopbarActionConfig = {
 
 export type TopbarConfig = {
   actions: TopbarActionConfig[];
+  /** When set, shown in the app header next to the sidebar trigger (see AppTopbar). */
+  breadcrumbs?: BreadcrumbsItem[];
   badge?: TopbarBadgeConfig;
   rightContent?: ReactNode;
 };
@@ -39,16 +42,29 @@ const TopbarContext = createContext<TopbarContextValue | null>(null);
 
 export function TopbarProvider({ children }: { children: ReactNode }) {
   const [config, setConfigState] = useState<TopbarConfig | null>(null);
+  const clearTimeoutRef = useRef<number | null>(null);
   const [logPendingSources, setLogPendingSources] = useState<
     Record<string, boolean>
   >({});
 
   const setConfig = useCallback((next: TopbarConfig) => {
+    // If a clear was scheduled by an outgoing route, cancel it so topbar stays stable.
+    if (clearTimeoutRef.current != null) {
+      window.clearTimeout(clearTimeoutRef.current);
+      clearTimeoutRef.current = null;
+    }
     setConfigState(next);
   }, []);
 
   const clearConfig = useCallback(() => {
-    setConfigState(null);
+    // Hold previous config during route transitions so topbar doesn't flash skeletons.
+    if (clearTimeoutRef.current != null) {
+      window.clearTimeout(clearTimeoutRef.current);
+    }
+    clearTimeoutRef.current = window.setTimeout(() => {
+      setConfigState(null);
+      clearTimeoutRef.current = null;
+    }, 2000);
   }, []);
 
   const setLogFilterPending = useCallback((source: string, pending: boolean) => {

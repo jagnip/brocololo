@@ -12,7 +12,6 @@ import { InstructionsSection } from "@/components/recipes/recipe-page/instructio
 import { IngredientsSection } from "@/components/recipes/recipe-page/ingredients-section";
 import { NotesSection } from "@/components/recipes/recipe-page/notes-section";
 import { RecipeAddToLogDialogContainer } from "@/components/recipes/recipe-page/add-to-log/add-to-log-dialog-container";
-import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import {
   useRecipePageAddToLogData,
   useRecipePageBaseData,
@@ -63,6 +62,14 @@ export default function RecipePage({
 
   const topbarConfig = useMemo(
     () => ({
+      breadcrumbs: [
+        {
+          label: "Recipes",
+          href: ROUTES.recipes,
+          preserveQuery: "all" as const,
+        },
+        { label: recipe.name },
+      ],
       actions: [
         {
           id: "add-to-log",
@@ -81,7 +88,7 @@ export default function RecipePage({
         },
       ],
     }),
-    [recipe.slug],
+    [recipe.name, recipe.slug],
   );
   return (
     <div className="page-container">
@@ -90,17 +97,6 @@ export default function RecipePage({
       <div className="grid grid-cols-1 gap-block md:grid-cols-5 md:gap-block">
         <div className="order-1 md:order-0 md:col-span-5 flex flex-col ">
           <PageHeader title={recipe.name} className="pb-2"/>
-          <Breadcrumbs
-            // Keep list context when users navigate back to the recipes index.
-            items={[
-              {
-                label: "Recipes",
-                href: ROUTES.recipes,
-              },
-              // Keep detail crumb stable across recipe renames and long titles.
-              { label: "This recipe" },
-            ]}
-          />
         </div>
 
         <div className="contents md:col-span-3 md:block">

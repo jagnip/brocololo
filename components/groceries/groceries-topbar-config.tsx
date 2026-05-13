@@ -2,22 +2,21 @@
 
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
-import { GroceriesTopbarControls } from "@/components/groceries/groceries-topbar-controls";
-import type { GroceriesPlanSelectOption } from "@/components/groceries/groceries-plan-select";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { ROUTES } from "@/lib/constants";
 
 type GroceriesTopbarConfigProps = {
-  planOptions: GroceriesPlanSelectOption[];
   planId: string;
+  /** Same label as plan switcher / groceries list (e.g. "Jan 3 - Jan 9"). */
+  planDateRangeLabel: string;
   /** True when the persisted list exists and has at least one item (matches prior “Edit groceries” gate). */
   canEdit: boolean;
 };
 
-/** Registers groceries top bar: plan switcher + view/edit actions by route. */
+/** Registers groceries top bar: plan switcher + “Edit groceries” on the view route when allowed. */
 export function GroceriesTopbarConfig({
-  planOptions,
   planId,
+  planDateRangeLabel,
   canEdit,
 }: GroceriesTopbarConfigProps) {
   const pathname = usePathname();
@@ -25,16 +24,7 @@ export function GroceriesTopbarConfig({
 
   const config = useMemo(() => {
     const actions = isEditRoute
-      ? [
-          {
-            id: "view-groceries",
-            label: "View list",
-            href: ROUTES.groceriesView(planId),
-            variant: "outline" as const,
-            size: "default" as const,
-            ariaLabel: "View grocery list",
-          },
-        ]
+      ? []
       : canEdit
         ? [
             {
@@ -47,13 +37,25 @@ export function GroceriesTopbarConfig({
           ]
         : [];
 
+    const breadcrumbs = isEditRoute
+      ? [
+          { label: "Groceries", href: ROUTES.groceriesCurrent },
+          {
+            label: planDateRangeLabel,
+            href: ROUTES.groceriesView(planId),
+          },
+          { label: "Edit groceries" },
+        ]
+      : [
+          { label: "Groceries", href: ROUTES.groceriesCurrent },
+          { label: planDateRangeLabel },
+        ];
+
     return {
-      rightContent: (
-        <GroceriesTopbarControls planOptions={planOptions} planId={planId} />
-      ),
+      breadcrumbs,
       actions,
     };
-  }, [canEdit, isEditRoute, planId, planOptions]);
+  }, [canEdit, isEditRoute, planDateRangeLabel, planId]);
 
   return <TopbarConfigController config={config} />;
 }

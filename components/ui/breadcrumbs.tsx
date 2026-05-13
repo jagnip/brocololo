@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import { cn } from "@/lib/utils";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -76,25 +77,50 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
   }, [items, searchParams]);
 
   return (
-    <div className={className}>
-      <Breadcrumb>
-        <BreadcrumbList>
+    <div
+      className={cn(
+        // Single-line row: clip when the header is narrow (mobile); crumbs truncate inside flex items.
+        "min-w-0 w-full max-w-full overflow-hidden",
+        className,
+      )}
+    >
+      <Breadcrumb className="min-w-0 max-w-full">
+        <BreadcrumbList className="min-w-0 max-w-full overflow-hidden">
           {resolvedItems.map((item, index) => {
             const isLast = index === resolvedItems.length - 1;
+            const isFirst = index === 0;
+            const isMiddle = !isFirst && !isLast;
+            const isOnly = resolvedItems.length === 1;
 
             return (
-              <div key={`${item.label}-${index}`} className="contents">
-                <BreadcrumbItem>
+              <Fragment key={`${item.label}-${index}`}>
+                <BreadcrumbItem
+                  className={cn(
+                    "min-w-0",
+                    isOnly && "max-w-full flex-1 basis-0",
+                    !isOnly && isFirst && "max-md:max-w-[min(40vw,9rem)] min-w-0 shrink-0",
+                    !isOnly && isLast && "min-w-0 flex-1 basis-0",
+                    isMiddle &&
+                      "max-md:max-w-[min(32vw,7.5rem)] shrink md:max-w-none",
+                  )}
+                >
                   {isLast || !item.href ? (
-                    <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                    <BreadcrumbPage className="block min-w-0 truncate">
+                      {item.label}
+                    </BreadcrumbPage>
                   ) : (
                     <BreadcrumbLink asChild>
-                      <Link href={item.href}>{item.label}</Link>
+                      <Link
+                        href={item.href}
+                        className="block min-w-0 truncate"
+                      >
+                        {item.label}
+                      </Link>
                     </BreadcrumbLink>
                   )}
                 </BreadcrumbItem>
                 {!isLast ? <BreadcrumbSeparator /> : null}
-              </div>
+              </Fragment>
             );
           })}
         </BreadcrumbList>

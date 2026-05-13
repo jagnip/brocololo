@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getPlansCached } from "@/lib/db/planner";
 import { formatDateRangeLabel } from "@/lib/format-date-range-label";
-import { PlanTopbarConfig } from "@/components/planner/plan-topbar-config";
+import { PlanDetailTopbarConfig } from "@/components/planner/plan-detail-topbar-config";
 
 /** Server entry from `app/plan/[planId]/layout.tsx` so the top bar persists across plan switches. */
 export async function PlanTopbar({ planId }: { planId: string }) {
@@ -9,10 +9,10 @@ export async function PlanTopbar({ planId }: { planId: string }) {
   const current = plans.find((p) => p.id === planId);
   if (!current) notFound();
 
-  const planOptions = plans.map((p) => ({
-    id: p.id,
-    label: formatDateRangeLabel(p.startDate, p.endDate),
-  }));
+  const planDateRangeLabel = formatDateRangeLabel(
+    new Date(current.startDate),
+    new Date(current.endDate),
+  );
 
-  return <PlanTopbarConfig planOptions={planOptions} planId={planId} />;
+  return <PlanDetailTopbarConfig planDateRangeLabel={planDateRangeLabel} />;
 }

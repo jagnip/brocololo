@@ -1,12 +1,41 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useTopbar } from "@/components/context/topbar-context";
+import {
+  Breadcrumbs,
+  type BreadcrumbsItem,
+} from "@/components/ui/breadcrumbs";
+
+/** Routes where the shell expects a page to register top bar breadcrumbs (see TopbarConfig). */
+function pathnameExpectsBreadcrumbs(pathname: string): boolean {
+  if (pathname === "/recipes" || pathname.startsWith("/recipes/")) return true;
+  if (pathname === "/ingredients" || pathname.startsWith("/ingredients/"))
+    return true;
+  if (pathname.startsWith("/plan")) return true;
+  if (pathname.startsWith("/groceries")) return true;
+  return false;
+}
+
+function BreadcrumbRowSkeleton() {
+  return (
+    <div className="flex min-w-0 items-center gap-2" aria-hidden>
+      <Skeleton className="h-4 w-20 shrink-0 rounded-sm" />
+      <Skeleton className="h-4 w-3 shrink-0 rounded-sm" />
+      <Skeleton className="h-4 w-32 max-w-[40%] shrink rounded-sm" />
+    </div>
+  );
+}
+
+function TopbarBreadcrumbs({ items }: { items: BreadcrumbsItem[] }) {
+  return <Breadcrumbs items={items} className="min-w-0" />;
+}
 
 export function AppTopbar() {
   const { config } = useTopbar();
@@ -19,7 +48,9 @@ export function AppTopbar() {
   const isIngredientsIndexRoute = pathname === "/ingredients";
   const isIngredientCreateRoute = pathname === "/ingredients/create";
   const isIngredientEditRoute = /^\/ingredients\/[^/]+\/edit$/.test(pathname);
-  const isPlanDetailRoute = /^\/plan\/(?!create$)[^/]+$/.test(pathname);
+  const isPlanDetailRoute = /^\/plan\/(?!current$)(?!create$)[^/]+$/.test(
+    pathname,
+  );
   const isPlanCreateRoute = pathname === "/plan/create";
   const isGroceriesPlanDetailRoute =
     /^\/groceries\/(?!current$)[^/]+$/.test(pathname);
@@ -42,138 +73,144 @@ export function AppTopbar() {
   const shouldShowGroceriesPlanEditTopbarSkeleton =
     isGroceriesPlanEditRoute && !config;
 
+  const hasBreadcrumbs = Boolean(
+    config?.breadcrumbs && config.breadcrumbs.length > 0,
+  );
+  const showBreadcrumbSkeleton =
+    pathnameExpectsBreadcrumbs(pathname) && !hasBreadcrumbs;
+
+  const breadcrumbItems = useMemo(
+    () => (hasBreadcrumbs ? (config?.breadcrumbs ?? []) : []),
+    [config?.breadcrumbs, hasBreadcrumbs],
+  );
+
   // z-20: stay above page controls that use z-10 (e.g. log card remove buttons) while scrolling.
-  // `gap-2` between the nav trigger and the controls row matches inner `gap-2` and prevents selects
-  // from sitting flush against the icon when the row is cramped (mobile, sidebar closed).
   return (
     <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b bg-background px-4">
       <SidebarTrigger className="shrink-0 lg:hidden" />
-      {/* Same as `ml-auto`: group stays right; `flex-1` + `min-w-0` lets selects truncate instead of overlapping the trigger. */}
-      <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-        {shouldShowRecipeTopbarSkeleton ? (
-          <>
-            {/* Mirror only action buttons while detail page topbar config loads. */}
-            <Skeleton className="h-9 w-24 rounded-md" />
-            <Skeleton className="h-9 w-24 rounded-md" />
-          </>
-        ) : null}
-        {shouldShowRecipesIndexTopbarSkeleton ? (
-          <>
-            {/* Mirror recipes index topbar action while config hydrates. */}
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <div className="min-w-0 flex-1 overflow-hidden">
+          {showBreadcrumbSkeleton ? <BreadcrumbRowSkeleton /> : null}
+          {!showBreadcrumbSkeleton && hasBreadcrumbs ? (
+            <Suspense fallback={<BreadcrumbRowSkeleton />}>
+              <TopbarBreadcrumbs items={breadcrumbItems} />
+            </Suspense>
+          ) : null}
+        </div>
+        <div className="flex shrink-0 items-center justify-end gap-2">
+          {shouldShowRecipeTopbarSkeleton ? (
+            <>
+              <Skeleton className="h-9 w-24 rounded-md" />
+              <Skeleton className="h-9 w-24 rounded-md" />
+            </>
+          ) : null}
+          {shouldShowRecipesIndexTopbarSkeleton ? (
             <Skeleton className="h-9 w-28 rounded-md" />
-          </>
-        ) : null}
-        {shouldShowRecipeCreateTopbarSkeleton ? (
-          <>
-            {/* Mirror create recipe topbar with the single submit action. */}
-            <Skeleton className="h-9 w-28 rounded-md" />
-          </>
-        ) : null}
-        {shouldShowRecipeEditTopbarSkeleton ? (
-          <>
-            {/* Mirror edit recipe topbar: submit action plus delete icon. */}
-            <Skeleton className="h-9 w-28 rounded-md" />
-            <Skeleton className="h-9 w-9 rounded-md" />
-          </>
-        ) : null}
-        {shouldShowLogTopbarSkeleton ? (
-          <>
-            {/* Mirror log topbar: log switcher + person + delete + view-plan icon. */}
-            <Skeleton className="h-9 w-48 rounded-md" />
-            <Skeleton className="h-9 w-32 rounded-md" />
-            <Skeleton className="h-9 w-9 rounded-md" />
-            <Skeleton className="h-9 w-9 rounded-md" />
-          </>
-        ) : null}
-        {shouldShowIngredientsTopbarSkeleton ? (
-          <>
-            {/* Mirror “Create ingredient” secondary action while ingredients topbar config hydrates. */}
+          ) : null}
+          {shouldShowRecipeCreateTopbarSkeleton ? (
+            <>
+              <Skeleton className="h-9 w-20 rounded-md" />
+              <Skeleton className="h-9 w-28 rounded-md" />
+            </>
+          ) : null}
+          {shouldShowRecipeEditTopbarSkeleton ? (
+            <>
+              <Skeleton className="h-9 w-20 rounded-md" />
+              <Skeleton className="h-9 w-28 rounded-md" />
+              <Skeleton className="h-9 w-9 rounded-md" />
+            </>
+          ) : null}
+          {shouldShowLogTopbarSkeleton ? (
+            <>
+              <Skeleton className="h-9 w-48 rounded-md" />
+              <Skeleton className="h-9 w-32 rounded-md" />
+              <Skeleton className="h-9 w-9 rounded-md" />
+              <Skeleton className="h-9 w-9 rounded-md" />
+            </>
+          ) : null}
+          {shouldShowIngredientsTopbarSkeleton ? (
             <Skeleton className="h-9 w-44 rounded-md" />
-          </>
-        ) : null}
-        {shouldShowIngredientCreateTopbarSkeleton ? (
-          <>
-            {/* Mirror ingredient/create topbar: single primary submit action. */}
-            <Skeleton className="h-9 w-32 rounded-md" />
-          </>
-        ) : null}
-        {shouldShowIngredientEditTopbarSkeleton ? (
-          <>
-            {/* Mirror ingredient/edit topbar: submit action plus delete icon. */}
-            <Skeleton className="h-9 w-32 rounded-md" />
-            <Skeleton className="h-9 w-9 rounded-md" />
-          </>
-        ) : null}
-        {shouldShowPlanTopbarSkeleton ? (
-          <>
-            {/* Mirror Meal plan topbar: switcher + Create plan text action. */}
-            <Skeleton className="h-9 w-48 rounded-md" />
-            <Skeleton className="h-9 w-24 rounded-md" />
-          </>
-        ) : null}
-        {shouldShowPlanCreateTopbarSkeleton ? (
-          <>
-            {/* Mirror plan/create: Save plan + Find meals while client form mounts. */}
-            <Skeleton className="h-9 w-24 rounded-md" />
-            <Skeleton className="h-9 w-28 rounded-md" />
-          </>
-        ) : null}
-        {shouldShowGroceriesPlanTopbarSkeleton ? (
-          <>
-            {/* Mirror groceries view topbar: plan switcher + Edit groceries while layout hydrates. */}
-            <Skeleton className="h-9 w-36 rounded-md sm:w-48" />
-            <Skeleton className="h-9 w-28 rounded-md" />
-          </>
-        ) : null}
-        {shouldShowGroceriesPlanEditTopbarSkeleton ? (
-          <>
-            {/* Mirror groceries edit topbar: plan switcher + View list while layout hydrates. */}
-            <Skeleton className="h-9 w-36 rounded-md sm:w-48" />
-            <Skeleton className="h-9 w-24 rounded-md" />
-          </>
-        ) : null}
-        {config?.badge ? (
-          <Badge variant={config.badge.variant ?? "outline"}>
-            {config.badge.label}
-          </Badge>
-        ) : null}
-        {config?.rightContent ?? null}
-        {config?.actions.map((action) => {
-          const variant = action.variant ?? "default";
-          const size = action.size ?? "sm";
-          const content =
-            action.size === "icon" && action.icon ? action.icon : action.label;
+          ) : null}
+          {shouldShowIngredientCreateTopbarSkeleton ? (
+            <>
+              <Skeleton className="h-9 w-20 rounded-md" />
+              <Skeleton className="h-9 w-36 rounded-md" />
+            </>
+          ) : null}
+          {shouldShowIngredientEditTopbarSkeleton ? (
+            <>
+              <Skeleton className="h-9 w-20 rounded-md" />
+              <Skeleton className="h-9 w-32 rounded-md" />
+              <Skeleton className="h-9 w-9 rounded-md" />
+            </>
+          ) : null}
+          {shouldShowPlanTopbarSkeleton ? (
+            <>
+              <Skeleton className="h-9 w-48 rounded-md" />
+              <Skeleton className="h-9 w-24 rounded-md" />
+            </>
+          ) : null}
+          {shouldShowPlanCreateTopbarSkeleton ? (
+            <>
+              <Skeleton className="h-9 w-20 rounded-md" />
+              <Skeleton className="h-9 w-24 rounded-md" />
+            </>
+          ) : null}
+          {shouldShowGroceriesPlanTopbarSkeleton ? (
+            <>
+              <Skeleton className="h-9 w-36 rounded-md sm:w-48" />
+              <Skeleton className="h-9 w-28 rounded-md" />
+            </>
+          ) : null}
+          {shouldShowGroceriesPlanEditTopbarSkeleton ? (
+            <>
+              <Skeleton className="h-9 w-20 rounded-md" />
+              <Skeleton className="h-9 w-36 rounded-md" />
+            </>
+          ) : null}
+          {config?.badge ? (
+            <Badge variant={config.badge.variant ?? "outline"}>
+              {config.badge.label}
+            </Badge>
+          ) : null}
+          {config?.rightContent ?? null}
+          {config?.actions?.map((action) => {
+            const variant = action.variant ?? "default";
+            const size = action.size ?? "sm";
+            const content =
+              action.size === "icon" && action.icon ? action.icon : action.label;
 
-          if (action.href) {
+            if (action.href) {
+              return (
+                <Button
+                  key={action.id}
+                  asChild
+                  variant={variant}
+                  size={size}
+                  aria-label={action.ariaLabel}
+                  aria-busy={action.ariaBusy}
+                  disabled={action.disabled}
+                >
+                  <Link href={action.href}>{content}</Link>
+                </Button>
+              );
+            }
+
             return (
               <Button
                 key={action.id}
-                asChild
                 variant={variant}
                 size={size}
+                onClick={action.onClick}
                 aria-label={action.ariaLabel}
                 aria-busy={action.ariaBusy}
                 disabled={action.disabled}
               >
-                <Link href={action.href}>{content}</Link>
+                {content}
               </Button>
             );
-          }
-
-          return (
-            <Button
-              key={action.id}
-              variant={variant}
-              size={size}
-              onClick={action.onClick}
-              aria-label={action.ariaLabel}
-              aria-busy={action.ariaBusy}
-              disabled={action.disabled}
-            >
-              {content}
-            </Button>
-          );
-        })}
+          })}
+        </div>
       </div>
     </header>
   );

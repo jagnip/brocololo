@@ -13,12 +13,13 @@ export default async function IngredientsPage({
     <div className="page-container">
       <TopbarConfigController
         config={{
+          breadcrumbs: [{ label: "Ingredients" }],
           actions: [
             {
               id: "create-ingredient",
               label: "Create ingredient",
               href: ROUTES.ingredientCreate,
-              variant: "default" as const,
+              variant: "outline" as const,
               size: "default" as const,
             },
           ],

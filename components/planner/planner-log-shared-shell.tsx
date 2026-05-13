@@ -35,12 +35,14 @@ import type {
 import { useEffect, useOptimistic, useTransition } from "react";
 import { ROUTES } from "@/lib/constants";
 import { generateGroceryListFromPlan } from "@/actions/shopping-list-actions";
+import { PlanSelect, type PlanSelectOption } from "@/components/planner/plan-select";
 
 type PersonType = "PRIMARY" | "SECONDARY";
 type PlannerLogTab = "plan" | "log";
 
 type PlannerLogShellProps = {
   planId: string;
+  planOptions: PlanSelectOption[];
   initialTab: PlannerLogTab;
   initialDateRange: DateRangeValue;
   initialPlan: PlanInputType;
@@ -63,6 +65,7 @@ type PlannerLogShellProps = {
 
 export function PlannerLogSharedShell({
   planId,
+  planOptions,
   initialTab,
   initialDateRange,
   initialPlan,
@@ -208,9 +211,11 @@ export function PlannerLogSharedShell({
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-2 whitespace-nowrap">
-            {/* Shared top-level title for both tabs. */}
-            {/* <PageHeader title="Plan & log" className="shrink-0" /> */}
-            {/* Use shared shadcn tabs primitive for consistent DS behavior. */}
+            {/* Keep plan switcher in the same row as tabs and controls. */}
+            <div className="flex min-w-0 items-center gap-2">
+              <Label className="shrink-0 text-xs text-muted-foreground">Plan</Label>
+              <PlanSelect plans={planOptions} currentPlanId={planId} />
+            </div>
             <Tabs
               value={displayedTab}
               onValueChange={(value) => {
@@ -229,10 +234,10 @@ export function PlannerLogSharedShell({
               </TabsList>
             </Tabs>
           </div>
-          {/* Shared date range applies to both planner and log views. */}
           <div className="flex w-full items-center gap-2 sm:w-auto sm:min-w-[20rem] sm:max-w-md lg:min-w-[24rem] lg:max-w-lg">
-            <Label className="shrink-0 text-xs text-muted-foreground">
-              Plan for
+            {/* Keep heading style while preserving one-row layout composition. */}
+            <Label className="type-h3 shrink-0">
+              Date range
             </Label>
             <WeekPicker
               value={dateRange}

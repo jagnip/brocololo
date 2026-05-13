@@ -1,5 +1,6 @@
-import RecipeGridContainer from "@/components/recipes/grid-container";
 import { Suspense } from "react";
+import RecipeGridContainer from "@/components/recipes/grid-container";
+import { RecipesListFiltersPersistence } from "@/components/recipes/recipes-list-filters-persistence";
 import { RecipeTabsContainer } from "@/components/recipes/tabs-container";
 import { RecipesPageSkeleton } from "@/components/recipes/recipes-page-skeleton";
 import { TopbarConfigController } from "@/components/topbar-config";
@@ -22,8 +23,12 @@ export default async function Page({ searchParams }: RecipesPageProps) {
 
   return (
     <>
+      <Suspense fallback={null}>
+        <RecipesListFiltersPersistence />
+      </Suspense>
       <TopbarConfigController
         config={{
+          breadcrumbs: [{ label: "Recipes" }],
           actions: [
             {
               id: "create-recipe",
