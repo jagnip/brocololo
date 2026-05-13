@@ -65,13 +65,15 @@ export function AppTopbar() {
         ) : null}
         {shouldShowRecipeCreateTopbarSkeleton ? (
           <>
-            {/* Mirror create recipe topbar with the single submit action. */}
+            {/* Cancel + Create while recipe form topbar hydrates. */}
+            <Skeleton className="h-9 w-20 rounded-md" />
             <Skeleton className="h-9 w-28 rounded-md" />
           </>
         ) : null}
         {shouldShowRecipeEditTopbarSkeleton ? (
           <>
-            {/* Mirror edit recipe topbar: submit action plus delete icon. */}
+            {/* Cancel + Update + delete while recipe edit topbar hydrates. */}
+            <Skeleton className="h-9 w-20 rounded-md" />
             <Skeleton className="h-9 w-28 rounded-md" />
             <Skeleton className="h-9 w-9 rounded-md" />
           </>
@@ -87,19 +89,21 @@ export function AppTopbar() {
         ) : null}
         {shouldShowIngredientsTopbarSkeleton ? (
           <>
-            {/* Mirror “Create ingredient” secondary action while ingredients topbar config hydrates. */}
+            {/* Mirror “Create ingredient” (secondary) while ingredients topbar hydrates. */}
             <Skeleton className="h-9 w-44 rounded-md" />
           </>
         ) : null}
         {shouldShowIngredientCreateTopbarSkeleton ? (
           <>
-            {/* Mirror ingredient/create topbar: single primary submit action. */}
-            <Skeleton className="h-9 w-32 rounded-md" />
+            {/* Cancel + Create ingredient while form topbar hydrates. */}
+            <Skeleton className="h-9 w-20 rounded-md" />
+            <Skeleton className="h-9 w-36 rounded-md" />
           </>
         ) : null}
         {shouldShowIngredientEditTopbarSkeleton ? (
           <>
-            {/* Mirror ingredient/edit topbar: submit action plus delete icon. */}
+            {/* Cancel + Update + delete while ingredient edit topbar hydrates. */}
+            <Skeleton className="h-9 w-20 rounded-md" />
             <Skeleton className="h-9 w-32 rounded-md" />
             <Skeleton className="h-9 w-9 rounded-md" />
           </>
@@ -113,9 +117,9 @@ export function AppTopbar() {
         ) : null}
         {shouldShowPlanCreateTopbarSkeleton ? (
           <>
-            {/* Mirror plan/create: Save plan + Find meals while client form mounts. */}
+            {/* Cancel + Save plan while plan/create topbar hydrates. */}
+            <Skeleton className="h-9 w-20 rounded-md" />
             <Skeleton className="h-9 w-24 rounded-md" />
-            <Skeleton className="h-9 w-28 rounded-md" />
           </>
         ) : null}
         {shouldShowGroceriesPlanTopbarSkeleton ? (
@@ -127,9 +131,9 @@ export function AppTopbar() {
         ) : null}
         {shouldShowGroceriesPlanEditTopbarSkeleton ? (
           <>
-            {/* Mirror groceries edit topbar: plan switcher + View list while layout hydrates. */}
-            <Skeleton className="h-9 w-36 rounded-md sm:w-48" />
-            <Skeleton className="h-9 w-24 rounded-md" />
+            {/* Cancel + Save groceries while edit topbar hydrates. */}
+            <Skeleton className="h-9 w-20 rounded-md" />
+            <Skeleton className="h-9 w-36 rounded-md" />
           </>
         ) : null}
         {config?.badge ? (

@@ -28,6 +28,7 @@ import type {
 } from "@/lib/validations/planner";
 import { getDaysInRange, formatDayLabel } from "@/lib/planner/helpers";
 import {
+  ROUTES,
   type MealTimeLimits,
   WEEKDAY_TIME_LIMIT_DEFAULTS,
   WEEKEND_TIME_LIMIT_DEFAULTS,
@@ -35,11 +36,11 @@ import {
 import { IngredientType } from "@/types/ingredient";
 import { RecipeType } from "@/types/recipe";
 import { MESSAGES } from "@/lib/messages";
+import { cn } from "@/lib/utils";
 import { PlanViewSkeleton } from "./plan-view-skeleton";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { PlannerTimeLimitsSection } from "./planner-time-limits-section";
 import { PlannerRollingRecipesSection } from "./planner-rolling-recipes-section";
-import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import {
   getRangeGroupAvailability,
   mapGroupLimitsToDailyLimits,
@@ -231,8 +232,16 @@ export function PlannerForm({
   const generatedPlan = shouldShowGeneratedPlan(plan, isGenerating)
     ? plan
     : null;
-  // Keep plan/create actions in the global top bar so controls stay in one place.
+  // Save stays in the global top bar; Find meals lives under the planner column on this page.
   const topbarActions = [
+    {
+      id: "cancel-plan-create",
+      label: "Cancel",
+      href: ROUTES.planCurrent,
+      variant: "outline" as const,
+      size: "default" as const,
+      ariaLabel: "Cancel and go back to meal plan",
+    },
     {
       id: "save-plan",
       label: isSaving ? MESSAGES.planner.savePending : "Save plan",
@@ -244,21 +253,6 @@ export function PlannerForm({
       disabled: !generatedPlan || isSaving,
       ariaBusy: isSaving,
       // Requested UX: keep planner create-page actions outlined.
-      variant: "outline" as const,
-      size: "default" as const,
-    },
-    {
-      id: "find-meals",
-      label: isGenerating ? MESSAGES.planner.generatePending : "Find meals",
-      onClick: () => {
-        void form.handleSubmit(onSubmit)();
-      },
-      disabled:
-        isGenerating ||
-        hasInvalidTimeLimitInputs ||
-        hasInvalidRollingMealsInputs,
-      ariaBusy: isGenerating,
-      // Requested UX: match Save/Create action style in planner topbar.
       variant: "outline" as const,
       size: "default" as const,
     },
@@ -349,56 +343,74 @@ export function PlannerForm({
       <div
         className={`flex flex-col gap-6 lg:grid ${desktopGridColumns} lg:items-start lg:gap-x-4 lg:gap-y-6`}
       >
-        <div className="lg:sticky lg:top-20">
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="flex w-full flex-col"
-            >
-              {/* Left-rail collapse shrinks column width, not just content height. */}
-              <div className="mb-2 hidden lg:flex lg:items-center lg:justify-between">
-                {!isFormCollapsed ? (
-                  <Subheader className="text-base">Planner</Subheader>
-                ) : (
-                  <span className="sr-only">Planner section collapsed</span>
+        {/* Planner column: criteria form + Find meals below (not in top bar). */}
+        <div className="flex flex-col gap-3">
+          <div className="lg:sticky lg:top-20">
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="flex w-full flex-col"
+              >
+              {/* Date + collapse: one row on lg; horizontal gap matches planner-time-limits rows (gap-1.5). */}
+              <FormField
+                control={form.control}
+                name="dateRange"
+                render={({ field }) => (
+                  <FormItem className="gap-0">
+                    <div
+                      className={cn(
+                        "mb-0 flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-1.5",
+                        isFormCollapsed && "lg:justify-end",
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "min-w-0 w-full flex-1",
+                          // Desktop-only collapse: keep the week picker on small screens.
+                          isFormCollapsed && "lg:hidden",
+                        )}
+                      >
+                        <FormControl>
+                          <WeekPicker
+                            value={field.value}
+                            onChange={field.onChange}
+                            occupiedDateKeys={occupiedDateKeys}
+                            compact
+                          />
+                        </FormControl>
+                      </div>
+                      <div className="hidden shrink-0 lg:flex lg:items-center">
+                        <span className="sr-only">
+                          {isFormCollapsed
+                            ? "Planner section collapsed"
+                            : "Planner criteria"}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setIsFormCollapsed((prev) => !prev)}
+                          aria-expanded={!isFormCollapsed}
+                          aria-label={
+                            isFormCollapsed
+                              ? "Expand planner form"
+                              : "Collapse planner form"
+                          }
+                          className="size-8"
+                        >
+                          {isFormCollapsed ? (
+                            <ChevronRight className="size-4" />
+                          ) : (
+                            <ChevronLeft className="size-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
                 )}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setIsFormCollapsed((prev) => !prev)}
-                  aria-expanded={!isFormCollapsed}
-                  aria-label={
-                    isFormCollapsed
-                      ? "Expand planner form"
-                      : "Collapse planner form"
-                  }
-                  className="size-8"
-                >
-                  {isFormCollapsed ? (
-                    <ChevronRight className="size-4" />
-                  ) : (
-                    <ChevronLeft className="size-4" />
-                  )}
-                </Button>
-              </div>
+              />
               <div className={`block ${isFormCollapsed ? "lg:hidden" : ""}`}>
-                <FormField
-                  control={form.control}
-                  name="dateRange"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <WeekPicker
-                          value={field.value}
-                          onChange={field.onChange}
-                          occupiedDateKeys={occupiedDateKeys}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 <PlannerTimeLimitsSection
                   fields={fields}
                   control={form.control}
@@ -437,6 +449,24 @@ export function PlannerForm({
               </div>
             </form>
           </Form>
+          </div>
+          <Button
+            type="button"
+            variant="default"
+            size="default"
+            className="w-full shrink-0 sm:w-fit"
+            disabled={
+              isGenerating ||
+              hasInvalidTimeLimitInputs ||
+              hasInvalidRollingMealsInputs
+            }
+            aria-busy={isGenerating}
+            onClick={() => {
+              void form.handleSubmit(onSubmit)();
+            }}
+          >
+            {isGenerating ? MESSAGES.planner.generatePending : "Find meals"}
+          </Button>
         </div>
 
         <div className="hidden lg:block">
@@ -456,7 +486,7 @@ export function PlannerForm({
             />
           ) : (
             <Card className="flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed p-0 py-0 shadow-none">
-              <div className="flex min-h-[220px] flex-1 flex-col items-center justify-center gap-2 p-3 text-center">
+              <div className="flex min-h-[220px] flex-col items-start justify-start gap-2 p-3 text-left">
                 <span
                   className="flex size-7 shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground"
                   aria-hidden

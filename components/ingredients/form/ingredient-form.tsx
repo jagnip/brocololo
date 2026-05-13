@@ -49,6 +49,7 @@ import {
 import type { IngredientType } from "@/types/ingredient";
 import type { UnitType } from "@/types/unit";
 import { MESSAGES } from "@/lib/messages";
+import { ROUTES } from "@/lib/constants";
 import {
   buildDefaultUnitOptions,
   getFallbackUnitIdFromUnitIds,
@@ -57,7 +58,6 @@ import { CreateUnitDialog } from "./create-unit-dialog";
 import { RenameUnitDialog } from "./rename-unit-dialog";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { TopbarConfigController } from "@/components/topbar-config";
-import { PageHeader } from "@/components/page-header";
 import { SubstitutionsAllowedControl } from "@/components/groceries/substitutions-allowed-control";
 
 type IngredientFormProps = {
@@ -309,9 +309,17 @@ export default function IngredientForm({
         ...(isPageCreateMode
           ? [
               {
+                id: "cancel-ingredient",
+                label: "Cancel",
+                href: ROUTES.ingredients,
+                variant: "outline" as const,
+                size: "default" as const,
+                ariaLabel: "Cancel and go back to ingredients",
+              },
+              {
                 id: "create-ingredient-submit",
                 label: isSubmitting ? "Creating..." : "Create ingredient",
-                // Match standard primary button sizing used on other pages.
+                variant: "default" as const,
                 size: "default" as const,
                 onClick: handleTopbarCreateClick,
                 disabled: isSubmitting,
@@ -322,9 +330,17 @@ export default function IngredientForm({
         ...(isPageEditMode
           ? [
               {
+                id: "cancel-ingredient",
+                label: "Cancel",
+                href: ROUTES.ingredients,
+                variant: "outline" as const,
+                size: "default" as const,
+                ariaLabel: "Cancel and go back to ingredients",
+              },
+              {
                 id: "update-ingredient-submit",
                 label: isSubmitting ? "Editing..." : "Update ingredient",
-                // Match standard primary button sizing used on other pages.
+                variant: "default" as const,
                 size: "default" as const,
                 onClick: handleTopbarUpdateClick,
                 disabled: isSubmitting,
@@ -373,17 +389,12 @@ export default function IngredientForm({
         }}
         className="space-y-5"
       >
-        {mode === "page" ? (
-          // Keep page title typography consistent with shared page header rules.
-          <PageHeader
-            title={ingredient ? "Edit ingredient" : "Create ingredient"}
-            className="pb-0"
-          />
-        ) : (
+        {/* Page routes rely on the shell / document title; dialog mode keeps an in-flow h1 for a11y. */}
+        {mode === "dialog" ? (
           <h1 className="text-2xl font-semibold">
             {ingredient ? "Edit ingredient" : "Create ingredient"}
           </h1>
-        )}
+        ) : null}
 
         <div
           className={

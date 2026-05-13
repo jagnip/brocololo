@@ -632,6 +632,14 @@ export function GroceriesEditList({
     () => ({
       actions: [
         {
+          id: "cancel-groceries-edit",
+          label: "Cancel",
+          href: ROUTES.groceriesView(list.plan.id),
+          variant: "outline" as const,
+          size: "default" as const,
+          ariaLabel: "Cancel editing and view grocery list",
+        },
+        {
           id: "save-groceries",
           label: isPending ? "Saving groceries..." : "Save groceries",
           onClick: () => {

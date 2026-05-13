@@ -3,11 +3,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function IngredientFormSkeleton() {
   return (
     <div className="page-container space-y-5">
-      {/* Match PageHeader height with pb-0 used by ingredient form. */}
-      <div>
-        <Skeleton className="h-9 w-52" />
-      </div>
-
       {/* Match first form row exactly: name/description/brand/category in page layout. */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (

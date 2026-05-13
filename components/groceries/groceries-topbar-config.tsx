@@ -11,7 +11,7 @@ type GroceriesTopbarConfigProps = {
   canEdit: boolean;
 };
 
-/** Registers groceries top bar: plan switcher + view/edit actions by route. */
+/** Registers groceries top bar: plan switcher + “Edit groceries” on the view route when allowed. */
 export function GroceriesTopbarConfig({
   planId,
   canEdit,
@@ -21,16 +21,7 @@ export function GroceriesTopbarConfig({
 
   const config = useMemo(() => {
     const actions = isEditRoute
-      ? [
-          {
-            id: "view-groceries",
-            label: "View list",
-            href: ROUTES.groceriesView(planId),
-            variant: "outline" as const,
-            size: "default" as const,
-            ariaLabel: "View grocery list",
-          },
-        ]
+      ? []
       : canEdit
         ? [
             {

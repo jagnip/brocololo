@@ -8,7 +8,7 @@ import {
 } from "@/lib/validations/recipe";
 import { toast } from "sonner";
 import { Resolver, useForm, useWatch } from "react-hook-form";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
@@ -59,6 +59,8 @@ import { EditIngredientDialog } from "./edit-ingredient-dialog";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { reconcileIngredientUnitsAfterUpdate } from "./ingredient-row-adjustments";
 import { Label } from "@/components/ui/label";
+import { useRouter } from "next/navigation";
+import { getRecipesListHrefWithStoredFilters } from "@/lib/recipes/recipes-list-filters-storage";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { Trash2 } from "lucide-react";
 import { Subheader } from "../recipe-page/subheader";
@@ -136,6 +138,11 @@ export default function RecipeForm({
   const [editIngredientState, setEditIngredientState] = useState<{
     ingredientId: string;
   } | null>(null);
+  const router = useRouter();
+  // Restore last `/recipes` query (filters) when leaving create/edit via Cancel.
+  const handleCancelToRecipesList = useCallback(() => {
+    router.push(getRecipesListHrefWithStoredFilters());
+  }, [router]);
   const formSchema = recipe ? updateRecipeSchema : createRecipeSchema;
   const mealOccasionCategories = useMemo(
     () => localCategories.filter((category) => category.type === "MEAL_OCCASION"),
@@ -431,6 +438,14 @@ export default function RecipeForm({
       <TopbarConfigController
         config={{
           actions: [
+            {
+              id: "cancel-recipe",
+              label: "Cancel",
+              onClick: handleCancelToRecipesList,
+              variant: "outline" as const,
+              size: "default" as const,
+              ariaLabel: "Cancel and go back to recipes",
+            },
             {
               id: "submit-recipe",
               label: topbarSubmitLabel,

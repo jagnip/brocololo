@@ -18,7 +18,7 @@ export default async function IngredientsPage({
               id: "create-ingredient",
               label: "Create ingredient",
               href: ROUTES.ingredientCreate,
-              variant: "default" as const,
+              variant: "outline" as const,
               size: "default" as const,
             },
           ],

@@ -40,6 +40,9 @@ export function PlannerFormSkeleton() {
           <Skeleton className="h-4 w-28 rounded-md" />
           <Skeleton className="h-10 w-full rounded-md" />
         </div>
+
+        {/* Full width on small screens; compact on sm+ (matches Find meals button). */}
+        <Skeleton className="h-9 w-full rounded-md sm:w-32" />
       </div>
 
       <div className="hidden min-h-0 space-y-8 lg:block">
