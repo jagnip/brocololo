@@ -10,11 +10,11 @@ import { resolveCurrentPlanFromList } from "@/lib/planner/resolve-current-plan";
 export default async function GroceriesCurrentPage() {
   const plans = await getPlans();
   if (plans.length === 0) {
-    return <PlanCurrentEmpty />;
+    return <PlanCurrentEmpty emptyBreadcrumbContext="groceries" />;
   }
   const targetPlan = resolveCurrentPlanFromList(plans);
   if (!targetPlan) {
-    return <PlanCurrentEmpty />;
+    return <PlanCurrentEmpty emptyBreadcrumbContext="groceries" />;
   }
   redirect(ROUTES.groceriesView(targetPlan.id));
 }

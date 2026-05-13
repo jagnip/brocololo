@@ -336,6 +336,10 @@ export function PlannerForm({
     <>
       <TopbarConfigController
         config={{
+          breadcrumbs: [
+            { label: "Meal plan", href: ROUTES.planCurrent },
+            { label: "Create plan" },
+          ],
           actions: topbarActions,
         }}
       />

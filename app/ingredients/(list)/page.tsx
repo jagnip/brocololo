@@ -13,6 +13,7 @@ export default async function IngredientsPage({
     <div className="page-container">
       <TopbarConfigController
         config={{
+          breadcrumbs: [{ label: "Ingredients" }],
           actions: [
             {
               id: "create-ingredient",

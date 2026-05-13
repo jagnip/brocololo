@@ -2,10 +2,22 @@ import Link from "next/link";
 import { UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
+import {
+  PlanCurrentEmptyTopbar,
+  type PlanCurrentEmptyBreadcrumbContext,
+} from "@/components/planner/plan-current-empty-topbar";
 
-export function PlanCurrentEmpty() {
+type PlanCurrentEmptyProps = {
+  /** Drives top bar crumbs when this empty state is shown from plan vs groceries “current”. */
+  emptyBreadcrumbContext: PlanCurrentEmptyBreadcrumbContext;
+};
+
+export function PlanCurrentEmpty({
+  emptyBreadcrumbContext,
+}: PlanCurrentEmptyProps) {
   return (
     <div className="page-container">
+      <PlanCurrentEmptyTopbar context={emptyBreadcrumbContext} />
       <section
         className="rounded-lg border border-border bg-card p-6 text-card-foreground shadow-xs"
         aria-labelledby="plan-empty-heading"

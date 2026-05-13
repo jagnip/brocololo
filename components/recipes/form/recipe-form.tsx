@@ -62,6 +62,7 @@ import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { getRecipesListHrefWithStoredFilters } from "@/lib/recipes/recipes-list-filters-storage";
 import { TopbarConfigController } from "@/components/topbar-config";
+import { ROUTES } from "@/lib/constants";
 import { Trash2 } from "lucide-react";
 import { Subheader } from "../recipe-page/subheader";
 import MultipleSelector from "@/components/ui/multiselect";
@@ -433,52 +434,78 @@ export default function RecipeForm({
       ? "Update recipe"
       : "Create recipe";
 
+  const recipesListHref = getRecipesListHrefWithStoredFilters();
+  const topbarConfig = useMemo(
+    () => ({
+      breadcrumbs:
+        isEditMode && recipe
+          ? [
+              { label: "Recipes", href: recipesListHref },
+              {
+                label: recipe.name,
+                href: ROUTES.recipe(recipe.slug),
+              },
+              { label: "Edit recipe" },
+            ]
+          : [
+              { label: "Recipes", href: recipesListHref },
+              { label: "Create recipe" },
+            ],
+      actions: [
+        {
+          id: "cancel-recipe",
+          label: "Cancel",
+          onClick: handleCancelToRecipesList,
+          variant: "outline" as const,
+          size: "default" as const,
+          ariaLabel: "Cancel and go back to recipes",
+        },
+        {
+          id: "submit-recipe",
+          label: topbarSubmitLabel,
+          onClick: () => {
+            // Keep topbar action aligned with the form submit pipeline.
+            submitWithSanitizedInstructions();
+          },
+          disabled: isSubmitting,
+          ariaBusy: isSubmitting,
+          variant: "default" as const,
+          size: "default" as const,
+        },
+        ...(isEditMode
+          ? [
+              {
+                id: "delete-recipe",
+                label: "Delete recipe",
+                onClick: () => {
+                  // Keep delete confirmation flow centralized in the existing dialog state.
+                  setIsDeleteOpen(true);
+                },
+                disabled: isDeleting,
+                ariaBusy: isDeleting,
+                ariaLabel: "Delete recipe",
+                icon: <Trash2 className="h-4 w-4" />,
+                variant: "outline" as const,
+                size: "icon" as const,
+              },
+            ]
+          : []),
+      ],
+    }),
+    [
+      handleCancelToRecipesList,
+      isDeleting,
+      isEditMode,
+      isSubmitting,
+      recipe,
+      recipesListHref,
+      topbarSubmitLabel,
+    ],
+  );
+
   return (
     <Form {...form}>
-      <TopbarConfigController
-        config={{
-          actions: [
-            {
-              id: "cancel-recipe",
-              label: "Cancel",
-              onClick: handleCancelToRecipesList,
-              variant: "outline" as const,
-              size: "default" as const,
-              ariaLabel: "Cancel and go back to recipes",
-            },
-            {
-              id: "submit-recipe",
-              label: topbarSubmitLabel,
-              onClick: () => {
-                // Keep topbar action aligned with the form submit pipeline.
-                submitWithSanitizedInstructions();
-              },
-              disabled: isSubmitting,
-              ariaBusy: isSubmitting,
-              variant: "default",
-              size: "default",
-            },
-            ...(isEditMode
-              ? [
-                  {
-                    id: "delete-recipe",
-                    label: "Delete recipe",
-                    onClick: () => {
-                      // Keep delete confirmation flow centralized in the existing dialog state.
-                      setIsDeleteOpen(true);
-                    },
-                    disabled: isDeleting,
-                    ariaBusy: isDeleting,
-                    ariaLabel: "Delete recipe",
-                    icon: <Trash2 className="h-4 w-4" />,
-                    variant: "outline" as const,
-                    size: "icon" as const,
-                  },
-                ]
-              : []),
-          ],
-        }}
-      />
+      <TopbarConfigController config={topbarConfig} />
       <form
         onSubmit={(event) => {
           event.preventDefault();

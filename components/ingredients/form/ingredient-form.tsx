@@ -305,6 +305,18 @@ export default function IngredientForm({
   }, [form, onSubmit]);
   const topbarConfig = useMemo(
     () => ({
+      breadcrumbs: isPageCreateMode
+        ? [
+            { label: "Ingredients", href: ROUTES.ingredients },
+            { label: "Create ingredient" },
+          ]
+        : isPageEditMode
+          ? [
+              { label: "Ingredients", href: ROUTES.ingredients },
+              { label: ingredient?.name ?? "Ingredient" },
+              { label: "Edit ingredient" },
+            ]
+          : [],
       actions: [
         ...(isPageCreateMode
           ? [
@@ -368,6 +380,7 @@ export default function IngredientForm({
     [
       handleTopbarCreateClick,
       handleTopbarUpdateClick,
+      ingredient?.name,
       isDeleting,
       isPageCreateMode,
       isPageEditMode,

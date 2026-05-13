@@ -23,6 +23,7 @@ import type {
 import type { IngredientListWithItems } from "@/lib/db/ingredient-lists";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { ROUTES } from "@/lib/constants";
+import { formatDateRangeLabel } from "@/lib/format-date-range-label";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -628,8 +629,21 @@ export function GroceriesEditList({
     );
   };
 
+  const planDateRangeLabel = formatDateRangeLabel(
+    new Date(list.plan.startDate),
+    new Date(list.plan.endDate),
+  );
+
   const topbarConfig = useMemo(
     () => ({
+      breadcrumbs: [
+        { label: "Groceries", href: ROUTES.groceriesCurrent },
+        {
+          label: planDateRangeLabel,
+          href: ROUTES.groceriesView(list.plan.id),
+        },
+        { label: "Edit groceries" },
+      ],
       actions: [
         {
           id: "cancel-groceries-edit",
@@ -671,7 +685,7 @@ export function GroceriesEditList({
         },
       ],
     }),
-    [isPending, isSaveDisabled, list.plan.id, router, rows, startTransition],
+    [isPending, isSaveDisabled, list.plan.id, planDateRangeLabel, router, rows, startTransition],
   );
 
   return (

@@ -16,11 +16,11 @@ export default async function PlanCurrentPage({
   const { tab, person } = await searchParams;
   if (plans.length === 0) {
     // Render an actionable empty state instead of redirecting back to /plan.
-    return <PlanCurrentEmpty />;
+    return <PlanCurrentEmpty emptyBreadcrumbContext="meal-plan" />;
   }
   const targetPlan = resolveCurrentPlanFromList(plans);
   if (!targetPlan) {
-    return <PlanCurrentEmpty />;
+    return <PlanCurrentEmpty emptyBreadcrumbContext="meal-plan" />;
   }
 
   // Preserve tab/person context when resolving "current plan".

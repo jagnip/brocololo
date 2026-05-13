@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import type { BreadcrumbsItem } from "@/components/ui/breadcrumbs";
 
 export type TopbarBadgeConfig = {
   label: string;
@@ -23,6 +24,8 @@ export type TopbarActionConfig = {
 
 export type TopbarConfig = {
   actions: TopbarActionConfig[];
+  /** When set, shown in the app header next to the sidebar trigger (see AppTopbar). */
+  breadcrumbs?: BreadcrumbsItem[];
   badge?: TopbarBadgeConfig;
   rightContent?: ReactNode;
 };
