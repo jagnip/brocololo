@@ -2,13 +2,10 @@
 
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
-import { GroceriesTopbarControls } from "@/components/groceries/groceries-topbar-controls";
-import type { GroceriesPlanSelectOption } from "@/components/groceries/groceries-plan-select";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { ROUTES } from "@/lib/constants";
 
 type GroceriesTopbarConfigProps = {
-  planOptions: GroceriesPlanSelectOption[];
   planId: string;
   /** True when the persisted list exists and has at least one item (matches prior “Edit groceries” gate). */
   canEdit: boolean;
@@ -16,7 +13,6 @@ type GroceriesTopbarConfigProps = {
 
 /** Registers groceries top bar: plan switcher + view/edit actions by route. */
 export function GroceriesTopbarConfig({
-  planOptions,
   planId,
   canEdit,
 }: GroceriesTopbarConfigProps) {
@@ -48,12 +44,9 @@ export function GroceriesTopbarConfig({
         : [];
 
     return {
-      rightContent: (
-        <GroceriesTopbarControls planOptions={planOptions} planId={planId} />
-      ),
       actions,
     };
-  }, [canEdit, isEditRoute, planId, planOptions]);
+  }, [canEdit, isEditRoute, planId]);
 
   return <TopbarConfigController config={config} />;
 }

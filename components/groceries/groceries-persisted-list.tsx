@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import type { getShoppingListByPlanId } from "@/lib/db/shopping-list";
+import {
+  GroceriesPlanSelect,
+  type GroceriesPlanSelectOption,
+} from "@/components/groceries/groceries-plan-select";
 import { GroceriesPersistedItemRow } from "@/components/groceries/groceries-persisted-item-row";
 import { GroceriesViewLayoutControls } from "@/components/groceries/groceries-view-layout-controls";
 import { Label } from "@/components/ui/label";
@@ -10,33 +14,18 @@ export type GroceriesPersistedListModel = NonNullable<
   Awaited<ReturnType<typeof getShoppingListByPlanId>>
 >;
 
-function formatDateRange(start: Date, end: Date): string {
-  const sameMonth =
-    start.getFullYear() === end.getFullYear() &&
-    start.getMonth() === end.getMonth();
-
-  if (sameMonth) {
-    // Match requested format like "2 - 7 May".
-    const month = end.toLocaleDateString("en-US", { month: "short" });
-    return `${start.getDate()} - ${end.getDate()} ${month}`;
-  }
-
-  const startStr = start.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-  const endStr = end.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-  return `${startStr} - ${endStr}`;
-}
-
 /** Read-only groceries list from persisted `ShoppingList` rows (grouped by ingredient category). */
-export function GroceriesPersistedList({ list }: { list: GroceriesPersistedListModel }) {
+export function GroceriesPersistedList({
+  list,
+  planOptions,
+  currentPlanId,
+}: {
+  list: GroceriesPersistedListModel;
+  planOptions: GroceriesPlanSelectOption[];
+  currentPlanId: string;
+}) {
   const [isLayoutPending, setIsLayoutPending] = useState(false);
   const { plan, items } = list;
-  const rangeLabel = formatDateRange(plan.startDate, plan.endDate);
 
   const sections: { title: string; rows: typeof items }[] = [];
   for (const item of items) {
@@ -52,7 +41,12 @@ export function GroceriesPersistedList({ list }: { list: GroceriesPersistedListM
   return (
     <div className="space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <h1 className="type-h1">Groceries for {rangeLabel}</h1>
+        {/* Replace the left-side title with the plan selector in page content. */}
+        <div className="flex min-w-0 items-center gap-2">
+          {/* Match requested label wording for the groceries page selector. */}
+          <Label className="shrink-0 text-xs text-muted-foreground">Groceries for</Label>
+          <GroceriesPlanSelect plans={planOptions} currentPlanId={currentPlanId} />
+        </div>
         {/* Header-right control mirrors planner/date-range composition:
             inline label on the left, selector on the right. */}
         <div className="flex items-center gap-2 sm:min-w-[20rem] lg:min-w-[24rem]">

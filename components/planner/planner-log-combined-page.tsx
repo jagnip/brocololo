@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { LogPerson } from "@/src/generated/enums";
-import { getPlanById } from "@/lib/db/planner";
+import { getPlanById, getPlansCached } from "@/lib/db/planner";
 import { getRecipes } from "@/lib/db/recipes";
 import { getLogByPlanId } from "@/lib/db/logs";
 import { getPlannerPoolItemsForPlan } from "@/lib/db/planner";
@@ -12,6 +12,7 @@ import type { DateRangeValue } from "@/components/planner/date-range-picker";
 import { PlannerLogSharedShell } from "@/components/planner/planner-log-shared-shell";
 import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
 import { planHasShoppingList } from "@/lib/db/shopping-list";
+import { formatDateRangeLabel } from "@/lib/format-date-range-label";
 
 type PlannerLogCombinedPageProps = {
   planId: string;
@@ -82,7 +83,15 @@ export async function PlannerLogCombinedPage({
   const initialTab = tab === "log" ? "log" : "plan";
 
   // Shared page fetches both planner and log dependencies once, then delegates interactions to client.
-  const [planSlots, plannerRecipes, log, allRecipes, ingredients, hasExistingShoppingList] =
+  const [
+    planSlots,
+    plannerRecipes,
+    log,
+    allRecipes,
+    ingredients,
+    hasExistingShoppingList,
+    allPlans,
+  ] =
     await Promise.all([
       getPlanById(planId),
       getRecipes(undefined, undefined, false),
@@ -90,11 +99,16 @@ export async function PlannerLogCombinedPage({
       getRecipes(undefined),
       getIngredients(),
       planHasShoppingList(planId),
+      getPlansCached(),
     ]);
 
   if (!planSlots) notFound();
 
   const initialDateRange = toInitialDateRange(planSlots);
+  const planOptions = allPlans.map((plan) => ({
+    id: plan.id,
+    label: formatDateRangeLabel(plan.startDate, plan.endDate),
+  }));
 
   let logData: {
     logId: string;
@@ -164,6 +178,7 @@ export async function PlannerLogCombinedPage({
   return (
     <PlannerLogSharedShell
       planId={planId}
+      planOptions={planOptions}
       initialTab={initialTab}
       initialDateRange={initialDateRange}
       initialPlan={planSlots}
