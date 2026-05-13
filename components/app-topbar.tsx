@@ -34,12 +34,7 @@ function BreadcrumbRowSkeleton() {
 }
 
 function TopbarBreadcrumbs({ items }: { items: BreadcrumbsItem[] }) {
-  return (
-    <Breadcrumbs
-      items={items}
-      className="min-w-0 [&_[data-slot=breadcrumb-list]]:flex-nowrap [&_[data-slot=breadcrumb-list]]:overflow-hidden [&_[data-slot=breadcrumb-page]]:truncate [&_[data-slot=breadcrumb-link]]:max-w-[min(40vw,12rem)] [&_[data-slot=breadcrumb-link]]:truncate"
-    />
-  );
+  return <Breadcrumbs items={items} className="min-w-0" />;
 }
 
 export function AppTopbar() {
