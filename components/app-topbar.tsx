@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Suspense, useMemo } from "react";
 import { usePathname } from "next/navigation";
+import { UserButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -212,6 +213,7 @@ export function AppTopbar() {
           })}
         </div>
       </div>
+      <UserButton />
     </header>
   );
 }
