@@ -10,20 +10,24 @@
 import "dotenv/config";
 import { prisma } from "../lib/db/index";
 
-const OWNER_CLERK_ID = process.env.MIGRATION_OWNER_CLERK_ID;
-if (!OWNER_CLERK_ID) {
-  console.error(
-    "Set MIGRATION_OWNER_CLERK_ID to your Clerk user ID (the account you sign in with).",
-  );
-  process.exit(1);
+function requireOwnerClerkId(): string {
+  const clerkId = process.env.MIGRATION_OWNER_CLERK_ID;
+  if (!clerkId) {
+    console.error(
+      "Set MIGRATION_OWNER_CLERK_ID to your Clerk user ID (the account you sign in with).",
+    );
+    process.exit(1);
+  }
+  return clerkId;
 }
 
 async function main() {
-  console.log(`Backfilling data for Clerk user: ${OWNER_CLERK_ID}`);
+  const ownerClerkId = requireOwnerClerkId();
+  console.log(`Backfilling data for Clerk user: ${ownerClerkId}`);
 
   const owner = await prisma.user.upsert({
-    where: { clerkId: OWNER_CLERK_ID },
-    create: { clerkId: OWNER_CLERK_ID },
+    where: { clerkId: ownerClerkId },
+    create: { clerkId: ownerClerkId },
     update: {},
     select: { id: true },
   });
