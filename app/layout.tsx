@@ -1,10 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Suspense } from "react";
 import "./globals.css";
 import { Toaster } from "sonner";
-import { AppSidebarContainer } from "@/components/app-sidebar-container";
-import { RedirectToast } from "@/components/redirect-toast";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,11 +38,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AppSidebarContainer>{children}</AppSidebarContainer>
-        <Suspense fallback={null}>
-          <RedirectToast />
-        </Suspense>
-        <Toaster />
+        <ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up">
+          {children}
+          <Toaster />
+        </ClerkProvider>
       </body>
     </html>
   );

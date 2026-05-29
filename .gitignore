@@ -49,3 +49,6 @@ storybook-static
 /uivariant/
 
 .agents
+
+# clerk configuration (can include secrets)
+/.clerk/
