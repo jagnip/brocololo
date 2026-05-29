@@ -14,6 +14,9 @@ export const MEAL_TYPES: PlannerMealType[] = [
 ];
 
 export const ROUTES = {
+  home: "/",
+  signIn: "/sign-in",
+  signUp: "/sign-up",
   recipes: "/recipes",
   recipeCreate: "/recipes/create",
   recipe: (slug: string) => `/recipes/${slug}`,
