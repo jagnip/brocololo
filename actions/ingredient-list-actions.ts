@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { ROUTES } from "@/lib/constants";
+import { requireUser } from "@/lib/auth/session";
 import {
   addIngredientToList,
   createIngredientList,
@@ -17,8 +18,6 @@ import {
   renameIngredientListSchema,
 } from "@/lib/validations/ingredient-list";
 
-// Library mutations are global, but the groceries edit page that surfaces
-// them needs to be revalidated so a refresh / nav reflects the latest state.
 function revalidateGroceriesPaths(planId: string) {
   revalidatePath(ROUTES.groceries);
   revalidatePath(ROUTES.groceriesEdit(planId));
@@ -38,7 +37,8 @@ export async function createIngredientListAction(input: unknown): Promise<
   }
 
   try {
-    const list = await createIngredientList({ name: parsed.data.name });
+    const { id: userId } = await requireUser();
+    const list = await createIngredientList({ userId, name: parsed.data.name });
     revalidateGroceriesPaths(parsed.data.planId);
     return { type: "success", listId: list.id };
   } catch {
@@ -59,7 +59,9 @@ export async function renameIngredientListAction(input: unknown): Promise<
   }
 
   try {
+    const { id: userId } = await requireUser();
     await renameIngredientList({
+      userId,
       id: parsed.data.listId,
       name: parsed.data.name,
     });
@@ -82,7 +84,8 @@ export async function deleteIngredientListAction(input: unknown): Promise<
   }
 
   try {
-    await deleteIngredientList({ id: parsed.data.listId });
+    const { id: userId } = await requireUser();
+    await deleteIngredientList({ userId, id: parsed.data.listId });
     revalidateGroceriesPaths(parsed.data.planId);
     return { type: "success" };
   } catch {
@@ -102,7 +105,9 @@ export async function addIngredientToListAction(input: unknown): Promise<
   }
 
   try {
+    const { id: userId } = await requireUser();
     await addIngredientToList({
+      userId,
       listId: parsed.data.listId,
       ingredientId: parsed.data.ingredientId,
     });
@@ -128,7 +133,9 @@ export async function removeIngredientFromListAction(input: unknown): Promise<
   }
 
   try {
+    const { id: userId } = await requireUser();
     await removeIngredientFromList({
+      userId,
       listId: parsed.data.listId,
       ingredientId: parsed.data.ingredientId,
     });

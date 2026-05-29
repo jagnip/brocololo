@@ -42,8 +42,38 @@ enum LogPerson {
   SECONDARY
 }
 
+// App user synced from Clerk — one row per signed-in account.
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique @map("clerk_id")
+  email     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  familyMembers   FamilyMember[]
+  recipes         Recipe[]
+  plans           Plan[]
+  ingredientLists IngredientList[]
+  ingredients     Ingredient[]
+
+  @@map("users")
+}
+
+// Named family members for log/planner portion splits — not Clerk accounts.
+model FamilyMember {
+  id       String @id @default(cuid())
+  userId   String @map("user_id")
+  name     String
+  position Int // 0 = PRIMARY, 1 = SECONDARY (maps to LogPerson for now)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, position])
+  @@map("family_members")
+}
+
 model Plan {
   id        String     @id @default(cuid())
+  userId    String     @map("user_id")
   startDate DateTime   @map("start_date")
   endDate   DateTime   @map("end_date")
   createdAt DateTime   @default(now()) @map("created_at")
@@ -51,6 +81,9 @@ model Plan {
   log       Log?
   shoppingList ShoppingList?
 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
   @@map("plans")
 }
 
@@ -163,8 +196,9 @@ model PlanSlotAlternative {
 
 model Recipe {
   id           String     @id @default(cuid())
-  name         String     @unique
-  slug         String     @unique
+  userId       String     @map("user_id")
+  name         String
+  slug         String
   handsOnTime  Int        @map("hands_on_time")
   totalTime    Int        @map("total_time")
   notes        String[] 
@@ -177,17 +211,22 @@ model Recipe {
   lastUsedInPlanner DateTime? @map("last_used_in_planner")
   excludeFromPlanner Boolean @default(false) @map("exclude_from_planner")
 
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   categories   Category[] @relation("category_recipes")
   planSlots    PlanSlot[] @relation("recipe_plan_slots")
   alternatives PlanSlotAlternative[] @relation("recipe_alternatives")
   logEntryRecipes LogEntryRecipe[]
 
+  @@unique([userId, slug])
+  @@unique([userId, name])
+  @@index([userId])
   @@index([slug])
   @@map("recipes")
 }
 
 model Ingredient {
   id              String   @id @default(cuid())
+  userId          String?  @map("user_id")
   name            String
   slug            String   @unique
   icon            String?
@@ -201,6 +240,7 @@ model Ingredient {
   categoryId      String   @map("category_id")
   defaultUnitId   String?  @map("default_unit_id")
 
+  user            User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
   category        IngredientCategory @relation(fields: [categoryId], references: [id])
   defaultUnit     Unit?              @relation("ingredient_default_unit", fields: [defaultUnitId], references: [id], onDelete: Restrict)
   recipes         RecipeIngredient[]
@@ -209,6 +249,7 @@ model Ingredient {
   groceryIngredient GroceryIngredient?
   ingredientLists IngredientListItem[]
 
+  @@index([userId])
   @@index([categoryId])
   @@index([defaultUnitId])
   @@map("ingredients")
@@ -402,17 +443,18 @@ model LogIngredient {
   @@map("log_ingredients")
 }
 
-// Global, app-wide ingredient lists used as a quick-add library on the
-// groceries edit page. They are intentionally not scoped to a Plan or a
-// ShoppingList so they can be reused across plans.
+// Per-user ingredient lists used as a quick-add library on the groceries edit page.
 model IngredientList {
   id        String   @id @default(cuid())
+  userId    String   @map("user_id")
   name      String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  user  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   items IngredientListItem[]
 
+  @@index([userId])
   @@map("ingredient_lists")
 }
 

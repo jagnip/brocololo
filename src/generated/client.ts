@@ -45,6 +45,16 @@ export { Prisma }
  */
 export type Category = Prisma.CategoryModel
 /**
+ * Model User
+ * 
+ */
+export type User = Prisma.UserModel
+/**
+ * Model FamilyMember
+ * 
+ */
+export type FamilyMember = Prisma.FamilyMemberModel
+/**
  * Model Plan
  * 
  */

@@ -5,6 +5,7 @@ import { getLogs } from "@/lib/db/logs";
 import RecipePage from "./recipe-page";
 import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
 import { RecipePageProvider } from "@/components/context/recipe-page-context";
+import { requireUser } from "@/lib/auth/session";
 
 type RecipePageContainerProps = {
   recipeSlug: string;
@@ -13,11 +14,12 @@ type RecipePageContainerProps = {
 export default async function RecipePageContainer({
   recipeSlug,
 }: RecipePageContainerProps) {
+  const { id: userId } = await requireUser();
   const [recipe, ingredients, ingredientFormDependencies, logs] = await Promise.all([
-    getRecipeBySlug(recipeSlug),
-    getIngredients(),
+    getRecipeBySlug(userId, recipeSlug),
+    getIngredients(userId),
     getIngredientFormDependencies(),
-    getLogs(),
+    getLogs(userId),
   ]);
 
   if (!recipe) {

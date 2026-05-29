@@ -2,10 +2,12 @@ import { notFound } from "next/navigation";
 import { getPlansCached } from "@/lib/db/planner";
 import { formatDateRangeLabel } from "@/lib/format-date-range-label";
 import { PlanDetailTopbarConfig } from "@/components/planner/plan-detail-topbar-config";
+import { requireUser } from "@/lib/auth/session";
 
 /** Server entry from `app/plan/[planId]/layout.tsx` so the top bar persists across plan switches. */
 export async function PlanTopbar({ planId }: { planId: string }) {
-  const plans = await getPlansCached();
+  const { id: userId } = await requireUser();
+  const plans = await getPlansCached(userId);
   const current = plans.find((p) => p.id === planId);
   if (!current) notFound();
 

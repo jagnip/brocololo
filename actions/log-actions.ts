@@ -32,6 +32,7 @@ import {
   updateLogRecipeIngredientsSchema,
   type UpdateLogRecipeIngredientsInput,
 } from "@/lib/validations/log";
+import { requireUser } from "@/lib/auth/session";
 
 export async function updateLogRecipeIngredientsAction(
   input: UpdateLogRecipeIngredientsInput,
@@ -45,7 +46,8 @@ export async function updateLogRecipeIngredientsAction(
   }
 
   try {
-    await updateLogRecipeIngredients(parsed.data);
+    const { id: userId } = await requireUser();
+    await updateLogRecipeIngredients(userId, parsed.data);
   } catch (error) {
     console.error("Error updating log recipe ingredients", error);
     return {
@@ -68,7 +70,8 @@ export async function addRecipeToLogAction(input: AddRecipeToLogInput) {
   }
 
   try {
-    const { logId } = await replaceMealSlotWithRecipe(parsed.data);
+    const { id: userId } = await requireUser();
+    const { logId } = await replaceMealSlotWithRecipe(userId, parsed.data);
     revalidatePath(ROUTES.logView(logId));
     revalidatePath(ROUTES.log);
     revalidatePath(ROUTES.logCurrent);
@@ -100,7 +103,8 @@ export async function upsertLogSlotAction(input: UpsertLogSlotInput) {
   }
 
   try {
-    await upsertLogSlot(parsed.data);
+    const { id: userId } = await requireUser();
+    await upsertLogSlot(userId, parsed.data);
   } catch (error) {
     console.error("Error updating log slot", error);
     return {
@@ -123,7 +127,8 @@ export async function placePlannerPoolItemAction(input: PlacePlannerPoolItemInpu
   }
 
   try {
-    await placePlannerPoolItemInEntry(parsed.data);
+    const { id: userId } = await requireUser();
+    await placePlannerPoolItemInEntry(userId, parsed.data);
   } catch (error) {
     console.error("Error placing planner pool item", error);
     if (error instanceof Error && error.message === "NO_UNUSED_PLAN_SLOT_FOR_RECIPE") {
@@ -152,7 +157,8 @@ export async function clearLogEntryAssignmentAction(input: ClearLogEntryAssignme
   }
 
   try {
-    await clearLogEntryAssignment(parsed.data);
+    const { id: userId } = await requireUser();
+    await clearLogEntryAssignment(userId, parsed.data);
   } catch (error) {
     console.error("Error clearing log entry assignment", error);
     return {
@@ -175,7 +181,8 @@ export async function duplicateLogEntryAction(input: DuplicateLogEntryInput) {
   }
 
   try {
-    await duplicateLogEntryToDay(parsed.data);
+    const { id: userId } = await requireUser();
+    await duplicateLogEntryToDay(userId, parsed.data);
   } catch (error) {
     console.error("Error duplicating log entry", error);
     if (error instanceof Error && error.message === "TARGET_LOG_ENTRY_NOT_FOUND") {
@@ -204,7 +211,8 @@ export async function appendNextLogDayAction(input: AppendNextLogDayInput) {
   }
 
   try {
-    const result = await appendNextLogDay(parsed.data);
+    const { id: userId } = await requireUser();
+    const result = await appendNextLogDay({ userId, logId: parsed.data.logId });
     if (result.type === "date_conflict") {
       return result;
     }
@@ -231,7 +239,8 @@ export async function removeLogDayAction(input: RemoveLogDayInput) {
   }
 
   try {
-    const result = await removeLogDay(parsed.data);
+    const { id: userId } = await requireUser();
+    const result = await removeLogDay({ userId, ...parsed.data });
     if (result.type === "impact_warning") {
       return result;
     }
@@ -263,8 +272,9 @@ export async function deleteLogAction(
   }
 
   try {
-    await deleteLogById(logId);
-    const remainingLogs = await getLogs();
+    const { id: userId } = await requireUser();
+    await deleteLogById(userId, logId);
+    const remainingLogs = await getLogs(userId);
     const nextLogId = remainingLogs[0]?.id ?? null;
     revalidatePath(ROUTES.log);
     revalidatePath("/");

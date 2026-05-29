@@ -37,6 +37,15 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
+vi.mock("@/lib/auth/session", () => ({
+  requireUser: vi.fn().mockResolvedValue({
+    id: "user-test",
+    clerkId: "clerk-test",
+    email: null,
+    familyMembers: [],
+  }),
+}));
+
 describe("updateLogRecipeIngredientsAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -67,7 +76,7 @@ describe("updateLogRecipeIngredientsAction", () => {
     });
 
     expect(result).toEqual({ type: "success" });
-    expect(updateLogRecipeIngredients).toHaveBeenCalledWith({
+    expect(updateLogRecipeIngredients).toHaveBeenCalledWith("user-test", {
       logId: "log-1",
       person: "PRIMARY",
       entryId: "entry-1",
@@ -109,7 +118,7 @@ describe("addRecipeToLogAction", () => {
     } as never);
 
     expect(result).toEqual({ type: "success" });
-    expect(replaceMealSlotWithRecipe).toHaveBeenCalledWith({
+    expect(replaceMealSlotWithRecipe).toHaveBeenCalledWith("user-test", {
       recipeId: "recipe-1",
       person: "PRIMARY",
       date: new Date("2026-03-19"),
@@ -169,7 +178,7 @@ describe("upsertLogSlotAction", () => {
     });
 
     expect(result).toEqual({ type: "success" });
-    expect(upsertLogSlot).toHaveBeenCalledWith({
+    expect(upsertLogSlot).toHaveBeenCalledWith("user-test", {
       logId: "log-1",
       person: "PRIMARY",
       entryId: "entry-1",
@@ -219,7 +228,7 @@ describe("clearLogEntryAssignmentAction", () => {
     });
 
     expect(result).toEqual({ type: "success" });
-    expect(clearLogEntryAssignment).toHaveBeenCalledWith({
+    expect(clearLogEntryAssignment).toHaveBeenCalledWith("user-test", {
       logId: "log-1",
       person: "PRIMARY",
       entryId: "entry-1",
@@ -249,7 +258,7 @@ describe("appendNextLogDayAction", () => {
     const result = await appendNextLogDayAction({ logId: "log-1" });
 
     expect(result).toEqual({ type: "success", dateKey: "2026-04-04" });
-    expect(appendNextLogDay).toHaveBeenCalledWith({ logId: "log-1" });
+    expect(appendNextLogDay).toHaveBeenCalledWith({ userId: "user-test", logId: "log-1" });
   });
 });
 
@@ -286,6 +295,7 @@ describe("removeLogDayAction", () => {
 
     expect(result).toEqual({ type: "success", nextDayKey: "2026-04-11" });
     expect(removeLogDay).toHaveBeenCalledWith({
+      userId: "user-test",
       logId: "log-1",
       dateKey: "2026-04-10",
     });
@@ -318,6 +328,6 @@ describe("deleteLogAction", () => {
     ]);
     const result = await deleteLogAction("log-1");
     expect(result).toEqual({ type: "success", nextLogId: "log-2" });
-    expect(deleteLogById).toHaveBeenCalledWith("log-1");
+    expect(deleteLogById).toHaveBeenCalledWith("user-test", "log-1");
   });
 });

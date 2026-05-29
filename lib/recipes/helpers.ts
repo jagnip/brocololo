@@ -660,6 +660,7 @@ type SwapReadyIngredient = Pick<
   | "fats"
   | "carbs"
   | "categoryId"
+  | "userId"
   // Required on RecipeType["ingredients"][number]["ingredient"] (Prisma include).
   | "category"
   // Include default unit metadata so swap candidates match full recipe ingredient shape.

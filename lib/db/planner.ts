@@ -76,8 +76,9 @@ const recipeInclude = {
   images: true,
 } as const;
 
-export async function getPlans() {
+export async function getPlans(userId: string) {
   return prisma.plan.findMany({
+    where: { userId },
     orderBy: { createdAt: "desc" },
     select: { id: true, startDate: true, endDate: true },
   });
@@ -90,13 +91,15 @@ export const getPlansCached = cache(getPlans);
  * Returns canonical UTC day keys (YYYY-MM-DD) already owned by plans/logs.
  * Used to disable dates in planner create picker before generation/save.
  */
-export async function getOccupiedDateKeysForPlanning() {
+export async function getOccupiedDateKeysForPlanning(userId: string) {
   const [planSlots, logEntries] = await Promise.all([
     prisma.planSlot.findMany({
+      where: { plan: { userId } },
       select: { date: true },
       distinct: ["date"],
     }),
     prisma.logEntry.findMany({
+      where: { log: { plan: { userId } } },
       select: { date: true },
       distinct: ["date"],
     }),
@@ -105,15 +108,23 @@ export async function getOccupiedDateKeysForPlanning() {
   return [...new Set([...planSlots, ...logEntries].map((row) => toDateKey(row.date)))].sort();
 }
 
-export async function getLatestPlanId() {
+export async function getLatestPlanId(userId: string) {
   const plan = await prisma.plan.findFirst({
+    where: { userId },
     orderBy: { createdAt: "desc" },
     select: { id: true },
   });
   return plan?.id ?? null;
 }
 
-export async function deletePlanById(planId: string) {
+export async function deletePlanById(userId: string, planId: string) {
+  const owned = await prisma.plan.findFirst({
+    where: { id: planId, userId },
+    select: { id: true },
+  });
+  if (!owned) {
+    throw new Error("PLAN_NOT_FOUND");
+  }
   await prisma.plan.delete({
     where: { id: planId },
   });
@@ -121,8 +132,9 @@ export async function deletePlanById(planId: string) {
 
 // Returns unused recipes from the most recent plan, grouped by recipeId.
 // meals = number of unused slots for that recipe (the "debt" to carry forward).
-export async function getUnusedRecipesFromLatestPlan() {
+export async function getUnusedRecipesFromLatestPlan(userId: string) {
   const latestPlan = await prisma.plan.findFirst({
+    where: { userId },
     orderBy: { createdAt: "desc" },
     select: {
       slots: {
@@ -147,9 +159,9 @@ export async function getUnusedRecipesFromLatestPlan() {
   return Array.from(countsById, ([recipeId, meals]) => ({ recipeId, meals }));
 }
 
-export async function getPlanById(planId: string) {
-  const plan = await prisma.plan.findUnique({
-    where: { id: planId },
+export async function getPlanById(userId: string, planId: string) {
+  const plan = await prisma.plan.findFirst({
+    where: { id: planId, userId },
     include: {
       slots: {
         include: {
@@ -176,9 +188,9 @@ export async function getPlanById(planId: string) {
   }));
 }
 
-export async function getPlanDateRangeById(planId: string) {
-  return prisma.plan.findUnique({
-    where: { id: planId },
+export async function getPlanDateRangeById(userId: string, planId: string) {
+  return prisma.plan.findFirst({
+    where: { id: planId, userId },
     select: { startDate: true, endDate: true },
   });
 }
@@ -211,6 +223,7 @@ export type DateCollisionResult = {
  */
 export async function findDateCollisionsTx(params: {
   tx: Prisma.TransactionClient;
+  userId: string;
   dateKeys: string[];
   excludePlanId?: string;
   excludeLogId?: string;
@@ -228,11 +241,14 @@ export async function findDateCollisionsTx(params: {
       date: {
         in: params.dateKeys.map((dateKey) => new Date(`${dateKey}T00:00:00.000Z`)),
       },
+      log: {
+        plan: { userId: params.userId },
+        ...(params.excludePlanId
+          ? { planId: { not: params.excludePlanId } }
+          : {}),
+      },
       ...(params.excludeLogId
         ? { NOT: { logId: params.excludeLogId } }
-        : {}),
-      ...(params.excludePlanId
-        ? { log: { planId: { not: params.excludePlanId } } }
         : {}),
     },
     select: {
@@ -253,9 +269,9 @@ export async function findDateCollisionsTx(params: {
   };
 }
 
-export async function getPlanForGroceries(planId: string) {
-  const plan = await prisma.plan.findUnique({
-    where: { id: planId },
+export async function getPlanForGroceries(userId: string, planId: string) {
+  const plan = await prisma.plan.findFirst({
+    where: { id: planId, userId },
     include: {
       slots: {
         include: {
@@ -301,6 +317,7 @@ export async function getPlanForGroceries(planId: string) {
 }
 
 export async function createPlan(
+  userId: string,
   startDate: Date,
   endDate: Date,
   slots: SlotInputType[]
@@ -325,6 +342,7 @@ export async function createPlan(
     const dateKeys = [...new Set(slots.map((slot) => slot.date.toISOString().slice(0, 10)))];
     const dateCollision = await findDateCollisionsTx({
       tx,
+      userId,
       dateKeys,
     });
     if (dateCollision.dates.length > 0) {
@@ -338,6 +356,7 @@ export async function createPlan(
 
     const createdPlan = await tx.plan.create({
       data: {
+        userId,
         startDate,
         endDate,
         slots: {
@@ -409,10 +428,11 @@ async function createBaselineLogTx(
 }
 
 export async function getPlannerPoolItemsForPlan(params: {
+  userId: string;
   planId: string;
   person: LogPerson;
 }): Promise<PlannerPoolItem[]> {
-  const slots = await getPlanById(params.planId);
+  const slots = await getPlanById(params.userId, params.planId);
   if (!slots) return [];
 
   // Pool = unused plan slots only: matches planner "used" checkmarks and reserveNextUnusedPlanSlot.
@@ -586,6 +606,7 @@ function toDateKey(value: Date | string): string {
 }
 
 export async function updatePlan(
+  userId: string,
   planId: string,
   slots: SlotSaveData[],
   options: UpdatePlanOptions = {},
@@ -602,8 +623,8 @@ export async function updatePlan(
   const forceDestructiveSync = options.forceDestructiveSync ?? false;
 
   const result = await prisma.$transaction(async (tx) => {
-    const existingPlan = await tx.plan.findUnique({
-      where: { id: planId },
+    const existingPlan = await tx.plan.findFirst({
+      where: { id: planId, userId },
       include: {
         log: { select: { id: true } },
         slots: {
@@ -625,6 +646,7 @@ export async function updatePlan(
     // Block extending a plan into dates already owned by another plan/log pair.
     const dateCollision = await findDateCollisionsTx({
       tx,
+      userId,
       dateKeys: addedDateKeys,
       excludePlanId: planId,
     });
@@ -752,13 +774,14 @@ export async function updatePlan(
 }
 
 export async function generateBaselineLogForPlan(
+  userId: string,
   planId: string,
 ): Promise<
   | { type: "success"; logId: string }
   | { type: "date_conflict"; dates: string[] }
   | { type: "already_exists"; logId: string }
 > {
-  const slots = await getPlanById(planId);
+  const slots = await getPlanById(userId, planId);
   if (!slots) {
     throw new Error("PLAN_NOT_FOUND");
   }
@@ -770,6 +793,7 @@ export async function generateBaselineLogForPlan(
 
   const existingEntries = await prisma.logEntry.findMany({
     where: {
+      log: { plan: { userId } },
       date: {
         gte: minDate,
         lte: maxDate,

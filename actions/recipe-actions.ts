@@ -10,11 +10,13 @@ import slugify from "slugify";
 import { Prisma } from "@/src/generated/client";
 import { ROUTES } from "@/lib/constants";
 import { appendRedirectToastToPath } from "@/lib/messages";
+import { requireUser } from "@/lib/auth/session";
 
 export const createRecipeAction = async (
 
   formData: CreateRecipePayload
 ) => {
+  const { id: userId } = await requireUser();
 
     let recipe;
 
@@ -25,7 +27,7 @@ export const createRecipeAction = async (
   });
 
   try {
-    recipe = await createRecipe({ ...formData, slug });
+    recipe = await createRecipe(userId, { ...formData, slug });
   } catch (error) {
     console.error("Error", error);
 
@@ -52,6 +54,7 @@ export const updateRecipeAction = async (
   recipeId: string,
   formData: UpdateRecipePayload
 ) => {
+  const { id: userId } = await requireUser();
   let recipe;
 
   const slug = slugify(formData.name, {
@@ -61,7 +64,7 @@ export const updateRecipeAction = async (
   });
 
   try {
-    recipe = await updateRecipe(recipeId, { ...formData, slug });
+    recipe = await updateRecipe(userId, recipeId, { ...formData, slug });
   } catch (error) {
     console.error("Error updating recipe", error);
 
@@ -84,8 +87,9 @@ export const updateRecipeAction = async (
 };
 
 export const deleteRecipeAction = async (recipeId: string) => {
+  const { id: userId } = await requireUser();
   try {
-    await deleteRecipe(recipeId);
+    await deleteRecipe(userId, recipeId);
   } catch (error) {
     console.error("Error deleting recipe", error);
 

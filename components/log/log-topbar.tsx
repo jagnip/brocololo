@@ -4,19 +4,21 @@ import { LogPerson } from "@/src/generated/enums";
 import { getLogById, getLogsCached } from "@/lib/db/logs";
 import { formatDateRangeLabel } from "@/lib/format-date-range-label";
 import { LogTopbarConfig } from "@/components/log/log-topbar-config";
+import { requireUser } from "@/lib/auth/session";
 
 /** Loads log list + current log for the app top bar; PRIMARY is enough for plan id / selector labels. */
-const loadLogTopbarData = cache(async (logId: string) => {
+const loadLogTopbarData = cache(async (userId: string, logId: string) => {
   const [log, allLogs] = await Promise.all([
-    getLogById(logId, LogPerson.PRIMARY),
-    getLogsCached(),
+    getLogById(userId, logId, LogPerson.PRIMARY),
+    getLogsCached(userId),
   ]);
   return { log, allLogs };
 });
 
 /** Server entry mounted from `app/log/[logId]/layout.tsx` so the top bar survives client navigations between logs. */
 export async function LogTopbar({ logId }: { logId: string }) {
-  const { log, allLogs } = await loadLogTopbarData(logId);
+  const { id: userId } = await requireUser();
+  const { log, allLogs } = await loadLogTopbarData(userId, logId);
   if (!log) notFound();
 
   const logOptions = allLogs.map((entry) => ({

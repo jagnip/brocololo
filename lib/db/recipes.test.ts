@@ -57,6 +57,8 @@ function baseCreateRecipeInput() {
   };
 }
 
+const TEST_USER_ID = "user-test";
+
 describe("createRecipe category type rules", () => {
   const mockedPrisma = prisma as unknown as {
     category: { findMany: ReturnType<typeof vi.fn> };
@@ -109,7 +111,7 @@ describe("createRecipe category type rules", () => {
       } satisfies MockCategory,
     ]);
 
-    await expect(createRecipe(baseCreateRecipeInput())).resolves.toMatchObject({
+    await expect(createRecipe(TEST_USER_ID, baseCreateRecipeInput())).resolves.toMatchObject({
       id: "recipe-id",
     });
   });
@@ -133,7 +135,7 @@ describe("createRecipe category type rules", () => {
       proteinCategoryId: "protein-id",
     };
 
-    await expect(createRecipe(input)).resolves.toMatchObject({
+    await expect(createRecipe(TEST_USER_ID, input)).resolves.toMatchObject({
       id: "recipe-id",
     });
   });

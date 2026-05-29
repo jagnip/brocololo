@@ -319,10 +319,6 @@ export type GroceryIngredientNullableScalarRelationFilter = {
   isNot?: Prisma.GroceryIngredientWhereInput | null
 }
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
-}
-
 export type BoolFieldUpdateOperationsInput = {
   set?: boolean
 }

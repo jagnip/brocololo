@@ -79,14 +79,18 @@ const recipeInclude = {
   images: true,
 } satisfies Prisma.RecipeInclude;
 
-export async function getRecipeBySlug(slug: string): Promise<RecipeType | null> {
-  return await prisma.recipe.findUnique({
-    where: { slug },
+export async function getRecipeBySlug(
+  userId: string,
+  slug: string,
+): Promise<RecipeType | null> {
+  return await prisma.recipe.findFirst({
+    where: { userId, slug },
     include: recipeInclude,
   });
 }
 
 export async function getRecipes(
+  userId: string,
   occasion?: string,
   q?: string,
   excludeFromPlanner?: boolean,
@@ -117,6 +121,7 @@ export async function getRecipes(
 
   const recipes = await prisma.recipe.findMany({
     where: {
+      userId,
       ...(categoryConditions.length > 0 ? { AND: categoryConditions } : {}),
       ...(filters?.handsOnTimeMax !== undefined
         ? { handsOnTime: { lte: filters.handsOnTimeMax } }
@@ -198,7 +203,10 @@ async function validateAndBuildCategoryIds(input: {
 }
 
 
-export async function createRecipe(data: CreateRecipePayload & { slug: string }) {
+export async function createRecipe(
+  userId: string,
+  data: CreateRecipePayload & { slug: string },
+) {
   const {
     mealOccasionCategoryIds,
     proteinCategoryId,
@@ -226,6 +234,7 @@ export async function createRecipe(data: CreateRecipePayload & { slug: string })
     const recipe = await tx.recipe.create({
       data: {
         ...recipeData,
+        userId,
         categories: {
           connect: categories.map((categoryId) => ({ id: categoryId })),
         },
@@ -318,8 +327,9 @@ export async function createRecipe(data: CreateRecipePayload & { slug: string })
 }
 
 export async function updateRecipe(
+  userId: string,
   recipeId: string,
-  data: UpdateRecipePayload & { slug: string }
+  data: UpdateRecipePayload & { slug: string },
 ) {
   const {
     mealOccasionCategoryIds,
@@ -345,6 +355,14 @@ export async function updateRecipe(
     }));
 
   return prisma.$transaction(async (tx) => {
+    const owned = await tx.recipe.findFirst({
+      where: { id: recipeId, userId },
+      select: { id: true },
+    });
+    if (!owned) {
+      throw new Error("RECIPE_NOT_FOUND");
+    }
+
     await tx.recipe.update({
       where: { id: recipeId },
       data: {
@@ -587,7 +605,14 @@ export async function updateRecipe(
   });
 }
 
-export async function deleteRecipe(recipeId: string) {
+export async function deleteRecipe(userId: string, recipeId: string) {
+  const owned = await prisma.recipe.findFirst({
+    where: { id: recipeId, userId },
+    select: { id: true },
+  });
+  if (!owned) {
+    throw new Error("RECIPE_NOT_FOUND");
+  }
   // Hard-delete recipe; related rows are removed by DB cascades.
   return prisma.recipe.delete({
     where: { id: recipeId },

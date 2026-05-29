@@ -9,6 +9,13 @@ import {
 async function main() {
   console.log('🌱 Seeding database...');
 
+  const seedUser = await prisma.user.upsert({
+    where: { clerkId: 'seed-user' },
+    create: { clerkId: 'seed-user' },
+    update: {},
+    select: { id: true },
+  });
+
   // Clear existing data (order matters due to foreign keys)
   await prisma.recipeIngredient.deleteMany();
   await prisma.ingredientUnit.deleteMany();
@@ -297,6 +304,7 @@ async function main() {
   }) => {
     return await prisma.recipe.create({
       data: {
+        userId: seedUser.id,
         name: data.name,
         slug: slugify(data.name, { lower: true, strict: true, trim: true }),
         handsOnTime: data.handsOnTime,

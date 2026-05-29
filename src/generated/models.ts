@@ -9,6 +9,8 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/Category'
+export type * from './models/User'
+export type * from './models/FamilyMember'
 export type * from './models/Plan'
 export type * from './models/GroceryIngredient'
 export type * from './models/ShoppingLayoutPreset'

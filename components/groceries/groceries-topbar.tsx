@@ -3,14 +3,16 @@ import { GroceriesTopbarConfig } from "@/components/groceries/groceries-topbar-c
 import { getPlansCached } from "@/lib/db/planner";
 import { getShoppingListByPlanId } from "@/lib/db/shopping-list";
 import { formatDateRangeLabel } from "@/lib/format-date-range-label";
+import { requireUser } from "@/lib/auth/session";
 
 /** Server entry from `app/groceries/[planId]/layout.tsx` so the top bar persists across plan switches. */
 export async function GroceriesTopbar({ planId }: { planId: string }) {
-  const plans = await getPlansCached();
+  const { id: userId } = await requireUser();
+  const plans = await getPlansCached(userId);
   const current = plans.find((p) => p.id === planId);
   if (!current) notFound();
 
-  const list = await getShoppingListByPlanId(planId);
+  const list = await getShoppingListByPlanId(userId, planId);
   const canEdit = !!(list && list.items.length > 0);
 
   const planDateRangeLabel = formatDateRangeLabel(

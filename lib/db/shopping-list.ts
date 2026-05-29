@@ -4,6 +4,16 @@ import { transformPlanToShoppingListRows } from "@/lib/groceries/helpers";
 import type { PlanSlotData } from "@/lib/groceries/helpers";
 import { prisma } from "@/lib/db/index";
 
+async function assertPlanOwned(userId: string, planId: string) {
+  const plan = await prisma.plan.findFirst({
+    where: { id: planId, userId },
+    select: { id: true },
+  });
+  if (!plan) {
+    throw new Error("PLAN_NOT_FOUND");
+  }
+}
+
 let cachedGramUnitId: string | null | undefined;
 const TRANSIENT_DB_MAX_ATTEMPTS = 3;
 const TRANSIENT_DB_RETRY_DELAYS_MS = [150, 400];
@@ -209,11 +219,14 @@ function slotsToPlanSlotData(
 /**
  * Replaces shopping list items for the plan from current planner slots (full plan date range).
  */
-export async function generateShoppingListForPlan(planId: string): Promise<
+export async function generateShoppingListForPlan(
+  userId: string,
+  planId: string,
+): Promise<
   | { ok: true; shoppingListId: string }
   | { ok: false; error: "plan_not_found" | "no_gram_unit" }
 > {
-  const plan = await getPlanForGroceries(planId);
+  const plan = await getPlanForGroceries(userId, planId);
   if (!plan) return { ok: false, error: "plan_not_found" };
 
   const gramUnitId = await getGramUnitId();
@@ -316,7 +329,8 @@ export async function generateShoppingListForPlan(planId: string): Promise<
 }
 
 /** Shopping list with items for groceries UI (sorted by category then position). */
-export async function getShoppingListByPlanId(planId: string) {
+export async function getShoppingListByPlanId(userId: string, planId: string) {
+  await assertPlanOwned(userId, planId);
   const allCategories = await withTransientDbRetry(
     () =>
       prisma.ingredientCategory.findMany({
@@ -411,12 +425,13 @@ export async function getShoppingListByPlanId(planId: string) {
 }
 
 export async function setShoppingListActiveLayoutPreset(input: {
+  userId: string;
   planId: string;
   presetId: string;
 }) {
   return prisma.$transaction(async (tx) => {
-    const list = await tx.shoppingList.findUnique({
-      where: { planId: input.planId },
+    const list = await tx.shoppingList.findFirst({
+      where: { planId: input.planId, plan: { userId: input.userId } },
       select: { id: true, planId: true },
     });
     if (!list) throw new Error("SHOPPING_LIST_NOT_FOUND");
@@ -437,12 +452,13 @@ export async function setShoppingListActiveLayoutPreset(input: {
 }
 
 export async function deleteActiveShoppingLayoutPreset(input: {
+  userId: string;
   planId: string;
   presetId: string;
 }) {
   return prisma.$transaction(async (tx) => {
-    const list = await tx.shoppingList.findUnique({
-      where: { planId: input.planId },
+    const list = await tx.shoppingList.findFirst({
+      where: { planId: input.planId, plan: { userId: input.userId } },
       select: { id: true, planId: true, activeLayoutPresetId: true },
     });
     if (!list) throw new Error("SHOPPING_LIST_NOT_FOUND");
@@ -478,6 +494,7 @@ export async function deleteActiveShoppingLayoutPreset(input: {
 }
 
 export async function saveShoppingLayoutPreset(input: {
+  userId: string;
   planId: string;
   presetName: string;
   orderedCategoryIds: string[];
@@ -486,8 +503,8 @@ export async function saveShoppingLayoutPreset(input: {
   if (!trimmedPresetName) throw new Error("SHOPPING_LAYOUT_PRESET_NAME_REQUIRED");
 
   return prisma.$transaction(async (tx) => {
-    const list = await tx.shoppingList.findUnique({
-      where: { planId: input.planId },
+    const list = await tx.shoppingList.findFirst({
+      where: { planId: input.planId, plan: { userId: input.userId } },
       select: { id: true, planId: true },
     });
     if (!list) throw new Error("SHOPPING_LIST_NOT_FOUND");
@@ -535,9 +552,12 @@ export async function saveShoppingLayoutPreset(input: {
 }
 
 /** True when a persisted shopping list row exists for the plan (regenerating replaces its lines). */
-export async function planHasShoppingList(planId: string): Promise<boolean> {
-  const row = await prisma.shoppingList.findUnique({
-    where: { planId },
+export async function planHasShoppingList(
+  userId: string,
+  planId: string,
+): Promise<boolean> {
+  const row = await prisma.shoppingList.findFirst({
+    where: { planId, plan: { userId } },
     select: { id: true },
   });
   return row != null;
@@ -545,9 +565,20 @@ export async function planHasShoppingList(planId: string): Promise<boolean> {
 
 /** Updates one shopping-list item purchased flag and returns parent plan id for revalidation. */
 export async function setShoppingListItemPurchased(input: {
+  userId: string;
   itemId: string;
   purchased: boolean;
 }) {
+  const item = await prisma.shoppingListItem.findFirst({
+    where: {
+      id: input.itemId,
+      shoppingList: { plan: { userId: input.userId } },
+    },
+    select: { id: true },
+  });
+  if (!item) {
+    throw new Error("SHOPPING_LIST_ITEM_NOT_FOUND");
+  }
   return prisma.shoppingListItem.update({
     where: { id: input.itemId },
     data: { purchased: input.purchased },
@@ -564,6 +595,7 @@ export async function setShoppingListItemPurchased(input: {
 }
 
 export async function updateShoppingListItems(input: {
+  userId: string;
   planId: string;
   // Rows added in the form. They have no DB id yet (the temp client id is not
   // sent through here); the server assigns a real id and a per-category position.
@@ -595,8 +627,8 @@ export async function updateShoppingListItems(input: {
 }) {
   return prisma.$transaction(
     async (tx) => {
-      const list = await tx.shoppingList.findUnique({
-        where: { planId: input.planId },
+      const list = await tx.shoppingList.findFirst({
+        where: { planId: input.planId, plan: { userId: input.userId } },
         select: { id: true, planId: true },
       });
       if (!list) {

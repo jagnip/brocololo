@@ -4,6 +4,7 @@ import { getIngredientLists } from "@/lib/db/ingredient-lists";
 import { getIngredientCategories, getIngredients } from "@/lib/db/ingredients";
 import { getShoppingListByPlanId } from "@/lib/db/shopping-list";
 import { getUnits } from "@/lib/db/units";
+import { requireUser } from "@/lib/auth/session";
 
 export default async function GroceriesEditPage({
   params,
@@ -11,19 +12,14 @@ export default async function GroceriesEditPage({
   params: Promise<{ planId: string }>;
 }) {
   const { planId } = await params;
+  const { id: userId } = await requireUser();
 
-  // Keep page-level responsibility to URL + data fetching only.
-  // categories is fetched separately so the edit form can render a section
-  // for every category, even ones that currently have no items.
-  // ingredientLists is fetched here too so the right-side library panel is
-  // hydrated on first render and re-fetches whenever a server action calls
-  // revalidatePath(ROUTES.groceriesEdit(planId)).
   const [list, ingredients, categories, units, ingredientLists] = await Promise.all([
-    getShoppingListByPlanId(planId),
-    getIngredients(),
+    getShoppingListByPlanId(userId, planId),
+    getIngredients(userId),
     getIngredientCategories(),
     getUnits(),
-    getIngredientLists(),
+    getIngredientLists(userId),
   ]);
 
   if (!list) {
