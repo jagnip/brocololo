@@ -22,6 +22,19 @@ vi.mock("@/lib/db/recipes", () => ({
   deleteRecipe: vi.fn(),
 }));
 
+vi.mock("@/lib/messages", () => ({
+  appendRedirectToastToPath: vi.fn((path: string) => path),
+}));
+
+vi.mock("@/lib/auth/session", () => ({
+  requireUser: vi.fn().mockResolvedValue({
+    id: "user-test",
+    clerkId: "clerk-test",
+    email: null,
+    familyMembers: [],
+  }),
+}));
+
 function makeKnownPrismaError(code: string) {
   // Build an object that passes `instanceof PrismaClientKnownRequestError`.
   const error = Object.create(
@@ -46,7 +59,7 @@ describe("deleteRecipeAction", () => {
 
     // redirect is terminal; mocked version returns undefined in tests.
     expect(result).toBeUndefined();
-    expect(deleteRecipe).toHaveBeenCalledWith(recipeId);
+    expect(deleteRecipe).toHaveBeenCalledWith("user-test", recipeId);
     expect(redirect).toHaveBeenCalledWith(ROUTES.recipes);
   });
 
@@ -57,7 +70,7 @@ describe("deleteRecipeAction", () => {
 
     expect(result).toEqual({
       type: "error",
-      message: "Recipe was not found (it may already be deleted).",
+      message: "Recipe no longer exists",
     });
     expect(redirect).not.toHaveBeenCalled();
   });
@@ -69,7 +82,7 @@ describe("deleteRecipeAction", () => {
 
     expect(result).toEqual({
       type: "error",
-      message: "Failed to delete recipe",
+      message: "Couldn't delete recipe. Try again",
     });
     expect(redirect).not.toHaveBeenCalled();
   });

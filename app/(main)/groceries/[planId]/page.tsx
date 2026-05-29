@@ -6,6 +6,7 @@ import { GroceriesPersistedList } from "@/components/groceries/groceries-persist
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 import { formatDateRangeLabel } from "@/lib/format-date-range-label";
+import { requireUser } from "@/lib/auth/session";
 
 export default async function GroceriesPlanPage({
   params,
@@ -13,11 +14,12 @@ export default async function GroceriesPlanPage({
   params: Promise<{ planId: string }>;
 }) {
   const { planId } = await params;
+  const { id: userId } = await requireUser();
 
   const [dateRange, list, plans] = await Promise.all([
-    getPlanDateRangeById(planId),
-    getShoppingListByPlanId(planId),
-    getPlansCached(),
+    getPlanDateRangeById(userId, planId),
+    getShoppingListByPlanId(userId, planId),
+    getPlansCached(userId),
   ]);
 
   if (!dateRange) {

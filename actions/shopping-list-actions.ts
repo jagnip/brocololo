@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { ROUTES } from "@/lib/constants";
+import { requireUser } from "@/lib/auth/session";
 import {
   deleteActiveShoppingLayoutPreset,
   generateShoppingListForPlan,
@@ -19,7 +20,8 @@ export async function generateGroceryListFromPlan(planId: string): Promise<
   | { type: "success"; shoppingListId: string }
   | { type: "error"; code: "plan_not_found" | "no_gram_unit"; message: string }
 > {
-  const result = await generateShoppingListForPlan(planId);
+  const { id: userId } = await requireUser();
+  const result = await generateShoppingListForPlan(userId, planId);
   if (!result.ok) {
     if (result.error === "plan_not_found") {
       return {
@@ -50,7 +52,8 @@ export async function setShoppingListItemPurchasedAction(input: {
   | { type: "error"; message: string }
 > {
   try {
-    const updated = await setShoppingListItemPurchased(input);
+    const { id: userId } = await requireUser();
+    const updated = await setShoppingListItemPurchased({ userId, ...input });
     revalidatePath(ROUTES.groceries);
     revalidatePath(ROUTES.groceriesView(updated.shoppingList.planId));
     return {
@@ -78,11 +81,7 @@ export async function saveShoppingListEditsAction(input: unknown): Promise<
   }
 
   try {
-    // Three-bucket partition:
-    //   - itemsToCreate: rows added in the form (isNew) that have a name.
-    //   - itemsToUpdate: persisted rows that still have a name (regular edits).
-    //   - itemIdsToDelete: persisted rows whose name was cleared (soft-delete).
-    // Rows that are isNew + nameless are silently dropped (nothing to persist).
+    const { id: userId } = await requireUser();
     const items = parsed.data.items;
     const hasName = (item: (typeof items)[number]) =>
       Boolean(item.ingredientId) || item.displayLabel.trim().length > 0;
@@ -98,6 +97,7 @@ export async function saveShoppingListEditsAction(input: unknown): Promise<
       .map((item) => item.id);
 
     await updateShoppingListItems({
+      userId,
       planId: parsed.data.planId,
       itemsToCreate,
       itemsToUpdate,
@@ -120,7 +120,8 @@ export async function setShoppingLayoutPresetAction(input: {
   presetId: string;
 }): Promise<{ type: "success" } | { type: "error"; message: string }> {
   try {
-    const updated = await setShoppingListActiveLayoutPreset(input);
+    const { id: userId } = await requireUser();
+    const updated = await setShoppingListActiveLayoutPreset({ userId, ...input });
     revalidatePath(ROUTES.groceries);
     revalidatePath(ROUTES.groceriesView(updated.planId));
     revalidatePath(ROUTES.groceriesEdit(updated.planId));
@@ -139,7 +140,8 @@ export async function saveShoppingLayoutPresetAction(input: {
   orderedCategoryIds: string[];
 }): Promise<{ type: "success" } | { type: "error"; message: string }> {
   try {
-    const updated = await saveShoppingLayoutPreset(input);
+    const { id: userId } = await requireUser();
+    const updated = await saveShoppingLayoutPreset({ userId, ...input });
     revalidatePath(ROUTES.groceries);
     revalidatePath(ROUTES.groceriesView(updated.planId));
     revalidatePath(ROUTES.groceriesEdit(updated.planId));
@@ -170,7 +172,8 @@ export async function deleteActiveShoppingLayoutPresetAction(input: unknown): Pr
   }
 
   try {
-    const updated = await deleteActiveShoppingLayoutPreset(parsed.data);
+    const { id: userId } = await requireUser();
+    const updated = await deleteActiveShoppingLayoutPreset({ userId, ...parsed.data });
     revalidatePath(ROUTES.groceries);
     revalidatePath(ROUTES.groceriesView(updated.planId));
     revalidatePath(ROUTES.groceriesEdit(updated.planId));

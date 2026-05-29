@@ -389,14 +389,6 @@ export type ShoppingLayoutPresetCategoryUncheckedUpdateManyWithoutPresetNestedIn
   deleteMany?: Prisma.ShoppingLayoutPresetCategoryScalarWhereInput | Prisma.ShoppingLayoutPresetCategoryScalarWhereInput[]
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type ShoppingLayoutPresetCategoryCreateNestedManyWithoutIngredientCategoryInput = {
   create?: Prisma.XOR<Prisma.ShoppingLayoutPresetCategoryCreateWithoutIngredientCategoryInput, Prisma.ShoppingLayoutPresetCategoryUncheckedCreateWithoutIngredientCategoryInput> | Prisma.ShoppingLayoutPresetCategoryCreateWithoutIngredientCategoryInput[] | Prisma.ShoppingLayoutPresetCategoryUncheckedCreateWithoutIngredientCategoryInput[]
   connectOrCreate?: Prisma.ShoppingLayoutPresetCategoryCreateOrConnectWithoutIngredientCategoryInput | Prisma.ShoppingLayoutPresetCategoryCreateOrConnectWithoutIngredientCategoryInput[]

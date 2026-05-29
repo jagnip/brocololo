@@ -4,6 +4,7 @@ import {
 } from "@/lib/db/ingredients";
 import { IngredientsInfiniteList } from "@/components/ingredients/ingredients-infinite-list";
 import { IngredientsFilterBar } from "@/components/ingredients/ingredients-filter-bar";
+import { requireUser } from "@/lib/auth/session";
 
 type IngredientsPageContainerProps = {
   q?: string;
@@ -17,9 +18,11 @@ export async function IngredientsPageContainer({
   q,
   categorySlug,
 }: IngredientsPageContainerProps) {
+  const { id: userId } = await requireUser();
   // Run the page fetch and the category list in parallel; they have no data dependency.
   const [data, categories] = await Promise.all([
     getIngredientsPage({
+      userId,
       q,
       categorySlug,
       page: 1,

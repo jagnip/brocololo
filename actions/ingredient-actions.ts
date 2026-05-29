@@ -20,6 +20,7 @@ import {
 import type { IngredientType } from "@/types/ingredient";
 import { appendRedirectToastToPath } from "@/lib/messages";
 import { getIngredientDisplayName } from "@/lib/ingredients/format";
+import { requireUser } from "@/lib/auth/session";
 
 type IngredientActionError = {
   type: "error";
@@ -72,6 +73,7 @@ async function saveIngredient(
   formData: IngredientFormValues,
   params: { ingredientId?: string },
 ): Promise<IngredientInlineActionResult> {
+  const { id: userId } = await requireUser();
   const gramsUnit = await getGramsUnit();
   if (!gramsUnit) {
     return {
@@ -149,7 +151,7 @@ async function saveIngredient(
         conversionFallback = updated.fallbackStats;
       }
     } else {
-      ingredient = (await createIngredient({
+      ingredient = (await createIngredient(userId, {
         ...normalizedPayload,
         slug,
       })) as IngredientType;

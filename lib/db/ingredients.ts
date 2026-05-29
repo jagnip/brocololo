@@ -1,9 +1,11 @@
 import slugify from "slugify";
 import { prisma } from "./index";
 import type { IngredientPayload } from "@/lib/validations/ingredient";
+import { ingredientVisibilityWhere } from "./ingredient-visibility";
 
-export async function getIngredients() {
+export async function getIngredients(userId: string) {
   return await prisma.ingredient.findMany({
+    where: ingredientVisibilityWhere(userId),
     include: {
       category: {
         select: { id: true, name: true, slug: true, sortOrder: true },
@@ -18,6 +20,7 @@ export async function getIngredients() {
 }
 
 type GetIngredientsPageInput = {
+  userId: string;
   q?: string;
   categorySlug?: string;
   page?: number;
@@ -25,6 +28,7 @@ type GetIngredientsPageInput = {
 };
 
 export async function getIngredientsPage({
+  userId,
   q,
   categorySlug,
   page = 1,
@@ -57,10 +61,11 @@ export async function getIngredientsPage({
     : undefined;
 
   // Build the final where only with the clauses we actually have, so an empty filter stays unset.
+  const visibility = ingredientVisibilityWhere(userId);
   const where =
     searchClause || categoryClause
-      ? { ...(searchClause ?? {}), ...(categoryClause ?? {}) }
-      : undefined;
+      ? { AND: [visibility, { ...(searchClause ?? {}), ...(categoryClause ?? {}) }] }
+      : visibility;
 
   const [total, items] = await Promise.all([
     prisma.ingredient.count({ where }),
@@ -165,6 +170,7 @@ export async function findIngredientIdentityDuplicate(input: {
 }
 
 export async function createIngredient(
+  userId: string,
   data: IngredientPayload & { slug: string },
 ) {
   const {
@@ -177,7 +183,7 @@ export async function createIngredient(
 
   return prisma.$transaction(async (tx) => {
     const ingredient = await tx.ingredient.create({
-      data: ingredientData,
+      data: { ...ingredientData, userId },
       select: { id: true, slug: true },
     });
 

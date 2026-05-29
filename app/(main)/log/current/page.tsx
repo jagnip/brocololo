@@ -1,13 +1,15 @@
 import { redirect } from "next/navigation";
 import { ROUTES } from "@/lib/constants";
 import { findLogContainingDate, getLogsCached } from "@/lib/db/logs";
+import { requireUser } from "@/lib/auth/session";
 
 export default async function LogCurrentPage({
   searchParams,
 }: {
   searchParams: Promise<{ person?: string; day?: string }>;
 }) {
-  const logs = await getLogsCached();
+  const { id: userId } = await requireUser();
+  const logs = await getLogsCached(userId);
   const { person } = await searchParams;
 
   const today = new Date();

@@ -12,6 +12,7 @@ import {
 } from "@/lib/log/view-model";
 import { LogDayViewController } from "@/components/log/log-day-view";
 import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
+import { requireUser } from "@/lib/auth/session";
 type LogDetailPageContainerProps = {
   logId: string;
   person?: string;
@@ -75,19 +76,21 @@ export async function LogPage({
   person: rawPerson,
   day,
 }: LogDetailPageContainerProps) {
+  const { id: userId } = await requireUser();
   const person = parsePerson(rawPerson);
 
   const [log, ingredients, recipes, ingredientFormDependencies] =
     await Promise.all([
-      getLogById(logId, person),
-      getIngredients(),
-      getRecipes(undefined),
+      getLogById(userId, logId, person),
+      getIngredients(userId),
+      getRecipes(userId),
       getIngredientFormDependencies(),
     ]);
   if (!log) notFound();
 
   const days = buildLogDays(log.entries);
   const poolItemsRaw = await getPlannerPoolItemsForPlan({
+    userId,
     planId: log.plan.id,
     person,
   });

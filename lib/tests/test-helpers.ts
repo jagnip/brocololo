@@ -73,6 +73,7 @@ export function createMockIngredient(overrides?: Partial<{
 
   return {
     id: defaultId,
+    userId: null,
     name: 'Chicken Breast',
     brand: null,
     descriptor: null,
@@ -190,6 +191,7 @@ export function createMockRecipe(overrides?: Partial<RecipeType>): RecipeType {
 
   const defaultRecipe: RecipeType = {
     id: defaultRecipeId,
+    userId: 'user-test',
     name: 'Test Recipe',
     slug: 'test-recipe',
     instructions: [
@@ -414,6 +416,7 @@ export function createRecipeWithMissingConversions(): RecipeType {
 export function createMinimalRecipe(): RecipeType {
   return {
     id: 'recipe-minimal',
+    userId: 'user-test',
     name: 'Minimal Recipe',
     slug: 'minimal-recipe',
     instructions: [],

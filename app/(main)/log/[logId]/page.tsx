@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { LogPerson } from "@/src/generated/enums";
 import { ROUTES } from "@/lib/constants";
 import { getLogById } from "@/lib/db/logs";
+import { requireUser } from "@/lib/auth/session";
 
 export default async function LogDetailPage({
   params,
@@ -12,7 +13,8 @@ export default async function LogDetailPage({
 }) {
   const { logId } = await params;
   const { person } = await searchParams;
-  const log = await getLogById(logId, LogPerson.PRIMARY);
+  const { id: userId } = await requireUser();
+  const log = await getLogById(userId, logId, LogPerson.PRIMARY);
   if (!log) {
     notFound();
   }

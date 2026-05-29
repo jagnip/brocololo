@@ -12,6 +12,7 @@ import { filterByMealOccasion, filterByHandsOnTime, filterByTotalTime } from "@/
 import { DayTimeLimitsType, RollingRecipeType } from "@/lib/validations/planner";
 import { pickBestCandidate } from "@/lib/planner/scoring";
 import { generateBaselineLogForPlan } from "@/lib/db/planner";
+import { requireUser } from "@/lib/auth/session";
 
 export async function generatePlan(
   start: Date,
@@ -24,8 +25,9 @@ export async function generatePlan(
   | { type: "error"; message: string }
 > {
   try {
+    const { id: userId } = await requireUser();
     // Planner candidates are narrowed by meal occasion per slot.
-    const recipes = await getRecipes(undefined, undefined, false);
+    const recipes = await getRecipes(userId, undefined, undefined, false);
 
     if (recipes.length === 0) {
       return { type: "error", message: "No recipes available to plan." };
@@ -118,13 +120,14 @@ export async function savePlan(plan: PlanInputType): Promise<
 
   let planId: string;
   try {
-    const created = await createPlan(startDate, endDate, plan);
+    const { id: userId } = await requireUser();
+    const created = await createPlan(userId, startDate, endDate, plan);
     if (created.type === "date_conflict") {
       return created;
     }
     planId = created.plan.id;
     // Create paired baseline log immediately so Planner/Log shared view stays in sync.
-    const baselineLogResult = await generateBaselineLogForPlan(planId);
+    const baselineLogResult = await generateBaselineLogForPlan(userId, planId);
     if (baselineLogResult.type === "date_conflict") {
       console.error("Unexpected baseline log date conflict after plan creation", {
         planId,
@@ -165,7 +168,8 @@ export async function updateSavedPlan(
   }
 
   try {
-    const result = await updatePlan(planId, slots, options);
+    const { id: userId } = await requireUser();
+    const result = await updatePlan(userId, planId, slots, options);
     if (result.type === "date_conflict") {
       return result;
     }
@@ -190,7 +194,8 @@ export async function generateLogFromPlan(
   | { type: "error"; message: string }
 > {
   try {
-    const result = await generateBaselineLogForPlan(planId);
+    const { id: userId } = await requireUser();
+    const result = await generateBaselineLogForPlan(userId, planId);
     revalidatePath(ROUTES.log);
     return result;
   } catch (error) {
@@ -207,7 +212,8 @@ export async function deletePlanAction(
   }
 
   try {
-    await deletePlanById(planId);
+    const { id: userId } = await requireUser();
+    await deletePlanById(userId, planId);
   } catch (error) {
     console.error("Error deleting plan", error);
     return { type: "error", message: "Failed to delete plan." };

@@ -41,8 +41,9 @@ async function releasePlanSlotsLinkedToEntryRecipes(
   }
 }
 
-export async function getLogs() {
+export async function getLogs(userId: string) {
   return prisma.log.findMany({
+    where: { plan: { userId } },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
@@ -76,15 +77,22 @@ export function findLogContainingDate(
   });
 }
 
-export async function deleteLogById(logId: string) {
+export async function deleteLogById(userId: string, logId: string) {
+  const owned = await prisma.log.findFirst({
+    where: { id: logId, plan: { userId } },
+    select: { id: true },
+  });
+  if (!owned) {
+    throw new Error("LOG_NOT_FOUND");
+  }
   await prisma.log.delete({
     where: { id: logId },
   });
 }
 
-export async function getLogById(logId: string, person: LogPerson) {
-  return prisma.log.findUnique({
-    where: { id: logId },
+export async function getLogById(userId: string, logId: string, person: LogPerson) {
+  return prisma.log.findFirst({
+    where: { id: logId, plan: { userId } },
     select: {
       id: true,
       createdAt: true,
@@ -159,15 +167,15 @@ export async function getLogById(logId: string, person: LogPerson) {
   });
 }
 
-export async function getLogByPlanId(planId: string, person: LogPerson) {
-  const log = await prisma.log.findUnique({
-    where: { planId },
+export async function getLogByPlanId(userId: string, planId: string, person: LogPerson) {
+  const log = await prisma.log.findFirst({
+    where: { planId, plan: { userId } },
     select: { id: true },
   });
   if (!log) {
     return null;
   }
-  return getLogById(log.id, person);
+  return getLogById(userId, log.id, person);
 }
 
 export type AppendNextLogDayResult =
@@ -183,10 +191,10 @@ export type AppendNextLogDayResult =
       conflictingPlanIds: string[];
     };
 
-export async function appendNextLogDay(input: { logId: string }): Promise<AppendNextLogDayResult> {
+export async function appendNextLogDay(input: { userId: string; logId: string }): Promise<AppendNextLogDayResult> {
   return prisma.$transaction(async (tx) => {
-    const log = await tx.log.findUnique({
-      where: { id: input.logId },
+    const log = await tx.log.findFirst({
+      where: { id: input.logId, plan: { userId: input.userId } },
       select: {
         id: true,
         plan: {
@@ -220,6 +228,7 @@ export async function appendNextLogDay(input: { logId: string }): Promise<Append
     // Block collisions with any other plan/log owner for the target day.
     const dateCollision = await findDateCollisionsTx({
       tx,
+      userId: input.userId,
       dateKeys: [nextDateKey],
       excludePlanId: log.plan.id,
       excludeLogId: log.id,
@@ -299,11 +308,20 @@ export type RemoveLogDayResult =
   | ({ type: "impact_warning" } & RemoveDayImpact);
 
 export async function removeLogDay(input: {
+  userId: string;
   logId: string;
   dateKey: string;
   force?: boolean;
 }): Promise<RemoveLogDayResult> {
   return prisma.$transaction(async (tx) => {
+    const logWithPlan = await tx.log.findFirst({
+      where: { id: input.logId, plan: { userId: input.userId } },
+      select: { planId: true },
+    });
+    if (!logWithPlan) {
+      throw new Error("LOG_NOT_FOUND");
+    }
+
     const distinctDays = await tx.logEntry.findMany({
       where: { logId: input.logId },
       distinct: ["date"],
@@ -316,13 +334,7 @@ export async function removeLogDay(input: {
     }
 
     const targetDate = new Date(`${input.dateKey}T00:00:00.000Z`);
-    const logWithPlan = await tx.log.findUnique({
-      where: { id: input.logId },
-      select: { planId: true },
-    });
-    if (!logWithPlan) {
-      throw new Error("LOG_NOT_FOUND");
-    }
+    const logWithPlanId = logWithPlan.planId;
 
     // Impact on the log side: any non-empty meal entry (has recipe or ingredients).
     const nonEmptyLogEntries = await tx.logEntry.findMany({
@@ -337,7 +349,7 @@ export async function removeLogDay(input: {
     // Impact on the plan side: any planned slot (recipe assigned) on that date.
     const impactedPlanMealsCount = await tx.planSlot.count({
       where: {
-        planId: logWithPlan.planId,
+        planId: logWithPlanId,
         date: targetDate,
         recipeId: { not: null },
       },
@@ -363,19 +375,19 @@ export async function removeLogDay(input: {
     // Keep planner dates synced with log date removals.
     await tx.planSlot.deleteMany({
       where: {
-        planId: logWithPlan.planId,
+        planId: logWithPlanId,
         date: targetDate,
       },
     });
 
     const remainingPlanBounds = await tx.planSlot.aggregate({
-      where: { planId: logWithPlan.planId },
+      where: { planId: logWithPlanId },
       _min: { date: true },
       _max: { date: true },
     });
     if (remainingPlanBounds._min.date && remainingPlanBounds._max.date) {
       await tx.plan.update({
-        where: { id: logWithPlan.planId },
+        where: { id: logWithPlanId },
         data: {
           startDate: remainingPlanBounds._min.date,
           endDate: remainingPlanBounds._max.date,
@@ -398,9 +410,18 @@ export async function removeLogDay(input: {
 }
 
 export async function updateLogRecipeIngredients(
+  userId: string,
   input: UpdateLogRecipeIngredientsInput,
 ) {
   await prisma.$transaction(async (tx) => {
+    const ownedLog = await tx.log.findFirst({
+      where: { id: input.logId, plan: { userId } },
+      select: { id: true, planId: true },
+    });
+    if (!ownedLog) {
+      throw new Error("LOG_NOT_FOUND");
+    }
+
     const entry = await tx.logEntry.findFirst({
       where: {
         id: input.entryId,
@@ -426,14 +447,6 @@ export async function updateLogRecipeIngredients(
       throw new Error("ENTRY_RECIPE_NOT_FOUND");
     }
 
-    const log = await tx.log.findUnique({
-      where: { id: input.logId },
-      select: { planId: true },
-    });
-    if (!log) {
-      throw new Error("LOG_NOT_FOUND");
-    }
-
     await assertIngredientRowsHaveSupportedUnits(tx, input.ingredients);
 
     await tx.logIngredient.deleteMany({
@@ -457,8 +470,16 @@ export async function updateLogRecipeIngredients(
   });
 }
 
-export async function upsertLogSlot(input: UpsertLogSlotInput) {
+export async function upsertLogSlot(userId: string, input: UpsertLogSlotInput) {
   await prisma.$transaction(async (tx) => {
+    const ownedLog = await tx.log.findFirst({
+      where: { id: input.logId, plan: { userId } },
+      select: { id: true, planId: true },
+    });
+    if (!ownedLog) {
+      throw new Error("LOG_NOT_FOUND");
+    }
+
     const entry = await tx.logEntry.findFirst({
       where: {
         id: input.entryId,
@@ -472,13 +493,7 @@ export async function upsertLogSlot(input: UpsertLogSlotInput) {
       throw new Error("LOG_ENTRY_NOT_FOUND");
     }
 
-    const log = await tx.log.findUnique({
-      where: { id: input.logId },
-      select: { planId: true },
-    });
-    if (!log) {
-      throw new Error("LOG_NOT_FOUND");
-    }
+    const log = { planId: ownedLog.planId };
 
     await assertIngredientRowsHaveSupportedUnits(tx, input.ingredients);
 
@@ -523,8 +538,19 @@ export async function upsertLogSlot(input: UpsertLogSlotInput) {
   });
 }
 
-export async function placePlannerPoolItemInEntry(input: PlacePlannerPoolItemInput) {
+export async function placePlannerPoolItemInEntry(
+  userId: string,
+  input: PlacePlannerPoolItemInput,
+) {
   await prisma.$transaction(async (tx) => {
+    const ownedLog = await tx.log.findFirst({
+      where: { id: input.logId, plan: { userId } },
+      select: { id: true, planId: true },
+    });
+    if (!ownedLog) {
+      throw new Error("LOG_NOT_FOUND");
+    }
+
     const entry = await tx.logEntry.findFirst({
       where: {
         id: input.entryId,
@@ -538,13 +564,7 @@ export async function placePlannerPoolItemInEntry(input: PlacePlannerPoolItemInp
       throw new Error("LOG_ENTRY_NOT_FOUND");
     }
 
-    const log = await tx.log.findUnique({
-      where: { id: input.logId },
-      select: { planId: true },
-    });
-    if (!log) {
-      throw new Error("LOG_NOT_FOUND");
-    }
+    const log = { planId: ownedLog.planId };
 
     await assertIngredientRowsHaveSupportedUnits(tx, input.ingredients);
 
@@ -595,8 +615,19 @@ export async function placePlannerPoolItemInEntry(input: PlacePlannerPoolItemInp
   });
 }
 
-export async function clearLogEntryAssignment(input: ClearLogEntryAssignmentInput) {
+export async function clearLogEntryAssignment(
+  userId: string,
+  input: ClearLogEntryAssignmentInput,
+) {
   await prisma.$transaction(async (tx) => {
+    const ownedLog = await tx.log.findFirst({
+      where: { id: input.logId, plan: { userId } },
+      select: { id: true },
+    });
+    if (!ownedLog) {
+      throw new Error("LOG_NOT_FOUND");
+    }
+
     const entry = await tx.logEntry.findFirst({
       where: {
         id: input.entryId,
@@ -626,8 +657,19 @@ export async function clearLogEntryAssignment(input: ClearLogEntryAssignmentInpu
   });
 }
 
-export async function duplicateLogEntryToDay(input: DuplicateLogEntryInput) {
+export async function duplicateLogEntryToDay(
+  userId: string,
+  input: DuplicateLogEntryInput,
+) {
   await prisma.$transaction(async (tx) => {
+    const ownedLog = await tx.log.findFirst({
+      where: { id: input.logId, plan: { userId } },
+      select: { id: true, planId: true },
+    });
+    if (!ownedLog) {
+      throw new Error("LOG_NOT_FOUND");
+    }
+
     const sourceEntry = await tx.logEntry.findFirst({
       where: {
         id: input.sourceEntryId,
@@ -654,13 +696,7 @@ export async function duplicateLogEntryToDay(input: DuplicateLogEntryInput) {
       throw new Error("TARGET_LOG_ENTRY_NOT_FOUND");
     }
 
-    const log = await tx.log.findUnique({
-      where: { id: input.logId },
-      select: { planId: true },
-    });
-    if (!log) {
-      throw new Error("LOG_NOT_FOUND");
-    }
+    const log = { planId: ownedLog.planId };
 
     await assertIngredientRowsHaveSupportedUnits(tx, input.ingredients);
     await releasePlanSlotsLinkedToEntryRecipes(tx, targetEntry.id);
@@ -773,13 +809,17 @@ function utcCalendarDateForLogEntry(value: Date | string): Date {
   );
 }
 
-export async function replaceMealSlotWithRecipe(input: ParsedAddRecipeToLogInput) {
+export async function replaceMealSlotWithRecipe(
+  userId: string,
+  input: ParsedAddRecipeToLogInput,
+) {
   return prisma.$transaction(async (tx) => {
     const date = utcCalendarDateForLogEntry(input.date);
 
     const activeLog = await tx.log.findFirst({
       where: {
         plan: {
+          userId,
           startDate: {
             lte: date,
           },

@@ -1,5 +1,6 @@
 import { getRecipes } from "@/lib/db/recipes";
 import RecipeGrid from "./grid";
+import { requireUser } from "@/lib/auth/session";
 
 export type RecipeGridContainerProps = {
   occasion?: string;
@@ -16,10 +17,11 @@ export default async function RecipeGridContainer({
   type,
   time,
 }: RecipeGridContainerProps) {
+  const { id: userId } = await requireUser();
 
 const handsOnTimeMax = time ? Number(time) : undefined;
 
-  const recipes = await getRecipes(occasion, search, undefined, {
+  const recipes = await getRecipes(userId, occasion, search, undefined, {
     proteinSlug: protein,
     typeSlug: type,
     handsOnTimeMax,

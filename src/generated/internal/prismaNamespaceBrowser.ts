@@ -52,6 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   Category: 'Category',
+  User: 'User',
+  FamilyMember: 'FamilyMember',
   Plan: 'Plan',
   GroceryIngredient: 'GroceryIngredient',
   ShoppingLayoutPreset: 'ShoppingLayoutPreset',
@@ -104,8 +106,29 @@ export const CategoryScalarFieldEnum = {
 export type CategoryScalarFieldEnum = (typeof CategoryScalarFieldEnum)[keyof typeof CategoryScalarFieldEnum]
 
 
+export const UserScalarFieldEnum = {
+  id: 'id',
+  clerkId: 'clerkId',
+  email: 'email',
+  createdAt: 'createdAt'
+} as const
+
+export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const FamilyMemberScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  name: 'name',
+  position: 'position'
+} as const
+
+export type FamilyMemberScalarFieldEnum = (typeof FamilyMemberScalarFieldEnum)[keyof typeof FamilyMemberScalarFieldEnum]
+
+
 export const PlanScalarFieldEnum = {
   id: 'id',
+  userId: 'userId',
   startDate: 'startDate',
   endDate: 'endDate',
   createdAt: 'createdAt'
@@ -197,6 +220,7 @@ export type PlanSlotAlternativeScalarFieldEnum = (typeof PlanSlotAlternativeScal
 
 export const RecipeScalarFieldEnum = {
   id: 'id',
+  userId: 'userId',
   name: 'name',
   slug: 'slug',
   handsOnTime: 'handsOnTime',
@@ -213,6 +237,7 @@ export type RecipeScalarFieldEnum = (typeof RecipeScalarFieldEnum)[keyof typeof 
 
 export const IngredientScalarFieldEnum = {
   id: 'id',
+  userId: 'userId',
   name: 'name',
   slug: 'slug',
   icon: 'icon',
@@ -357,6 +382,7 @@ export type LogIngredientScalarFieldEnum = (typeof LogIngredientScalarFieldEnum)
 
 export const IngredientListScalarFieldEnum = {
   id: 'id',
+  userId: 'userId',
   name: 'name',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

@@ -13,6 +13,7 @@ import { PlannerLogSharedShell } from "@/components/planner/planner-log-shared-s
 import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
 import { planHasShoppingList } from "@/lib/db/shopping-list";
 import { formatDateRangeLabel } from "@/lib/format-date-range-label";
+import { requireUser } from "@/lib/auth/session";
 
 type PlannerLogCombinedPageProps = {
   planId: string;
@@ -79,10 +80,10 @@ export async function PlannerLogCombinedPage({
   tab,
   person: rawPerson,
 }: PlannerLogCombinedPageProps) {
+  const { id: userId } = await requireUser();
   const person = parsePerson(rawPerson);
   const initialTab = tab === "log" ? "log" : "plan";
 
-  // Shared page fetches both planner and log dependencies once, then delegates interactions to client.
   const [
     planSlots,
     plannerRecipes,
@@ -93,13 +94,13 @@ export async function PlannerLogCombinedPage({
     allPlans,
   ] =
     await Promise.all([
-      getPlanById(planId),
-      getRecipes(undefined, undefined, false),
-      getLogByPlanId(planId, person),
-      getRecipes(undefined),
-      getIngredients(),
-      planHasShoppingList(planId),
-      getPlansCached(),
+      getPlanById(userId, planId),
+      getRecipes(userId, undefined, undefined, false),
+      getLogByPlanId(userId, planId, person),
+      getRecipes(userId),
+      getIngredients(userId),
+      planHasShoppingList(userId, planId),
+      getPlansCached(userId),
     ]);
 
   if (!planSlots) notFound();
@@ -124,7 +125,7 @@ export async function PlannerLogCombinedPage({
 
   if (log) {
     const days = buildLogDays(log.entries);
-    const poolItemsRaw = await getPlannerPoolItemsForPlan({ planId, person });
+    const poolItemsRaw = await getPlannerPoolItemsForPlan({ userId, planId, person });
     const plannerPool = buildVisiblePlannerPoolCards({
       items: poolItemsRaw.map((item) => ({
         ...item,
