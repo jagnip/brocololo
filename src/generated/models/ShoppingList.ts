@@ -177,6 +177,7 @@ export type ShoppingListWhereInput = {
   plan?: Prisma.XOR<Prisma.PlanScalarRelationFilter, Prisma.PlanWhereInput>
   activeLayoutPreset?: Prisma.XOR<Prisma.ShoppingLayoutPresetNullableScalarRelationFilter, Prisma.ShoppingLayoutPresetWhereInput> | null
   items?: Prisma.ShoppingListItemListRelationFilter
+  shares?: Prisma.ShoppingListShareListRelationFilter
 }
 
 export type ShoppingListOrderByWithRelationInput = {
@@ -187,6 +188,7 @@ export type ShoppingListOrderByWithRelationInput = {
   plan?: Prisma.PlanOrderByWithRelationInput
   activeLayoutPreset?: Prisma.ShoppingLayoutPresetOrderByWithRelationInput
   items?: Prisma.ShoppingListItemOrderByRelationAggregateInput
+  shares?: Prisma.ShoppingListShareOrderByRelationAggregateInput
 }
 
 export type ShoppingListWhereUniqueInput = Prisma.AtLeast<{
@@ -200,6 +202,7 @@ export type ShoppingListWhereUniqueInput = Prisma.AtLeast<{
   plan?: Prisma.XOR<Prisma.PlanScalarRelationFilter, Prisma.PlanWhereInput>
   activeLayoutPreset?: Prisma.XOR<Prisma.ShoppingLayoutPresetNullableScalarRelationFilter, Prisma.ShoppingLayoutPresetWhereInput> | null
   items?: Prisma.ShoppingListItemListRelationFilter
+  shares?: Prisma.ShoppingListShareListRelationFilter
 }, "id" | "planId">
 
 export type ShoppingListOrderByWithAggregationInput = {
@@ -228,6 +231,7 @@ export type ShoppingListCreateInput = {
   plan: Prisma.PlanCreateNestedOneWithoutShoppingListInput
   activeLayoutPreset?: Prisma.ShoppingLayoutPresetCreateNestedOneWithoutListsUsingAsActiveInput
   items?: Prisma.ShoppingListItemCreateNestedManyWithoutShoppingListInput
+  shares?: Prisma.ShoppingListShareCreateNestedManyWithoutShoppingListInput
 }
 
 export type ShoppingListUncheckedCreateInput = {
@@ -236,6 +240,7 @@ export type ShoppingListUncheckedCreateInput = {
   activeLayoutPresetId?: string | null
   createdAt?: Date | string
   items?: Prisma.ShoppingListItemUncheckedCreateNestedManyWithoutShoppingListInput
+  shares?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutShoppingListInput
 }
 
 export type ShoppingListUpdateInput = {
@@ -244,6 +249,7 @@ export type ShoppingListUpdateInput = {
   plan?: Prisma.PlanUpdateOneRequiredWithoutShoppingListNestedInput
   activeLayoutPreset?: Prisma.ShoppingLayoutPresetUpdateOneWithoutListsUsingAsActiveNestedInput
   items?: Prisma.ShoppingListItemUpdateManyWithoutShoppingListNestedInput
+  shares?: Prisma.ShoppingListShareUpdateManyWithoutShoppingListNestedInput
 }
 
 export type ShoppingListUncheckedUpdateInput = {
@@ -252,6 +258,7 @@ export type ShoppingListUncheckedUpdateInput = {
   activeLayoutPresetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   items?: Prisma.ShoppingListItemUncheckedUpdateManyWithoutShoppingListNestedInput
+  shares?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutShoppingListNestedInput
 }
 
 export type ShoppingListCreateManyInput = {
@@ -388,6 +395,20 @@ export type ShoppingListUncheckedUpdateManyWithoutActiveLayoutPresetNestedInput 
   deleteMany?: Prisma.ShoppingListScalarWhereInput | Prisma.ShoppingListScalarWhereInput[]
 }
 
+export type ShoppingListCreateNestedOneWithoutSharesInput = {
+  create?: Prisma.XOR<Prisma.ShoppingListCreateWithoutSharesInput, Prisma.ShoppingListUncheckedCreateWithoutSharesInput>
+  connectOrCreate?: Prisma.ShoppingListCreateOrConnectWithoutSharesInput
+  connect?: Prisma.ShoppingListWhereUniqueInput
+}
+
+export type ShoppingListUpdateOneRequiredWithoutSharesNestedInput = {
+  create?: Prisma.XOR<Prisma.ShoppingListCreateWithoutSharesInput, Prisma.ShoppingListUncheckedCreateWithoutSharesInput>
+  connectOrCreate?: Prisma.ShoppingListCreateOrConnectWithoutSharesInput
+  upsert?: Prisma.ShoppingListUpsertWithoutSharesInput
+  connect?: Prisma.ShoppingListWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ShoppingListUpdateToOneWithWhereWithoutSharesInput, Prisma.ShoppingListUpdateWithoutSharesInput>, Prisma.ShoppingListUncheckedUpdateWithoutSharesInput>
+}
+
 export type ShoppingListCreateNestedOneWithoutItemsInput = {
   create?: Prisma.XOR<Prisma.ShoppingListCreateWithoutItemsInput, Prisma.ShoppingListUncheckedCreateWithoutItemsInput>
   connectOrCreate?: Prisma.ShoppingListCreateOrConnectWithoutItemsInput
@@ -407,6 +428,7 @@ export type ShoppingListCreateWithoutPlanInput = {
   createdAt?: Date | string
   activeLayoutPreset?: Prisma.ShoppingLayoutPresetCreateNestedOneWithoutListsUsingAsActiveInput
   items?: Prisma.ShoppingListItemCreateNestedManyWithoutShoppingListInput
+  shares?: Prisma.ShoppingListShareCreateNestedManyWithoutShoppingListInput
 }
 
 export type ShoppingListUncheckedCreateWithoutPlanInput = {
@@ -414,6 +436,7 @@ export type ShoppingListUncheckedCreateWithoutPlanInput = {
   activeLayoutPresetId?: string | null
   createdAt?: Date | string
   items?: Prisma.ShoppingListItemUncheckedCreateNestedManyWithoutShoppingListInput
+  shares?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutShoppingListInput
 }
 
 export type ShoppingListCreateOrConnectWithoutPlanInput = {
@@ -437,6 +460,7 @@ export type ShoppingListUpdateWithoutPlanInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   activeLayoutPreset?: Prisma.ShoppingLayoutPresetUpdateOneWithoutListsUsingAsActiveNestedInput
   items?: Prisma.ShoppingListItemUpdateManyWithoutShoppingListNestedInput
+  shares?: Prisma.ShoppingListShareUpdateManyWithoutShoppingListNestedInput
 }
 
 export type ShoppingListUncheckedUpdateWithoutPlanInput = {
@@ -444,6 +468,7 @@ export type ShoppingListUncheckedUpdateWithoutPlanInput = {
   activeLayoutPresetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   items?: Prisma.ShoppingListItemUncheckedUpdateManyWithoutShoppingListNestedInput
+  shares?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutShoppingListNestedInput
 }
 
 export type ShoppingListCreateWithoutActiveLayoutPresetInput = {
@@ -451,6 +476,7 @@ export type ShoppingListCreateWithoutActiveLayoutPresetInput = {
   createdAt?: Date | string
   plan: Prisma.PlanCreateNestedOneWithoutShoppingListInput
   items?: Prisma.ShoppingListItemCreateNestedManyWithoutShoppingListInput
+  shares?: Prisma.ShoppingListShareCreateNestedManyWithoutShoppingListInput
 }
 
 export type ShoppingListUncheckedCreateWithoutActiveLayoutPresetInput = {
@@ -458,6 +484,7 @@ export type ShoppingListUncheckedCreateWithoutActiveLayoutPresetInput = {
   planId: string
   createdAt?: Date | string
   items?: Prisma.ShoppingListItemUncheckedCreateNestedManyWithoutShoppingListInput
+  shares?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutShoppingListInput
 }
 
 export type ShoppingListCreateOrConnectWithoutActiveLayoutPresetInput = {
@@ -496,11 +523,60 @@ export type ShoppingListScalarWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"ShoppingList"> | Date | string
 }
 
+export type ShoppingListCreateWithoutSharesInput = {
+  id?: string
+  createdAt?: Date | string
+  plan: Prisma.PlanCreateNestedOneWithoutShoppingListInput
+  activeLayoutPreset?: Prisma.ShoppingLayoutPresetCreateNestedOneWithoutListsUsingAsActiveInput
+  items?: Prisma.ShoppingListItemCreateNestedManyWithoutShoppingListInput
+}
+
+export type ShoppingListUncheckedCreateWithoutSharesInput = {
+  id?: string
+  planId: string
+  activeLayoutPresetId?: string | null
+  createdAt?: Date | string
+  items?: Prisma.ShoppingListItemUncheckedCreateNestedManyWithoutShoppingListInput
+}
+
+export type ShoppingListCreateOrConnectWithoutSharesInput = {
+  where: Prisma.ShoppingListWhereUniqueInput
+  create: Prisma.XOR<Prisma.ShoppingListCreateWithoutSharesInput, Prisma.ShoppingListUncheckedCreateWithoutSharesInput>
+}
+
+export type ShoppingListUpsertWithoutSharesInput = {
+  update: Prisma.XOR<Prisma.ShoppingListUpdateWithoutSharesInput, Prisma.ShoppingListUncheckedUpdateWithoutSharesInput>
+  create: Prisma.XOR<Prisma.ShoppingListCreateWithoutSharesInput, Prisma.ShoppingListUncheckedCreateWithoutSharesInput>
+  where?: Prisma.ShoppingListWhereInput
+}
+
+export type ShoppingListUpdateToOneWithWhereWithoutSharesInput = {
+  where?: Prisma.ShoppingListWhereInput
+  data: Prisma.XOR<Prisma.ShoppingListUpdateWithoutSharesInput, Prisma.ShoppingListUncheckedUpdateWithoutSharesInput>
+}
+
+export type ShoppingListUpdateWithoutSharesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  plan?: Prisma.PlanUpdateOneRequiredWithoutShoppingListNestedInput
+  activeLayoutPreset?: Prisma.ShoppingLayoutPresetUpdateOneWithoutListsUsingAsActiveNestedInput
+  items?: Prisma.ShoppingListItemUpdateManyWithoutShoppingListNestedInput
+}
+
+export type ShoppingListUncheckedUpdateWithoutSharesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  planId?: Prisma.StringFieldUpdateOperationsInput | string
+  activeLayoutPresetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  items?: Prisma.ShoppingListItemUncheckedUpdateManyWithoutShoppingListNestedInput
+}
+
 export type ShoppingListCreateWithoutItemsInput = {
   id?: string
   createdAt?: Date | string
   plan: Prisma.PlanCreateNestedOneWithoutShoppingListInput
   activeLayoutPreset?: Prisma.ShoppingLayoutPresetCreateNestedOneWithoutListsUsingAsActiveInput
+  shares?: Prisma.ShoppingListShareCreateNestedManyWithoutShoppingListInput
 }
 
 export type ShoppingListUncheckedCreateWithoutItemsInput = {
@@ -508,6 +584,7 @@ export type ShoppingListUncheckedCreateWithoutItemsInput = {
   planId: string
   activeLayoutPresetId?: string | null
   createdAt?: Date | string
+  shares?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutShoppingListInput
 }
 
 export type ShoppingListCreateOrConnectWithoutItemsInput = {
@@ -531,6 +608,7 @@ export type ShoppingListUpdateWithoutItemsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   plan?: Prisma.PlanUpdateOneRequiredWithoutShoppingListNestedInput
   activeLayoutPreset?: Prisma.ShoppingLayoutPresetUpdateOneWithoutListsUsingAsActiveNestedInput
+  shares?: Prisma.ShoppingListShareUpdateManyWithoutShoppingListNestedInput
 }
 
 export type ShoppingListUncheckedUpdateWithoutItemsInput = {
@@ -538,6 +616,7 @@ export type ShoppingListUncheckedUpdateWithoutItemsInput = {
   planId?: Prisma.StringFieldUpdateOperationsInput | string
   activeLayoutPresetId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  shares?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutShoppingListNestedInput
 }
 
 export type ShoppingListCreateManyActiveLayoutPresetInput = {
@@ -551,6 +630,7 @@ export type ShoppingListUpdateWithoutActiveLayoutPresetInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   plan?: Prisma.PlanUpdateOneRequiredWithoutShoppingListNestedInput
   items?: Prisma.ShoppingListItemUpdateManyWithoutShoppingListNestedInput
+  shares?: Prisma.ShoppingListShareUpdateManyWithoutShoppingListNestedInput
 }
 
 export type ShoppingListUncheckedUpdateWithoutActiveLayoutPresetInput = {
@@ -558,6 +638,7 @@ export type ShoppingListUncheckedUpdateWithoutActiveLayoutPresetInput = {
   planId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   items?: Prisma.ShoppingListItemUncheckedUpdateManyWithoutShoppingListNestedInput
+  shares?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutShoppingListNestedInput
 }
 
 export type ShoppingListUncheckedUpdateManyWithoutActiveLayoutPresetInput = {
@@ -573,10 +654,12 @@ export type ShoppingListUncheckedUpdateManyWithoutActiveLayoutPresetInput = {
 
 export type ShoppingListCountOutputType = {
   items: number
+  shares: number
 }
 
 export type ShoppingListCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   items?: boolean | ShoppingListCountOutputTypeCountItemsArgs
+  shares?: boolean | ShoppingListCountOutputTypeCountSharesArgs
 }
 
 /**
@@ -596,6 +679,13 @@ export type ShoppingListCountOutputTypeCountItemsArgs<ExtArgs extends runtime.Ty
   where?: Prisma.ShoppingListItemWhereInput
 }
 
+/**
+ * ShoppingListCountOutputType without action
+ */
+export type ShoppingListCountOutputTypeCountSharesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ShoppingListShareWhereInput
+}
+
 
 export type ShoppingListSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -605,6 +695,7 @@ export type ShoppingListSelect<ExtArgs extends runtime.Types.Extensions.Internal
   plan?: boolean | Prisma.PlanDefaultArgs<ExtArgs>
   activeLayoutPreset?: boolean | Prisma.ShoppingList$activeLayoutPresetArgs<ExtArgs>
   items?: boolean | Prisma.ShoppingList$itemsArgs<ExtArgs>
+  shares?: boolean | Prisma.ShoppingList$sharesArgs<ExtArgs>
   _count?: boolean | Prisma.ShoppingListCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["shoppingList"]>
 
@@ -638,6 +729,7 @@ export type ShoppingListInclude<ExtArgs extends runtime.Types.Extensions.Interna
   plan?: boolean | Prisma.PlanDefaultArgs<ExtArgs>
   activeLayoutPreset?: boolean | Prisma.ShoppingList$activeLayoutPresetArgs<ExtArgs>
   items?: boolean | Prisma.ShoppingList$itemsArgs<ExtArgs>
+  shares?: boolean | Prisma.ShoppingList$sharesArgs<ExtArgs>
   _count?: boolean | Prisma.ShoppingListCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ShoppingListIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -655,6 +747,7 @@ export type $ShoppingListPayload<ExtArgs extends runtime.Types.Extensions.Intern
     plan: Prisma.$PlanPayload<ExtArgs>
     activeLayoutPreset: Prisma.$ShoppingLayoutPresetPayload<ExtArgs> | null
     items: Prisma.$ShoppingListItemPayload<ExtArgs>[]
+    shares: Prisma.$ShoppingListSharePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1058,6 +1151,7 @@ export interface Prisma__ShoppingListClient<T, Null = never, ExtArgs extends run
   plan<T extends Prisma.PlanDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PlanDefaultArgs<ExtArgs>>): Prisma.Prisma__PlanClient<runtime.Types.Result.GetResult<Prisma.$PlanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   activeLayoutPreset<T extends Prisma.ShoppingList$activeLayoutPresetArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShoppingList$activeLayoutPresetArgs<ExtArgs>>): Prisma.Prisma__ShoppingLayoutPresetClient<runtime.Types.Result.GetResult<Prisma.$ShoppingLayoutPresetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   items<T extends Prisma.ShoppingList$itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShoppingList$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShoppingListItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  shares<T extends Prisma.ShoppingList$sharesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShoppingList$sharesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShoppingListSharePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1527,6 +1621,30 @@ export type ShoppingList$itemsArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.ShoppingListItemScalarFieldEnum | Prisma.ShoppingListItemScalarFieldEnum[]
+}
+
+/**
+ * ShoppingList.shares
+ */
+export type ShoppingList$sharesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ShoppingListShare
+   */
+  select?: Prisma.ShoppingListShareSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ShoppingListShare
+   */
+  omit?: Prisma.ShoppingListShareOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShoppingListShareInclude<ExtArgs> | null
+  where?: Prisma.ShoppingListShareWhereInput
+  orderBy?: Prisma.ShoppingListShareOrderByWithRelationInput | Prisma.ShoppingListShareOrderByWithRelationInput[]
+  cursor?: Prisma.ShoppingListShareWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ShoppingListShareScalarFieldEnum | Prisma.ShoppingListShareScalarFieldEnum[]
 }
 
 /**

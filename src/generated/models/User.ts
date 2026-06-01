@@ -179,6 +179,7 @@ export type UserWhereInput = {
   plans?: Prisma.PlanListRelationFilter
   ingredientLists?: Prisma.IngredientListListRelationFilter
   ingredients?: Prisma.IngredientListRelationFilter
+  shoppingListSharesCreated?: Prisma.ShoppingListShareListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -191,6 +192,7 @@ export type UserOrderByWithRelationInput = {
   plans?: Prisma.PlanOrderByRelationAggregateInput
   ingredientLists?: Prisma.IngredientListOrderByRelationAggregateInput
   ingredients?: Prisma.IngredientOrderByRelationAggregateInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -206,6 +208,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   plans?: Prisma.PlanListRelationFilter
   ingredientLists?: Prisma.IngredientListListRelationFilter
   ingredients?: Prisma.IngredientListRelationFilter
+  shoppingListSharesCreated?: Prisma.ShoppingListShareListRelationFilter
 }, "id" | "clerkId">
 
 export type UserOrderByWithAggregationInput = {
@@ -238,6 +241,7 @@ export type UserCreateInput = {
   plans?: Prisma.PlanCreateNestedManyWithoutUserInput
   ingredientLists?: Prisma.IngredientListCreateNestedManyWithoutUserInput
   ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -250,6 +254,7 @@ export type UserUncheckedCreateInput = {
   plans?: Prisma.PlanUncheckedCreateNestedManyWithoutUserInput
   ingredientLists?: Prisma.IngredientListUncheckedCreateNestedManyWithoutUserInput
   ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUpdateInput = {
@@ -262,6 +267,7 @@ export type UserUpdateInput = {
   plans?: Prisma.PlanUpdateManyWithoutUserNestedInput
   ingredientLists?: Prisma.IngredientListUpdateManyWithoutUserNestedInput
   ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -274,6 +280,7 @@ export type UserUncheckedUpdateInput = {
   plans?: Prisma.PlanUncheckedUpdateManyWithoutUserNestedInput
   ingredientLists?: Prisma.IngredientListUncheckedUpdateManyWithoutUserNestedInput
   ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -364,6 +371,20 @@ export type UserUpdateOneRequiredWithoutPlansNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPlansInput, Prisma.UserUpdateWithoutPlansInput>, Prisma.UserUncheckedUpdateWithoutPlansInput>
 }
 
+export type UserCreateNestedOneWithoutShoppingListSharesCreatedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutShoppingListSharesCreatedInput, Prisma.UserUncheckedCreateWithoutShoppingListSharesCreatedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutShoppingListSharesCreatedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutShoppingListSharesCreatedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutShoppingListSharesCreatedInput, Prisma.UserUncheckedCreateWithoutShoppingListSharesCreatedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutShoppingListSharesCreatedInput
+  upsert?: Prisma.UserUpsertWithoutShoppingListSharesCreatedInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutShoppingListSharesCreatedInput, Prisma.UserUpdateWithoutShoppingListSharesCreatedInput>, Prisma.UserUncheckedUpdateWithoutShoppingListSharesCreatedInput>
+}
+
 export type UserCreateNestedOneWithoutRecipesInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutRecipesInput, Prisma.UserUncheckedCreateWithoutRecipesInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutRecipesInput
@@ -417,6 +438,7 @@ export type UserCreateWithoutFamilyMembersInput = {
   plans?: Prisma.PlanCreateNestedManyWithoutUserInput
   ingredientLists?: Prisma.IngredientListCreateNestedManyWithoutUserInput
   ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutFamilyMembersInput = {
@@ -428,6 +450,7 @@ export type UserUncheckedCreateWithoutFamilyMembersInput = {
   plans?: Prisma.PlanUncheckedCreateNestedManyWithoutUserInput
   ingredientLists?: Prisma.IngredientListUncheckedCreateNestedManyWithoutUserInput
   ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutFamilyMembersInput = {
@@ -455,6 +478,7 @@ export type UserUpdateWithoutFamilyMembersInput = {
   plans?: Prisma.PlanUpdateManyWithoutUserNestedInput
   ingredientLists?: Prisma.IngredientListUpdateManyWithoutUserNestedInput
   ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFamilyMembersInput = {
@@ -466,6 +490,7 @@ export type UserUncheckedUpdateWithoutFamilyMembersInput = {
   plans?: Prisma.PlanUncheckedUpdateManyWithoutUserNestedInput
   ingredientLists?: Prisma.IngredientListUncheckedUpdateManyWithoutUserNestedInput
   ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserCreateWithoutPlansInput = {
@@ -477,6 +502,7 @@ export type UserCreateWithoutPlansInput = {
   recipes?: Prisma.RecipeCreateNestedManyWithoutUserInput
   ingredientLists?: Prisma.IngredientListCreateNestedManyWithoutUserInput
   ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutPlansInput = {
@@ -488,6 +514,7 @@ export type UserUncheckedCreateWithoutPlansInput = {
   recipes?: Prisma.RecipeUncheckedCreateNestedManyWithoutUserInput
   ingredientLists?: Prisma.IngredientListUncheckedCreateNestedManyWithoutUserInput
   ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutPlansInput = {
@@ -515,6 +542,7 @@ export type UserUpdateWithoutPlansInput = {
   recipes?: Prisma.RecipeUpdateManyWithoutUserNestedInput
   ingredientLists?: Prisma.IngredientListUpdateManyWithoutUserNestedInput
   ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPlansInput = {
@@ -524,6 +552,71 @@ export type UserUncheckedUpdateWithoutPlansInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   familyMembers?: Prisma.FamilyMemberUncheckedUpdateManyWithoutUserNestedInput
   recipes?: Prisma.RecipeUncheckedUpdateManyWithoutUserNestedInput
+  ingredientLists?: Prisma.IngredientListUncheckedUpdateManyWithoutUserNestedInput
+  ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
+}
+
+export type UserCreateWithoutShoppingListSharesCreatedInput = {
+  id?: string
+  clerkId: string
+  email?: string | null
+  createdAt?: Date | string
+  familyMembers?: Prisma.FamilyMemberCreateNestedManyWithoutUserInput
+  recipes?: Prisma.RecipeCreateNestedManyWithoutUserInput
+  plans?: Prisma.PlanCreateNestedManyWithoutUserInput
+  ingredientLists?: Prisma.IngredientListCreateNestedManyWithoutUserInput
+  ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutShoppingListSharesCreatedInput = {
+  id?: string
+  clerkId: string
+  email?: string | null
+  createdAt?: Date | string
+  familyMembers?: Prisma.FamilyMemberUncheckedCreateNestedManyWithoutUserInput
+  recipes?: Prisma.RecipeUncheckedCreateNestedManyWithoutUserInput
+  plans?: Prisma.PlanUncheckedCreateNestedManyWithoutUserInput
+  ingredientLists?: Prisma.IngredientListUncheckedCreateNestedManyWithoutUserInput
+  ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutShoppingListSharesCreatedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutShoppingListSharesCreatedInput, Prisma.UserUncheckedCreateWithoutShoppingListSharesCreatedInput>
+}
+
+export type UserUpsertWithoutShoppingListSharesCreatedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutShoppingListSharesCreatedInput, Prisma.UserUncheckedUpdateWithoutShoppingListSharesCreatedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutShoppingListSharesCreatedInput, Prisma.UserUncheckedCreateWithoutShoppingListSharesCreatedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutShoppingListSharesCreatedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutShoppingListSharesCreatedInput, Prisma.UserUncheckedUpdateWithoutShoppingListSharesCreatedInput>
+}
+
+export type UserUpdateWithoutShoppingListSharesCreatedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  clerkId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  familyMembers?: Prisma.FamilyMemberUpdateManyWithoutUserNestedInput
+  recipes?: Prisma.RecipeUpdateManyWithoutUserNestedInput
+  plans?: Prisma.PlanUpdateManyWithoutUserNestedInput
+  ingredientLists?: Prisma.IngredientListUpdateManyWithoutUserNestedInput
+  ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutShoppingListSharesCreatedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  clerkId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  familyMembers?: Prisma.FamilyMemberUncheckedUpdateManyWithoutUserNestedInput
+  recipes?: Prisma.RecipeUncheckedUpdateManyWithoutUserNestedInput
+  plans?: Prisma.PlanUncheckedUpdateManyWithoutUserNestedInput
   ingredientLists?: Prisma.IngredientListUncheckedUpdateManyWithoutUserNestedInput
   ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
 }
@@ -537,6 +630,7 @@ export type UserCreateWithoutRecipesInput = {
   plans?: Prisma.PlanCreateNestedManyWithoutUserInput
   ingredientLists?: Prisma.IngredientListCreateNestedManyWithoutUserInput
   ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutRecipesInput = {
@@ -548,6 +642,7 @@ export type UserUncheckedCreateWithoutRecipesInput = {
   plans?: Prisma.PlanUncheckedCreateNestedManyWithoutUserInput
   ingredientLists?: Prisma.IngredientListUncheckedCreateNestedManyWithoutUserInput
   ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutRecipesInput = {
@@ -575,6 +670,7 @@ export type UserUpdateWithoutRecipesInput = {
   plans?: Prisma.PlanUpdateManyWithoutUserNestedInput
   ingredientLists?: Prisma.IngredientListUpdateManyWithoutUserNestedInput
   ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRecipesInput = {
@@ -586,6 +682,7 @@ export type UserUncheckedUpdateWithoutRecipesInput = {
   plans?: Prisma.PlanUncheckedUpdateManyWithoutUserNestedInput
   ingredientLists?: Prisma.IngredientListUncheckedUpdateManyWithoutUserNestedInput
   ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserCreateWithoutIngredientsInput = {
@@ -597,6 +694,7 @@ export type UserCreateWithoutIngredientsInput = {
   recipes?: Prisma.RecipeCreateNestedManyWithoutUserInput
   plans?: Prisma.PlanCreateNestedManyWithoutUserInput
   ingredientLists?: Prisma.IngredientListCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutIngredientsInput = {
@@ -608,6 +706,7 @@ export type UserUncheckedCreateWithoutIngredientsInput = {
   recipes?: Prisma.RecipeUncheckedCreateNestedManyWithoutUserInput
   plans?: Prisma.PlanUncheckedCreateNestedManyWithoutUserInput
   ingredientLists?: Prisma.IngredientListUncheckedCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutIngredientsInput = {
@@ -635,6 +734,7 @@ export type UserUpdateWithoutIngredientsInput = {
   recipes?: Prisma.RecipeUpdateManyWithoutUserNestedInput
   plans?: Prisma.PlanUpdateManyWithoutUserNestedInput
   ingredientLists?: Prisma.IngredientListUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutIngredientsInput = {
@@ -646,6 +746,7 @@ export type UserUncheckedUpdateWithoutIngredientsInput = {
   recipes?: Prisma.RecipeUncheckedUpdateManyWithoutUserNestedInput
   plans?: Prisma.PlanUncheckedUpdateManyWithoutUserNestedInput
   ingredientLists?: Prisma.IngredientListUncheckedUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserCreateWithoutIngredientListsInput = {
@@ -657,6 +758,7 @@ export type UserCreateWithoutIngredientListsInput = {
   recipes?: Prisma.RecipeCreateNestedManyWithoutUserInput
   plans?: Prisma.PlanCreateNestedManyWithoutUserInput
   ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserUncheckedCreateWithoutIngredientListsInput = {
@@ -668,6 +770,7 @@ export type UserUncheckedCreateWithoutIngredientListsInput = {
   recipes?: Prisma.RecipeUncheckedCreateNestedManyWithoutUserInput
   plans?: Prisma.PlanUncheckedCreateNestedManyWithoutUserInput
   ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
 }
 
 export type UserCreateOrConnectWithoutIngredientListsInput = {
@@ -695,6 +798,7 @@ export type UserUpdateWithoutIngredientListsInput = {
   recipes?: Prisma.RecipeUpdateManyWithoutUserNestedInput
   plans?: Prisma.PlanUpdateManyWithoutUserNestedInput
   ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutIngredientListsInput = {
@@ -706,6 +810,7 @@ export type UserUncheckedUpdateWithoutIngredientListsInput = {
   recipes?: Prisma.RecipeUncheckedUpdateManyWithoutUserNestedInput
   plans?: Prisma.PlanUncheckedUpdateManyWithoutUserNestedInput
   ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
 }
 
 
@@ -719,6 +824,7 @@ export type UserCountOutputType = {
   plans: number
   ingredientLists: number
   ingredients: number
+  shoppingListSharesCreated: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -727,6 +833,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   plans?: boolean | UserCountOutputTypeCountPlansArgs
   ingredientLists?: boolean | UserCountOutputTypeCountIngredientListsArgs
   ingredients?: boolean | UserCountOutputTypeCountIngredientsArgs
+  shoppingListSharesCreated?: boolean | UserCountOutputTypeCountShoppingListSharesCreatedArgs
 }
 
 /**
@@ -774,6 +881,13 @@ export type UserCountOutputTypeCountIngredientsArgs<ExtArgs extends runtime.Type
   where?: Prisma.IngredientWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountShoppingListSharesCreatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ShoppingListShareWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -785,6 +899,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   plans?: boolean | Prisma.User$plansArgs<ExtArgs>
   ingredientLists?: boolean | Prisma.User$ingredientListsArgs<ExtArgs>
   ingredients?: boolean | Prisma.User$ingredientsArgs<ExtArgs>
+  shoppingListSharesCreated?: boolean | Prisma.User$shoppingListSharesCreatedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -816,6 +931,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   plans?: boolean | Prisma.User$plansArgs<ExtArgs>
   ingredientLists?: boolean | Prisma.User$ingredientListsArgs<ExtArgs>
   ingredients?: boolean | Prisma.User$ingredientsArgs<ExtArgs>
+  shoppingListSharesCreated?: boolean | Prisma.User$shoppingListSharesCreatedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -829,6 +945,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     plans: Prisma.$PlanPayload<ExtArgs>[]
     ingredientLists: Prisma.$IngredientListPayload<ExtArgs>[]
     ingredients: Prisma.$IngredientPayload<ExtArgs>[]
+    shoppingListSharesCreated: Prisma.$ShoppingListSharePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1234,6 +1351,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   plans<T extends Prisma.User$plansArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$plansArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ingredientLists<T extends Prisma.User$ingredientListsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ingredientListsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IngredientListPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ingredients<T extends Prisma.User$ingredientsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ingredientsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IngredientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  shoppingListSharesCreated<T extends Prisma.User$shoppingListSharesCreatedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$shoppingListSharesCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShoppingListSharePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1772,6 +1890,30 @@ export type User$ingredientsArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.IngredientScalarFieldEnum | Prisma.IngredientScalarFieldEnum[]
+}
+
+/**
+ * User.shoppingListSharesCreated
+ */
+export type User$shoppingListSharesCreatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ShoppingListShare
+   */
+  select?: Prisma.ShoppingListShareSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ShoppingListShare
+   */
+  omit?: Prisma.ShoppingListShareOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShoppingListShareInclude<ExtArgs> | null
+  where?: Prisma.ShoppingListShareWhereInput
+  orderBy?: Prisma.ShoppingListShareOrderByWithRelationInput | Prisma.ShoppingListShareOrderByWithRelationInput[]
+  cursor?: Prisma.ShoppingListShareWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ShoppingListShareScalarFieldEnum | Prisma.ShoppingListShareScalarFieldEnum[]
 }
 
 /**

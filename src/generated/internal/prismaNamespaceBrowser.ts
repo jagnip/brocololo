@@ -59,6 +59,7 @@ export const ModelName = {
   ShoppingLayoutPreset: 'ShoppingLayoutPreset',
   ShoppingLayoutPresetCategory: 'ShoppingLayoutPresetCategory',
   ShoppingList: 'ShoppingList',
+  ShoppingListShare: 'ShoppingListShare',
   ShoppingListItem: 'ShoppingListItem',
   PlanSlot: 'PlanSlot',
   PlanSlotAlternative: 'PlanSlotAlternative',
@@ -175,6 +176,19 @@ export const ShoppingListScalarFieldEnum = {
 } as const
 
 export type ShoppingListScalarFieldEnum = (typeof ShoppingListScalarFieldEnum)[keyof typeof ShoppingListScalarFieldEnum]
+
+
+export const ShoppingListShareScalarFieldEnum = {
+  id: 'id',
+  shoppingListId: 'shoppingListId',
+  token: 'token',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt',
+  createdByUserId: 'createdByUserId'
+} as const
+
+export type ShoppingListShareScalarFieldEnum = (typeof ShoppingListShareScalarFieldEnum)[keyof typeof ShoppingListShareScalarFieldEnum]
 
 
 export const ShoppingListItemScalarFieldEnum = {

@@ -49,11 +49,12 @@ model User {
   email     String?
   createdAt DateTime @default(now()) @map("created_at")
 
-  familyMembers   FamilyMember[]
-  recipes         Recipe[]
-  plans           Plan[]
-  ingredientLists IngredientList[]
-  ingredients     Ingredient[]
+  familyMembers            FamilyMember[]
+  recipes                  Recipe[]
+  plans                    Plan[]
+  ingredientLists          IngredientList[]
+  ingredients              Ingredient[]
+  shoppingListSharesCreated ShoppingListShare[]
 
   @@map("users")
 }
@@ -134,8 +135,27 @@ model ShoppingList {
   plan                 Plan                  @relation(fields: [planId], references: [id], onDelete: Cascade)
   activeLayoutPreset   ShoppingLayoutPreset? @relation(fields: [activeLayoutPresetId], references: [id], onDelete: SetNull)
   items                ShoppingListItem[]
+  shares               ShoppingListShare[]
 
   @@map("shopping_lists")
+}
+
+// Public time-limited link to collaborate on a grocery list (view, purchased, layout).
+model ShoppingListShare {
+  id              String    @id @default(cuid())
+  shoppingListId  String    @map("shopping_list_id")
+  token           String    @unique
+  expiresAt       DateTime  @map("expires_at")
+  revokedAt       DateTime? @map("revoked_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  createdByUserId String    @map("created_by_user_id")
+
+  shoppingList ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+
+  @@index([shoppingListId])
+  @@index([expiresAt])
+  @@map("shopping_list_shares")
 }
 
 model ShoppingListItem {

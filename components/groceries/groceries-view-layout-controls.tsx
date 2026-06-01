@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useOptimistic, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { setShoppingLayoutPresetByShareAction } from "@/actions/shopping-list-share-actions";
 import { setShoppingLayoutPresetAction } from "@/actions/shopping-list-actions";
 import {
   GroceriesLayoutSelector,
@@ -11,6 +12,7 @@ import {
 
 type GroceriesViewLayoutControlsProps = {
   planId: string;
+  shareToken?: string;
   presets: GroceriesLayoutPresetOption[];
   activePresetId: string | null;
   onPendingChange?: (isPending: boolean) => void;
@@ -18,6 +20,7 @@ type GroceriesViewLayoutControlsProps = {
 
 export function GroceriesViewLayoutControls({
   planId,
+  shareToken,
   presets,
   activePresetId,
   onPendingChange,
@@ -35,7 +38,12 @@ export function GroceriesViewLayoutControls({
     // Optimistically reflect selection in the topbar before server revalidation completes.
     setOptimisticPresetId(presetId);
     startTransition(async () => {
-      const result = await setShoppingLayoutPresetAction({ planId, presetId });
+      const result = shareToken
+        ? await setShoppingLayoutPresetByShareAction({
+            token: shareToken,
+            presetId,
+          })
+        : await setShoppingLayoutPresetAction({ planId, presetId });
       if (result.type === "error") {
         toast.error(result.message);
         return;
