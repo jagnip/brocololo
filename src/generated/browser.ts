@@ -58,6 +58,11 @@ export type ShoppingLayoutPresetCategory = Prisma.ShoppingLayoutPresetCategoryMo
  */
 export type ShoppingList = Prisma.ShoppingListModel
 /**
+ * Model ShoppingListShare
+ * 
+ */
+export type ShoppingListShare = Prisma.ShoppingListShareModel
+/**
  * Model ShoppingListItem
  * 
  */

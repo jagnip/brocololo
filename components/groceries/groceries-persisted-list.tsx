@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { getShoppingListByPlanId } from "@/lib/db/shopping-list";
+import type { getShoppingListById } from "@/lib/db/shopping-list";
 import {
   GroceriesPlanSelect,
   type GroceriesPlanSelectOption,
@@ -11,7 +11,7 @@ import { GroceriesViewLayoutControls } from "@/components/groceries/groceries-vi
 import { Label } from "@/components/ui/label";
 
 export type GroceriesPersistedListModel = NonNullable<
-  Awaited<ReturnType<typeof getShoppingListByPlanId>>
+  Awaited<ReturnType<typeof getShoppingListById>>
 >;
 
 /** Read-only groceries list from persisted `ShoppingList` rows (grouped by ingredient category). */
@@ -19,10 +19,12 @@ export function GroceriesPersistedList({
   list,
   planOptions,
   currentPlanId,
+  shareToken,
 }: {
   list: GroceriesPersistedListModel;
-  planOptions: GroceriesPlanSelectOption[];
-  currentPlanId: string;
+  planOptions?: GroceriesPlanSelectOption[];
+  currentPlanId?: string;
+  shareToken?: string;
 }) {
   const [isLayoutPending, setIsLayoutPending] = useState(false);
   const { plan, items } = list;
@@ -42,17 +44,21 @@ export function GroceriesPersistedList({
     <div className="space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         {/* Replace the left-side title with the plan selector in page content. */}
-        <div className="flex min-w-0 items-center gap-2">
-          {/* Match requested label wording for the groceries page selector. */}
-          <Label className="shrink-0 text-xs text-muted-foreground">Groceries for</Label>
-          <GroceriesPlanSelect plans={planOptions} currentPlanId={currentPlanId} />
-        </div>
+        {!shareToken && planOptions && currentPlanId ? (
+          <div className="flex min-w-0 items-center gap-2">
+            <Label className="shrink-0 text-xs text-muted-foreground">Groceries for</Label>
+            <GroceriesPlanSelect plans={planOptions} currentPlanId={currentPlanId} />
+          </div>
+        ) : (
+          <div className="min-w-0 flex-1" />
+        )}
         {/* Header-right control mirrors planner/date-range composition:
             inline label on the left, selector on the right. */}
         <div className="flex items-center gap-2 sm:min-w-[20rem] lg:min-w-[24rem]">
           <Label className="shrink-0 whitespace-nowrap">Supermarket layout</Label>
           <GroceriesViewLayoutControls
             planId={plan.id}
+            shareToken={shareToken}
             presets={list.layoutPresets.map((preset) => ({
               id: preset.id,
               name: preset.name,
@@ -73,7 +79,11 @@ export function GroceriesPersistedList({
             </h2>
             <ul className="divide-y">
               {section.rows.map((row) => (
-                <GroceriesPersistedItemRow key={row.id} row={row} />
+                <GroceriesPersistedItemRow
+                  key={row.id}
+                  row={row}
+                  shareToken={shareToken}
+                />
               ))}
             </ul>
           </section>

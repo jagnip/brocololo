@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { ArrowRightLeft, CircleAlert, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { setShoppingListItemPurchasedByShareAction } from "@/actions/shopping-list-share-actions";
 import { setShoppingListItemPurchasedAction } from "@/actions/shopping-list-actions";
 import { IngredientIcon } from "@/components/ingredient-icon";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +47,10 @@ function parseRecipeNames(attribution: string | null): string[] {
     .filter(Boolean);
 }
 
-export function GroceriesPersistedItemRow({ row }: GroceriesPersistedItemRowProps) {
+export function GroceriesPersistedItemRow({
+  row,
+  shareToken,
+}: GroceriesPersistedItemRowProps & { shareToken?: string }) {
   const [isPending, startTransition] = useTransition();
   const [isPurchased, setIsPurchased] = useState(row.purchased);
 
@@ -73,10 +77,16 @@ export function GroceriesPersistedItemRow({ row }: GroceriesPersistedItemRowProp
     const previous = isPurchased;
     setIsPurchased(next);
     startTransition(async () => {
-      const result = await setShoppingListItemPurchasedAction({
-        itemId: row.id,
-        purchased: next,
-      });
+      const result = shareToken
+        ? await setShoppingListItemPurchasedByShareAction({
+            token: shareToken,
+            itemId: row.id,
+            purchased: next,
+          })
+        : await setShoppingListItemPurchasedAction({
+            itemId: row.id,
+            purchased: next,
+          });
       if (result.type === "error") {
         setIsPurchased(previous);
         toast.error(result.message);

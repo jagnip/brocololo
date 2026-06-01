@@ -392,6 +392,7 @@ export const ModelName = {
   ShoppingLayoutPreset: 'ShoppingLayoutPreset',
   ShoppingLayoutPresetCategory: 'ShoppingLayoutPresetCategory',
   ShoppingList: 'ShoppingList',
+  ShoppingListShare: 'ShoppingListShare',
   ShoppingListItem: 'ShoppingListItem',
   PlanSlot: 'PlanSlot',
   PlanSlotAlternative: 'PlanSlotAlternative',
@@ -426,7 +427,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "category" | "user" | "familyMember" | "plan" | "groceryIngredient" | "shoppingLayoutPreset" | "shoppingLayoutPresetCategory" | "shoppingList" | "shoppingListItem" | "planSlot" | "planSlotAlternative" | "recipe" | "ingredient" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage" | "log" | "logEntry" | "logEntryRecipe" | "logIngredient" | "ingredientList" | "ingredientListItem"
+    modelProps: "category" | "user" | "familyMember" | "plan" | "groceryIngredient" | "shoppingLayoutPreset" | "shoppingLayoutPresetCategory" | "shoppingList" | "shoppingListShare" | "shoppingListItem" | "planSlot" | "planSlotAlternative" | "recipe" | "ingredient" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage" | "log" | "logEntry" | "logEntryRecipe" | "logIngredient" | "ingredientList" | "ingredientListItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1019,6 +1020,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ShoppingListCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ShoppingListCountAggregateOutputType> | number
+        }
+      }
+    }
+    ShoppingListShare: {
+      payload: Prisma.$ShoppingListSharePayload<ExtArgs>
+      fields: Prisma.ShoppingListShareFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ShoppingListShareFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListSharePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ShoppingListShareFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListSharePayload>
+        }
+        findFirst: {
+          args: Prisma.ShoppingListShareFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListSharePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ShoppingListShareFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListSharePayload>
+        }
+        findMany: {
+          args: Prisma.ShoppingListShareFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListSharePayload>[]
+        }
+        create: {
+          args: Prisma.ShoppingListShareCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListSharePayload>
+        }
+        createMany: {
+          args: Prisma.ShoppingListShareCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ShoppingListShareCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListSharePayload>[]
+        }
+        delete: {
+          args: Prisma.ShoppingListShareDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListSharePayload>
+        }
+        update: {
+          args: Prisma.ShoppingListShareUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListSharePayload>
+        }
+        deleteMany: {
+          args: Prisma.ShoppingListShareDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ShoppingListShareUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ShoppingListShareUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListSharePayload>[]
+        }
+        upsert: {
+          args: Prisma.ShoppingListShareUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShoppingListSharePayload>
+        }
+        aggregate: {
+          args: Prisma.ShoppingListShareAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateShoppingListShare>
+        }
+        groupBy: {
+          args: Prisma.ShoppingListShareGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShoppingListShareGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ShoppingListShareCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShoppingListShareCountAggregateOutputType> | number
         }
       }
     }
@@ -2548,6 +2623,19 @@ export const ShoppingListScalarFieldEnum = {
 export type ShoppingListScalarFieldEnum = (typeof ShoppingListScalarFieldEnum)[keyof typeof ShoppingListScalarFieldEnum]
 
 
+export const ShoppingListShareScalarFieldEnum = {
+  id: 'id',
+  shoppingListId: 'shoppingListId',
+  token: 'token',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt',
+  createdByUserId: 'createdByUserId'
+} as const
+
+export type ShoppingListShareScalarFieldEnum = (typeof ShoppingListShareScalarFieldEnum)[keyof typeof ShoppingListShareScalarFieldEnum]
+
+
 export const ShoppingListItemScalarFieldEnum = {
   id: 'id',
   shoppingListId: 'shoppingListId',
@@ -3038,6 +3126,7 @@ export type GlobalOmitConfig = {
   shoppingLayoutPreset?: Prisma.ShoppingLayoutPresetOmit
   shoppingLayoutPresetCategory?: Prisma.ShoppingLayoutPresetCategoryOmit
   shoppingList?: Prisma.ShoppingListOmit
+  shoppingListShare?: Prisma.ShoppingListShareOmit
   shoppingListItem?: Prisma.ShoppingListItemOmit
   planSlot?: Prisma.PlanSlotOmit
   planSlotAlternative?: Prisma.PlanSlotAlternativeOmit

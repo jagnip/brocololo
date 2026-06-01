@@ -36,6 +36,7 @@ export const ROUTES = {
   groceriesView: (planId: string) => `/groceries/${planId}`,
   // Dedicated edit page for a persisted grocery list.
   groceriesEdit: (planId: string) => `/groceries/${planId}/edit`,
+  shareGroceries: (token: string) => `/share/groceries/${token}`,
   /** URL prefix for log routes; there is no list page at this path (index redirects). */
   log: "/log",
   logCurrent: "/log/current",

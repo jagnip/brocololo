@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
+import { GroceriesShareDialog } from "@/components/groceries/groceries-share-dialog";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { ROUTES } from "@/lib/constants";
 
@@ -21,12 +22,20 @@ export function GroceriesTopbarConfig({
 }: GroceriesTopbarConfigProps) {
   const pathname = usePathname();
   const isEditRoute = pathname.endsWith("/edit");
+  const [shareOpen, setShareOpen] = useState(false);
 
   const config = useMemo(() => {
     const actions = isEditRoute
       ? []
       : canEdit
         ? [
+            {
+              id: "share-groceries",
+              label: "Share",
+              onClick: () => setShareOpen(true),
+              variant: "outline" as const,
+              size: "default" as const,
+            },
             {
               id: "edit-groceries",
               label: "Edit groceries",
@@ -57,5 +66,16 @@ export function GroceriesTopbarConfig({
     };
   }, [canEdit, isEditRoute, planDateRangeLabel, planId]);
 
-  return <TopbarConfigController config={config} />;
+  return (
+    <>
+      <TopbarConfigController config={config} />
+      {canEdit && !isEditRoute ? (
+        <GroceriesShareDialog
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          planId={planId}
+        />
+      ) : null}
+    </>
+  );
 }

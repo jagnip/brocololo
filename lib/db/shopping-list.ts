@@ -329,20 +329,19 @@ export async function generateShoppingListForPlan(
 }
 
 /** Shopping list with items for groceries UI (sorted by category then position). */
-export async function getShoppingListByPlanId(userId: string, planId: string) {
-  await assertPlanOwned(userId, planId);
+export async function getShoppingListById(shoppingListId: string) {
   const allCategories = await withTransientDbRetry(
     () =>
       prisma.ingredientCategory.findMany({
         orderBy: { sortOrder: "asc" },
         select: { id: true, sortOrder: true },
       }),
-    "getShoppingListByPlanId:ingredientCategory.findMany",
+    "getShoppingListById:ingredientCategory.findMany",
   );
   const list = await withTransientDbRetry(
     () =>
       prisma.shoppingList.findUnique({
-        where: { planId },
+        where: { id: shoppingListId },
         include: {
           plan: { select: { id: true, startDate: true, endDate: true } },
           activeLayoutPreset: {
@@ -372,7 +371,7 @@ export async function getShoppingListByPlanId(userId: string, planId: string) {
           },
         },
       }),
-    "getShoppingListByPlanId:shoppingList.findUnique",
+    "getShoppingListById:shoppingList.findUnique",
   );
 
   if (!list) return null;
@@ -388,7 +387,7 @@ export async function getShoppingListByPlanId(userId: string, planId: string) {
           },
         },
       }),
-    "getShoppingListByPlanId:shoppingLayoutPreset.findMany",
+    "getShoppingListById:shoppingLayoutPreset.findMany",
   );
   const categoryIdsByDefaultOrder = allCategories.map((category) => category.id);
   const effectiveCategoryOrderIds = buildCategoryOrderIds({
@@ -424,14 +423,24 @@ export async function getShoppingListByPlanId(userId: string, planId: string) {
   };
 }
 
-export async function setShoppingListActiveLayoutPreset(input: {
-  userId: string;
-  planId: string;
+/** Shopping list for an owned plan (auth via userId). */
+export async function getShoppingListByPlanId(userId: string, planId: string) {
+  await assertPlanOwned(userId, planId);
+  const row = await prisma.shoppingList.findUnique({
+    where: { planId },
+    select: { id: true },
+  });
+  if (!row) return null;
+  return getShoppingListById(row.id);
+}
+
+export async function setShoppingListActiveLayoutPresetForList(input: {
+  shoppingListId: string;
   presetId: string;
 }) {
   return prisma.$transaction(async (tx) => {
-    const list = await tx.shoppingList.findFirst({
-      where: { planId: input.planId, plan: { userId: input.userId } },
+    const list = await tx.shoppingList.findUnique({
+      where: { id: input.shoppingListId },
       select: { id: true, planId: true },
     });
     if (!list) throw new Error("SHOPPING_LIST_NOT_FOUND");
@@ -448,6 +457,53 @@ export async function setShoppingListActiveLayoutPreset(input: {
     });
 
     return { planId: list.planId, presetId: preset.id };
+  });
+}
+
+export async function setShoppingListItemPurchasedForList(input: {
+  shoppingListId: string;
+  itemId: string;
+  purchased: boolean;
+}) {
+  const item = await prisma.shoppingListItem.findFirst({
+    where: {
+      id: input.itemId,
+      shoppingListId: input.shoppingListId,
+    },
+    select: { id: true },
+  });
+  if (!item) {
+    throw new Error("SHOPPING_LIST_ITEM_NOT_FOUND");
+  }
+  return prisma.shoppingListItem.update({
+    where: { id: input.itemId },
+    data: { purchased: input.purchased },
+    select: {
+      id: true,
+      purchased: true,
+      shoppingList: {
+        select: {
+          planId: true,
+        },
+      },
+    },
+  });
+}
+
+export async function setShoppingListActiveLayoutPreset(input: {
+  userId: string;
+  planId: string;
+  presetId: string;
+}) {
+  const list = await prisma.shoppingList.findFirst({
+    where: { planId: input.planId, plan: { userId: input.userId } },
+    select: { id: true },
+  });
+  if (!list) throw new Error("SHOPPING_LIST_NOT_FOUND");
+
+  return setShoppingListActiveLayoutPresetForList({
+    shoppingListId: list.id,
+    presetId: input.presetId,
   });
 }
 
@@ -574,23 +630,15 @@ export async function setShoppingListItemPurchased(input: {
       id: input.itemId,
       shoppingList: { plan: { userId: input.userId } },
     },
-    select: { id: true },
+    select: { id: true, shoppingListId: true },
   });
   if (!item) {
     throw new Error("SHOPPING_LIST_ITEM_NOT_FOUND");
   }
-  return prisma.shoppingListItem.update({
-    where: { id: input.itemId },
-    data: { purchased: input.purchased },
-    select: {
-      id: true,
-      purchased: true,
-      shoppingList: {
-        select: {
-          planId: true,
-        },
-      },
-    },
+  return setShoppingListItemPurchasedForList({
+    shoppingListId: item.shoppingListId,
+    itemId: input.itemId,
+    purchased: input.purchased,
   });
 }
 
