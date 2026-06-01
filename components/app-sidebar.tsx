@@ -7,6 +7,7 @@ import {
   UtensilsCrossed,
   ShoppingCart,
   Apple,
+  Settings,
 } from "lucide-react";
 import {
   Sidebar,
@@ -28,11 +29,12 @@ export function AppSidebar() {
   const isIngredients = pathname.startsWith(ROUTES.ingredients);
   const isProgram = pathname.startsWith(ROUTES.plan) || pathname.startsWith(ROUTES.log);
   const isGroceries = pathname.startsWith(ROUTES.groceries);
+  const isSettings = pathname.startsWith(ROUTES.settings);
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <SidebarMenu>
+      <SidebarHeader className="flex h-full flex-col">
+        <SidebarMenu className="flex-1">
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isRecipes} tooltip="Recipes">
               <Link
@@ -94,6 +96,26 @@ export function AppSidebar() {
               >
                 <ShoppingCart />
                 <span>Groceries</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={isSettings}
+              tooltip="Settings"
+            >
+              <Link
+                href={ROUTES.settings}
+                onClick={() => {
+                  if (!isMobile) return;
+                  setOpenMobile(false);
+                }}
+              >
+                <Settings />
+                <span>Settings</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

@@ -121,7 +121,8 @@ export const FamilyMemberScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   name: 'name',
-  position: 'position'
+  isSelf: 'isSelf',
+  sortOrder: 'sortOrder'
 } as const
 
 export type FamilyMemberScalarFieldEnum = (typeof FamilyMemberScalarFieldEnum)[keyof typeof FamilyMemberScalarFieldEnum]

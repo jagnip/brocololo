@@ -27,63 +27,69 @@ export type AggregateFamilyMember = {
 }
 
 export type FamilyMemberAvgAggregateOutputType = {
-  position: number | null
+  sortOrder: number | null
 }
 
 export type FamilyMemberSumAggregateOutputType = {
-  position: number | null
+  sortOrder: number | null
 }
 
 export type FamilyMemberMinAggregateOutputType = {
   id: string | null
   userId: string | null
   name: string | null
-  position: number | null
+  isSelf: boolean | null
+  sortOrder: number | null
 }
 
 export type FamilyMemberMaxAggregateOutputType = {
   id: string | null
   userId: string | null
   name: string | null
-  position: number | null
+  isSelf: boolean | null
+  sortOrder: number | null
 }
 
 export type FamilyMemberCountAggregateOutputType = {
   id: number
   userId: number
   name: number
-  position: number
+  isSelf: number
+  sortOrder: number
   _all: number
 }
 
 
 export type FamilyMemberAvgAggregateInputType = {
-  position?: true
+  sortOrder?: true
 }
 
 export type FamilyMemberSumAggregateInputType = {
-  position?: true
+  sortOrder?: true
 }
 
 export type FamilyMemberMinAggregateInputType = {
   id?: true
   userId?: true
   name?: true
-  position?: true
+  isSelf?: true
+  sortOrder?: true
 }
 
 export type FamilyMemberMaxAggregateInputType = {
   id?: true
   userId?: true
   name?: true
-  position?: true
+  isSelf?: true
+  sortOrder?: true
 }
 
 export type FamilyMemberCountAggregateInputType = {
   id?: true
   userId?: true
   name?: true
-  position?: true
+  isSelf?: true
+  sortOrder?: true
   _all?: true
 }
 
@@ -177,7 +183,8 @@ export type FamilyMemberGroupByOutputType = {
   id: string
   userId: string
   name: string
-  position: number
+  isSelf: boolean
+  sortOrder: number
   _count: FamilyMemberCountAggregateOutputType | null
   _avg: FamilyMemberAvgAggregateOutputType | null
   _sum: FamilyMemberSumAggregateOutputType | null
@@ -207,7 +214,8 @@ export type FamilyMemberWhereInput = {
   id?: Prisma.StringFilter<"FamilyMember"> | string
   userId?: Prisma.StringFilter<"FamilyMember"> | string
   name?: Prisma.StringFilter<"FamilyMember"> | string
-  position?: Prisma.IntFilter<"FamilyMember"> | number
+  isSelf?: Prisma.BoolFilter<"FamilyMember"> | boolean
+  sortOrder?: Prisma.IntFilter<"FamilyMember"> | number
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
@@ -215,27 +223,29 @@ export type FamilyMemberOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  position?: Prisma.SortOrder
+  isSelf?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
 }
 
 export type FamilyMemberWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  userId_position?: Prisma.FamilyMemberUserIdPositionCompoundUniqueInput
   AND?: Prisma.FamilyMemberWhereInput | Prisma.FamilyMemberWhereInput[]
   OR?: Prisma.FamilyMemberWhereInput[]
   NOT?: Prisma.FamilyMemberWhereInput | Prisma.FamilyMemberWhereInput[]
   userId?: Prisma.StringFilter<"FamilyMember"> | string
   name?: Prisma.StringFilter<"FamilyMember"> | string
-  position?: Prisma.IntFilter<"FamilyMember"> | number
+  isSelf?: Prisma.BoolFilter<"FamilyMember"> | boolean
+  sortOrder?: Prisma.IntFilter<"FamilyMember"> | number
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "userId_position">
+}, "id">
 
 export type FamilyMemberOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  position?: Prisma.SortOrder
+  isSelf?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
   _count?: Prisma.FamilyMemberCountOrderByAggregateInput
   _avg?: Prisma.FamilyMemberAvgOrderByAggregateInput
   _max?: Prisma.FamilyMemberMaxOrderByAggregateInput
@@ -250,13 +260,15 @@ export type FamilyMemberScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"FamilyMember"> | string
   userId?: Prisma.StringWithAggregatesFilter<"FamilyMember"> | string
   name?: Prisma.StringWithAggregatesFilter<"FamilyMember"> | string
-  position?: Prisma.IntWithAggregatesFilter<"FamilyMember"> | number
+  isSelf?: Prisma.BoolWithAggregatesFilter<"FamilyMember"> | boolean
+  sortOrder?: Prisma.IntWithAggregatesFilter<"FamilyMember"> | number
 }
 
 export type FamilyMemberCreateInput = {
   id?: string
   name: string
-  position: number
+  isSelf?: boolean
+  sortOrder: number
   user: Prisma.UserCreateNestedOneWithoutFamilyMembersInput
 }
 
@@ -264,13 +276,15 @@ export type FamilyMemberUncheckedCreateInput = {
   id?: string
   userId: string
   name: string
-  position: number
+  isSelf?: boolean
+  sortOrder: number
 }
 
 export type FamilyMemberUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.IntFieldUpdateOperationsInput | number
+  isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutFamilyMembersNestedInput
 }
 
@@ -278,27 +292,31 @@ export type FamilyMemberUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.IntFieldUpdateOperationsInput | number
+  isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type FamilyMemberCreateManyInput = {
   id?: string
   userId: string
   name: string
-  position: number
+  isSelf?: boolean
+  sortOrder: number
 }
 
 export type FamilyMemberUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.IntFieldUpdateOperationsInput | number
+  isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type FamilyMemberUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.IntFieldUpdateOperationsInput | number
+  isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type FamilyMemberListRelationFilter = {
@@ -311,38 +329,36 @@ export type FamilyMemberOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type FamilyMemberUserIdPositionCompoundUniqueInput = {
-  userId: string
-  position: number
-}
-
 export type FamilyMemberCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  position?: Prisma.SortOrder
+  isSelf?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type FamilyMemberAvgOrderByAggregateInput = {
-  position?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type FamilyMemberMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  position?: Prisma.SortOrder
+  isSelf?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type FamilyMemberMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  position?: Prisma.SortOrder
+  isSelf?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type FamilyMemberSumOrderByAggregateInput = {
-  position?: Prisma.SortOrder
+  sortOrder?: Prisma.SortOrder
 }
 
 export type FamilyMemberCreateNestedManyWithoutUserInput = {
@@ -387,6 +403,10 @@ export type FamilyMemberUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.FamilyMemberScalarWhereInput | Prisma.FamilyMemberScalarWhereInput[]
 }
 
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
+}
+
 export type IntFieldUpdateOperationsInput = {
   set?: number
   increment?: number
@@ -398,13 +418,15 @@ export type IntFieldUpdateOperationsInput = {
 export type FamilyMemberCreateWithoutUserInput = {
   id?: string
   name: string
-  position: number
+  isSelf?: boolean
+  sortOrder: number
 }
 
 export type FamilyMemberUncheckedCreateWithoutUserInput = {
   id?: string
   name: string
-  position: number
+  isSelf?: boolean
+  sortOrder: number
 }
 
 export type FamilyMemberCreateOrConnectWithoutUserInput = {
@@ -440,31 +462,36 @@ export type FamilyMemberScalarWhereInput = {
   id?: Prisma.StringFilter<"FamilyMember"> | string
   userId?: Prisma.StringFilter<"FamilyMember"> | string
   name?: Prisma.StringFilter<"FamilyMember"> | string
-  position?: Prisma.IntFilter<"FamilyMember"> | number
+  isSelf?: Prisma.BoolFilter<"FamilyMember"> | boolean
+  sortOrder?: Prisma.IntFilter<"FamilyMember"> | number
 }
 
 export type FamilyMemberCreateManyUserInput = {
   id?: string
   name: string
-  position: number
+  isSelf?: boolean
+  sortOrder: number
 }
 
 export type FamilyMemberUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.IntFieldUpdateOperationsInput | number
+  isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type FamilyMemberUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.IntFieldUpdateOperationsInput | number
+  isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type FamilyMemberUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.IntFieldUpdateOperationsInput | number
+  isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 
@@ -473,7 +500,8 @@ export type FamilyMemberSelect<ExtArgs extends runtime.Types.Extensions.Internal
   id?: boolean
   userId?: boolean
   name?: boolean
-  position?: boolean
+  isSelf?: boolean
+  sortOrder?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["familyMember"]>
 
@@ -481,7 +509,8 @@ export type FamilyMemberSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   id?: boolean
   userId?: boolean
   name?: boolean
-  position?: boolean
+  isSelf?: boolean
+  sortOrder?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["familyMember"]>
 
@@ -489,7 +518,8 @@ export type FamilyMemberSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   id?: boolean
   userId?: boolean
   name?: boolean
-  position?: boolean
+  isSelf?: boolean
+  sortOrder?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["familyMember"]>
 
@@ -497,10 +527,11 @@ export type FamilyMemberSelectScalar = {
   id?: boolean
   userId?: boolean
   name?: boolean
-  position?: boolean
+  isSelf?: boolean
+  sortOrder?: boolean
 }
 
-export type FamilyMemberOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "position", ExtArgs["result"]["familyMember"]>
+export type FamilyMemberOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "isSelf" | "sortOrder", ExtArgs["result"]["familyMember"]>
 export type FamilyMemberInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -520,7 +551,8 @@ export type $FamilyMemberPayload<ExtArgs extends runtime.Types.Extensions.Intern
     id: string
     userId: string
     name: string
-    position: number
+    isSelf: boolean
+    sortOrder: number
   }, ExtArgs["result"]["familyMember"]>
   composites: {}
 }
@@ -948,7 +980,8 @@ export interface FamilyMemberFieldRefs {
   readonly id: Prisma.FieldRef<"FamilyMember", 'String'>
   readonly userId: Prisma.FieldRef<"FamilyMember", 'String'>
   readonly name: Prisma.FieldRef<"FamilyMember", 'String'>
-  readonly position: Prisma.FieldRef<"FamilyMember", 'Int'>
+  readonly isSelf: Prisma.FieldRef<"FamilyMember", 'Boolean'>
+  readonly sortOrder: Prisma.FieldRef<"FamilyMember", 'Int'>
 }
     
 

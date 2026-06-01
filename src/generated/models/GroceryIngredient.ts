@@ -319,10 +319,6 @@ export type GroceryIngredientNullableScalarRelationFilter = {
   isNot?: Prisma.GroceryIngredientWhereInput | null
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type GroceryIngredientCreateNestedOneWithoutShoppingListItemsInput = {
   create?: Prisma.XOR<Prisma.GroceryIngredientCreateWithoutShoppingListItemsInput, Prisma.GroceryIngredientUncheckedCreateWithoutShoppingListItemsInput>
   connectOrCreate?: Prisma.GroceryIngredientCreateOrConnectWithoutShoppingListItemsInput

@@ -61,14 +61,15 @@ model User {
 
 // Named family members for log/planner portion splits — not Clerk accounts.
 model FamilyMember {
-  id       String @id @default(cuid())
-  userId   String @map("user_id")
-  name     String
-  position Int // 0 = PRIMARY, 1 = SECONDARY (maps to LogPerson for now)
+  id        String  @id @default(cuid())
+  userId    String  @map("user_id")
+  name      String
+  isSelf    Boolean @default(false) @map("is_self")
+  sortOrder Int     @map("sort_order")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, position])
+  @@index([userId, sortOrder])
   @@map("family_members")
 }
 

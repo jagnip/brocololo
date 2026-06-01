@@ -41,7 +41,14 @@ export const ROUTES = {
   log: "/log",
   logCurrent: "/log/current",
   logView: (logId: string) => `/log/${logId}`,
+  settings: "/settings",
 } as const;
+
+/** Default label for the account-holder family row (Settings). */
+export const FAMILY_SELF_DEFAULT_NAME = "Me";
+
+/** Server-side guard against abuse; not shown as a product limit in UI. */
+export const FAMILY_MEMBERS_MAX_PER_USER = 100;
 
 
 export type MealTimeLimits = {
