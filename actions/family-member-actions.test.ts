@@ -32,7 +32,7 @@ vi.mock("@/lib/auth/session", () => ({
 
 const selfMember = {
   id: "fm-self",
-  name: "Me",
+  name: "",
   isSelf: true,
   sortOrder: 0,
 };
@@ -42,12 +42,20 @@ describe("updateFamilyMemberNameAction", () => {
     vi.clearAllMocks();
   });
 
-  it("returns validation error for empty name", async () => {
+  it("allows renaming self to empty string", async () => {
+    vi.mocked(updateFamilyMemberName).mockResolvedValue(selfMember);
+
     const result = await updateFamilyMemberNameAction({
       id: selfMember.id,
       name: "   ",
     });
-    expect(result.type).toBe("error");
+
+    expect(result.type).toBe("success");
+    expect(updateFamilyMemberName).toHaveBeenCalledWith({
+      userId: "user-test",
+      id: selfMember.id,
+      name: "",
+    });
   });
 
   it("renames a member on success", async () => {
@@ -71,6 +79,27 @@ describe("updateFamilyMemberNameAction", () => {
       name: "Jagoda",
     });
   });
+
+  it("allows renaming non-self to empty string", async () => {
+    vi.mocked(updateFamilyMemberName).mockResolvedValue({
+      id: "fm-2",
+      name: "",
+      isSelf: false,
+      sortOrder: 1,
+    });
+
+    const result = await updateFamilyMemberNameAction({
+      id: "fm-2",
+      name: "",
+    });
+
+    expect(result.type).toBe("success");
+    expect(updateFamilyMemberName).toHaveBeenCalledWith({
+      userId: "user-test",
+      id: "fm-2",
+      name: "",
+    });
+  });
 });
 
 describe("createFamilyMemberAction", () => {
@@ -78,21 +107,21 @@ describe("createFamilyMemberAction", () => {
     vi.clearAllMocks();
   });
 
-  it("adds a family member", async () => {
+  it("adds a family member with empty name", async () => {
     vi.mocked(listFamilyMembers).mockResolvedValue([selfMember]);
     vi.mocked(createFamilyMember).mockResolvedValue({
       id: "fm-2",
-      name: "Nelson",
+      name: "",
       isSelf: false,
       sortOrder: 1,
     });
 
-    const result = await createFamilyMemberAction({ name: "Nelson" });
+    const result = await createFamilyMemberAction({ name: "   " });
 
     expect(result.type).toBe("success");
     expect(createFamilyMember).toHaveBeenCalledWith({
       userId: "user-test",
-      name: "Nelson",
+      name: "",
     });
   });
 });

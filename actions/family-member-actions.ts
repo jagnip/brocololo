@@ -39,7 +39,7 @@ export async function updateFamilyMemberNameAction(
     const member = await updateFamilyMemberName({
       userId,
       id: parsed.data.id,
-      name: parsed.data.name,
+      name: parsed.data.name.trim(),
     });
     revalidateSettings();
     return { type: "success", member };
@@ -72,7 +72,7 @@ export async function createFamilyMemberAction(
 
     const member = await createFamilyMember({
       userId,
-      name: parsed.data.name,
+      name: (parsed.data.name ?? "").trim(),
     });
     revalidateSettings();
     return { type: "success", member };

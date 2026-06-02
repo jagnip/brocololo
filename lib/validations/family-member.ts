@@ -2,12 +2,10 @@ import { z } from "zod";
 import { FAMILY_MEMBERS_MAX_PER_USER } from "@/lib/constants";
 
 const NAME_MAX = 40;
-const NAME_MIN = 1;
 
 export const familyMemberNameSchema = z
   .string()
   .trim()
-  .min(NAME_MIN, { message: "Name cannot be empty." })
   .max(NAME_MAX, {
     message: `Keep the name under ${NAME_MAX} characters.`,
   });
@@ -20,7 +18,7 @@ export const updateFamilyMemberNameSchema = z.object({
 });
 
 export const createFamilyMemberSchema = z.object({
-  name: familyMemberNameSchema,
+  name: familyMemberNameSchema.optional().default(""),
 });
 
 export const deleteFamilyMemberSchema = z.object({

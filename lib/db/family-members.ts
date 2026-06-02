@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db/index";
-import { FAMILY_SELF_DEFAULT_NAME } from "@/lib/constants";
 
 /** Row shape returned to Settings UI and future Phase 2 surfaces. */
 export type FamilyMemberRow = {
@@ -31,7 +30,7 @@ export async function listFamilyMembers(
 
 /**
  * Guarantees exactly one self row for the account holder.
- * Creates "Me" when the household has no members yet.
+ * Creates an empty self row when the household has no members yet.
  */
 export async function ensureSelfFamilyMember(
   userId: string,
@@ -65,7 +64,7 @@ export async function ensureSelfFamilyMember(
   await prisma.familyMember.create({
     data: {
       userId,
-      name: FAMILY_SELF_DEFAULT_NAME,
+      name: "",
       isSelf: true,
       sortOrder: 0,
     },

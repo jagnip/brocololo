@@ -30,6 +30,20 @@ type SettingsFormProps = {
   initialMembers: FamilyMemberRow[];
 };
 
+/** Display label for non-self members (delete dialog, aria-labels). */
+function getFamilyMemberDisplayName(
+  member: FamilyMemberRow,
+  familyMembers: FamilyMemberRow[],
+): string {
+  const trimmed = member.name.trim();
+  if (trimmed) {
+    return trimmed;
+  }
+  const ordered = [...familyMembers].sort((a, b) => a.sortOrder - b.sortOrder);
+  const index = ordered.findIndex((row) => row.id === member.id);
+  return `Family member ${index + 1}`;
+}
+
 export function SettingsForm({ initialMembers }: SettingsFormProps) {
   const router = useRouter();
   const [members, setMembers] = useState(initialMembers);
@@ -40,6 +54,19 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
   const [deleteTarget, setDeleteTarget] = useState<FamilyMemberRow | null>(null);
   const [isAdding, startAddTransition] = useTransition();
   const [isDeleting, startDeleteTransition] = useTransition();
+
+  const selfMember = useMemo(
+    () => members.find((member) => member.isSelf),
+    [members],
+  );
+
+  const familyMembers = useMemo(
+    () =>
+      members
+        .filter((member) => !member.isSelf)
+        .sort((a, b) => a.sortOrder - b.sortOrder),
+    [members],
+  );
 
   useEffect(() => {
     setMembers(initialMembers);
@@ -64,11 +91,6 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
   const saveName = useCallback(
     async (member: FamilyMemberRow) => {
       const trimmed = (draftNames[member.id] ?? "").trim();
-      if (!trimmed) {
-        setDraftNames((prev) => ({ ...prev, [member.id]: member.name }));
-        toast.error("Name cannot be empty.");
-        return;
-      }
       if (trimmed === member.name) {
         return;
       }
@@ -98,7 +120,7 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
 
   const handleAddMember = () => {
     startAddTransition(async () => {
-      const result = await createFamilyMemberAction({ name: "Family member" });
+      const result = await createFamilyMemberAction({ name: "" });
       if (result.type === "error") {
         toast.error(result.message);
         return;
@@ -129,6 +151,37 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
     });
   };
 
+  const renderNameInput = (
+    member: FamilyMemberRow,
+    label: string,
+    placeholder: string,
+  ) => (
+    <div className="w-full md:w-1/2 lg:w-1/3">
+      <div className="flex flex-col gap-2">
+        <Label htmlFor={`family-member-${member.id}`}>{label}</Label>
+        <Input
+          id={`family-member-${member.id}`}
+          value={draftNames[member.id] ?? ""}
+          placeholder={placeholder}
+          disabled={pendingMemberId === member.id}
+          onChange={(event) =>
+            setDraftNames((prev) => ({
+              ...prev,
+              [member.id]: event.target.value,
+            }))
+          }
+          onBlur={() => void saveName(member)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              event.currentTarget.blur();
+            }
+          }}
+        />
+      </div>
+    </div>
+  );
+
   return (
     <>
       <TopbarConfigController config={topbarConfig} />
@@ -136,6 +189,24 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
         className="flex flex-col gap-6"
         onSubmit={(event) => event.preventDefault()}
       >
+        {/* Account holder — separate from household members */}
+        {selfMember ? (
+          <section>
+            <div className="mb-3">
+              <Subheader>Your profile</Subheader>
+            </div>
+            <div className="section-container">
+              <div className="flex flex-col gap-3">
+                {renderNameInput(
+                  selfMember,
+                  "Your name",
+                  "Enter your name",
+                )}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         <section>
           <div className="mb-3">
             <Subheader>Family members</Subheader>
@@ -143,59 +214,31 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
           <div className="section-container">
             <div className="flex flex-col gap-3">
               <p className="text-sm text-muted-foreground">
-                Names for meal log and planner portions. These are not separate
-                accounts.
+                Add family members to adjust recipes and view nutrition by
+                person.
               </p>
 
-              {members.map((member) => (
+              {familyMembers.map((member) => (
                 <div
                   key={member.id}
-                  className="grid grid-cols-1 gap-item lg:grid-cols-3 lg:items-end"
+                  className="flex flex-wrap items-end gap-item"
                 >
-                  <div
-                    className={
-                      member.isSelf ? "lg:col-span-3" : "lg:col-span-2"
-                    }
-                  >
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor={`family-member-${member.id}`}>
-                        {member.isSelf ? "You" : "Name"}
-                      </Label>
-                      <Input
-                        id={`family-member-${member.id}`}
-                        value={draftNames[member.id] ?? ""}
-                        disabled={pendingMemberId === member.id}
-                        onChange={(event) =>
-                          setDraftNames((prev) => ({
-                            ...prev,
-                            [member.id]: event.target.value,
-                          }))
-                        }
-                        onBlur={() => void saveName(member)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") {
-                            event.preventDefault();
-                            event.currentTarget.blur();
-                          }
-                        }}
-                      />
-                    </div>
-                  </div>
-                  {!member.isSelf ? (
-                    <div className="flex items-end lg:justify-end">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        aria-label={`Remove ${member.name}`}
-                        onClick={() => setDeleteTarget(member)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="hidden lg:block" aria-hidden />
+                  {renderNameInput(
+                    member,
+                    "Family member's name",
+                    "Enter name",
                   )}
+                  <div className="flex items-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label={`Remove ${getFamilyMemberDisplayName(member, familyMembers)}`}
+                      onClick={() => setDeleteTarget(member)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
 
@@ -215,7 +258,7 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
                       Adding…
                     </>
                   ) : (
-                    "+ Add family member"
+                    "Add family member"
                   )}
                 </Button>
               </div>
@@ -237,7 +280,7 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
             <AlertDialogTitle>Remove family member?</AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget
-                ? `“${deleteTarget.name}” will be removed from your household list.`
+                ? `${getFamilyMemberDisplayName(deleteTarget, familyMembers)} will be removed from your household list.`
                 : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
