@@ -38,6 +38,7 @@ type RecipeAddToLogDialogProps = {
   onOpenChange: (open: boolean) => void;
   recipeIngredients: RecipeType["ingredients"];
   familyMembers: FamilyMemberRow[];
+  audienceMembers: RecipeType["audienceMembers"];
   memberPortions: RecipeType["memberPortions"];
   currentServings: number;
   servingScalingFactor: number;
@@ -60,6 +61,7 @@ export function RecipeAddToLogDialogContainer({
   onOpenChange,
   recipeIngredients,
   familyMembers,
+  audienceMembers,
   memberPortions,
   currentServings,
   servingScalingFactor,
@@ -108,6 +110,9 @@ export function RecipeAddToLogDialogContainer({
         recipeServings: currentServings,
         familyMembers,
         memberPortions,
+        cookingFamilyMemberIds: audienceMembers.map(
+          (member) => member.familyMemberId,
+        ),
       });
       if (amountForPerson == null || amountForPerson <= 0) {
         return [];
@@ -129,6 +134,7 @@ export function RecipeAddToLogDialogContainer({
   }, [
     currentServings,
     familyMembers,
+    audienceMembers,
     logFamilyMemberId,
     memberPortions,
     recipeIngredients,

@@ -1,16 +1,5 @@
 import { z } from "zod";
 
-const preprocessNumberInput = <T extends z.ZodTypeAny>(schema: T) =>
-  z.preprocess((value) => {
-    if (value === "" || value === null || value === undefined) {
-      return undefined;
-    }
-    if (typeof value === "string") {
-      return Number(value);
-    }
-    return value;
-  }, schema);
-
 const preprocessRequiredNumberInput = (
   message: string,
   schema: z.ZodNumber,
@@ -123,6 +112,8 @@ const recipeMemberPortionSchema = z.object({
   ),
 });
 
+const recipeAudienceMemberIdSchema = z.string().min(1);
+
 const recipeInstructionSchema = z.object({
   id: z.string().min(1).optional(),
   text: z
@@ -137,56 +128,94 @@ const recipeImageSchema = z.object({
   isCover: z.boolean().default(false),
 });
 
-const recipeBaseSchema = z.object({
-  name: z.string().min(1, { message: "Enter a recipe name" }),
-  // Category form fields are explicit to keep UI semantics clear.
-  mealOccasionCategoryIds: z.array(z.string()).default([]),
-  proteinCategoryId: z.string().nullish(),
-  typeCategoryId: z.string().nullish(),
-  images: z
-    .array(recipeImageSchema)
-    .transform((images) => {
-      // Automatically set first image as cover if images exist
-      if (images.length > 0 && !images.some((img) => img.isCover === true)) {
-        images[0].isCover = true;
+const recipeBaseSchema = z
+  .object({
+    name: z.string().min(1, { message: "Enter a recipe name" }),
+    // Category form fields are explicit to keep UI semantics clear.
+    mealOccasionCategoryIds: z.array(z.string()).default([]),
+    proteinCategoryId: z.string().nullish(),
+    typeCategoryId: z.string().nullish(),
+    images: z
+      .array(recipeImageSchema)
+      .transform((images) => {
+        // Automatically set first image as cover if images exist
+        if (images.length > 0 && !images.some((img) => img.isCover === true)) {
+          images[0].isCover = true;
+        }
+        return images;
+      })
+      .default([]),
+    // Keep empty string values as missing so required checks trigger.
+    handsOnTime: preprocessRequiredNumberInput(
+      "Enter a hands-on time above 0",
+      z.number()
+        .int({ message: "Enter a hands-on time above 0" })
+        .positive({ message: "Enter a hands-on time above 0" }),
+    ),
+    // Keep empty string values as missing so required checks trigger.
+    totalTime: preprocessRequiredNumberInput(
+      "Enter a total time above 0",
+      z.number()
+        .int({ message: "Enter a total time above 0" })
+        .positive({ message: "Enter a total time above 0" }),
+    ),
+    // Keep empty string values as missing so required checks trigger.
+    servings: preprocessRequiredNumberInput(
+      "Enter a number of portions above 0",
+      z.number()
+        .int({ message: "Enter a number of portions above 0" })
+        .min(1, { message: "Enter a number of portions above 0" }),
+    ),
+    audienceFamilyMemberIds: z
+      .array(recipeAudienceMemberIdSchema)
+      .min(1, { message: "Choose who this recipe is for" }),
+    memberPortions: z.array(recipeMemberPortionSchema).default([]),
+    ingredientGroups: z.array(recipeIngredientGroupSchema).default([]),
+    // Keep arrays required but allow empty collections for draft-like recipes.
+    ingredients: z.array(recipeIngredientSchema),
+    // Keep arrays required but allow empty collections for draft-like recipes.
+    instructions: z.array(recipeInstructionSchema),
+    notes: z.string().transform((val) => {
+      if (!val || val.trim() === "") return [];
+      const lines = val.split("\n").map(line => line.trim()).filter(line => line !== "");
+      return lines;
+    }),
+    excludeFromPlanner: z.boolean().default(false),
+  })
+  .superRefine((recipe, ctx) => {
+    const audienceIds = new Set(recipe.audienceFamilyMemberIds);
+    const audienceCount = audienceIds.size;
+
+    if (audienceCount > 0 && recipe.servings % audienceCount !== 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["servings"],
+        message: `Use ${audienceCount}, ${audienceCount * 2}, ${audienceCount * 3}, etc. portions for this audience`,
+      });
+    }
+
+    recipe.memberPortions.forEach((portion, index) => {
+      if (!audienceIds.has(portion.familyMemberId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["memberPortions", index, "familyMemberId"],
+          message: "Serving multipliers must be for people in the recipe audience",
+        });
       }
-      return images;
-    })
-    .default([]),
-  // Keep empty string values as missing so required checks trigger.
-  handsOnTime: preprocessRequiredNumberInput(
-    "Enter a hands-on time above 0",
-    z.number()
-      .int({ message: "Enter a hands-on time above 0" })
-      .positive({ message: "Enter a hands-on time above 0" }),
-  ),
-  // Keep empty string values as missing so required checks trigger.
-  totalTime: preprocessRequiredNumberInput(
-    "Enter a total time above 0",
-    z.number()
-      .int({ message: "Enter a total time above 0" })
-      .positive({ message: "Enter a total time above 0" }),
-  ),
-  // Keep empty string values as missing so required checks trigger.
-  servings: preprocessRequiredNumberInput(
-    "Enter a number of portions above 0",
-    z.number()
-      .int({ message: "Enter a number of portions above 0" })
-      .min(1, { message: "Enter a number of portions above 0" }),
-  ),
-  memberPortions: z.array(recipeMemberPortionSchema).default([]),
-  ingredientGroups: z.array(recipeIngredientGroupSchema).default([]),
-  // Keep arrays required but allow empty collections for draft-like recipes.
-  ingredients: z.array(recipeIngredientSchema),
-  // Keep arrays required but allow empty collections for draft-like recipes.
-  instructions: z.array(recipeInstructionSchema),
-  notes: z.string().transform((val) => {
-    if (!val || val.trim() === "") return [];
-    const lines = val.split("\n").map(line => line.trim()).filter(line => line !== "");
-    return lines;
-  }),
-  excludeFromPlanner: z.boolean().default(false),
-});
+    });
+
+    recipe.ingredients.forEach((ingredient, ingredientIndex) => {
+      ingredient.targetFamilyMemberIds.forEach((familyMemberId) => {
+        if (!audienceIds.has(familyMemberId)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["ingredients", ingredientIndex, "targetFamilyMemberIds"],
+            message: "Ingredient targets must be in the recipe audience",
+          });
+        }
+      });
+    });
+  });
 
 export const createRecipeSchema = recipeBaseSchema;
 export const updateRecipeSchema = recipeBaseSchema;

@@ -29,6 +29,7 @@ function coerceIngredientRowPosition(value: unknown): number {
  */
 export function buildDraftRecipeForNutrition(
   servings: unknown,
+  audienceFamilyMemberIds: CreateRecipeFormValues["audienceFamilyMemberIds"] | undefined,
   memberPortions: CreateRecipeFormValues["memberPortions"] | undefined,
   rows: FormIngredientRow[] | undefined,
   catalog: IngredientType[],
@@ -79,6 +80,10 @@ export function buildDraftRecipeForNutrition(
 
   return {
     servings: coercePreviewServings(servings),
+    audienceMembers: (audienceFamilyMemberIds ?? []).map((familyMemberId) => ({
+      recipeId: "draft",
+      familyMemberId,
+    })),
     memberPortions: (memberPortions ?? []).map((portion) => ({
       recipeId: "draft",
       familyMemberId: portion.familyMemberId,

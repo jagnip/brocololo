@@ -55,6 +55,9 @@ function toRecipeSelectorRows(params: {
         recipeServings: params.recipe.servings,
         familyMembers: params.familyMembers,
         memberPortions: params.recipe.memberPortions,
+        cookingFamilyMemberIds: params.recipe.audienceMembers.map(
+          (member) => member.familyMemberId,
+        ),
       });
       if (amountForPerson == null || amountForPerson <= 0) return null;
 

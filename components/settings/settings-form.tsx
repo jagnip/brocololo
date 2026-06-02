@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import {
   createFamilyMemberAction,
   deleteFamilyMemberAction,
+  getFamilyMemberRecipeImpactAction,
   updateFamilyMemberNameAction,
 } from "@/actions/family-member-actions";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
@@ -52,6 +53,7 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
   );
   const [pendingMemberId, setPendingMemberId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<FamilyMemberRow | null>(null);
+  const [deleteHasRecipeImpact, setDeleteHasRecipeImpact] = useState(false);
   const [isAdding, startAddTransition] = useTransition();
   const [isDeleting, startDeleteTransition] = useTransition();
 
@@ -133,6 +135,16 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
       }));
       refreshFromServer();
     });
+  };
+
+  const handleRequestDelete = async (member: FamilyMemberRow) => {
+    const result = await getFamilyMemberRecipeImpactAction({ id: member.id });
+    if (result.type === "error") {
+      toast.error(result.message);
+      return;
+    }
+    setDeleteHasRecipeImpact(result.hasRecipeImpact);
+    setDeleteTarget(member);
   };
 
   const handleConfirmDelete = () => {
@@ -235,7 +247,7 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
                       variant="outline"
                       size="icon"
                       aria-label={`Remove ${getFamilyMemberDisplayName(member, familyMembers)}`}
-                      onClick={() => setDeleteTarget(member)}
+                      onClick={() => void handleRequestDelete(member)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -273,6 +285,7 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
         onOpenChange={(open) => {
           if (!open) {
             setDeleteTarget(null);
+            setDeleteHasRecipeImpact(false);
           }
         }}
       >
@@ -281,7 +294,9 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
             <AlertDialogTitle>Remove family member?</AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget
-                ? `${getFamilyMemberDisplayName(deleteTarget, familyMembers)} will be removed from your household list.`
+                ? deleteHasRecipeImpact
+                  ? `${getFamilyMemberDisplayName(deleteTarget, familyMembers)} will be removed from your household list, recipes, serving multipliers, and ingredient customisations.`
+                  : `${getFamilyMemberDisplayName(deleteTarget, familyMembers)} will be removed from your household list.`
                 : null}
             </AlertDialogDescription>
           </AlertDialogHeader>

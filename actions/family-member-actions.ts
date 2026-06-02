@@ -6,6 +6,7 @@ import { FAMILY_MEMBERS_MAX_PER_USER, ROUTES } from "@/lib/constants";
 import {
   createFamilyMember,
   deleteFamilyMember,
+  getFamilyMemberRecipeImpact,
   listFamilyMembers,
   updateFamilyMemberName,
 } from "@/lib/db/family-members";
@@ -110,5 +111,36 @@ export async function deleteFamilyMemberAction(
       };
     }
     return { type: "error", message: "Could not remove member. Try again." };
+  }
+}
+
+export async function getFamilyMemberRecipeImpactAction(
+  input: unknown,
+): Promise<
+  | { type: "success"; hasRecipeImpact: boolean }
+  | { type: "error"; message: string }
+> {
+  const parsed = deleteFamilyMemberSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      type: "error",
+      message:
+        parsed.error.issues[0]?.message ??
+        "Could not check member usage. Try again.",
+    };
+  }
+
+  try {
+    const { id: userId } = await requireUser();
+    const impact = await getFamilyMemberRecipeImpact({
+      userId,
+      id: parsed.data.id,
+    });
+    return {
+      type: "success",
+      hasRecipeImpact: impact.hasRecipeImpact,
+    };
+  } catch {
+    return { type: "error", message: "Could not check member usage. Try again." };
   }
 }

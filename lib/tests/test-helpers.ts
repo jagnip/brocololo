@@ -226,6 +226,14 @@ export function createMockRecipe(overrides?: Partial<RecipeType>): RecipeType {
     totalTime: 30,
     notes: [],
     servings: 4,
+    audienceMembers: [
+      {
+        familyMemberId: 'family-self',
+      },
+      {
+        familyMemberId: 'family-member-1',
+      },
+    ],
     memberPortions: [
       {
         recipeId: defaultRecipeId,
@@ -445,6 +453,11 @@ export function createMinimalRecipe(): RecipeType {
     totalTime: 0,
     notes: [],
     servings: 1,
+    audienceMembers: [
+      {
+        familyMemberId: 'family-self',
+      },
+    ],
     memberPortions: [],
     lastUsedInPlanner: null,
     excludeFromPlanner: false,

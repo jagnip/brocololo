@@ -140,6 +140,7 @@ export default function RecipePage({
           onOpenChange={setIsAddToLogOpen}
           recipeIngredients={addToLogData.recipeIngredients}
           familyMembers={familyMembers}
+          audienceMembers={addToLogData.audienceMembers}
           memberPortions={addToLogData.memberPortions}
           currentServings={addToLogData.currentServings}
           servingScalingFactor={addToLogData.servingScalingFactor}

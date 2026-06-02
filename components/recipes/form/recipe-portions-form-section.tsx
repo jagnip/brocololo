@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { scaleFormIngredientRowsForNewServings } from "@/lib/recipes/scale-form-ingredient-rows-for-servings";
@@ -42,7 +43,18 @@ export function RecipePortionsFormSection({
   onNumericServingsChange,
 }: RecipePortionsFormSectionProps) {
   const servings = useWatch({ control: form.control, name: "servings" });
+  const audienceFamilyMemberIds =
+    useWatch({ control: form.control, name: "audienceFamilyMemberIds" }) ?? [];
   const ingredients = useWatch({ control: form.control, name: "ingredients" }) ?? [];
+  const audienceIdSet = useMemo(
+    () => new Set(audienceFamilyMemberIds),
+    [audienceFamilyMemberIds],
+  );
+  const audienceCount = audienceFamilyMemberIds.length;
+  const servingsHint =
+    audienceCount > 0
+      ? `Servings are plate-count yield. For this audience, use ${audienceCount}, ${audienceCount * 2}, ${audienceCount * 3}, etc.`
+      : "Choose who this recipe is for before setting portions.";
 
   // Anchor: ingredient amounts in the form are expressed for this many portions until the user recalculates.
   const [amountsBaselineServings, setAmountsBaselineServings] = useState<
@@ -104,6 +116,49 @@ export function RecipePortionsFormSection({
     setAmountsBaselineServings(servings);
   }
 
+  function handleAudienceChange(familyMemberId: string, checked: boolean) {
+    const nextIds = checked
+      ? [...audienceFamilyMemberIds, familyMemberId]
+      : audienceFamilyMemberIds.filter((id) => id !== familyMemberId);
+    const nextIdSet = new Set(nextIds);
+    form.setValue("audienceFamilyMemberIds", nextIds, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    form.setValue(
+      "memberPortions",
+      (form.getValues("memberPortions") ?? []).filter((portion) =>
+        nextIdSet.has(portion.familyMemberId),
+      ),
+      { shouldValidate: true, shouldDirty: true },
+    );
+    form.setValue(
+      "ingredients",
+      (form.getValues("ingredients") ?? []).map((ingredient) => ({
+        ...ingredient,
+        targetFamilyMemberIds: (ingredient.targetFamilyMemberIds ?? []).filter(
+          (id) => nextIdSet.has(id),
+        ),
+      })),
+      { shouldValidate: true, shouldDirty: true },
+    );
+
+    // Keep the portion field on a valid audience multiple after audience edits.
+    const nextCount = nextIds.length;
+    if (
+      nextCount > 0 &&
+      (typeof servings !== "number" ||
+        !Number.isFinite(servings) ||
+        servings < nextCount ||
+        servings % nextCount !== 0)
+    ) {
+      form.setValue("servings", nextCount, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }
+
   return (
     <section>
       <div className="mb-3">
@@ -112,6 +167,43 @@ export function RecipePortionsFormSection({
       <div className="section-container">
         {/* Match Basics: `gap-3` between stacked field groups (same as name row → timing row). */}
         <div className="flex flex-col gap-3">
+          <FormField
+            control={form.control}
+            name="audienceFamilyMemberIds"
+            render={() => (
+              <FormItem>
+                <FormLabel>Who is this recipe for?</FormLabel>
+                <FormControl>
+                  <div className="flex flex-wrap gap-2">
+                    {familyMembers.map((member, index) => {
+                      const label =
+                        member.name.trim() ||
+                        (member.isSelf ? "You" : `Family member ${index}`);
+                      return (
+                        <div key={member.id} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`recipe-audience-${member.id}`}
+                            checked={audienceIdSet.has(member.id)}
+                            onCheckedChange={(checked) =>
+                              handleAudienceChange(member.id, checked === true)
+                            }
+                          />
+                          <Label
+                            htmlFor={`recipe-audience-${member.id}`}
+                            className="normal-case tracking-normal"
+                          >
+                            {label}
+                          </Label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {/* Small: input + button same row (`1fr` + auto); `md+`: same 3-column rhythm as Categories. */}
           <FormField
             control={form.control}
@@ -146,6 +238,7 @@ export function RecipePortionsFormSection({
                   </div>
                   <div className="hidden md:col-span-1 md:block" aria-hidden />
                 </div>
+                <p className="text-sm text-muted-foreground">{servingsHint}</p>
                 <FormMessage />
               </FormItem>
             )}
@@ -155,7 +248,9 @@ export function RecipePortionsFormSection({
             control={form.control}
             name="memberPortions"
             render={({ field }) => {
-              const nonSelfMembers = familyMembers.filter((member) => !member.isSelf);
+              const nonSelfMembers = familyMembers.filter(
+                (member) => !member.isSelf && audienceIdSet.has(member.id),
+              );
               return (
                 <FormItem>
                   <FormLabel className="text-muted-foreground">

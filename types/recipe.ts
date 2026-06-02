@@ -86,6 +86,11 @@ export type RecipeType = Prisma.RecipeGetPayload<{
       };
     };
     images: true;
+    audienceMembers: {
+      select: {
+        familyMemberId: true;
+      };
+    };
     memberPortions: true;
   };
 }>;

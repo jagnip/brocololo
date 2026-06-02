@@ -29,6 +29,7 @@ export function getFamilyMemberIngredientAmountPerMeal(params: {
   recipeServings: number;
   familyMembers: FamilyMemberForPortion[];
   memberPortions: MemberPortion[];
+  cookingFamilyMemberIds?: string[];
 }): number | null {
   const {
     amount,
@@ -38,26 +39,27 @@ export function getFamilyMemberIngredientAmountPerMeal(params: {
     recipeServings,
     familyMembers,
     memberPortions,
+    cookingFamilyMemberIds,
   } = params;
 
   if (amount == null) return null;
 
   if (!Number.isFinite(recipeServings) || recipeServings <= 0) return null;
 
-  const selectedMember = familyMembers.find(
-    (member) => member.id === familyMemberId,
+  const cookingMemberIdSet = new Set(
+    cookingFamilyMemberIds ?? familyMembers.map((member) => member.id),
   );
+  const cookingMembers = familyMembers.filter((member) =>
+    cookingMemberIdSet.has(member.id),
+  );
+  if (cookingMembers.length === 0) return null;
+
+  const selectedMember = cookingMembers.find((member) => member.id === familyMemberId);
   if (!selectedMember) return null;
 
-  const allWeight = familyMembers.reduce(
-    (sum, member) => sum + getMemberMultiplier(member, memberPortions),
-    0,
-  );
-  if (!Number.isFinite(allWeight) || allWeight <= 0) return null;
-
   const applicableMembers = appliesToEveryone
-    ? familyMembers
-    : familyMembers.filter((member) =>
+    ? cookingMembers
+    : cookingMembers.filter((member) =>
         targetFamilyMemberIds.includes(member.id),
       );
   if (!applicableMembers.some((member) => member.id === familyMemberId)) {
@@ -71,9 +73,9 @@ export function getFamilyMemberIngredientAmountPerMeal(params: {
   if (!Number.isFinite(applicableWeight) || applicableWeight <= 0) return null;
 
   const selectedWeight = getMemberMultiplier(selectedMember, memberPortions);
-  // Servings are total cooked portions. Targeted ingredients are split only
-  // across the members who receive that ingredient.
-  return (amount * allWeight * selectedWeight) / (recipeServings * applicableWeight);
+  // Servings are plate-count yield. One cooked meal consumes audienceCount / servings
+  // of the recipe, then multipliers divide that meal among applicable members.
+  return (amount * cookingMembers.length * selectedWeight) / (recipeServings * applicableWeight);
 }
 
 export function getPersonIngredientAmountPerMeal(params: {

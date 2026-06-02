@@ -62,29 +62,44 @@ model FamilyMember {
   isSelf    Boolean @default(false) @map("is_self")
   sortOrder Int     @map("sort_order")
 
-  user                    User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  logEntries              LogEntry[]
-  recipeMemberPortions    RecipeMemberPortion[]
-  recipeIngredientTargets RecipeIngredientMemberTarget[]
+  user                      User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logEntries                LogEntry[]
+  planAudienceMemberships   PlanAudienceMember[]
+  recipeAudienceMemberships RecipeAudienceMember[]
+  recipeMemberPortions      RecipeMemberPortion[]
+  recipeIngredientTargets   RecipeIngredientMemberTarget[]
 
   @@index([userId, sortOrder])
   @@map("family_members")
 }
 
 model Plan {
-  id           String        @id @default(cuid())
-  userId       String        @map("user_id")
-  startDate    DateTime      @map("start_date")
-  endDate      DateTime      @map("end_date")
-  createdAt    DateTime      @default(now()) @map("created_at")
-  slots        PlanSlot[]
-  log          Log?
-  shoppingList ShoppingList?
+  id              String               @id @default(cuid())
+  userId          String               @map("user_id")
+  startDate       DateTime             @map("start_date")
+  endDate         DateTime             @map("end_date")
+  createdAt       DateTime             @default(now()) @map("created_at")
+  slots           PlanSlot[]
+  audienceMembers PlanAudienceMember[]
+  log             Log?
+  shoppingList    ShoppingList?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("plans")
+}
+
+model PlanAudienceMember {
+  planId         String @map("plan_id")
+  familyMemberId String @map("family_member_id")
+
+  plan         Plan         @relation(fields: [planId], references: [id], onDelete: Cascade)
+  familyMember FamilyMember @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+
+  @@id([planId, familyMemberId])
+  @@index([familyMemberId])
+  @@map("plan_audience_members")
 }
 
 model GroceryIngredient {
@@ -226,6 +241,7 @@ model Recipe {
   ingredientGroups   RecipeIngredientGroup[]
   instructions       RecipeInstruction[]
   images             RecipeImage[]
+  audienceMembers    RecipeAudienceMember[]
   memberPortions     RecipeMemberPortion[]
   lastUsedInPlanner  DateTime?               @map("last_used_in_planner")
   excludeFromPlanner Boolean                 @default(false) @map("exclude_from_planner")
@@ -241,6 +257,18 @@ model Recipe {
   @@index([userId])
   @@index([slug])
   @@map("recipes")
+}
+
+model RecipeAudienceMember {
+  recipeId       String @map("recipe_id")
+  familyMemberId String @map("family_member_id")
+
+  recipe       Recipe       @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  familyMember FamilyMember @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+
+  @@id([recipeId, familyMemberId])
+  @@index([familyMemberId])
+  @@map("recipe_audience_members")
 }
 
 model RecipeMemberPortion {

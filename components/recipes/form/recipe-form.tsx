@@ -219,7 +219,14 @@ export default function RecipeForm({
       ? {
           ...recipeToFormData(recipe),
           memberPortions: familyMembers
-            .filter((member) => !member.isSelf)
+            .filter(
+              (member) =>
+                !member.isSelf &&
+                recipe.audienceMembers.some(
+                  (audienceMember) =>
+                    audienceMember.familyMemberId === member.id,
+                ),
+            )
             .map((member) => {
               const saved = recipe.memberPortions.find(
                 (portion) => portion.familyMemberId === member.id,
@@ -236,6 +243,8 @@ export default function RecipeForm({
           proteinCategoryId: null,
           typeCategoryId: null,
           images: [],
+          servings: Math.max(familyMembers.length, 1),
+          audienceFamilyMemberIds: familyMembers.map((member) => member.id),
           // Keep targeted numeric fields empty so placeholders guide first input.
           // Start in no-group mode; grouping is optional.
           ingredientGroups: [],
@@ -256,6 +265,8 @@ export default function RecipeForm({
 
   // Live nutrition preview — subscribed fields only (see `buildDraftRecipeForNutrition`).
   const previewServings = useWatch({ control: form.control, name: "servings" });
+  const previewAudienceFamilyMemberIds =
+    useWatch({ control: form.control, name: "audienceFamilyMemberIds" }) ?? [];
   const previewMemberPortions = useWatch({
     control: form.control,
     name: "memberPortions",
@@ -266,11 +277,16 @@ export default function RecipeForm({
   const nutritionPreview = useMemo(() => {
     const draft = buildDraftRecipeForNutrition(
       previewServings,
+      previewAudienceFamilyMemberIds,
       previewMemberPortions,
       previewIngredients,
       localIngredients,
     );
-    return familyMembers.map((member, index) => ({
+    const audienceIdSet = new Set(previewAudienceFamilyMemberIds);
+    const audienceMembers = familyMembers.filter((member) =>
+      audienceIdSet.has(member.id),
+    );
+    return audienceMembers.map((member, index) => ({
       familyMemberId: member.id,
       label:
         member.name.trim() ||
@@ -280,6 +296,7 @@ export default function RecipeForm({
   }, [
     familyMembers,
     previewServings,
+    previewAudienceFamilyMemberIds,
     previewMemberPortions,
     previewIngredients,
     localIngredients,
@@ -773,7 +790,9 @@ export default function RecipeForm({
                   <FormControl>
                     <IngredientSelector
                       ingredients={localIngredients}
-                      familyMembers={familyMembers}
+                      familyMembers={familyMembers.filter((member) =>
+                        previewAudienceFamilyMemberIds.includes(member.id),
+                      )}
                       groups={ingredientGroups}
                       value={field.value}
                       onChange={field.onChange}

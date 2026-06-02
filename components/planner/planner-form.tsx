@@ -7,10 +7,13 @@ import {
   FormField,
   FormItem,
   FormControl,
+  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import {
   plannerCriteriaSchema,
@@ -47,12 +50,14 @@ import {
   mergeDailyLimitsByDate,
   type TimeLimitGroups,
 } from "@/lib/planner/time-limit-mapping";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 type PlannerFormProps = {
   ingredients: IngredientType[];
   recipes: RecipeType[];
   previousPlanUnusedRecipes: RollingRecipeType[];
   occupiedDateKeys: string[];
+  familyMembers: FamilyMemberRow[];
 };
 
 type TimeLimitsMode = "grouped" | "daily";
@@ -79,6 +84,7 @@ export function PlannerForm({
   recipes,
   previousPlanUnusedRecipes,
   occupiedDateKeys,
+  familyMembers,
 }: PlannerFormProps) {
   const [plan, setPlan] = useState<PlanInputType | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -109,6 +115,7 @@ export function PlannerForm({
     defaultValues: {
       // Prefill to next 4 days (inclusive) or first free 4-day window.
       dateRange: getDefaultDateRange(occupiedDateKeys),
+      audienceFamilyMemberIds: familyMembers.map((member) => member.id),
       dailyTimeLimits: [],
       fridgeIngredientIds: [],
       rollingRecipes: [],
@@ -125,6 +132,7 @@ export function PlannerForm({
       const result = await generatePlan(
         new Date(values.dateRange.start),
         new Date(values.dateRange.end),
+        values.audienceFamilyMemberIds ?? [],
         values.dailyTimeLimits as DayTimeLimitsType[],
         values.fridgeIngredientIds ?? [],
         // Coerced numeric fields are validated by Zod; cast input shape for server action typing.
@@ -228,6 +236,21 @@ export function PlannerForm({
     (form.watch("dailyTimeLimits") as DayTimeLimitsType[] | undefined) ?? [];
 
   const dateRange = form.watch("dateRange");
+  const selectedAudienceFamilyMemberIds =
+    form.watch("audienceFamilyMemberIds") ?? [];
+  const selectedAudienceIdSet = new Set(selectedAudienceFamilyMemberIds);
+  const eligibleRecipes = recipes.filter((recipe) => {
+    const recipeAudienceIds = new Set(
+      recipe.audienceMembers.map((member) => member.familyMemberId),
+    );
+    return selectedAudienceFamilyMemberIds.every((id) =>
+      recipeAudienceIds.has(id),
+    );
+  });
+  const eligibleRecipeIds = new Set(eligibleRecipes.map((recipe) => recipe.id));
+  const eligiblePreviousPlanUnusedRecipes = previousPlanUnusedRecipes.filter(
+    (recipe) => eligibleRecipeIds.has(recipe.recipeId),
+  );
   // Keep a narrowed generated plan reference so callback closures stay non-null-safe.
   const generatedPlan = shouldShowGeneratedPlan(plan, isGenerating)
     ? plan
@@ -429,6 +452,54 @@ export function PlannerForm({
                   getDayLabel={formatDayLabel}
                   onInvalidStateChange={setHasInvalidTimeLimitInputs}
                 />
+                <FormField
+                  control={form.control}
+                  name="audienceFamilyMemberIds"
+                  render={({ field }) => (
+                    <FormItem className="mt-4 rounded-xl border border-border bg-background p-4">
+                      <FormLabel>Who are you cooking for?</FormLabel>
+                      <FormControl>
+                        <div className="flex flex-wrap gap-2">
+                          {familyMembers.map((member, index) => {
+                            const label =
+                              member.name.trim() ||
+                              (member.isSelf ? "You" : `Family member ${index}`);
+                            return (
+                              <div
+                                key={member.id}
+                                className="flex items-center gap-2"
+                              >
+                                <Checkbox
+                                  id={`planner-audience-${member.id}`}
+                                  checked={selectedAudienceIdSet.has(member.id)}
+                                  onCheckedChange={(checked) => {
+                                    const current = field.value ?? [];
+                                    field.onChange(
+                                      checked === true
+                                        ? [...current, member.id]
+                                        : current.filter((id) => id !== member.id),
+                                    );
+                                  }}
+                                />
+                                <Label
+                                  htmlFor={`planner-audience-${member.id}`}
+                                  className="normal-case tracking-normal"
+                                >
+                                  {label}
+                                </Label>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </FormControl>
+                      <p className="text-sm text-muted-foreground">
+                        Only recipes that include everyone selected here can be
+                        planned.
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <div className="mt-4 rounded-xl border border-border bg-background p-4">
                   <FormField
                     control={form.control}
@@ -442,8 +513,9 @@ export function PlannerForm({
                           selected={selected}
                           onChange={field.onChange}
                           ingredients={ingredients}
-                          recipes={recipes}
-                          previousPlanUnusedRecipes={previousPlanUnusedRecipes}
+                          recipes={eligibleRecipes}
+                          audienceMemberCount={selectedAudienceFamilyMemberIds.length}
+                          previousPlanUnusedRecipes={eligiblePreviousPlanUnusedRecipes}
                           onInvalidStateChange={setHasInvalidRollingMealsInputs}
                         />
                       );

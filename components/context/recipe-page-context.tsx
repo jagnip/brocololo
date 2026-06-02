@@ -81,6 +81,12 @@ export function RecipePageProvider({
     setSelectedInstructionFamilyMemberId,
   ] = useState<string | null>(null);
   const scaling = useRecipeScalingState({ recipe });
+  const recipeAudienceFamilyMembers = useMemo(() => {
+    const audienceIds = new Set(
+      recipe.audienceMembers.map((member) => member.familyMemberId),
+    );
+    return familyMembers.filter((member) => audienceIds.has(member.id));
+  }, [familyMembers, recipe.audienceMembers]);
 
   const effectiveRecipe = useMemo(
     () =>
@@ -99,7 +105,7 @@ export function RecipePageProvider({
     targetCaloriesPerPortion: scaling.targetCaloriesPerPortion,
     globalScaleRatio: scaling.globalScaleRatio,
     localScaleByIngredientId: scaling.localScaleByIngredientId,
-    familyMembers,
+    familyMembers: recipeAudienceFamilyMembers,
   });
 
   const { ungroupedIngredients, visibleGroupedIngredients } = useIngredientGrouping({
@@ -122,7 +128,7 @@ export function RecipePageProvider({
     () => ({
       recipe,
       ingredients,
-      familyMembers,
+      familyMembers: recipeAudienceFamilyMembers,
       selectedInstructionFamilyMemberId,
       setSelectedInstructionFamilyMemberId,
       currentServings: scaling.currentServings,
@@ -155,7 +161,7 @@ export function RecipePageProvider({
     }),
     [
       ingredients,
-      familyMembers,
+      recipeAudienceFamilyMembers,
       nutrition.effectiveRecipeIngredientById,
       nutrition.getIngredientCalorieFactor,
       nutrition.getIngredientDisplayScalingFactor,
@@ -164,18 +170,7 @@ export function RecipePageProvider({
       nutrition.servingScalingFactor,
       originalRecipeIngredientById,
       recipe,
-      scaling.currentServings,
-      scaling.handleApplyScaleToAll,
-      scaling.handleCaloriesChange,
-      scaling.handleIngredientEdit,
-      scaling.handleIngredientChange,
-      scaling.handleReset,
-      scaling.handleServingsChange,
-      scaling.handleUnitChange,
-      scaling.hasActiveScaling,
-      scaling.localScaleByIngredientId,
-      scaling.selectedUnits,
-      scaling.targetCaloriesPerPortion,
+      scaling,
       selectedInstructionFamilyMemberId,
       ungroupedIngredients,
       availableLogDateKeys,
@@ -302,6 +297,7 @@ export function useRecipePageAddToLogData() {
     recipeName: recipe.name,
     recipeIngredients: recipeForScaledNutrition.ingredients,
     familyMembers,
+    audienceMembers: recipe.audienceMembers,
     memberPortions: recipe.memberPortions,
     currentServings,
     servingScalingFactor,

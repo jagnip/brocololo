@@ -6,7 +6,6 @@ import {
   PlannerMealType,
   Prisma,
 } from "@/src/generated/client";
-import { getDaysInRange } from "@/lib/planner/helpers";
 import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
 import { prisma } from "./index";
 
@@ -79,6 +78,9 @@ const recipeInclude = {
     },
   },
   images: true,
+  audienceMembers: {
+    select: { familyMemberId: true },
+  },
   memberPortions: true,
 } as const;
 
@@ -169,6 +171,9 @@ export async function getPlanById(userId: string, planId: string) {
   const plan = await prisma.plan.findFirst({
     where: { id: planId, userId },
     include: {
+      audienceMembers: {
+        select: { familyMemberId: true },
+      },
       slots: {
         include: {
           recipe: { include: recipeInclude },
@@ -184,12 +189,16 @@ export async function getPlanById(userId: string, planId: string) {
   });
 
   if (!plan) return null;
+  const cookingFamilyMemberIds = plan.audienceMembers.map(
+    (member) => member.familyMemberId,
+  );
 
   return plan.slots.map((slot) => ({
     date: slot.date,
     mealType: slot.mealType,
     recipe: slot.recipe,
     alternatives: slot.alternatives.map((a) => a.recipe),
+    cookingFamilyMemberIds,
     used: slot.used,
   }));
 }
@@ -364,6 +373,11 @@ export async function createPlan(
         userId,
         startDate,
         endDate,
+        audienceMembers: {
+          create: [
+            ...new Set(slots.flatMap((slot) => slot.cookingFamilyMemberIds ?? [])),
+          ].map((familyMemberId) => ({ familyMemberId })),
+        },
         slots: {
           create: slots.map((s) => ({
             date: s.date,
@@ -415,9 +429,12 @@ async function createBaselineLogTx(
     select: { id: true },
   });
 
-  // One log entry per plan slot per current family member (no automatic snack slots).
+  const cookingFamilyMemberIds = [
+    ...new Set(slots.flatMap((slot) => slot.cookingFamilyMemberIds ?? [])),
+  ];
+  // One log entry per plan slot per selected cooking member (no automatic snack slots).
   const familyMembers = await tx.familyMember.findMany({
-    where: { userId },
+    where: { userId, id: { in: cookingFamilyMemberIds } },
     select: { id: true },
     orderBy: { sortOrder: "asc" },
   });
@@ -482,6 +499,7 @@ export async function getPlannerPoolItemsForPlan(params: {
             recipeServings: slot.recipe!.servings,
             familyMembers,
             memberPortions: slot.recipe!.memberPortions,
+            cookingFamilyMemberIds: slot.cookingFamilyMemberIds,
           });
           if (personAmount == null || ri.unitId == null) return null;
           return {

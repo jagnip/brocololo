@@ -83,6 +83,9 @@ const recipeInclude = {
     },
   },
   images: true,
+  audienceMembers: {
+    select: { familyMemberId: true },
+  },
   memberPortions: true,
 } satisfies Prisma.RecipeInclude;
 
@@ -240,6 +243,7 @@ export async function createRecipe(
     ingredients,
     instructions,
     images,
+    audienceFamilyMemberIds,
     memberPortions,
     ...recipeData
   } = data;
@@ -257,11 +261,13 @@ export async function createRecipe(
   );
   assertKnownFamilyMemberIds(
     [
+      ...audienceFamilyMemberIds,
       ...memberPortions.map((portion) => portion.familyMemberId),
       ...ingredients.flatMap((ingredient) => ingredient.targetFamilyMemberIds),
     ],
     ownedFamilyMemberIds,
   );
+  const audienceFamilyMemberIdSet = new Set(audienceFamilyMemberIds);
   // Keep positions deterministic and unique even if client submits duplicates.
   const normalizedGroups = [...ingredientGroups]
     .sort((a, b) => a.position - b.position)
@@ -284,12 +290,21 @@ export async function createRecipe(
             isCover: img.isCover,
           })),
         },
+        audienceMembers: {
+          create: audienceFamilyMemberIds.map((familyMemberId) => ({
+            familyMemberId,
+          })),
+        },
       },
       select: { id: true },
     });
 
     const portionRows = memberPortions
-      .filter((portion) => nonSelfFamilyMemberIds.has(portion.familyMemberId))
+      .filter(
+        (portion) =>
+          nonSelfFamilyMemberIds.has(portion.familyMemberId) &&
+          audienceFamilyMemberIdSet.has(portion.familyMemberId),
+      )
       .map((portion) => ({
         recipeId: recipe.id,
         familyMemberId: portion.familyMemberId,
@@ -334,9 +349,12 @@ export async function createRecipe(
         select: { id: true },
       });
 
-      if (!ing.appliesToEveryone && ing.targetFamilyMemberIds.length > 0) {
+      const targetFamilyMemberIds = ing.targetFamilyMemberIds.filter((id) =>
+        audienceFamilyMemberIdSet.has(id),
+      );
+      if (!ing.appliesToEveryone && targetFamilyMemberIds.length > 0) {
         await tx.recipeIngredientMemberTarget.createMany({
-          data: ing.targetFamilyMemberIds.map((familyMemberId) => ({
+          data: targetFamilyMemberIds.map((familyMemberId) => ({
             recipeIngredientId: created.id,
             familyMemberId,
           })),
@@ -403,6 +421,7 @@ export async function updateRecipe(
     ingredients,
     instructions,
     images,
+    audienceFamilyMemberIds,
     memberPortions,
     ...recipeData
   } = data;
@@ -420,11 +439,13 @@ export async function updateRecipe(
   );
   assertKnownFamilyMemberIds(
     [
+      ...audienceFamilyMemberIds,
       ...memberPortions.map((portion) => portion.familyMemberId),
       ...ingredients.flatMap((ingredient) => ingredient.targetFamilyMemberIds),
     ],
     ownedFamilyMemberIds,
   );
+  const audienceFamilyMemberIdSet = new Set(audienceFamilyMemberIds);
   // Keep positions deterministic and unique even if client submits duplicates.
   const normalizedGroups = [...ingredientGroups]
     .sort((a, b) => a.position - b.position)
@@ -462,8 +483,24 @@ export async function updateRecipe(
     await tx.recipeMemberPortion.deleteMany({
       where: { recipeId },
     });
+    await tx.recipeAudienceMember.deleteMany({
+      where: { recipeId },
+    });
+    if (audienceFamilyMemberIds.length > 0) {
+      await tx.recipeAudienceMember.createMany({
+        data: audienceFamilyMemberIds.map((familyMemberId) => ({
+          recipeId,
+          familyMemberId,
+        })),
+        skipDuplicates: true,
+      });
+    }
     const portionRows = memberPortions
-      .filter((portion) => nonSelfFamilyMemberIds.has(portion.familyMemberId))
+      .filter(
+        (portion) =>
+          nonSelfFamilyMemberIds.has(portion.familyMemberId) &&
+          audienceFamilyMemberIdSet.has(portion.familyMemberId),
+      )
       .map((portion) => ({
         recipeId,
         familyMemberId: portion.familyMemberId,
@@ -564,9 +601,12 @@ export async function updateRecipe(
           },
         });
         ingredientIdByTempKey.set(ing.tempIngredientKey, ing.id);
-        if (!ing.appliesToEveryone && ing.targetFamilyMemberIds.length > 0) {
+        const targetFamilyMemberIds = ing.targetFamilyMemberIds.filter((id) =>
+          audienceFamilyMemberIdSet.has(id),
+        );
+        if (!ing.appliesToEveryone && targetFamilyMemberIds.length > 0) {
           await tx.recipeIngredientMemberTarget.createMany({
-            data: ing.targetFamilyMemberIds.map((familyMemberId) => ({
+            data: targetFamilyMemberIds.map((familyMemberId) => ({
               recipeIngredientId: ing.id!,
               familyMemberId,
             })),
@@ -587,9 +627,12 @@ export async function updateRecipe(
           },
           select: { id: true },
         });
-        if (!ing.appliesToEveryone && ing.targetFamilyMemberIds.length > 0) {
+        const targetFamilyMemberIds = ing.targetFamilyMemberIds.filter((id) =>
+          audienceFamilyMemberIdSet.has(id),
+        );
+        if (!ing.appliesToEveryone && targetFamilyMemberIds.length > 0) {
           await tx.recipeIngredientMemberTarget.createMany({
-            data: ing.targetFamilyMemberIds.map((familyMemberId) => ({
+            data: targetFamilyMemberIds.map((familyMemberId) => ({
               recipeIngredientId: created.id,
               familyMemberId,
             })),

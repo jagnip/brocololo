@@ -218,6 +218,8 @@ export type FamilyMemberWhereInput = {
   sortOrder?: Prisma.IntFilter<"FamilyMember"> | number
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   logEntries?: Prisma.LogEntryListRelationFilter
+  planAudienceMemberships?: Prisma.PlanAudienceMemberListRelationFilter
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberListRelationFilter
   recipeMemberPortions?: Prisma.RecipeMemberPortionListRelationFilter
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetListRelationFilter
 }
@@ -230,6 +232,8 @@ export type FamilyMemberOrderByWithRelationInput = {
   sortOrder?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   logEntries?: Prisma.LogEntryOrderByRelationAggregateInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberOrderByRelationAggregateInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberOrderByRelationAggregateInput
   recipeMemberPortions?: Prisma.RecipeMemberPortionOrderByRelationAggregateInput
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetOrderByRelationAggregateInput
 }
@@ -245,6 +249,8 @@ export type FamilyMemberWhereUniqueInput = Prisma.AtLeast<{
   sortOrder?: Prisma.IntFilter<"FamilyMember"> | number
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   logEntries?: Prisma.LogEntryListRelationFilter
+  planAudienceMemberships?: Prisma.PlanAudienceMemberListRelationFilter
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberListRelationFilter
   recipeMemberPortions?: Prisma.RecipeMemberPortionListRelationFilter
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetListRelationFilter
 }, "id">
@@ -280,6 +286,8 @@ export type FamilyMemberCreateInput = {
   sortOrder: number
   user: Prisma.UserCreateNestedOneWithoutFamilyMembersInput
   logEntries?: Prisma.LogEntryCreateNestedManyWithoutFamilyMemberInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberCreateNestedManyWithoutFamilyMemberInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutFamilyMemberInput
   recipeMemberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutFamilyMemberInput
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetCreateNestedManyWithoutFamilyMemberInput
 }
@@ -291,6 +299,8 @@ export type FamilyMemberUncheckedCreateInput = {
   isSelf?: boolean
   sortOrder: number
   logEntries?: Prisma.LogEntryUncheckedCreateNestedManyWithoutFamilyMemberInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
   recipeMemberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutFamilyMemberInput
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUncheckedCreateNestedManyWithoutFamilyMemberInput
 }
@@ -302,6 +312,8 @@ export type FamilyMemberUpdateInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutFamilyMembersNestedInput
   logEntries?: Prisma.LogEntryUpdateManyWithoutFamilyMemberNestedInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
   recipeMemberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutFamilyMemberNestedInput
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUpdateManyWithoutFamilyMemberNestedInput
 }
@@ -313,6 +325,8 @@ export type FamilyMemberUncheckedUpdateInput = {
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   logEntries?: Prisma.LogEntryUncheckedUpdateManyWithoutFamilyMemberNestedInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
   recipeMemberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutFamilyMemberNestedInput
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUncheckedUpdateManyWithoutFamilyMemberNestedInput
 }
@@ -441,6 +455,34 @@ export type IntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type FamilyMemberCreateNestedOneWithoutPlanAudienceMembershipsInput = {
+  create?: Prisma.XOR<Prisma.FamilyMemberCreateWithoutPlanAudienceMembershipsInput, Prisma.FamilyMemberUncheckedCreateWithoutPlanAudienceMembershipsInput>
+  connectOrCreate?: Prisma.FamilyMemberCreateOrConnectWithoutPlanAudienceMembershipsInput
+  connect?: Prisma.FamilyMemberWhereUniqueInput
+}
+
+export type FamilyMemberUpdateOneRequiredWithoutPlanAudienceMembershipsNestedInput = {
+  create?: Prisma.XOR<Prisma.FamilyMemberCreateWithoutPlanAudienceMembershipsInput, Prisma.FamilyMemberUncheckedCreateWithoutPlanAudienceMembershipsInput>
+  connectOrCreate?: Prisma.FamilyMemberCreateOrConnectWithoutPlanAudienceMembershipsInput
+  upsert?: Prisma.FamilyMemberUpsertWithoutPlanAudienceMembershipsInput
+  connect?: Prisma.FamilyMemberWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.FamilyMemberUpdateToOneWithWhereWithoutPlanAudienceMembershipsInput, Prisma.FamilyMemberUpdateWithoutPlanAudienceMembershipsInput>, Prisma.FamilyMemberUncheckedUpdateWithoutPlanAudienceMembershipsInput>
+}
+
+export type FamilyMemberCreateNestedOneWithoutRecipeAudienceMembershipsInput = {
+  create?: Prisma.XOR<Prisma.FamilyMemberCreateWithoutRecipeAudienceMembershipsInput, Prisma.FamilyMemberUncheckedCreateWithoutRecipeAudienceMembershipsInput>
+  connectOrCreate?: Prisma.FamilyMemberCreateOrConnectWithoutRecipeAudienceMembershipsInput
+  connect?: Prisma.FamilyMemberWhereUniqueInput
+}
+
+export type FamilyMemberUpdateOneRequiredWithoutRecipeAudienceMembershipsNestedInput = {
+  create?: Prisma.XOR<Prisma.FamilyMemberCreateWithoutRecipeAudienceMembershipsInput, Prisma.FamilyMemberUncheckedCreateWithoutRecipeAudienceMembershipsInput>
+  connectOrCreate?: Prisma.FamilyMemberCreateOrConnectWithoutRecipeAudienceMembershipsInput
+  upsert?: Prisma.FamilyMemberUpsertWithoutRecipeAudienceMembershipsInput
+  connect?: Prisma.FamilyMemberWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.FamilyMemberUpdateToOneWithWhereWithoutRecipeAudienceMembershipsInput, Prisma.FamilyMemberUpdateWithoutRecipeAudienceMembershipsInput>, Prisma.FamilyMemberUncheckedUpdateWithoutRecipeAudienceMembershipsInput>
+}
+
 export type FamilyMemberCreateNestedOneWithoutRecipeMemberPortionsInput = {
   create?: Prisma.XOR<Prisma.FamilyMemberCreateWithoutRecipeMemberPortionsInput, Prisma.FamilyMemberUncheckedCreateWithoutRecipeMemberPortionsInput>
   connectOrCreate?: Prisma.FamilyMemberCreateOrConnectWithoutRecipeMemberPortionsInput
@@ -489,6 +531,8 @@ export type FamilyMemberCreateWithoutUserInput = {
   isSelf?: boolean
   sortOrder: number
   logEntries?: Prisma.LogEntryCreateNestedManyWithoutFamilyMemberInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberCreateNestedManyWithoutFamilyMemberInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutFamilyMemberInput
   recipeMemberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutFamilyMemberInput
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetCreateNestedManyWithoutFamilyMemberInput
 }
@@ -499,6 +543,8 @@ export type FamilyMemberUncheckedCreateWithoutUserInput = {
   isSelf?: boolean
   sortOrder: number
   logEntries?: Prisma.LogEntryUncheckedCreateNestedManyWithoutFamilyMemberInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
   recipeMemberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutFamilyMemberInput
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUncheckedCreateNestedManyWithoutFamilyMemberInput
 }
@@ -540,6 +586,134 @@ export type FamilyMemberScalarWhereInput = {
   sortOrder?: Prisma.IntFilter<"FamilyMember"> | number
 }
 
+export type FamilyMemberCreateWithoutPlanAudienceMembershipsInput = {
+  id?: string
+  name: string
+  isSelf?: boolean
+  sortOrder: number
+  user: Prisma.UserCreateNestedOneWithoutFamilyMembersInput
+  logEntries?: Prisma.LogEntryCreateNestedManyWithoutFamilyMemberInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutFamilyMemberInput
+  recipeMemberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutFamilyMemberInput
+  recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetCreateNestedManyWithoutFamilyMemberInput
+}
+
+export type FamilyMemberUncheckedCreateWithoutPlanAudienceMembershipsInput = {
+  id?: string
+  userId: string
+  name: string
+  isSelf?: boolean
+  sortOrder: number
+  logEntries?: Prisma.LogEntryUncheckedCreateNestedManyWithoutFamilyMemberInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
+  recipeMemberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutFamilyMemberInput
+  recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUncheckedCreateNestedManyWithoutFamilyMemberInput
+}
+
+export type FamilyMemberCreateOrConnectWithoutPlanAudienceMembershipsInput = {
+  where: Prisma.FamilyMemberWhereUniqueInput
+  create: Prisma.XOR<Prisma.FamilyMemberCreateWithoutPlanAudienceMembershipsInput, Prisma.FamilyMemberUncheckedCreateWithoutPlanAudienceMembershipsInput>
+}
+
+export type FamilyMemberUpsertWithoutPlanAudienceMembershipsInput = {
+  update: Prisma.XOR<Prisma.FamilyMemberUpdateWithoutPlanAudienceMembershipsInput, Prisma.FamilyMemberUncheckedUpdateWithoutPlanAudienceMembershipsInput>
+  create: Prisma.XOR<Prisma.FamilyMemberCreateWithoutPlanAudienceMembershipsInput, Prisma.FamilyMemberUncheckedCreateWithoutPlanAudienceMembershipsInput>
+  where?: Prisma.FamilyMemberWhereInput
+}
+
+export type FamilyMemberUpdateToOneWithWhereWithoutPlanAudienceMembershipsInput = {
+  where?: Prisma.FamilyMemberWhereInput
+  data: Prisma.XOR<Prisma.FamilyMemberUpdateWithoutPlanAudienceMembershipsInput, Prisma.FamilyMemberUncheckedUpdateWithoutPlanAudienceMembershipsInput>
+}
+
+export type FamilyMemberUpdateWithoutPlanAudienceMembershipsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  user?: Prisma.UserUpdateOneRequiredWithoutFamilyMembersNestedInput
+  logEntries?: Prisma.LogEntryUpdateManyWithoutFamilyMemberNestedInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
+  recipeMemberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutFamilyMemberNestedInput
+  recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUpdateManyWithoutFamilyMemberNestedInput
+}
+
+export type FamilyMemberUncheckedUpdateWithoutPlanAudienceMembershipsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  logEntries?: Prisma.LogEntryUncheckedUpdateManyWithoutFamilyMemberNestedInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
+  recipeMemberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutFamilyMemberNestedInput
+  recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUncheckedUpdateManyWithoutFamilyMemberNestedInput
+}
+
+export type FamilyMemberCreateWithoutRecipeAudienceMembershipsInput = {
+  id?: string
+  name: string
+  isSelf?: boolean
+  sortOrder: number
+  user: Prisma.UserCreateNestedOneWithoutFamilyMembersInput
+  logEntries?: Prisma.LogEntryCreateNestedManyWithoutFamilyMemberInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberCreateNestedManyWithoutFamilyMemberInput
+  recipeMemberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutFamilyMemberInput
+  recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetCreateNestedManyWithoutFamilyMemberInput
+}
+
+export type FamilyMemberUncheckedCreateWithoutRecipeAudienceMembershipsInput = {
+  id?: string
+  userId: string
+  name: string
+  isSelf?: boolean
+  sortOrder: number
+  logEntries?: Prisma.LogEntryUncheckedCreateNestedManyWithoutFamilyMemberInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
+  recipeMemberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutFamilyMemberInput
+  recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUncheckedCreateNestedManyWithoutFamilyMemberInput
+}
+
+export type FamilyMemberCreateOrConnectWithoutRecipeAudienceMembershipsInput = {
+  where: Prisma.FamilyMemberWhereUniqueInput
+  create: Prisma.XOR<Prisma.FamilyMemberCreateWithoutRecipeAudienceMembershipsInput, Prisma.FamilyMemberUncheckedCreateWithoutRecipeAudienceMembershipsInput>
+}
+
+export type FamilyMemberUpsertWithoutRecipeAudienceMembershipsInput = {
+  update: Prisma.XOR<Prisma.FamilyMemberUpdateWithoutRecipeAudienceMembershipsInput, Prisma.FamilyMemberUncheckedUpdateWithoutRecipeAudienceMembershipsInput>
+  create: Prisma.XOR<Prisma.FamilyMemberCreateWithoutRecipeAudienceMembershipsInput, Prisma.FamilyMemberUncheckedCreateWithoutRecipeAudienceMembershipsInput>
+  where?: Prisma.FamilyMemberWhereInput
+}
+
+export type FamilyMemberUpdateToOneWithWhereWithoutRecipeAudienceMembershipsInput = {
+  where?: Prisma.FamilyMemberWhereInput
+  data: Prisma.XOR<Prisma.FamilyMemberUpdateWithoutRecipeAudienceMembershipsInput, Prisma.FamilyMemberUncheckedUpdateWithoutRecipeAudienceMembershipsInput>
+}
+
+export type FamilyMemberUpdateWithoutRecipeAudienceMembershipsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  user?: Prisma.UserUpdateOneRequiredWithoutFamilyMembersNestedInput
+  logEntries?: Prisma.LogEntryUpdateManyWithoutFamilyMemberNestedInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
+  recipeMemberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutFamilyMemberNestedInput
+  recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUpdateManyWithoutFamilyMemberNestedInput
+}
+
+export type FamilyMemberUncheckedUpdateWithoutRecipeAudienceMembershipsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  logEntries?: Prisma.LogEntryUncheckedUpdateManyWithoutFamilyMemberNestedInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
+  recipeMemberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutFamilyMemberNestedInput
+  recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUncheckedUpdateManyWithoutFamilyMemberNestedInput
+}
+
 export type FamilyMemberCreateWithoutRecipeMemberPortionsInput = {
   id?: string
   name: string
@@ -547,6 +721,8 @@ export type FamilyMemberCreateWithoutRecipeMemberPortionsInput = {
   sortOrder: number
   user: Prisma.UserCreateNestedOneWithoutFamilyMembersInput
   logEntries?: Prisma.LogEntryCreateNestedManyWithoutFamilyMemberInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberCreateNestedManyWithoutFamilyMemberInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutFamilyMemberInput
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetCreateNestedManyWithoutFamilyMemberInput
 }
 
@@ -557,6 +733,8 @@ export type FamilyMemberUncheckedCreateWithoutRecipeMemberPortionsInput = {
   isSelf?: boolean
   sortOrder: number
   logEntries?: Prisma.LogEntryUncheckedCreateNestedManyWithoutFamilyMemberInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUncheckedCreateNestedManyWithoutFamilyMemberInput
 }
 
@@ -583,6 +761,8 @@ export type FamilyMemberUpdateWithoutRecipeMemberPortionsInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutFamilyMembersNestedInput
   logEntries?: Prisma.LogEntryUpdateManyWithoutFamilyMemberNestedInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUpdateManyWithoutFamilyMemberNestedInput
 }
 
@@ -593,6 +773,8 @@ export type FamilyMemberUncheckedUpdateWithoutRecipeMemberPortionsInput = {
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   logEntries?: Prisma.LogEntryUncheckedUpdateManyWithoutFamilyMemberNestedInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUncheckedUpdateManyWithoutFamilyMemberNestedInput
 }
 
@@ -603,6 +785,8 @@ export type FamilyMemberCreateWithoutRecipeIngredientTargetsInput = {
   sortOrder: number
   user: Prisma.UserCreateNestedOneWithoutFamilyMembersInput
   logEntries?: Prisma.LogEntryCreateNestedManyWithoutFamilyMemberInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberCreateNestedManyWithoutFamilyMemberInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutFamilyMemberInput
   recipeMemberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutFamilyMemberInput
 }
 
@@ -613,6 +797,8 @@ export type FamilyMemberUncheckedCreateWithoutRecipeIngredientTargetsInput = {
   isSelf?: boolean
   sortOrder: number
   logEntries?: Prisma.LogEntryUncheckedCreateNestedManyWithoutFamilyMemberInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
   recipeMemberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutFamilyMemberInput
 }
 
@@ -639,6 +825,8 @@ export type FamilyMemberUpdateWithoutRecipeIngredientTargetsInput = {
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutFamilyMembersNestedInput
   logEntries?: Prisma.LogEntryUpdateManyWithoutFamilyMemberNestedInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
   recipeMemberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutFamilyMemberNestedInput
 }
 
@@ -649,6 +837,8 @@ export type FamilyMemberUncheckedUpdateWithoutRecipeIngredientTargetsInput = {
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   logEntries?: Prisma.LogEntryUncheckedUpdateManyWithoutFamilyMemberNestedInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
   recipeMemberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutFamilyMemberNestedInput
 }
 
@@ -658,6 +848,8 @@ export type FamilyMemberCreateWithoutLogEntriesInput = {
   isSelf?: boolean
   sortOrder: number
   user: Prisma.UserCreateNestedOneWithoutFamilyMembersInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberCreateNestedManyWithoutFamilyMemberInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutFamilyMemberInput
   recipeMemberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutFamilyMemberInput
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetCreateNestedManyWithoutFamilyMemberInput
 }
@@ -668,6 +860,8 @@ export type FamilyMemberUncheckedCreateWithoutLogEntriesInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
   recipeMemberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutFamilyMemberInput
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUncheckedCreateNestedManyWithoutFamilyMemberInput
 }
@@ -694,6 +888,8 @@ export type FamilyMemberUpdateWithoutLogEntriesInput = {
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutFamilyMembersNestedInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
   recipeMemberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutFamilyMemberNestedInput
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUpdateManyWithoutFamilyMemberNestedInput
 }
@@ -704,6 +900,8 @@ export type FamilyMemberUncheckedUpdateWithoutLogEntriesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
   recipeMemberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutFamilyMemberNestedInput
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUncheckedUpdateManyWithoutFamilyMemberNestedInput
 }
@@ -721,6 +919,8 @@ export type FamilyMemberUpdateWithoutUserInput = {
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   logEntries?: Prisma.LogEntryUpdateManyWithoutFamilyMemberNestedInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
   recipeMemberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutFamilyMemberNestedInput
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUpdateManyWithoutFamilyMemberNestedInput
 }
@@ -731,6 +931,8 @@ export type FamilyMemberUncheckedUpdateWithoutUserInput = {
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
   logEntries?: Prisma.LogEntryUncheckedUpdateManyWithoutFamilyMemberNestedInput
+  planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
+  recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
   recipeMemberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutFamilyMemberNestedInput
   recipeIngredientTargets?: Prisma.RecipeIngredientMemberTargetUncheckedUpdateManyWithoutFamilyMemberNestedInput
 }
@@ -749,12 +951,16 @@ export type FamilyMemberUncheckedUpdateManyWithoutUserInput = {
 
 export type FamilyMemberCountOutputType = {
   logEntries: number
+  planAudienceMemberships: number
+  recipeAudienceMemberships: number
   recipeMemberPortions: number
   recipeIngredientTargets: number
 }
 
 export type FamilyMemberCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   logEntries?: boolean | FamilyMemberCountOutputTypeCountLogEntriesArgs
+  planAudienceMemberships?: boolean | FamilyMemberCountOutputTypeCountPlanAudienceMembershipsArgs
+  recipeAudienceMemberships?: boolean | FamilyMemberCountOutputTypeCountRecipeAudienceMembershipsArgs
   recipeMemberPortions?: boolean | FamilyMemberCountOutputTypeCountRecipeMemberPortionsArgs
   recipeIngredientTargets?: boolean | FamilyMemberCountOutputTypeCountRecipeIngredientTargetsArgs
 }
@@ -774,6 +980,20 @@ export type FamilyMemberCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types
  */
 export type FamilyMemberCountOutputTypeCountLogEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.LogEntryWhereInput
+}
+
+/**
+ * FamilyMemberCountOutputType without action
+ */
+export type FamilyMemberCountOutputTypeCountPlanAudienceMembershipsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PlanAudienceMemberWhereInput
+}
+
+/**
+ * FamilyMemberCountOutputType without action
+ */
+export type FamilyMemberCountOutputTypeCountRecipeAudienceMembershipsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RecipeAudienceMemberWhereInput
 }
 
 /**
@@ -799,6 +1019,8 @@ export type FamilyMemberSelect<ExtArgs extends runtime.Types.Extensions.Internal
   sortOrder?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   logEntries?: boolean | Prisma.FamilyMember$logEntriesArgs<ExtArgs>
+  planAudienceMemberships?: boolean | Prisma.FamilyMember$planAudienceMembershipsArgs<ExtArgs>
+  recipeAudienceMemberships?: boolean | Prisma.FamilyMember$recipeAudienceMembershipsArgs<ExtArgs>
   recipeMemberPortions?: boolean | Prisma.FamilyMember$recipeMemberPortionsArgs<ExtArgs>
   recipeIngredientTargets?: boolean | Prisma.FamilyMember$recipeIngredientTargetsArgs<ExtArgs>
   _count?: boolean | Prisma.FamilyMemberCountOutputTypeDefaultArgs<ExtArgs>
@@ -834,6 +1056,8 @@ export type FamilyMemberOmit<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type FamilyMemberInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   logEntries?: boolean | Prisma.FamilyMember$logEntriesArgs<ExtArgs>
+  planAudienceMemberships?: boolean | Prisma.FamilyMember$planAudienceMembershipsArgs<ExtArgs>
+  recipeAudienceMemberships?: boolean | Prisma.FamilyMember$recipeAudienceMembershipsArgs<ExtArgs>
   recipeMemberPortions?: boolean | Prisma.FamilyMember$recipeMemberPortionsArgs<ExtArgs>
   recipeIngredientTargets?: boolean | Prisma.FamilyMember$recipeIngredientTargetsArgs<ExtArgs>
   _count?: boolean | Prisma.FamilyMemberCountOutputTypeDefaultArgs<ExtArgs>
@@ -850,6 +1074,8 @@ export type $FamilyMemberPayload<ExtArgs extends runtime.Types.Extensions.Intern
   objects: {
     user: Prisma.$UserPayload<ExtArgs>
     logEntries: Prisma.$LogEntryPayload<ExtArgs>[]
+    planAudienceMemberships: Prisma.$PlanAudienceMemberPayload<ExtArgs>[]
+    recipeAudienceMemberships: Prisma.$RecipeAudienceMemberPayload<ExtArgs>[]
     recipeMemberPortions: Prisma.$RecipeMemberPortionPayload<ExtArgs>[]
     recipeIngredientTargets: Prisma.$RecipeIngredientMemberTargetPayload<ExtArgs>[]
   }
@@ -1255,6 +1481,8 @@ export interface Prisma__FamilyMemberClient<T, Null = never, ExtArgs extends run
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   logEntries<T extends Prisma.FamilyMember$logEntriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.FamilyMember$logEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LogEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  planAudienceMemberships<T extends Prisma.FamilyMember$planAudienceMembershipsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.FamilyMember$planAudienceMembershipsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlanAudienceMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  recipeAudienceMemberships<T extends Prisma.FamilyMember$recipeAudienceMembershipsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.FamilyMember$recipeAudienceMembershipsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecipeAudienceMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   recipeMemberPortions<T extends Prisma.FamilyMember$recipeMemberPortionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.FamilyMember$recipeMemberPortionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecipeMemberPortionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   recipeIngredientTargets<T extends Prisma.FamilyMember$recipeIngredientTargetsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.FamilyMember$recipeIngredientTargetsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecipeIngredientMemberTargetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1708,6 +1936,54 @@ export type FamilyMember$logEntriesArgs<ExtArgs extends runtime.Types.Extensions
   take?: number
   skip?: number
   distinct?: Prisma.LogEntryScalarFieldEnum | Prisma.LogEntryScalarFieldEnum[]
+}
+
+/**
+ * FamilyMember.planAudienceMemberships
+ */
+export type FamilyMember$planAudienceMembershipsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PlanAudienceMember
+   */
+  select?: Prisma.PlanAudienceMemberSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PlanAudienceMember
+   */
+  omit?: Prisma.PlanAudienceMemberOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PlanAudienceMemberInclude<ExtArgs> | null
+  where?: Prisma.PlanAudienceMemberWhereInput
+  orderBy?: Prisma.PlanAudienceMemberOrderByWithRelationInput | Prisma.PlanAudienceMemberOrderByWithRelationInput[]
+  cursor?: Prisma.PlanAudienceMemberWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PlanAudienceMemberScalarFieldEnum | Prisma.PlanAudienceMemberScalarFieldEnum[]
+}
+
+/**
+ * FamilyMember.recipeAudienceMemberships
+ */
+export type FamilyMember$recipeAudienceMembershipsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RecipeAudienceMember
+   */
+  select?: Prisma.RecipeAudienceMemberSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RecipeAudienceMember
+   */
+  omit?: Prisma.RecipeAudienceMemberOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RecipeAudienceMemberInclude<ExtArgs> | null
+  where?: Prisma.RecipeAudienceMemberWhereInput
+  orderBy?: Prisma.RecipeAudienceMemberOrderByWithRelationInput | Prisma.RecipeAudienceMemberOrderByWithRelationInput[]
+  cursor?: Prisma.RecipeAudienceMemberWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RecipeAudienceMemberScalarFieldEnum | Prisma.RecipeAudienceMemberScalarFieldEnum[]
 }
 
 /**

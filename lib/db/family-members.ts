@@ -130,3 +130,46 @@ export async function deleteFamilyMember(input: {
 
   await prisma.familyMember.delete({ where: { id: input.id } });
 }
+
+export type FamilyMemberRecipeImpact = {
+  hasRecipeImpact: boolean;
+};
+
+export async function getFamilyMemberRecipeImpact(input: {
+  userId: string;
+  id: string;
+}): Promise<FamilyMemberRecipeImpact> {
+  const owned = await prisma.familyMember.findFirst({
+    where: { id: input.id, userId: input.userId },
+    select: { id: true },
+  });
+  if (!owned) {
+    throw new Error("FAMILY_MEMBER_NOT_FOUND");
+  }
+
+  const [audienceRows, portionRows, ingredientTargetRows] = await Promise.all([
+    prisma.recipeAudienceMember.count({
+      where: {
+        familyMemberId: input.id,
+        recipe: { userId: input.userId },
+      },
+    }),
+    prisma.recipeMemberPortion.count({
+      where: {
+        familyMemberId: input.id,
+        recipe: { userId: input.userId },
+      },
+    }),
+    prisma.recipeIngredientMemberTarget.count({
+      where: {
+        familyMemberId: input.id,
+        recipeIngredient: { recipe: { userId: input.userId } },
+      },
+    }),
+  ]);
+
+  return {
+    hasRecipeImpact:
+      audienceRows + portionRows + ingredientTargetRows > 0,
+  };
+}

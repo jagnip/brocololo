@@ -257,6 +257,9 @@ export function recipeToFormData(recipe: RecipeType): UpdateRecipeFormValues {
     handsOnTime: recipe.handsOnTime,
     totalTime: recipe.totalTime,
     servings: recipe.servings,
+    audienceFamilyMemberIds: recipe.audienceMembers.map(
+      (member) => member.familyMemberId,
+    ),
     memberPortions: recipe.memberPortions.map((portion) => ({
       familyMemberId: portion.familyMemberId,
       multiplier: portion.multiplier,
@@ -417,6 +420,7 @@ export function getInstructionIngredientPersonFactor(
     recipeServings,
     familyMembers,
     memberPortions,
+    cookingFamilyMemberIds: familyMembers.map((member) => member.id),
   });
   return sampleAmount ?? 0;
 }
@@ -424,7 +428,7 @@ export function getInstructionIngredientPersonFactor(
 /** Minimal recipe shape consumed by nutrition math — avoids building full RecipeType mocks. */
 export type RecipeForNutritionCalculation = Pick<
   RecipeType,
-  "servings" | "memberPortions"
+  "servings" | "memberPortions" | "audienceMembers"
 > & {
   ingredients: RecipeType["ingredients"];
 };
@@ -470,6 +474,9 @@ export function calculateNutritionPerServing(
         recipeServings: recipe.servings,
         familyMembers,
         memberPortions: recipe.memberPortions,
+        cookingFamilyMemberIds: recipe.audienceMembers.map(
+          (member) => member.familyMemberId,
+        ),
       });
       if (amountForMember == null || amountForMember <= 0) {
         return acc;

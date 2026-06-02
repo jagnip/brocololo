@@ -55,6 +55,7 @@ export const ModelName = {
   User: 'User',
   FamilyMember: 'FamilyMember',
   Plan: 'Plan',
+  PlanAudienceMember: 'PlanAudienceMember',
   GroceryIngredient: 'GroceryIngredient',
   ShoppingLayoutPreset: 'ShoppingLayoutPreset',
   ShoppingLayoutPresetCategory: 'ShoppingLayoutPresetCategory',
@@ -64,6 +65,7 @@ export const ModelName = {
   PlanSlot: 'PlanSlot',
   PlanSlotAlternative: 'PlanSlotAlternative',
   Recipe: 'Recipe',
+  RecipeAudienceMember: 'RecipeAudienceMember',
   RecipeMemberPortion: 'RecipeMemberPortion',
   Ingredient: 'Ingredient',
   Unit: 'Unit',
@@ -139,6 +141,14 @@ export const PlanScalarFieldEnum = {
 } as const
 
 export type PlanScalarFieldEnum = (typeof PlanScalarFieldEnum)[keyof typeof PlanScalarFieldEnum]
+
+
+export const PlanAudienceMemberScalarFieldEnum = {
+  planId: 'planId',
+  familyMemberId: 'familyMemberId'
+} as const
+
+export type PlanAudienceMemberScalarFieldEnum = (typeof PlanAudienceMemberScalarFieldEnum)[keyof typeof PlanAudienceMemberScalarFieldEnum]
 
 
 export const GroceryIngredientScalarFieldEnum = {
@@ -249,6 +259,14 @@ export const RecipeScalarFieldEnum = {
 } as const
 
 export type RecipeScalarFieldEnum = (typeof RecipeScalarFieldEnum)[keyof typeof RecipeScalarFieldEnum]
+
+
+export const RecipeAudienceMemberScalarFieldEnum = {
+  recipeId: 'recipeId',
+  familyMemberId: 'familyMemberId'
+} as const
+
+export type RecipeAudienceMemberScalarFieldEnum = (typeof RecipeAudienceMemberScalarFieldEnum)[keyof typeof RecipeAudienceMemberScalarFieldEnum]
 
 
 export const RecipeMemberPortionScalarFieldEnum = {
