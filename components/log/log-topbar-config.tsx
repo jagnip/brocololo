@@ -6,22 +6,35 @@ import { LogTopbarControls } from "@/components/log/log-topbar-controls";
 import type { LogSelectOption } from "@/components/log/log-select";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { ROUTES } from "@/lib/constants";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 type LogTopbarConfigProps = {
   planId: string;
   logOptions: LogSelectOption[];
   logId: string;
+  familyMembers: FamilyMemberRow[];
 };
 
 /** Registers log detail top bar actions (e.g. link back to the plan this log belongs to). */
-export function LogTopbarConfig({ planId, logOptions, logId }: LogTopbarConfigProps) {
+export function LogTopbarConfig({
+  planId,
+  logOptions,
+  logId,
+  familyMembers,
+}: LogTopbarConfigProps) {
   const config = useMemo(
     () => ({
       breadcrumbs: [
         { label: "Meal plan", href: ROUTES.planCurrent },
         { label: "Log" },
       ],
-      rightContent: <LogTopbarControls logOptions={logOptions} logId={logId} />,
+      rightContent: (
+        <LogTopbarControls
+          logOptions={logOptions}
+          logId={logId}
+          familyMembers={familyMembers}
+        />
+      ),
       actions: [
         {
           id: "view-plan",
@@ -34,7 +47,7 @@ export function LogTopbarConfig({ planId, logOptions, logId }: LogTopbarConfigPr
         },
       ],
     }),
-    [planId, logId, logOptions],
+    [planId, logId, logOptions, familyMembers],
   );
 
   return <TopbarConfigController config={config} />;

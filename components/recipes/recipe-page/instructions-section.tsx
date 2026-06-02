@@ -16,12 +16,13 @@ import { Subheader } from "@/components/recipes/recipe-page/subheader";
 export function InstructionsSection() {
   const {
     instructions,
+    familyMembers,
+    recipeServings,
+    memberPortions,
     effectiveRecipeIngredientById,
-    selectedInstructionPerson,
-    setSelectedInstructionPerson,
+    selectedInstructionFamilyMemberId,
+    setSelectedInstructionFamilyMemberId,
     selectedUnits,
-    jagodaPortionFactor,
-    nelsonPortionFactor,
     getIngredientDisplayScalingFactor,
     getIngredientCalorieFactor,
   } = useRecipePageInstructionsSectionData();
@@ -62,20 +63,22 @@ export function InstructionsSection() {
           role="radiogroup"
           aria-label="Instruction person filter"
         >
-          {(["jagoda", "nelson"] as const).map((person) => {
-            const isSelected = selectedInstructionPerson === person;
-            const label = person === "jagoda" ? "Jagoda" : "Nelson";
+          {familyMembers.map((member, index) => {
+            const isSelected = selectedInstructionFamilyMemberId === member.id;
+            const label =
+              member.name.trim() ||
+              (member.isSelf ? "You" : `Family member ${index}`);
             return (
               <Button
-                key={person}
+                key={member.id}
                 type="button"
                 size="default"
                 role="radio"
                 aria-checked={isSelected}
                 variant="outline"
                 onClick={() =>
-                  setSelectedInstructionPerson((prev) =>
-                    prev === person ? null : person,
+                  setSelectedInstructionFamilyMemberId((prev) =>
+                    prev === member.id ? null : member.id,
                   )
                 }
                 // Build classes without empty entries.
@@ -154,8 +157,11 @@ export function InstructionsSection() {
                     // Filter instruction badges by selected person, but keep step text visible.
                     if (
                       !isInstructionIngredientVisibleForPerson(
-                        recipeIngredient.nutritionTarget,
-                        selectedInstructionPerson,
+                        recipeIngredient.appliesToEveryone,
+                        recipeIngredient.memberTargets.map(
+                          (target) => target.familyMemberId,
+                        ),
+                        selectedInstructionFamilyMemberId,
                       )
                     ) {
                       return null;
@@ -165,10 +171,14 @@ export function InstructionsSection() {
                       recipeIngredient.unit?.id ||
                       null;
                     const personFactor = getInstructionIngredientPersonFactor(
-                      recipeIngredient.nutritionTarget,
-                      selectedInstructionPerson,
-                      jagodaPortionFactor,
-                      nelsonPortionFactor,
+                      selectedInstructionFamilyMemberId,
+                      recipeServings,
+                      familyMembers,
+                      memberPortions,
+                      recipeIngredient.appliesToEveryone,
+                      recipeIngredient.memberTargets.map(
+                        (target) => target.familyMemberId,
+                      ),
                     );
                     const display = getIngredientDisplay(
                       recipeIngredient.amount,
@@ -178,9 +188,7 @@ export function InstructionsSection() {
                       recipeIngredient.ingredient.unitConversions,
                       getIngredientDisplayScalingFactor(recipeIngredient.id) *
                         personFactor,
-                      getIngredientCalorieFactor(
-                        recipeIngredient.nutritionTarget,
-                      ),
+                      getIngredientCalorieFactor(recipeIngredient),
                     );
                     const fullBadgeLabel = formatInstructionIngredientBadge({
                       rawAmount: display.rawAmount,

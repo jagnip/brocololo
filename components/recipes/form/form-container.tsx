@@ -4,6 +4,7 @@ import { getRecipeBySlug } from "@/lib/db/recipes";
 import { getIngredients } from "@/lib/db/ingredients";
 import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
 import { requireUser } from "@/lib/auth/session";
+import { ensureSelfFamilyMember } from "@/lib/db/family-members";
 
 export default async function RecipeFormContainer({
   recipeSlug,
@@ -11,12 +12,13 @@ export default async function RecipeFormContainer({
   recipeSlug?: string;
 }) {
   const { id: userId } = await requireUser();
-  const [categories, ingredients, ingredientFormDependencies, recipe] =
+  const [categories, ingredients, ingredientFormDependencies, recipe, familyMembers] =
     await Promise.all([
       getCategories(),
       getIngredients(userId),
       getIngredientFormDependencies(),
       recipeSlug ? getRecipeBySlug(userId, recipeSlug) : null,
+      ensureSelfFamilyMember(userId),
     ]);
 
   return (
@@ -25,6 +27,7 @@ export default async function RecipeFormContainer({
       ingredients={ingredients}
       ingredientFormDependencies={ingredientFormDependencies}
       recipe={recipe ?? undefined}
+      familyMembers={familyMembers}
     />
   );
 }

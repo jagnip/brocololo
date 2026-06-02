@@ -1,6 +1,7 @@
 import type { RecipeType } from "@/types/recipe";
 import type { IngredientType } from "@/types/ingredient";
 import type { UpdateRecipeFormValues } from "@/lib/validations/recipe";
+import { getFamilyMemberIngredientAmountPerMeal } from "@/lib/log/helpers";
 
 // Shape of a unitConversion entry after enriching with the unit name
 export type UnitConversionWithName = {
@@ -224,7 +225,8 @@ export function recipeToFormData(recipe: RecipeType): UpdateRecipeFormValues {
     ingredientId: ri.ingredient.id,
     amount: ri.amount,
     unitId: ri.unit?.id ?? null,
-    nutritionTarget: ri.nutritionTarget,
+    appliesToEveryone: ri.appliesToEveryone,
+    targetFamilyMemberIds: ri.memberTargets.map((target) => target.familyMemberId),
     additionalInfo: ri.additionalInfo,
     // Legacy recipes with no groups stay ungrouped in the editor.
     groupTempKey: ri.groupId ?? null,
@@ -255,7 +257,10 @@ export function recipeToFormData(recipe: RecipeType): UpdateRecipeFormValues {
     handsOnTime: recipe.handsOnTime,
     totalTime: recipe.totalTime,
     servings: recipe.servings,
-    servingMultiplierForNelson: recipe.servingMultiplierForNelson,
+    memberPortions: recipe.memberPortions.map((portion) => ({
+      familyMemberId: portion.familyMemberId,
+      multiplier: portion.multiplier,
+    })),
     ingredientGroups,
     ingredients: ingredientRows,
     instructions: recipe.instructions.map((instruction) => ({
@@ -334,23 +339,34 @@ export type NutritionPerPortion = {
   carbs: number;
 };
 
-export type NutritionRole = "primary" | "secondary";
-export type NutritionTarget = "BOTH" | "PRIMARY_ONLY" | "SECONDARY_ONLY";
-export type InstructionPersonFilter = "jagoda" | "nelson" | null;
+export type FamilyMemberForNutrition = {
+  id: string;
+  name?: string;
+  isSelf: boolean;
+  sortOrder?: number;
+};
 
-export function resolveNutritionRole(input: "jagoda" | "nelson" | NutritionRole): NutritionRole {
-  return input === "jagoda" ? "primary" : input === "nelson" ? "secondary" : input;
+export type InstructionPersonFilter = string | null;
+
+export function getCalorieScalingFactorForIngredient(
+  appliesToEveryone: boolean,
+  targetFamilyMemberIds: string[],
+  selectedFamilyMemberId: string,
+  calorieScalingFactor: number,
+): number {
+  // Calorie scaling is anchored to the account holder's row.
+  if (appliesToEveryone || targetFamilyMemberIds.includes(selectedFamilyMemberId)) {
+    return calorieScalingFactor;
+  }
+  return 1;
 }
 
 export function getPrimaryCalorieScalingFactorForTarget(
-  nutritionTarget: NutritionTarget,
+  nutritionTarget: "BOTH" | "PRIMARY_ONLY" | "SECONDARY_ONLY",
   primaryCalorieScalingFactor: number,
 ): number {
-  // Option A: primary calorie target never alters secondary-only ingredient amounts.
-  if (nutritionTarget === "SECONDARY_ONLY") {
-    return 1;
-  }
-  return primaryCalorieScalingFactor;
+  // Compatibility wrapper for legacy tests; active app code uses member IDs.
+  return nutritionTarget === "SECONDARY_ONLY" ? 1 : primaryCalorieScalingFactor;
 }
 
 /**
@@ -358,62 +374,66 @@ export function getPrimaryCalorieScalingFactorForTarget(
  * for the selected person filter.
  */
 export function isInstructionIngredientVisibleForPerson(
-  nutritionTarget: NutritionTarget,
-  selectedPerson: InstructionPersonFilter,
+  appliesToEveryone: boolean,
+  targetFamilyMemberIds: string[],
+  selectedFamilyMemberId: InstructionPersonFilter,
 ): boolean {
   // No filter selected => keep existing "show all badges" behavior.
-  if (selectedPerson == null) {
+  if (selectedFamilyMemberId == null) {
     return true;
   }
-  if (nutritionTarget === "BOTH") {
+  if (appliesToEveryone) {
     return true;
   }
-  if (selectedPerson === "jagoda") {
-    return nutritionTarget === "PRIMARY_ONLY";
-  }
-  return nutritionTarget === "SECONDARY_ONLY";
+  return targetFamilyMemberIds.includes(selectedFamilyMemberId);
 }
 
 /**
- * Returns per-person portion factor used for BOTH-target instruction badges.
+ * Returns per-person portion factor used for instruction badges.
  */
 export function getInstructionIngredientPersonFactor(
-  nutritionTarget: NutritionTarget,
-  selectedPerson: InstructionPersonFilter,
-  jagodaPortionFactor: number,
-  nelsonPortionFactor: number,
+  selectedFamilyMemberId: InstructionPersonFilter,
+  recipeServings: number,
+  familyMembers: FamilyMemberForNutrition[],
+  memberPortions: Array<{ familyMemberId: string; multiplier: number }>,
+  appliesToEveryone: boolean,
+  targetFamilyMemberIds: string[],
 ): number {
   // No person selected => preserve existing total recipe-row amount display.
-  if (selectedPerson == null || nutritionTarget !== "BOTH") {
+  if (selectedFamilyMemberId == null) {
     return 1;
   }
-  return selectedPerson === "jagoda" ? jagodaPortionFactor : nelsonPortionFactor;
+  const selectedMember = familyMembers.find(
+    (member) => member.id === selectedFamilyMemberId,
+  );
+  if (!selectedMember || recipeServings <= 0) {
+    return 1;
+  }
+  const sampleAmount = getFamilyMemberIngredientAmountPerMeal({
+    amount: recipeServings,
+    appliesToEveryone,
+    targetFamilyMemberIds,
+    familyMemberId: selectedFamilyMemberId,
+    recipeServings,
+    familyMembers,
+    memberPortions,
+  });
+  return sampleAmount ?? 0;
 }
 
 /** Minimal recipe shape consumed by nutrition math — avoids building full RecipeType mocks. */
 export type RecipeForNutritionCalculation = Pick<
   RecipeType,
-  "servings" | "servingMultiplierForNelson"
+  "servings" | "memberPortions"
 > & {
   ingredients: RecipeType["ingredients"];
 };
 
-function getIngredientNutritionTarget(
-  recipeIngredient: RecipeForNutritionCalculation["ingredients"][number],
-): NutritionTarget {
-  return recipeIngredient.nutritionTarget as NutritionTarget;
-}
-
 export function calculateNutritionPerServing(
   recipe: RecipeForNutritionCalculation,
-  person: "jagoda" | "nelson" | NutritionRole,
+  familyMemberId: string,
+  familyMembers: FamilyMemberForNutrition[],
 ): NutritionPerPortion {
-  const role = resolveNutritionRole(person);
-  const secondaryMultiplier = recipe.servingMultiplierForNelson;
-  const totalParts = 1 + secondaryMultiplier;
-  const primaryPortionFactor = 1 / totalParts;
-  const secondaryPortionFactor = secondaryMultiplier / totalParts;
-
   const total = recipe.ingredients.reduce(
     (acc, recipeIngredient) => {
       if (recipeIngredient.amount == null || recipeIngredient.unit == null) {
@@ -439,66 +459,38 @@ export function calculateNutritionPerServing(
         fat: ingredient.fats * nutrientMultiplier,
         carbs: ingredient.carbs * nutrientMultiplier,
       };
-      const target = getIngredientNutritionTarget(recipeIngredient);
 
-      if (target === "PRIMARY_ONLY") {
-        if (role !== "primary") {
-          return acc;
-        }
-        return {
-          calories: acc.calories + ingredientNutrition.calories,
-          protein: acc.protein + ingredientNutrition.protein,
-          fat: acc.fat + ingredientNutrition.fat,
-          carbs: acc.carbs + ingredientNutrition.carbs,
-        };
+      const amountForMember = getFamilyMemberIngredientAmountPerMeal({
+        amount: recipeIngredient.amount,
+        appliesToEveryone: recipeIngredient.appliesToEveryone,
+        targetFamilyMemberIds: recipeIngredient.memberTargets.map(
+          (target) => target.familyMemberId,
+        ),
+        familyMemberId,
+        recipeServings: recipe.servings,
+        familyMembers,
+        memberPortions: recipe.memberPortions,
+      });
+      if (amountForMember == null || amountForMember <= 0) {
+        return acc;
       }
 
-      if (target === "SECONDARY_ONLY") {
-        if (role !== "secondary") {
-          return acc;
-        }
-        return {
-          calories: acc.calories + ingredientNutrition.calories,
-          protein: acc.protein + ingredientNutrition.protein,
-          fat: acc.fat + ingredientNutrition.fat,
-          carbs: acc.carbs + ingredientNutrition.carbs,
-        };
-      }
-
-      // Shared ingredients are split by 1:multiplier across roles.
-      const sharedFactor = role === "primary" ? primaryPortionFactor : secondaryPortionFactor;
+      const memberFactor = amountForMember / recipeIngredient.amount;
       return {
-        calories: acc.calories + ingredientNutrition.calories * sharedFactor,
-        protein: acc.protein + ingredientNutrition.protein * sharedFactor,
-        fat: acc.fat + ingredientNutrition.fat * sharedFactor,
-        carbs: acc.carbs + ingredientNutrition.carbs * sharedFactor,
+        calories: acc.calories + ingredientNutrition.calories * memberFactor,
+        protein: acc.protein + ingredientNutrition.protein * memberFactor,
+        fat: acc.fat + ingredientNutrition.fat * memberFactor,
+        carbs: acc.carbs + ingredientNutrition.carbs * memberFactor,
       };
     },
     { calories: 0, protein: 0, fat: 0, carbs: 0 }
   );
 
-  const mealCount = recipe.servings / 2;
-  if (!Number.isFinite(mealCount) || mealCount <= 0) {
-    return {
-      calories: 0,
-      protein: 0,
-      fat: 0,
-      carbs: 0,
-    };
-  }
-
-  const perMeal = {
-    calories: total.calories / mealCount,
-    protein: total.protein / mealCount,
-    fat: total.fat / mealCount,
-    carbs: total.carbs / mealCount,
-  };
-
   return {
-    calories: Math.round(perMeal.calories * 10) / 10,
-    protein: Math.round(perMeal.protein * 10) / 10,
-    fat: Math.round(perMeal.fat * 10) / 10,
-    carbs: Math.round(perMeal.carbs * 10) / 10,
+    calories: Math.round(total.calories * 10) / 10,
+    protein: Math.round(total.protein * 10) / 10,
+    fat: Math.round(total.fat * 10) / 10,
+    carbs: Math.round(total.carbs * 10) / 10,
   };
 }
 
@@ -520,8 +512,6 @@ export function scaleNutritionByCalories(
 
 export type ScalingCalculation = {
   servingScalingFactor: number;
-  jagodaPortionFactor: number; 
-  nelsonPortionFactor: number;  
 };
 
 
@@ -553,21 +543,10 @@ export function scaleIngredientNutritionForGrams(
 export function calculateServingScalingFactor(
   currentServings: number,
   recipeServings: number,
-  nelsonMultiplier: number
 ): ScalingCalculation {
-  // Saved ingredient amounts already include Nelson's multiplier.
-  // Scaling between serving counts should therefore be linear.
   const servingScalingFactor = currentServings / recipeServings;
-
-  // Portion split per meal still follows Jagoda=1 part, Nelson=multiplier parts.
-  const totalParts = 1 + nelsonMultiplier;
-  const jagodaPortionFactor = 1 / totalParts;
-  const nelsonPortionFactor = nelsonMultiplier / totalParts;
-
   return {
     servingScalingFactor,
-    jagodaPortionFactor,
-    nelsonPortionFactor,
   };
 }
 

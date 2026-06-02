@@ -80,6 +80,7 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
   const topbarConfig = useMemo(
     () => ({
       breadcrumbs: [{ label: "Settings" }],
+      actions: [],
     }),
     [],
   );

@@ -23,6 +23,9 @@ const recipeInclude = {
     orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
     include: {
       group: true,
+      memberTargets: {
+        select: { familyMemberId: true },
+      },
       ingredient: {
         include: {
           category: {
@@ -51,6 +54,9 @@ const recipeInclude = {
         include: {
           recipeIngredient: {
             include: {
+              memberTargets: {
+                select: { familyMemberId: true },
+              },
               ingredient: {
                 include: {
                   category: {
@@ -77,6 +83,7 @@ const recipeInclude = {
     },
   },
   images: true,
+  memberPortions: true,
 } satisfies Prisma.RecipeInclude;
 
 export async function getRecipeBySlug(
@@ -202,6 +209,24 @@ async function validateAndBuildCategoryIds(input: {
   return uniqueCategoryIds;
 }
 
+async function getOwnedFamilyMembers(userId: string) {
+  return prisma.familyMember.findMany({
+    where: { userId },
+    select: { id: true, isSelf: true },
+    orderBy: { sortOrder: "asc" },
+  });
+}
+
+function assertKnownFamilyMemberIds(
+  familyMemberIds: string[],
+  ownedFamilyMemberIds: Set<string>,
+) {
+  for (const id of familyMemberIds) {
+    if (!ownedFamilyMemberIds.has(id)) {
+      throw new Error("INVALID_FAMILY_MEMBER_SELECTION");
+    }
+  }
+}
 
 export async function createRecipe(
   userId: string,
@@ -215,6 +240,7 @@ export async function createRecipe(
     ingredients,
     instructions,
     images,
+    memberPortions,
     ...recipeData
   } = data;
   const categories = await validateAndBuildCategoryIds({
@@ -222,6 +248,20 @@ export async function createRecipe(
     proteinCategoryId,
     typeCategoryId,
   });
+  const ownedFamilyMembers = await getOwnedFamilyMembers(userId);
+  const ownedFamilyMemberIds = new Set(ownedFamilyMembers.map((member) => member.id));
+  const nonSelfFamilyMemberIds = new Set(
+    ownedFamilyMembers
+      .filter((member) => !member.isSelf)
+      .map((member) => member.id),
+  );
+  assertKnownFamilyMemberIds(
+    [
+      ...memberPortions.map((portion) => portion.familyMemberId),
+      ...ingredients.flatMap((ingredient) => ingredient.targetFamilyMemberIds),
+    ],
+    ownedFamilyMemberIds,
+  );
   // Keep positions deterministic and unique even if client submits duplicates.
   const normalizedGroups = [...ingredientGroups]
     .sort((a, b) => a.position - b.position)
@@ -247,6 +287,20 @@ export async function createRecipe(
       },
       select: { id: true },
     });
+
+    const portionRows = memberPortions
+      .filter((portion) => nonSelfFamilyMemberIds.has(portion.familyMemberId))
+      .map((portion) => ({
+        recipeId: recipe.id,
+        familyMemberId: portion.familyMemberId,
+        multiplier: portion.multiplier,
+      }));
+    if (portionRows.length > 0) {
+      await tx.recipeMemberPortion.createMany({
+        data: portionRows,
+        skipDuplicates: true,
+      });
+    }
 
     const groupIdByTempKey = new Map<string, string>();
     for (const group of normalizedGroups) {
@@ -274,11 +328,21 @@ export async function createRecipe(
           ingredientId: ing.ingredientId,
           amount: ing.amount,
           unitId: ing.unitId,
-          nutritionTarget: ing.nutritionTarget,
+          appliesToEveryone: ing.appliesToEveryone,
           additionalInfo: ing.additionalInfo,
         },
         select: { id: true },
       });
+
+      if (!ing.appliesToEveryone && ing.targetFamilyMemberIds.length > 0) {
+        await tx.recipeIngredientMemberTarget.createMany({
+          data: ing.targetFamilyMemberIds.map((familyMemberId) => ({
+            recipeIngredientId: created.id,
+            familyMemberId,
+          })),
+          skipDuplicates: true,
+        });
+      }
 
       ingredientIdByTempKey.set(ing.tempIngredientKey, created.id);
     }
@@ -339,6 +403,7 @@ export async function updateRecipe(
     ingredients,
     instructions,
     images,
+    memberPortions,
     ...recipeData
   } = data;
   const categories = await validateAndBuildCategoryIds({
@@ -346,6 +411,20 @@ export async function updateRecipe(
     proteinCategoryId,
     typeCategoryId,
   });
+  const ownedFamilyMembers = await getOwnedFamilyMembers(userId);
+  const ownedFamilyMemberIds = new Set(ownedFamilyMembers.map((member) => member.id));
+  const nonSelfFamilyMemberIds = new Set(
+    ownedFamilyMembers
+      .filter((member) => !member.isSelf)
+      .map((member) => member.id),
+  );
+  assertKnownFamilyMemberIds(
+    [
+      ...memberPortions.map((portion) => portion.familyMemberId),
+      ...ingredients.flatMap((ingredient) => ingredient.targetFamilyMemberIds),
+    ],
+    ownedFamilyMemberIds,
+  );
   // Keep positions deterministic and unique even if client submits duplicates.
   const normalizedGroups = [...ingredientGroups]
     .sort((a, b) => a.position - b.position)
@@ -378,6 +457,27 @@ export async function updateRecipe(
           })),
         },
       },
+    });
+
+    await tx.recipeMemberPortion.deleteMany({
+      where: { recipeId },
+    });
+    const portionRows = memberPortions
+      .filter((portion) => nonSelfFamilyMemberIds.has(portion.familyMemberId))
+      .map((portion) => ({
+        recipeId,
+        familyMemberId: portion.familyMemberId,
+        multiplier: portion.multiplier,
+      }));
+    if (portionRows.length > 0) {
+      await tx.recipeMemberPortion.createMany({
+        data: portionRows,
+        skipDuplicates: true,
+      });
+    }
+
+    await tx.recipeIngredientMemberTarget.deleteMany({
+      where: { recipeIngredient: { recipeId } },
     });
 
     const existingIngredients = await tx.recipeIngredient.findMany({
@@ -459,11 +559,20 @@ export async function updateRecipe(
             ingredientId: ing.ingredientId,
             amount: ing.amount,
             unitId: ing.unitId,
-            nutritionTarget: ing.nutritionTarget,
+            appliesToEveryone: ing.appliesToEveryone,
             additionalInfo: ing.additionalInfo,
           },
         });
         ingredientIdByTempKey.set(ing.tempIngredientKey, ing.id);
+        if (!ing.appliesToEveryone && ing.targetFamilyMemberIds.length > 0) {
+          await tx.recipeIngredientMemberTarget.createMany({
+            data: ing.targetFamilyMemberIds.map((familyMemberId) => ({
+              recipeIngredientId: ing.id!,
+              familyMemberId,
+            })),
+            skipDuplicates: true,
+          });
+        }
       } else {
         const created = await tx.recipeIngredient.create({
           data: {
@@ -473,11 +582,20 @@ export async function updateRecipe(
             ingredientId: ing.ingredientId,
             amount: ing.amount,
             unitId: ing.unitId,
-            nutritionTarget: ing.nutritionTarget,
+            appliesToEveryone: ing.appliesToEveryone,
             additionalInfo: ing.additionalInfo,
           },
           select: { id: true },
         });
+        if (!ing.appliesToEveryone && ing.targetFamilyMemberIds.length > 0) {
+          await tx.recipeIngredientMemberTarget.createMany({
+            data: ing.targetFamilyMemberIds.map((familyMemberId) => ({
+              recipeIngredientId: created.id,
+              familyMemberId,
+            })),
+            skipDuplicates: true,
+          });
+        }
         ingredientIdByTempKey.set(ing.tempIngredientKey, created.id);
       }
     }

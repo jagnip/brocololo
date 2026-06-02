@@ -6,7 +6,7 @@ type Row = CreateRecipeFormValues["ingredients"][number];
 /**
  * Scale quantified ingredient rows when portions (servings) change.
  * Uses the same linear ratio as the recipe view page (`servingScalingFactor` from
- * `calculateServingScalingFactor`); Nelson multiplier does not affect batch totals.
+ * `calculateServingScalingFactor`); member multipliers do not affect batch totals.
  */
 export function scaleFormIngredientRowsForNewServings(
   rows: Row[],
@@ -25,7 +25,6 @@ export function scaleFormIngredientRowsForNewServings(
   const { servingScalingFactor } = calculateServingScalingFactor(
     nextServings,
     amountsBaselineServings,
-    1,
   );
 
   if (!Number.isFinite(servingScalingFactor) || servingScalingFactor === 1) {

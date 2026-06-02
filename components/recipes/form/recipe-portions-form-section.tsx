@@ -17,11 +17,13 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { scaleFormIngredientRowsForNewServings } from "@/lib/recipes/scale-form-ingredient-rows-for-servings";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 type RecipePortionsFormSectionProps = {
   form: UseFormReturn<CreateRecipeFormValues>;
   recipe?: RecipeType;
-  nelsonMultiplierOptions: readonly number[];
+  familyMembers: FamilyMemberRow[];
+  multiplierOptions: readonly number[];
   onNumericServingsChange: (
     onChange: (value: number | null) => void,
     event: React.ChangeEvent<HTMLInputElement>,
@@ -29,13 +31,14 @@ type RecipePortionsFormSectionProps = {
 };
 
 /**
- * Portions (servings) + Nelson multiplier, plus optional “Recalculate ingredients” when
+ * Portions (servings) + family-member multipliers, plus optional “Recalculate ingredients” when
  * the servings field diverges from the servings count current row amounts were written for.
  */
 export function RecipePortionsFormSection({
   form,
   recipe,
-  nelsonMultiplierOptions,
+  familyMembers,
+  multiplierOptions,
   onNumericServingsChange,
 }: RecipePortionsFormSectionProps) {
   const servings = useWatch({ control: form.control, name: "servings" });
@@ -60,8 +63,7 @@ export function RecipePortionsFormSection({
       amountsBaselineServings !== undefined ||
       typeof servings !== "number" ||
       !Number.isFinite(servings) ||
-      servings < 2 ||
-      servings % 2 !== 0
+      servings < 1
     ) {
       return;
     }
@@ -79,7 +81,7 @@ export function RecipePortionsFormSection({
     if (servings === amountsBaselineServings) {
       return false;
     }
-    if (servings < 2 || servings % 2 !== 0) {
+    if (servings < 1) {
       return false;
     }
     return true;
@@ -122,8 +124,8 @@ export function RecipePortionsFormSection({
                     <Input
                       {...field}
                       type="number"
-                      min={2}
-                      step={2}
+                      min={1}
+                      step={1}
                       placeholder="Enter portions"
                       value={(field.value as number | undefined) ?? ""}
                       onChange={(event) =>
@@ -149,47 +151,74 @@ export function RecipePortionsFormSection({
             )}
           />
 
-          {/* One row per household member; add more columns here when multi-person UI ships. */}
           <FormField
             control={form.control}
-            name="servingMultiplierForNelson"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-muted-foreground">
-                  Serving multiplier
-                </FormLabel>
-                <FormControl>
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-item">
-                    <Label className="shrink-0 ">Nelson</Label>
-                    <div
-                      className="flex min-w-0 flex-1 flex-wrap gap-2"
-                      role="radiogroup"
-                      aria-label="Nelson serving multiplier"
-                    >
-                      {nelsonMultiplierOptions.map((multiplier) => {
-                        // Keep the UI default selected at 1 without changing backend validation rules.
+            name="memberPortions"
+            render={({ field }) => {
+              const nonSelfMembers = familyMembers.filter((member) => !member.isSelf);
+              return (
+                <FormItem>
+                  <FormLabel className="text-muted-foreground">
+                    Serving multipliers
+                  </FormLabel>
+                  <FormControl>
+                    <div className="flex flex-col gap-2">
+                      {nonSelfMembers.map((member, index) => {
                         const selectedMultiplier =
-                          (field.value as number | null | undefined) ?? 1;
-                        const checked = selectedMultiplier === multiplier;
+                          field.value?.find(
+                            (portion) => portion.familyMemberId === member.id,
+                          )?.multiplier ?? 1;
+                        const label =
+                          member.name.trim() || `Family member ${index + 1}`;
                         return (
-                          <Button
-                            key={multiplier}
-                            type="button"
-                            role="radio"
-                            aria-checked={checked}
-                            variant={checked ? "default" : "outline"}
-                            onClick={() => field.onChange(multiplier)}
+                          <div
+                            key={member.id}
+                            className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-item"
                           >
-                            {multiplier}
-                          </Button>
+                            <Label className="shrink-0">{label}</Label>
+                            <div
+                              className="flex min-w-0 flex-1 flex-wrap gap-2"
+                              role="radiogroup"
+                              aria-label={`${label} serving multiplier`}
+                            >
+                              {multiplierOptions.map((multiplier) => {
+                                const checked = selectedMultiplier === multiplier;
+                                return (
+                                  <Button
+                                    key={multiplier}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={checked}
+                                    variant={checked ? "default" : "outline"}
+                                    onClick={() => {
+                                      const current = field.value ?? [];
+                                      const withoutMember = current.filter(
+                                        (portion) =>
+                                          portion.familyMemberId !== member.id,
+                                      );
+                                      field.onChange([
+                                        ...withoutMember,
+                                        {
+                                          familyMemberId: member.id,
+                                          multiplier,
+                                        },
+                                      ]);
+                                    }}
+                                  >
+                                    {multiplier}
+                                  </Button>
+                                );
+                              })}
+                            </div>
+                          </div>
                         );
                       })}
                     </div>
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         </div>
       </div>

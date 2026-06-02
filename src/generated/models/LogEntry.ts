@@ -29,7 +29,7 @@ export type LogEntryMinAggregateOutputType = {
   logId: string | null
   date: Date | null
   mealType: $Enums.LogMealType | null
-  person: $Enums.LogPerson | null
+  familyMemberId: string | null
 }
 
 export type LogEntryMaxAggregateOutputType = {
@@ -37,7 +37,7 @@ export type LogEntryMaxAggregateOutputType = {
   logId: string | null
   date: Date | null
   mealType: $Enums.LogMealType | null
-  person: $Enums.LogPerson | null
+  familyMemberId: string | null
 }
 
 export type LogEntryCountAggregateOutputType = {
@@ -45,7 +45,7 @@ export type LogEntryCountAggregateOutputType = {
   logId: number
   date: number
   mealType: number
-  person: number
+  familyMemberId: number
   _all: number
 }
 
@@ -55,7 +55,7 @@ export type LogEntryMinAggregateInputType = {
   logId?: true
   date?: true
   mealType?: true
-  person?: true
+  familyMemberId?: true
 }
 
 export type LogEntryMaxAggregateInputType = {
@@ -63,7 +63,7 @@ export type LogEntryMaxAggregateInputType = {
   logId?: true
   date?: true
   mealType?: true
-  person?: true
+  familyMemberId?: true
 }
 
 export type LogEntryCountAggregateInputType = {
@@ -71,7 +71,7 @@ export type LogEntryCountAggregateInputType = {
   logId?: true
   date?: true
   mealType?: true
-  person?: true
+  familyMemberId?: true
   _all?: true
 }
 
@@ -152,7 +152,7 @@ export type LogEntryGroupByOutputType = {
   logId: string
   date: Date
   mealType: $Enums.LogMealType
-  person: $Enums.LogPerson
+  familyMemberId: string
   _count: LogEntryCountAggregateOutputType | null
   _min: LogEntryMinAggregateOutputType | null
   _max: LogEntryMaxAggregateOutputType | null
@@ -181,8 +181,9 @@ export type LogEntryWhereInput = {
   logId?: Prisma.StringFilter<"LogEntry"> | string
   date?: Prisma.DateTimeFilter<"LogEntry"> | Date | string
   mealType?: Prisma.EnumLogMealTypeFilter<"LogEntry"> | $Enums.LogMealType
-  person?: Prisma.EnumLogPersonFilter<"LogEntry"> | $Enums.LogPerson
+  familyMemberId?: Prisma.StringFilter<"LogEntry"> | string
   log?: Prisma.XOR<Prisma.LogScalarRelationFilter, Prisma.LogWhereInput>
+  familyMember?: Prisma.XOR<Prisma.FamilyMemberScalarRelationFilter, Prisma.FamilyMemberWhereInput>
   recipes?: Prisma.LogEntryRecipeListRelationFilter
   ingredients?: Prisma.LogIngredientListRelationFilter
 }
@@ -192,33 +193,35 @@ export type LogEntryOrderByWithRelationInput = {
   logId?: Prisma.SortOrder
   date?: Prisma.SortOrder
   mealType?: Prisma.SortOrder
-  person?: Prisma.SortOrder
+  familyMemberId?: Prisma.SortOrder
   log?: Prisma.LogOrderByWithRelationInput
+  familyMember?: Prisma.FamilyMemberOrderByWithRelationInput
   recipes?: Prisma.LogEntryRecipeOrderByRelationAggregateInput
   ingredients?: Prisma.LogIngredientOrderByRelationAggregateInput
 }
 
 export type LogEntryWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  logId_date_mealType_person?: Prisma.LogEntryLogIdDateMealTypePersonCompoundUniqueInput
+  logId_date_mealType_familyMemberId?: Prisma.LogEntryLogIdDateMealTypeFamilyMemberIdCompoundUniqueInput
   AND?: Prisma.LogEntryWhereInput | Prisma.LogEntryWhereInput[]
   OR?: Prisma.LogEntryWhereInput[]
   NOT?: Prisma.LogEntryWhereInput | Prisma.LogEntryWhereInput[]
   logId?: Prisma.StringFilter<"LogEntry"> | string
   date?: Prisma.DateTimeFilter<"LogEntry"> | Date | string
   mealType?: Prisma.EnumLogMealTypeFilter<"LogEntry"> | $Enums.LogMealType
-  person?: Prisma.EnumLogPersonFilter<"LogEntry"> | $Enums.LogPerson
+  familyMemberId?: Prisma.StringFilter<"LogEntry"> | string
   log?: Prisma.XOR<Prisma.LogScalarRelationFilter, Prisma.LogWhereInput>
+  familyMember?: Prisma.XOR<Prisma.FamilyMemberScalarRelationFilter, Prisma.FamilyMemberWhereInput>
   recipes?: Prisma.LogEntryRecipeListRelationFilter
   ingredients?: Prisma.LogIngredientListRelationFilter
-}, "id" | "logId_date_mealType_person">
+}, "id" | "logId_date_mealType_familyMemberId">
 
 export type LogEntryOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   logId?: Prisma.SortOrder
   date?: Prisma.SortOrder
   mealType?: Prisma.SortOrder
-  person?: Prisma.SortOrder
+  familyMemberId?: Prisma.SortOrder
   _count?: Prisma.LogEntryCountOrderByAggregateInput
   _max?: Prisma.LogEntryMaxOrderByAggregateInput
   _min?: Prisma.LogEntryMinOrderByAggregateInput
@@ -232,15 +235,15 @@ export type LogEntryScalarWhereWithAggregatesInput = {
   logId?: Prisma.StringWithAggregatesFilter<"LogEntry"> | string
   date?: Prisma.DateTimeWithAggregatesFilter<"LogEntry"> | Date | string
   mealType?: Prisma.EnumLogMealTypeWithAggregatesFilter<"LogEntry"> | $Enums.LogMealType
-  person?: Prisma.EnumLogPersonWithAggregatesFilter<"LogEntry"> | $Enums.LogPerson
+  familyMemberId?: Prisma.StringWithAggregatesFilter<"LogEntry"> | string
 }
 
 export type LogEntryCreateInput = {
   id?: string
   date: Date | string
   mealType: $Enums.LogMealType
-  person: $Enums.LogPerson
   log: Prisma.LogCreateNestedOneWithoutEntriesInput
+  familyMember: Prisma.FamilyMemberCreateNestedOneWithoutLogEntriesInput
   recipes?: Prisma.LogEntryRecipeCreateNestedManyWithoutEntryInput
   ingredients?: Prisma.LogIngredientCreateNestedManyWithoutEntryInput
 }
@@ -250,7 +253,7 @@ export type LogEntryUncheckedCreateInput = {
   logId: string
   date: Date | string
   mealType: $Enums.LogMealType
-  person: $Enums.LogPerson
+  familyMemberId: string
   recipes?: Prisma.LogEntryRecipeUncheckedCreateNestedManyWithoutEntryInput
   ingredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutEntryInput
 }
@@ -259,8 +262,8 @@ export type LogEntryUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumLogMealTypeFieldUpdateOperationsInput | $Enums.LogMealType
-  person?: Prisma.EnumLogPersonFieldUpdateOperationsInput | $Enums.LogPerson
   log?: Prisma.LogUpdateOneRequiredWithoutEntriesNestedInput
+  familyMember?: Prisma.FamilyMemberUpdateOneRequiredWithoutLogEntriesNestedInput
   recipes?: Prisma.LogEntryRecipeUpdateManyWithoutEntryNestedInput
   ingredients?: Prisma.LogIngredientUpdateManyWithoutEntryNestedInput
 }
@@ -270,7 +273,7 @@ export type LogEntryUncheckedUpdateInput = {
   logId?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumLogMealTypeFieldUpdateOperationsInput | $Enums.LogMealType
-  person?: Prisma.EnumLogPersonFieldUpdateOperationsInput | $Enums.LogPerson
+  familyMemberId?: Prisma.StringFieldUpdateOperationsInput | string
   recipes?: Prisma.LogEntryRecipeUncheckedUpdateManyWithoutEntryNestedInput
   ingredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutEntryNestedInput
 }
@@ -280,14 +283,13 @@ export type LogEntryCreateManyInput = {
   logId: string
   date: Date | string
   mealType: $Enums.LogMealType
-  person: $Enums.LogPerson
+  familyMemberId: string
 }
 
 export type LogEntryUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumLogMealTypeFieldUpdateOperationsInput | $Enums.LogMealType
-  person?: Prisma.EnumLogPersonFieldUpdateOperationsInput | $Enums.LogPerson
 }
 
 export type LogEntryUncheckedUpdateManyInput = {
@@ -295,7 +297,7 @@ export type LogEntryUncheckedUpdateManyInput = {
   logId?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumLogMealTypeFieldUpdateOperationsInput | $Enums.LogMealType
-  person?: Prisma.EnumLogPersonFieldUpdateOperationsInput | $Enums.LogPerson
+  familyMemberId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 export type LogEntryListRelationFilter = {
@@ -308,11 +310,11 @@ export type LogEntryOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type LogEntryLogIdDateMealTypePersonCompoundUniqueInput = {
+export type LogEntryLogIdDateMealTypeFamilyMemberIdCompoundUniqueInput = {
   logId: string
   date: Date | string
   mealType: $Enums.LogMealType
-  person: $Enums.LogPerson
+  familyMemberId: string
 }
 
 export type LogEntryCountOrderByAggregateInput = {
@@ -320,7 +322,7 @@ export type LogEntryCountOrderByAggregateInput = {
   logId?: Prisma.SortOrder
   date?: Prisma.SortOrder
   mealType?: Prisma.SortOrder
-  person?: Prisma.SortOrder
+  familyMemberId?: Prisma.SortOrder
 }
 
 export type LogEntryMaxOrderByAggregateInput = {
@@ -328,7 +330,7 @@ export type LogEntryMaxOrderByAggregateInput = {
   logId?: Prisma.SortOrder
   date?: Prisma.SortOrder
   mealType?: Prisma.SortOrder
-  person?: Prisma.SortOrder
+  familyMemberId?: Prisma.SortOrder
 }
 
 export type LogEntryMinOrderByAggregateInput = {
@@ -336,12 +338,54 @@ export type LogEntryMinOrderByAggregateInput = {
   logId?: Prisma.SortOrder
   date?: Prisma.SortOrder
   mealType?: Prisma.SortOrder
-  person?: Prisma.SortOrder
+  familyMemberId?: Prisma.SortOrder
 }
 
 export type LogEntryScalarRelationFilter = {
   is?: Prisma.LogEntryWhereInput
   isNot?: Prisma.LogEntryWhereInput
+}
+
+export type LogEntryCreateNestedManyWithoutFamilyMemberInput = {
+  create?: Prisma.XOR<Prisma.LogEntryCreateWithoutFamilyMemberInput, Prisma.LogEntryUncheckedCreateWithoutFamilyMemberInput> | Prisma.LogEntryCreateWithoutFamilyMemberInput[] | Prisma.LogEntryUncheckedCreateWithoutFamilyMemberInput[]
+  connectOrCreate?: Prisma.LogEntryCreateOrConnectWithoutFamilyMemberInput | Prisma.LogEntryCreateOrConnectWithoutFamilyMemberInput[]
+  createMany?: Prisma.LogEntryCreateManyFamilyMemberInputEnvelope
+  connect?: Prisma.LogEntryWhereUniqueInput | Prisma.LogEntryWhereUniqueInput[]
+}
+
+export type LogEntryUncheckedCreateNestedManyWithoutFamilyMemberInput = {
+  create?: Prisma.XOR<Prisma.LogEntryCreateWithoutFamilyMemberInput, Prisma.LogEntryUncheckedCreateWithoutFamilyMemberInput> | Prisma.LogEntryCreateWithoutFamilyMemberInput[] | Prisma.LogEntryUncheckedCreateWithoutFamilyMemberInput[]
+  connectOrCreate?: Prisma.LogEntryCreateOrConnectWithoutFamilyMemberInput | Prisma.LogEntryCreateOrConnectWithoutFamilyMemberInput[]
+  createMany?: Prisma.LogEntryCreateManyFamilyMemberInputEnvelope
+  connect?: Prisma.LogEntryWhereUniqueInput | Prisma.LogEntryWhereUniqueInput[]
+}
+
+export type LogEntryUpdateManyWithoutFamilyMemberNestedInput = {
+  create?: Prisma.XOR<Prisma.LogEntryCreateWithoutFamilyMemberInput, Prisma.LogEntryUncheckedCreateWithoutFamilyMemberInput> | Prisma.LogEntryCreateWithoutFamilyMemberInput[] | Prisma.LogEntryUncheckedCreateWithoutFamilyMemberInput[]
+  connectOrCreate?: Prisma.LogEntryCreateOrConnectWithoutFamilyMemberInput | Prisma.LogEntryCreateOrConnectWithoutFamilyMemberInput[]
+  upsert?: Prisma.LogEntryUpsertWithWhereUniqueWithoutFamilyMemberInput | Prisma.LogEntryUpsertWithWhereUniqueWithoutFamilyMemberInput[]
+  createMany?: Prisma.LogEntryCreateManyFamilyMemberInputEnvelope
+  set?: Prisma.LogEntryWhereUniqueInput | Prisma.LogEntryWhereUniqueInput[]
+  disconnect?: Prisma.LogEntryWhereUniqueInput | Prisma.LogEntryWhereUniqueInput[]
+  delete?: Prisma.LogEntryWhereUniqueInput | Prisma.LogEntryWhereUniqueInput[]
+  connect?: Prisma.LogEntryWhereUniqueInput | Prisma.LogEntryWhereUniqueInput[]
+  update?: Prisma.LogEntryUpdateWithWhereUniqueWithoutFamilyMemberInput | Prisma.LogEntryUpdateWithWhereUniqueWithoutFamilyMemberInput[]
+  updateMany?: Prisma.LogEntryUpdateManyWithWhereWithoutFamilyMemberInput | Prisma.LogEntryUpdateManyWithWhereWithoutFamilyMemberInput[]
+  deleteMany?: Prisma.LogEntryScalarWhereInput | Prisma.LogEntryScalarWhereInput[]
+}
+
+export type LogEntryUncheckedUpdateManyWithoutFamilyMemberNestedInput = {
+  create?: Prisma.XOR<Prisma.LogEntryCreateWithoutFamilyMemberInput, Prisma.LogEntryUncheckedCreateWithoutFamilyMemberInput> | Prisma.LogEntryCreateWithoutFamilyMemberInput[] | Prisma.LogEntryUncheckedCreateWithoutFamilyMemberInput[]
+  connectOrCreate?: Prisma.LogEntryCreateOrConnectWithoutFamilyMemberInput | Prisma.LogEntryCreateOrConnectWithoutFamilyMemberInput[]
+  upsert?: Prisma.LogEntryUpsertWithWhereUniqueWithoutFamilyMemberInput | Prisma.LogEntryUpsertWithWhereUniqueWithoutFamilyMemberInput[]
+  createMany?: Prisma.LogEntryCreateManyFamilyMemberInputEnvelope
+  set?: Prisma.LogEntryWhereUniqueInput | Prisma.LogEntryWhereUniqueInput[]
+  disconnect?: Prisma.LogEntryWhereUniqueInput | Prisma.LogEntryWhereUniqueInput[]
+  delete?: Prisma.LogEntryWhereUniqueInput | Prisma.LogEntryWhereUniqueInput[]
+  connect?: Prisma.LogEntryWhereUniqueInput | Prisma.LogEntryWhereUniqueInput[]
+  update?: Prisma.LogEntryUpdateWithWhereUniqueWithoutFamilyMemberInput | Prisma.LogEntryUpdateWithWhereUniqueWithoutFamilyMemberInput[]
+  updateMany?: Prisma.LogEntryUpdateManyWithWhereWithoutFamilyMemberInput | Prisma.LogEntryUpdateManyWithWhereWithoutFamilyMemberInput[]
+  deleteMany?: Prisma.LogEntryScalarWhereInput | Prisma.LogEntryScalarWhereInput[]
 }
 
 export type LogEntryCreateNestedManyWithoutLogInput = {
@@ -390,10 +434,6 @@ export type EnumLogMealTypeFieldUpdateOperationsInput = {
   set?: $Enums.LogMealType
 }
 
-export type EnumLogPersonFieldUpdateOperationsInput = {
-  set?: $Enums.LogPerson
-}
-
 export type LogEntryCreateNestedOneWithoutRecipesInput = {
   create?: Prisma.XOR<Prisma.LogEntryCreateWithoutRecipesInput, Prisma.LogEntryUncheckedCreateWithoutRecipesInput>
   connectOrCreate?: Prisma.LogEntryCreateOrConnectWithoutRecipesInput
@@ -422,11 +462,66 @@ export type LogEntryUpdateOneRequiredWithoutIngredientsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.LogEntryUpdateToOneWithWhereWithoutIngredientsInput, Prisma.LogEntryUpdateWithoutIngredientsInput>, Prisma.LogEntryUncheckedUpdateWithoutIngredientsInput>
 }
 
+export type LogEntryCreateWithoutFamilyMemberInput = {
+  id?: string
+  date: Date | string
+  mealType: $Enums.LogMealType
+  log: Prisma.LogCreateNestedOneWithoutEntriesInput
+  recipes?: Prisma.LogEntryRecipeCreateNestedManyWithoutEntryInput
+  ingredients?: Prisma.LogIngredientCreateNestedManyWithoutEntryInput
+}
+
+export type LogEntryUncheckedCreateWithoutFamilyMemberInput = {
+  id?: string
+  logId: string
+  date: Date | string
+  mealType: $Enums.LogMealType
+  recipes?: Prisma.LogEntryRecipeUncheckedCreateNestedManyWithoutEntryInput
+  ingredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutEntryInput
+}
+
+export type LogEntryCreateOrConnectWithoutFamilyMemberInput = {
+  where: Prisma.LogEntryWhereUniqueInput
+  create: Prisma.XOR<Prisma.LogEntryCreateWithoutFamilyMemberInput, Prisma.LogEntryUncheckedCreateWithoutFamilyMemberInput>
+}
+
+export type LogEntryCreateManyFamilyMemberInputEnvelope = {
+  data: Prisma.LogEntryCreateManyFamilyMemberInput | Prisma.LogEntryCreateManyFamilyMemberInput[]
+  skipDuplicates?: boolean
+}
+
+export type LogEntryUpsertWithWhereUniqueWithoutFamilyMemberInput = {
+  where: Prisma.LogEntryWhereUniqueInput
+  update: Prisma.XOR<Prisma.LogEntryUpdateWithoutFamilyMemberInput, Prisma.LogEntryUncheckedUpdateWithoutFamilyMemberInput>
+  create: Prisma.XOR<Prisma.LogEntryCreateWithoutFamilyMemberInput, Prisma.LogEntryUncheckedCreateWithoutFamilyMemberInput>
+}
+
+export type LogEntryUpdateWithWhereUniqueWithoutFamilyMemberInput = {
+  where: Prisma.LogEntryWhereUniqueInput
+  data: Prisma.XOR<Prisma.LogEntryUpdateWithoutFamilyMemberInput, Prisma.LogEntryUncheckedUpdateWithoutFamilyMemberInput>
+}
+
+export type LogEntryUpdateManyWithWhereWithoutFamilyMemberInput = {
+  where: Prisma.LogEntryScalarWhereInput
+  data: Prisma.XOR<Prisma.LogEntryUpdateManyMutationInput, Prisma.LogEntryUncheckedUpdateManyWithoutFamilyMemberInput>
+}
+
+export type LogEntryScalarWhereInput = {
+  AND?: Prisma.LogEntryScalarWhereInput | Prisma.LogEntryScalarWhereInput[]
+  OR?: Prisma.LogEntryScalarWhereInput[]
+  NOT?: Prisma.LogEntryScalarWhereInput | Prisma.LogEntryScalarWhereInput[]
+  id?: Prisma.StringFilter<"LogEntry"> | string
+  logId?: Prisma.StringFilter<"LogEntry"> | string
+  date?: Prisma.DateTimeFilter<"LogEntry"> | Date | string
+  mealType?: Prisma.EnumLogMealTypeFilter<"LogEntry"> | $Enums.LogMealType
+  familyMemberId?: Prisma.StringFilter<"LogEntry"> | string
+}
+
 export type LogEntryCreateWithoutLogInput = {
   id?: string
   date: Date | string
   mealType: $Enums.LogMealType
-  person: $Enums.LogPerson
+  familyMember: Prisma.FamilyMemberCreateNestedOneWithoutLogEntriesInput
   recipes?: Prisma.LogEntryRecipeCreateNestedManyWithoutEntryInput
   ingredients?: Prisma.LogIngredientCreateNestedManyWithoutEntryInput
 }
@@ -435,7 +530,7 @@ export type LogEntryUncheckedCreateWithoutLogInput = {
   id?: string
   date: Date | string
   mealType: $Enums.LogMealType
-  person: $Enums.LogPerson
+  familyMemberId: string
   recipes?: Prisma.LogEntryRecipeUncheckedCreateNestedManyWithoutEntryInput
   ingredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutEntryInput
 }
@@ -466,23 +561,12 @@ export type LogEntryUpdateManyWithWhereWithoutLogInput = {
   data: Prisma.XOR<Prisma.LogEntryUpdateManyMutationInput, Prisma.LogEntryUncheckedUpdateManyWithoutLogInput>
 }
 
-export type LogEntryScalarWhereInput = {
-  AND?: Prisma.LogEntryScalarWhereInput | Prisma.LogEntryScalarWhereInput[]
-  OR?: Prisma.LogEntryScalarWhereInput[]
-  NOT?: Prisma.LogEntryScalarWhereInput | Prisma.LogEntryScalarWhereInput[]
-  id?: Prisma.StringFilter<"LogEntry"> | string
-  logId?: Prisma.StringFilter<"LogEntry"> | string
-  date?: Prisma.DateTimeFilter<"LogEntry"> | Date | string
-  mealType?: Prisma.EnumLogMealTypeFilter<"LogEntry"> | $Enums.LogMealType
-  person?: Prisma.EnumLogPersonFilter<"LogEntry"> | $Enums.LogPerson
-}
-
 export type LogEntryCreateWithoutRecipesInput = {
   id?: string
   date: Date | string
   mealType: $Enums.LogMealType
-  person: $Enums.LogPerson
   log: Prisma.LogCreateNestedOneWithoutEntriesInput
+  familyMember: Prisma.FamilyMemberCreateNestedOneWithoutLogEntriesInput
   ingredients?: Prisma.LogIngredientCreateNestedManyWithoutEntryInput
 }
 
@@ -491,7 +575,7 @@ export type LogEntryUncheckedCreateWithoutRecipesInput = {
   logId: string
   date: Date | string
   mealType: $Enums.LogMealType
-  person: $Enums.LogPerson
+  familyMemberId: string
   ingredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutEntryInput
 }
 
@@ -515,8 +599,8 @@ export type LogEntryUpdateWithoutRecipesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumLogMealTypeFieldUpdateOperationsInput | $Enums.LogMealType
-  person?: Prisma.EnumLogPersonFieldUpdateOperationsInput | $Enums.LogPerson
   log?: Prisma.LogUpdateOneRequiredWithoutEntriesNestedInput
+  familyMember?: Prisma.FamilyMemberUpdateOneRequiredWithoutLogEntriesNestedInput
   ingredients?: Prisma.LogIngredientUpdateManyWithoutEntryNestedInput
 }
 
@@ -525,7 +609,7 @@ export type LogEntryUncheckedUpdateWithoutRecipesInput = {
   logId?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumLogMealTypeFieldUpdateOperationsInput | $Enums.LogMealType
-  person?: Prisma.EnumLogPersonFieldUpdateOperationsInput | $Enums.LogPerson
+  familyMemberId?: Prisma.StringFieldUpdateOperationsInput | string
   ingredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutEntryNestedInput
 }
 
@@ -533,8 +617,8 @@ export type LogEntryCreateWithoutIngredientsInput = {
   id?: string
   date: Date | string
   mealType: $Enums.LogMealType
-  person: $Enums.LogPerson
   log: Prisma.LogCreateNestedOneWithoutEntriesInput
+  familyMember: Prisma.FamilyMemberCreateNestedOneWithoutLogEntriesInput
   recipes?: Prisma.LogEntryRecipeCreateNestedManyWithoutEntryInput
 }
 
@@ -543,7 +627,7 @@ export type LogEntryUncheckedCreateWithoutIngredientsInput = {
   logId: string
   date: Date | string
   mealType: $Enums.LogMealType
-  person: $Enums.LogPerson
+  familyMemberId: string
   recipes?: Prisma.LogEntryRecipeUncheckedCreateNestedManyWithoutEntryInput
 }
 
@@ -567,8 +651,8 @@ export type LogEntryUpdateWithoutIngredientsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumLogMealTypeFieldUpdateOperationsInput | $Enums.LogMealType
-  person?: Prisma.EnumLogPersonFieldUpdateOperationsInput | $Enums.LogPerson
   log?: Prisma.LogUpdateOneRequiredWithoutEntriesNestedInput
+  familyMember?: Prisma.FamilyMemberUpdateOneRequiredWithoutLogEntriesNestedInput
   recipes?: Prisma.LogEntryRecipeUpdateManyWithoutEntryNestedInput
 }
 
@@ -577,22 +661,54 @@ export type LogEntryUncheckedUpdateWithoutIngredientsInput = {
   logId?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumLogMealTypeFieldUpdateOperationsInput | $Enums.LogMealType
-  person?: Prisma.EnumLogPersonFieldUpdateOperationsInput | $Enums.LogPerson
+  familyMemberId?: Prisma.StringFieldUpdateOperationsInput | string
   recipes?: Prisma.LogEntryRecipeUncheckedUpdateManyWithoutEntryNestedInput
+}
+
+export type LogEntryCreateManyFamilyMemberInput = {
+  id?: string
+  logId: string
+  date: Date | string
+  mealType: $Enums.LogMealType
+}
+
+export type LogEntryUpdateWithoutFamilyMemberInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mealType?: Prisma.EnumLogMealTypeFieldUpdateOperationsInput | $Enums.LogMealType
+  log?: Prisma.LogUpdateOneRequiredWithoutEntriesNestedInput
+  recipes?: Prisma.LogEntryRecipeUpdateManyWithoutEntryNestedInput
+  ingredients?: Prisma.LogIngredientUpdateManyWithoutEntryNestedInput
+}
+
+export type LogEntryUncheckedUpdateWithoutFamilyMemberInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  logId?: Prisma.StringFieldUpdateOperationsInput | string
+  date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mealType?: Prisma.EnumLogMealTypeFieldUpdateOperationsInput | $Enums.LogMealType
+  recipes?: Prisma.LogEntryRecipeUncheckedUpdateManyWithoutEntryNestedInput
+  ingredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutEntryNestedInput
+}
+
+export type LogEntryUncheckedUpdateManyWithoutFamilyMemberInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  logId?: Prisma.StringFieldUpdateOperationsInput | string
+  date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  mealType?: Prisma.EnumLogMealTypeFieldUpdateOperationsInput | $Enums.LogMealType
 }
 
 export type LogEntryCreateManyLogInput = {
   id?: string
   date: Date | string
   mealType: $Enums.LogMealType
-  person: $Enums.LogPerson
+  familyMemberId: string
 }
 
 export type LogEntryUpdateWithoutLogInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumLogMealTypeFieldUpdateOperationsInput | $Enums.LogMealType
-  person?: Prisma.EnumLogPersonFieldUpdateOperationsInput | $Enums.LogPerson
+  familyMember?: Prisma.FamilyMemberUpdateOneRequiredWithoutLogEntriesNestedInput
   recipes?: Prisma.LogEntryRecipeUpdateManyWithoutEntryNestedInput
   ingredients?: Prisma.LogIngredientUpdateManyWithoutEntryNestedInput
 }
@@ -601,7 +717,7 @@ export type LogEntryUncheckedUpdateWithoutLogInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumLogMealTypeFieldUpdateOperationsInput | $Enums.LogMealType
-  person?: Prisma.EnumLogPersonFieldUpdateOperationsInput | $Enums.LogPerson
+  familyMemberId?: Prisma.StringFieldUpdateOperationsInput | string
   recipes?: Prisma.LogEntryRecipeUncheckedUpdateManyWithoutEntryNestedInput
   ingredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutEntryNestedInput
 }
@@ -610,7 +726,7 @@ export type LogEntryUncheckedUpdateManyWithoutLogInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   date?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   mealType?: Prisma.EnumLogMealTypeFieldUpdateOperationsInput | $Enums.LogMealType
-  person?: Prisma.EnumLogPersonFieldUpdateOperationsInput | $Enums.LogPerson
+  familyMemberId?: Prisma.StringFieldUpdateOperationsInput | string
 }
 
 
@@ -658,8 +774,9 @@ export type LogEntrySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   logId?: boolean
   date?: boolean
   mealType?: boolean
-  person?: boolean
+  familyMemberId?: boolean
   log?: boolean | Prisma.LogDefaultArgs<ExtArgs>
+  familyMember?: boolean | Prisma.FamilyMemberDefaultArgs<ExtArgs>
   recipes?: boolean | Prisma.LogEntry$recipesArgs<ExtArgs>
   ingredients?: boolean | Prisma.LogEntry$ingredientsArgs<ExtArgs>
   _count?: boolean | Prisma.LogEntryCountOutputTypeDefaultArgs<ExtArgs>
@@ -670,8 +787,9 @@ export type LogEntrySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   logId?: boolean
   date?: boolean
   mealType?: boolean
-  person?: boolean
+  familyMemberId?: boolean
   log?: boolean | Prisma.LogDefaultArgs<ExtArgs>
+  familyMember?: boolean | Prisma.FamilyMemberDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["logEntry"]>
 
 export type LogEntrySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -679,8 +797,9 @@ export type LogEntrySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   logId?: boolean
   date?: boolean
   mealType?: boolean
-  person?: boolean
+  familyMemberId?: boolean
   log?: boolean | Prisma.LogDefaultArgs<ExtArgs>
+  familyMember?: boolean | Prisma.FamilyMemberDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["logEntry"]>
 
 export type LogEntrySelectScalar = {
@@ -688,27 +807,31 @@ export type LogEntrySelectScalar = {
   logId?: boolean
   date?: boolean
   mealType?: boolean
-  person?: boolean
+  familyMemberId?: boolean
 }
 
-export type LogEntryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "logId" | "date" | "mealType" | "person", ExtArgs["result"]["logEntry"]>
+export type LogEntryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "logId" | "date" | "mealType" | "familyMemberId", ExtArgs["result"]["logEntry"]>
 export type LogEntryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   log?: boolean | Prisma.LogDefaultArgs<ExtArgs>
+  familyMember?: boolean | Prisma.FamilyMemberDefaultArgs<ExtArgs>
   recipes?: boolean | Prisma.LogEntry$recipesArgs<ExtArgs>
   ingredients?: boolean | Prisma.LogEntry$ingredientsArgs<ExtArgs>
   _count?: boolean | Prisma.LogEntryCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type LogEntryIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   log?: boolean | Prisma.LogDefaultArgs<ExtArgs>
+  familyMember?: boolean | Prisma.FamilyMemberDefaultArgs<ExtArgs>
 }
 export type LogEntryIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   log?: boolean | Prisma.LogDefaultArgs<ExtArgs>
+  familyMember?: boolean | Prisma.FamilyMemberDefaultArgs<ExtArgs>
 }
 
 export type $LogEntryPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "LogEntry"
   objects: {
     log: Prisma.$LogPayload<ExtArgs>
+    familyMember: Prisma.$FamilyMemberPayload<ExtArgs>
     recipes: Prisma.$LogEntryRecipePayload<ExtArgs>[]
     ingredients: Prisma.$LogIngredientPayload<ExtArgs>[]
   }
@@ -717,7 +840,7 @@ export type $LogEntryPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     logId: string
     date: Date
     mealType: $Enums.LogMealType
-    person: $Enums.LogPerson
+    familyMemberId: string
   }, ExtArgs["result"]["logEntry"]>
   composites: {}
 }
@@ -1113,6 +1236,7 @@ readonly fields: LogEntryFieldRefs;
 export interface Prisma__LogEntryClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   log<T extends Prisma.LogDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LogDefaultArgs<ExtArgs>>): Prisma.Prisma__LogClient<runtime.Types.Result.GetResult<Prisma.$LogPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  familyMember<T extends Prisma.FamilyMemberDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.FamilyMemberDefaultArgs<ExtArgs>>): Prisma.Prisma__FamilyMemberClient<runtime.Types.Result.GetResult<Prisma.$FamilyMemberPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   recipes<T extends Prisma.LogEntry$recipesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LogEntry$recipesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LogEntryRecipePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ingredients<T extends Prisma.LogEntry$ingredientsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LogEntry$ingredientsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LogIngredientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1148,7 +1272,7 @@ export interface LogEntryFieldRefs {
   readonly logId: Prisma.FieldRef<"LogEntry", 'String'>
   readonly date: Prisma.FieldRef<"LogEntry", 'DateTime'>
   readonly mealType: Prisma.FieldRef<"LogEntry", 'LogMealType'>
-  readonly person: Prisma.FieldRef<"LogEntry", 'LogPerson'>
+  readonly familyMemberId: Prisma.FieldRef<"LogEntry", 'String'>
 }
     
 

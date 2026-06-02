@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { LogMealType, LogPerson } from "@/src/generated/enums";
+import { LogMealType } from "@/src/generated/enums";
 import { RecipeAddToLogDialog } from "./add-to-log-dialog";
 import type {
   EditableIngredientRow,
@@ -20,8 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getPersonIngredientAmountPerMeal } from "@/lib/log/helpers";
+import { getFamilyMemberIngredientAmountPerMeal } from "@/lib/log/helpers";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 type IngredientFormDependencies = {
   categories: Array<{ id: string; name: string }>;
@@ -36,9 +37,10 @@ type RecipeAddToLogDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   recipeIngredients: RecipeType["ingredients"];
+  familyMembers: FamilyMemberRow[];
+  memberPortions: RecipeType["memberPortions"];
   currentServings: number;
   servingScalingFactor: number;
-  servingMultiplierForNelson: number;
   availableLogDateKeys?: string[];
   ingredientOptions: LogIngredientOption[];
   ingredientFormDependencies: IngredientFormDependencies;
@@ -57,18 +59,19 @@ export function RecipeAddToLogDialogContainer({
   open,
   onOpenChange,
   recipeIngredients,
+  familyMembers,
+  memberPortions,
   currentServings,
   servingScalingFactor,
-  servingMultiplierForNelson,
   availableLogDateKeys,
   ingredientOptions,
   ingredientFormDependencies,
 }: RecipeAddToLogDialogProps) {
   const router = useRouter();
   const [isSaving, startSavingTransition] = useTransition();
-  const [logPerson, setLogPerson] = useState<"PRIMARY" | "SECONDARY">(
-    LogPerson.PRIMARY,
-  );
+  const defaultFamilyMemberId =
+    familyMembers.find((member) => member.isSelf)?.id ?? familyMembers[0]?.id ?? "";
+  const [logFamilyMemberId, setLogFamilyMemberId] = useState(defaultFamilyMemberId);
   // Defensive fallback: some legacy render paths/tests may omit the allowlist prop.
   const normalizedAvailableLogDateKeys = availableLogDateKeys ?? [];
   const [logDate, setLogDate] = useState(() =>
@@ -83,27 +86,28 @@ export function RecipeAddToLogDialogContainer({
     if (!open) {
       return;
     }
-    setLogPerson(LogPerson.PRIMARY);
+    setLogFamilyMemberId(defaultFamilyMemberId);
     setLogDate(getInitialLogDateKey(normalizedAvailableLogDateKeys));
     setLogMealType(LogMealType.DINNER);
-  }, [normalizedAvailableLogDateKeys, open]);
+  }, [defaultFamilyMemberId, normalizedAvailableLogDateKeys, open]);
 
   const initialRows = useMemo(() => {
-    const selectedPerson =
-      logPerson === LogPerson.PRIMARY ? "primary" : "secondary";
-
     return recipeIngredients.flatMap((recipeIngredient) => {
       if (recipeIngredient.amount == null) {
         return [];
       }
 
       const scaledAmount = recipeIngredient.amount * servingScalingFactor;
-      const amountForPerson = getPersonIngredientAmountPerMeal({
+      const amountForPerson = getFamilyMemberIngredientAmountPerMeal({
         amount: scaledAmount,
-        nutritionTarget: recipeIngredient.nutritionTarget,
-        person: selectedPerson,
+        appliesToEveryone: recipeIngredient.appliesToEveryone,
+        targetFamilyMemberIds: recipeIngredient.memberTargets.map(
+          (target) => target.familyMemberId,
+        ),
+        familyMemberId: logFamilyMemberId,
         recipeServings: currentServings,
-        servingMultiplierForNelson,
+        familyMembers,
+        memberPortions,
       });
       if (amountForPerson == null || amountForPerson <= 0) {
         return [];
@@ -124,9 +128,10 @@ export function RecipeAddToLogDialogContainer({
     });
   }, [
     currentServings,
-    logPerson,
+    familyMembers,
+    logFamilyMemberId,
+    memberPortions,
     recipeIngredients,
-    servingMultiplierForNelson,
     servingScalingFactor,
   ]);
 
@@ -156,18 +161,20 @@ export function RecipeAddToLogDialogContainer({
           <div className="min-w-0 flex-1 basis-0 space-y-2 lg:w-[300px] lg:flex-none">
             <Label>Person</Label>
             <Select
-              value={logPerson}
-              onValueChange={(nextValue) =>
-                setLogPerson(nextValue as "PRIMARY" | "SECONDARY")
-              }
+              value={logFamilyMemberId}
+              onValueChange={setLogFamilyMemberId}
               disabled={isSaving}
             >
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={LogPerson.PRIMARY}>Jagoda</SelectItem>
-                <SelectItem value={LogPerson.SECONDARY}>Nelson</SelectItem>
+                {familyMembers.map((member, index) => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.name.trim() ||
+                      (member.isSelf ? "You" : `Family member ${index}`)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -235,7 +242,7 @@ export function RecipeAddToLogDialogContainer({
           );
           const result = await addRecipeToLogAction({
             recipeId,
-            person: logPerson,
+            familyMemberId: logFamilyMemberId,
             date: logDate,
             mealType: logMealType,
             ingredients: completeRows,

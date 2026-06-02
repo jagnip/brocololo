@@ -6,6 +6,7 @@ import RecipePage from "./recipe-page";
 import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
 import { RecipePageProvider } from "@/components/context/recipe-page-context";
 import { requireUser } from "@/lib/auth/session";
+import { ensureSelfFamilyMember } from "@/lib/db/family-members";
 
 type RecipePageContainerProps = {
   recipeSlug: string;
@@ -15,11 +16,12 @@ export default async function RecipePageContainer({
   recipeSlug,
 }: RecipePageContainerProps) {
   const { id: userId } = await requireUser();
-  const [recipe, ingredients, ingredientFormDependencies, logs] = await Promise.all([
+  const [recipe, ingredients, ingredientFormDependencies, logs, familyMembers] = await Promise.all([
     getRecipeBySlug(userId, recipeSlug),
     getIngredients(userId),
     getIngredientFormDependencies(),
     getLogs(userId),
+    ensureSelfFamilyMember(userId),
   ]);
 
   if (!recipe) {
@@ -32,6 +34,7 @@ export default async function RecipePageContainer({
     <RecipePageProvider
       recipe={recipe}
       ingredients={ingredients}
+      familyMembers={familyMembers}
       availableLogDateKeys={logDateKeys}
     >
       <RecipePage ingredientFormDependencies={ingredientFormDependencies} />

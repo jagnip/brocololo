@@ -26,6 +26,11 @@ export type RecipeType = Prisma.RecipeGetPayload<{
       ];
       include: {
         group: true;
+        memberTargets: {
+          select: {
+            familyMemberId: true;
+          };
+        };
         ingredient: {
           include: {
             category: true;
@@ -53,6 +58,11 @@ export type RecipeType = Prisma.RecipeGetPayload<{
           include: {
             recipeIngredient: {
               include: {
+                  memberTargets: {
+                    select: {
+                      familyMemberId: true;
+                    };
+                  };
                 ingredient: {
                   include: {
                     category: true;
@@ -76,5 +86,6 @@ export type RecipeType = Prisma.RecipeGetPayload<{
       };
     };
     images: true;
+    memberPortions: true;
   };
 }>;

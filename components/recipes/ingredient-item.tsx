@@ -374,28 +374,16 @@ export function IngredientItem({
         </div>
 
         <div className="ml-auto flex items-center gap-item">
-          {recipeIngredient.nutritionTarget === "PRIMARY_ONLY" && (
+          {!recipeIngredient.appliesToEveryone && (
             <Button
               type="button"
               variant="outline"
               size="default"
-              className="h-8 w-8 p-0"
-              aria-label="Jagoda only"
-              title="Jagoda only"
+              className="h-8 px-2"
+              aria-label="Selected members only"
+              title="Selected members only"
             >
-              J
-            </Button>
-          )}
-          {recipeIngredient.nutritionTarget === "SECONDARY_ONLY" && (
-            <Button
-              type="button"
-              variant="outline"
-              size="default"
-              className="h-8 w-8 p-0"
-              aria-label="Nelson only"
-              title="Nelson only"
-            >
-              N
+              Selected
             </Button>
           )}
           {recipeIngredient.additionalInfo && (

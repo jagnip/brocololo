@@ -2,7 +2,6 @@
 
 import { useEffect, useOptimistic, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { LogPerson } from "@/src/generated/enums";
 import {
   Select,
   SelectContent,
@@ -11,29 +10,38 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTopbar } from "@/components/context/topbar-context";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 type LogPersonSelectProps = {
-  value: "PRIMARY" | "SECONDARY";
+  value: string;
+  familyMembers: FamilyMemberRow[];
 };
 
 /**
- * Reads `?person=` from the URL so the control works in the app top bar (layouts do not receive searchParams).
- * Falls back to PRIMARY when the param is absent — same as `LogPage`’s `parsePerson`.
+ * Reads `?memberId=` from the URL so the control works in the app top bar.
+ * Falls back to the self member when the param is absent.
  */
-export function LogPersonSelectFromUrl() {
+export function LogPersonSelectFromUrl({
+  familyMembers,
+}: {
+  familyMembers: FamilyMemberRow[];
+}) {
   const searchParams = useSearchParams();
-  const raw = searchParams.get("person");
-  const value =
-    raw === LogPerson.SECONDARY ? LogPerson.SECONDARY : LogPerson.PRIMARY;
-  return <LogPersonSelect value={value} />;
+  const raw = searchParams.get("memberId");
+  const fallback =
+    familyMembers.find((member) => member.isSelf)?.id ?? familyMembers[0]?.id ?? "";
+  const value = familyMembers.some((member) => member.id === raw)
+    ? raw!
+    : fallback;
+  return <LogPersonSelect value={value} familyMembers={familyMembers} />;
 }
 
-export function LogPersonSelect({ value }: LogPersonSelectProps) {
+export function LogPersonSelect({ value, familyMembers }: LogPersonSelectProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [optimisticPerson, setOptimisticPerson] = useOptimistic(value);
+  const [optimisticMemberId, setOptimisticMemberId] = useOptimistic(value);
   const { setLogFilterPending } = useTopbar();
 
   useEffect(() => {
@@ -43,10 +51,10 @@ export function LogPersonSelect({ value }: LogPersonSelectProps) {
   }, [isPending, setLogFilterPending]);
 
   const handleValueChange = (nextValue: string) => {
-    if (nextValue === optimisticPerson) return;
-    setOptimisticPerson(nextValue as "PRIMARY" | "SECONDARY");
+    if (nextValue === optimisticMemberId) return;
+    setOptimisticMemberId(nextValue);
     const params = new URLSearchParams(searchParams.toString());
-    params.set("person", nextValue);
+    params.set("memberId", nextValue);
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`);
     });
@@ -54,7 +62,7 @@ export function LogPersonSelect({ value }: LogPersonSelectProps) {
 
   return (
     <Select
-      value={optimisticPerson}
+      value={optimisticMemberId}
       onValueChange={handleValueChange}
       allowInlineClear={false}
     >
@@ -63,8 +71,12 @@ export function LogPersonSelect({ value }: LogPersonSelectProps) {
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value={LogPerson.PRIMARY}>Jagoda</SelectItem>
-        <SelectItem value={LogPerson.SECONDARY}>Nelson</SelectItem>
+        {familyMembers.map((member, index) => (
+          <SelectItem key={member.id} value={member.id}>
+            {member.name.trim() ||
+              (member.isSelf ? "You" : `Family member ${index}`)}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );

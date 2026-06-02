@@ -14,6 +14,7 @@ import {
 import type { LogDayData } from "@/lib/log/view-model";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import { PageHeader } from "../page-header";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 function toDayMacros(day: LogDayData) {
   return day.slots.reduce(
@@ -44,6 +45,7 @@ export type LogDayPanelHeaderProps = {
   showDayControls?: boolean;
   showDayManagementActions?: boolean;
   showPageHeader?: boolean;
+  familyMembers: FamilyMemberRow[];
 };
 
 export function LogDayHeader({
@@ -59,6 +61,7 @@ export function LogDayHeader({
   showDayControls = true,
   showDayManagementActions = true,
   showPageHeader = true,
+  familyMembers,
 }: LogDayPanelHeaderProps) {
   const dayMacros = toDayMacros(day);
 
@@ -91,7 +94,7 @@ export function LogDayHeader({
             </div>
 
             {/* Person selector belongs under Log details in combined view. */}
-            <LogPersonSelectFromUrl />
+            <LogPersonSelectFromUrl familyMembers={familyMembers} />
 
             {showDayManagementActions ? (
               <>

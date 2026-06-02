@@ -64,10 +64,12 @@ export const ModelName = {
   PlanSlot: 'PlanSlot',
   PlanSlotAlternative: 'PlanSlotAlternative',
   Recipe: 'Recipe',
+  RecipeMemberPortion: 'RecipeMemberPortion',
   Ingredient: 'Ingredient',
   Unit: 'Unit',
   IngredientUnit: 'IngredientUnit',
   RecipeIngredient: 'RecipeIngredient',
+  RecipeIngredientMemberTarget: 'RecipeIngredientMemberTarget',
   RecipeIngredientGroup: 'RecipeIngredientGroup',
   RecipeInstruction: 'RecipeInstruction',
   RecipeInstructionIngredient: 'RecipeInstructionIngredient',
@@ -242,12 +244,20 @@ export const RecipeScalarFieldEnum = {
   totalTime: 'totalTime',
   notes: 'notes',
   servings: 'servings',
-  servingMultiplierForNelson: 'servingMultiplierForNelson',
   lastUsedInPlanner: 'lastUsedInPlanner',
   excludeFromPlanner: 'excludeFromPlanner'
 } as const
 
 export type RecipeScalarFieldEnum = (typeof RecipeScalarFieldEnum)[keyof typeof RecipeScalarFieldEnum]
+
+
+export const RecipeMemberPortionScalarFieldEnum = {
+  recipeId: 'recipeId',
+  familyMemberId: 'familyMemberId',
+  multiplier: 'multiplier'
+} as const
+
+export type RecipeMemberPortionScalarFieldEnum = (typeof RecipeMemberPortionScalarFieldEnum)[keyof typeof RecipeMemberPortionScalarFieldEnum]
 
 
 export const IngredientScalarFieldEnum = {
@@ -296,11 +306,19 @@ export const RecipeIngredientScalarFieldEnum = {
   ingredientId: 'ingredientId',
   unitId: 'unitId',
   amount: 'amount',
-  nutritionTarget: 'nutritionTarget',
+  appliesToEveryone: 'appliesToEveryone',
   additionalInfo: 'additionalInfo'
 } as const
 
 export type RecipeIngredientScalarFieldEnum = (typeof RecipeIngredientScalarFieldEnum)[keyof typeof RecipeIngredientScalarFieldEnum]
+
+
+export const RecipeIngredientMemberTargetScalarFieldEnum = {
+  recipeIngredientId: 'recipeIngredientId',
+  familyMemberId: 'familyMemberId'
+} as const
+
+export type RecipeIngredientMemberTargetScalarFieldEnum = (typeof RecipeIngredientMemberTargetScalarFieldEnum)[keyof typeof RecipeIngredientMemberTargetScalarFieldEnum]
 
 
 export const RecipeIngredientGroupScalarFieldEnum = {
@@ -366,7 +384,7 @@ export const LogEntryScalarFieldEnum = {
   logId: 'logId',
   date: 'date',
   mealType: 'mealType',
-  person: 'person'
+  familyMemberId: 'familyMemberId'
 } as const
 
 export type LogEntryScalarFieldEnum = (typeof LogEntryScalarFieldEnum)[keyof typeof LogEntryScalarFieldEnum]

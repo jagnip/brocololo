@@ -53,13 +53,6 @@ const recipeIngredientGroupSchema = z.object({
   position: z.coerce.number().int().min(0).default(0),
 });
 
-// Keep ingredient nutrition targeting explicit by role.
-export const nutritionTargetSchema = z.enum([
-  "BOTH",
-  "PRIMARY_ONLY",
-  "SECONDARY_ONLY",
-]);
-
 const recipeIngredientSchema = z
   .object({
     id: z.string().min(1).optional(),
@@ -77,7 +70,8 @@ const recipeIngredientSchema = z
       .min(1, { message: "Choose a unit" })
       .nullish()
       .transform((val) => val ?? null),
-    nutritionTarget: nutritionTargetSchema.default("BOTH"),
+    appliesToEveryone: z.boolean().default(true),
+    targetFamilyMemberIds: z.array(z.string().min(1)).default([]),
     additionalInfo: z
       .string()
       .max(50, { message: "Keep additional info under 50 characters" })
@@ -104,7 +98,30 @@ const recipeIngredientSchema = z
         message: "Choose a unit before entering an amount",
       });
     }
+    if (
+      !ingredient.appliesToEveryone &&
+      ingredient.targetFamilyMemberIds.length === 0
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["targetFamilyMemberIds"],
+        message: "Choose who this ingredient is for",
+      });
+    }
   });
+
+const recipeMemberPortionSchema = z.object({
+  familyMemberId: z.string().min(1),
+  multiplier: preprocessRequiredNumberInput(
+    "Choose a multiplier",
+    z
+      .number()
+      .min(1)
+      .refine((value) => isHalfStepValue(value), {
+        message: "Choose a multiplier in 0.5 steps",
+      }),
+  ),
+});
 
 const recipeInstructionSchema = z.object({
   id: z.string().min(1).optional(),
@@ -152,29 +169,12 @@ const recipeBaseSchema = z.object({
   ),
   // Keep empty string values as missing so required checks trigger.
   servings: preprocessRequiredNumberInput(
-    "Enter an even number of portions above 0",
+    "Enter a number of portions above 0",
     z.number()
-      .int({ message: "Enter an even number of portions above 0" })
-      .min(2, { message: "Enter an even number of portions above 0" })
-      .refine((value) => value % 2 === 0, {
-        message: "Enter an even number of portions above 0",
-      }),
+      .int({ message: "Enter a number of portions above 0" })
+      .min(1, { message: "Enter a number of portions above 0" }),
   ),
-  // Keep this optional in the form and normalize missing/blank input to 1.
-  servingMultiplierForNelson: z.preprocess((value) => {
-    if (value === "" || value === null || value === undefined) {
-      return 1;
-    }
-    if (typeof value === "string") {
-      return Number(value);
-    }
-    return value;
-  }, z
-    .number()
-    .min(1)
-    .refine((value) => isHalfStepValue(value), {
-      message: "Choose a multiplier in 0.5 steps",
-    })),
+  memberPortions: z.array(recipeMemberPortionSchema).default([]),
   ingredientGroups: z.array(recipeIngredientGroupSchema).default([]),
   // Keep arrays required but allow empty collections for draft-like recipes.
   ingredients: z.array(recipeIngredientSchema),

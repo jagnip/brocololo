@@ -300,7 +300,6 @@ async function main() {
     categoryIds: string[];
     ingredients: Array<{ ingredientId: string; unitId: string; amount: number }>;
     imageUrl?: string;
-    servingMultiplierForNelson?: number;
   }) => {
     return await prisma.recipe.create({
       data: {
@@ -310,7 +309,6 @@ async function main() {
         handsOnTime: data.handsOnTime,
         totalTime: data.totalTime,
         servings: data.servings,
-        servingMultiplierForNelson: data.servingMultiplierForNelson ?? 1,
         instructions: {
           create: data.instructions.map((text, position) => ({
             text,

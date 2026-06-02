@@ -5,8 +5,9 @@ import { RecipeType } from "@/types/recipe";
 import {
   calculateNutritionPerServing,
   calculateServingScalingFactor,
-  getPrimaryCalorieScalingFactorForTarget,
+  getCalorieScalingFactorForIngredient,
 } from "@/lib/recipes/helpers";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 type UseRecipeNutritionParams = {
   recipe: RecipeType;
@@ -15,19 +16,24 @@ type UseRecipeNutritionParams = {
   targetCaloriesPerPortion: number | null;
   globalScaleRatio: number;
   localScaleByIngredientId: Record<string, number>;
+  familyMembers: FamilyMemberRow[];
 };
 
 export type UseRecipeNutritionResult = {
   recipeForScaledNutrition: RecipeType;
   effectiveRecipeIngredientById: Map<string, RecipeType["ingredients"][number]>;
-  jagodaNutrition: ReturnType<typeof calculateNutritionPerServing>;
-  nelsonNutrition: ReturnType<typeof calculateNutritionPerServing>;
+  nutritionRows: Array<{
+    familyMemberId: string;
+    label: string;
+    nutrition: ReturnType<typeof calculateNutritionPerServing>;
+  }>;
   servingScalingFactor: number;
-  jagodaPortionFactor: number;
-  nelsonPortionFactor: number;
   calorieScalingFactor: number;
   getIngredientCalorieFactor: (
-    nutritionTarget: "BOTH" | "PRIMARY_ONLY" | "SECONDARY_ONLY",
+    recipeIngredient: Pick<
+      RecipeType["ingredients"][number],
+      "appliesToEveryone" | "memberTargets"
+    >,
   ) => number;
   getIngredientDisplayScalingFactor: (recipeIngredientId: string) => number;
 };
@@ -39,6 +45,7 @@ export function useRecipeNutrition({
   targetCaloriesPerPortion,
   globalScaleRatio,
   localScaleByIngredientId,
+  familyMembers,
 }: UseRecipeNutritionParams): UseRecipeNutritionResult {
   const effectiveRecipeIngredientById = useMemo(
     () =>
@@ -51,10 +58,16 @@ export function useRecipeNutrition({
     [effectiveRecipe.ingredients],
   );
 
-  const jagodaBaseNutrition = calculateNutritionPerServing(effectiveRecipe, "primary");
+  const selfMember = familyMembers.find((member) => member.isSelf) ?? familyMembers[0];
+  const selfFamilyMemberId = selfMember?.id ?? "";
+  const selfBaseNutrition = calculateNutritionPerServing(
+    effectiveRecipe,
+    selfFamilyMemberId,
+    familyMembers,
+  );
   const calorieScalingFactor =
-    targetCaloriesPerPortion && jagodaBaseNutrition.calories > 0
-      ? targetCaloriesPerPortion / jagodaBaseNutrition.calories
+    targetCaloriesPerPortion && selfBaseNutrition.calories > 0
+      ? targetCaloriesPerPortion / selfBaseNutrition.calories
       : 1;
 
   const recipeForScaledNutrition = useMemo(
@@ -66,8 +79,10 @@ export function useRecipeNutrition({
         }
         // Compose base-anchored global + per-row local scales for nutrition math.
         const rowScaleRatio = localScaleByIngredientId[ingredientRow.id] ?? 1;
-        const calorieFactor = getPrimaryCalorieScalingFactorForTarget(
-          ingredientRow.nutritionTarget,
+        const calorieFactor = getCalorieScalingFactorForIngredient(
+          ingredientRow.appliesToEveryone,
+          ingredientRow.memberTargets.map((target) => target.familyMemberId),
+          selfFamilyMemberId,
           calorieScalingFactor,
         );
         return {
@@ -77,26 +92,46 @@ export function useRecipeNutrition({
         };
       }),
     }),
-    [calorieScalingFactor, effectiveRecipe, globalScaleRatio, localScaleByIngredientId],
+    [
+      calorieScalingFactor,
+      effectiveRecipe,
+      globalScaleRatio,
+      localScaleByIngredientId,
+      selfFamilyMemberId,
+    ],
   );
 
-  const jagodaNutrition = calculateNutritionPerServing(recipeForScaledNutrition, "primary");
-  const nelsonNutrition = calculateNutritionPerServing(
-    recipeForScaledNutrition,
-    "secondary",
-  );
+  const nutritionRows = familyMembers.map((member, index) => ({
+    familyMemberId: member.id,
+    label:
+      member.name.trim() ||
+      (member.isSelf ? "You" : `Family member ${index}`),
+    nutrition: calculateNutritionPerServing(
+      recipeForScaledNutrition,
+      member.id,
+      familyMembers,
+    ),
+  }));
 
-  const { servingScalingFactor, jagodaPortionFactor, nelsonPortionFactor } =
-    calculateServingScalingFactor(
-      currentServings,
-      recipe.servings,
-      recipe.servingMultiplierForNelson,
-    );
+  const { servingScalingFactor } = calculateServingScalingFactor(
+    currentServings,
+    recipe.servings,
+  );
 
   const getIngredientCalorieFactor = useCallback(
-    (nutritionTarget: "BOTH" | "PRIMARY_ONLY" | "SECONDARY_ONLY") =>
-      getPrimaryCalorieScalingFactorForTarget(nutritionTarget, calorieScalingFactor),
-    [calorieScalingFactor],
+    (
+      recipeIngredient: Pick<
+        RecipeType["ingredients"][number],
+        "appliesToEveryone" | "memberTargets"
+      >,
+    ) =>
+      getCalorieScalingFactorForIngredient(
+        recipeIngredient.appliesToEveryone,
+        recipeIngredient.memberTargets.map((target) => target.familyMemberId),
+        selfFamilyMemberId,
+        calorieScalingFactor,
+      ),
+    [calorieScalingFactor, selfFamilyMemberId],
   );
 
   const getIngredientDisplayScalingFactor = useCallback(
@@ -110,11 +145,8 @@ export function useRecipeNutrition({
   return {
     recipeForScaledNutrition,
     effectiveRecipeIngredientById,
-    jagodaNutrition,
-    nelsonNutrition,
+    nutritionRows,
     servingScalingFactor,
-    jagodaPortionFactor,
-    nelsonPortionFactor,
     calorieScalingFactor,
     getIngredientCalorieFactor,
     getIngredientDisplayScalingFactor,

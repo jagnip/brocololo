@@ -83,6 +83,11 @@ export type PlanSlotAlternative = Prisma.PlanSlotAlternativeModel
  */
 export type Recipe = Prisma.RecipeModel
 /**
+ * Model RecipeMemberPortion
+ * 
+ */
+export type RecipeMemberPortion = Prisma.RecipeMemberPortionModel
+/**
  * Model Ingredient
  * 
  */
@@ -102,6 +107,11 @@ export type IngredientUnit = Prisma.IngredientUnitModel
  * 
  */
 export type RecipeIngredient = Prisma.RecipeIngredientModel
+/**
+ * Model RecipeIngredientMemberTarget
+ * 
+ */
+export type RecipeIngredientMemberTarget = Prisma.RecipeIngredientMemberTargetModel
 /**
  * Model RecipeIngredientGroup
  * 

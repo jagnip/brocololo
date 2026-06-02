@@ -20,8 +20,8 @@ model Category {
   type    CategoryType
   recipes Recipe[]     @relation("category_recipes")
 
-  @@map("categories")
   @@index([type])
+  @@map("categories")
 }
 
 enum PlannerMealType {
@@ -37,11 +37,6 @@ enum LogMealType {
   DINNER
 }
 
-enum LogPerson {
-  PRIMARY
-  SECONDARY
-}
-
 // App user synced from Clerk — one row per signed-in account.
 model User {
   id        String   @id @default(cuid())
@@ -49,11 +44,11 @@ model User {
   email     String?
   createdAt DateTime @default(now()) @map("created_at")
 
-  familyMembers            FamilyMember[]
-  recipes                  Recipe[]
-  plans                    Plan[]
-  ingredientLists          IngredientList[]
-  ingredients              Ingredient[]
+  familyMembers             FamilyMember[]
+  recipes                   Recipe[]
+  plans                     Plan[]
+  ingredientLists           IngredientList[]
+  ingredients               Ingredient[]
   shoppingListSharesCreated ShoppingListShare[]
 
   @@map("users")
@@ -67,20 +62,23 @@ model FamilyMember {
   isSelf    Boolean @default(false) @map("is_self")
   sortOrder Int     @map("sort_order")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                    User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logEntries              LogEntry[]
+  recipeMemberPortions    RecipeMemberPortion[]
+  recipeIngredientTargets RecipeIngredientMemberTarget[]
 
   @@index([userId, sortOrder])
   @@map("family_members")
 }
 
 model Plan {
-  id        String     @id @default(cuid())
-  userId    String     @map("user_id")
-  startDate DateTime   @map("start_date")
-  endDate   DateTime   @map("end_date")
-  createdAt DateTime   @default(now()) @map("created_at")
-  slots     PlanSlot[]
-  log       Log?
+  id           String        @id @default(cuid())
+  userId       String        @map("user_id")
+  startDate    DateTime      @map("start_date")
+  endDate      DateTime      @map("end_date")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  slots        PlanSlot[]
+  log          Log?
   shoppingList ShoppingList?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -90,22 +88,22 @@ model Plan {
 }
 
 model GroceryIngredient {
-  id                    String @id @default(cuid())
-  ingredientId          String @unique @map("ingredient_id")
-  additionalInfo        String? @map("additional_info")
-  substitutionsAllowed  Boolean @default(false) @map("substitutions_allowed")
-  substitutionNote      String? @map("substitution_note")
+  id                   String  @id @default(cuid())
+  ingredientId         String  @unique @map("ingredient_id")
+  additionalInfo       String? @map("additional_info")
+  substitutionsAllowed Boolean @default(false) @map("substitutions_allowed")
+  substitutionNote     String? @map("substitution_note")
 
-  ingredient            Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
-  shoppingListItems     ShoppingListItem[]
+  ingredient        Ingredient         @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  shoppingListItems ShoppingListItem[]
 
   @@map("grocery_ingredients")
 }
 
 model ShoppingLayoutPreset {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   name      String
-  isBuiltIn Boolean  @default(false) @map("is_built_in")
+  isBuiltIn Boolean @default(false) @map("is_built_in")
 
   categoryOrders     ShoppingLayoutPresetCategory[]
   listsUsingAsActive ShoppingList[]
@@ -133,10 +131,10 @@ model ShoppingList {
   activeLayoutPresetId String?  @map("active_layout_preset_id")
   createdAt            DateTime @default(now()) @map("created_at")
 
-  plan                 Plan                  @relation(fields: [planId], references: [id], onDelete: Cascade)
-  activeLayoutPreset   ShoppingLayoutPreset? @relation(fields: [activeLayoutPresetId], references: [id], onDelete: SetNull)
-  items                ShoppingListItem[]
-  shares               ShoppingListShare[]
+  plan               Plan                  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  activeLayoutPreset ShoppingLayoutPreset? @relation(fields: [activeLayoutPresetId], references: [id], onDelete: SetNull)
+  items              ShoppingListItem[]
+  shares             ShoppingListShare[]
 
   @@map("shopping_lists")
 }
@@ -160,40 +158,40 @@ model ShoppingListShare {
 }
 
 model ShoppingListItem {
-  id                   String   @id @default(cuid())
-  shoppingListId       String   @map("shopping_list_id")
-  groceryIngredientId  String?  @map("grocery_ingredient_id")
-  ingredientCategoryId String   @map("ingredient_category_id")
-  displayLabel         String   @map("display_label")
-  unitId               String?  @map("unit_id")
+  id                   String  @id @default(cuid())
+  shoppingListId       String  @map("shopping_list_id")
+  groceryIngredientId  String? @map("grocery_ingredient_id")
+  ingredientCategoryId String  @map("ingredient_category_id")
+  displayLabel         String  @map("display_label")
+  unitId               String? @map("unit_id")
   amount               Float?
-  additionalInfo       String?  @map("additional_info")
-  substitutionsAllowed Boolean  @default(false) @map("substitutions_allowed")
-  substitutionNote     String?  @map("substitution_note")
-  purchased            Boolean  @default(false)
-  recipeAttribution    String?  @map("recipe_attribution")
-  position             Int      @default(0)
+  additionalInfo       String? @map("additional_info")
+  substitutionsAllowed Boolean @default(false) @map("substitutions_allowed")
+  substitutionNote     String? @map("substitution_note")
+  purchased            Boolean @default(false)
+  recipeAttribution    String? @map("recipe_attribution")
+  position             Int     @default(0)
 
-  shoppingList       ShoppingList       @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
-  groceryIngredient  GroceryIngredient? @relation(fields: [groceryIngredientId], references: [id], onDelete: SetNull)
-  category           IngredientCategory @relation(fields: [ingredientCategoryId], references: [id], onDelete: Restrict)
-  unit               Unit?              @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  shoppingList      ShoppingList       @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+  groceryIngredient GroceryIngredient? @relation(fields: [groceryIngredientId], references: [id], onDelete: SetNull)
+  category          IngredientCategory @relation(fields: [ingredientCategoryId], references: [id], onDelete: Restrict)
+  unit              Unit?              @relation(fields: [unitId], references: [id], onDelete: Restrict)
 
   @@index([shoppingListId, ingredientCategoryId, position])
   @@map("shopping_list_items")
 }
 
 model PlanSlot {
-  id        String   @id @default(cuid())
-  planId    String   @map("plan_id")
-  date      DateTime @db.Date
-  mealType  PlannerMealType @map("meal_type")
-  recipeId  String?  @map("recipe_id")
-  used      Boolean  @default(false)
+  id       String          @id @default(cuid())
+  planId   String          @map("plan_id")
+  date     DateTime        @db.Date
+  mealType PlannerMealType @map("meal_type")
+  recipeId String?         @map("recipe_id")
+  used     Boolean         @default(false)
 
-  plan         Plan                  @relation(fields: [planId], references: [id], onDelete: Cascade)
-  recipe       Recipe?               @relation("recipe_plan_slots", fields: [recipeId], references: [id], onDelete: Cascade)
-  alternatives PlanSlotAlternative[]
+  plan            Plan                  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  recipe          Recipe?               @relation("recipe_plan_slots", fields: [recipeId], references: [id], onDelete: Cascade)
+  alternatives    PlanSlotAlternative[]
   logEntryRecipes LogEntryRecipe[]
 
   @@index([planId])
@@ -216,26 +214,26 @@ model PlanSlotAlternative {
 }
 
 model Recipe {
-  id           String     @id @default(cuid())
-  userId       String     @map("user_id")
-  name         String
-  slug         String
-  handsOnTime  Int        @map("hands_on_time")
-  totalTime    Int        @map("total_time")
-  notes        String[] 
-  servings     Int
-  servingMultiplierForNelson Float @map("serving_multiplier_for_nelson") @default(1)
-  ingredients RecipeIngredient[]
-  ingredientGroups RecipeIngredientGroup[]
-  instructions RecipeInstruction[]
-  images       RecipeImage[]
-  lastUsedInPlanner DateTime? @map("last_used_in_planner")
-  excludeFromPlanner Boolean @default(false) @map("exclude_from_planner")
+  id                 String                  @id @default(cuid())
+  userId             String                  @map("user_id")
+  name               String
+  slug               String
+  handsOnTime        Int                     @map("hands_on_time")
+  totalTime          Int                     @map("total_time")
+  notes              String[]
+  servings           Int
+  ingredients        RecipeIngredient[]
+  ingredientGroups   RecipeIngredientGroup[]
+  instructions       RecipeInstruction[]
+  images             RecipeImage[]
+  memberPortions     RecipeMemberPortion[]
+  lastUsedInPlanner  DateTime?               @map("last_used_in_planner")
+  excludeFromPlanner Boolean                 @default(false) @map("exclude_from_planner")
 
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  categories   Category[] @relation("category_recipes")
-  planSlots    PlanSlot[] @relation("recipe_plan_slots")
-  alternatives PlanSlotAlternative[] @relation("recipe_alternatives")
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categories      Category[]            @relation("category_recipes")
+  planSlots       PlanSlot[]            @relation("recipe_plan_slots")
+  alternatives    PlanSlotAlternative[] @relation("recipe_alternatives")
   logEntryRecipes LogEntryRecipe[]
 
   @@unique([userId, slug])
@@ -245,30 +243,43 @@ model Recipe {
   @@map("recipes")
 }
 
-model Ingredient {
-  id              String   @id @default(cuid())
-  userId          String?  @map("user_id")
-  name            String
-  slug            String   @unique
-  icon            String?
-  brand           String?
-  descriptor      String?
-  supermarketUrl  String?  @map("supermarket_url")
-  calories        Float
-  proteins        Float
-  fats            Float
-  carbs           Float
-  categoryId      String   @map("category_id")
-  defaultUnitId   String?  @map("default_unit_id")
+model RecipeMemberPortion {
+  recipeId       String @map("recipe_id")
+  familyMemberId String @map("family_member_id")
+  multiplier     Float  @default(1)
 
-  user            User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category        IngredientCategory @relation(fields: [categoryId], references: [id])
-  defaultUnit     Unit?              @relation("ingredient_default_unit", fields: [defaultUnitId], references: [id], onDelete: Restrict)
-  recipes         RecipeIngredient[]
-  unitConversions IngredientUnit[]
-  logIngredients  LogIngredient[]
+  recipe       Recipe       @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  familyMember FamilyMember @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+
+  @@id([recipeId, familyMemberId])
+  @@index([familyMemberId])
+  @@map("recipe_member_portions")
+}
+
+model Ingredient {
+  id             String  @id @default(cuid())
+  userId         String? @map("user_id")
+  name           String
+  slug           String  @unique
+  icon           String?
+  brand          String?
+  descriptor     String?
+  supermarketUrl String? @map("supermarket_url")
+  calories       Float
+  proteins       Float
+  fats           Float
+  carbs          Float
+  categoryId     String  @map("category_id")
+  defaultUnitId  String? @map("default_unit_id")
+
+  user              User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category          IngredientCategory   @relation(fields: [categoryId], references: [id])
+  defaultUnit       Unit?                @relation("ingredient_default_unit", fields: [defaultUnitId], references: [id], onDelete: Restrict)
+  recipes           RecipeIngredient[]
+  unitConversions   IngredientUnit[]
+  logIngredients    LogIngredient[]
   groceryIngredient GroceryIngredient?
-  ingredientLists IngredientListItem[]
+  ingredientLists   IngredientListItem[]
 
   @@index([userId])
   @@index([categoryId])
@@ -277,87 +288,94 @@ model Ingredient {
 }
 
 model Unit {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id         String  @id @default(cuid())
+  name       String  @unique
   // Optional plural label supports irregular forms (e.g. piece -> pieces).
-  namePlural  String?  @map("name_plural")
-  
-  ingredientUnits IngredientUnit[]
-  defaultForIngredients Ingredient[] @relation("ingredient_default_unit")
-  recipeIngredients RecipeIngredient[]
-  logIngredients LogIngredient[]
-  shoppingListItems ShoppingListItem[]
+  namePlural String? @map("name_plural")
+
+  ingredientUnits       IngredientUnit[]
+  defaultForIngredients Ingredient[]       @relation("ingredient_default_unit")
+  recipeIngredients     RecipeIngredient[]
+  logIngredients        LogIngredient[]
+  shoppingListItems     ShoppingListItem[]
 
   @@map("units")
 }
 
 model IngredientUnit {
-  ingredientId  String @map("ingredient_id")
-  unitId        String @map("unit_id")
-  gramsPerUnit  Float @map("grams_per_unit")
-  
-  ingredient    Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
-  unit          Unit      @relation(fields: [unitId], references: [id], onDelete: Restrict)
-  
+  ingredientId String @map("ingredient_id")
+  unitId       String @map("unit_id")
+  gramsPerUnit Float  @map("grams_per_unit")
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  unit       Unit       @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
   @@id([ingredientId, unitId])
   @@map("ingredient_units")
 }
 
 model RecipeIngredient {
-  id          String   @id @default(cuid())
-  recipeId    String @map("recipe_id")
-  groupId     String? @map("group_id")
-  position    Int
-  ingredientId String @map("ingredient_id")
-  unitId      String? @map("unit_id")
-  amount      Float? 
-  nutritionTarget NutritionTarget @default(BOTH) @map("nutrition_target")
-  additionalInfo String? @map("additional_info")
+  id                String  @id @default(cuid())
+  recipeId          String  @map("recipe_id")
+  groupId           String? @map("group_id")
+  position          Int
+  ingredientId      String  @map("ingredient_id")
+  unitId            String? @map("unit_id")
+  amount            Float?
+  appliesToEveryone Boolean @default(true) @map("applies_to_everyone")
+  additionalInfo    String? @map("additional_info")
 
-  recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  group       RecipeIngredientGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  ingredient  Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
-  unit        Unit?    @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  recipe            Recipe                         @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  group             RecipeIngredientGroup?         @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  ingredient        Ingredient                     @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+  unit              Unit?                          @relation(fields: [unitId], references: [id], onDelete: Restrict)
   instructionsLinks RecipeInstructionIngredient[]
+  memberTargets     RecipeIngredientMemberTarget[]
 
   @@index([recipeId])
   @@index([recipeId, groupId])
-  @@index([ingredientId])  
-  @@index([unitId]) 
+  @@index([ingredientId])
+  @@index([unitId])
   @@map("recipe_ingredients")
 }
 
-enum NutritionTarget {
-  BOTH
-  PRIMARY_ONLY
-  SECONDARY_ONLY
+model RecipeIngredientMemberTarget {
+  recipeIngredientId String @map("recipe_ingredient_id")
+  familyMemberId     String @map("family_member_id")
+
+  recipeIngredient RecipeIngredient @relation(fields: [recipeIngredientId], references: [id], onDelete: Cascade)
+  familyMember     FamilyMember     @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+
+  @@id([recipeIngredientId, familyMemberId])
+  @@index([familyMemberId])
+  @@map("recipe_ingredient_member_targets")
 }
 
 model RecipeIngredientGroup {
-  id        String @id @default(cuid())
-  recipeId  String @map("recipe_id")
-  name      String
-  position  Int
+  id       String @id @default(cuid())
+  recipeId String @map("recipe_id")
+  name     String
+  position Int
 
   recipe      Recipe             @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   ingredients RecipeIngredient[]
 
-  @@index([recipeId])
   @@unique([recipeId, position])
+  @@index([recipeId])
   @@map("recipe_ingredient_groups")
 }
 
 model RecipeInstruction {
-  id        String @id @default(cuid())
-  recipeId  String @map("recipe_id")
-  position  Int
-  text      String
+  id       String @id @default(cuid())
+  recipeId String @map("recipe_id")
+  position Int
+  text     String
 
-  recipe      Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipe      Recipe                        @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   ingredients RecipeInstructionIngredient[]
 
-  @@index([recipeId])
   @@unique([recipeId, position])
+  @@index([recipeId])
   @@map("recipe_instructions")
 }
 
@@ -374,12 +392,12 @@ model RecipeInstructionIngredient {
 }
 
 model IngredientCategory {
-  id        String       @id @default(cuid())
-  name      String       @unique
-  slug      String       @unique
-  sortOrder Int          @default(0) @map("sort_order")
+  id        String @id @default(cuid())
+  name      String @unique
+  slug      String @unique
+  sortOrder Int    @default(0) @map("sort_order")
 
-  ingredients                     Ingredient[]
+  ingredients                    Ingredient[]
   shoppingLayoutPresetCategories ShoppingLayoutPresetCategory[]
   shoppingListItems              ShoppingListItem[]
 
@@ -392,9 +410,9 @@ model RecipeImage {
   url       String
   isCover   Boolean  @default(false) @map("is_cover")
   createdAt DateTime @default(now()) @map("created_at")
-  
-  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
   @@index([recipeId])
   @@map("recipe_images")
 }
@@ -411,31 +429,33 @@ model Log {
 }
 
 model LogEntry {
-  id        String      @id @default(cuid())
-  logId     String      @map("log_id")
-  date      DateTime    @db.Date
-  mealType  LogMealType @map("meal_type")
-  person    LogPerson
+  id             String      @id @default(cuid())
+  logId          String      @map("log_id")
+  date           DateTime    @db.Date
+  mealType       LogMealType @map("meal_type")
+  familyMemberId String      @map("family_member_id")
 
-  log         Log              @relation(fields: [logId], references: [id], onDelete: Cascade)
-  recipes     LogEntryRecipe[]
-  ingredients LogIngredient[]
+  log          Log              @relation(fields: [logId], references: [id], onDelete: Cascade)
+  familyMember FamilyMember     @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+  recipes      LogEntryRecipe[]
+  ingredients  LogIngredient[]
 
-  @@unique([logId, date, mealType, person])
+  @@unique([logId, date, mealType, familyMemberId])
   @@index([logId])
+  @@index([familyMemberId])
   @@map("log_entries")
 }
 
 model LogEntryRecipe {
-  id             String   @id @default(cuid())
-  entryId        String   @map("entry_id")
-  sourceRecipeId String?  @map("source_recipe_id")
-  planSlotId     String?  @map("plan_slot_id")
-  position       Int      @default(0)
+  id             String  @id @default(cuid())
+  entryId        String  @map("entry_id")
+  sourceRecipeId String? @map("source_recipe_id")
+  planSlotId     String? @map("plan_slot_id")
+  position       Int     @default(0)
 
   entry        LogEntry        @relation(fields: [entryId], references: [id], onDelete: Cascade)
   sourceRecipe Recipe?         @relation(fields: [sourceRecipeId], references: [id], onDelete: SetNull)
-  planSlot    PlanSlot?        @relation(fields: [planSlotId], references: [id], onDelete: SetNull)
+  planSlot     PlanSlot?       @relation(fields: [planSlotId], references: [id], onDelete: SetNull)
   ingredients  LogIngredient[]
 
   @@index([entryId])
@@ -445,12 +465,12 @@ model LogEntryRecipe {
 }
 
 model LogIngredient {
-  id            String   @id @default(cuid())
-  entryId       String   @map("entry_id")
-  entryRecipeId String?  @map("entry_recipe_id")
-  ingredientId  String?  @map("ingredient_id")
+  id            String  @id @default(cuid())
+  entryId       String  @map("entry_id")
+  entryRecipeId String? @map("entry_recipe_id")
+  ingredientId  String? @map("ingredient_id")
   amount        Float?
-  unitId        String?  @map("unit_id")
+  unitId        String? @map("unit_id")
 
   entry       LogEntry        @relation(fields: [entryId], references: [id], onDelete: Cascade)
   entryRecipe LogEntryRecipe? @relation(fields: [entryRecipeId], references: [id], onDelete: SetNull)

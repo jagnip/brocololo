@@ -263,35 +263,11 @@ export type FloatWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedFloatFilter<$PrismaModel>
 }
 
-export type EnumNutritionTargetFilter<$PrismaModel = never> = {
-  equals?: $Enums.NutritionTarget | Prisma.EnumNutritionTargetFieldRefInput<$PrismaModel>
-  in?: $Enums.NutritionTarget[] | Prisma.ListEnumNutritionTargetFieldRefInput<$PrismaModel>
-  notIn?: $Enums.NutritionTarget[] | Prisma.ListEnumNutritionTargetFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumNutritionTargetFilter<$PrismaModel> | $Enums.NutritionTarget
-}
-
-export type EnumNutritionTargetWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.NutritionTarget | Prisma.EnumNutritionTargetFieldRefInput<$PrismaModel>
-  in?: $Enums.NutritionTarget[] | Prisma.ListEnumNutritionTargetFieldRefInput<$PrismaModel>
-  notIn?: $Enums.NutritionTarget[] | Prisma.ListEnumNutritionTargetFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumNutritionTargetWithAggregatesFilter<$PrismaModel> | $Enums.NutritionTarget
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumNutritionTargetFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumNutritionTargetFilter<$PrismaModel>
-}
-
 export type EnumLogMealTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.LogMealType | Prisma.EnumLogMealTypeFieldRefInput<$PrismaModel>
   in?: $Enums.LogMealType[] | Prisma.ListEnumLogMealTypeFieldRefInput<$PrismaModel>
   notIn?: $Enums.LogMealType[] | Prisma.ListEnumLogMealTypeFieldRefInput<$PrismaModel>
   not?: Prisma.NestedEnumLogMealTypeFilter<$PrismaModel> | $Enums.LogMealType
-}
-
-export type EnumLogPersonFilter<$PrismaModel = never> = {
-  equals?: $Enums.LogPerson | Prisma.EnumLogPersonFieldRefInput<$PrismaModel>
-  in?: $Enums.LogPerson[] | Prisma.ListEnumLogPersonFieldRefInput<$PrismaModel>
-  notIn?: $Enums.LogPerson[] | Prisma.ListEnumLogPersonFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumLogPersonFilter<$PrismaModel> | $Enums.LogPerson
 }
 
 export type EnumLogMealTypeWithAggregatesFilter<$PrismaModel = never> = {
@@ -302,16 +278,6 @@ export type EnumLogMealTypeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumLogMealTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumLogMealTypeFilter<$PrismaModel>
-}
-
-export type EnumLogPersonWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.LogPerson | Prisma.EnumLogPersonFieldRefInput<$PrismaModel>
-  in?: $Enums.LogPerson[] | Prisma.ListEnumLogPersonFieldRefInput<$PrismaModel>
-  notIn?: $Enums.LogPerson[] | Prisma.ListEnumLogPersonFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumLogPersonWithAggregatesFilter<$PrismaModel> | $Enums.LogPerson
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumLogPersonFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumLogPersonFilter<$PrismaModel>
 }
 
 export type NestedStringFilter<$PrismaModel = never> = {
@@ -565,35 +531,11 @@ export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedFloatFilter<$PrismaModel>
 }
 
-export type NestedEnumNutritionTargetFilter<$PrismaModel = never> = {
-  equals?: $Enums.NutritionTarget | Prisma.EnumNutritionTargetFieldRefInput<$PrismaModel>
-  in?: $Enums.NutritionTarget[] | Prisma.ListEnumNutritionTargetFieldRefInput<$PrismaModel>
-  notIn?: $Enums.NutritionTarget[] | Prisma.ListEnumNutritionTargetFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumNutritionTargetFilter<$PrismaModel> | $Enums.NutritionTarget
-}
-
-export type NestedEnumNutritionTargetWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.NutritionTarget | Prisma.EnumNutritionTargetFieldRefInput<$PrismaModel>
-  in?: $Enums.NutritionTarget[] | Prisma.ListEnumNutritionTargetFieldRefInput<$PrismaModel>
-  notIn?: $Enums.NutritionTarget[] | Prisma.ListEnumNutritionTargetFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumNutritionTargetWithAggregatesFilter<$PrismaModel> | $Enums.NutritionTarget
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumNutritionTargetFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumNutritionTargetFilter<$PrismaModel>
-}
-
 export type NestedEnumLogMealTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.LogMealType | Prisma.EnumLogMealTypeFieldRefInput<$PrismaModel>
   in?: $Enums.LogMealType[] | Prisma.ListEnumLogMealTypeFieldRefInput<$PrismaModel>
   notIn?: $Enums.LogMealType[] | Prisma.ListEnumLogMealTypeFieldRefInput<$PrismaModel>
   not?: Prisma.NestedEnumLogMealTypeFilter<$PrismaModel> | $Enums.LogMealType
-}
-
-export type NestedEnumLogPersonFilter<$PrismaModel = never> = {
-  equals?: $Enums.LogPerson | Prisma.EnumLogPersonFieldRefInput<$PrismaModel>
-  in?: $Enums.LogPerson[] | Prisma.ListEnumLogPersonFieldRefInput<$PrismaModel>
-  notIn?: $Enums.LogPerson[] | Prisma.ListEnumLogPersonFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumLogPersonFilter<$PrismaModel> | $Enums.LogPerson
 }
 
 export type NestedEnumLogMealTypeWithAggregatesFilter<$PrismaModel = never> = {
@@ -604,16 +546,6 @@ export type NestedEnumLogMealTypeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumLogMealTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumLogMealTypeFilter<$PrismaModel>
-}
-
-export type NestedEnumLogPersonWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.LogPerson | Prisma.EnumLogPersonFieldRefInput<$PrismaModel>
-  in?: $Enums.LogPerson[] | Prisma.ListEnumLogPersonFieldRefInput<$PrismaModel>
-  notIn?: $Enums.LogPerson[] | Prisma.ListEnumLogPersonFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumLogPersonWithAggregatesFilter<$PrismaModel> | $Enums.LogPerson
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumLogPersonFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumLogPersonFilter<$PrismaModel>
 }
 
 

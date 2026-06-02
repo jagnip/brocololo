@@ -36,8 +36,8 @@ import { useEffect, useOptimistic, useTransition } from "react";
 import { ROUTES } from "@/lib/constants";
 import { generateGroceryListFromPlan } from "@/actions/shopping-list-actions";
 import { PlanSelect, type PlanSelectOption } from "@/components/planner/plan-select";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
-type PersonType = "PRIMARY" | "SECONDARY";
 type PlannerLogTab = "plan" | "log";
 
 type PlannerLogShellProps = {
@@ -47,7 +47,8 @@ type PlannerLogShellProps = {
   initialDateRange: DateRangeValue;
   initialPlan: PlanInputType;
   plannerRecipes: RecipeType[];
-  person: PersonType;
+  familyMembers: FamilyMemberRow[];
+  familyMemberId: string;
   logData: {
     logId: string;
     days: LogDayData[];
@@ -70,7 +71,8 @@ export function PlannerLogSharedShell({
   initialDateRange,
   initialPlan,
   plannerRecipes,
-  person,
+  familyMembers,
+  familyMemberId,
   logData,
   hasExistingShoppingList,
 }: PlannerLogShellProps) {
@@ -98,7 +100,7 @@ export function PlannerLogSharedShell({
   const setTab = (nextTab: PlannerLogTab) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", nextTab);
-    params.set("person", person);
+    params.set("memberId", familyMemberId);
     const query = params.toString();
     router.push(query ? `/plan/${planId}?${query}` : `/plan/${planId}`);
   };
@@ -301,9 +303,10 @@ export function PlannerLogSharedShell({
           {hasLogData && logData ? (
             <LogDayViewController
               days={logData.days}
+              familyMembers={familyMembers}
               plannerPool={logData.plannerPool}
               logId={logData.logId}
-              person={person}
+              familyMemberId={familyMemberId}
               recipeOptions={logData.recipeOptions}
               ingredientOptions={logData.ingredientOptions}
               dateRange={dateRange}

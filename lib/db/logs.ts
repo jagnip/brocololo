@@ -1,7 +1,6 @@
 import { cache } from "react";
 import {
   LogMealType,
-  LogPerson,
   PlannerMealType,
   Prisma,
 } from "@/src/generated/client";
@@ -90,7 +89,11 @@ export async function deleteLogById(userId: string, logId: string) {
   });
 }
 
-export async function getLogById(userId: string, logId: string, person: LogPerson) {
+export async function getLogById(
+  userId: string,
+  logId: string,
+  familyMemberId: string,
+) {
   return prisma.log.findFirst({
     where: { id: logId, plan: { userId } },
     select: {
@@ -104,13 +107,21 @@ export async function getLogById(userId: string, logId: string, person: LogPerso
         },
       },
       entries: {
-        where: { person },
+        where: { familyMemberId },
         orderBy: [{ date: "asc" }, { mealType: "asc" }],
         select: {
           id: true,
           date: true,
           mealType: true,
-          person: true,
+          familyMemberId: true,
+          familyMember: {
+            select: {
+              id: true,
+              name: true,
+              isSelf: true,
+              sortOrder: true,
+            },
+          },
           recipes: {
             orderBy: { position: "asc" },
             select: {
@@ -167,7 +178,11 @@ export async function getLogById(userId: string, logId: string, person: LogPerso
   });
 }
 
-export async function getLogByPlanId(userId: string, planId: string, person: LogPerson) {
+export async function getLogByPlanId(
+  userId: string,
+  planId: string,
+  familyMemberId: string,
+) {
   const log = await prisma.log.findFirst({
     where: { planId, plan: { userId } },
     select: { id: true },
@@ -175,7 +190,7 @@ export async function getLogByPlanId(userId: string, planId: string, person: Log
   if (!log) {
     return null;
   }
-  return getLogById(userId, log.id, person);
+  return getLogById(userId, log.id, familyMemberId);
 }
 
 export type AppendNextLogDayResult =
@@ -253,17 +268,21 @@ export async function appendNextLogDay(input: { userId: string; logId: string })
       PlannerMealType.LUNCH,
       PlannerMealType.DINNER,
     ] as const;
-    const people = [LogPerson.PRIMARY, LogPerson.SECONDARY] as const;
+    const familyMembers = await tx.familyMember.findMany({
+      where: { userId: input.userId },
+      select: { id: true },
+      orderBy: { sortOrder: "asc" },
+    });
 
-    for (const person of people) {
+    for (const familyMember of familyMembers) {
       for (const mealType of logMealTypes) {
         await tx.logEntry.upsert({
           where: {
-            logId_date_mealType_person: {
+            logId_date_mealType_familyMemberId: {
               logId: input.logId,
               date: nextDate,
               mealType,
-              person,
+              familyMemberId: familyMember.id,
             },
           },
           update: {},
@@ -271,7 +290,7 @@ export async function appendNextLogDay(input: { userId: string; logId: string })
             logId: input.logId,
             date: nextDate,
             mealType,
-            person,
+            familyMemberId: familyMember.id,
           },
         });
       }
@@ -426,7 +445,7 @@ export async function updateLogRecipeIngredients(
       where: {
         id: input.entryId,
         logId: input.logId,
-        person: input.person,
+        familyMemberId: input.familyMemberId,
       },
       select: { id: true },
     });
@@ -484,7 +503,7 @@ export async function upsertLogSlot(userId: string, input: UpsertLogSlotInput) {
       where: {
         id: input.entryId,
         logId: input.logId,
-        person: input.person,
+        familyMemberId: input.familyMemberId,
       },
       select: { id: true },
     });
@@ -555,7 +574,7 @@ export async function placePlannerPoolItemInEntry(
       where: {
         id: input.entryId,
         logId: input.logId,
-        person: input.person,
+        familyMemberId: input.familyMemberId,
       },
       select: { id: true },
     });
@@ -632,7 +651,7 @@ export async function clearLogEntryAssignment(
       where: {
         id: input.entryId,
         logId: input.logId,
-        person: input.person,
+        familyMemberId: input.familyMemberId,
       },
       select: { id: true },
     });
@@ -674,7 +693,7 @@ export async function duplicateLogEntryToDay(
       where: {
         id: input.sourceEntryId,
         logId: input.logId,
-        person: input.person,
+        familyMemberId: input.familyMemberId,
       },
       select: { id: true },
     });
@@ -686,7 +705,7 @@ export async function duplicateLogEntryToDay(
     const targetEntry = await tx.logEntry.findFirst({
       where: {
         logId: input.logId,
-        person: input.person,
+        familyMemberId: input.familyMemberId,
         date: targetDate,
         mealType: input.targetMealType,
       },
@@ -845,11 +864,11 @@ export async function replaceMealSlotWithRecipe(
 
     const entry = await tx.logEntry.upsert({
       where: {
-        logId_date_mealType_person: {
+        logId_date_mealType_familyMemberId: {
           logId: activeLog.id,
           date,
           mealType: input.mealType,
-          person: input.person,
+          familyMemberId: input.familyMemberId,
         },
       },
       update: {},
@@ -857,7 +876,7 @@ export async function replaceMealSlotWithRecipe(
         logId: activeLog.id,
         date,
         mealType: input.mealType,
-        person: input.person,
+        familyMemberId: input.familyMemberId,
       },
       select: {
         id: true,

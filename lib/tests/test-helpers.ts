@@ -120,6 +120,8 @@ export function createMockRecipeIngredient(overrides?: Partial<{
 }>): RecipeType["ingredients"][number] {
   const defaultIngredient = createMockIngredient();
   const defaultUnit = createMockUnit({ id: 'unit-grams', name: 'grams' });
+  const { nutritionTarget, ...restOverrides } = overrides ?? {};
+  const appliesToEveryone = nutritionTarget == null || nutritionTarget === 'BOTH';
 
   return {
     id: 'ri-1',
@@ -129,12 +131,22 @@ export function createMockRecipeIngredient(overrides?: Partial<{
     ingredientId: defaultIngredient.id,
     unitId: defaultUnit.id,
     amount: 400, // 400g
-    nutritionTarget: 'BOTH' as const,
+    appliesToEveryone,
     additionalInfo: null,
+    memberTargets: appliesToEveryone
+      ? []
+      : [
+          {
+            familyMemberId:
+              nutritionTarget === 'PRIMARY_ONLY'
+                ? 'family-self'
+                : 'family-member-1',
+          },
+        ],
     group: null,
     ingredient: defaultIngredient,
     unit: defaultUnit,
-    ...overrides,
+    ...restOverrides,
   };
 }
 
@@ -214,7 +226,13 @@ export function createMockRecipe(overrides?: Partial<RecipeType>): RecipeType {
     totalTime: 30,
     notes: [],
     servings: 4,
-    servingMultiplierForNelson: 1.5,
+    memberPortions: [
+      {
+        recipeId: defaultRecipeId,
+        familyMemberId: 'family-member-1',
+        multiplier: 1.5,
+      },
+    ],
     lastUsedInPlanner: null,
     excludeFromPlanner: false,
     categories: [createMockCategory()],
@@ -229,8 +247,9 @@ export function createMockRecipe(overrides?: Partial<RecipeType>): RecipeType {
         ingredientId: defaultIngredient.id,
         unitId: defaultUnit.id,
         amount: 400, // 400g of chicken
-        nutritionTarget: 'BOTH',
+        appliesToEveryone: true,
         additionalInfo: null,
+        memberTargets: [],
         group: null,
         ingredient: defaultIngredient,
         unit: defaultUnit,
@@ -300,8 +319,9 @@ export function createComplexMockRecipe(): RecipeType {
         ingredientId: 'ing-chicken',
         unitId: 'unit-grams',
         amount: 200, // 200g chicken
-        nutritionTarget: 'BOTH',
+        appliesToEveryone: true,
         additionalInfo: null,
+        memberTargets: [],
         group: null,
         ingredient: chickenIngredient,
         unit: gramUnit,
@@ -314,8 +334,9 @@ export function createComplexMockRecipe(): RecipeType {
         ingredientId: 'ing-rice',
         unitId: 'unit-cup',
         amount: 1, // 1 cup rice
-        nutritionTarget: 'BOTH',
+        appliesToEveryone: true,
         additionalInfo: null,
+        memberTargets: [],
         group: null,
         ingredient: riceIngredient,
         unit: cupUnit,
@@ -424,7 +445,7 @@ export function createMinimalRecipe(): RecipeType {
     totalTime: 0,
     notes: [],
     servings: 1,
-    servingMultiplierForNelson: 1,
+    memberPortions: [],
     lastUsedInPlanner: null,
     excludeFromPlanner: false,
     categories: [],

@@ -6,7 +6,6 @@ export type PlanSlotData = {
   recipe: {
     name: string;
     servings: number;
-    servingMultiplierForNelson: number;
     ingredients: Array<{
       ingredient: {
         id: string;
@@ -50,7 +49,6 @@ function scaleIngredients(slots: PlanSlotData[]): ScaledIngredient[] {
     const { servingScalingFactor } = calculateServingScalingFactor(
       2,
       slot.recipe.servings,
-      slot.recipe.servingMultiplierForNelson,
     );
 
     return slot.recipe.ingredients.map((ri) => {

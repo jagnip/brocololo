@@ -6,7 +6,6 @@ import type { RecipeType } from "@/types/recipe";
 import { IngredientItem } from "@/components/recipes/ingredient-item";
 import { isScaleModified } from "@/lib/recipes/helpers";
 import { useRecipePageIngredientsSectionData } from "@/components/context/recipe-page-context";
-import { PortionSplitCard } from "@/components/recipes/recipe-page/portion-split-card";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 
 export function IngredientsSection() {
@@ -14,8 +13,6 @@ export function IngredientsSection() {
     recipe,
     ingredients,
     currentServings,
-    jagodaPortionFactor,
-    nelsonPortionFactor,
     hasActiveScaling,
     localScaleByIngredientId,
     selectedUnits,
@@ -55,8 +52,8 @@ export function IngredientsSection() {
           <Button
             variant="outline"
             size="icon-sm"
-            onClick={() => onServingsChange(currentServings - 2)}
-            disabled={currentServings <= 2}
+            onClick={() => onServingsChange(currentServings - 1)}
+            disabled={currentServings <= 1}
             aria-label="Decrease servings"
           >
             <Minus />
@@ -67,19 +64,13 @@ export function IngredientsSection() {
           <Button
             variant="outline"
             size="icon-sm"
-            onClick={() => onServingsChange(currentServings + 2)}
+            onClick={() => onServingsChange(currentServings + 1)}
             aria-label="Increase servings"
           >
             <Plus />
           </Button>
         </div>
       </div>
-      <PortionSplitCard
-        jagodaPortionFactor={jagodaPortionFactor}
-        nelsonPortionFactor={nelsonPortionFactor}
-        nelsonMultiplier={recipe.servingMultiplierForNelson}
-      />
-
       {ungroupedIngredients.length > 0 ? (
         <div className="mb-item">
           {/* Keep uncategorized ingredients first and unlabeled. */}
@@ -93,9 +84,7 @@ export function IngredientsSection() {
                 }
                 onUnitChange={(unitId) => onUnitChange(recipeIngredient.id, unitId)}
                 servingScalingFactor={getIngredientDisplayScalingFactor(recipeIngredient.id)}
-                calorieScalingFactor={getIngredientCalorieFactor(
-                  recipeIngredient.nutritionTarget,
-                )}
+                calorieScalingFactor={getIngredientCalorieFactor(recipeIngredient)}
                 onAmountEdit={(ratio, activeCalorieScalingFactor) =>
                   onAmountEdit(recipeIngredient.id, ratio, activeCalorieScalingFactor)
                 }
@@ -128,9 +117,7 @@ export function IngredientsSection() {
                 }
                 onUnitChange={(unitId) => onUnitChange(recipeIngredient.id, unitId)}
                 servingScalingFactor={getIngredientDisplayScalingFactor(recipeIngredient.id)}
-                calorieScalingFactor={getIngredientCalorieFactor(
-                  recipeIngredient.nutritionTarget,
-                )}
+                calorieScalingFactor={getIngredientCalorieFactor(recipeIngredient)}
                 onAmountEdit={(ratio, activeCalorieScalingFactor) =>
                   onAmountEdit(recipeIngredient.id, ratio, activeCalorieScalingFactor)
                 }

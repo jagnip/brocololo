@@ -1,9 +1,8 @@
 import { cache } from "react";
 import { SlotInputType, SlotSaveData } from "@/types/planner";
-import { getPersonIngredientAmountPerMeal } from "@/lib/log/helpers";
+import { getFamilyMemberIngredientAmountPerMeal } from "@/lib/log/helpers";
 import {
   LogMealType,
-  LogPerson,
   PlannerMealType,
   Prisma,
 } from "@/src/generated/client";
@@ -22,6 +21,9 @@ const recipeInclude = {
     orderBy: { position: "asc" as const },
     include: {
       group: true,
+      memberTargets: {
+        select: { familyMemberId: true },
+      },
       ingredient: {
         include: {
           category: {
@@ -49,6 +51,9 @@ const recipeInclude = {
         include: {
           recipeIngredient: {
             include: {
+              memberTargets: {
+                select: { familyMemberId: true },
+              },
               ingredient: {
                 include: {
                   category: {
@@ -74,6 +79,7 @@ const recipeInclude = {
     },
   },
   images: true,
+  memberPortions: true,
 } as const;
 
 export async function getPlans(userId: string) {
@@ -279,7 +285,6 @@ export async function getPlanForGroceries(userId: string, planId: string) {
             select: {
               name: true,
               servings: true,
-              servingMultiplierForNelson: true,
               ingredients: {
                 include: {
                   ingredient: {
@@ -401,6 +406,7 @@ function toLogMealType(mealType: PlannerMealType): LogMealType {
 
 async function createBaselineLogTx(
   tx: Prisma.TransactionClient,
+  userId: string,
   planId: string,
   slots: SlotInputType[],
 ) {
@@ -409,16 +415,20 @@ async function createBaselineLogTx(
     select: { id: true },
   });
 
-  // One log entry per plan slot per person (no automatic snack slots).
-  const people = [LogPerson.PRIMARY, LogPerson.SECONDARY] as const;
-  for (const person of people) {
+  // One log entry per plan slot per current family member (no automatic snack slots).
+  const familyMembers = await tx.familyMember.findMany({
+    where: { userId },
+    select: { id: true },
+    orderBy: { sortOrder: "asc" },
+  });
+  for (const familyMember of familyMembers) {
     for (const slot of slots) {
       await tx.logEntry.create({
         data: {
           logId: log.id,
           date: slot.date,
           mealType: toLogMealType(slot.mealType),
-          person,
+          familyMemberId: familyMember.id,
         },
       });
     }
@@ -430,9 +440,16 @@ async function createBaselineLogTx(
 export async function getPlannerPoolItemsForPlan(params: {
   userId: string;
   planId: string;
-  person: LogPerson;
+  familyMemberId: string;
 }): Promise<PlannerPoolItem[]> {
-  const slots = await getPlanById(params.userId, params.planId);
+  const [slots, familyMembers] = await Promise.all([
+    getPlanById(params.userId, params.planId),
+    prisma.familyMember.findMany({
+      where: { userId: params.userId },
+      select: { id: true, isSelf: true },
+      orderBy: { sortOrder: "asc" },
+    }),
+  ]);
   if (!slots) return [];
 
   // Pool = unused plan slots only: matches planner "used" checkmarks and reserveNextUnusedPlanSlot.
@@ -455,12 +472,16 @@ export async function getPlannerPoolItemsForPlan(params: {
       imageUrl: getRecipeDisplayImageUrl(slot.recipe.images),
       ingredients: slot.recipe.ingredients
         .map((ri) => {
-          const personAmount = getPersonIngredientAmountPerMeal({
+          const personAmount = getFamilyMemberIngredientAmountPerMeal({
             amount: ri.amount,
-            nutritionTarget: ri.nutritionTarget,
-            person: params.person === LogPerson.PRIMARY ? "primary" : "secondary",
+            appliesToEveryone: ri.appliesToEveryone,
+            targetFamilyMemberIds: ri.memberTargets.map(
+              (target) => target.familyMemberId,
+            ),
+            familyMemberId: params.familyMemberId,
             recipeServings: slot.recipe!.servings,
-            servingMultiplierForNelson: slot.recipe!.servingMultiplierForNelson,
+            familyMembers,
+            memberPortions: slot.recipe!.memberPortions,
           });
           if (personAmount == null || ri.unitId == null) return null;
           return {
@@ -719,7 +740,11 @@ export async function updatePlan(
         LogMealType.LUNCH,
         LogMealType.DINNER,
       ] as const;
-      const people = [LogPerson.PRIMARY, LogPerson.SECONDARY] as const;
+      const familyMembers = await tx.familyMember.findMany({
+        where: { userId },
+        select: { id: true },
+        orderBy: { sortOrder: "asc" },
+      });
 
       // Keep log days aligned with plan dates.
       for (const dateKey of removedDateKeys) {
@@ -732,15 +757,15 @@ export async function updatePlan(
       }
       for (const dateKey of addedDateKeys) {
         const date = new Date(`${dateKey}T00:00:00.000Z`);
-        for (const person of people) {
+        for (const familyMember of familyMembers) {
           for (const mealType of mealTypes) {
             await tx.logEntry.upsert({
               where: {
-                logId_date_mealType_person: {
+                logId_date_mealType_familyMemberId: {
                   logId,
                   date,
                   mealType,
-                  person,
+                  familyMemberId: familyMember.id,
                 },
               },
               update: {},
@@ -748,7 +773,7 @@ export async function updatePlan(
                 logId,
                 date,
                 mealType,
-                person,
+                familyMemberId: familyMember.id,
               },
             });
           }
@@ -823,7 +848,7 @@ export async function generateBaselineLogForPlan(
 
   try {
     const logId = await prisma.$transaction(
-      (tx) => createBaselineLogTx(tx, planId, slots),
+      (tx) => createBaselineLogTx(tx, userId, planId, slots),
       { timeout: 30000 },
     );
 

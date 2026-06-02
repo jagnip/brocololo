@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
-import { LogPerson } from "@/src/generated/enums";
 import { getPlanById, getPlansCached } from "@/lib/db/planner";
 import { getRecipes } from "@/lib/db/recipes";
 import { getLogByPlanId } from "@/lib/db/logs";
 import { getPlannerPoolItemsForPlan } from "@/lib/db/planner";
 import { getIngredients } from "@/lib/db/ingredients";
-import { getPersonIngredientAmountPerMeal } from "@/lib/log/helpers";
+import { getFamilyMemberIngredientAmountPerMeal } from "@/lib/log/helpers";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { buildLogDays, buildVisiblePlannerPoolCards } from "@/lib/log/view-model";
 import type { DateRangeValue } from "@/components/planner/date-range-picker";
@@ -14,17 +13,13 @@ import type { LogIngredientOption } from "@/components/log/log-ingredients-form"
 import { planHasShoppingList } from "@/lib/db/shopping-list";
 import { formatDateRangeLabel } from "@/lib/format-date-range-label";
 import { requireUser } from "@/lib/auth/session";
+import { ensureSelfFamilyMember } from "@/lib/db/family-members";
 
 type PlannerLogCombinedPageProps = {
   planId: string;
   tab?: string;
-  person?: string;
+  memberId?: string;
 };
-
-function parsePerson(input?: string): "PRIMARY" | "SECONDARY" {
-  if (input === LogPerson.SECONDARY) return LogPerson.SECONDARY;
-  return LogPerson.PRIMARY;
-}
 
 function toDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
@@ -43,20 +38,23 @@ function toInitialDateRange(planSlots: Awaited<ReturnType<typeof getPlanById>>):
 
 function toRecipeSelectorRows(params: {
   recipe: Awaited<ReturnType<typeof getRecipes>>[number];
-  person: "PRIMARY" | "SECONDARY";
+  familyMemberId: string;
+  familyMembers: Awaited<ReturnType<typeof ensureSelfFamilyMember>>;
 }) {
-  const selectedPerson = params.person === LogPerson.PRIMARY ? "primary" : "secondary";
-
   return params.recipe.ingredients
     .map((recipeIngredient) => {
       if (recipeIngredient.amount == null) return null;
 
-      const amountForPerson = getPersonIngredientAmountPerMeal({
+      const amountForPerson = getFamilyMemberIngredientAmountPerMeal({
         amount: recipeIngredient.amount,
-        nutritionTarget: recipeIngredient.nutritionTarget ?? "BOTH",
-        person: selectedPerson,
+        appliesToEveryone: recipeIngredient.appliesToEveryone,
+        targetFamilyMemberIds: recipeIngredient.memberTargets.map(
+          (target) => target.familyMemberId,
+        ),
+        familyMemberId: params.familyMemberId,
         recipeServings: params.recipe.servings,
-        servingMultiplierForNelson: params.recipe.servingMultiplierForNelson ?? 1,
+        familyMembers: params.familyMembers,
+        memberPortions: params.recipe.memberPortions,
       });
       if (amountForPerson == null || amountForPerson <= 0) return null;
 
@@ -78,32 +76,37 @@ function toRecipeSelectorRows(params: {
 export async function PlannerLogCombinedPage({
   planId,
   tab,
-  person: rawPerson,
+  memberId: rawMemberId,
 }: PlannerLogCombinedPageProps) {
   const { id: userId } = await requireUser();
-  const person = parsePerson(rawPerson);
   const initialTab = tab === "log" ? "log" : "plan";
 
   const [
     planSlots,
     plannerRecipes,
-    log,
     allRecipes,
     ingredients,
     hasExistingShoppingList,
     allPlans,
+    familyMembers,
   ] =
     await Promise.all([
       getPlanById(userId, planId),
       getRecipes(userId, undefined, undefined, false),
-      getLogByPlanId(userId, planId, person),
       getRecipes(userId),
       getIngredients(userId),
       planHasShoppingList(userId, planId),
       getPlansCached(userId),
+      ensureSelfFamilyMember(userId),
     ]);
 
   if (!planSlots) notFound();
+  const selectedFamilyMember =
+    familyMembers.find((member) => member.id === rawMemberId) ??
+    familyMembers.find((member) => member.isSelf) ??
+    familyMembers[0];
+  if (!selectedFamilyMember) notFound();
+  const log = await getLogByPlanId(userId, planId, selectedFamilyMember.id);
 
   const initialDateRange = toInitialDateRange(planSlots);
   const planOptions = allPlans.map((plan) => ({
@@ -125,7 +128,11 @@ export async function PlannerLogCombinedPage({
 
   if (log) {
     const days = buildLogDays(log.entries);
-    const poolItemsRaw = await getPlannerPoolItemsForPlan({ userId, planId, person });
+    const poolItemsRaw = await getPlannerPoolItemsForPlan({
+      userId,
+      planId,
+      familyMemberId: selectedFamilyMember.id,
+    });
     const plannerPool = buildVisiblePlannerPoolCards({
       items: poolItemsRaw.map((item) => ({
         ...item,
@@ -145,7 +152,11 @@ export async function PlannerLogCombinedPage({
     const recipeOptions = allRecipes.map((recipe) => ({
       id: recipe.id,
       name: recipe.name,
-      initialRows: toRecipeSelectorRows({ recipe, person }),
+      initialRows: toRecipeSelectorRows({
+        recipe,
+        familyMemberId: selectedFamilyMember.id,
+        familyMembers,
+      }),
     }));
 
     const ingredientOptions = ingredients.map((ingredient) => ({
@@ -184,7 +195,8 @@ export async function PlannerLogCombinedPage({
       initialDateRange={initialDateRange}
       initialPlan={planSlots}
       plannerRecipes={plannerRecipes}
-      person={person}
+      familyMembers={familyMembers}
+      familyMemberId={selectedFamilyMember.id}
       logData={logData}
       hasExistingShoppingList={hasExistingShoppingList}
     />
