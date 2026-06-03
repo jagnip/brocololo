@@ -2,8 +2,8 @@ import { useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useRecipePageNutritionSectionData } from "@/components/context/recipe-page-context";
+import { EditableCaloriesBadge } from "@/components/recipes/editable-calories-badge";
 import {
   NutritionPersonCard,
   NutritionPersonSummaryRow,
@@ -54,25 +54,17 @@ export function NutritionSection() {
             personLabel={row.label}
             caloriesArea={
               index === 0 ? (
-                <div className="flex items-center gap-tight">
-                  <Input
-                    type="number"
-                    size="default"
-                    value={targetCaloriesPerPortion?.toString() ?? ""}
-                    placeholder={
-                      isCaloriesInputFocused
-                        ? ""
-                        : (selfRow?.nutrition.calories.toString() ?? "0")
-                    }
-                    onChange={(event) => onCaloriesChange(event.target.value)}
-                    onFocus={() => setIsCaloriesInputFocused(true)}
-                    onBlur={() => setIsCaloriesInputFocused(false)}
-                    // Keep only width + number spinner reset; rely on DS defaults for spacing.
-                    className="w-16 [appearance:textfield] placeholder:text-foreground placeholder:opacity-100 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                    aria-label="Calories per portion"
-                  />
-                  <span className="type-body leading-4 text-foreground">kcal</span>
-                </div>
+                <EditableCaloriesBadge
+                  value={targetCaloriesPerPortion}
+                  placeholder={
+                    isCaloriesInputFocused
+                      ? ""
+                      : (selfRow?.nutrition.calories.toString() ?? "0")
+                  }
+                  onChange={onCaloriesChange}
+                  onFocus={() => setIsCaloriesInputFocused(true)}
+                  onBlur={() => setIsCaloriesInputFocused(false)}
+                />
               ) : (
                 <Badge variant="secondary">{row.nutrition.calories} kcal</Badge>
               )

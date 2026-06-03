@@ -319,6 +319,8 @@ function expectNutritionToMatchScaledRecipe(
   );
 
   const caloriesInput = screen.getByLabelText("Calories per portion");
+  // Self-row target stays inside the editable outline badge, not a standalone Input.
+  expect(caloriesInput.closest('[data-slot="badge"]')).toBeInTheDocument();
   if (options?.targetCaloriesPerPortion != null) {
     expect(caloriesInput).toHaveValue(options.targetCaloriesPerPortion);
   } else {
