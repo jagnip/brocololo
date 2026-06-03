@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { RotateCcw } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useRecipePageNutritionSectionData } from "@/components/context/recipe-page-context";
 import { EditableCaloriesBadge } from "@/components/recipes/editable-calories-badge";
@@ -11,21 +10,26 @@ import {
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { cn } from "@/lib/utils";
 
+function caloriesAriaLabel(personLabel: string): string {
+  return `Calories per portion for ${personLabel}`;
+}
+
 export function NutritionSection() {
   const {
-    targetCaloriesPerPortion,
+    calorieTarget,
     nutritionRows,
     onCaloriesChange,
     hasActiveNutritionScaling,
     onNutritionReset,
   } = useRecipePageNutritionSectionData();
-  const selfRow = nutritionRows[0];
-  const [isCaloriesInputFocused, setIsCaloriesInputFocused] = useState(false);
+  const [focusedCaloriesMemberId, setFocusedCaloriesMemberId] = useState<
+    string | null
+  >(null);
 
   const handleNutritionReset = () => {
     onNutritionReset();
-    // Unfocus so the calculated kcal placeholder is visible again after reset.
-    setIsCaloriesInputFocused(false);
+    // Unfocus so calculated kcal placeholders are visible again after reset.
+    setFocusedCaloriesMemberId(null);
   };
 
   return (
@@ -48,33 +52,40 @@ export function NutritionSection() {
         </Button>
       </div>
 
-      {nutritionRows.map((row, index) => (
-        <NutritionPersonCard key={row.familyMemberId}>
-          <NutritionPersonSummaryRow
-            personLabel={row.label}
-            caloriesArea={
-              index === 0 ? (
+      {nutritionRows.map((row) => {
+        const isAnchor =
+          calorieTarget?.familyMemberId === row.familyMemberId;
+        const isFocused = focusedCaloriesMemberId === row.familyMemberId;
+
+        return (
+          <NutritionPersonCard key={row.familyMemberId}>
+            <NutritionPersonSummaryRow
+              personLabel={row.label}
+              caloriesArea={
                 <EditableCaloriesBadge
-                  value={targetCaloriesPerPortion}
-                  placeholder={
-                    isCaloriesInputFocused
-                      ? ""
-                      : (selfRow?.nutrition.calories.toString() ?? "0")
+                  ariaLabel={caloriesAriaLabel(row.label)}
+                  value={
+                    isAnchor && calorieTarget ? calorieTarget.calories : null
                   }
-                  onChange={onCaloriesChange}
-                  onFocus={() => setIsCaloriesInputFocused(true)}
-                  onBlur={() => setIsCaloriesInputFocused(false)}
+                  placeholder={
+                    isFocused ? "" : (row.nutrition.calories.toString() ?? "0")
+                  }
+                  onChange={(value) =>
+                    onCaloriesChange(row.familyMemberId, value)
+                  }
+                  onFocus={() =>
+                    setFocusedCaloriesMemberId(row.familyMemberId)
+                  }
+                  onBlur={() => setFocusedCaloriesMemberId(null)}
                 />
-              ) : (
-                <Badge variant="secondary">{row.nutrition.calories} kcal</Badge>
-              )
-            }
-            protein={row.nutrition.protein}
-            fat={row.nutrition.fat}
-            carbs={row.nutrition.carbs}
-          />
-        </NutritionPersonCard>
-      ))}
+              }
+              protein={row.nutrition.protein}
+              fat={row.nutrition.fat}
+              carbs={row.nutrition.carbs}
+            />
+          </NutritionPersonCard>
+        );
+      })}
     </div>
   );
 }

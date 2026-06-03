@@ -1,7 +1,10 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import type { NutritionPerPortion } from "@/lib/recipes/helpers";
+import {
+  roundNutritionCalories,
+  type NutritionPerPortion,
+} from "@/lib/recipes/helpers";
 import {
   NutritionPersonCard,
   NutritionPersonSummaryRow,
@@ -62,7 +65,9 @@ export function RecipeNutritionPreviewSection({
             <NutritionPersonSummaryRow
               personLabel={row.label}
               caloriesArea={
-                <Badge variant="secondary">{row.nutrition.calories} kcal</Badge>
+                <Badge variant="secondary">
+                  {roundNutritionCalories(row.nutrition.calories)} kcal
+                </Badge>
               }
               protein={row.nutrition.protein}
               fat={row.nutrition.fat}

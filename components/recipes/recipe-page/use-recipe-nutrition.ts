@@ -8,12 +8,13 @@ import {
   getCalorieScalingFactorForIngredient,
 } from "@/lib/recipes/helpers";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
+import type { CalorieTarget } from "@/components/recipes/recipe-page/use-recipe-scaling-state";
 
 type UseRecipeNutritionParams = {
   recipe: RecipeType;
   effectiveRecipe: RecipeType;
   currentServings: number;
-  targetCaloriesPerPortion: number | null;
+  calorieTarget: CalorieTarget | null;
   globalScaleRatio: number;
   localScaleByIngredientId: Record<string, number>;
   familyMembers: FamilyMemberRow[];
@@ -42,7 +43,7 @@ export function useRecipeNutrition({
   recipe,
   effectiveRecipe,
   currentServings,
-  targetCaloriesPerPortion,
+  calorieTarget,
   globalScaleRatio,
   localScaleByIngredientId,
   familyMembers,
@@ -71,14 +72,15 @@ export function useRecipeNutrition({
     recipeAudienceMembers.find((member) => member.isSelf) ??
     recipeAudienceMembers[0];
   const selfFamilyMemberId = selfMember?.id ?? "";
-  const selfBaseNutrition = calculateNutritionPerServing(
+  const anchorMemberId = calorieTarget?.familyMemberId ?? selfFamilyMemberId;
+  const anchorBaseNutrition = calculateNutritionPerServing(
     effectiveRecipe,
-    selfFamilyMemberId,
+    anchorMemberId,
     recipeAudienceMembers,
   );
   const calorieScalingFactor =
-    targetCaloriesPerPortion && selfBaseNutrition.calories > 0
-      ? targetCaloriesPerPortion / selfBaseNutrition.calories
+    calorieTarget && anchorBaseNutrition.calories > 0
+      ? calorieTarget.calories / anchorBaseNutrition.calories
       : 1;
 
   const recipeForScaledNutrition = useMemo(
@@ -93,7 +95,7 @@ export function useRecipeNutrition({
         const calorieFactor = getCalorieScalingFactorForIngredient(
           ingredientRow.appliesToEveryone,
           ingredientRow.memberTargets.map((target) => target.familyMemberId),
-          selfFamilyMemberId,
+          anchorMemberId,
           calorieScalingFactor,
         );
         return {
@@ -104,11 +106,11 @@ export function useRecipeNutrition({
       }),
     }),
     [
+      anchorMemberId,
       calorieScalingFactor,
       effectiveRecipe,
       globalScaleRatio,
       localScaleByIngredientId,
-      selfFamilyMemberId,
     ],
   );
 
@@ -139,10 +141,10 @@ export function useRecipeNutrition({
       getCalorieScalingFactorForIngredient(
         recipeIngredient.appliesToEveryone,
         recipeIngredient.memberTargets.map((target) => target.familyMemberId),
-        selfFamilyMemberId,
+        anchorMemberId,
         calorieScalingFactor,
       ),
-    [calorieScalingFactor, selfFamilyMemberId],
+    [anchorMemberId, calorieScalingFactor],
   );
 
   const getIngredientDisplayScalingFactor = useCallback(

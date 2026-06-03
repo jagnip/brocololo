@@ -12,7 +12,10 @@ import {
 import type { IngredientType } from "@/types/ingredient";
 import type { RecipeType } from "@/types/recipe";
 import { buildEffectiveRecipeForSimulation } from "@/lib/recipes/helpers";
-import { useRecipeScalingState } from "@/components/recipes/recipe-page/use-recipe-scaling-state";
+import {
+  useRecipeScalingState,
+  type CalorieTarget,
+} from "@/components/recipes/recipe-page/use-recipe-scaling-state";
 import { useRecipeNutrition } from "@/components/recipes/recipe-page/use-recipe-nutrition";
 import { useIngredientGrouping } from "@/components/recipes/recipe-page/use-ingredient-grouping";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
@@ -32,9 +35,9 @@ type RecipePageContextValue = {
   selectedInstructionFamilyMemberId: string | null;
   setSelectedInstructionFamilyMemberId: Dispatch<SetStateAction<string | null>>;
   currentServings: number;
-  targetCaloriesPerPortion: number | null;
+  calorieTarget: CalorieTarget | null;
   nutritionRows: ReturnType<typeof useRecipeNutrition>["nutritionRows"];
-  onCaloriesChange: (value: string) => void;
+  onCaloriesChange: (familyMemberId: string, value: string) => void;
   effectiveRecipeIngredientById: Map<string, RecipeType["ingredients"][number]>;
   selectedUnits: Record<string, string | null>;
   getIngredientDisplayScalingFactor: (recipeIngredientId: string) => number;
@@ -104,7 +107,7 @@ export function RecipePageProvider({
     recipe,
     effectiveRecipe,
     currentServings: scaling.currentServings,
-    targetCaloriesPerPortion: scaling.targetCaloriesPerPortion,
+    calorieTarget: scaling.calorieTarget,
     globalScaleRatio: scaling.globalScaleRatio,
     localScaleByIngredientId: scaling.localScaleByIngredientId,
     familyMembers: recipeAudienceFamilyMembers,
@@ -134,7 +137,7 @@ export function RecipePageProvider({
       selectedInstructionFamilyMemberId,
       setSelectedInstructionFamilyMemberId,
       currentServings: scaling.currentServings,
-      targetCaloriesPerPortion: scaling.targetCaloriesPerPortion,
+      calorieTarget: scaling.calorieTarget,
       nutritionRows: nutrition.nutritionRows,
       onCaloriesChange: scaling.handleCaloriesChange,
       effectiveRecipeIngredientById: nutrition.effectiveRecipeIngredientById,
@@ -206,7 +209,7 @@ export function useRecipePageBaseData() {
 export function useRecipePageNutritionSectionData() {
   const {
     currentServings,
-    targetCaloriesPerPortion,
+    calorieTarget,
     nutritionRows,
     onCaloriesChange,
     hasActiveNutritionScaling,
@@ -214,7 +217,7 @@ export function useRecipePageNutritionSectionData() {
   } = useRecipePageContext();
   return {
     currentServings,
-    targetCaloriesPerPortion,
+    calorieTarget,
     nutritionRows,
     onCaloriesChange,
     hasActiveNutritionScaling,

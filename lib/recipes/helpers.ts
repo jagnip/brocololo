@@ -346,6 +346,11 @@ export type NutritionPerPortion = {
   carbs: number;
 };
 
+/** Per-portion kcal shown in UI — whole numbers only (no decimal part). */
+export function roundNutritionCalories(calories: number): number {
+  return Math.round(calories);
+}
+
 export type FamilyMemberForNutrition = {
   id: string;
   name?: string;
@@ -361,7 +366,7 @@ export function getCalorieScalingFactorForIngredient(
   selectedFamilyMemberId: string,
   calorieScalingFactor: number,
 ): number {
-  // Calorie scaling is anchored to the account holder's row.
+  // Calorie scaling applies to shared rows and rows targeted at the active anchor person.
   if (appliesToEveryone || targetFamilyMemberIds.includes(selectedFamilyMemberId)) {
     return calorieScalingFactor;
   }
@@ -511,7 +516,7 @@ export function calculateNutritionPerServing(
   );
 
   return {
-    calories: Math.round(total.calories * 10) / 10,
+    calories: roundNutritionCalories(total.calories),
     protein: Math.round(total.protein * 10) / 10,
     fat: Math.round(total.fat * 10) / 10,
     carbs: Math.round(total.carbs * 10) / 10,
@@ -526,7 +531,7 @@ export function scaleNutritionByCalories(
   const scalingFactor = targetCalories / baseNutrition.calories;
 
   return {
-    calories: Math.round(baseNutrition.calories * scalingFactor * 10) / 10,
+    calories: roundNutritionCalories(baseNutrition.calories * scalingFactor),
     protein: Math.round(baseNutrition.protein * scalingFactor * 10) / 10,
     fat: Math.round(baseNutrition.fat * scalingFactor * 10) / 10,
     carbs: Math.round(baseNutrition.carbs * scalingFactor * 10) / 10,
@@ -583,7 +588,7 @@ export function scaleNutrition(
   factor: number,
 ): NutritionPerPortion {
   return {
-    calories: Math.round(nutrition.calories * factor * 10) / 10,
+    calories: roundNutritionCalories(nutrition.calories * factor),
     protein: Math.round(nutrition.protein * factor * 10) / 10,
     fat: Math.round(nutrition.fat * factor * 10) / 10,
     carbs: Math.round(nutrition.carbs * factor * 10) / 10,

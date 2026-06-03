@@ -118,9 +118,9 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
     const nelson = calculateNutritionPerServing(recipe, "secondary");
 
     // Primary ignores SECONDARY_ONLY oil.
-    expect(jagoda.calories).toBeCloseTo(66.7, 1);
+    expect(jagoda.calories).toBe(67);
     // Secondary includes SECONDARY_ONLY oil.
-    expect(nelson.calories).toBeCloseTo(1033.3, 1);
+    expect(nelson.calories).toBe(1033);
   });
 
   it("ignores null amount and missing conversion safely", () => {

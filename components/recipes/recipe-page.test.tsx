@@ -276,11 +276,13 @@ function buildScaledRecipe(
     globalScale?: number;
     localScaleById?: Record<string, number>;
     calorieScalingFactor?: number;
+    calorieAnchorMemberId?: string;
   },
 ): RecipeType {
   const globalScale = options?.globalScale ?? 1;
   const localScaleById = options?.localScaleById ?? {};
   const calorieScalingFactor = options?.calorieScalingFactor ?? 1;
+  const calorieAnchorMemberId = options?.calorieAnchorMemberId ?? "family-self";
 
   return {
     ...recipe,
@@ -292,7 +294,7 @@ function buildScaledRecipe(
       const calorieFactor = getCalorieScalingFactorForIngredient(
         row.appliesToEveryone,
         row.memberTargets.map((target) => target.familyMemberId),
-        "family-self",
+        calorieAnchorMemberId,
         calorieScalingFactor,
       );
       return {
@@ -303,34 +305,56 @@ function buildScaledRecipe(
   };
 }
 
+function caloriesInputFor(personLabel: string): HTMLElement {
+  return screen.getByLabelText(`Calories per portion for ${personLabel}`);
+}
+
 function expectNutritionToMatchScaledRecipe(
   recipe: RecipeType,
-  options?: { targetCaloriesPerPortion?: number },
+  options?: {
+    anchorLabel?: string;
+    anchorFamilyMemberId?: string;
+    targetCalories?: number;
+  },
 ): void {
-  const expectedJagoda = calculateNutritionPerServing(
+  const anchorLabel = options?.anchorLabel ?? "Jagoda";
+  const anchorFamilyMemberId = options?.anchorFamilyMemberId ?? "family-self";
+  const otherFamilyMemberId =
+    anchorFamilyMemberId === "family-self" ? "family-member-1" : "family-self";
+  const otherLabel = anchorFamilyMemberId === "family-self" ? "Nelson" : "Jagoda";
+
+  const expectedAnchor = calculateNutritionPerServing(
     recipe,
-    "family-self",
+    anchorFamilyMemberId,
     mockFamilyMembers,
   );
-  const expectedNelson = calculateNutritionPerServing(
+  const expectedOther = calculateNutritionPerServing(
     recipe,
-    "family-member-1",
+    otherFamilyMemberId,
     mockFamilyMembers,
   );
 
-  const caloriesInput = screen.getByLabelText("Calories per portion");
-  // Self-row target stays inside the editable outline badge, not a standalone Input.
-  expect(caloriesInput.closest('[data-slot="badge"]')).toBeInTheDocument();
-  if (options?.targetCaloriesPerPortion != null) {
-    expect(caloriesInput).toHaveValue(options.targetCaloriesPerPortion);
-  } else {
-    // Baseline calories show in placeholder until a target is entered.
-    expect(caloriesInput).toHaveAttribute(
+  const anchorInput = caloriesInputFor(anchorLabel);
+  const otherInput = caloriesInputFor(otherLabel);
+  expect(anchorInput.closest('[data-slot="badge"]')).toBeInTheDocument();
+  expect(otherInput.closest('[data-slot="badge"]')).toBeInTheDocument();
+
+  if (options?.targetCalories != null) {
+    expect(anchorInput).toHaveValue(options.targetCalories);
+    expect(otherInput).toHaveAttribute(
       "placeholder",
-      expectedJagoda.calories.toString(),
+      expectedOther.calories.toString(),
+    );
+  } else {
+    expect(anchorInput).toHaveAttribute(
+      "placeholder",
+      expectedAnchor.calories.toString(),
+    );
+    expect(otherInput).toHaveAttribute(
+      "placeholder",
+      expectedOther.calories.toString(),
     );
   }
-  expect(screen.getByText(`${expectedNelson.calories} kcal`)).toBeInTheDocument();
 }
 
 async function setIngredientAmount(ingredientName: string, value: string): Promise<void> {
@@ -483,18 +507,73 @@ describe("RecipePage nutrition integration", () => {
     const { recipe, ingredients } = createRecipeFixture();
     renderRecipePage(recipe, ingredients);
 
-    const caloriesInput = screen.getByLabelText("Calories per portion");
+    const caloriesInput = caloriesInputFor("Jagoda");
     await userEvent.type(caloriesInput, "300");
 
     // Base Jagoda calories are 150 in this fixture, so target 300 => 2x.
     const calorieScalingFactor = 2;
     const scaledRecipe = buildScaledRecipe(recipe, { calorieScalingFactor });
     expectNutritionToMatchScaledRecipe(scaledRecipe, {
-      targetCaloriesPerPortion: 300,
+      targetCalories: 300,
     });
 
     // SECONDARY_ONLY amount should stay unchanged in UI while target is active.
     expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(100);
+  });
+
+  it("scales shared and Nelson-targeted rows when Nelson calorie target is set", async () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    renderRecipePage(recipe, ingredients);
+
+    const nelsonBaseline = calculateNutritionPerServing(
+      recipe,
+      "family-member-1",
+      mockFamilyMembers,
+    );
+    const nelsonTarget = nelsonBaseline.calories * 2;
+
+    const caloriesInput = caloriesInputFor("Nelson");
+    await userEvent.type(caloriesInput, nelsonTarget.toString());
+
+    const calorieScalingFactor = 2;
+    const scaledRecipe = buildScaledRecipe(recipe, {
+      calorieScalingFactor,
+      calorieAnchorMemberId: "family-member-1",
+    });
+    expectNutritionToMatchScaledRecipe(scaledRecipe, {
+      anchorLabel: "Nelson",
+      anchorFamilyMemberId: "family-member-1",
+      targetCalories: nelsonTarget,
+    });
+
+    // PRIMARY_ONLY row stays unchanged while Nelson is the anchor.
+    expect(screen.getByLabelText("Amount of Side Veg Jagoda")).toHaveValue(100);
+    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(200);
+  });
+
+  it("switches calorie anchor from Jagoda to Nelson when Nelson target is edited", async () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    renderRecipePage(recipe, ingredients);
+
+    await userEvent.type(caloriesInputFor("Jagoda"), "300");
+    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(100);
+    expect(screen.getByLabelText("Amount of Shared Protein")).toHaveValue(600);
+
+    const nelsonBaseline = calculateNutritionPerServing(
+      recipe,
+      "family-member-1",
+      mockFamilyMembers,
+    );
+    const nelsonTarget = nelsonBaseline.calories * 2;
+    await userEvent.clear(caloriesInputFor("Nelson"));
+    await userEvent.type(caloriesInputFor("Nelson"), nelsonTarget.toString());
+
+    // Anchor moved to Nelson: Jagoda-only row fixed, Nelson-only + shared scaled 2x.
+    expect(screen.getByLabelText("Amount of Side Veg Jagoda")).toHaveValue(100);
+    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(200);
+    expect(screen.getByLabelText("Amount of Shared Protein")).toHaveValue(600);
+    expect(caloriesInputFor("Jagoda")).not.toHaveValue(300);
+    expect(caloriesInputFor("Nelson")).toHaveValue(nelsonTarget);
   });
 
   it("resets to baseline values after mixed scaling interactions", async () => {
