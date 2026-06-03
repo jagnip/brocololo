@@ -168,7 +168,7 @@ const recipeBaseSchema = z
     ),
     audienceFamilyMemberIds: z
       .array(recipeAudienceMemberIdSchema)
-      .min(1, { message: "Choose who this recipe is for" }),
+      .min(1, { message: "Choose at least one person" }),
     memberPortions: z.array(recipeMemberPortionSchema).default([]),
     ingredientGroups: z.array(recipeIngredientGroupSchema).default([]),
     // Keep arrays required but allow empty collections for draft-like recipes.

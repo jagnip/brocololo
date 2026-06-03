@@ -280,7 +280,7 @@ export function RecipePortionsFormSection({
                 <FormItem>
                   <div className="flex items-center gap-1">
                     <FormLabel className="text-muted-foreground">
-                      Serving multipliers
+                      Portion sizes
                     </FormLabel>
                     <TooltipProvider>
                       <Tooltip>
@@ -288,17 +288,17 @@ export function RecipePortionsFormSection({
                           <button
                             type="button"
                             className="inline-flex h-auto w-auto items-center px-1 py-0 text-muted-foreground outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] [&_svg]:size-4"
-                            aria-label="Show serving multiplier guidance"
+                            aria-label="Show portion size guidance"
                           >
                             <Info strokeWidth={1.75} />
                           </button>
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs">
-                          {/* Multipliers change the split, not how many planner servings the recipe yields. */}
+                          {/* Portion sizes change the split, not how many planner servings the recipe yields. */}
                           <p>
-                            Multipliers are relative to each other. They decide
-                            how cooked food and nutrition are split, but do not
-                            change the recipe serving count.
+                            Choose how much each person usually eats. This
+                            changes how the cooked food is shared, not how many
+                            servings the recipe makes.
                           </p>
                         </TooltipContent>
                       </Tooltip>
