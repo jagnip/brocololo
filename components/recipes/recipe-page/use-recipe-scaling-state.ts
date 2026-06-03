@@ -21,6 +21,7 @@ export type UseRecipeScalingStateResult = {
   swapsByRecipeIngredientId: IngredientSwapMap;
   selectedUnits: Record<string, string | null>;
   hasActiveScaling: boolean;
+  hasActiveNutritionScaling: boolean;
   setTargetCaloriesPerPortion: (value: number | null) => void;
   handleCaloriesChange: (caloriesString: string) => void;
   handleServingsChange: (newServings: number) => void;
@@ -31,6 +32,7 @@ export type UseRecipeScalingStateResult = {
   ) => void;
   handleApplyScaleToAll: (recipeIngredientId: string) => void;
   handleReset: () => void;
+  handleNutritionReset: () => void;
   handleIngredientChange: (
     recipeIngredientId: string,
     selectedIngredientId: string,
@@ -125,9 +127,12 @@ export function useRecipeScalingState({
   const handleReset = useCallback(() => {
     setGlobalScaleRatio(1);
     setLocalScaleByIngredientId({});
-    setTargetCaloriesPerPortion(null);
     setSwapsByRecipeIngredientId({});
     setSelectedUnits({});
+  }, []);
+
+  const handleNutritionReset = useCallback(() => {
+    setTargetCaloriesPerPortion(null);
   }, []);
 
   const handleIngredientChange = useCallback(
@@ -183,15 +188,11 @@ export function useRecipeScalingState({
     () =>
       globalScaleRatio !== 1 ||
       Object.keys(localScaleByIngredientId).length > 0 ||
-      targetCaloriesPerPortion !== null ||
       Object.keys(swapsByRecipeIngredientId).length > 0,
-    [
-      globalScaleRatio,
-      localScaleByIngredientId,
-      swapsByRecipeIngredientId,
-      targetCaloriesPerPortion,
-    ],
+    [globalScaleRatio, localScaleByIngredientId, swapsByRecipeIngredientId],
   );
+
+  const hasActiveNutritionScaling = targetCaloriesPerPortion !== null;
 
   return {
     currentServings,
@@ -201,12 +202,14 @@ export function useRecipeScalingState({
     swapsByRecipeIngredientId,
     selectedUnits,
     hasActiveScaling,
+    hasActiveNutritionScaling,
     setTargetCaloriesPerPortion,
     handleCaloriesChange,
     handleServingsChange,
     handleIngredientEdit,
     handleApplyScaleToAll,
     handleReset,
+    handleNutritionReset,
     handleIngredientChange,
     handleUnitChange,
   };

@@ -45,6 +45,7 @@ type RecipePageContextValue = {
     >,
   ) => number;
   hasActiveScaling: boolean;
+  hasActiveNutritionScaling: boolean;
   localScaleByIngredientId: Record<string, number>;
   ungroupedIngredients: RecipeType["ingredients"];
   visibleGroupedIngredients: Array<
@@ -53,6 +54,7 @@ type RecipePageContextValue = {
     }
   >;
   onReset: () => void;
+  onNutritionReset: () => void;
   onServingsChange: (nextServings: number) => void;
   onUnitChange: (recipeIngredientId: string, unitId: string | null) => void;
   onAmountEdit: (
@@ -140,10 +142,12 @@ export function RecipePageProvider({
       getIngredientDisplayScalingFactor: nutrition.getIngredientDisplayScalingFactor,
       getIngredientCalorieFactor: nutrition.getIngredientCalorieFactor,
       hasActiveScaling: scaling.hasActiveScaling,
+      hasActiveNutritionScaling: scaling.hasActiveNutritionScaling,
       localScaleByIngredientId: scaling.localScaleByIngredientId,
       ungroupedIngredients,
       visibleGroupedIngredients,
       onReset: scaling.handleReset,
+      onNutritionReset: scaling.handleNutritionReset,
       onServingsChange: scaling.handleServingsChange,
       onUnitChange: scaling.handleUnitChange,
       onAmountEdit: scaling.handleIngredientEdit,
@@ -205,12 +209,16 @@ export function useRecipePageNutritionSectionData() {
     targetCaloriesPerPortion,
     nutritionRows,
     onCaloriesChange,
+    hasActiveNutritionScaling,
+    onNutritionReset,
   } = useRecipePageContext();
   return {
     currentServings,
     targetCaloriesPerPortion,
     nutritionRows,
     onCaloriesChange,
+    hasActiveNutritionScaling,
+    onNutritionReset,
   };
 }
 
