@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Minus, Plus, RotateCcw } from "lucide-react";
@@ -5,8 +6,12 @@ import type { IngredientType } from "@/types/ingredient";
 import type { RecipeType } from "@/types/recipe";
 import { IngredientItem } from "@/components/recipes/ingredient-item";
 import { isScaleModified } from "@/lib/recipes/helpers";
+import { getSharedPortionShares } from "@/lib/recipes/shared-portion-shares";
 import { useRecipePageIngredientsSectionData } from "@/components/context/recipe-page-context";
+import { PortionSplitCard } from "@/components/recipes/recipe-page/portion-split-card";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
+
+const SHARED_INGREDIENTS_SCOPE_LABEL = "Shared ingredients";
 
 export function IngredientsSection() {
   const {
@@ -28,6 +33,28 @@ export function IngredientsSection() {
     onApplyScaleToAll,
     onIngredientChange,
   } = useRecipePageIngredientsSectionData();
+
+  const portionSplitMembers = useMemo(() => {
+    const shares = getSharedPortionShares(
+      familyMembers,
+      recipe.memberPortions,
+    );
+    return shares.map((entry, index) => {
+      const member = familyMembers.find(
+        (familyMember) => familyMember.id === entry.familyMemberId,
+      );
+      const label =
+        member?.name.trim() ||
+        (member?.isSelf ? "You" : `Family member ${index + 1}`);
+      return {
+        label,
+        share: entry.share,
+        multiplier: entry.multiplier,
+      };
+    });
+  }, [familyMembers, recipe.memberPortions]);
+
+  const showPortionSplitChart = portionSplitMembers.length > 1;
 
   if (!recipe.ingredients || recipe.ingredients.length === 0) {
     return null;
@@ -72,6 +99,12 @@ export function IngredientsSection() {
           </Button>
         </div>
       </div>
+      {showPortionSplitChart ? (
+        <PortionSplitCard
+          members={portionSplitMembers}
+          scopeLabel={SHARED_INGREDIENTS_SCOPE_LABEL}
+        />
+      ) : null}
       {ungroupedIngredients.length > 0 ? (
         <div className="mb-item">
           {/* Keep uncategorized ingredients first and unlabeled. */}

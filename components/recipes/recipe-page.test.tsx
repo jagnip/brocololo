@@ -590,6 +590,36 @@ describe("RecipePage nutrition integration", () => {
   });
 });
 
+describe("RecipePage shared portion split chart", () => {
+  it("shows shared-ingredient split for multi-person audience", () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    renderRecipePage(recipe, ingredients);
+
+    expect(screen.getByText("Shared ingredients")).toBeInTheDocument();
+    expect(screen.getByText("· 33%")).toBeInTheDocument();
+    expect(screen.getByText("· 67%")).toBeInTheDocument();
+    expect(screen.queryByText(/×2/)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("img", {
+        name: /Shared ingredients: Jagoda · 33%, Nelson · 67%/i,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides portion split chart when recipe audience is one person", () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    const soloAudienceRecipe = {
+      ...recipe,
+      audienceMembers: [{ familyMemberId: "family-self" }],
+      memberPortions: [],
+    };
+    renderRecipePage(soloAudienceRecipe, ingredients);
+
+    expect(screen.queryByText("Shared ingredients")).not.toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: /Shared ingredients/i })).not.toBeInTheDocument();
+  });
+});
+
 describe("RecipePage ingredient member badges", () => {
   it("shows member name badges for targeted ingredients", () => {
     const { recipe, ingredients } = createRecipeFixture();
