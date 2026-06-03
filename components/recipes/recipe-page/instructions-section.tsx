@@ -64,7 +64,7 @@ export function InstructionsSection() {
         {/* Hide person filter when the recipe audience is a single cook. */}
         {showPersonFilter ? (
           <div
-            className="flex items-center gap-item"
+            className="flex min-w-0 flex-wrap items-center justify-start gap-item max-md:basis-full"
             role="radiogroup"
             aria-label="Instruction person filter"
           >
