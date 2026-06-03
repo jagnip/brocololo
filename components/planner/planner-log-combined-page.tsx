@@ -14,6 +14,7 @@ import { planHasShoppingList } from "@/lib/db/shopping-list";
 import { formatDateRangeLabel } from "@/lib/format-date-range-label";
 import { requireUser } from "@/lib/auth/session";
 import { ensureSelfFamilyMember } from "@/lib/db/family-members";
+import { filterFamilyMembersToPlanAudience } from "@/lib/planner/plan-audience";
 
 type PlannerLogCombinedPageProps = {
   planId: string;
@@ -104,10 +105,19 @@ export async function PlannerLogCombinedPage({
     ]);
 
   if (!planSlots) notFound();
+
+  // Track tab person selector: only members chosen when the plan was saved.
+  const planAudienceIds = planSlots[0]?.cookingFamilyMemberIds ?? [];
+  const planAudienceMembers = filterFamilyMembersToPlanAudience(
+    familyMembers,
+    planAudienceIds,
+  );
+  if (planAudienceMembers.length === 0) notFound();
+
   const selectedFamilyMember =
-    familyMembers.find((member) => member.id === rawMemberId) ??
-    familyMembers.find((member) => member.isSelf) ??
-    familyMembers[0];
+    planAudienceMembers.find((member) => member.id === rawMemberId) ??
+    planAudienceMembers.find((member) => member.isSelf) ??
+    planAudienceMembers[0];
   if (!selectedFamilyMember) notFound();
   const log = await getLogByPlanId(userId, planId, selectedFamilyMember.id);
 
@@ -198,7 +208,7 @@ export async function PlannerLogCombinedPage({
       initialDateRange={initialDateRange}
       initialPlan={planSlots}
       plannerRecipes={plannerRecipes}
-      familyMembers={familyMembers}
+      familyMembers={planAudienceMembers}
       familyMemberId={selectedFamilyMember.id}
       logData={logData}
       hasExistingShoppingList={hasExistingShoppingList}

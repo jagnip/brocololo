@@ -16,6 +16,12 @@ export const MESSAGES = {
     generatePending: "Finding...",
     saved: "Plan saved",
     savePending: "Saving plan...",
+    planColumnIdleTitle: "Nothing planned yet",
+    planColumnIdleSubtitle: "Find meals to start",
+    generationFailedTitle: "We couldn't find recipes for your criteria",
+    generationFailedSubtitle: "Please try to adjust your settings.",
+    /** Toast when generatePlan cannot fill the plan. */
+    generationFailedMessage: "We couldn't find recipes for your criteria",
   },
 } as const;
 

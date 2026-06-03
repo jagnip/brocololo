@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import * as LabelPrimitive from "@radix-ui/react-label";
-import { Info } from "lucide-react";
+import { CircleHelp, Info } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -16,6 +16,8 @@ type LabelProps = React.ComponentProps<typeof LabelPrimitive.Root> & {
   tooltip?: React.ReactNode;
   tooltipAriaLabel?: string;
   tooltipContentClassName?: string;
+  /** `help` shows a ? icon; `info` is the default. */
+  tooltipIcon?: "info" | "help";
 };
 
 function Label({
@@ -23,8 +25,10 @@ function Label({
   tooltip,
   tooltipAriaLabel = "Show field guidance",
   tooltipContentClassName,
+  tooltipIcon = "info",
   ...props
 }: LabelProps) {
+  const TooltipIcon = tooltipIcon === "help" ? CircleHelp : Info;
   const label = (
     <LabelPrimitive.Root
       data-slot="label"
@@ -51,7 +55,7 @@ function Label({
               className="inline-flex h-auto w-auto items-center px-1 py-0 text-muted-foreground outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] [&_svg]:size-4"
               aria-label={tooltipAriaLabel}
             >
-              <Info strokeWidth={1.75} />
+              <TooltipIcon strokeWidth={1.75} />
             </button>
           </TooltipTrigger>
           <TooltipContent className={cn("max-w-xs", tooltipContentClassName)}>

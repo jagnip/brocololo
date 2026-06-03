@@ -2,7 +2,7 @@
 
 import { getRecipes } from "@/lib/db/recipes";
 import { listFamilyMembers } from "@/lib/db/family-members";
-import { getDaysInRange as getDaysToPlan, getMaxDaysSinceLastUsedCandidate, getMealTimeLimit, markBatchSlots, formatDayLabel } from "@/lib/planner/helpers";
+import { getDaysInRange as getDaysToPlan, getMaxDaysSinceLastUsedCandidate, getMealTimeLimit, markBatchSlots } from "@/lib/planner/helpers";
 import { PlanInputType, SlotSaveData } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { createPlan, deletePlanById, updatePlan } from "@/lib/db/planner";
@@ -14,6 +14,9 @@ import { DayTimeLimitsType, RollingRecipeType } from "@/lib/validations/planner"
 import { pickBestCandidate } from "@/lib/planner/scoring";
 import { generateBaselineLogForPlan } from "@/lib/db/planner";
 import { requireUser } from "@/lib/auth/session";
+import { MESSAGES } from "@/lib/messages";
+
+const PLAN_GENERATION_FAILED_MESSAGE = MESSAGES.planner.generationFailedMessage;
 
 export async function generatePlan(
   start: Date,
@@ -48,7 +51,7 @@ export async function generatePlan(
     );
 
     if (recipes.length === 0) {
-      return { type: "error", message: "No recipes available to plan." };
+      return { type: "error", message: PLAN_GENERATION_FAILED_MESSAGE };
     }
 
     const days = getDaysToPlan(start, end); //get all days between start and end dates
@@ -69,10 +72,7 @@ export async function generatePlan(
         candidates = filterByTotalTime(candidates, getMealTimeLimit(dayTimeLimits, mealType, "total"));
 
         if (candidates.length === 0) {
-          return {
-            type: "error",
-            message: `No recipes available for ${mealType.toLowerCase()} on ${formatDayLabel(day)}.`,
-          };
+          return { type: "error", message: PLAN_GENERATION_FAILED_MESSAGE };
         }
 
         const maxDaysSinceLastUsedCandidate = getMaxDaysSinceLastUsedCandidate(candidates, day);

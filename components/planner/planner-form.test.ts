@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { shouldShowGeneratedPlan, getDailyLimitsForPlanAllDaysToggle } from "./planner-form";
+import { getDailyLimitsForPlanAllDaysToggle } from "./planner-form";
+import {
+  getPlannerPlanColumnMode,
+  shouldShowGeneratedPlan,
+} from "./planner-plan-column-state";
+import { MESSAGES } from "@/lib/messages";
 import {
   WEEKDAY_TIME_LIMIT_DEFAULTS,
   WEEKEND_TIME_LIMIT_DEFAULTS,
@@ -37,6 +42,83 @@ describe("planner-form visibility helpers", () => {
     ];
 
     expect(shouldShowGeneratedPlan(plan, false)).toBe(true);
+  });
+
+  it("shows failure empty state after Find meals errors, hiding the previous plan", () => {
+    const plan: PlanInputType = [
+      {
+        date: new Date("2026-03-02"),
+        mealType: "DINNER",
+        recipe: null,
+        alternatives: [],
+        used: false,
+      },
+    ];
+
+    expect(
+      getPlannerPlanColumnMode({
+        isGenerating: false,
+        plan: null,
+        lastGenerationError: MESSAGES.planner.generationFailedTitle,
+      }),
+    ).toBe("failure");
+    expect(
+      getPlannerPlanColumnMode({
+        isGenerating: false,
+        plan,
+        lastGenerationError: MESSAGES.planner.generationFailedTitle,
+      }),
+    ).toBe("failure");
+  });
+
+  it("shows the previous plan again when not generating and no error is set", () => {
+    const plan: PlanInputType = [
+      {
+        date: new Date("2026-03-02"),
+        mealType: "DINNER",
+        recipe: null,
+        alternatives: [],
+        used: false,
+      },
+    ];
+
+    expect(
+      getPlannerPlanColumnMode({
+        isGenerating: false,
+        plan,
+        lastGenerationError: null,
+      }),
+    ).toBe("plan");
+  });
+
+  it("shows idle empty when nothing was generated and no error is set", () => {
+    expect(
+      getPlannerPlanColumnMode({
+        isGenerating: false,
+        plan: null,
+        lastGenerationError: null,
+      }),
+    ).toBe("idle");
+  });
+
+  it("shows plan column content when generation succeeds", () => {
+    const plan: PlanInputType = [
+      {
+        date: new Date("2026-03-02"),
+        mealType: "DINNER",
+        recipe: null,
+        alternatives: [],
+        used: false,
+      },
+    ];
+
+    expect(
+      getPlannerPlanColumnMode({
+        isGenerating: false,
+        plan,
+        lastGenerationError: null,
+      }),
+    ).toBe("plan");
   });
 
   it("seeds daily limits from grouped values when no daily draft exists", () => {

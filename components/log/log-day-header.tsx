@@ -93,8 +93,10 @@ export function LogDayHeader({
               </Select>
             </div>
 
-            {/* Person selector belongs under Log details in combined view. */}
-            <LogPersonSelectFromUrl familyMembers={familyMembers} />
+            {/* Hide when plan audience is a single person (no meaningful switch). */}
+            {familyMembers.length > 1 ? (
+              <LogPersonSelectFromUrl familyMembers={familyMembers} />
+            ) : null}
 
             {showDayManagementActions ? (
               <>
