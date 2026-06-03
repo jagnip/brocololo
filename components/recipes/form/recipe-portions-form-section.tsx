@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { useWatch } from "react-hook-form";
+import { Info } from "lucide-react";
 import type { CreateRecipeFormValues } from "@/lib/validations/recipe";
 import type { RecipeType } from "@/types/recipe";
 import {
@@ -16,6 +17,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { scaleFormIngredientRowsForNewServings } from "@/lib/recipes/scale-form-ingredient-rows-for-servings";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
@@ -210,7 +217,26 @@ export function RecipePortionsFormSection({
             name="servings"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Portions</FormLabel>
+                <div className="flex items-center gap-1">
+                  <FormLabel>Portions</FormLabel>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="inline-flex h-auto w-auto items-center px-1 py-0 text-muted-foreground outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] [&_svg]:size-4"
+                          aria-label="Show portions guidance"
+                        >
+                          <Info strokeWidth={1.75} />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        {/* Keep long helper copy available without adding permanent form noise. */}
+                        <p>{servingsHint}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-item md:grid-cols-3">
                   <FormControl className="min-w-0 md:col-span-1">
                     <Input
@@ -238,7 +264,6 @@ export function RecipePortionsFormSection({
                   </div>
                   <div className="hidden md:col-span-1 md:block" aria-hidden />
                 </div>
-                <p className="text-sm text-muted-foreground">{servingsHint}</p>
                 <FormMessage />
               </FormItem>
             )}
@@ -248,17 +273,40 @@ export function RecipePortionsFormSection({
             control={form.control}
             name="memberPortions"
             render={({ field }) => {
-              const nonSelfMembers = familyMembers.filter(
-                (member) => !member.isSelf && audienceIdSet.has(member.id),
+              const audienceMembers = familyMembers.filter((member) =>
+                audienceIdSet.has(member.id),
               );
               return (
                 <FormItem>
-                  <FormLabel className="text-muted-foreground">
-                    Serving multipliers
-                  </FormLabel>
+                  <div className="flex items-center gap-1">
+                    <FormLabel className="text-muted-foreground">
+                      Serving multipliers
+                    </FormLabel>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="inline-flex h-auto w-auto items-center px-1 py-0 text-muted-foreground outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] [&_svg]:size-4"
+                            aria-label="Show serving multiplier guidance"
+                          >
+                            <Info strokeWidth={1.75} />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          {/* Multipliers change the split, not how many planner servings the recipe yields. */}
+                          <p>
+                            Multipliers are relative to each other. They decide
+                            how cooked food and nutrition are split, but do not
+                            change the recipe serving count.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <FormControl>
                     <div className="flex flex-col gap-2">
-                      {nonSelfMembers.map((member, index) => {
+                      {audienceMembers.map((member, index) => {
                         const selectedMultiplier =
                           field.value?.find(
                             (portion) => portion.familyMemberId === member.id,

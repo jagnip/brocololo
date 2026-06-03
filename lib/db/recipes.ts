@@ -254,11 +254,6 @@ export async function createRecipe(
   });
   const ownedFamilyMembers = await getOwnedFamilyMembers(userId);
   const ownedFamilyMemberIds = new Set(ownedFamilyMembers.map((member) => member.id));
-  const nonSelfFamilyMemberIds = new Set(
-    ownedFamilyMembers
-      .filter((member) => !member.isSelf)
-      .map((member) => member.id),
-  );
   assertKnownFamilyMemberIds(
     [
       ...audienceFamilyMemberIds,
@@ -302,7 +297,7 @@ export async function createRecipe(
     const portionRows = memberPortions
       .filter(
         (portion) =>
-          nonSelfFamilyMemberIds.has(portion.familyMemberId) &&
+          ownedFamilyMemberIds.has(portion.familyMemberId) &&
           audienceFamilyMemberIdSet.has(portion.familyMemberId),
       )
       .map((portion) => ({
@@ -432,11 +427,6 @@ export async function updateRecipe(
   });
   const ownedFamilyMembers = await getOwnedFamilyMembers(userId);
   const ownedFamilyMemberIds = new Set(ownedFamilyMembers.map((member) => member.id));
-  const nonSelfFamilyMemberIds = new Set(
-    ownedFamilyMembers
-      .filter((member) => !member.isSelf)
-      .map((member) => member.id),
-  );
   assertKnownFamilyMemberIds(
     [
       ...audienceFamilyMemberIds,
@@ -498,7 +488,7 @@ export async function updateRecipe(
     const portionRows = memberPortions
       .filter(
         (portion) =>
-          nonSelfFamilyMemberIds.has(portion.familyMemberId) &&
+          ownedFamilyMemberIds.has(portion.familyMemberId) &&
           audienceFamilyMemberIdSet.has(portion.familyMemberId),
       )
       .map((portion) => ({

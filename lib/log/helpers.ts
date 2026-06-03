@@ -12,9 +12,6 @@ function getMemberMultiplier(
   member: FamilyMemberForPortion,
   memberPortions: MemberPortion[],
 ): number {
-  if (member.isSelf) {
-    return 1;
-  }
   return (
     memberPortions.find((portion) => portion.familyMemberId === member.id)
       ?.multiplier ?? 1

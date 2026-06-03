@@ -101,4 +101,25 @@ describe("getFamilyMemberIngredientAmountPerMeal", () => {
 
     expect(amount).toBeNull();
   });
+
+  it("allows the account holder to have a custom multiplier", () => {
+    const selfAmount = getFamilyMemberIngredientAmountPerMeal({
+      amount: 300,
+      appliesToEveryone: true,
+      targetFamilyMemberIds: [],
+      familyMemberId: "self",
+      recipeServings: 2,
+      familyMembers: [
+        { id: "self", isSelf: true },
+        { id: "partner", isSelf: false },
+      ],
+      memberPortions: [
+        { familyMemberId: "self", multiplier: 2 },
+        { familyMemberId: "partner", multiplier: 1 },
+      ],
+      cookingFamilyMemberIds: ["self", "partner"],
+    });
+
+    expect(selfAmount).toBeCloseTo(200);
+  });
 });

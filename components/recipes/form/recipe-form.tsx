@@ -221,7 +221,6 @@ export default function RecipeForm({
           memberPortions: familyMembers
             .filter(
               (member) =>
-                !member.isSelf &&
                 recipe.audienceMembers.some(
                   (audienceMember) =>
                     audienceMember.familyMemberId === member.id,
@@ -255,7 +254,6 @@ export default function RecipeForm({
           notes: "",
           excludeFromPlanner: false,
           memberPortions: familyMembers
-            .filter((member) => !member.isSelf)
             .map((member) => ({
               familyMemberId: member.id,
               multiplier: 1,
