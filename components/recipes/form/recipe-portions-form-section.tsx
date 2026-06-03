@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { useWatch } from "react-hook-form";
-import { Info } from "lucide-react";
 import type { CreateRecipeFormValues } from "@/lib/validations/recipe";
 import type { RecipeType } from "@/types/recipe";
 import {
@@ -17,12 +16,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CheckboxWithLabel } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { scaleFormIngredientRowsForNewServings } from "@/lib/recipes/scale-form-ingredient-rows-for-servings";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
@@ -211,26 +204,12 @@ export function RecipePortionsFormSection({
             name="servings"
             render={({ field }) => (
               <FormItem>
-                <div className="flex items-center gap-1">
-                  <FormLabel>Portions</FormLabel>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          type="button"
-                          className="inline-flex h-auto w-auto items-center px-1 py-0 text-muted-foreground outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] [&_svg]:size-4"
-                          aria-label="Show portions guidance"
-                        >
-                          <Info strokeWidth={1.75} />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        {/* Keep long helper copy available without adding permanent form noise. */}
-                        <p>{servingsHint}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
+                <FormLabel
+                  tooltip={servingsHint}
+                  tooltipAriaLabel="Show portions guidance"
+                >
+                  Portions
+                </FormLabel>
                 <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-item md:grid-cols-3">
                   <FormControl className="min-w-0 md:col-span-1">
                     <Input
@@ -272,32 +251,13 @@ export function RecipePortionsFormSection({
               );
               return (
                 <FormItem>
-                  <div className="flex items-center gap-1">
-                    <FormLabel className="text-muted-foreground">
-                      Portion sizes
-                    </FormLabel>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            className="inline-flex h-auto w-auto items-center px-1 py-0 text-muted-foreground outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] [&_svg]:size-4"
-                            aria-label="Show portion size guidance"
-                          >
-                            <Info strokeWidth={1.75} />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs">
-                          {/* Portion sizes change the split, not how many planner servings the recipe yields. */}
-                          <p>
-                            Choose how much each person usually eats. This
-                            changes how the cooked food is shared, not how many
-                            servings the recipe makes.
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
+                  <FormLabel
+                    className="text-muted-foreground"
+                    tooltip="Choose how much each person usually eats. This changes how the cooked food is shared, not how many servings the recipe makes."
+                    tooltipAriaLabel="Show portion size guidance"
+                  >
+                    Portion sizes
+                  </FormLabel>
                   <FormControl>
                     <div className="flex flex-col gap-2">
                       {audienceMembers.map((member, index) => {
