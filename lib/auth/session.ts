@@ -5,11 +5,6 @@ export type AppUser = {
   id: string;
   clerkId: string;
   email: string | null;
-  familyMembers: Array<{
-    id: string;
-    name: string;
-    position: number;
-  }>;
 };
 
 /**
@@ -19,11 +14,10 @@ export type AppUser = {
 export async function getOrCreateUser(clerkId: string): Promise<AppUser> {
   const existing = await prisma.user.findUnique({
     where: { clerkId },
-    include: {
-      familyMembers: {
-        orderBy: { position: "asc" },
-        select: { id: true, name: true, position: true },
-      },
+    select: {
+      id: true,
+      clerkId: true,
+      email: true,
     },
   });
 
@@ -42,11 +36,10 @@ export async function getOrCreateUser(clerkId: string): Promise<AppUser> {
       clerkId,
       email,
     },
-    include: {
-      familyMembers: {
-        orderBy: { position: "asc" },
-        select: { id: true, name: true, position: true },
-      },
+    select: {
+      id: true,
+      clerkId: true,
+      email: true,
     },
   });
 }

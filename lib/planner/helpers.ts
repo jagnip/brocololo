@@ -79,7 +79,17 @@ export function getMaxDaysSinceLastUsedCandidate(candidates: RecipeType[], slotD
   }, 0);
 }
 
-// Marks future slots as claimed by a batch recipe (servings > 2).
+export function getPlannerMealCountForAudience(
+  recipe: Pick<RecipeType, "servings">,
+  audienceMemberCount: number,
+): number {
+  if (audienceMemberCount <= 0) {
+    return 0;
+  }
+  return Math.floor(recipe.servings / audienceMemberCount);
+}
+
+// Marks future slots as claimed by a batch recipe (servings > selected audience count).
 // Uses a Map so generatePlan knows which recipe was carried forward into each slot.
 // Does NOT push to plan — generatePlan handles that so it can compute alternatives.
 export function markBatchSlots(
@@ -88,9 +98,11 @@ export function markBatchSlots(
   dayIndex: number,
   days: Date[],
   batchFilledSlots: Map<string, RecipeType>,
-  overrideMeals?: number, // if provided, use this instead of recipe.servings
+  audienceMemberCount: number,
+  overrideMeals?: number,
 ): void {
-  const totalMeals = overrideMeals ?? Math.floor(recipe.servings / 2);
+  const totalMeals =
+    overrideMeals ?? getPlannerMealCountForAudience(recipe, audienceMemberCount);
   const extraMeals = totalMeals - 1;
   if (extraMeals <= 0) return;
 

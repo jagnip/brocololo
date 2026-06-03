@@ -14,6 +14,7 @@ import { LogDayHeader } from "./log-day-header";
 import { LogPool } from "./log-pool";
 import { LogSlot } from "./log-slot";
 import { Subheader } from "../recipes/recipe-page/subheader";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 /** Inline editor selection for the active log day (owned by `LogDayViewController`). */
 export type SelectedSlotState = {
@@ -43,6 +44,7 @@ export type LogActiveDayViewProps = {
   isAddingDay: boolean;
   isRemovingDay: boolean;
   logId?: string;
+  familyMembers: FamilyMemberRow[];
   showDayControls?: boolean;
   showDayManagementActions?: boolean;
   showPageHeader?: boolean;
@@ -108,6 +110,7 @@ export function LogActiveDayView({
   isAddingDay,
   isRemovingDay,
   logId,
+  familyMembers,
   showDayControls = true,
   showDayManagementActions = true,
   showPageHeader = true,
@@ -134,6 +137,7 @@ export function LogActiveDayView({
         selectedDayKey={day.dateKey}
         onSelectDay={onSelectDay}
         logId={logId}
+        familyMembers={familyMembers}
         isAddingDay={isAddingDay}
         onAddDay={onAddDay}
         isRemovingDay={isRemovingDay}

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { generatePlan } from "./planner-actions";
 import { getRecipes } from "@/lib/db/recipes";
+import { listFamilyMembers } from "@/lib/db/family-members";
 import { TIME_LIMIT_DEFAULTS } from "@/lib/constants";
 import { getDaysInRange } from "@/lib/planner/helpers";
 import type { DayTimeLimitsType } from "@/lib/validations/planner";
@@ -8,6 +9,14 @@ import { createMockCategory, createMockRecipe } from "@/lib/tests/test-helpers";
 
 vi.mock("@/lib/db/recipes", () => ({
   getRecipes: vi.fn(),
+}));
+
+vi.mock("@/lib/db/family-members", () => ({
+  listFamilyMembers: vi.fn(),
+}));
+
+vi.mock("@/lib/auth/session", () => ({
+  requireUser: vi.fn().mockResolvedValue({ id: "user-test", clerkId: "clerk-test" }),
 }));
 
 // These imports exist in planner-actions module scope; mock them so the test
@@ -95,6 +104,22 @@ function buildSimulationRecipes() {
   return [...breakfastRecipes, ...savouryRecipes];
 }
 
+const simulationAudienceFamilyMemberIds = ["family-self", "family-member-1"];
+
+function setupSimulationMocks() {
+  vi.mocked(getRecipes).mockResolvedValue(buildSimulationRecipes());
+  vi.mocked(listFamilyMembers).mockResolvedValue([
+    { id: "family-self", userId: "user-test", name: "You", isSelf: true, sortOrder: 0 },
+    {
+      id: "family-member-1",
+      userId: "user-test",
+      name: "Partner",
+      isSelf: false,
+      sortOrder: 1,
+    },
+  ]);
+}
+
 function getPlanMetrics(plan: NonNullable<Awaited<ReturnType<typeof generatePlan>> extends { type: "success"; plan: infer T } ? T : never>) {
   const recipeIds = plan.map((slot) => slot.recipe?.id).filter((id): id is string => Boolean(id));
   const uniqueRecipeCount = new Set(recipeIds).size;
@@ -138,14 +163,28 @@ function printPlanForReview(
 
 describe("planner generation simulation with default time limits", () => {
   it("returns deterministic output for identical inputs", async () => {
-    vi.mocked(getRecipes).mockResolvedValue(buildSimulationRecipes());
+    setupSimulationMocks();
 
     const start = new Date("2026-04-20T00:00:00.000Z");
     const end = new Date("2026-04-26T00:00:00.000Z");
     const dailyTimeLimits = buildDailyTimeLimitsFromDefaults(start, end);
 
-    const first = await generatePlan(start, end, dailyTimeLimits, [], []);
-    const second = await generatePlan(start, end, dailyTimeLimits, [], []);
+    const first = await generatePlan(
+      start,
+      end,
+      simulationAudienceFamilyMemberIds,
+      dailyTimeLimits,
+      [],
+      [],
+    );
+    const second = await generatePlan(
+      start,
+      end,
+      simulationAudienceFamilyMemberIds,
+      dailyTimeLimits,
+      [],
+      [],
+    );
 
     expect(first.type).toBe("success");
     expect(second.type).toBe("success");
@@ -158,13 +197,20 @@ describe("planner generation simulation with default time limits", () => {
   });
 
   it("keeps baseline variety above a minimum threshold", async () => {
-    vi.mocked(getRecipes).mockResolvedValue(buildSimulationRecipes());
+    setupSimulationMocks();
 
     const start = new Date("2026-04-20T00:00:00.000Z");
     const end = new Date("2026-04-26T00:00:00.000Z");
     const dailyTimeLimits = buildDailyTimeLimitsFromDefaults(start, end);
 
-    const result = await generatePlan(start, end, dailyTimeLimits, [], []);
+    const result = await generatePlan(
+      start,
+      end,
+      simulationAudienceFamilyMemberIds,
+      dailyTimeLimits,
+      [],
+      [],
+    );
     expect(result.type).toBe("success");
     if (result.type !== "success") return;
 
@@ -178,7 +224,7 @@ describe("planner generation simulation with default time limits", () => {
   it.runIf(process.env.PLANNER_DEBUG === "1")(
     "prints multiple generated plans for manual review",
     async () => {
-      vi.mocked(getRecipes).mockResolvedValue(buildSimulationRecipes());
+      setupSimulationMocks();
 
       // Fixed ranges let you compare output across edits to scoring logic.
       const windows = [
@@ -201,7 +247,14 @@ describe("planner generation simulation with default time limits", () => {
 
       for (const window of windows) {
         const dailyTimeLimits = buildDailyTimeLimitsFromDefaults(window.start, window.end);
-        const result = await generatePlan(window.start, window.end, dailyTimeLimits, [], []);
+        const result = await generatePlan(
+          window.start,
+          window.end,
+          simulationAudienceFamilyMemberIds,
+          dailyTimeLimits,
+          [],
+          [],
+        );
         expect(result.type).toBe("success");
         if (result.type !== "success") continue;
 

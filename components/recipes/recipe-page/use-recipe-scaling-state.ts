@@ -9,20 +9,25 @@ import {
   isScaleModified,
 } from "@/lib/recipes/helpers";
 
+export type CalorieTarget = {
+  familyMemberId: string;
+  calories: number;
+};
+
 type UseRecipeScalingStateParams = {
   recipe: RecipeType;
 };
 
 export type UseRecipeScalingStateResult = {
   currentServings: number;
-  targetCaloriesPerPortion: number | null;
+  calorieTarget: CalorieTarget | null;
   globalScaleRatio: number;
   localScaleByIngredientId: Record<string, number>;
   swapsByRecipeIngredientId: IngredientSwapMap;
   selectedUnits: Record<string, string | null>;
   hasActiveScaling: boolean;
-  setTargetCaloriesPerPortion: (value: number | null) => void;
-  handleCaloriesChange: (caloriesString: string) => void;
+  hasActiveNutritionScaling: boolean;
+  handleCaloriesChange: (familyMemberId: string, caloriesString: string) => void;
   handleServingsChange: (newServings: number) => void;
   handleIngredientEdit: (
     recipeIngredientId: string,
@@ -31,6 +36,7 @@ export type UseRecipeScalingStateResult = {
   ) => void;
   handleApplyScaleToAll: (recipeIngredientId: string) => void;
   handleReset: () => void;
+  handleNutritionReset: () => void;
   handleIngredientChange: (
     recipeIngredientId: string,
     selectedIngredientId: string,
@@ -43,9 +49,7 @@ export function useRecipeScalingState({
   recipe,
 }: UseRecipeScalingStateParams): UseRecipeScalingStateResult {
   const [currentServings, setCurrentServings] = useState(recipe.servings);
-  const [targetCaloriesPerPortion, setTargetCaloriesPerPortion] = useState<
-    number | null
-  >(null);
+  const [calorieTarget, setCalorieTarget] = useState<CalorieTarget | null>(null);
   const [globalScaleRatio, setGlobalScaleRatio] = useState(1);
   const [localScaleByIngredientId, setLocalScaleByIngredientId] = useState<
     Record<string, number>
@@ -59,26 +63,29 @@ export function useRecipeScalingState({
   // Reset scaling state when navigating to a different recipe.
   useEffect(() => {
     setCurrentServings(recipe.servings);
-    setTargetCaloriesPerPortion(null);
+    setCalorieTarget(null);
     setGlobalScaleRatio(1);
     setLocalScaleByIngredientId({});
     setSwapsByRecipeIngredientId({});
     setSelectedUnits({});
   }, [recipe.id, recipe.servings]);
 
-  const handleCaloriesChange = useCallback((caloriesString: string) => {
-    const calories = parseFloat(caloriesString);
+  const handleCaloriesChange = useCallback(
+    (familyMemberId: string, caloriesString: string) => {
+      const calories = parseFloat(caloriesString);
 
-    if (isNaN(calories) || calories <= 0) {
-      setTargetCaloriesPerPortion(null);
-      return;
-    }
+      if (isNaN(calories) || calories <= 0) {
+        setCalorieTarget(null);
+        return;
+      }
 
-    // Keep calorie target mode deterministic by clearing row/global edits.
-    setGlobalScaleRatio(1);
-    setLocalScaleByIngredientId({});
-    setTargetCaloriesPerPortion(calories);
-  }, []);
+      // Last-edited person is the anchor; clear manual scales when entering target mode.
+      setGlobalScaleRatio(1);
+      setLocalScaleByIngredientId({});
+      setCalorieTarget({ familyMemberId, calories: Math.round(calories) });
+    },
+    [],
+  );
 
   const handleServingsChange = useCallback((newServings: number) => {
     setCurrentServings(newServings);
@@ -105,7 +112,7 @@ export function useRecipeScalingState({
         }
         return next;
       });
-      setTargetCaloriesPerPortion(null);
+      setCalorieTarget(null);
     },
     [],
   );
@@ -125,9 +132,12 @@ export function useRecipeScalingState({
   const handleReset = useCallback(() => {
     setGlobalScaleRatio(1);
     setLocalScaleByIngredientId({});
-    setTargetCaloriesPerPortion(null);
     setSwapsByRecipeIngredientId({});
     setSelectedUnits({});
+  }, []);
+
+  const handleNutritionReset = useCallback(() => {
+    setCalorieTarget(null);
   }, []);
 
   const handleIngredientChange = useCallback(
@@ -183,30 +193,27 @@ export function useRecipeScalingState({
     () =>
       globalScaleRatio !== 1 ||
       Object.keys(localScaleByIngredientId).length > 0 ||
-      targetCaloriesPerPortion !== null ||
       Object.keys(swapsByRecipeIngredientId).length > 0,
-    [
-      globalScaleRatio,
-      localScaleByIngredientId,
-      swapsByRecipeIngredientId,
-      targetCaloriesPerPortion,
-    ],
+    [globalScaleRatio, localScaleByIngredientId, swapsByRecipeIngredientId],
   );
+
+  const hasActiveNutritionScaling = calorieTarget !== null;
 
   return {
     currentServings,
-    targetCaloriesPerPortion,
+    calorieTarget,
     globalScaleRatio,
     localScaleByIngredientId,
     swapsByRecipeIngredientId,
     selectedUnits,
     hasActiveScaling,
-    setTargetCaloriesPerPortion,
+    hasActiveNutritionScaling,
     handleCaloriesChange,
     handleServingsChange,
     handleIngredientEdit,
     handleApplyScaleToAll,
     handleReset,
+    handleNutritionReset,
     handleIngredientChange,
     handleUnitChange,
   };

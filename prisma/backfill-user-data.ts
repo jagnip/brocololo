@@ -63,16 +63,45 @@ async function main() {
     ),
   ]);
 
-  await prisma.familyMember.upsert({
-    where: { userId_position: { userId: owner.id, position: 0 } },
-    create: { userId: owner.id, name: "Jagoda", position: 0 },
-    update: { name: "Jagoda" },
+  const selfMember = await prisma.familyMember.findFirst({
+    where: { userId: owner.id, isSelf: true },
+    select: { id: true },
   });
-  await prisma.familyMember.upsert({
-    where: { userId_position: { userId: owner.id, position: 1 } },
-    create: { userId: owner.id, name: "Nelson", position: 1 },
-    update: { name: "Nelson" },
+  if (selfMember) {
+    await prisma.familyMember.update({
+      where: { id: selfMember.id },
+      data: { name: "Jagoda" },
+    });
+  } else {
+    await prisma.familyMember.create({
+      data: {
+        userId: owner.id,
+        name: "Jagoda",
+        isSelf: true,
+        sortOrder: 0,
+      },
+    });
+  }
+
+  const secondaryMember = await prisma.familyMember.findFirst({
+    where: { userId: owner.id, isSelf: false, sortOrder: 1 },
+    select: { id: true },
   });
+  if (secondaryMember) {
+    await prisma.familyMember.update({
+      where: { id: secondaryMember.id },
+      data: { name: "Nelson" },
+    });
+  } else {
+    await prisma.familyMember.create({
+      data: {
+        userId: owner.id,
+        name: "Nelson",
+        isSelf: false,
+        sortOrder: 1,
+      },
+    });
+  }
 
   console.log("Done:", {
     ownerId: owner.id,

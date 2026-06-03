@@ -40,6 +40,9 @@ const rollingRecipeSchema = z.object({
 
 export const plannerCriteriaSchema = z.object({
   dateRange: dateRangeSchema,
+  audienceFamilyMemberIds: z
+    .array(z.string().min(1))
+    .min(1, "Choose who you are cooking for"),
   dailyTimeLimits: z.array(dayTimeLimitsSchema).min(1, "Select at least one day"),
   fridgeIngredientIds: z.array(z.string()).default([]),
   rollingRecipes: z.array(rollingRecipeSchema).default([]),

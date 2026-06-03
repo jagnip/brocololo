@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LogMealType, LogPerson } from "@/src/generated/enums";
+import { LogMealType } from "@/src/generated/enums";
 
 export const logIngredientEditorRowSchema = z.object({
   ingredientId: z.string().min(1, { message: "Ingredient is required" }),
@@ -11,7 +11,7 @@ export const logIngredientEditorRowSchema = z.object({
 
 export const updateLogRecipeIngredientsSchema = z.object({
   logId: z.string().min(1),
-  person: z.enum([LogPerson.PRIMARY, LogPerson.SECONDARY]),
+  familyMemberId: z.string().min(1),
   entryId: z.string().min(1),
   entryRecipeId: z.string().min(1),
   ingredients: z.array(logIngredientEditorRowSchema).max(200),
@@ -23,7 +23,7 @@ export type UpdateLogRecipeIngredientsInput = z.infer<
 
 export const upsertLogSlotSchema = z.object({
   logId: z.string().min(1),
-  person: z.enum([LogPerson.PRIMARY, LogPerson.SECONDARY]),
+  familyMemberId: z.string().min(1),
   entryId: z.string().min(1),
   recipeId: z.string().min(1).nullable(),
   ingredients: z.array(logIngredientEditorRowSchema).max(200),
@@ -33,7 +33,7 @@ export type UpsertLogSlotInput = z.infer<typeof upsertLogSlotSchema>;
 
 export const addRecipeToLogSchema = z.object({
   recipeId: z.string().min(1),
-  person: z.enum([LogPerson.PRIMARY, LogPerson.SECONDARY]),
+  familyMemberId: z.string().min(1),
   date: z.coerce.date(),
   mealType: z.enum([
     LogMealType.BREAKFAST,
@@ -55,7 +55,7 @@ export const plannerPoolIngredientSchema = z.object({
 
 export const placePlannerPoolItemSchema = z.object({
   logId: z.string().min(1),
-  person: z.enum([LogPerson.PRIMARY, LogPerson.SECONDARY]),
+  familyMemberId: z.string().min(1),
   entryId: z.string().min(1),
   sourceRecipeId: z.string().min(1),
   ingredients: z.array(plannerPoolIngredientSchema).max(200),
@@ -65,7 +65,7 @@ export type PlacePlannerPoolItemInput = z.infer<typeof placePlannerPoolItemSchem
 
 export const duplicateLogEntrySchema = z.object({
   logId: z.string().min(1),
-  person: z.enum([LogPerson.PRIMARY, LogPerson.SECONDARY]),
+  familyMemberId: z.string().min(1),
   sourceEntryId: z.string().min(1),
   sourceRecipeId: z.string().min(1).nullable(),
   targetDay: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -82,7 +82,7 @@ export type DuplicateLogEntryInput = z.infer<typeof duplicateLogEntrySchema>;
 
 export const clearLogEntryAssignmentSchema = z.object({
   logId: z.string().min(1),
-  person: z.enum([LogPerson.PRIMARY, LogPerson.SECONDARY]),
+  familyMemberId: z.string().min(1),
   entryId: z.string().min(1),
 });
 

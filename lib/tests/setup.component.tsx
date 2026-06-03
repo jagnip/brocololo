@@ -37,3 +37,10 @@ vi.mock("next/image", () => ({
     [key: string]: unknown;
   }) => <img src={src} alt={alt} {...props} />,
 }));
+
+if (!Element.prototype.hasPointerCapture) {
+  // Radix Select relies on pointer capture APIs missing in jsdom.
+  Element.prototype.hasPointerCapture = () => false;
+  Element.prototype.setPointerCapture = () => {};
+  Element.prototype.releasePointerCapture = () => {};
+}

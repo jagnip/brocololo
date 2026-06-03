@@ -5,29 +5,36 @@ import { RecipeType } from "@/types/recipe";
 import {
   calculateNutritionPerServing,
   calculateServingScalingFactor,
-  getPrimaryCalorieScalingFactorForTarget,
+  getCalorieScalingFactorForIngredient,
 } from "@/lib/recipes/helpers";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
+import type { CalorieTarget } from "@/components/recipes/recipe-page/use-recipe-scaling-state";
 
 type UseRecipeNutritionParams = {
   recipe: RecipeType;
   effectiveRecipe: RecipeType;
   currentServings: number;
-  targetCaloriesPerPortion: number | null;
+  calorieTarget: CalorieTarget | null;
   globalScaleRatio: number;
   localScaleByIngredientId: Record<string, number>;
+  familyMembers: FamilyMemberRow[];
 };
 
 export type UseRecipeNutritionResult = {
   recipeForScaledNutrition: RecipeType;
   effectiveRecipeIngredientById: Map<string, RecipeType["ingredients"][number]>;
-  jagodaNutrition: ReturnType<typeof calculateNutritionPerServing>;
-  nelsonNutrition: ReturnType<typeof calculateNutritionPerServing>;
+  nutritionRows: Array<{
+    familyMemberId: string;
+    label: string;
+    nutrition: ReturnType<typeof calculateNutritionPerServing>;
+  }>;
   servingScalingFactor: number;
-  jagodaPortionFactor: number;
-  nelsonPortionFactor: number;
   calorieScalingFactor: number;
   getIngredientCalorieFactor: (
-    nutritionTarget: "BOTH" | "PRIMARY_ONLY" | "SECONDARY_ONLY",
+    recipeIngredient: Pick<
+      RecipeType["ingredients"][number],
+      "appliesToEveryone" | "memberTargets"
+    >,
   ) => number;
   getIngredientDisplayScalingFactor: (recipeIngredientId: string) => number;
 };
@@ -36,10 +43,20 @@ export function useRecipeNutrition({
   recipe,
   effectiveRecipe,
   currentServings,
-  targetCaloriesPerPortion,
+  calorieTarget,
   globalScaleRatio,
   localScaleByIngredientId,
+  familyMembers,
 }: UseRecipeNutritionParams): UseRecipeNutritionResult {
+  const recipeAudienceIdSet = useMemo(
+    () =>
+      new Set(recipe.audienceMembers.map((member) => member.familyMemberId)),
+    [recipe.audienceMembers],
+  );
+  const recipeAudienceMembers = useMemo(
+    () => familyMembers.filter((member) => recipeAudienceIdSet.has(member.id)),
+    [familyMembers, recipeAudienceIdSet],
+  );
   const effectiveRecipeIngredientById = useMemo(
     () =>
       new Map(
@@ -51,10 +68,19 @@ export function useRecipeNutrition({
     [effectiveRecipe.ingredients],
   );
 
-  const jagodaBaseNutrition = calculateNutritionPerServing(effectiveRecipe, "primary");
+  const selfMember =
+    recipeAudienceMembers.find((member) => member.isSelf) ??
+    recipeAudienceMembers[0];
+  const selfFamilyMemberId = selfMember?.id ?? "";
+  const anchorMemberId = calorieTarget?.familyMemberId ?? selfFamilyMemberId;
+  const anchorBaseNutrition = calculateNutritionPerServing(
+    effectiveRecipe,
+    anchorMemberId,
+    recipeAudienceMembers,
+  );
   const calorieScalingFactor =
-    targetCaloriesPerPortion && jagodaBaseNutrition.calories > 0
-      ? targetCaloriesPerPortion / jagodaBaseNutrition.calories
+    calorieTarget && anchorBaseNutrition.calories > 0
+      ? calorieTarget.calories / anchorBaseNutrition.calories
       : 1;
 
   const recipeForScaledNutrition = useMemo(
@@ -66,8 +92,10 @@ export function useRecipeNutrition({
         }
         // Compose base-anchored global + per-row local scales for nutrition math.
         const rowScaleRatio = localScaleByIngredientId[ingredientRow.id] ?? 1;
-        const calorieFactor = getPrimaryCalorieScalingFactorForTarget(
-          ingredientRow.nutritionTarget,
+        const calorieFactor = getCalorieScalingFactorForIngredient(
+          ingredientRow.appliesToEveryone,
+          ingredientRow.memberTargets.map((target) => target.familyMemberId),
+          anchorMemberId,
           calorieScalingFactor,
         );
         return {
@@ -77,26 +105,46 @@ export function useRecipeNutrition({
         };
       }),
     }),
-    [calorieScalingFactor, effectiveRecipe, globalScaleRatio, localScaleByIngredientId],
+    [
+      anchorMemberId,
+      calorieScalingFactor,
+      effectiveRecipe,
+      globalScaleRatio,
+      localScaleByIngredientId,
+    ],
   );
 
-  const jagodaNutrition = calculateNutritionPerServing(recipeForScaledNutrition, "primary");
-  const nelsonNutrition = calculateNutritionPerServing(
-    recipeForScaledNutrition,
-    "secondary",
-  );
+  const nutritionRows = recipeAudienceMembers.map((member, index) => ({
+    familyMemberId: member.id,
+    label:
+      member.name.trim() ||
+      (member.isSelf ? "You" : `Family member ${index}`),
+    nutrition: calculateNutritionPerServing(
+      recipeForScaledNutrition,
+      member.id,
+      recipeAudienceMembers,
+    ),
+  }));
 
-  const { servingScalingFactor, jagodaPortionFactor, nelsonPortionFactor } =
-    calculateServingScalingFactor(
-      currentServings,
-      recipe.servings,
-      recipe.servingMultiplierForNelson,
-    );
+  const { servingScalingFactor } = calculateServingScalingFactor(
+    currentServings,
+    recipe.servings,
+  );
 
   const getIngredientCalorieFactor = useCallback(
-    (nutritionTarget: "BOTH" | "PRIMARY_ONLY" | "SECONDARY_ONLY") =>
-      getPrimaryCalorieScalingFactorForTarget(nutritionTarget, calorieScalingFactor),
-    [calorieScalingFactor],
+    (
+      recipeIngredient: Pick<
+        RecipeType["ingredients"][number],
+        "appliesToEveryone" | "memberTargets"
+      >,
+    ) =>
+      getCalorieScalingFactorForIngredient(
+        recipeIngredient.appliesToEveryone,
+        recipeIngredient.memberTargets.map((target) => target.familyMemberId),
+        anchorMemberId,
+        calorieScalingFactor,
+      ),
+    [anchorMemberId, calorieScalingFactor],
   );
 
   const getIngredientDisplayScalingFactor = useCallback(
@@ -110,11 +158,8 @@ export function useRecipeNutrition({
   return {
     recipeForScaledNutrition,
     effectiveRecipeIngredientById,
-    jagodaNutrition,
-    nelsonNutrition,
+    nutritionRows,
     servingScalingFactor,
-    jagodaPortionFactor,
-    nelsonPortionFactor,
     calorieScalingFactor,
     getIngredientCalorieFactor,
     getIngredientDisplayScalingFactor,

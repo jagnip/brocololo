@@ -31,7 +31,6 @@ vi.mock("@/lib/auth/session", () => ({
     id: "user-test",
     clerkId: "clerk-test",
     email: null,
-    familyMembers: [],
   }),
 }));
 

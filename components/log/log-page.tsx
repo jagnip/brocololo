@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
-import { LogPerson } from "@/src/generated/enums";
 import { getLogById } from "@/lib/db/logs";
 import { getPlannerPoolItemsForPlan } from "@/lib/db/planner";
 import { getIngredients } from "@/lib/db/ingredients";
 import { getRecipes } from "@/lib/db/recipes";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
-import { getPersonIngredientAmountPerMeal } from "@/lib/log/helpers";
+import { getFamilyMemberIngredientAmountPerMeal } from "@/lib/log/helpers";
 import {
   buildLogDays,
   buildVisiblePlannerPoolCards,
@@ -13,37 +12,37 @@ import {
 import { LogDayViewController } from "@/components/log/log-day-view";
 import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
 import { requireUser } from "@/lib/auth/session";
+import { ensureSelfFamilyMember } from "@/lib/db/family-members";
 type LogDetailPageContainerProps = {
   logId: string;
-  person?: string;
+  memberId?: string;
   day?: string;
 };
 
-function parsePerson(input?: string): "PRIMARY" | "SECONDARY" {
-  if (input === LogPerson.SECONDARY) return LogPerson.SECONDARY;
-  return LogPerson.PRIMARY;
-}
-
 function toRecipeSelectorRows(params: {
   recipe: Awaited<ReturnType<typeof getRecipes>>[number];
-  person: "PRIMARY" | "SECONDARY";
+  familyMemberId: string;
+  familyMembers: Awaited<ReturnType<typeof ensureSelfFamilyMember>>;
 }) {
-  const selectedPerson =
-    params.person === LogPerson.PRIMARY ? "primary" : "secondary";
-
   return params.recipe.ingredients
     .map((recipeIngredient) => {
       if (recipeIngredient.amount == null) {
         return null;
       }
 
-      const amountForPerson = getPersonIngredientAmountPerMeal({
+      const amountForPerson = getFamilyMemberIngredientAmountPerMeal({
         amount: recipeIngredient.amount,
-        nutritionTarget: recipeIngredient.nutritionTarget ?? "BOTH",
-        person: selectedPerson,
+        appliesToEveryone: recipeIngredient.appliesToEveryone,
+        targetFamilyMemberIds: recipeIngredient.memberTargets.map(
+          (target) => target.familyMemberId,
+        ),
+        familyMemberId: params.familyMemberId,
         recipeServings: params.recipe.servings,
-        servingMultiplierForNelson:
-          params.recipe.servingMultiplierForNelson ?? 1,
+        familyMembers: params.familyMembers,
+        memberPortions: params.recipe.memberPortions,
+        cookingFamilyMemberIds: params.recipe.audienceMembers.map(
+          (member) => member.familyMemberId,
+        ),
       });
       if (amountForPerson == null || amountForPerson <= 0) {
         return null;
@@ -73,15 +72,20 @@ function toRecipeSelectorRows(params: {
 
 export async function LogPage({
   logId,
-  person: rawPerson,
+  memberId: rawMemberId,
   day,
 }: LogDetailPageContainerProps) {
   const { id: userId } = await requireUser();
-  const person = parsePerson(rawPerson);
+  const familyMembers = await ensureSelfFamilyMember(userId);
+  const selectedFamilyMember =
+    familyMembers.find((member) => member.id === rawMemberId) ??
+    familyMembers.find((member) => member.isSelf) ??
+    familyMembers[0];
+  if (!selectedFamilyMember) notFound();
 
   const [log, ingredients, recipes, ingredientFormDependencies] =
     await Promise.all([
-      getLogById(userId, logId, person),
+      getLogById(userId, logId, selectedFamilyMember.id),
       getIngredients(userId),
       getRecipes(userId),
       getIngredientFormDependencies(),
@@ -92,7 +96,7 @@ export async function LogPage({
   const poolItemsRaw = await getPlannerPoolItemsForPlan({
     userId,
     planId: log.plan.id,
-    person,
+    familyMemberId: selectedFamilyMember.id,
   });
   const plannerPool = buildVisiblePlannerPoolCards({
     items: poolItemsRaw.map((item) => ({
@@ -113,7 +117,11 @@ export async function LogPage({
   const recipeOptions = recipes.map((recipe) => ({
     id: recipe.id,
     name: recipe.name,
-    initialRows: toRecipeSelectorRows({ recipe, person }),
+    initialRows: toRecipeSelectorRows({
+      recipe,
+      familyMemberId: selectedFamilyMember.id,
+      familyMembers,
+    }),
   }));
 
   const ingredientOptions = ingredients.map((ingredient) => ({
@@ -138,10 +146,11 @@ export async function LogPage({
   return (
     <LogDayViewController
       days={days}
+      familyMembers={familyMembers}
       plannerPool={plannerPool}
       initialSelectedDayKey={day}
       logId={logId}
-      person={person}
+      familyMemberId={selectedFamilyMember.id}
       recipeOptions={recipeOptions}
       ingredientOptions={ingredientOptions}
       ingredientFormDependencies={ingredientFormDependencies}

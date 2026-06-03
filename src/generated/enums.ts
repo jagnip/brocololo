@@ -35,20 +35,3 @@ export const LogMealType = {
 } as const
 
 export type LogMealType = (typeof LogMealType)[keyof typeof LogMealType]
-
-
-export const LogPerson = {
-  PRIMARY: 'PRIMARY',
-  SECONDARY: 'SECONDARY'
-} as const
-
-export type LogPerson = (typeof LogPerson)[keyof typeof LogPerson]
-
-
-export const NutritionTarget = {
-  BOTH: 'BOTH',
-  PRIMARY_ONLY: 'PRIMARY_ONLY',
-  SECONDARY_ONLY: 'SECONDARY_ONLY'
-} as const
-
-export type NutritionTarget = (typeof NutritionTarget)[keyof typeof NutritionTarget]

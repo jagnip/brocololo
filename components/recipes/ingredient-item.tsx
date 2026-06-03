@@ -6,10 +6,12 @@ import {
   formatIngredientAmount,
   getUnitDisplayName,
   getIngredientDisplay,
+  getIngredientMemberBadges,
   getIngredientNutritionPer100g,
   isGramUnit,
   scaleIngredientNutritionForGrams,
 } from "@/lib/recipes/helpers";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { getIngredientSelectorDisplay } from "@/lib/ingredients/format";
 import {
   buildIngredientSearchSourceMap,
@@ -33,6 +35,7 @@ import { IngredientIcon } from "../ingredient-icon";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 import { IngredientNutritionalInfo } from "./ingredient-nutritional-info";
 import {
   SearchableSelect,
@@ -50,6 +53,7 @@ type IngredientItemProps = {
   showApplyScaleAction: boolean;
   onApplyScaleToAll: () => void;
   onIngredientChange: (ingredientId: string) => void;
+  familyMembers: FamilyMemberRow[];
 };
 
 export function IngredientItem({
@@ -63,8 +67,37 @@ export function IngredientItem({
   showApplyScaleAction,
   onApplyScaleToAll,
   onIngredientChange,
+  familyMembers,
 }: IngredientItemProps) {
   const { ingredient } = recipeIngredient;
+  // Resolve read-only member badges for targeted ingredients (hidden for solo households).
+  const memberBadges = useMemo(
+    () => getIngredientMemberBadges(recipeIngredient, familyMembers),
+    [recipeIngredient, familyMembers],
+  );
+  const hasMemberBadges = memberBadges.length > 0;
+  const hasAdditionalInfo = Boolean(recipeIngredient.additionalInfo);
+  // Row 2 right: additional info and/or badges alone; both → info on row 2, badges on row 3.
+  const showBadgesOnRow2 = hasMemberBadges && !hasAdditionalInfo;
+  const showBadgesOnRow3 = hasMemberBadges && hasAdditionalInfo;
+  const showRow2Right = hasAdditionalInfo || showBadgesOnRow2;
+  const memberBadgeAriaLabel = hasMemberBadges
+    ? `For ${memberBadges.map((badge) => badge.label).join(", ")}`
+    : undefined;
+
+  const memberBadgeGroup = hasMemberBadges ? (
+    <div
+      role="group"
+      aria-label={memberBadgeAriaLabel}
+      className="flex flex-wrap items-center justify-end gap-1"
+    >
+      {memberBadges.map((badge) => (
+        <Badge key={badge.familyMemberId} variant="secondary">
+          {badge.label}
+        </Badge>
+      ))}
+    </div>
+  ) : null;
 
   const {
     displayAmount,
@@ -325,8 +358,8 @@ export function IngredientItem({
           )}
         />
       </div>
-      <div className="flex items-center justify-between gap-item flex-wrap">
-        <div className="flex items-center gap-item">
+      <div className="flex items-center justify-between gap-item">
+        <div className="flex shrink-0 items-center gap-item">
           <Button
             type="button"
             variant="outline"
@@ -373,38 +406,20 @@ export function IngredientItem({
           )}
         </div>
 
-        <div className="ml-auto flex items-center gap-item">
-          {recipeIngredient.nutritionTarget === "PRIMARY_ONLY" && (
-            <Button
-              type="button"
-              variant="outline"
-              size="default"
-              className="h-8 w-8 p-0"
-              aria-label="Jagoda only"
-              title="Jagoda only"
-            >
-              J
-            </Button>
-          )}
-          {recipeIngredient.nutritionTarget === "SECONDARY_ONLY" && (
-            <Button
-              type="button"
-              variant="outline"
-              size="default"
-              className="h-8 w-8 p-0"
-              aria-label="Nelson only"
-              title="Nelson only"
-            >
-              N
-            </Button>
-          )}
-          {recipeIngredient.additionalInfo && (
-            <span className="text-muted-foreground type-body">
-              {recipeIngredient.additionalInfo}
-            </span>
-          )}
-        </div>
+        {showRow2Right ? (
+          <div className="ml-auto flex min-w-0 max-w-full items-center justify-end gap-item">
+            {hasAdditionalInfo ? (
+              <span className="text-muted-foreground type-body">
+                {recipeIngredient.additionalInfo}
+              </span>
+            ) : null}
+            {showBadgesOnRow2 ? memberBadgeGroup : null}
+          </div>
+        ) : null}
       </div>
+      {showBadgesOnRow3 ? (
+        <div className="flex justify-end">{memberBadgeGroup}</div>
+      ) : null}
       <IngredientNutritionalInfo
         isOpen={showNutritionDetails}
         nutrition={nutrition}

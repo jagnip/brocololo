@@ -7,19 +7,24 @@ import {
   FormField,
   FormItem,
   FormControl,
+  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { CheckboxWithLabel } from "@/components/ui/checkbox";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   plannerCriteriaSchema,
   type PlannerCriteriaInputType,
 } from "@/lib/validations/planner";
 import { toast } from "sonner";
 import { getDefaultDateRange, WeekPicker } from "./date-range-picker";
-import { PlanView } from "./plan-view";
-import { useCallback, useEffect, useState } from "react";
+import { PlannerPlanColumn } from "./planner-plan-column";
+import {
+  getPlannerPlanColumnMode,
+  shouldShowGeneratedPlan,
+} from "./planner-plan-column-state";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PlanInputType } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
 import type {
@@ -37,7 +42,6 @@ import { IngredientType } from "@/types/ingredient";
 import { RecipeType } from "@/types/recipe";
 import { MESSAGES } from "@/lib/messages";
 import { cn } from "@/lib/utils";
-import { PlanViewSkeleton } from "./plan-view-skeleton";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { PlannerTimeLimitsSection } from "./planner-time-limits-section";
 import { PlannerRollingRecipesSection } from "./planner-rolling-recipes-section";
@@ -47,23 +51,22 @@ import {
   mergeDailyLimitsByDate,
   type TimeLimitGroups,
 } from "@/lib/planner/time-limit-mapping";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 type PlannerFormProps = {
   ingredients: IngredientType[];
   recipes: RecipeType[];
   previousPlanUnusedRecipes: RollingRecipeType[];
   occupiedDateKeys: string[];
+  familyMembers: FamilyMemberRow[];
 };
 
 type TimeLimitsMode = "grouped" | "daily";
 
-export function shouldShowGeneratedPlan(
-  plan: PlanInputType | null,
-  isGenerating: boolean,
-): boolean {
-  // Keep result visibility rule explicit for UI and tests.
-  return !isGenerating && plan !== null;
-}
+export {
+  getPlannerPlanColumnMode,
+  shouldShowGeneratedPlan,
+} from "./planner-plan-column-state";
 
 export function getDailyLimitsForPlanAllDaysToggle(
   daysInRange: Date[],
@@ -79,8 +82,12 @@ export function PlannerForm({
   recipes,
   previousPlanUnusedRecipes,
   occupiedDateKeys,
+  familyMembers,
 }: PlannerFormProps) {
   const [plan, setPlan] = useState<PlanInputType | null>(null);
+  const [lastGenerationError, setLastGenerationError] = useState<string | null>(
+    null,
+  );
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasInvalidTimeLimitInputs, setHasInvalidTimeLimitInputs] =
@@ -109,6 +116,7 @@ export function PlannerForm({
     defaultValues: {
       // Prefill to next 4 days (inclusive) or first free 4-day window.
       dateRange: getDefaultDateRange(occupiedDateKeys),
+      audienceFamilyMemberIds: familyMembers.map((member) => member.id),
       dailyTimeLimits: [],
       fridgeIngredientIds: [],
       rollingRecipes: [],
@@ -120,11 +128,14 @@ export function PlannerForm({
     if (hasInvalidTimeLimitInputs || hasInvalidRollingMealsInputs) {
       return;
     }
+    // Only Find meals should swap the plan column to loading / empty states.
     setIsGenerating(true);
+    setLastGenerationError(null);
     try {
       const result = await generatePlan(
         new Date(values.dateRange.start),
         new Date(values.dateRange.end),
+        values.audienceFamilyMemberIds ?? [],
         values.dailyTimeLimits as DayTimeLimitsType[],
         values.fridgeIngredientIds ?? [],
         // Coerced numeric fields are validated by Zod; cast input shape for server action typing.
@@ -132,6 +143,8 @@ export function PlannerForm({
       );
 
       if (result.type === "error") {
+        // Keep the last successful plan in memory; failure empty state hides it until criteria change.
+        setLastGenerationError(result.message);
         toast.error(result.message);
         return;
       }
@@ -142,6 +155,7 @@ export function PlannerForm({
       }
 
       setPlan(result.plan);
+      setLastGenerationError(null);
       toast.success(MESSAGES.planner.generated);
     } finally {
       setIsGenerating(false);
@@ -228,10 +242,33 @@ export function PlannerForm({
     (form.watch("dailyTimeLimits") as DayTimeLimitsType[] | undefined) ?? [];
 
   const dateRange = form.watch("dateRange");
+  const selectedAudienceFamilyMemberIds =
+    form.watch("audienceFamilyMemberIds") ?? [];
+  const selectedAudienceIdSet = new Set(selectedAudienceFamilyMemberIds);
+  const eligibleRecipes = recipes.filter((recipe) => {
+    const recipeAudienceIds = new Set(
+      recipe.audienceMembers.map((member) => member.familyMemberId),
+    );
+    return selectedAudienceFamilyMemberIds.every((id) =>
+      recipeAudienceIds.has(id),
+    );
+  });
+  const eligibleRecipeIds = new Set(eligibleRecipes.map((recipe) => recipe.id));
+  const eligiblePreviousPlanUnusedRecipes = previousPlanUnusedRecipes.filter(
+    (recipe) => eligibleRecipeIds.has(recipe.recipeId),
+  );
   // Keep a narrowed generated plan reference so callback closures stay non-null-safe.
   const generatedPlan = shouldShowGeneratedPlan(plan, isGenerating)
     ? plan
     : null;
+  const planColumnMode = getPlannerPlanColumnMode({
+    isGenerating,
+    plan,
+    lastGenerationError,
+  });
+  const showPlanColumn = planColumnMode !== "idle";
+  const fridgeIngredientIds = (form.watch("fridgeIngredientIds") ??
+    []) as string[];
   // Save stays in the global top bar; Find meals lives under the planner column on this page.
   const topbarActions = [
     {
@@ -257,6 +294,24 @@ export function PlannerForm({
       size: "default" as const,
     },
   ];
+
+  const generationErrorClearSkipRef = useRef(true);
+  const audienceCriteriaKey = selectedAudienceFamilyMemberIds.join(",");
+  const timeLimitsCriteriaKey = JSON.stringify({
+    mode: timeLimitsMode,
+    group: groupTimeLimits,
+    daily: watchedDailyTimeLimits,
+  });
+  const dateRangeCriteriaKey = `${dateRange?.start ?? ""}|${dateRange?.end ?? ""}`;
+
+  // After a failed Find meals, editing criteria brings back the last plan (no empty placeholder).
+  useEffect(() => {
+    if (generationErrorClearSkipRef.current) {
+      generationErrorClearSkipRef.current = false;
+      return;
+    }
+    setLastGenerationError(null);
+  }, [audienceCriteriaKey, dateRangeCriteriaKey, timeLimitsCriteriaKey]);
 
   useEffect(() => {
     if (!dateRange?.start || !dateRange?.end) return;
@@ -347,10 +402,9 @@ export function PlannerForm({
       <div
         className={`flex flex-col gap-6 lg:grid ${desktopGridColumns} lg:items-start lg:gap-x-4 lg:gap-y-6`}
       >
-        {/* Planner column: criteria form + Find meals below (not in top bar). */}
-        <div className="flex flex-col gap-3">
-          <div className="lg:sticky lg:top-20">
-            <Form {...form}>
+        {/* Form + Find meals: one sticky column so scroll does not leave the button under the form. */}
+        <div className="flex flex-col gap-3 lg:sticky lg:top-20">
+          <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="flex w-full flex-col"
@@ -429,6 +483,47 @@ export function PlannerForm({
                   getDayLabel={formatDayLabel}
                   onInvalidStateChange={setHasInvalidTimeLimitInputs}
                 />
+                <FormField
+                  control={form.control}
+                  name="audienceFamilyMemberIds"
+                  render={({ field }) => (
+                    <FormItem className="mt-4 rounded-xl border border-border bg-background p-4">
+                      <FormLabel
+                        tooltip="Only recipes that include everyone selected here can be planned."
+                        tooltipIcon="help"
+                        tooltipAriaLabel="How selected family members affect planning"
+                      >
+                        Who are you cooking for?
+                      </FormLabel>
+                      <FormControl>
+                        <div className="flex flex-wrap gap-2">
+                          {familyMembers.map((member, index) => {
+                            const label =
+                              member.name.trim() ||
+                              (member.isSelf ? "You" : `Family member ${index}`);
+                            return (
+                              <CheckboxWithLabel
+                                key={member.id}
+                                id={`planner-audience-${member.id}`}
+                                checked={selectedAudienceIdSet.has(member.id)}
+                                onCheckedChange={(checked) => {
+                                  const current = field.value ?? [];
+                                  field.onChange(
+                                    checked === true
+                                      ? [...current, member.id]
+                                      : current.filter((id) => id !== member.id),
+                                  );
+                                }}
+                                label={label}
+                              />
+                            );
+                          })}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <div className="mt-4 rounded-xl border border-border bg-background p-4">
                   <FormField
                     control={form.control}
@@ -442,8 +537,9 @@ export function PlannerForm({
                           selected={selected}
                           onChange={field.onChange}
                           ingredients={ingredients}
-                          recipes={recipes}
-                          previousPlanUnusedRecipes={previousPlanUnusedRecipes}
+                          recipes={eligibleRecipes}
+                          audienceMemberCount={selectedAudienceFamilyMemberIds.length}
+                          previousPlanUnusedRecipes={eligiblePreviousPlanUnusedRecipes}
                           onInvalidStateChange={setHasInvalidRollingMealsInputs}
                         />
                       );
@@ -453,12 +549,15 @@ export function PlannerForm({
               </div>
             </form>
           </Form>
-          </div>
           <Button
             type="button"
             variant="default"
             size="default"
-            className="w-full shrink-0 sm:w-fit"
+            className={cn(
+              "w-full shrink-0 sm:w-fit",
+              // Desktop collapse hides criteria; keep Find meals in sync with that rail.
+              isFormCollapsed && "lg:hidden",
+            )}
             disabled={
               isGenerating ||
               hasInvalidTimeLimitInputs ||
@@ -474,55 +573,29 @@ export function PlannerForm({
         </div>
 
         <div className="hidden lg:block">
-          {isGenerating ? (
-            // While generating a new plan, hide previous results and show loading state.
-            <PlanViewSkeleton />
-          ) : generatedPlan ? (
-            <PlanView
+          <PlannerPlanColumn
+            mode={planColumnMode}
+            plan={generatedPlan}
+            lastGenerationError={lastGenerationError}
+            fridgeIngredientIds={fridgeIngredientIds}
+            recipes={recipes}
+            onShuffle={handleShuffle}
+            onReplace={handleReplace}
+            onRemove={handleRemove}
+          />
+        </div>
+        {showPlanColumn ? (
+          <div className="lg:hidden">
+            <PlannerPlanColumn
+              mode={planColumnMode}
               plan={generatedPlan}
-              fridgeIngredientIds={
-                (form.watch("fridgeIngredientIds") ?? []) as string[]
-              }
+              lastGenerationError={lastGenerationError}
+              fridgeIngredientIds={fridgeIngredientIds}
               recipes={recipes}
               onShuffle={handleShuffle}
               onReplace={handleReplace}
               onRemove={handleRemove}
             />
-          ) : (
-            <Card className="flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed p-0 py-0 shadow-none">
-              <div className="flex min-h-[220px] flex-col items-start justify-start gap-2 p-3 text-left">
-                <span
-                  className="flex size-7 shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground"
-                  aria-hidden
-                >
-                  <Plus className="size-3" />
-                </span>
-                <p className="text-sm font-medium leading-snug text-foreground">
-                  Nothing planned yet
-                </p>
-                <span className="text-xs text-muted-foreground">
-                  Find meals to start
-                </span>
-              </div>
-            </Card>
-          )}
-        </div>
-        {isGenerating || generatedPlan ? (
-          <div className="lg:hidden">
-            {isGenerating ? (
-              <PlanViewSkeleton />
-            ) : (
-              <PlanView
-                plan={generatedPlan!}
-                fridgeIngredientIds={
-                  (form.watch("fridgeIngredientIds") ?? []) as string[]
-                }
-                recipes={recipes}
-                onShuffle={handleShuffle}
-                onReplace={handleReplace}
-                onRemove={handleRemove}
-              />
-            )}
           </div>
         ) : null}
       </div>

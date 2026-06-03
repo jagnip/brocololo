@@ -23,28 +23,14 @@ function coerceIngredientRowPosition(value: unknown): number {
   return Math.trunc(n);
 }
 
-/** Fallback to 1 while multiplier is unset or invalid (aligned with resolver preprocess). */
-function coerceNelsonMultiplier(value: unknown): number {
-  if (value === "" || value === null || value === undefined) {
-    return 1;
-  }
-  if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
-    return value;
-  }
-  const n = Number(value);
-  if (Number.isFinite(n) && n >= 0) {
-    return n;
-  }
-  return 1;
-}
-
 /**
  * Maps editor form slice + ingredient catalog into the shape used by calculateNutritionPerServing.
  * Skips placeholder rows without ingredientId (same idea as submit sanitization).
  */
 export function buildDraftRecipeForNutrition(
   servings: unknown,
-  servingMultiplierForNelson: unknown,
+  audienceFamilyMemberIds: CreateRecipeFormValues["audienceFamilyMemberIds"] | undefined,
+  memberPortions: CreateRecipeFormValues["memberPortions"] | undefined,
   rows: FormIngredientRow[] | undefined,
   catalog: IngredientType[],
 ): RecipeForNutritionCalculation {
@@ -77,8 +63,11 @@ export function buildDraftRecipeForNutrition(
       ingredientId: catalogIngredient.id,
       unitId,
       amount: row.amount,
-      nutritionTarget: row.nutritionTarget ?? "BOTH",
+      appliesToEveryone: row.appliesToEveryone ?? true,
       additionalInfo: row.additionalInfo ?? null,
+      memberTargets: (row.targetFamilyMemberIds ?? []).map((familyMemberId) => ({
+        familyMemberId,
+      })),
       group: null,
       ingredient: catalogIngredient,
       unit: {
@@ -91,7 +80,15 @@ export function buildDraftRecipeForNutrition(
 
   return {
     servings: coercePreviewServings(servings),
-    servingMultiplierForNelson: coerceNelsonMultiplier(servingMultiplierForNelson),
+    audienceMembers: (audienceFamilyMemberIds ?? []).map((familyMemberId) => ({
+      recipeId: "draft",
+      familyMemberId,
+    })),
+    memberPortions: (memberPortions ?? []).map((portion) => ({
+      recipeId: "draft",
+      familyMemberId: portion.familyMemberId,
+      multiplier: Number(portion.multiplier) || 1,
+    })),
     ingredients,
   };
 }

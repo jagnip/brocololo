@@ -40,7 +40,7 @@ import {
 import { buildDraftRecipeForNutrition } from "@/lib/recipes/build-draft-recipe-for-nutrition";
 import { IngredientType } from "@/types/ingredient";
 import { IngredientSelector } from "./ingredient-selector";
-import { Checkbox } from "@/components/ui/checkbox";
+import { CheckboxWithLabel } from "@/components/ui/checkbox";
 import { InstructionStepsEditor } from "./instruction-steps-editor";
 import {
   Dialog,
@@ -68,6 +68,7 @@ import { Subheader } from "../recipe-page/subheader";
 import MultipleSelector from "@/components/ui/multiselect";
 import { RecipeNutritionPreviewSection } from "./recipe-nutrition-preview-section";
 import { RecipePortionsFormSection } from "./recipe-portions-form-section";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 type RecipeFormProps = {
   categories: CategoryType[];
@@ -79,6 +80,7 @@ type RecipeFormProps = {
     iconOptions: string[];
   };
   recipe?: RecipeType;
+  familyMembers: FamilyMemberRow[];
 };
 
 export function sanitizeInstructionRows<
@@ -124,6 +126,7 @@ export default function RecipeForm({
   ingredients,
   ingredientFormDependencies,
   recipe,
+  familyMembers,
 }: RecipeFormProps) {
   // Keep delete confirmation local to the edit form state.
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -213,13 +216,34 @@ export default function RecipeForm({
       formSchema,
     ) as unknown as Resolver<CreateRecipeFormValues>,
     defaultValues: recipe
-      ? recipeToFormData(recipe)
+      ? {
+          ...recipeToFormData(recipe),
+          memberPortions: familyMembers
+            .filter(
+              (member) =>
+                recipe.audienceMembers.some(
+                  (audienceMember) =>
+                    audienceMember.familyMemberId === member.id,
+                ),
+            )
+            .map((member) => {
+              const saved = recipe.memberPortions.find(
+                (portion) => portion.familyMemberId === member.id,
+              );
+              return {
+                familyMemberId: member.id,
+                multiplier: saved?.multiplier ?? 1,
+              };
+            }),
+        }
       : {
           name: "",
           mealOccasionCategoryIds: [],
           proteinCategoryId: null,
           typeCategoryId: null,
           images: [],
+          servings: Math.max(familyMembers.length, 1),
+          audienceFamilyMemberIds: familyMembers.map((member) => member.id),
           // Keep targeted numeric fields empty so placeholders guide first input.
           // Start in no-group mode; grouping is optional.
           ingredientGroups: [],
@@ -229,14 +253,21 @@ export default function RecipeForm({
           instructions: [],
           notes: "",
           excludeFromPlanner: false,
+          memberPortions: familyMembers
+            .map((member) => ({
+              familyMemberId: member.id,
+              multiplier: 1,
+            })),
         },
   });
 
   // Live nutrition preview — subscribed fields only (see `buildDraftRecipeForNutrition`).
   const previewServings = useWatch({ control: form.control, name: "servings" });
-  const previewMultiplier = useWatch({
+  const previewAudienceFamilyMemberIds =
+    useWatch({ control: form.control, name: "audienceFamilyMemberIds" }) ?? [];
+  const previewMemberPortions = useWatch({
     control: form.control,
-    name: "servingMultiplierForNelson",
+    name: "memberPortions",
   });
   const previewIngredients =
     useWatch({ control: form.control, name: "ingredients" }) ?? [];
@@ -244,17 +275,27 @@ export default function RecipeForm({
   const nutritionPreview = useMemo(() => {
     const draft = buildDraftRecipeForNutrition(
       previewServings,
-      previewMultiplier ?? 1,
+      previewAudienceFamilyMemberIds,
+      previewMemberPortions,
       previewIngredients,
       localIngredients,
     );
-    return {
-      jagoda: calculateNutritionPerServing(draft, "primary"),
-      nelson: calculateNutritionPerServing(draft, "secondary"),
-    };
+    const audienceIdSet = new Set(previewAudienceFamilyMemberIds);
+    const audienceMembers = familyMembers.filter((member) =>
+      audienceIdSet.has(member.id),
+    );
+    return audienceMembers.map((member, index) => ({
+      familyMemberId: member.id,
+      label:
+        member.name.trim() ||
+        (member.isSelf ? "You" : `Family member ${index}`),
+      nutrition: calculateNutritionPerServing(draft, member.id, familyMembers),
+    }));
   }, [
+    familyMembers,
     previewServings,
-    previewMultiplier,
+    previewAudienceFamilyMemberIds,
+    previewMemberPortions,
     previewIngredients,
     localIngredients,
   ]);
@@ -269,7 +310,7 @@ export default function RecipeForm({
     onChange(nextValue);
   };
   // Restrict UI choices to the agreed segmented-button multipliers.
-  const nelsonMultiplierOptions = [1, 1.5, 2, 2.5, 3] as const;
+  const memberMultiplierOptions = [1, 1.5, 2, 2.5, 3] as const;
 
   useEffect(() => {
     // Sync local options if server-provided categories change.
@@ -622,21 +663,15 @@ export default function RecipeForm({
                 name="excludeFromPlanner"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex items-center gap-2">
-                      <FormControl>
-                        <Checkbox
-                          id="exclude-from-planner"
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <Label
-                        htmlFor="exclude-from-planner"
-                        className="shrink-0 normal-case tracking-normal"
-                      >
-                        Exclude from planner
-                      </Label>
-                    </div>
+                    <FormControl>
+                      <CheckboxWithLabel
+                        id="exclude-from-planner"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        label="Exclude from planner"
+                        labelClassName="shrink-0"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -731,7 +766,8 @@ export default function RecipeForm({
         <RecipePortionsFormSection
           form={form}
           recipe={recipe}
-          nelsonMultiplierOptions={nelsonMultiplierOptions}
+          familyMembers={familyMembers}
+          multiplierOptions={memberMultiplierOptions}
           onNumericServingsChange={handleNumericFieldChange}
         />
 
@@ -746,6 +782,9 @@ export default function RecipeForm({
                   <FormControl>
                     <IngredientSelector
                       ingredients={localIngredients}
+                      familyMembers={familyMembers.filter((member) =>
+                        previewAudienceFamilyMemberIds.includes(member.id),
+                      )}
                       groups={ingredientGroups}
                       value={field.value}
                       onChange={field.onChange}
@@ -769,7 +808,7 @@ export default function RecipeForm({
           </div>
         </section>
 
-        <RecipeNutritionPreviewSection {...nutritionPreview} />
+        <RecipeNutritionPreviewSection rows={nutritionPreview} />
 
         <section>
           <div className="mb-3">

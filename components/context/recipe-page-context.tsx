@@ -12,13 +12,18 @@ import {
 import type { IngredientType } from "@/types/ingredient";
 import type { RecipeType } from "@/types/recipe";
 import { buildEffectiveRecipeForSimulation } from "@/lib/recipes/helpers";
-import { useRecipeScalingState } from "@/components/recipes/recipe-page/use-recipe-scaling-state";
+import {
+  useRecipeScalingState,
+  type CalorieTarget,
+} from "@/components/recipes/recipe-page/use-recipe-scaling-state";
 import { useRecipeNutrition } from "@/components/recipes/recipe-page/use-recipe-nutrition";
 import { useIngredientGrouping } from "@/components/recipes/recipe-page/use-ingredient-grouping";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 type RecipePageProviderProps = {
   recipe: RecipeType;
   ingredients: IngredientType[];
+  familyMembers: FamilyMemberRow[];
   availableLogDateKeys: string[];
   children: ReactNode;
 };
@@ -26,22 +31,24 @@ type RecipePageProviderProps = {
 type RecipePageContextValue = {
   recipe: RecipeType;
   ingredients: IngredientType[];
-  selectedInstructionPerson: "jagoda" | "nelson" | null;
-  setSelectedInstructionPerson: Dispatch<SetStateAction<"jagoda" | "nelson" | null>>;
+  familyMembers: FamilyMemberRow[];
+  selectedInstructionFamilyMemberId: string | null;
+  setSelectedInstructionFamilyMemberId: Dispatch<SetStateAction<string | null>>;
   currentServings: number;
-  targetCaloriesPerPortion: number | null;
-  jagodaNutrition: ReturnType<typeof useRecipeNutrition>["jagodaNutrition"];
-  nelsonNutrition: ReturnType<typeof useRecipeNutrition>["nelsonNutrition"];
-  onCaloriesChange: (value: string) => void;
+  calorieTarget: CalorieTarget | null;
+  nutritionRows: ReturnType<typeof useRecipeNutrition>["nutritionRows"];
+  onCaloriesChange: (familyMemberId: string, value: string) => void;
   effectiveRecipeIngredientById: Map<string, RecipeType["ingredients"][number]>;
   selectedUnits: Record<string, string | null>;
-  jagodaPortionFactor: number;
-  nelsonPortionFactor: number;
   getIngredientDisplayScalingFactor: (recipeIngredientId: string) => number;
   getIngredientCalorieFactor: (
-    nutritionTarget: "BOTH" | "PRIMARY_ONLY" | "SECONDARY_ONLY",
+    recipeIngredient: Pick<
+      RecipeType["ingredients"][number],
+      "appliesToEveryone" | "memberTargets"
+    >,
   ) => number;
   hasActiveScaling: boolean;
+  hasActiveNutritionScaling: boolean;
   localScaleByIngredientId: Record<string, number>;
   ungroupedIngredients: RecipeType["ingredients"];
   visibleGroupedIngredients: Array<
@@ -50,6 +57,7 @@ type RecipePageContextValue = {
     }
   >;
   onReset: () => void;
+  onNutritionReset: () => void;
   onServingsChange: (nextServings: number) => void;
   onUnitChange: (recipeIngredientId: string, unitId: string | null) => void;
   onAmountEdit: (
@@ -69,13 +77,21 @@ const RecipePageContext = createContext<RecipePageContextValue | null>(null);
 export function RecipePageProvider({
   recipe,
   ingredients,
+  familyMembers,
   availableLogDateKeys,
   children,
 }: RecipePageProviderProps) {
-  const [selectedInstructionPerson, setSelectedInstructionPerson] = useState<
-    "jagoda" | "nelson" | null
-  >(null);
+  const [
+    selectedInstructionFamilyMemberId,
+    setSelectedInstructionFamilyMemberId,
+  ] = useState<string | null>(null);
   const scaling = useRecipeScalingState({ recipe });
+  const recipeAudienceFamilyMembers = useMemo(() => {
+    const audienceIds = new Set(
+      recipe.audienceMembers.map((member) => member.familyMemberId),
+    );
+    return familyMembers.filter((member) => audienceIds.has(member.id));
+  }, [familyMembers, recipe.audienceMembers]);
 
   const effectiveRecipe = useMemo(
     () =>
@@ -91,9 +107,10 @@ export function RecipePageProvider({
     recipe,
     effectiveRecipe,
     currentServings: scaling.currentServings,
-    targetCaloriesPerPortion: scaling.targetCaloriesPerPortion,
+    calorieTarget: scaling.calorieTarget,
     globalScaleRatio: scaling.globalScaleRatio,
     localScaleByIngredientId: scaling.localScaleByIngredientId,
+    familyMembers: recipeAudienceFamilyMembers,
   });
 
   const { ungroupedIngredients, visibleGroupedIngredients } = useIngredientGrouping({
@@ -116,24 +133,24 @@ export function RecipePageProvider({
     () => ({
       recipe,
       ingredients,
-      selectedInstructionPerson,
-      setSelectedInstructionPerson,
+      familyMembers: recipeAudienceFamilyMembers,
+      selectedInstructionFamilyMemberId,
+      setSelectedInstructionFamilyMemberId,
       currentServings: scaling.currentServings,
-      targetCaloriesPerPortion: scaling.targetCaloriesPerPortion,
-      jagodaNutrition: nutrition.jagodaNutrition,
-      nelsonNutrition: nutrition.nelsonNutrition,
+      calorieTarget: scaling.calorieTarget,
+      nutritionRows: nutrition.nutritionRows,
       onCaloriesChange: scaling.handleCaloriesChange,
       effectiveRecipeIngredientById: nutrition.effectiveRecipeIngredientById,
       selectedUnits: scaling.selectedUnits,
-      jagodaPortionFactor: nutrition.jagodaPortionFactor,
-      nelsonPortionFactor: nutrition.nelsonPortionFactor,
       getIngredientDisplayScalingFactor: nutrition.getIngredientDisplayScalingFactor,
       getIngredientCalorieFactor: nutrition.getIngredientCalorieFactor,
       hasActiveScaling: scaling.hasActiveScaling,
+      hasActiveNutritionScaling: scaling.hasActiveNutritionScaling,
       localScaleByIngredientId: scaling.localScaleByIngredientId,
       ungroupedIngredients,
       visibleGroupedIngredients,
       onReset: scaling.handleReset,
+      onNutritionReset: scaling.handleNutritionReset,
       onServingsChange: scaling.handleServingsChange,
       onUnitChange: scaling.handleUnitChange,
       onAmountEdit: scaling.handleIngredientEdit,
@@ -151,30 +168,17 @@ export function RecipePageProvider({
     }),
     [
       ingredients,
+      recipeAudienceFamilyMembers,
       nutrition.effectiveRecipeIngredientById,
       nutrition.getIngredientCalorieFactor,
       nutrition.getIngredientDisplayScalingFactor,
-      nutrition.jagodaNutrition,
-      nutrition.jagodaPortionFactor,
-      nutrition.nelsonNutrition,
-      nutrition.nelsonPortionFactor,
+      nutrition.nutritionRows,
       nutrition.recipeForScaledNutrition,
       nutrition.servingScalingFactor,
       originalRecipeIngredientById,
       recipe,
-      scaling.currentServings,
-      scaling.handleApplyScaleToAll,
-      scaling.handleCaloriesChange,
-      scaling.handleIngredientEdit,
-      scaling.handleIngredientChange,
-      scaling.handleReset,
-      scaling.handleServingsChange,
-      scaling.handleUnitChange,
-      scaling.hasActiveScaling,
-      scaling.localScaleByIngredientId,
-      scaling.selectedUnits,
-      scaling.targetCaloriesPerPortion,
-      selectedInstructionPerson,
+      scaling,
+      selectedInstructionFamilyMemberId,
       ungroupedIngredients,
       availableLogDateKeys,
       visibleGroupedIngredients,
@@ -198,48 +202,52 @@ export function useRecipePageHeaderData() {
 }
 
 export function useRecipePageBaseData() {
-  const { recipe, ingredients } = useRecipePageContext();
-  return { recipe, ingredients };
+  const { recipe, ingredients, familyMembers } = useRecipePageContext();
+  return { recipe, ingredients, familyMembers };
 }
 
 export function useRecipePageNutritionSectionData() {
   const {
     currentServings,
-    targetCaloriesPerPortion,
-    jagodaNutrition,
-    nelsonNutrition,
+    calorieTarget,
+    nutritionRows,
     onCaloriesChange,
+    hasActiveNutritionScaling,
+    onNutritionReset,
   } = useRecipePageContext();
   return {
     currentServings,
-    targetCaloriesPerPortion,
-    jagodaNutrition,
-    nelsonNutrition,
+    calorieTarget,
+    nutritionRows,
     onCaloriesChange,
+    hasActiveNutritionScaling,
+    onNutritionReset,
   };
 }
 
 export function useRecipePageInstructionsSectionData() {
   const {
     recipe,
+    familyMembers,
+    currentServings,
     effectiveRecipeIngredientById,
-    selectedInstructionPerson,
-    setSelectedInstructionPerson,
+    selectedInstructionFamilyMemberId,
+    setSelectedInstructionFamilyMemberId,
     selectedUnits,
-    jagodaPortionFactor,
-    nelsonPortionFactor,
     getIngredientDisplayScalingFactor,
     getIngredientCalorieFactor,
   } = useRecipePageContext();
 
   return {
     instructions: recipe.instructions,
+    familyMembers,
+    currentServings,
+    audienceMembers: recipe.audienceMembers,
+    memberPortions: recipe.memberPortions,
     effectiveRecipeIngredientById,
-    selectedInstructionPerson,
-    setSelectedInstructionPerson,
+    selectedInstructionFamilyMemberId,
+    setSelectedInstructionFamilyMemberId,
     selectedUnits,
-    jagodaPortionFactor,
-    nelsonPortionFactor,
     getIngredientDisplayScalingFactor,
     getIngredientCalorieFactor,
   };
@@ -249,9 +257,8 @@ export function useRecipePageIngredientsSectionData() {
   const {
     recipe,
     ingredients,
+    familyMembers,
     currentServings,
-    jagodaPortionFactor,
-    nelsonPortionFactor,
     hasActiveScaling,
     localScaleByIngredientId,
     selectedUnits,
@@ -270,9 +277,8 @@ export function useRecipePageIngredientsSectionData() {
   return {
     recipe,
     ingredients,
+    familyMembers,
     currentServings,
-    jagodaPortionFactor,
-    nelsonPortionFactor,
     hasActiveScaling,
     localScaleByIngredientId,
     selectedUnits,
@@ -292,6 +298,7 @@ export function useRecipePageIngredientsSectionData() {
 export function useRecipePageAddToLogData() {
   const {
     recipe,
+    familyMembers,
     currentServings,
     recipeForScaledNutrition,
     servingScalingFactor,
@@ -302,9 +309,11 @@ export function useRecipePageAddToLogData() {
     recipeId: recipe.id,
     recipeName: recipe.name,
     recipeIngredients: recipeForScaledNutrition.ingredients,
+    familyMembers,
+    audienceMembers: recipe.audienceMembers,
+    memberPortions: recipe.memberPortions,
     currentServings,
     servingScalingFactor,
-    servingMultiplierForNelson: recipe.servingMultiplierForNelson,
     availableLogDateKeys,
   };
 }

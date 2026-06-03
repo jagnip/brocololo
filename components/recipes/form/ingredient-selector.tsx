@@ -35,9 +35,11 @@ import {
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 type IngredientSelectorProps = {
   ingredients: IngredientType[];
+  familyMembers: FamilyMemberRow[];
   groups: RecipeIngredientGroupInputType[];
   value: RecipeIngredientInputType[];
   onGroupsChange: (value: RecipeIngredientGroupInputType[]) => void;
@@ -110,17 +112,6 @@ function normalizePosition(value: unknown) {
 
 function toLaneKey(groupTempKey: string | null | undefined) {
   return groupTempKey ?? UNGROUPED_LANE_KEY;
-}
-
-function getNextNutritionTarget(
-  current: RecipeIngredientInputType["nutritionTarget"] | null | undefined,
-  clicked: "PRIMARY_ONLY" | "SECONDARY_ONLY",
-): RecipeIngredientInputType["nutritionTarget"] {
-  // Clicking an active button resets row to shared (BOTH).
-  if (current === clicked) {
-    return "BOTH";
-  }
-  return clicked;
 }
 
 function normalizeGroupPositions(groups: RecipeIngredientGroupInputType[]) {
@@ -325,6 +316,7 @@ export function removeIngredientGroup(input: {
 
 export function IngredientSelector({
   ingredients,
+  familyMembers,
   groups,
   value,
   onGroupsChange,
@@ -544,7 +536,8 @@ export function IngredientSelector({
         ingredientId: "",
         amount: null,
         unitId: null,
-        nutritionTarget: "BOTH",
+        appliesToEveryone: true,
+        targetFamilyMemberIds: [],
         additionalInfo: null,
         groupTempKey,
         position: lanePosition,
@@ -913,63 +906,47 @@ export function IngredientSelector({
           </div>
         </div>
 
-        {/* Third row: nutrition target — label + person toggles. */}
+        {/* Third row: ingredient target — empty selection means everyone in the recipe audience. */}
         <div className={INGREDIENT_ROW_LAYOUT_CLASSES.nutritionTargetRow}>
           <Label
             id={`nutrition-target-label-${item.tempIngredientKey}`}
             className="shrink-0 normal-case tracking-normal"
           >
-            Only use for:
+            Use only for:
           </Label>
           <div
             className="flex flex-wrap items-center gap-2"
-            role="radiogroup"
+            role="group"
             aria-labelledby={`nutrition-target-label-${item.tempIngredientKey}`}
           >
-            <Button
-              type="button"
-              size="default"
-              variant={
-                (item.nutritionTarget ?? "BOTH") === "PRIMARY_ONLY"
-                  ? "default"
-                  : "outline"
-              }
-              role="radio"
-              aria-checked={(item.nutritionTarget ?? "BOTH") === "PRIMARY_ONLY"}
-              onClick={() =>
-                updateIngredient(item.tempIngredientKey, {
-                  nutritionTarget: getNextNutritionTarget(
-                    item.nutritionTarget,
-                    "PRIMARY_ONLY",
-                  ),
-                })
-              }
-            >
-              Jagoda
-            </Button>
-            <Button
-              type="button"
-              size="default"
-              variant={
-                (item.nutritionTarget ?? "BOTH") === "SECONDARY_ONLY"
-                  ? "default"
-                  : "outline"
-              }
-              role="radio"
-              aria-checked={
-                (item.nutritionTarget ?? "BOTH") === "SECONDARY_ONLY"
-              }
-              onClick={() =>
-                updateIngredient(item.tempIngredientKey, {
-                  nutritionTarget: getNextNutritionTarget(
-                    item.nutritionTarget,
-                    "SECONDARY_ONLY",
-                  ),
-                })
-              }
-            >
-              Nelson
-            </Button>
+            {familyMembers.map((member, index) => {
+              const selectedIds = item.targetFamilyMemberIds ?? [];
+              const selected =
+                !(item.appliesToEveryone ?? true) && selectedIds.includes(member.id);
+              const label =
+                member.name.trim() ||
+                (member.isSelf ? "You" : `Family member ${index}`);
+              return (
+                <Button
+                  key={member.id}
+                  type="button"
+                  size="default"
+                  variant={selected ? "default" : "outline"}
+                  aria-pressed={selected}
+                  onClick={() => {
+                    const nextIds = selected
+                      ? selectedIds.filter((id) => id !== member.id)
+                      : [...selectedIds, member.id];
+                    updateIngredient(item.tempIngredientKey, {
+                      appliesToEveryone: nextIds.length === 0,
+                      targetFamilyMemberIds: nextIds,
+                    });
+                  }}
+                >
+                  {label}
+                </Button>
+              );
+            })}
           </div>
         </div>
       </div>

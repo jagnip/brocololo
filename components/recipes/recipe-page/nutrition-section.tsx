@@ -1,62 +1,91 @@
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useRecipePageNutritionSectionData } from "@/components/context/recipe-page-context";
+import { EditableCaloriesBadge } from "@/components/recipes/editable-calories-badge";
 import {
   NutritionPersonCard,
   NutritionPersonSummaryRow,
 } from "@/components/recipes/nutrition-person-summary";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
+import { cn } from "@/lib/utils";
+
+function caloriesAriaLabel(personLabel: string): string {
+  return `Calories per portion for ${personLabel}`;
+}
 
 export function NutritionSection() {
   const {
-    targetCaloriesPerPortion,
-    jagodaNutrition,
-    nelsonNutrition,
+    calorieTarget,
+    nutritionRows,
     onCaloriesChange,
+    hasActiveNutritionScaling,
+    onNutritionReset,
   } = useRecipePageNutritionSectionData();
+  const [focusedCaloriesMemberId, setFocusedCaloriesMemberId] = useState<
+    string | null
+  >(null);
+
+  const handleNutritionReset = () => {
+    onNutritionReset();
+    // Unfocus so calculated kcal placeholders are visible again after reset.
+    setFocusedCaloriesMemberId(null);
+  };
 
   return (
-    <div className="flex flex-col gap-item">
-      <Subheader>Nutrition (per serving)</Subheader>
+    // Extra bottom padding + reserved reset slot keep ingredients from jumping when scaling is active.
+    <div className="flex flex-col gap-item pb-item">
+      <div className="flex min-h-8 items-center gap-item">
+        <Subheader>Nutrition (per serving)</Subheader>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={handleNutritionReset}
+          aria-label="Reset nutrition to default"
+          aria-hidden={!hasActiveNutritionScaling}
+          tabIndex={hasActiveNutritionScaling ? 0 : -1}
+          className={cn(
+            !hasActiveNutritionScaling && "pointer-events-none invisible",
+          )}
+        >
+          <RotateCcw />
+        </Button>
+      </div>
 
-      {/* Shared row shell with edit surface for Jagoda’s calorie target */}
-      <NutritionPersonCard>
-        <NutritionPersonSummaryRow
-          personLabel="Jagoda"
-          caloriesArea={
-            <div className="flex items-center gap-tight">
-              <Input
-                type="number"
-                size="default"
-                value={
-                  targetCaloriesPerPortion?.toString() ??
-                  jagodaNutrition.calories.toString()
-                }
-                onChange={(event) => onCaloriesChange(event.target.value)}
-                // Keep only width + number spinner reset; rely on DS defaults for spacing.
-                className="w-16 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                aria-label="Calories per portion"
-              />
-              <span className="type-body leading-4 text-foreground">kcal</span>
-            </div>
-          }
-          protein={jagodaNutrition.protein}
-          fat={jagodaNutrition.fat}
-          carbs={jagodaNutrition.carbs}
-        />
-      </NutritionPersonCard>
+      {nutritionRows.map((row) => {
+        const isAnchor =
+          calorieTarget?.familyMemberId === row.familyMemberId;
+        const isFocused = focusedCaloriesMemberId === row.familyMemberId;
 
-      <NutritionPersonCard>
-        <NutritionPersonSummaryRow
-          personLabel="Nelson"
-          caloriesArea={
-            <Badge variant="secondary">{nelsonNutrition.calories} kcal</Badge>
-          }
-          protein={nelsonNutrition.protein}
-          fat={nelsonNutrition.fat}
-          carbs={nelsonNutrition.carbs}
-        />
-      </NutritionPersonCard>
+        return (
+          <NutritionPersonCard key={row.familyMemberId}>
+            <NutritionPersonSummaryRow
+              personLabel={row.label}
+              caloriesArea={
+                <EditableCaloriesBadge
+                  ariaLabel={caloriesAriaLabel(row.label)}
+                  value={
+                    isAnchor && calorieTarget ? calorieTarget.calories : null
+                  }
+                  placeholder={
+                    isFocused ? "" : (row.nutrition.calories.toString() ?? "0")
+                  }
+                  onChange={(value) =>
+                    onCaloriesChange(row.familyMemberId, value)
+                  }
+                  onFocus={() =>
+                    setFocusedCaloriesMemberId(row.familyMemberId)
+                  }
+                  onBlur={() => setFocusedCaloriesMemberId(null)}
+                />
+              }
+              protein={row.nutrition.protein}
+              fat={row.nutrition.fat}
+              carbs={row.nutrition.carbs}
+            />
+          </NutritionPersonCard>
+        );
+      })}
     </div>
   );
 }

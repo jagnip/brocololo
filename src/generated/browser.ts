@@ -38,6 +38,11 @@ export type FamilyMember = Prisma.FamilyMemberModel
  */
 export type Plan = Prisma.PlanModel
 /**
+ * Model PlanAudienceMember
+ * 
+ */
+export type PlanAudienceMember = Prisma.PlanAudienceMemberModel
+/**
  * Model GroceryIngredient
  * 
  */
@@ -83,6 +88,16 @@ export type PlanSlotAlternative = Prisma.PlanSlotAlternativeModel
  */
 export type Recipe = Prisma.RecipeModel
 /**
+ * Model RecipeAudienceMember
+ * 
+ */
+export type RecipeAudienceMember = Prisma.RecipeAudienceMemberModel
+/**
+ * Model RecipeMemberPortion
+ * 
+ */
+export type RecipeMemberPortion = Prisma.RecipeMemberPortionModel
+/**
  * Model Ingredient
  * 
  */
@@ -102,6 +117,11 @@ export type IngredientUnit = Prisma.IngredientUnitModel
  * 
  */
 export type RecipeIngredient = Prisma.RecipeIngredientModel
+/**
+ * Model RecipeIngredientMemberTarget
+ * 
+ */
+export type RecipeIngredientMemberTarget = Prisma.RecipeIngredientMemberTargetModel
 /**
  * Model RecipeIngredientGroup
  * 

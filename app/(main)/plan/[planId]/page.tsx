@@ -5,14 +5,14 @@ export default async function PlanPage({
   searchParams,
 }: {
   params: Promise<{ planId: string }>;
-  searchParams: Promise<{ tab?: string; person?: string }>;
+  searchParams: Promise<{ tab?: string; memberId?: string }>;
 }) {
   const { planId } = await params;
-  const { tab, person } = await searchParams;
+  const { tab, memberId } = await searchParams;
 
   return (
     <div className="page-container">
-      <PlannerLogCombinedPage planId={planId} tab={tab} person={person} />
+      <PlannerLogCombinedPage planId={planId} tab={tab} memberId={memberId} />
     </div>
   );
 }

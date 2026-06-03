@@ -30,7 +30,7 @@ export default function RecipePage({
   ingredientFormDependencies,
 }: RecipePageProps) {
   const [isAddToLogOpen, setIsAddToLogOpen] = useState(false);
-  const { recipe, ingredients } = useRecipePageBaseData();
+  const { recipe, ingredients, familyMembers } = useRecipePageBaseData();
   const addToLogData = useRecipePageAddToLogData();
 
   useEffect(() => {
@@ -139,9 +139,11 @@ export default function RecipePage({
           open={isAddToLogOpen}
           onOpenChange={setIsAddToLogOpen}
           recipeIngredients={addToLogData.recipeIngredients}
+          familyMembers={familyMembers}
+          audienceMembers={addToLogData.audienceMembers}
+          memberPortions={addToLogData.memberPortions}
           currentServings={addToLogData.currentServings}
           servingScalingFactor={addToLogData.servingScalingFactor}
-          servingMultiplierForNelson={addToLogData.servingMultiplierForNelson}
           availableLogDateKeys={addToLogData.availableLogDateKeys}
           ingredientOptions={ingredientOptionsForLogDialog}
           ingredientFormDependencies={ingredientFormDependencies}

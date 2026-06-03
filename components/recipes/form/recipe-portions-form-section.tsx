@@ -14,14 +14,17 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { CheckboxWithLabel } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { scaleFormIngredientRowsForNewServings } from "@/lib/recipes/scale-form-ingredient-rows-for-servings";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 type RecipePortionsFormSectionProps = {
   form: UseFormReturn<CreateRecipeFormValues>;
   recipe?: RecipeType;
-  nelsonMultiplierOptions: readonly number[];
+  familyMembers: FamilyMemberRow[];
+  multiplierOptions: readonly number[];
   onNumericServingsChange: (
     onChange: (value: number | null) => void,
     event: React.ChangeEvent<HTMLInputElement>,
@@ -29,17 +32,29 @@ type RecipePortionsFormSectionProps = {
 };
 
 /**
- * Portions (servings) + Nelson multiplier, plus optional “Recalculate ingredients” when
+ * Portions (servings) + family-member multipliers, plus optional “Recalculate ingredients” when
  * the servings field diverges from the servings count current row amounts were written for.
  */
 export function RecipePortionsFormSection({
   form,
   recipe,
-  nelsonMultiplierOptions,
+  familyMembers,
+  multiplierOptions,
   onNumericServingsChange,
 }: RecipePortionsFormSectionProps) {
   const servings = useWatch({ control: form.control, name: "servings" });
+  const audienceFamilyMemberIds =
+    useWatch({ control: form.control, name: "audienceFamilyMemberIds" }) ?? [];
   const ingredients = useWatch({ control: form.control, name: "ingredients" }) ?? [];
+  const audienceIdSet = useMemo(
+    () => new Set(audienceFamilyMemberIds),
+    [audienceFamilyMemberIds],
+  );
+  const audienceCount = audienceFamilyMemberIds.length;
+  const servingsHint =
+    audienceCount > 0
+      ? `Servings are plate-count yield. For this audience, use ${audienceCount}, ${audienceCount * 2}, ${audienceCount * 3}, etc.`
+      : "Choose who this recipe is for before setting portions.";
 
   // Anchor: ingredient amounts in the form are expressed for this many portions until the user recalculates.
   const [amountsBaselineServings, setAmountsBaselineServings] = useState<
@@ -60,8 +75,7 @@ export function RecipePortionsFormSection({
       amountsBaselineServings !== undefined ||
       typeof servings !== "number" ||
       !Number.isFinite(servings) ||
-      servings < 2 ||
-      servings % 2 !== 0
+      servings < 1
     ) {
       return;
     }
@@ -79,7 +93,7 @@ export function RecipePortionsFormSection({
     if (servings === amountsBaselineServings) {
       return false;
     }
-    if (servings < 2 || servings % 2 !== 0) {
+    if (servings < 1) {
       return false;
     }
     return true;
@@ -102,6 +116,49 @@ export function RecipePortionsFormSection({
     setAmountsBaselineServings(servings);
   }
 
+  function handleAudienceChange(familyMemberId: string, checked: boolean) {
+    const nextIds = checked
+      ? [...audienceFamilyMemberIds, familyMemberId]
+      : audienceFamilyMemberIds.filter((id) => id !== familyMemberId);
+    const nextIdSet = new Set(nextIds);
+    form.setValue("audienceFamilyMemberIds", nextIds, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    form.setValue(
+      "memberPortions",
+      (form.getValues("memberPortions") ?? []).filter((portion) =>
+        nextIdSet.has(portion.familyMemberId),
+      ),
+      { shouldValidate: true, shouldDirty: true },
+    );
+    form.setValue(
+      "ingredients",
+      (form.getValues("ingredients") ?? []).map((ingredient) => ({
+        ...ingredient,
+        targetFamilyMemberIds: (ingredient.targetFamilyMemberIds ?? []).filter(
+          (id) => nextIdSet.has(id),
+        ),
+      })),
+      { shouldValidate: true, shouldDirty: true },
+    );
+
+    // Keep the portion field on a valid audience multiple after audience edits.
+    const nextCount = nextIds.length;
+    if (
+      nextCount > 0 &&
+      (typeof servings !== "number" ||
+        !Number.isFinite(servings) ||
+        servings < nextCount ||
+        servings % nextCount !== 0)
+    ) {
+      form.setValue("servings", nextCount, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }
+
   return (
     <section>
       <div className="mb-3">
@@ -110,20 +167,56 @@ export function RecipePortionsFormSection({
       <div className="section-container">
         {/* Match Basics: `gap-3` between stacked field groups (same as name row → timing row). */}
         <div className="flex flex-col gap-3">
+          <FormField
+            control={form.control}
+            name="audienceFamilyMemberIds"
+            render={() => (
+              <FormItem>
+                <FormLabel>Who is this recipe for?</FormLabel>
+                <FormControl>
+                  <div className="flex flex-wrap gap-2">
+                    {familyMembers.map((member, index) => {
+                      const label =
+                        member.name.trim() ||
+                        (member.isSelf ? "You" : `Family member ${index}`);
+                      return (
+                        <CheckboxWithLabel
+                          key={member.id}
+                          id={`recipe-audience-${member.id}`}
+                          checked={audienceIdSet.has(member.id)}
+                          onCheckedChange={(checked) =>
+                            handleAudienceChange(member.id, checked === true)
+                          }
+                          label={label}
+                        />
+                      );
+                    })}
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {/* Small: input + button same row (`1fr` + auto); `md+`: same 3-column rhythm as Categories. */}
           <FormField
             control={form.control}
             name="servings"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Portions</FormLabel>
+                <FormLabel
+                  tooltip={servingsHint}
+                  tooltipAriaLabel="Show portions guidance"
+                >
+                  Portions
+                </FormLabel>
                 <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-item md:grid-cols-3">
                   <FormControl className="min-w-0 md:col-span-1">
                     <Input
                       {...field}
                       type="number"
-                      min={2}
-                      step={2}
+                      min={1}
+                      step={1}
                       placeholder="Enter portions"
                       value={(field.value as number | undefined) ?? ""}
                       onChange={(event) =>
@@ -149,47 +242,80 @@ export function RecipePortionsFormSection({
             )}
           />
 
-          {/* One row per household member; add more columns here when multi-person UI ships. */}
           <FormField
             control={form.control}
-            name="servingMultiplierForNelson"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-muted-foreground">
-                  Serving multiplier
-                </FormLabel>
-                <FormControl>
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-item">
-                    <Label className="shrink-0 ">Nelson</Label>
-                    <div
-                      className="flex min-w-0 flex-1 flex-wrap gap-2"
-                      role="radiogroup"
-                      aria-label="Nelson serving multiplier"
-                    >
-                      {nelsonMultiplierOptions.map((multiplier) => {
-                        // Keep the UI default selected at 1 without changing backend validation rules.
+            name="memberPortions"
+            render={({ field }) => {
+              const audienceMembers = familyMembers.filter((member) =>
+                audienceIdSet.has(member.id),
+              );
+              return (
+                <FormItem>
+                  <FormLabel
+                    className="text-muted-foreground"
+                    tooltip="Choose how much each person usually eats. This changes how the cooked food is shared, not how many servings the recipe makes."
+                    tooltipAriaLabel="Show portion size guidance"
+                  >
+                    Portion sizes
+                  </FormLabel>
+                  <FormControl>
+                    <div className="flex flex-col gap-2">
+                      {audienceMembers.map((member, index) => {
                         const selectedMultiplier =
-                          (field.value as number | null | undefined) ?? 1;
-                        const checked = selectedMultiplier === multiplier;
+                          field.value?.find(
+                            (portion) => portion.familyMemberId === member.id,
+                          )?.multiplier ?? 1;
+                        const label =
+                          member.name.trim() || `Family member ${index + 1}`;
                         return (
-                          <Button
-                            key={multiplier}
-                            type="button"
-                            role="radio"
-                            aria-checked={checked}
-                            variant={checked ? "default" : "outline"}
-                            onClick={() => field.onChange(multiplier)}
+                          <div
+                            key={member.id}
+                            className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-item"
                           >
-                            {multiplier}
-                          </Button>
+                            <Label className="shrink-0">{label}</Label>
+                            <div
+                              className="flex min-w-0 flex-1 flex-wrap gap-2"
+                              role="radiogroup"
+                              aria-label={`${label} serving multiplier`}
+                            >
+                              {multiplierOptions.map((multiplier) => {
+                                const checked = selectedMultiplier === multiplier;
+                                return (
+                                  <Button
+                                    key={multiplier}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={checked}
+                                    variant={checked ? "default" : "outline"}
+                                    onClick={() => {
+                                      const current = field.value ?? [];
+                                      const withoutMember = current.filter(
+                                        (portion) =>
+                                          portion.familyMemberId !== member.id,
+                                      );
+                                      field.onChange([
+                                        ...withoutMember,
+                                        {
+                                          familyMemberId: member.id,
+                                          multiplier,
+                                        },
+                                      ]);
+                                    }}
+                                  >
+                                    {multiplier}
+                                  </Button>
+                                );
+                              })}
+                            </div>
+                          </div>
                         );
                       })}
                     </div>
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         </div>
       </div>

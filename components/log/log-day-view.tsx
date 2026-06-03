@@ -40,6 +40,7 @@ import {
 import { LogRemoveDayAlertDialog } from "./log-remove-day-alert-dialog";
 import { LogDuplicateEntryDialog } from "./log-duplicate-entry-dialog";
 import type { DateRangeValue } from "@/components/planner/date-range-picker";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 type IngredientFormDependencies = {
   categories: Array<{ id: string; name: string }>;
@@ -138,10 +139,12 @@ function toRecipeIngredients(
 
 type LogDayViewProps = {
   days: LogDayData[];
+  familyMembers?: FamilyMemberRow[];
   plannerPool?: PlannerPoolCardData[];
   initialSelectedDayKey?: string;
   logId?: string;
-  person?: "PRIMARY" | "SECONDARY";
+  familyMemberId?: string;
+  person?: string;
   dateRange?: DateRangeValue;
   allowDayManagement?: boolean;
   recipeOptions?: Array<{
@@ -171,15 +174,21 @@ type DuplicateRecipeState = {
 
 export function LogDayViewController({
   days,
+  familyMembers = [
+    { id: "family-self", name: "You", isSelf: true, sortOrder: 0 },
+    { id: "family-member-1", name: "Family member", isSelf: false, sortOrder: 1 },
+  ],
   plannerPool = [],
   initialSelectedDayKey,
   logId,
+  familyMemberId,
   person,
   dateRange,
   allowDayManagement = true,
   recipeOptions = [],
   ingredientOptions = [],
 }: LogDayViewProps) {
+  const selectedFamilyMemberId = familyMemberId ?? person ?? familyMembers[0]?.id;
   const router = useRouter();
   const { isLogFilterPending } = useTopbar();
   const isPhoneViewport = useIsPhoneViewport();
@@ -448,7 +457,7 @@ export function LogDayViewController({
   };
 
   const handleSlotSave = async (rows: EditableIngredientRow[]) => {
-    if (!logId || !person || !selectedSlot) {
+    if (!logId || !selectedFamilyMemberId || !selectedSlot) {
       toast.error("Missing log context for this action");
       return;
     }
@@ -466,7 +475,7 @@ export function LogDayViewController({
     startSavingTransition(async () => {
       const result = await upsertLogSlotAction({
         logId,
-        person,
+        familyMemberId: selectedFamilyMemberId,
         entryId: activeSelection.entryId,
         recipeId: activeSelection.selectedRecipeId,
         ingredients: completeRows,
@@ -585,7 +594,7 @@ export function LogDayViewController({
     if (activeData.type !== "planner-pool-item" || overData.type !== "log-slot")
       return;
 
-    if (!logId || !person || !overData.entryId) {
+    if (!logId || !selectedFamilyMemberId || !overData.entryId) {
       toast.error("Missing log context for this action");
       return;
     }
@@ -683,7 +692,7 @@ export function LogDayViewController({
     startSavingTransition(async () => {
       const result = await placePlannerPoolItemAction({
         logId,
-        person,
+        familyMemberId: selectedFamilyMemberId,
         entryId: targetEntryId,
         sourceRecipeId: plannerItem.sourceRecipeId ?? "",
         ingredients: plannerItem.ingredients,
@@ -704,7 +713,7 @@ export function LogDayViewController({
   };
 
   const handleRemovePlacedRecipe = (slot: LogDayData["slots"][number]) => {
-    if (!logId || !person || !slot.entryId) {
+    if (!logId || !selectedFamilyMemberId || !slot.entryId) {
       toast.error("Missing log context for this action");
       return;
     }
@@ -779,7 +788,7 @@ export function LogDayViewController({
     startSavingTransition(async () => {
       const result = await clearLogEntryAssignmentAction({
         logId,
-        person,
+        familyMemberId: selectedFamilyMemberId,
         entryId: slot.entryId!,
       });
 
@@ -834,7 +843,7 @@ export function LogDayViewController({
     targetDay: string;
     targetMealType: LogMealType;
   }) => {
-    if (!logId || !person || !duplicateSource) {
+    if (!logId || !selectedFamilyMemberId || !duplicateSource) {
       toast.error("Missing log context for this action");
       return;
     }
@@ -856,7 +865,7 @@ export function LogDayViewController({
     startSavingTransition(async () => {
       const result = await duplicateLogEntryAction({
         logId,
-        person,
+        familyMemberId: selectedFamilyMemberId,
         sourceEntryId: duplicateSource.sourceEntryId,
         sourceRecipeId: duplicateSource.sourceRecipeId,
         targetDay: payload.targetDay,
@@ -873,7 +882,7 @@ export function LogDayViewController({
       setDuplicateSource(null);
       setSelectedDayKey(payload.targetDay);
       setSelectedSlot(null);
-      router.push(`${ROUTES.logView(logId)}?person=${person}&day=${payload.targetDay}`);
+      router.push(`${ROUTES.logView(logId)}?memberId=${selectedFamilyMemberId}&day=${payload.targetDay}`);
       router.refresh();
       toast.success("Entry duplicated");
     });
@@ -902,8 +911,8 @@ export function LogDayViewController({
         return;
       }
 
-      const nextPerson = person ?? "PRIMARY";
-      const nextUrl = `${ROUTES.logView(logId)}?person=${nextPerson}&day=${result.dateKey}`;
+      const nextMemberId = selectedFamilyMemberId ?? "";
+      const nextUrl = `${ROUTES.logView(logId)}?memberId=${nextMemberId}&day=${result.dateKey}`;
       router.push(nextUrl);
       router.refresh();
     });
@@ -953,13 +962,13 @@ export function LogDayViewController({
         return;
       }
 
-      const nextPerson = person ?? "PRIMARY";
+      const nextMemberId = selectedFamilyMemberId ?? "";
       if (forcedResult.type === "success" && forcedResult.nextDayKey) {
         router.push(
-          `${ROUTES.logView(logId)}?person=${nextPerson}&day=${forcedResult.nextDayKey}`,
+          `${ROUTES.logView(logId)}?memberId=${nextMemberId}&day=${forcedResult.nextDayKey}`,
         );
       } else {
-        router.push(`${ROUTES.logView(logId)}?person=${nextPerson}`);
+        router.push(`${ROUTES.logView(logId)}?memberId=${nextMemberId}`);
       }
 
       setRemoveDayWarning(null);
@@ -981,7 +990,7 @@ export function LogDayViewController({
       >
         <h2 className="text-lg font-medium">No log entries in selected range</h2>
         <p className="text-sm text-muted-foreground">
-          Adjust the shared date range or switch person.
+          Adjust the shared date range or switch family member.
         </p>
       </section>
     );
@@ -1015,6 +1024,7 @@ export function LogDayViewController({
           <LogActiveDayView
             day={activeDay}
             days={visibleDays}
+            familyMembers={familyMembers}
             groupedPlannerPool={groupedPlannerPool}
             editorSlot={editorSlot}
             ingredientOptions={ingredientOptions}
