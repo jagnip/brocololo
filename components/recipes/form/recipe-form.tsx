@@ -40,7 +40,7 @@ import {
 import { buildDraftRecipeForNutrition } from "@/lib/recipes/build-draft-recipe-for-nutrition";
 import { IngredientType } from "@/types/ingredient";
 import { IngredientSelector } from "./ingredient-selector";
-import { Checkbox } from "@/components/ui/checkbox";
+import { CheckboxWithLabel } from "@/components/ui/checkbox";
 import { InstructionStepsEditor } from "./instruction-steps-editor";
 import {
   Dialog,
@@ -663,21 +663,15 @@ export default function RecipeForm({
                 name="excludeFromPlanner"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex items-center gap-2">
-                      <FormControl>
-                        <Checkbox
-                          id="exclude-from-planner"
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <Label
-                        htmlFor="exclude-from-planner"
-                        className="shrink-0 normal-case tracking-normal"
-                      >
-                        Exclude from planner
-                      </Label>
-                    </div>
+                    <FormControl>
+                      <CheckboxWithLabel
+                        id="exclude-from-planner"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        label="Exclude from planner"
+                        labelClassName="shrink-0"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

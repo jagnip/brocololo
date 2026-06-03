@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { CheckboxWithLabel } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
   Tooltip,
@@ -187,21 +187,15 @@ export function RecipePortionsFormSection({
                         member.name.trim() ||
                         (member.isSelf ? "You" : `Family member ${index}`);
                       return (
-                        <div key={member.id} className="flex items-center gap-2">
-                          <Checkbox
-                            id={`recipe-audience-${member.id}`}
-                            checked={audienceIdSet.has(member.id)}
-                            onCheckedChange={(checked) =>
-                              handleAudienceChange(member.id, checked === true)
-                            }
-                          />
-                          <Label
-                            htmlFor={`recipe-audience-${member.id}`}
-                            className="normal-case tracking-normal"
-                          >
-                            {label}
-                          </Label>
-                        </div>
+                        <CheckboxWithLabel
+                          key={member.id}
+                          id={`recipe-audience-${member.id}`}
+                          checked={audienceIdSet.has(member.id)}
+                          onCheckedChange={(checked) =>
+                            handleAudienceChange(member.id, checked === true)
+                          }
+                          label={label}
+                        />
                       );
                     })}
                   </div>

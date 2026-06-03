@@ -12,8 +12,7 @@ import {
 } from "@/components/ui/form";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { CheckboxWithLabel } from "@/components/ui/checkbox";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import {
   plannerCriteriaSchema,
@@ -465,29 +464,20 @@ export function PlannerForm({
                               member.name.trim() ||
                               (member.isSelf ? "You" : `Family member ${index}`);
                             return (
-                              <div
+                              <CheckboxWithLabel
                                 key={member.id}
-                                className="flex items-center gap-2"
-                              >
-                                <Checkbox
-                                  id={`planner-audience-${member.id}`}
-                                  checked={selectedAudienceIdSet.has(member.id)}
-                                  onCheckedChange={(checked) => {
-                                    const current = field.value ?? [];
-                                    field.onChange(
-                                      checked === true
-                                        ? [...current, member.id]
-                                        : current.filter((id) => id !== member.id),
-                                    );
-                                  }}
-                                />
-                                <Label
-                                  htmlFor={`planner-audience-${member.id}`}
-                                  className="normal-case tracking-normal"
-                                >
-                                  {label}
-                                </Label>
-                              </div>
+                                id={`planner-audience-${member.id}`}
+                                checked={selectedAudienceIdSet.has(member.id)}
+                                onCheckedChange={(checked) => {
+                                  const current = field.value ?? [];
+                                  field.onChange(
+                                    checked === true
+                                      ? [...current, member.id]
+                                      : current.filter((id) => id !== member.id),
+                                  );
+                                }}
+                                label={label}
+                              />
                             );
                           })}
                         </div>

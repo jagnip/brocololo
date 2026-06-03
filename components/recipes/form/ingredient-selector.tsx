@@ -906,32 +906,19 @@ export function IngredientSelector({
           </div>
         </div>
 
-        {/* Third row: ingredient target — everyone or selected family members. */}
+        {/* Third row: ingredient target — empty selection means everyone in the recipe audience. */}
         <div className={INGREDIENT_ROW_LAYOUT_CLASSES.nutritionTargetRow}>
           <Label
             id={`nutrition-target-label-${item.tempIngredientKey}`}
             className="shrink-0 normal-case tracking-normal"
           >
-            Use for:
+            Use only for:
           </Label>
           <div
             className="flex flex-wrap items-center gap-2"
             role="group"
             aria-labelledby={`nutrition-target-label-${item.tempIngredientKey}`}
           >
-            <Button
-              type="button"
-              size="default"
-              variant={item.appliesToEveryone ?? true ? "default" : "outline"}
-              onClick={() =>
-                updateIngredient(item.tempIngredientKey, {
-                  appliesToEveryone: true,
-                  targetFamilyMemberIds: [],
-                })
-              }
-            >
-              Everyone
-            </Button>
             {familyMembers.map((member, index) => {
               const selectedIds = item.targetFamilyMemberIds ?? [];
               const selected =
@@ -951,7 +938,7 @@ export function IngredientSelector({
                       ? selectedIds.filter((id) => id !== member.id)
                       : [...selectedIds, member.id];
                     updateIngredient(item.tempIngredientKey, {
-                      appliesToEveryone: false,
+                      appliesToEveryone: nextIds.length === 0,
                       targetFamilyMemberIds: nextIds,
                     });
                   }}
