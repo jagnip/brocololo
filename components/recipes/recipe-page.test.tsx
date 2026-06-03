@@ -622,4 +622,26 @@ describe("RecipePage ingredient member badges", () => {
     expect(within(nelsonRow).queryByRole("group", { name: /^For / })).not.toBeInTheDocument();
     expect(within(nelsonRow).queryByText("Nelson")).not.toBeInTheDocument();
   });
+
+  it("places additional info on row 2 and member badges on row 3 when both exist", () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    const recipeWithInfo = {
+      ...recipe,
+      ingredients: recipe.ingredients.map((row) =>
+        row.id === "ri-side-sauce-nelson"
+          ? { ...row, additionalInfo: "warmed" }
+          : row,
+      ),
+    };
+    renderRecipePage(recipeWithInfo, ingredients);
+
+    const nelsonRow = getIngredientRow("Side Sauce Nelson");
+    const rowSections = nelsonRow.querySelectorAll(":scope > div");
+    const row2 = rowSections[1] as HTMLElement;
+    const row3 = rowSections[2] as HTMLElement;
+
+    expect(within(row2).getByText("warmed")).toBeInTheDocument();
+    expect(within(row2).queryByRole("group", { name: "For Nelson" })).not.toBeInTheDocument();
+    expect(within(row3).getByRole("group", { name: "For Nelson" })).toBeInTheDocument();
+  });
 });

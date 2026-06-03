@@ -75,10 +75,29 @@ export function IngredientItem({
     () => getIngredientMemberBadges(recipeIngredient, familyMembers),
     [recipeIngredient, familyMembers],
   );
-  const memberBadgeAriaLabel =
-    memberBadges.length > 0
-      ? `For ${memberBadges.map((badge) => badge.label).join(", ")}`
-      : undefined;
+  const hasMemberBadges = memberBadges.length > 0;
+  const hasAdditionalInfo = Boolean(recipeIngredient.additionalInfo);
+  // Row 2 right: additional info and/or badges alone; both → info on row 2, badges on row 3.
+  const showBadgesOnRow2 = hasMemberBadges && !hasAdditionalInfo;
+  const showBadgesOnRow3 = hasMemberBadges && hasAdditionalInfo;
+  const showRow2Right = hasAdditionalInfo || showBadgesOnRow2;
+  const memberBadgeAriaLabel = hasMemberBadges
+    ? `For ${memberBadges.map((badge) => badge.label).join(", ")}`
+    : undefined;
+
+  const memberBadgeGroup = hasMemberBadges ? (
+    <div
+      role="group"
+      aria-label={memberBadgeAriaLabel}
+      className="flex flex-wrap items-center justify-end gap-1"
+    >
+      {memberBadges.map((badge) => (
+        <Badge key={badge.familyMemberId} variant="secondary">
+          {badge.label}
+        </Badge>
+      ))}
+    </div>
+  ) : null;
 
   const {
     displayAmount,
@@ -339,8 +358,7 @@ export function IngredientItem({
           )}
         />
       </div>
-      {/* flex-wrap: right cluster drops to full-width line when badges + info do not fit. */}
-      <div className="flex flex-wrap items-center justify-between gap-item">
+      <div className="flex items-center justify-between gap-item">
         <div className="flex shrink-0 items-center gap-item">
           <Button
             type="button"
@@ -388,29 +406,20 @@ export function IngredientItem({
           )}
         </div>
 
-        {(memberBadges.length > 0 || recipeIngredient.additionalInfo) && (
-          <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-item">
-            {memberBadges.length > 0 ? (
-              <div
-                role="group"
-                aria-label={memberBadgeAriaLabel}
-                className="flex flex-wrap items-center justify-end gap-1"
-              >
-                {memberBadges.map((badge) => (
-                  <Badge key={badge.familyMemberId} variant="secondary">
-                    {badge.label}
-                  </Badge>
-                ))}
-              </div>
-            ) : null}
-            {recipeIngredient.additionalInfo ? (
+        {showRow2Right ? (
+          <div className="ml-auto flex min-w-0 max-w-full items-center justify-end gap-item">
+            {hasAdditionalInfo ? (
               <span className="text-muted-foreground type-body">
                 {recipeIngredient.additionalInfo}
               </span>
             ) : null}
+            {showBadgesOnRow2 ? memberBadgeGroup : null}
           </div>
-        )}
+        ) : null}
       </div>
+      {showBadgesOnRow3 ? (
+        <div className="flex justify-end">{memberBadgeGroup}</div>
+      ) : null}
       <IngredientNutritionalInfo
         isOpen={showNutritionDetails}
         nutrition={nutrition}
