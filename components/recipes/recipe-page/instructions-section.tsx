@@ -6,7 +6,7 @@ import {
   formatIngredientAmount,
   formatInstructionIngredientBadge,
   getIngredientDisplay,
-  getInstructionIngredientPersonFactor,
+  getInstructionIngredientBadgeAmount,
   isGramUnit,
   isInstructionIngredientVisibleForPerson,
 } from "@/lib/recipes/helpers";
@@ -17,7 +17,7 @@ export function InstructionsSection() {
   const {
     instructions,
     familyMembers,
-    recipeServings,
+    audienceMembers,
     memberPortions,
     effectiveRecipeIngredientById,
     selectedInstructionFamilyMemberId,
@@ -26,6 +26,10 @@ export function InstructionsSection() {
     getIngredientDisplayScalingFactor,
     getIngredientCalorieFactor,
   } = useRecipePageInstructionsSectionData();
+  const cookingFamilyMemberIds = audienceMembers.map(
+    (member) => member.familyMemberId,
+  );
+  const showPersonFilter = familyMembers.length > 1;
   const [selectedInstructionId, setSelectedInstructionId] = useState<string | null>(null);
 
   const renderTextWithMarkdownLinks = (text: string, keyPrefix: string) =>
@@ -57,42 +61,44 @@ export function InstructionsSection() {
     <div className="section-container">
       <div className="mb-item flex flex-wrap items-center justify-between gap-item">
         <Subheader>Instructions</Subheader>
-        {/* Keep this local segmented control aligned with existing button-group patterns. */}
-        <div
-          className="flex items-center gap-item"
-          role="radiogroup"
-          aria-label="Instruction person filter"
-        >
-          {familyMembers.map((member, index) => {
-            const isSelected = selectedInstructionFamilyMemberId === member.id;
-            const label =
-              member.name.trim() ||
-              (member.isSelf ? "You" : `Family member ${index}`);
-            return (
-              <Button
-                key={member.id}
-                type="button"
-                size="default"
-                role="radio"
-                aria-checked={isSelected}
-                variant="outline"
-                onClick={() =>
-                  setSelectedInstructionFamilyMemberId((prev) =>
-                    prev === member.id ? null : member.id,
-                  )
-                }
-                // Build classes without empty entries.
-                className={`${
-                  isSelected
-                    ? "bg-foreground text-background border-foreground hover:bg-foreground/90 hover:text-background"
-                    : "bg-background text-foreground"
-                }`}
-              >
-                {label}
-              </Button>
-            );
-          })}
-        </div>
+        {/* Hide person filter when the recipe audience is a single cook. */}
+        {showPersonFilter ? (
+          <div
+            className="flex items-center gap-item"
+            role="radiogroup"
+            aria-label="Instruction person filter"
+          >
+            {familyMembers.map((member, index) => {
+              const isSelected =
+                selectedInstructionFamilyMemberId === member.id;
+              const label =
+                member.name.trim() ||
+                (member.isSelf ? "You" : `Family member ${index}`);
+              return (
+                <Button
+                  key={member.id}
+                  type="button"
+                  size="default"
+                  role="radio"
+                  aria-checked={isSelected}
+                  variant="outline"
+                  onClick={() =>
+                    setSelectedInstructionFamilyMemberId((prev) =>
+                      prev === member.id ? null : member.id,
+                    )
+                  }
+                  className={`${
+                    isSelected
+                      ? "bg-foreground text-background border-foreground hover:bg-foreground/90 hover:text-background"
+                      : "bg-background text-foreground"
+                  }`}
+                >
+                  {label}
+                </Button>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
       <ol className="flex flex-col gap-item">
         {instructions.map((instruction, index) => {
@@ -170,25 +176,34 @@ export function InstructionsSection() {
                       selectedUnits[recipeIngredient.id] ||
                       recipeIngredient.unit?.id ||
                       null;
-                    const personFactor = getInstructionIngredientPersonFactor(
-                      selectedInstructionFamilyMemberId,
-                      recipeServings,
+                    const rowScaleFactor =
+                      getIngredientDisplayScalingFactor(recipeIngredient.id) *
+                      getIngredientCalorieFactor(recipeIngredient);
+                    const badgeAmount = getInstructionIngredientBadgeAmount({
+                      amount: recipeIngredient.amount,
+                      appliesToEveryone: recipeIngredient.appliesToEveryone,
+                      targetFamilyMemberIds:
+                        recipeIngredient.memberTargets.map(
+                          (target) => target.familyMemberId,
+                        ),
+                      selectedFamilyMemberId:
+                        selectedInstructionFamilyMemberId,
                       familyMembers,
                       memberPortions,
-                      recipeIngredient.appliesToEveryone,
-                      recipeIngredient.memberTargets.map(
-                        (target) => target.familyMemberId,
-                      ),
-                    );
+                      cookingFamilyMemberIds,
+                      rowScaleFactor,
+                    });
+                    if (badgeAmount == null) {
+                      return null;
+                    }
                     const display = getIngredientDisplay(
-                      recipeIngredient.amount,
+                      badgeAmount,
                       recipeIngredient.unit?.id ?? null,
                       recipeIngredient.unit?.name ?? null,
                       selectedUnitId,
                       recipeIngredient.ingredient.unitConversions,
-                      getIngredientDisplayScalingFactor(recipeIngredient.id) *
-                        personFactor,
-                      getIngredientCalorieFactor(recipeIngredient),
+                      1,
+                      1,
                     );
                     const fullBadgeLabel = formatInstructionIngredientBadge({
                       rawAmount: display.rawAmount,

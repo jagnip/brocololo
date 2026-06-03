@@ -6,10 +6,12 @@ import {
   formatIngredientAmount,
   getUnitDisplayName,
   getIngredientDisplay,
+  getIngredientMemberBadges,
   getIngredientNutritionPer100g,
   isGramUnit,
   scaleIngredientNutritionForGrams,
 } from "@/lib/recipes/helpers";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { getIngredientSelectorDisplay } from "@/lib/ingredients/format";
 import {
   buildIngredientSearchSourceMap,
@@ -33,6 +35,7 @@ import { IngredientIcon } from "../ingredient-icon";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 import { IngredientNutritionalInfo } from "./ingredient-nutritional-info";
 import {
   SearchableSelect,
@@ -50,6 +53,7 @@ type IngredientItemProps = {
   showApplyScaleAction: boolean;
   onApplyScaleToAll: () => void;
   onIngredientChange: (ingredientId: string) => void;
+  familyMembers: FamilyMemberRow[];
 };
 
 export function IngredientItem({
@@ -63,8 +67,18 @@ export function IngredientItem({
   showApplyScaleAction,
   onApplyScaleToAll,
   onIngredientChange,
+  familyMembers,
 }: IngredientItemProps) {
   const { ingredient } = recipeIngredient;
+  // Resolve read-only member badges for targeted ingredients (hidden for solo households).
+  const memberBadges = useMemo(
+    () => getIngredientMemberBadges(recipeIngredient, familyMembers),
+    [recipeIngredient, familyMembers],
+  );
+  const memberBadgeAriaLabel =
+    memberBadges.length > 0
+      ? `For ${memberBadges.map((badge) => badge.label).join(", ")}`
+      : undefined;
 
   const {
     displayAmount,
@@ -325,8 +339,9 @@ export function IngredientItem({
           )}
         />
       </div>
-      <div className="flex items-center justify-between gap-item flex-wrap">
-        <div className="flex items-center gap-item">
+      {/* flex-wrap: right cluster drops to full-width line when badges + info do not fit. */}
+      <div className="flex flex-wrap items-center justify-between gap-item">
+        <div className="flex shrink-0 items-center gap-item">
           <Button
             type="button"
             variant="outline"
@@ -373,25 +388,28 @@ export function IngredientItem({
           )}
         </div>
 
-        <div className="ml-auto flex items-center gap-item">
-          {!recipeIngredient.appliesToEveryone && (
-            <Button
-              type="button"
-              variant="outline"
-              size="default"
-              className="h-8 px-2"
-              aria-label="Selected members only"
-              title="Selected members only"
-            >
-              Selected
-            </Button>
-          )}
-          {recipeIngredient.additionalInfo && (
-            <span className="text-muted-foreground type-body">
-              {recipeIngredient.additionalInfo}
-            </span>
-          )}
-        </div>
+        {(memberBadges.length > 0 || recipeIngredient.additionalInfo) && (
+          <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-item">
+            {memberBadges.length > 0 ? (
+              <div
+                role="group"
+                aria-label={memberBadgeAriaLabel}
+                className="flex flex-wrap items-center justify-end gap-1"
+              >
+                {memberBadges.map((badge) => (
+                  <Badge key={badge.familyMemberId} variant="secondary">
+                    {badge.label}
+                  </Badge>
+                ))}
+              </div>
+            ) : null}
+            {recipeIngredient.additionalInfo ? (
+              <span className="text-muted-foreground type-body">
+                {recipeIngredient.additionalInfo}
+              </span>
+            ) : null}
+          </div>
+        )}
       </div>
       <IngredientNutritionalInfo
         isOpen={showNutritionDetails}

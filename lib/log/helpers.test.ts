@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getFamilyMemberIngredientAmountForScaledBatch,
   getFamilyMemberIngredientAmountPerMeal,
   getPersonIngredientAmountPerMeal,
 } from "@/lib/log/helpers";
@@ -121,5 +122,38 @@ describe("getFamilyMemberIngredientAmountPerMeal", () => {
     });
 
     expect(selfAmount).toBeCloseTo(200);
+  });
+});
+
+describe("getFamilyMemberIngredientAmountForScaledBatch", () => {
+  it("splits the full scaled row without dividing by servings again", () => {
+    const familyMembers = [
+      { id: "self", isSelf: true },
+      { id: "partner", isSelf: false },
+    ];
+    const memberPortions = [{ familyMemberId: "partner", multiplier: 2 }];
+
+    expect(
+      getFamilyMemberIngredientAmountForScaledBatch({
+        amount: 900,
+        appliesToEveryone: true,
+        targetFamilyMemberIds: [],
+        familyMemberId: "self",
+        familyMembers,
+        memberPortions,
+        cookingFamilyMemberIds: ["self", "partner"],
+      }),
+    ).toBe(300);
+    expect(
+      getFamilyMemberIngredientAmountForScaledBatch({
+        amount: 900,
+        appliesToEveryone: true,
+        targetFamilyMemberIds: [],
+        familyMemberId: "partner",
+        familyMembers,
+        memberPortions,
+        cookingFamilyMemberIds: ["self", "partner"],
+      }),
+    ).toBe(600);
   });
 });

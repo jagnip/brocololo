@@ -12,6 +12,7 @@ export function IngredientsSection() {
   const {
     recipe,
     ingredients,
+    familyMembers,
     currentServings,
     hasActiveScaling,
     localScaleByIngredientId,
@@ -96,6 +97,7 @@ export function IngredientsSection() {
                   onIngredientChange(recipeIngredient.id, ingredientId)
                 }
                 replacementCandidates={ingredients}
+                familyMembers={familyMembers}
               />
             ))}
           </ul>
@@ -129,6 +131,7 @@ export function IngredientsSection() {
                   onIngredientChange(recipeIngredient.id, ingredientId)
                 }
                 replacementCandidates={ingredients}
+                familyMembers={familyMembers}
               />
             ))}
           </ul>

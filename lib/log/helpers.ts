@@ -18,30 +18,30 @@ function getMemberMultiplier(
   );
 }
 
-export function getFamilyMemberIngredientAmountPerMeal(params: {
+type FamilyMemberPortionParams = {
   amount: number | null;
   appliesToEveryone: boolean;
   targetFamilyMemberIds: string[];
   familyMemberId: string;
-  recipeServings: number;
   familyMembers: FamilyMemberForPortion[];
   memberPortions: MemberPortion[];
   cookingFamilyMemberIds?: string[];
-}): number | null {
+};
+
+function getFamilyMemberPortionWeights(
+  params: FamilyMemberPortionParams,
+): { selectedWeight: number; applicableWeight: number } | null {
   const {
     amount,
     appliesToEveryone,
     targetFamilyMemberIds,
     familyMemberId,
-    recipeServings,
     familyMembers,
     memberPortions,
     cookingFamilyMemberIds,
   } = params;
 
   if (amount == null) return null;
-
-  if (!Number.isFinite(recipeServings) || recipeServings <= 0) return null;
 
   const cookingMemberIdSet = new Set(
     cookingFamilyMemberIds ?? familyMembers.map((member) => member.id),
@@ -70,9 +70,70 @@ export function getFamilyMemberIngredientAmountPerMeal(params: {
   if (!Number.isFinite(applicableWeight) || applicableWeight <= 0) return null;
 
   const selectedWeight = getMemberMultiplier(selectedMember, memberPortions);
+  return { selectedWeight, applicableWeight };
+}
+
+/**
+ * Splits a fully scaled recipe row across family cooks (separate batches).
+ * Use when amount already reflects all current servings on the recipe page.
+ */
+export function getFamilyMemberIngredientAmountForScaledBatch(
+  params: FamilyMemberPortionParams,
+): number | null {
+  const weights = getFamilyMemberPortionWeights(params);
+  if (weights == null || params.amount == null) return null;
+
+  const { selectedWeight, applicableWeight } = weights;
+  return (params.amount * selectedWeight) / applicableWeight;
+}
+
+export function getFamilyMemberIngredientAmountPerMeal(params: {
+  amount: number | null;
+  appliesToEveryone: boolean;
+  targetFamilyMemberIds: string[];
+  familyMemberId: string;
+  recipeServings: number;
+  familyMembers: FamilyMemberForPortion[];
+  memberPortions: MemberPortion[];
+  cookingFamilyMemberIds?: string[];
+}): number | null {
+  const {
+    amount,
+    appliesToEveryone,
+    targetFamilyMemberIds,
+    familyMemberId,
+    recipeServings,
+    familyMembers,
+    memberPortions,
+    cookingFamilyMemberIds,
+  } = params;
+
+  if (!Number.isFinite(recipeServings) || recipeServings <= 0) return null;
+
+  const weights = getFamilyMemberPortionWeights({
+    amount,
+    appliesToEveryone,
+    targetFamilyMemberIds,
+    familyMemberId,
+    familyMembers,
+    memberPortions,
+    cookingFamilyMemberIds,
+  });
+  if (weights == null || amount == null) return null;
+
+  const cookingMemberIdSet = new Set(
+    cookingFamilyMemberIds ?? familyMembers.map((member) => member.id),
+  );
+  const cookingMembers = familyMembers.filter((member) =>
+    cookingMemberIdSet.has(member.id),
+  );
+  const { selectedWeight, applicableWeight } = weights;
   // Servings are plate-count yield. One cooked meal consumes audienceCount / servings
   // of the recipe, then multipliers divide that meal among applicable members.
-  return (amount * cookingMembers.length * selectedWeight) / (recipeServings * applicableWeight);
+  return (
+    (amount * cookingMembers.length * selectedWeight) /
+    (recipeServings * applicableWeight)
+  );
 }
 
 export function getPersonIngredientAmountPerMeal(params: {

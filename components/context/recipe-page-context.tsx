@@ -226,6 +226,7 @@ export function useRecipePageInstructionsSectionData() {
   const {
     recipe,
     familyMembers,
+    currentServings,
     effectiveRecipeIngredientById,
     selectedInstructionFamilyMemberId,
     setSelectedInstructionFamilyMemberId,
@@ -237,7 +238,8 @@ export function useRecipePageInstructionsSectionData() {
   return {
     instructions: recipe.instructions,
     familyMembers,
-    recipeServings: recipe.servings,
+    currentServings,
+    audienceMembers: recipe.audienceMembers,
     memberPortions: recipe.memberPortions,
     effectiveRecipeIngredientById,
     selectedInstructionFamilyMemberId,

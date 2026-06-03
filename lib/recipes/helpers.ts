@@ -1,7 +1,11 @@
 import type { RecipeType } from "@/types/recipe";
 import type { IngredientType } from "@/types/ingredient";
 import type { UpdateRecipeFormValues } from "@/lib/validations/recipe";
-import { getFamilyMemberIngredientAmountPerMeal } from "@/lib/log/helpers";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
+import {
+  getFamilyMemberIngredientAmountForScaledBatch,
+  getFamilyMemberIngredientAmountPerMeal,
+} from "@/lib/log/helpers";
 
 // Shape of a unitConversion entry after enriching with the unit name
 export type UnitConversionWithName = {
@@ -392,37 +396,50 @@ export function isInstructionIngredientVisibleForPerson(
 }
 
 /**
- * Returns per-person portion factor used for instruction badges.
+ * Resolves the numeric amount shown on an instruction ingredient badge.
+ * Scales the recipe row to current servings first, then splits across cooks when filtered.
+ * Each cook makes their own batch (not a single shared plate).
  */
-export function getInstructionIngredientPersonFactor(
-  selectedFamilyMemberId: InstructionPersonFilter,
-  recipeServings: number,
-  familyMembers: FamilyMemberForNutrition[],
-  memberPortions: Array<{ familyMemberId: string; multiplier: number }>,
-  appliesToEveryone: boolean,
-  targetFamilyMemberIds: string[],
-): number {
-  // No person selected => preserve existing total recipe-row amount display.
+export function getInstructionIngredientBadgeAmount(params: {
+  amount: number | null;
+  appliesToEveryone: boolean;
+  targetFamilyMemberIds: string[];
+  selectedFamilyMemberId: InstructionPersonFilter;
+  familyMembers: FamilyMemberForNutrition[];
+  memberPortions: Array<{ familyMemberId: string; multiplier: number }>;
+  cookingFamilyMemberIds: string[];
+  rowScaleFactor: number;
+}): number | null {
+  const {
+    amount,
+    appliesToEveryone,
+    targetFamilyMemberIds,
+    selectedFamilyMemberId,
+    familyMembers,
+    memberPortions,
+    cookingFamilyMemberIds,
+    rowScaleFactor,
+  } = params;
+
+  if (amount == null) {
+    return null;
+  }
+
+  const scaledAmount = amount * rowScaleFactor;
+
   if (selectedFamilyMemberId == null) {
-    return 1;
+    return scaledAmount;
   }
-  const selectedMember = familyMembers.find(
-    (member) => member.id === selectedFamilyMemberId,
-  );
-  if (!selectedMember || recipeServings <= 0) {
-    return 1;
-  }
-  const sampleAmount = getFamilyMemberIngredientAmountPerMeal({
-    amount: recipeServings,
+
+  return getFamilyMemberIngredientAmountForScaledBatch({
+    amount: scaledAmount,
     appliesToEveryone,
     targetFamilyMemberIds,
     familyMemberId: selectedFamilyMemberId,
-    recipeServings,
     familyMembers,
     memberPortions,
-    cookingFamilyMemberIds: familyMembers.map((member) => member.id),
+    cookingFamilyMemberIds,
   });
-  return sampleAmount ?? 0;
 }
 
 /** Minimal recipe shape consumed by nutrition math — avoids building full RecipeType mocks. */
@@ -747,4 +764,66 @@ export function buildEffectiveRecipeForSimulation(
     ...recipe,
     ingredients,
   };
+}
+
+/** True when the household has at least one non-self member (family features are relevant). */
+export function hasHouseholdFamilyFeatures(
+  familyMembers: FamilyMemberRow[],
+): boolean {
+  return familyMembers.some((member) => !member.isSelf);
+}
+
+export function getSortedFamilyMembers(
+  familyMembers: FamilyMemberRow[],
+): FamilyMemberRow[] {
+  return [...familyMembers].sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+/** Display label for a family member on recipe surfaces (instructions, ingredients, nutrition). */
+export function getRecipeFamilyMemberLabel(
+  member: FamilyMemberRow,
+  familyMembers: FamilyMemberRow[],
+): string {
+  const trimmed = member.name.trim();
+  if (trimmed) {
+    return trimmed;
+  }
+  const ordered = getSortedFamilyMembers(familyMembers);
+  const index = ordered.findIndex((row) => row.id === member.id);
+  return member.isSelf ? "You" : `Family member ${index}`;
+}
+
+export type IngredientMemberBadge = {
+  familyMemberId: string;
+  label: string;
+};
+
+/** Read-only member badges for a recipe-page ingredient row. */
+export function getIngredientMemberBadges(
+  recipeIngredient: Pick<
+    RecipeType["ingredients"][number],
+    "appliesToEveryone" | "memberTargets"
+  >,
+  familyMembers: FamilyMemberRow[],
+): IngredientMemberBadge[] {
+  if (!hasHouseholdFamilyFeatures(familyMembers)) {
+    return [];
+  }
+  if (recipeIngredient.appliesToEveryone) {
+    return [];
+  }
+
+  const targetIds = new Set(
+    recipeIngredient.memberTargets.map((target) => target.familyMemberId),
+  );
+  if (targetIds.size === 0) {
+    return [];
+  }
+
+  return getSortedFamilyMembers(familyMembers)
+    .filter((member) => targetIds.has(member.id))
+    .map((member) => ({
+      familyMemberId: member.id,
+      label: getRecipeFamilyMemberLabel(member, familyMembers),
+    }));
 }
