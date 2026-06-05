@@ -10,14 +10,12 @@ type IngredientsInfiniteListProps = {
   q?: string;
   // Active category slug from the URL; used to keep paged fetches aligned with the server's first page.
   categorySlug?: string;
-  isAdmin?: boolean;
 };
 
 export function IngredientsInfiniteList({
   initialData,
   q,
   categorySlug,
-  isAdmin = false,
 }: IngredientsInfiniteListProps) {
   const [items, setItems] = useState(() => initialData.items);
   const [page, setPage] = useState(initialData.page);
@@ -138,7 +136,6 @@ export function IngredientsInfiniteList({
             <IngredientRow
               key={ingredient.id}
               ingredient={ingredient}
-              isAdmin={isAdmin}
             />
           ))}
 

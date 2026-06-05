@@ -10,11 +10,10 @@ import type { IngredientsPageItem } from "@/lib/db/ingredients";
 
 type IngredientRowProps = {
   ingredient: IngredientsPageItem;
-  isAdmin?: boolean;
 };
 
 // Single ingredient row visualization. Pure presentation: no client hooks needed.
-export function IngredientRow({ ingredient, isAdmin = false }: IngredientRowProps) {
+export function IngredientRow({ ingredient }: IngredientRowProps) {
   // Build one combined metadata suffix: "(descriptor, brand)" (or a single item if one is missing).
   const title = getIngredientTitleParts(ingredient);
   const descriptor = ingredient.descriptor?.trim();
@@ -39,11 +38,6 @@ export function IngredientRow({ ingredient, isAdmin = false }: IngredientRowProp
             </p>
             {/* Category uses secondary treatment per latest visual direction. */}
             <Badge variant="secondary">{ingredient.category.name}</Badge>
-            {isAdmin ? (
-              <Badge variant="outline">
-                {ingredient.userId === null ? "Global" : "Yours"}
-              </Badge>
-            ) : null}
             {/* Edit action fades in on row hover; focus-visible keeps keyboard navigation usable. */}
             <Button
               asChild

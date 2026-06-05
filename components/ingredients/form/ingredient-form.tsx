@@ -11,7 +11,8 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
+import { Info, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,12 +67,6 @@ import { CreateUnitDialog } from "./create-unit-dialog";
 import { RenameUnitDialog } from "./rename-unit-dialog";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { TopbarConfigController } from "@/components/topbar-config";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 function CanonicalSection({
   readOnly,
@@ -85,21 +80,9 @@ function CanonicalSection({
   }
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <fieldset
-            disabled
-            className="min-w-0 space-y-5 border-0 p-0 m-0"
-          >
-            {children}
-          </fieldset>
-        </TooltipTrigger>
-        <TooltipContent side="top">
-          Shared with all users. Only the shopping fields below are editable.
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <fieldset disabled className="min-w-0 space-y-5 border-0 p-0 m-0">
+      {children}
+    </fieldset>
   );
 }
 
@@ -458,6 +441,17 @@ export default function IngredientForm({
           <h1 className="text-2xl font-semibold">
             {ingredient ? "Edit ingredient" : "Create ingredient"}
           </h1>
+        ) : null}
+
+        {/* Regular users editing a shared ingredient: explain why most fields are disabled. */}
+        {canonicalDisabled ? (
+          <Alert>
+            <Info />
+            <AlertTitle>Shared ingredient</AlertTitle>
+            <AlertDescription>
+              Shared with all users. Only the shopping fields below are editable.
+            </AlertDescription>
+          </Alert>
         ) : null}
 
         <CanonicalSection readOnly={canonicalDisabled}>
@@ -996,12 +990,7 @@ export default function IngredientForm({
                 name="visibility"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel
-                      tooltip="Shared ingredients are visible to everyone. Visibility cannot be changed after creation."
-                      tooltipAriaLabel="Show visibility guidance"
-                    >
-                      Who can see this ingredient
-                    </FormLabel>
+                    <FormLabel>Who can see this ingredient</FormLabel>
                     <FormControl>
                       <div
                         className="flex flex-wrap gap-2"
@@ -1038,12 +1027,7 @@ export default function IngredientForm({
               />
             ) : (
               <div className="grid gap-2">
-                <Label
-                  tooltip="Visibility is set when the ingredient is created and cannot be changed later."
-                  tooltipAriaLabel="Show visibility guidance"
-                >
-                  Who can see this ingredient
-                </Label>
+                <Label>Who can see this ingredient</Label>
                 <div
                   className="flex flex-wrap gap-2"
                   role="radiogroup"

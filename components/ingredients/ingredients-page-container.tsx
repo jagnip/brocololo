@@ -18,7 +18,7 @@ export async function IngredientsPageContainer({
   q,
   categorySlug,
 }: IngredientsPageContainerProps) {
-  const { id: userId, isAdmin } = await requireUser();
+  const { id: userId } = await requireUser();
   // Run the page fetch and the category list in parallel; they have no data dependency.
   const [data, categories] = await Promise.all([
     getIngredientsPage({
@@ -45,7 +45,6 @@ export async function IngredientsPageContainer({
           initialData={data}
           q={q}
           categorySlug={categorySlug}
-          isAdmin={isAdmin}
         />
       </div>
     </>
