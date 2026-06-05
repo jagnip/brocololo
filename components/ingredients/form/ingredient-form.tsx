@@ -1,12 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Form,
   FormControl,
@@ -58,13 +66,52 @@ import { CreateUnitDialog } from "./create-unit-dialog";
 import { RenameUnitDialog } from "./rename-unit-dialog";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { TopbarConfigController } from "@/components/topbar-config";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+function CanonicalSection({
+  readOnly,
+  children,
+}: {
+  readOnly: boolean;
+  children: ReactNode;
+}) {
+  if (!readOnly) {
+    return <div className="space-y-5">{children}</div>;
+  }
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <fieldset
+            disabled
+            className="min-w-0 space-y-5 border-0 p-0 m-0"
+          >
+            {children}
+          </fieldset>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          Shared with all users. Only the shopping fields below are editable.
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 type IngredientFormProps = {
   categories: Array<{ id: string; name: string }>;
   units: Array<{ id: string; name: string; namePlural: string | null }>;
   gramsUnitId: string;
   iconOptions: string[];
+  isAdmin?: boolean;
   ingredient?: {
     id: string;
+    userId?: string | null;
     name: string;
     brand: string | null;
     descriptor: string | null;
@@ -99,6 +146,7 @@ export default function IngredientForm({
   gramsUnitId,
   iconOptions,
   ingredient,
+  isAdmin = false,
   mode = "page",
   initialName,
   onSubmitted,
@@ -181,6 +229,8 @@ export default function IngredientForm({
           defaultUnitId: gramsUnitId,
           groceryAdditionalInfo: null,
           grocerySubstitutionNote: null,
+          // Admin defaults to shared catalog; non-admins always create private rows.
+          visibility: isAdmin ? "global" : "private",
           // Keep grams conversion in form state as canonical baseline.
           unitConversions: [{ unitId: gramsUnitId, gramsPerUnit: 1 }],
         },
@@ -290,6 +340,10 @@ export default function IngredientForm({
   const isSubmitting = form.formState.isSubmitting;
   const isPageCreateMode = mode === "page" && !ingredient;
   const isPageEditMode = mode === "page" && Boolean(ingredient);
+  const isGlobalIngredient = ingredient?.userId === null;
+  const canonicalDisabled = Boolean(ingredient && isGlobalIngredient && !isAdmin);
+  const canDelete = isAdmin || (ingredient?.userId != null);
+  const groceriesSubstitutionDisabled = canonicalDisabled;
   const handleTopbarCreateClick = useCallback(() => {
     // Keep topbar submit behavior in sync with form validation + submit flow.
     void form.handleSubmit(onSubmit)();
@@ -365,7 +419,7 @@ export default function IngredientForm({
                 size: "icon" as const,
                 variant: "outline" as const,
                 ariaLabel: "Delete ingredient",
-                disabled: isDeleting,
+                disabled: isDeleting || !canDelete,
                 onClick: () => setIsDeleteOpen(true),
               },
             ]
@@ -376,6 +430,7 @@ export default function IngredientForm({
       handleTopbarCreateClick,
       handleTopbarUpdateClick,
       ingredient?.name,
+      canDelete,
       isDeleting,
       isPageCreateMode,
       isPageEditMode,
@@ -404,6 +459,7 @@ export default function IngredientForm({
           </h1>
         ) : null}
 
+        <CanonicalSection readOnly={canonicalDisabled}>
         <div
           className={
             mode === "page"
@@ -533,8 +589,7 @@ export default function IngredientForm({
           </div>
         ) : null}
 
-        {/* Tablet+ layout: icon/url share row at 1/3 + 2/3. */}
-        {/* Keep mobile vertical rhythm consistent with the form's spacing scale. */}
+        {/* Icon only — supermarket URL lives in the Groceries section. */}
         <div
           className={
             mode === "page"
@@ -549,34 +604,13 @@ export default function IngredientForm({
               <FormItem
                 className={mode === "page" ? "md:col-span-1 lg:col-span-1" : "md:col-span-1"}
               >
-                {/* Optional field marker keeps label-level guidance consistent. */}
                 <FormLabel>Icon (optional)</FormLabel>
                 <FormControl>
                   <IconPicker
                     value={(field.value as string | null) ?? null}
                     onChange={field.onChange}
                     options={iconOptions}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="supermarketUrl"
-            render={({ field }) => (
-              <FormItem
-                className={mode === "page" ? "md:col-span-2 lg:col-span-2" : "md:col-span-2"}
-              >
-                {/* Optional field marker keeps label-level guidance consistent. */}
-                <FormLabel>Supermarket URL (optional)</FormLabel>
-                <FormControl>
-                  <Input
-                    value={field.value ?? ""}
-                    onChange={(event) => field.onChange(event.target.value)}
-                    placeholder="https://"
+                    disabled={canonicalDisabled}
                   />
                 </FormControl>
                 <FormMessage />
@@ -879,67 +913,165 @@ export default function IngredientForm({
             />
           </div>
 
-          <div className="space-y-2 pt-2">
-            <Subheader className="mb-3">Groceries</Subheader>
+        </div>
+        </CanonicalSection>
 
-            {/* Match the same responsive form rhythm: phone 1-col, tablet 2-col, desktop 4-col. */}
-            <div
-              className={
-                mode === "page"
-                  ? "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-x-2 md:gap-y-2 lg:grid-cols-4 lg:gap-2"
-                  : "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-x-2 md:gap-y-2 lg:grid-cols-2 lg:gap-2"
-              }
-            >
-              <FormField
-                control={form.control}
-                name="grocerySubstitutionNote"
-                render={({ field }) => (
-                  <FormItem
-                    className={
-                      mode === "page"
-                        ? "order-2 md:order-2 lg:col-span-2"
-                        : "order-2 md:order-2"
-                    }
-                  >
-                    <FormLabel>Substitutions (optional)</FormLabel>
-                    <FormControl>
-                      <Input
-                        value={field.value ?? ""}
-                        onChange={(event) => field.onChange(event.target.value)}
-                        placeholder="e.g. spinach works too"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        <div className="space-y-2 pt-2">
+          <Subheader className="mb-3">Groceries</Subheader>
 
-              <FormField
-                control={form.control}
-                name="groceryAdditionalInfo"
-                render={({ field }) => (
-                  <FormItem
-                    className={
-                      mode === "page"
-                        ? "order-1 md:order-1 md:col-span-2 lg:col-span-3"
-                        : "order-1 md:order-1 md:col-span-2 lg:col-span-2"
-                    }
-                  >
-                    <FormLabel>Notes (optional)</FormLabel>
-                    <FormControl>
-                      <Input
-                        value={field.value ?? ""}
-                        onChange={(event) => field.onChange(event.target.value)}
-                        placeholder="e.g. ripe, organic"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          {/* URL 2 cols + Notes 1 col + Substitutions 1 col on desktop; URL full width on tablet. */}
+          <div
+            className={
+              mode === "page"
+                ? "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-x-2 md:gap-y-2 lg:grid-cols-4 lg:gap-2"
+                : "grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-x-2 md:gap-y-2"
+            }
+          >
+            <FormField
+              control={form.control}
+              name="supermarketUrl"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2 lg:col-span-2">
+                  <FormLabel>Supermarket URL (optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      value={field.value ?? ""}
+                      onChange={(event) => field.onChange(event.target.value)}
+                      placeholder="https://"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="groceryAdditionalInfo"
+              render={({ field }) => (
+                <FormItem className="lg:col-span-1">
+                  <FormLabel>Notes (optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      value={field.value ?? ""}
+                      onChange={(event) => field.onChange(event.target.value)}
+                      placeholder="e.g. ripe, organic"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="grocerySubstitutionNote"
+              render={({ field }) => (
+                <FormItem className="lg:col-span-1">
+                  <FormLabel>Substitutions (optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      value={field.value ?? ""}
+                      onChange={(event) => field.onChange(event.target.value)}
+                      placeholder="e.g. spinach works too"
+                      disabled={groceriesSubstitutionDisabled}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
         </div>
+
+        {/* Admin-only: visibility is chosen at create and fixed on edit. */}
+        {isAdmin ? (
+          <div className="space-y-2 pt-2">
+            <Subheader className="mb-3">Visibility</Subheader>
+
+            {!ingredient ? (
+              <FormField
+                control={form.control}
+                name="visibility"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel
+                      tooltip="Shared ingredients are visible to everyone. Visibility cannot be changed after creation."
+                      tooltipAriaLabel="Show visibility guidance"
+                    >
+                      Who can see this ingredient
+                    </FormLabel>
+                    <FormControl>
+                      <div
+                        className="flex flex-wrap gap-2"
+                        role="radiogroup"
+                        aria-label="Ingredient visibility"
+                      >
+                        <Button
+                          type="button"
+                          role="radio"
+                          aria-checked={field.value === "global"}
+                          variant={
+                            field.value === "global" ? "default" : "outline"
+                          }
+                          onClick={() => field.onChange("global")}
+                        >
+                          Shared catalog (all users)
+                        </Button>
+                        <Button
+                          type="button"
+                          role="radio"
+                          aria-checked={field.value === "private"}
+                          variant={
+                            field.value === "private" ? "default" : "outline"
+                          }
+                          onClick={() => field.onChange("private")}
+                        >
+                          Private (only me)
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : (
+              <div className="grid gap-2">
+                <Label
+                  tooltip="Visibility is set when the ingredient is created and cannot be changed later."
+                  tooltipAriaLabel="Show visibility guidance"
+                >
+                  Who can see this ingredient
+                </Label>
+                <div
+                  className="flex flex-wrap gap-2"
+                  role="radiogroup"
+                  aria-label="Ingredient visibility"
+                  aria-readonly
+                >
+                  <Button
+                    type="button"
+                    role="radio"
+                    aria-checked={ingredient.userId === null}
+                    variant={ingredient.userId === null ? "default" : "outline"}
+                    disabled
+                  >
+                    Shared catalog (all users)
+                  </Button>
+                  <Button
+                    type="button"
+                    role="radio"
+                    aria-checked={ingredient.userId !== null}
+                    variant={ingredient.userId !== null ? "default" : "outline"}
+                    disabled
+                  >
+                    Private (only me)
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null}
 
         <div className="flex items-center gap-2">
           {mode === "page" ? null : (

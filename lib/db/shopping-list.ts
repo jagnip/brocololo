@@ -426,6 +426,68 @@ export async function getShoppingListById(shoppingListId: string) {
   };
 }
 
+/** Apply per-user supermarket URL overrides on global catalog ingredients. */
+async function applyUserSupermarketUrlOverrides<
+  T extends {
+    items: Array<{
+      groceryIngredient: {
+        ingredient: { id: string; supermarketUrl: string | null };
+      } | null;
+    }>;
+  },
+>(userId: string, list: T): Promise<T> {
+  const ingredientIds = list.items
+    .map((item) => item.groceryIngredient?.ingredient.id)
+    .filter((id): id is string => Boolean(id));
+
+  if (ingredientIds.length === 0) {
+    return list;
+  }
+
+  const customizations = await prisma.ingredientUserCustomization.findMany({
+    where: {
+      userId,
+      ingredientId: { in: ingredientIds },
+      supermarketUrl: { not: null },
+    },
+    select: { ingredientId: true, supermarketUrl: true },
+  });
+
+  if (customizations.length === 0) {
+    return list;
+  }
+
+  const urlByIngredientId = new Map(
+    customizations.map((row) => [row.ingredientId, row.supermarketUrl]),
+  );
+
+  return {
+    ...list,
+    items: list.items.map((item) => {
+      const ingredient = item.groceryIngredient?.ingredient;
+      if (!ingredient) {
+        return item;
+      }
+
+      const overrideUrl = urlByIngredientId.get(ingredient.id);
+      if (!overrideUrl) {
+        return item;
+      }
+
+      return {
+        ...item,
+        groceryIngredient: {
+          ...item.groceryIngredient!,
+          ingredient: {
+            ...ingredient,
+            supermarketUrl: overrideUrl,
+          },
+        },
+      };
+    }),
+  };
+}
+
 /** Shopping list for an owned plan (auth via userId). */
 export async function getShoppingListByPlanId(userId: string, planId: string) {
   await assertPlanOwned(userId, planId);
@@ -434,7 +496,9 @@ export async function getShoppingListByPlanId(userId: string, planId: string) {
     select: { id: true },
   });
   if (!row) return null;
-  return getShoppingListById(row.id);
+  const list = await getShoppingListById(row.id);
+  if (!list) return null;
+  return applyUserSupermarketUrlOverrides(userId, list);
 }
 
 export async function setShoppingListActiveLayoutPresetForList(input: {

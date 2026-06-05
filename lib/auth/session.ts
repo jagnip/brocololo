@@ -1,10 +1,12 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { isAdmin } from "@/lib/auth/admin";
 import { prisma } from "@/lib/db/index";
 
 export type AppUser = {
   id: string;
   clerkId: string;
   email: string | null;
+  isAdmin: boolean;
 };
 
 /**
@@ -22,7 +24,7 @@ export async function getOrCreateUser(clerkId: string): Promise<AppUser> {
   });
 
   if (existing) {
-    return existing;
+    return { ...existing, isAdmin: isAdmin(clerkId) };
   }
 
   const clerkUser = await currentUser();
@@ -31,7 +33,7 @@ export async function getOrCreateUser(clerkId: string): Promise<AppUser> {
     clerkUser?.emailAddresses[0]?.emailAddress ??
     null;
 
-  return prisma.user.create({
+  const created = await prisma.user.create({
     data: {
       clerkId,
       email,
@@ -42,6 +44,8 @@ export async function getOrCreateUser(clerkId: string): Promise<AppUser> {
       email: true,
     },
   });
+
+  return { ...created, isAdmin: isAdmin(clerkId) };
 }
 
 /** Requires an authenticated Clerk session and returns the scoped app user. */

@@ -23,11 +23,18 @@ const hasIngredientListDelegate =
   existingPrisma != null &&
   "ingredientList" in existingPrisma &&
   existingPrisma.ingredientList != null;
+const hasIngredientUserCustomizationDelegate =
+  existingPrisma != null &&
+  "ingredientUserCustomization" in existingPrisma &&
+  existingPrisma.ingredientUserCustomization != null;
 
 // In dev, global singletons can survive schema/client regeneration.
 // Recreate the client when expected delegates are missing.
-export const prisma = hasShoppingListDelegate && hasIngredientListDelegate
-  ? existingPrisma
-  : createPrismaClient();
+export const prisma =
+  hasShoppingListDelegate &&
+  hasIngredientListDelegate &&
+  hasIngredientUserCustomizationDelegate
+    ? existingPrisma
+    : createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;

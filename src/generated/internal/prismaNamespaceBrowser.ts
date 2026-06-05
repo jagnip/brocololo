@@ -68,6 +68,7 @@ export const ModelName = {
   RecipeAudienceMember: 'RecipeAudienceMember',
   RecipeMemberPortion: 'RecipeMemberPortion',
   Ingredient: 'Ingredient',
+  IngredientUserCustomization: 'IngredientUserCustomization',
   Unit: 'Unit',
   IngredientUnit: 'IngredientUnit',
   RecipeIngredient: 'RecipeIngredient',
@@ -296,6 +297,17 @@ export const IngredientScalarFieldEnum = {
 } as const
 
 export type IngredientScalarFieldEnum = (typeof IngredientScalarFieldEnum)[keyof typeof IngredientScalarFieldEnum]
+
+
+export const IngredientUserCustomizationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  ingredientId: 'ingredientId',
+  supermarketUrl: 'supermarketUrl',
+  additionalInfo: 'additionalInfo'
+} as const
+
+export type IngredientUserCustomizationScalarFieldEnum = (typeof IngredientUserCustomizationScalarFieldEnum)[keyof typeof IngredientUserCustomizationScalarFieldEnum]
 
 
 export const UnitScalarFieldEnum = {

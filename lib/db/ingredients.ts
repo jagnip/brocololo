@@ -1,23 +1,92 @@
 import slugify from "slugify";
 import { prisma } from "./index";
-import type { IngredientPayload } from "@/lib/validations/ingredient";
+import type {
+  IngredientPayload,
+  IngredientShoppingOverlayPayload,
+} from "@/lib/validations/ingredient";
 import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
+import {
+  hasShoppingOverlayValues,
+  resolveIngredientForUser,
+} from "@/lib/ingredients/resolve-for-user";
 import { ingredientVisibilityWhere } from "./ingredient-visibility";
 
-export async function getIngredients(userId: string) {
-  return await prisma.ingredient.findMany({
-    where: ingredientVisibilityWhere(userId),
-    include: {
-      category: {
-        select: { id: true, name: true, slug: true, sortOrder: true },
-      },
-      unitConversions: {
-        include: { unit: true },
-        orderBy: { unit: { name: "asc" } },
-      },
+const ingredientListInclude = {
+  category: {
+    select: { id: true, name: true, slug: true, sortOrder: true },
+  },
+  unitConversions: {
+    include: { unit: true },
+    orderBy: { unit: { name: "asc" as const } },
+  },
+  groceryIngredient: true,
+} as const;
+
+async function getCustomizationMap(userId: string, ingredientIds: string[]) {
+  if (ingredientIds.length === 0) {
+    return new Map<string, { supermarketUrl: string | null; additionalInfo: string | null }>();
+  }
+
+  const rows = await prisma.ingredientUserCustomization.findMany({
+    where: {
+      userId,
+      ingredientId: { in: ingredientIds },
     },
+    select: {
+      ingredientId: true,
+      supermarketUrl: true,
+      additionalInfo: true,
+    },
+  });
+
+  return new Map(
+    rows.map((row) => [
+      row.ingredientId,
+      { supermarketUrl: row.supermarketUrl, additionalInfo: row.additionalInfo },
+    ]),
+  );
+}
+
+function mergeIngredientsForUser<T extends { id: string; userId: string | null }>(
+  userId: string,
+  ingredients: T[],
+  customizationMap: Map<
+    string,
+    { supermarketUrl: string | null; additionalInfo: string | null }
+  >,
+) {
+  return ingredients.map((ingredient) =>
+    resolveIngredientForUser(
+      ingredient,
+      ingredient.userId === null ? customizationMap.get(ingredient.id) : null,
+    ),
+  );
+}
+
+export async function getIngredientById(ingredientId: string) {
+  return prisma.ingredient.findUnique({
+    where: { id: ingredientId },
+    select: {
+      id: true,
+      userId: true,
+      slug: true,
+    },
+  });
+}
+
+export async function getIngredients(userId: string) {
+  const ingredients = await prisma.ingredient.findMany({
+    where: ingredientVisibilityWhere(userId),
+    include: ingredientListInclude,
     orderBy: { name: "asc" },
   });
+
+  const customizationMap = await getCustomizationMap(
+    userId,
+    ingredients.filter((row) => row.userId === null).map((row) => row.id),
+  );
+
+  return mergeIngredientsForUser(userId, ingredients, customizationMap);
 }
 
 type GetIngredientsPageInput = {
@@ -80,6 +149,7 @@ export async function getIngredientsPage({
           include: { unit: { select: { id: true, name: true } } },
           orderBy: { unit: { name: "asc" } },
         },
+        groceryIngredient: true,
       },
       orderBy: { name: "asc" },
       skip: (safePage - 1) * safePageSize,
@@ -87,10 +157,15 @@ export async function getIngredientsPage({
     }),
   ]);
 
+  const customizationMap = await getCustomizationMap(
+    userId,
+    items.filter((row) => row.userId === null).map((row) => row.id),
+  );
+
   const totalPages = Math.max(1, Math.ceil(total / safePageSize));
 
   return {
-    items,
+    items: mergeIngredientsForUser(userId, items, customizationMap),
     total,
     page: safePage,
     pageSize: safePageSize,
@@ -101,9 +176,12 @@ export async function getIngredientsPage({
 export type IngredientsPageData = Awaited<ReturnType<typeof getIngredientsPage>>;
 export type IngredientsPageItem = IngredientsPageData["items"][number];
 
-export async function getIngredientBySlug(slug: string) {
-  return prisma.ingredient.findUnique({
-    where: { slug },
+export async function getIngredientBySlug(userId: string, slug: string) {
+  const ingredient = await prisma.ingredient.findFirst({
+    where: {
+      slug,
+      OR: [{ userId: null }, { userId }],
+    },
     include: {
       category: {
         select: { id: true, name: true, slug: true, sortOrder: true },
@@ -119,6 +197,22 @@ export async function getIngredientBySlug(slug: string) {
       groceryIngredient: true,
     },
   });
+
+  if (!ingredient) {
+    return null;
+  }
+
+  const customization =
+    ingredient.userId === null
+      ? await prisma.ingredientUserCustomization.findUnique({
+          where: {
+            userId_ingredientId: { userId, ingredientId: ingredient.id },
+          },
+          select: { supermarketUrl: true, additionalInfo: true },
+        })
+      : null;
+
+  return resolveIngredientForUser(ingredient, customization);
 }
 
 export async function getIngredientCategories() {
@@ -147,8 +241,9 @@ export async function findIngredientIdentityDuplicate(input: {
   name: string;
   descriptor: string | null;
   brand: string | null;
-  // Identity is now scoped per category so the same name+descriptor+brand can exist in different categories.
   categoryId: string;
+  /** null = global catalog row; set for private ingredient owner scope */
+  ownerUserId: string | null;
   excludeIngredientId?: string;
 }) {
   return prisma.ingredient.findFirst({
@@ -162,8 +257,8 @@ export async function findIngredientIdentityDuplicate(input: {
         input.brand == null
           ? null
           : { equals: input.brand, mode: "insensitive" },
-      // Only treat as a duplicate when the category matches.
       categoryId: input.categoryId,
+      userId: input.ownerUserId,
       ...(input.excludeIngredientId ? { id: { not: input.excludeIngredientId } } : {}),
     },
     select: { id: true },
@@ -171,20 +266,21 @@ export async function findIngredientIdentityDuplicate(input: {
 }
 
 export async function createIngredient(
-  userId: string,
+  ownerUserId: string | null,
   data: IngredientPayload & { slug: string },
 ) {
   const {
     unitConversions,
     groceryAdditionalInfo,
     grocerySubstitutionNote,
+    visibility: _visibility,
     ...ingredientData
   } = data;
   const substitutionsAllowed = deriveSubstitutionsAllowed(grocerySubstitutionNote);
 
   return prisma.$transaction(async (tx) => {
     const ingredient = await tx.ingredient.create({
-      data: { ...ingredientData, userId },
+      data: { ...ingredientData, userId: ownerUserId },
       select: { id: true, slug: true },
     });
 
@@ -337,6 +433,7 @@ export async function updateIngredient(
     unitConversions,
     groceryAdditionalInfo,
     grocerySubstitutionNote,
+    visibility: _visibility,
     ...ingredientData
   } = data;
   const substitutionsAllowed = deriveSubstitutionsAllowed(grocerySubstitutionNote);
@@ -467,7 +564,10 @@ type IngredientSlugIdentity = {
  */
 export async function findAvailableSlug(
   identity: IngredientSlugIdentity,
-  excludeIngredientId?: string,
+  options: {
+    ownerUserId: string | null;
+    excludeIngredientId?: string;
+  },
 ): Promise<string> {
   const slugSource = [
     identity.name,
@@ -482,7 +582,10 @@ export async function findAvailableSlug(
   const collision = await prisma.ingredient.findFirst({
     where: {
       slug: baseSlug,
-      ...(excludeIngredientId ? { id: { not: excludeIngredientId } } : {}),
+      userId: options.ownerUserId,
+      ...(options.excludeIngredientId
+        ? { id: { not: options.excludeIngredientId } }
+        : {}),
     },
     select: { id: true },
   });
@@ -494,6 +597,45 @@ export async function findAvailableSlug(
   // Append random suffix to resolve collision.
   const suffix = crypto.randomUUID().slice(0, 6);
   return `${baseSlug}-${suffix}`;
+}
+
+export async function upsertIngredientUserCustomization(
+  userId: string,
+  ingredientId: string,
+  data: IngredientShoppingOverlayPayload,
+) {
+  const base = await prisma.ingredient.findUnique({
+    where: { id: ingredientId },
+    select: { slug: true, userId: true },
+  });
+
+  if (!base || base.userId !== null) {
+    return null;
+  }
+
+  if (!hasShoppingOverlayValues(data)) {
+    await prisma.ingredientUserCustomization.deleteMany({
+      where: { userId, ingredientId },
+    });
+  } else {
+    await prisma.ingredientUserCustomization.upsert({
+      where: {
+        userId_ingredientId: { userId, ingredientId },
+      },
+      create: {
+        userId,
+        ingredientId,
+        supermarketUrl: data.supermarketUrl,
+        additionalInfo: data.groceryAdditionalInfo,
+      },
+      update: {
+        supermarketUrl: data.supermarketUrl,
+        additionalInfo: data.groceryAdditionalInfo,
+      },
+    });
+  }
+
+  return getIngredientBySlug(userId, base.slug);
 }
 
 export async function deleteIngredient(ingredientId: string) {

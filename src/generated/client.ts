@@ -125,6 +125,11 @@ export type RecipeMemberPortion = Prisma.RecipeMemberPortionModel
  */
 export type Ingredient = Prisma.IngredientModel
 /**
+ * Model IngredientUserCustomization
+ * 
+ */
+export type IngredientUserCustomization = Prisma.IngredientUserCustomizationModel
+/**
  * Model Unit
  * 
  */

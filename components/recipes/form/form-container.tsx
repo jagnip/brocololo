@@ -11,7 +11,7 @@ export default async function RecipeFormContainer({
 }: {
   recipeSlug?: string;
 }) {
-  const { id: userId } = await requireUser();
+  const { id: userId, isAdmin } = await requireUser();
   const [categories, ingredients, ingredientFormDependencies, recipe, familyMembers] =
     await Promise.all([
       getCategories(),
@@ -28,6 +28,7 @@ export default async function RecipeFormContainer({
       ingredientFormDependencies={ingredientFormDependencies}
       recipe={recipe ?? undefined}
       familyMembers={familyMembers}
+      isAdmin={isAdmin}
     />
   );
 }

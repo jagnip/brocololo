@@ -401,6 +401,7 @@ export const ModelName = {
   RecipeAudienceMember: 'RecipeAudienceMember',
   RecipeMemberPortion: 'RecipeMemberPortion',
   Ingredient: 'Ingredient',
+  IngredientUserCustomization: 'IngredientUserCustomization',
   Unit: 'Unit',
   IngredientUnit: 'IngredientUnit',
   RecipeIngredient: 'RecipeIngredient',
@@ -431,7 +432,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "category" | "user" | "familyMember" | "plan" | "planAudienceMember" | "groceryIngredient" | "shoppingLayoutPreset" | "shoppingLayoutPresetCategory" | "shoppingList" | "shoppingListShare" | "shoppingListItem" | "planSlot" | "planSlotAlternative" | "recipe" | "recipeAudienceMember" | "recipeMemberPortion" | "ingredient" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientMemberTarget" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage" | "log" | "logEntry" | "logEntryRecipe" | "logIngredient" | "ingredientList" | "ingredientListItem"
+    modelProps: "category" | "user" | "familyMember" | "plan" | "planAudienceMember" | "groceryIngredient" | "shoppingLayoutPreset" | "shoppingLayoutPresetCategory" | "shoppingList" | "shoppingListShare" | "shoppingListItem" | "planSlot" | "planSlotAlternative" | "recipe" | "recipeAudienceMember" | "recipeMemberPortion" | "ingredient" | "ingredientUserCustomization" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientMemberTarget" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage" | "log" | "logEntry" | "logEntryRecipe" | "logIngredient" | "ingredientList" | "ingredientListItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1690,6 +1691,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.IngredientCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.IngredientCountAggregateOutputType> | number
+        }
+      }
+    }
+    IngredientUserCustomization: {
+      payload: Prisma.$IngredientUserCustomizationPayload<ExtArgs>
+      fields: Prisma.IngredientUserCustomizationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.IngredientUserCustomizationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IngredientUserCustomizationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.IngredientUserCustomizationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IngredientUserCustomizationPayload>
+        }
+        findFirst: {
+          args: Prisma.IngredientUserCustomizationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IngredientUserCustomizationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.IngredientUserCustomizationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IngredientUserCustomizationPayload>
+        }
+        findMany: {
+          args: Prisma.IngredientUserCustomizationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IngredientUserCustomizationPayload>[]
+        }
+        create: {
+          args: Prisma.IngredientUserCustomizationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IngredientUserCustomizationPayload>
+        }
+        createMany: {
+          args: Prisma.IngredientUserCustomizationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.IngredientUserCustomizationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IngredientUserCustomizationPayload>[]
+        }
+        delete: {
+          args: Prisma.IngredientUserCustomizationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IngredientUserCustomizationPayload>
+        }
+        update: {
+          args: Prisma.IngredientUserCustomizationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IngredientUserCustomizationPayload>
+        }
+        deleteMany: {
+          args: Prisma.IngredientUserCustomizationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.IngredientUserCustomizationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.IngredientUserCustomizationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IngredientUserCustomizationPayload>[]
+        }
+        upsert: {
+          args: Prisma.IngredientUserCustomizationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$IngredientUserCustomizationPayload>
+        }
+        aggregate: {
+          args: Prisma.IngredientUserCustomizationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateIngredientUserCustomization>
+        }
+        groupBy: {
+          args: Prisma.IngredientUserCustomizationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IngredientUserCustomizationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.IngredientUserCustomizationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.IngredientUserCustomizationCountAggregateOutputType> | number
         }
       }
     }
@@ -3039,6 +3114,17 @@ export const IngredientScalarFieldEnum = {
 export type IngredientScalarFieldEnum = (typeof IngredientScalarFieldEnum)[keyof typeof IngredientScalarFieldEnum]
 
 
+export const IngredientUserCustomizationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  ingredientId: 'ingredientId',
+  supermarketUrl: 'supermarketUrl',
+  additionalInfo: 'additionalInfo'
+} as const
+
+export type IngredientUserCustomizationScalarFieldEnum = (typeof IngredientUserCustomizationScalarFieldEnum)[keyof typeof IngredientUserCustomizationScalarFieldEnum]
+
+
 export const UnitScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -3440,6 +3526,7 @@ export type GlobalOmitConfig = {
   recipeAudienceMember?: Prisma.RecipeAudienceMemberOmit
   recipeMemberPortion?: Prisma.RecipeMemberPortionOmit
   ingredient?: Prisma.IngredientOmit
+  ingredientUserCustomization?: Prisma.IngredientUserCustomizationOmit
   unit?: Prisma.UnitOmit
   ingredientUnit?: Prisma.IngredientUnitOmit
   recipeIngredient?: Prisma.RecipeIngredientOmit

@@ -7,9 +7,11 @@ import {
   findAvailableSlug,
   findIngredientIdentityDuplicate,
   getGramsUnit,
+  getIngredientById,
   getIngredientCategorySlugById,
   getIngredientDeleteUsages,
   updateIngredient,
+  upsertIngredientUserCustomization,
 } from "@/lib/db/ingredients";
 import { redirect } from "next/navigation";
 import {
@@ -21,10 +23,20 @@ import {
 } from "./ingredient-actions";
 import type { IngredientFormValues } from "@/lib/validations/ingredient";
 import { appendRedirectToastToPath } from "@/lib/messages";
+import { requireUser } from "@/lib/auth/session";
 
 vi.mock("next/navigation", () => ({
   // Keep redirect mocked so tests can assert target route.
   redirect: vi.fn(),
+}));
+
+vi.mock("@/lib/auth/session", () => ({
+  requireUser: vi.fn().mockResolvedValue({
+    id: "user-test",
+    clerkId: "clerk-test",
+    email: null,
+    isAdmin: false,
+  }),
 }));
 
 vi.mock("@/lib/db/ingredients", () => ({
@@ -34,9 +46,10 @@ vi.mock("@/lib/db/ingredients", () => ({
   findAvailableSlug: vi.fn(),
   findIngredientIdentityDuplicate: vi.fn(),
   getGramsUnit: vi.fn(),
-  // New: action layer now resolves the category slug to fold it into slug generation.
+  getIngredientById: vi.fn(),
   getIngredientCategorySlugById: vi.fn(),
   updateIngredient: vi.fn(),
+  upsertIngredientUserCustomization: vi.fn(),
 }));
 
 function makeKnownPrismaError(code: string) {
@@ -93,6 +106,7 @@ function makeIngredientRecord() {
       sortOrder: 0,
     },
     defaultUnitId: "unit-g",
+    groceryIngredient: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     unitConversions: [
@@ -120,8 +134,12 @@ describe("inline ingredient save actions", () => {
     vi.mocked(getGramsUnit).mockResolvedValue({ id: "unit-g", name: "g" });
     vi.mocked(findAvailableSlug).mockResolvedValue("chicken-breast");
     vi.mocked(findIngredientIdentityDuplicate).mockResolvedValue(null);
-    // Default category slug used by slug generation; tests that care override per-call.
     vi.mocked(getIngredientCategorySlugById).mockResolvedValue("poultry");
+    vi.mocked(getIngredientById).mockResolvedValue({
+      id: "ingredient-1",
+      userId: "user-test",
+      slug: "chicken-breast",
+    });
   });
 
   it("creates ingredient inline and returns success payload", async () => {
@@ -133,7 +151,65 @@ describe("inline ingredient save actions", () => {
     if (result.type === "success") {
       expect(result.ingredient.id).toBe("ingredient-1");
     }
+    expect(createIngredient).toHaveBeenCalledWith(
+      "user-test",
+      expect.objectContaining({ name: "Chicken Breast" }),
+    );
     expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it("creates global ingredient when admin selects shared catalog", async () => {
+    vi.mocked(requireUser).mockResolvedValueOnce({
+      id: "user-test",
+      clerkId: "clerk-test",
+      email: null,
+      isAdmin: true,
+    });
+    vi.mocked(createIngredient).mockResolvedValue(makeIngredientRecord());
+
+    await createIngredientInlineAction({
+      ...makeValidIngredientFormValues(),
+      visibility: "global",
+    });
+
+    expect(createIngredient).toHaveBeenCalledWith(
+      null,
+      expect.objectContaining({ name: "Chicken Breast" }),
+    );
+  });
+
+  it("creates private ingredient when admin selects private visibility", async () => {
+    vi.mocked(requireUser).mockResolvedValueOnce({
+      id: "user-test",
+      clerkId: "clerk-test",
+      email: null,
+      isAdmin: true,
+    });
+    vi.mocked(createIngredient).mockResolvedValue(makeIngredientRecord());
+
+    await createIngredientInlineAction({
+      ...makeValidIngredientFormValues(),
+      visibility: "private",
+    });
+
+    expect(createIngredient).toHaveBeenCalledWith(
+      "user-test",
+      expect.objectContaining({ name: "Chicken Breast" }),
+    );
+  });
+
+  it("ignores global visibility for non-admin creates", async () => {
+    vi.mocked(createIngredient).mockResolvedValue(makeIngredientRecord());
+
+    await createIngredientInlineAction({
+      ...makeValidIngredientFormValues(),
+      visibility: "global",
+    });
+
+    expect(createIngredient).toHaveBeenCalledWith(
+      "user-test",
+      expect.objectContaining({ name: "Chicken Breast" }),
+    );
   });
 
   it("normalizes descriptor before creating ingredient inline", async () => {
@@ -145,6 +221,7 @@ describe("inline ingredient save actions", () => {
     });
 
     expect(createIngredient).toHaveBeenCalledWith(
+      "user-test",
       expect.objectContaining({ descriptor: "skinless" }),
     );
   });
@@ -159,6 +236,7 @@ describe("inline ingredient save actions", () => {
     });
 
     expect(createIngredient).toHaveBeenCalledWith(
+      "user-test",
       expect.objectContaining({
         groceryAdditionalInfo: "organic",
         grocerySubstitutionNote: "spinach works too",
@@ -180,10 +258,12 @@ describe("inline ingredient save actions", () => {
         name: "Chicken Breast",
         descriptor: "boneless",
         brand: "Tesco",
-        // Category slug is folded into slug source so URLs reflect the new identity.
         categorySlug: "poultry",
       },
-      undefined,
+      {
+        ownerUserId: "user-test",
+        excludeIngredientId: undefined,
+      },
     );
   });
 
@@ -217,6 +297,7 @@ describe("inline ingredient save actions", () => {
       descriptor: "skinless",
       brand: null,
       categoryId: "category-1",
+      ownerUserId: "user-test",
       excludeIngredientId: undefined,
     });
     expect(createIngredient).toHaveBeenCalled();
@@ -236,6 +317,7 @@ describe("inline ingredient save actions", () => {
       descriptor: "boneless",
       brand: "Tesco",
       categoryId: "category-1",
+      ownerUserId: "user-test",
       excludeIngredientId: undefined,
     });
     expect(createIngredient).toHaveBeenCalled();
@@ -258,6 +340,7 @@ describe("inline ingredient save actions", () => {
       descriptor: "boneless",
       brand: "Tesco",
       categoryId: "category-2",
+      ownerUserId: "user-test",
       excludeIngredientId: undefined,
     });
     expect(createIngredient).toHaveBeenCalled();
@@ -300,6 +383,34 @@ describe("inline ingredient save actions", () => {
     expect(updateIngredient).toHaveBeenCalled();
     expect(redirect).not.toHaveBeenCalled();
   });
+
+  it("saves shopping overlay for non-admin editing a global ingredient", async () => {
+    vi.mocked(getIngredientById).mockResolvedValue({
+      id: "ingredient-global",
+      userId: null,
+      slug: "tomato",
+    });
+    vi.mocked(upsertIngredientUserCustomization).mockResolvedValue(
+      makeIngredientRecord(),
+    );
+
+    const result = await updateIngredientInlineAction("ingredient-global", {
+      ...makeValidIngredientFormValues(),
+      supermarketUrl: "https://shop.example.com/tomato",
+      groceryAdditionalInfo: "organic",
+    });
+
+    expect(result.type).toBe("success");
+    expect(upsertIngredientUserCustomization).toHaveBeenCalledWith(
+      "user-test",
+      "ingredient-global",
+      {
+        supermarketUrl: "https://shop.example.com/tomato",
+        groceryAdditionalInfo: "organic",
+      },
+    );
+    expect(updateIngredient).not.toHaveBeenCalled();
+  });
 });
 
 describe("page ingredient save actions", () => {
@@ -308,8 +419,12 @@ describe("page ingredient save actions", () => {
     vi.mocked(getGramsUnit).mockResolvedValue({ id: "unit-g", name: "g" });
     vi.mocked(findAvailableSlug).mockResolvedValue("chicken-breast");
     vi.mocked(findIngredientIdentityDuplicate).mockResolvedValue(null);
-    // Default category slug used by slug generation; tests that care override per-call.
     vi.mocked(getIngredientCategorySlugById).mockResolvedValue("poultry");
+    vi.mocked(getIngredientById).mockResolvedValue({
+      id: "ingredient-1",
+      userId: "user-test",
+      slug: "chicken-breast",
+    });
   });
 
   it("redirects after successful create in page flow", async () => {
@@ -372,6 +487,7 @@ describe("page ingredient save actions", () => {
       descriptor: null,
       brand: null,
       categoryId: "category-1",
+      ownerUserId: "user-test",
       excludeIngredientId: "ingredient-1",
     });
     expect(updateIngredient).toHaveBeenCalled();
@@ -398,6 +514,11 @@ describe("deleteIngredientAction", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getIngredientById).mockResolvedValue({
+      id: ingredientId,
+      userId: "user-test",
+      slug: "chicken-breast",
+    });
   });
 
   it("blocks delete when ingredient is used by recipes", async () => {

@@ -22,6 +22,7 @@ type CreateIngredientDialogProps = IngredientFormDependencies & {
   initialName?: string;
   onOpenChange: (open: boolean) => void;
   onCreated: (ingredient: IngredientType) => void;
+  isAdmin?: boolean;
 };
 
 export function CreateIngredientDialog({
@@ -33,6 +34,7 @@ export function CreateIngredientDialog({
   units,
   gramsUnitId,
   iconOptions,
+  isAdmin = false,
 }: CreateIngredientDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -48,6 +50,7 @@ export function CreateIngredientDialog({
         <IngredientForm
           mode="dialog"
           initialName={initialName}
+          isAdmin={isAdmin}
           categories={categories}
           units={units}
           gramsUnitId={gramsUnitId}

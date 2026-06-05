@@ -115,6 +115,8 @@ const ingredientBaseSchema = z.object({
       const trimmed = value.trim();
       return trimmed === "" ? null : trimmed;
     }),
+  // Create-only: admin chooses shared catalog vs private ingredient.
+  visibility: z.enum(["global", "private"]).optional().default("private"),
 });
 
 export function makeIngredientSchema(gramsUnitId: string) {
@@ -165,3 +167,31 @@ export function makeIngredientSchema(gramsUnitId: string) {
 
 export type IngredientFormValues = z.input<typeof ingredientBaseSchema>;
 export type IngredientPayload = z.infer<typeof ingredientBaseSchema>;
+
+const nullableUrl = z
+  .string()
+  .trim()
+  .url({ message: "Enter a valid URL (include https://)" })
+  .nullish()
+  .transform((value) => {
+    if (!value) return null;
+    return value === "" ? null : value;
+  });
+
+/** Shopping fields regular users may override on global catalog ingredients. */
+export const ingredientShoppingOverlaySchema = z.object({
+  supermarketUrl: nullableUrl,
+  groceryAdditionalInfo: z
+    .string()
+    .max(200, { message: "Keep notes under 200 characters" })
+    .nullish()
+    .transform((value) => {
+      if (!value) return null;
+      const trimmed = value.trim();
+      return trimmed === "" ? null : trimmed;
+    }),
+});
+
+export type IngredientShoppingOverlayPayload = z.infer<
+  typeof ingredientShoppingOverlaySchema
+>;

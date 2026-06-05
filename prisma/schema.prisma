@@ -47,9 +47,10 @@ model User {
   familyMembers             FamilyMember[]
   recipes                   Recipe[]
   plans                     Plan[]
-  ingredientLists           IngredientList[]
-  ingredients               Ingredient[]
-  shoppingListSharesCreated ShoppingListShare[]
+  ingredientLists              IngredientList[]
+  ingredients                  Ingredient[]
+  ingredientUserCustomizations IngredientUserCustomization[]
+  shoppingListSharesCreated    ShoppingListShare[]
 
   @@map("users")
 }
@@ -288,7 +289,7 @@ model Ingredient {
   id             String  @id @default(cuid())
   userId         String? @map("user_id")
   name           String
-  slug           String  @unique
+  slug           String
   icon           String?
   brand          String?
   descriptor     String?
@@ -300,19 +301,37 @@ model Ingredient {
   categoryId     String  @map("category_id")
   defaultUnitId  String? @map("default_unit_id")
 
-  user              User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category          IngredientCategory   @relation(fields: [categoryId], references: [id])
-  defaultUnit       Unit?                @relation("ingredient_default_unit", fields: [defaultUnitId], references: [id], onDelete: Restrict)
-  recipes           RecipeIngredient[]
-  unitConversions   IngredientUnit[]
-  logIngredients    LogIngredient[]
-  groceryIngredient GroceryIngredient?
-  ingredientLists   IngredientListItem[]
+  user                       User?                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category                   IngredientCategory            @relation(fields: [categoryId], references: [id])
+  defaultUnit                Unit?                         @relation("ingredient_default_unit", fields: [defaultUnitId], references: [id], onDelete: Restrict)
+  recipes                    RecipeIngredient[]
+  unitConversions            IngredientUnit[]
+  logIngredients             LogIngredient[]
+  groceryIngredient          GroceryIngredient?
+  ingredientLists            IngredientListItem[]
+  userCustomizations         IngredientUserCustomization[]
 
   @@index([userId])
+  @@index([slug])
   @@index([categoryId])
   @@index([defaultUnitId])
   @@map("ingredients")
+}
+
+// Per-user shopping overrides for global catalog ingredients (userId null on ingredient).
+model IngredientUserCustomization {
+  id             String  @id @default(cuid())
+  userId         String  @map("user_id")
+  ingredientId   String  @map("ingredient_id")
+  supermarketUrl String? @map("supermarket_url")
+  additionalInfo String? @map("additional_info")
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ingredientId])
+  @@index([ingredientId])
+  @@map("ingredient_user_customizations")
 }
 
 model Unit {
