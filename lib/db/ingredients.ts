@@ -1,6 +1,7 @@
 import slugify from "slugify";
 import { prisma } from "./index";
 import type { IngredientPayload } from "@/lib/validations/ingredient";
+import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
 import { ingredientVisibilityWhere } from "./ingredient-visibility";
 
 export async function getIngredients(userId: string) {
@@ -177,9 +178,9 @@ export async function createIngredient(
     unitConversions,
     groceryAdditionalInfo,
     grocerySubstitutionNote,
-    grocerySubstitutionsAllowed,
     ...ingredientData
   } = data;
+  const substitutionsAllowed = deriveSubstitutionsAllowed(grocerySubstitutionNote);
 
   return prisma.$transaction(async (tx) => {
     const ingredient = await tx.ingredient.create({
@@ -202,12 +203,12 @@ export async function createIngredient(
         ingredientId: ingredient.id,
         additionalInfo: groceryAdditionalInfo,
         substitutionNote: grocerySubstitutionNote,
-        substitutionsAllowed: grocerySubstitutionsAllowed,
+        substitutionsAllowed,
       },
       update: {
         additionalInfo: groceryAdditionalInfo,
         substitutionNote: grocerySubstitutionNote,
-        substitutionsAllowed: grocerySubstitutionsAllowed,
+        substitutionsAllowed,
       },
     });
 
@@ -336,9 +337,9 @@ export async function updateIngredient(
     unitConversions,
     groceryAdditionalInfo,
     grocerySubstitutionNote,
-    grocerySubstitutionsAllowed,
     ...ingredientData
   } = data;
+  const substitutionsAllowed = deriveSubstitutionsAllowed(grocerySubstitutionNote);
 
   return prisma.$transaction(async (tx) => {
     const existingConversions = await tx.ingredientUnit.findMany({
@@ -427,12 +428,12 @@ export async function updateIngredient(
         ingredientId,
         additionalInfo: groceryAdditionalInfo,
         substitutionNote: grocerySubstitutionNote,
-        substitutionsAllowed: grocerySubstitutionsAllowed,
+        substitutionsAllowed,
       },
       update: {
         additionalInfo: groceryAdditionalInfo,
         substitutionNote: grocerySubstitutionNote,
-        substitutionsAllowed: grocerySubstitutionsAllowed,
+        substitutionsAllowed,
       },
     });
 

@@ -59,9 +59,7 @@ export function GroceriesPersistedItemRow({
     () => parseRecipeNames(row.recipeAttribution),
     [row.recipeAttribution],
   );
-  const hasMeta = Boolean(
-    row.additionalInfo || (row.substitutionsAllowed && row.substitutionNote),
-  );
+  const hasMeta = Boolean(row.additionalInfo || row.substitutionNote);
 
   const displayUnit = getUnitDisplayName({
     amount: row.amount,
@@ -204,7 +202,7 @@ export function GroceriesPersistedItemRow({
               {row.additionalInfo}
             </p>
           ) : null}
-          {row.substitutionsAllowed && row.substitutionNote ? (
+          {row.substitutionNote ? (
             <p
               className={cn(
                 "flex items-start gap-2 text-muted-foreground",

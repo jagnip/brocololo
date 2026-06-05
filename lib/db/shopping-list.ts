@@ -1,6 +1,7 @@
 import type { Prisma } from "@/src/generated/client";
 import { getPlanForGroceries } from "@/lib/db/planner";
 import { transformPlanToShoppingListRows } from "@/lib/groceries/helpers";
+import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
 import type { PlanSlotData } from "@/lib/groceries/helpers";
 import { prisma } from "@/lib/db/index";
 
@@ -308,7 +309,9 @@ export async function generateShoppingListForPlan(
             unitId: resolvedUnitId,
             amount: line.amount,
             additionalInfo: profile?.additionalInfo ?? null,
-            substitutionsAllowed: profile?.substitutionsAllowed ?? false,
+            substitutionsAllowed: deriveSubstitutionsAllowed(
+              profile?.substitutionNote,
+            ),
             substitutionNote: profile?.substitutionNote ?? null,
             purchased: false,
             recipeAttribution:
@@ -791,7 +794,9 @@ export async function updateShoppingListItems(input: {
               unitId: row.unitId,
               amount: row.amount,
               additionalInfo: row.additionalInfo,
-              substitutionsAllowed: row.substitutionsAllowed,
+              substitutionsAllowed: deriveSubstitutionsAllowed(
+                row.substitutionNote,
+              ),
               substitutionNote: row.substitutionNote,
               purchased: false,
               // User-added rows have no recipe attribution.
@@ -827,7 +832,9 @@ export async function updateShoppingListItems(input: {
             unitId: row.unitId,
             amount: row.amount,
             additionalInfo: row.additionalInfo,
-            substitutionsAllowed: row.substitutionsAllowed,
+            substitutionsAllowed: deriveSubstitutionsAllowed(
+              row.substitutionNote,
+            ),
             substitutionNote: row.substitutionNote,
           },
         });

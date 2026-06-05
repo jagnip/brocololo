@@ -58,8 +58,6 @@ import { CreateUnitDialog } from "./create-unit-dialog";
 import { RenameUnitDialog } from "./rename-unit-dialog";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { TopbarConfigController } from "@/components/topbar-config";
-import { SubstitutionsAllowedControl } from "@/components/groceries/substitutions-allowed-control";
-
 type IngredientFormProps = {
   categories: Array<{ id: string; name: string }>;
   units: Array<{ id: string; name: string; namePlural: string | null }>;
@@ -165,8 +163,6 @@ export default function IngredientForm({
           groceryAdditionalInfo: ingredient.groceryIngredient?.additionalInfo ?? null,
           grocerySubstitutionNote:
             ingredient.groceryIngredient?.substitutionNote ?? null,
-          grocerySubstitutionsAllowed:
-            ingredient.groceryIngredient?.substitutionsAllowed ?? false,
           unitConversions: ingredient.unitConversions.map((conversion) => ({
             unitId: conversion.unitId,
             gramsPerUnit: conversion.gramsPerUnit,
@@ -185,7 +181,6 @@ export default function IngredientForm({
           defaultUnitId: gramsUnitId,
           groceryAdditionalInfo: null,
           grocerySubstitutionNote: null,
-          grocerySubstitutionsAllowed: false,
           // Keep grams conversion in form state as canonical baseline.
           unitConversions: [{ unitId: gramsUnitId, gramsPerUnit: 1 }],
         },
@@ -915,23 +910,6 @@ export default function IngredientForm({
                       />
                     </FormControl>
                     <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="grocerySubstitutionsAllowed"
-                render={({ field }) => (
-                  <FormItem className="order-3 self-end gap-0 md:order-3 md:col-span-1">
-                    <FormControl>
-                      <SubstitutionsAllowedControl
-                        checked={field.value ?? false}
-                        onCheckedChange={field.onChange}
-                        // Ingredient form keeps this control full-width in its column.
-                        className="w-full justify-between"
-                      />
-                    </FormControl>
                   </FormItem>
                 )}
               />

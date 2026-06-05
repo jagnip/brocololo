@@ -115,7 +115,6 @@ const ingredientBaseSchema = z.object({
       const trimmed = value.trim();
       return trimmed === "" ? null : trimmed;
     }),
-  grocerySubstitutionsAllowed: z.boolean().default(false),
 });
 
 export function makeIngredientSchema(gramsUnitId: string) {

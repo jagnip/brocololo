@@ -65,7 +65,6 @@ function makeValidIngredientFormValues(): IngredientFormValues {
     defaultUnitId: "unit-g",
     groceryAdditionalInfo: null,
     grocerySubstitutionNote: null,
-    grocerySubstitutionsAllowed: false,
     unitConversions: [
       { unitId: "unit-g", gramsPerUnit: 1 },
       { unitId: "unit-cup", gramsPerUnit: 120 },
@@ -157,14 +156,12 @@ describe("inline ingredient save actions", () => {
       ...makeValidIngredientFormValues(),
       groceryAdditionalInfo: "organic",
       grocerySubstitutionNote: "spinach works too",
-      grocerySubstitutionsAllowed: true,
     });
 
     expect(createIngredient).toHaveBeenCalledWith(
       expect.objectContaining({
         groceryAdditionalInfo: "organic",
         grocerySubstitutionNote: "spinach works too",
-        grocerySubstitutionsAllowed: true,
       }),
     );
   });

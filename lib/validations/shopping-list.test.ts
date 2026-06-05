@@ -7,6 +7,7 @@ import {
 function makeValidRow() {
   return {
     id: "item-1",
+    isNew: false,
     ingredientId: "ingredient-1",
     ingredientCategoryId: "category-1",
     displayLabel: "Tomato",
@@ -59,6 +60,22 @@ describe("shoppingListEditableItemSchema", () => {
       amount: null,
     });
     expect(result.success).toBe(true);
+  });
+
+  it("derives substitutionsAllowed from substitution note", () => {
+    const withNote = shoppingListEditableItemSchema.parse({
+      ...makeValidRow(),
+      substitutionsAllowed: false,
+      substitutionNote: "Cherry tomato",
+    });
+    expect(withNote.substitutionsAllowed).toBe(true);
+
+    const withoutNote = shoppingListEditableItemSchema.parse({
+      ...makeValidRow(),
+      substitutionsAllowed: true,
+      substitutionNote: null,
+    });
+    expect(withoutNote.substitutionsAllowed).toBe(false);
   });
 });
 
