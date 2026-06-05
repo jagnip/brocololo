@@ -8,6 +8,8 @@ import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
 import {
   hasShoppingOverlayValues,
   resolveIngredientForUser,
+  type IngredientWithGroceryFields,
+  type ResolvedIngredientForUser,
 } from "@/lib/ingredients/resolve-for-user";
 import { ingredientVisibilityWhere } from "./ingredient-visibility";
 
@@ -62,11 +64,13 @@ export async function getIngredientCustomizationMap(
   );
 }
 
-function mergeIngredientsForUser<T extends { id: string; userId: string | null }>(
+function mergeIngredientsForUser<
+  T extends { id: string; userId: string | null } & IngredientWithGroceryFields,
+>(
   userId: string,
   ingredients: T[],
   customizationMap: Awaited<ReturnType<typeof getIngredientCustomizationMap>>,
-) {
+): ResolvedIngredientForUser<T>[] {
   return ingredients.map((ingredient) =>
     resolveIngredientForUser(
       ingredient,
@@ -199,11 +203,7 @@ export async function getIngredientBySlug(userId: string, slug: string) {
         select: { id: true, name: true, slug: true, sortOrder: true },
       },
       unitConversions: {
-        include: {
-          unit: {
-            select: { id: true, name: true },
-          },
-        },
+        include: { unit: true },
         orderBy: { unit: { name: "asc" } },
       },
       groceryIngredient: true,
@@ -220,7 +220,11 @@ export async function getIngredientBySlug(userId: string, slug: string) {
           where: {
             userId_ingredientId: { userId, ingredientId: ingredient.id },
           },
-          select: { supermarketUrl: true, additionalInfo: true },
+          select: {
+            supermarketUrl: true,
+            additionalInfo: true,
+            substitutionNote: true,
+          },
         })
       : null;
 
@@ -643,7 +647,13 @@ export async function upsertIngredientUserCustomization(
     return null;
   }
 
-  if (!hasShoppingOverlayValues(data)) {
+  const overlayRow = {
+    supermarketUrl: data.supermarketUrl,
+    additionalInfo: data.groceryAdditionalInfo,
+    substitutionNote: data.grocerySubstitutionNote,
+  };
+
+  if (!hasShoppingOverlayValues(overlayRow)) {
     await prisma.ingredientUserCustomization.deleteMany({
       where: { userId, ingredientId },
     });

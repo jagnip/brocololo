@@ -12,20 +12,22 @@ export type IngredientUserCustomizationRow = {
   substitutionNote: string | null;
 };
 
-type IngredientWithGrocery = {
+export type IngredientWithGroceryFields = {
   userId: string | null;
   supermarketUrl: string | null;
   groceryIngredient: GroceryIngredientShape;
 };
 
-/** Merge per-user shopping overlay for global catalog ingredients. */
-export function resolveIngredientForUser<T extends IngredientWithGrocery>(
-  ingredient: T,
-  customization: IngredientUserCustomizationRow | null | undefined,
-): T & {
+export type ResolvedIngredientForUser<T extends IngredientWithGroceryFields> = T & {
   isGlobal: boolean;
   hasUserCustomization: boolean;
-} {
+};
+
+/** Merge per-user shopping overlay for global catalog ingredients. */
+export function resolveIngredientForUser<T extends IngredientWithGroceryFields>(
+  ingredient: T,
+  customization: IngredientUserCustomizationRow | null | undefined,
+): ResolvedIngredientForUser<T> {
   const isGlobal = ingredient.userId === null;
 
   // Private ingredients keep canonical grocery fields on the ingredient row.

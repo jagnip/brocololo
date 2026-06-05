@@ -218,6 +218,8 @@ async function saveIngredient(
         {
           ...normalizedPayload,
           slug,
+          // Satisfies IngredientPayload; ignored on update (visibility is create-only).
+          visibility,
         },
         { gramsUnitId: gramsUnit.id },
       );
@@ -276,7 +278,7 @@ async function saveIngredient(
     );
 
     if (overlayIngredient) {
-      ingredient = overlayIngredient as IngredientType;
+      ingredient = overlayIngredient as unknown as IngredientType;
     }
   }
 
