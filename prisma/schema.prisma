@@ -323,8 +323,9 @@ model IngredientUserCustomization {
   id             String  @id @default(cuid())
   userId         String  @map("user_id")
   ingredientId   String  @map("ingredient_id")
-  supermarketUrl String? @map("supermarket_url")
-  additionalInfo String? @map("additional_info")
+  supermarketUrl   String? @map("supermarket_url")
+  additionalInfo   String? @map("additional_info")
+  substitutionNote String? @map("substitution_note")
 
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)

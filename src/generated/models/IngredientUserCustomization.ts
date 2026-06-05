@@ -30,6 +30,7 @@ export type IngredientUserCustomizationMinAggregateOutputType = {
   ingredientId: string | null
   supermarketUrl: string | null
   additionalInfo: string | null
+  substitutionNote: string | null
 }
 
 export type IngredientUserCustomizationMaxAggregateOutputType = {
@@ -38,6 +39,7 @@ export type IngredientUserCustomizationMaxAggregateOutputType = {
   ingredientId: string | null
   supermarketUrl: string | null
   additionalInfo: string | null
+  substitutionNote: string | null
 }
 
 export type IngredientUserCustomizationCountAggregateOutputType = {
@@ -46,6 +48,7 @@ export type IngredientUserCustomizationCountAggregateOutputType = {
   ingredientId: number
   supermarketUrl: number
   additionalInfo: number
+  substitutionNote: number
   _all: number
 }
 
@@ -56,6 +59,7 @@ export type IngredientUserCustomizationMinAggregateInputType = {
   ingredientId?: true
   supermarketUrl?: true
   additionalInfo?: true
+  substitutionNote?: true
 }
 
 export type IngredientUserCustomizationMaxAggregateInputType = {
@@ -64,6 +68,7 @@ export type IngredientUserCustomizationMaxAggregateInputType = {
   ingredientId?: true
   supermarketUrl?: true
   additionalInfo?: true
+  substitutionNote?: true
 }
 
 export type IngredientUserCustomizationCountAggregateInputType = {
@@ -72,6 +77,7 @@ export type IngredientUserCustomizationCountAggregateInputType = {
   ingredientId?: true
   supermarketUrl?: true
   additionalInfo?: true
+  substitutionNote?: true
   _all?: true
 }
 
@@ -153,6 +159,7 @@ export type IngredientUserCustomizationGroupByOutputType = {
   ingredientId: string
   supermarketUrl: string | null
   additionalInfo: string | null
+  substitutionNote: string | null
   _count: IngredientUserCustomizationCountAggregateOutputType | null
   _min: IngredientUserCustomizationMinAggregateOutputType | null
   _max: IngredientUserCustomizationMaxAggregateOutputType | null
@@ -182,6 +189,7 @@ export type IngredientUserCustomizationWhereInput = {
   ingredientId?: Prisma.StringFilter<"IngredientUserCustomization"> | string
   supermarketUrl?: Prisma.StringNullableFilter<"IngredientUserCustomization"> | string | null
   additionalInfo?: Prisma.StringNullableFilter<"IngredientUserCustomization"> | string | null
+  substitutionNote?: Prisma.StringNullableFilter<"IngredientUserCustomization"> | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   ingredient?: Prisma.XOR<Prisma.IngredientScalarRelationFilter, Prisma.IngredientWhereInput>
 }
@@ -192,6 +200,7 @@ export type IngredientUserCustomizationOrderByWithRelationInput = {
   ingredientId?: Prisma.SortOrder
   supermarketUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   additionalInfo?: Prisma.SortOrderInput | Prisma.SortOrder
+  substitutionNote?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   ingredient?: Prisma.IngredientOrderByWithRelationInput
 }
@@ -206,6 +215,7 @@ export type IngredientUserCustomizationWhereUniqueInput = Prisma.AtLeast<{
   ingredientId?: Prisma.StringFilter<"IngredientUserCustomization"> | string
   supermarketUrl?: Prisma.StringNullableFilter<"IngredientUserCustomization"> | string | null
   additionalInfo?: Prisma.StringNullableFilter<"IngredientUserCustomization"> | string | null
+  substitutionNote?: Prisma.StringNullableFilter<"IngredientUserCustomization"> | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   ingredient?: Prisma.XOR<Prisma.IngredientScalarRelationFilter, Prisma.IngredientWhereInput>
 }, "id" | "userId_ingredientId">
@@ -216,6 +226,7 @@ export type IngredientUserCustomizationOrderByWithAggregationInput = {
   ingredientId?: Prisma.SortOrder
   supermarketUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   additionalInfo?: Prisma.SortOrderInput | Prisma.SortOrder
+  substitutionNote?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.IngredientUserCustomizationCountOrderByAggregateInput
   _max?: Prisma.IngredientUserCustomizationMaxOrderByAggregateInput
   _min?: Prisma.IngredientUserCustomizationMinOrderByAggregateInput
@@ -230,12 +241,14 @@ export type IngredientUserCustomizationScalarWhereWithAggregatesInput = {
   ingredientId?: Prisma.StringWithAggregatesFilter<"IngredientUserCustomization"> | string
   supermarketUrl?: Prisma.StringNullableWithAggregatesFilter<"IngredientUserCustomization"> | string | null
   additionalInfo?: Prisma.StringNullableWithAggregatesFilter<"IngredientUserCustomization"> | string | null
+  substitutionNote?: Prisma.StringNullableWithAggregatesFilter<"IngredientUserCustomization"> | string | null
 }
 
 export type IngredientUserCustomizationCreateInput = {
   id?: string
   supermarketUrl?: string | null
   additionalInfo?: string | null
+  substitutionNote?: string | null
   user: Prisma.UserCreateNestedOneWithoutIngredientUserCustomizationsInput
   ingredient: Prisma.IngredientCreateNestedOneWithoutUserCustomizationsInput
 }
@@ -246,12 +259,14 @@ export type IngredientUserCustomizationUncheckedCreateInput = {
   ingredientId: string
   supermarketUrl?: string | null
   additionalInfo?: string | null
+  substitutionNote?: string | null
 }
 
 export type IngredientUserCustomizationUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  substitutionNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutIngredientUserCustomizationsNestedInput
   ingredient?: Prisma.IngredientUpdateOneRequiredWithoutUserCustomizationsNestedInput
 }
@@ -262,6 +277,7 @@ export type IngredientUserCustomizationUncheckedUpdateInput = {
   ingredientId?: Prisma.StringFieldUpdateOperationsInput | string
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  substitutionNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type IngredientUserCustomizationCreateManyInput = {
@@ -270,12 +286,14 @@ export type IngredientUserCustomizationCreateManyInput = {
   ingredientId: string
   supermarketUrl?: string | null
   additionalInfo?: string | null
+  substitutionNote?: string | null
 }
 
 export type IngredientUserCustomizationUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  substitutionNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type IngredientUserCustomizationUncheckedUpdateManyInput = {
@@ -284,6 +302,7 @@ export type IngredientUserCustomizationUncheckedUpdateManyInput = {
   ingredientId?: Prisma.StringFieldUpdateOperationsInput | string
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  substitutionNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type IngredientUserCustomizationListRelationFilter = {
@@ -307,6 +326,7 @@ export type IngredientUserCustomizationCountOrderByAggregateInput = {
   ingredientId?: Prisma.SortOrder
   supermarketUrl?: Prisma.SortOrder
   additionalInfo?: Prisma.SortOrder
+  substitutionNote?: Prisma.SortOrder
 }
 
 export type IngredientUserCustomizationMaxOrderByAggregateInput = {
@@ -315,6 +335,7 @@ export type IngredientUserCustomizationMaxOrderByAggregateInput = {
   ingredientId?: Prisma.SortOrder
   supermarketUrl?: Prisma.SortOrder
   additionalInfo?: Prisma.SortOrder
+  substitutionNote?: Prisma.SortOrder
 }
 
 export type IngredientUserCustomizationMinOrderByAggregateInput = {
@@ -323,6 +344,7 @@ export type IngredientUserCustomizationMinOrderByAggregateInput = {
   ingredientId?: Prisma.SortOrder
   supermarketUrl?: Prisma.SortOrder
   additionalInfo?: Prisma.SortOrder
+  substitutionNote?: Prisma.SortOrder
 }
 
 export type IngredientUserCustomizationCreateNestedManyWithoutUserInput = {
@@ -413,6 +435,7 @@ export type IngredientUserCustomizationCreateWithoutUserInput = {
   id?: string
   supermarketUrl?: string | null
   additionalInfo?: string | null
+  substitutionNote?: string | null
   ingredient: Prisma.IngredientCreateNestedOneWithoutUserCustomizationsInput
 }
 
@@ -421,6 +444,7 @@ export type IngredientUserCustomizationUncheckedCreateWithoutUserInput = {
   ingredientId: string
   supermarketUrl?: string | null
   additionalInfo?: string | null
+  substitutionNote?: string | null
 }
 
 export type IngredientUserCustomizationCreateOrConnectWithoutUserInput = {
@@ -458,12 +482,14 @@ export type IngredientUserCustomizationScalarWhereInput = {
   ingredientId?: Prisma.StringFilter<"IngredientUserCustomization"> | string
   supermarketUrl?: Prisma.StringNullableFilter<"IngredientUserCustomization"> | string | null
   additionalInfo?: Prisma.StringNullableFilter<"IngredientUserCustomization"> | string | null
+  substitutionNote?: Prisma.StringNullableFilter<"IngredientUserCustomization"> | string | null
 }
 
 export type IngredientUserCustomizationCreateWithoutIngredientInput = {
   id?: string
   supermarketUrl?: string | null
   additionalInfo?: string | null
+  substitutionNote?: string | null
   user: Prisma.UserCreateNestedOneWithoutIngredientUserCustomizationsInput
 }
 
@@ -472,6 +498,7 @@ export type IngredientUserCustomizationUncheckedCreateWithoutIngredientInput = {
   userId: string
   supermarketUrl?: string | null
   additionalInfo?: string | null
+  substitutionNote?: string | null
 }
 
 export type IngredientUserCustomizationCreateOrConnectWithoutIngredientInput = {
@@ -505,12 +532,14 @@ export type IngredientUserCustomizationCreateManyUserInput = {
   ingredientId: string
   supermarketUrl?: string | null
   additionalInfo?: string | null
+  substitutionNote?: string | null
 }
 
 export type IngredientUserCustomizationUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  substitutionNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ingredient?: Prisma.IngredientUpdateOneRequiredWithoutUserCustomizationsNestedInput
 }
 
@@ -519,6 +548,7 @@ export type IngredientUserCustomizationUncheckedUpdateWithoutUserInput = {
   ingredientId?: Prisma.StringFieldUpdateOperationsInput | string
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  substitutionNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type IngredientUserCustomizationUncheckedUpdateManyWithoutUserInput = {
@@ -526,6 +556,7 @@ export type IngredientUserCustomizationUncheckedUpdateManyWithoutUserInput = {
   ingredientId?: Prisma.StringFieldUpdateOperationsInput | string
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  substitutionNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type IngredientUserCustomizationCreateManyIngredientInput = {
@@ -533,12 +564,14 @@ export type IngredientUserCustomizationCreateManyIngredientInput = {
   userId: string
   supermarketUrl?: string | null
   additionalInfo?: string | null
+  substitutionNote?: string | null
 }
 
 export type IngredientUserCustomizationUpdateWithoutIngredientInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  substitutionNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutIngredientUserCustomizationsNestedInput
 }
 
@@ -547,6 +580,7 @@ export type IngredientUserCustomizationUncheckedUpdateWithoutIngredientInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  substitutionNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type IngredientUserCustomizationUncheckedUpdateManyWithoutIngredientInput = {
@@ -554,6 +588,7 @@ export type IngredientUserCustomizationUncheckedUpdateManyWithoutIngredientInput
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   supermarketUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   additionalInfo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  substitutionNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -564,6 +599,7 @@ export type IngredientUserCustomizationSelect<ExtArgs extends runtime.Types.Exte
   ingredientId?: boolean
   supermarketUrl?: boolean
   additionalInfo?: boolean
+  substitutionNote?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   ingredient?: boolean | Prisma.IngredientDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["ingredientUserCustomization"]>
@@ -574,6 +610,7 @@ export type IngredientUserCustomizationSelectCreateManyAndReturn<ExtArgs extends
   ingredientId?: boolean
   supermarketUrl?: boolean
   additionalInfo?: boolean
+  substitutionNote?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   ingredient?: boolean | Prisma.IngredientDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["ingredientUserCustomization"]>
@@ -584,6 +621,7 @@ export type IngredientUserCustomizationSelectUpdateManyAndReturn<ExtArgs extends
   ingredientId?: boolean
   supermarketUrl?: boolean
   additionalInfo?: boolean
+  substitutionNote?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   ingredient?: boolean | Prisma.IngredientDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["ingredientUserCustomization"]>
@@ -594,9 +632,10 @@ export type IngredientUserCustomizationSelectScalar = {
   ingredientId?: boolean
   supermarketUrl?: boolean
   additionalInfo?: boolean
+  substitutionNote?: boolean
 }
 
-export type IngredientUserCustomizationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "ingredientId" | "supermarketUrl" | "additionalInfo", ExtArgs["result"]["ingredientUserCustomization"]>
+export type IngredientUserCustomizationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "ingredientId" | "supermarketUrl" | "additionalInfo" | "substitutionNote", ExtArgs["result"]["ingredientUserCustomization"]>
 export type IngredientUserCustomizationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   ingredient?: boolean | Prisma.IngredientDefaultArgs<ExtArgs>
@@ -622,6 +661,7 @@ export type $IngredientUserCustomizationPayload<ExtArgs extends runtime.Types.Ex
     ingredientId: string
     supermarketUrl: string | null
     additionalInfo: string | null
+    substitutionNote: string | null
   }, ExtArgs["result"]["ingredientUserCustomization"]>
   composites: {}
 }
@@ -1052,6 +1092,7 @@ export interface IngredientUserCustomizationFieldRefs {
   readonly ingredientId: Prisma.FieldRef<"IngredientUserCustomization", 'String'>
   readonly supermarketUrl: Prisma.FieldRef<"IngredientUserCustomization", 'String'>
   readonly additionalInfo: Prisma.FieldRef<"IngredientUserCustomization", 'String'>
+  readonly substitutionNote: Prisma.FieldRef<"IngredientUserCustomization", 'String'>
 }
     
 

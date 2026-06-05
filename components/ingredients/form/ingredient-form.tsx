@@ -343,7 +343,8 @@ export default function IngredientForm({
   const isGlobalIngredient = ingredient?.userId === null;
   const canonicalDisabled = Boolean(ingredient && isGlobalIngredient && !isAdmin);
   const canDelete = isAdmin || (ingredient?.userId != null);
-  const groceriesSubstitutionDisabled = canonicalDisabled;
+  // Substitutions are per-user overlay fields on global ingredients.
+  const groceriesSubstitutionDisabled = false;
   const handleTopbarCreateClick = useCallback(() => {
     // Keep topbar submit behavior in sync with form validation + submit flow.
     void form.handleSubmit(onSubmit)();

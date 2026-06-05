@@ -304,7 +304,8 @@ export const IngredientUserCustomizationScalarFieldEnum = {
   userId: 'userId',
   ingredientId: 'ingredientId',
   supermarketUrl: 'supermarketUrl',
-  additionalInfo: 'additionalInfo'
+  additionalInfo: 'additionalInfo',
+  substitutionNote: 'substitutionNote'
 } as const
 
 export type IngredientUserCustomizationScalarFieldEnum = (typeof IngredientUserCustomizationScalarFieldEnum)[keyof typeof IngredientUserCustomizationScalarFieldEnum]

@@ -166,15 +166,35 @@ describe("inline ingredient save actions", () => {
       isAdmin: true,
     });
     vi.mocked(createIngredient).mockResolvedValue(makeIngredientRecord());
+    vi.mocked(upsertIngredientUserCustomization).mockResolvedValue(
+      makeIngredientRecord(),
+    );
 
     await createIngredientInlineAction({
       ...makeValidIngredientFormValues(),
       visibility: "global",
+      supermarketUrl: "https://shop.example.com/chicken",
+      groceryAdditionalInfo: "organic",
+      grocerySubstitutionNote: "turkey works too",
     });
 
     expect(createIngredient).toHaveBeenCalledWith(
       null,
-      expect.objectContaining({ name: "Chicken Breast" }),
+      expect.objectContaining({
+        name: "Chicken Breast",
+        supermarketUrl: null,
+        groceryAdditionalInfo: null,
+        grocerySubstitutionNote: null,
+      }),
+    );
+    expect(upsertIngredientUserCustomization).toHaveBeenCalledWith(
+      "user-test",
+      "ingredient-1",
+      {
+        supermarketUrl: "https://shop.example.com/chicken",
+        groceryAdditionalInfo: "organic",
+        grocerySubstitutionNote: "turkey works too",
+      },
     );
   });
 
@@ -407,9 +427,57 @@ describe("inline ingredient save actions", () => {
       {
         supermarketUrl: "https://shop.example.com/tomato",
         groceryAdditionalInfo: "organic",
+        grocerySubstitutionNote: null,
       },
     );
     expect(updateIngredient).not.toHaveBeenCalled();
+  });
+
+  it("updates canonical fields and overlay when admin edits a global ingredient", async () => {
+    vi.mocked(requireUser).mockResolvedValueOnce({
+      id: "user-test",
+      clerkId: "clerk-test",
+      email: null,
+      isAdmin: true,
+    });
+    vi.mocked(getIngredientById).mockResolvedValue({
+      id: "ingredient-global",
+      userId: null,
+      slug: "tomato",
+    });
+    vi.mocked(updateIngredient).mockResolvedValue({
+      ingredient: makeIngredientRecord(),
+      fallbackStats: { updatedRows: 0, updatedRecipes: 0 },
+    });
+    vi.mocked(upsertIngredientUserCustomization).mockResolvedValue(
+      makeIngredientRecord(),
+    );
+
+    const result = await updateIngredientInlineAction("ingredient-global", {
+      ...makeValidIngredientFormValues(),
+      supermarketUrl: "https://shop.example.com/tomato",
+      grocerySubstitutionNote: "cherry tomato",
+    });
+
+    expect(result.type).toBe("success");
+    expect(updateIngredient).toHaveBeenCalledWith(
+      "ingredient-global",
+      expect.objectContaining({
+        supermarketUrl: null,
+        groceryAdditionalInfo: null,
+        grocerySubstitutionNote: null,
+      }),
+      { gramsUnitId: "unit-g" },
+    );
+    expect(upsertIngredientUserCustomization).toHaveBeenCalledWith(
+      "user-test",
+      "ingredient-1",
+      {
+        supermarketUrl: "https://shop.example.com/tomato",
+        groceryAdditionalInfo: null,
+        grocerySubstitutionNote: "cherry tomato",
+      },
+    );
   });
 });
 

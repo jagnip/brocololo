@@ -4,6 +4,7 @@ import { transformPlanToShoppingListRows } from "@/lib/groceries/helpers";
 import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
 import type { PlanSlotData } from "@/lib/groceries/helpers";
 import { prisma } from "@/lib/db/index";
+import { getIngredientCustomizationMap } from "@/lib/db/ingredients";
 
 async function assertPlanOwned(userId: string, planId: string) {
   const plan = await prisma.plan.findFirst({
@@ -254,6 +255,17 @@ export async function generateShoppingListForPlan(
 
   const distinctIngredientIds = [...new Set(rows.map((r) => r.ingredientId))];
 
+  const [ingredientOwners, customizationMap] = await Promise.all([
+    prisma.ingredient.findMany({
+      where: { id: { in: distinctIngredientIds } },
+      select: { id: true, userId: true },
+    }),
+    getIngredientCustomizationMap(userId, distinctIngredientIds),
+  ]);
+  const ingredientOwnerById = new Map(
+    ingredientOwners.map((row) => [row.id, row.userId] as const),
+  );
+
   const shoppingListId = await prisma.$transaction(
     async (tx) => {
       const presetId = await ensureDefaultShoppingLayoutPreset(tx);
@@ -300,6 +312,14 @@ export async function generateShoppingListForPlan(
             line.unitId ??
             (line.unitName === "g" && line.amount !== null ? gramUnitId : null);
           const profile = profileByIngredientId.get(line.ingredientId);
+          const isGlobalIngredient = ingredientOwnerById.get(line.ingredientId) === null;
+          const overlay = customizationMap.get(line.ingredientId);
+          const additionalInfo = isGlobalIngredient
+            ? overlay?.additionalInfo ?? null
+            : profile?.additionalInfo ?? null;
+          const substitutionNote = isGlobalIngredient
+            ? overlay?.substitutionNote ?? null
+            : profile?.substitutionNote ?? null;
 
           createPayload.push({
             shoppingListId: list.id,
@@ -308,11 +328,9 @@ export async function generateShoppingListForPlan(
             displayLabel: line.ingredientName,
             unitId: resolvedUnitId,
             amount: line.amount,
-            additionalInfo: profile?.additionalInfo ?? null,
-            substitutionsAllowed: deriveSubstitutionsAllowed(
-              profile?.substitutionNote,
-            ),
-            substitutionNote: profile?.substitutionNote ?? null,
+            additionalInfo,
+            substitutionsAllowed: deriveSubstitutionsAllowed(substitutionNote),
+            substitutionNote,
             purchased: false,
             recipeAttribution:
               line.recipeNames.length > 0 ? line.recipeNames.join(", ") : null,
@@ -364,6 +382,7 @@ export async function getShoppingListById(shoppingListId: string) {
                   ingredient: {
                     select: {
                       id: true,
+                      userId: true,
                       icon: true,
                       supermarketUrl: true,
                     },
@@ -426,61 +445,61 @@ export async function getShoppingListById(shoppingListId: string) {
   };
 }
 
-/** Apply per-user supermarket URL overrides on global catalog ingredients. */
-async function applyUserSupermarketUrlOverrides<
+/** Apply per-user grocery overlays on global catalog ingredients when reading lists. */
+async function applyUserGroceryOverrides<
   T extends {
     items: Array<{
+      additionalInfo: string | null;
+      substitutionsAllowed: boolean;
+      substitutionNote: string | null;
       groceryIngredient: {
-        ingredient: { id: string; supermarketUrl: string | null };
+        ingredient: {
+          id: string;
+          userId: string | null;
+          supermarketUrl: string | null;
+        };
       } | null;
     }>;
   },
 >(userId: string, list: T): Promise<T> {
-  const ingredientIds = list.items
-    .map((item) => item.groceryIngredient?.ingredient.id)
-    .filter((id): id is string => Boolean(id));
+  const globalIngredientIds = list.items
+    .map((item) => item.groceryIngredient?.ingredient)
+    .filter(
+      (ingredient): ingredient is NonNullable<typeof ingredient> =>
+        Boolean(ingredient && ingredient.userId === null),
+    )
+    .map((ingredient) => ingredient.id);
 
-  if (ingredientIds.length === 0) {
+  if (globalIngredientIds.length === 0) {
     return list;
   }
 
-  const customizations = await prisma.ingredientUserCustomization.findMany({
-    where: {
-      userId,
-      ingredientId: { in: ingredientIds },
-      supermarketUrl: { not: null },
-    },
-    select: { ingredientId: true, supermarketUrl: true },
-  });
-
-  if (customizations.length === 0) {
-    return list;
-  }
-
-  const urlByIngredientId = new Map(
-    customizations.map((row) => [row.ingredientId, row.supermarketUrl]),
+  const customizationMap = await getIngredientCustomizationMap(
+    userId,
+    globalIngredientIds,
   );
 
   return {
     ...list,
     items: list.items.map((item) => {
       const ingredient = item.groceryIngredient?.ingredient;
-      if (!ingredient) {
+      if (!ingredient || ingredient.userId !== null) {
         return item;
       }
 
-      const overrideUrl = urlByIngredientId.get(ingredient.id);
-      if (!overrideUrl) {
-        return item;
-      }
+      const overlay = customizationMap.get(ingredient.id);
+      const substitutionNote = overlay?.substitutionNote ?? null;
 
       return {
         ...item,
+        additionalInfo: overlay?.additionalInfo ?? null,
+        substitutionsAllowed: deriveSubstitutionsAllowed(substitutionNote),
+        substitutionNote,
         groceryIngredient: {
           ...item.groceryIngredient!,
           ingredient: {
             ...ingredient,
-            supermarketUrl: overrideUrl,
+            supermarketUrl: overlay?.supermarketUrl ?? null,
           },
         },
       };
@@ -498,7 +517,7 @@ export async function getShoppingListByPlanId(userId: string, planId: string) {
   if (!row) return null;
   const list = await getShoppingListById(row.id);
   if (!list) return null;
-  return applyUserSupermarketUrlOverrides(userId, list);
+  return applyUserGroceryOverrides(userId, list);
 }
 
 export async function setShoppingListActiveLayoutPresetForList(input: {

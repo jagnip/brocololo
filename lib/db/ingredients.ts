@@ -22,9 +22,19 @@ const ingredientListInclude = {
   groceryIngredient: true,
 } as const;
 
-async function getCustomizationMap(userId: string, ingredientIds: string[]) {
+export async function getIngredientCustomizationMap(
+  userId: string,
+  ingredientIds: string[],
+) {
   if (ingredientIds.length === 0) {
-    return new Map<string, { supermarketUrl: string | null; additionalInfo: string | null }>();
+    return new Map<
+      string,
+      {
+        supermarketUrl: string | null;
+        additionalInfo: string | null;
+        substitutionNote: string | null;
+      }
+    >();
   }
 
   const rows = await prisma.ingredientUserCustomization.findMany({
@@ -36,13 +46,18 @@ async function getCustomizationMap(userId: string, ingredientIds: string[]) {
       ingredientId: true,
       supermarketUrl: true,
       additionalInfo: true,
+      substitutionNote: true,
     },
   });
 
   return new Map(
     rows.map((row) => [
       row.ingredientId,
-      { supermarketUrl: row.supermarketUrl, additionalInfo: row.additionalInfo },
+      {
+        supermarketUrl: row.supermarketUrl,
+        additionalInfo: row.additionalInfo,
+        substitutionNote: row.substitutionNote,
+      },
     ]),
   );
 }
@@ -50,10 +65,7 @@ async function getCustomizationMap(userId: string, ingredientIds: string[]) {
 function mergeIngredientsForUser<T extends { id: string; userId: string | null }>(
   userId: string,
   ingredients: T[],
-  customizationMap: Map<
-    string,
-    { supermarketUrl: string | null; additionalInfo: string | null }
-  >,
+  customizationMap: Awaited<ReturnType<typeof getIngredientCustomizationMap>>,
 ) {
   return ingredients.map((ingredient) =>
     resolveIngredientForUser(
@@ -81,7 +93,7 @@ export async function getIngredients(userId: string) {
     orderBy: { name: "asc" },
   });
 
-  const customizationMap = await getCustomizationMap(
+  const customizationMap = await getIngredientCustomizationMap(
     userId,
     ingredients.filter((row) => row.userId === null).map((row) => row.id),
   );
@@ -157,7 +169,7 @@ export async function getIngredientsPage({
     }),
   ]);
 
-  const customizationMap = await getCustomizationMap(
+  const customizationMap = await getIngredientCustomizationMap(
     userId,
     items.filter((row) => row.userId === null).map((row) => row.id),
   );
@@ -276,11 +288,19 @@ export async function createIngredient(
     visibility: _visibility,
     ...ingredientData
   } = data;
-  const substitutionsAllowed = deriveSubstitutionsAllowed(grocerySubstitutionNote);
+  const isGlobal = ownerUserId === null;
+  const substitutionsAllowed = isGlobal
+    ? false
+    : deriveSubstitutionsAllowed(grocerySubstitutionNote);
 
   return prisma.$transaction(async (tx) => {
     const ingredient = await tx.ingredient.create({
-      data: { ...ingredientData, userId: ownerUserId },
+      data: {
+        ...ingredientData,
+        // Global catalog rows never store personal grocery URLs.
+        supermarketUrl: isGlobal ? null : ingredientData.supermarketUrl,
+        userId: ownerUserId,
+      },
       select: { id: true, slug: true },
     });
 
@@ -292,18 +312,18 @@ export async function createIngredient(
       })),
     });
 
-    // Keep ingredient-level grocery defaults in sync with ingredient create/edit flows.
+    // Global ingredients keep an empty grocery shell for shopping-list FKs.
     await tx.groceryIngredient.upsert({
       where: { ingredientId: ingredient.id },
       create: {
         ingredientId: ingredient.id,
-        additionalInfo: groceryAdditionalInfo,
-        substitutionNote: grocerySubstitutionNote,
+        additionalInfo: isGlobal ? null : groceryAdditionalInfo,
+        substitutionNote: isGlobal ? null : grocerySubstitutionNote,
         substitutionsAllowed,
       },
       update: {
-        additionalInfo: groceryAdditionalInfo,
-        substitutionNote: grocerySubstitutionNote,
+        additionalInfo: isGlobal ? null : groceryAdditionalInfo,
+        substitutionNote: isGlobal ? null : grocerySubstitutionNote,
         substitutionsAllowed,
       },
     });
@@ -436,9 +456,16 @@ export async function updateIngredient(
     visibility: _visibility,
     ...ingredientData
   } = data;
-  const substitutionsAllowed = deriveSubstitutionsAllowed(grocerySubstitutionNote);
-
   return prisma.$transaction(async (tx) => {
+    const existingIngredient = await tx.ingredient.findUnique({
+      where: { id: ingredientId },
+      select: { userId: true },
+    });
+    const isGlobal = existingIngredient?.userId === null;
+    const substitutionsAllowed = isGlobal
+      ? false
+      : deriveSubstitutionsAllowed(grocerySubstitutionNote);
+
     const existingConversions = await tx.ingredientUnit.findMany({
       where: { ingredientId },
       select: {
@@ -503,7 +530,10 @@ export async function updateIngredient(
 
     await tx.ingredient.update({
       where: { id: ingredientId },
-      data: ingredientData,
+      data: {
+        ...ingredientData,
+        supermarketUrl: isGlobal ? null : ingredientData.supermarketUrl,
+      },
     });
 
     // Replace-all conversion model keeps edit logic straightforward.
@@ -523,13 +553,13 @@ export async function updateIngredient(
       where: { ingredientId },
       create: {
         ingredientId,
-        additionalInfo: groceryAdditionalInfo,
-        substitutionNote: grocerySubstitutionNote,
+        additionalInfo: isGlobal ? null : groceryAdditionalInfo,
+        substitutionNote: isGlobal ? null : grocerySubstitutionNote,
         substitutionsAllowed,
       },
       update: {
-        additionalInfo: groceryAdditionalInfo,
-        substitutionNote: grocerySubstitutionNote,
+        additionalInfo: isGlobal ? null : groceryAdditionalInfo,
+        substitutionNote: isGlobal ? null : grocerySubstitutionNote,
         substitutionsAllowed,
       },
     });
@@ -627,10 +657,12 @@ export async function upsertIngredientUserCustomization(
         ingredientId,
         supermarketUrl: data.supermarketUrl,
         additionalInfo: data.groceryAdditionalInfo,
+        substitutionNote: data.grocerySubstitutionNote,
       },
       update: {
         supermarketUrl: data.supermarketUrl,
         additionalInfo: data.groceryAdditionalInfo,
+        substitutionNote: data.grocerySubstitutionNote,
       },
     });
   }

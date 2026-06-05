@@ -178,12 +178,21 @@ const nullableUrl = z
     return value === "" ? null : value;
   });
 
-/** Shopping fields regular users may override on global catalog ingredients. */
+/** Shopping fields users may override on global catalog ingredients. */
 export const ingredientShoppingOverlaySchema = z.object({
   supermarketUrl: nullableUrl,
   groceryAdditionalInfo: z
     .string()
     .max(200, { message: "Keep notes under 200 characters" })
+    .nullish()
+    .transform((value) => {
+      if (!value) return null;
+      const trimmed = value.trim();
+      return trimmed === "" ? null : trimmed;
+    }),
+  grocerySubstitutionNote: z
+    .string()
+    .max(200, { message: "Keep substitutions under 200 characters" })
     .nullish()
     .transform((value) => {
       if (!value) return null;

@@ -83,17 +83,18 @@ async function saveIngredient(
     };
   }
 
-  // Non-admin users editing a global ingredient only persist shopping overlays.
   if (params.ingredientId) {
     const existing = await getIngredientById(params.ingredientId);
     if (!existing) {
       return { type: "error", message: "Ingredient no longer exists" };
     }
 
-    if (existing.userId === null && !isAdmin) {
+    // Global ingredients persist grocery fields in per-user overlays only.
+    if (existing.userId === null) {
       const parsedOverlay = ingredientShoppingOverlaySchema.safeParse({
         supermarketUrl: formData.supermarketUrl,
         groceryAdditionalInfo: formData.groceryAdditionalInfo,
+        grocerySubstitutionNote: formData.grocerySubstitutionNote,
       });
 
       if (!parsedOverlay.success) {
@@ -105,23 +106,28 @@ async function saveIngredient(
         };
       }
 
-      const ingredient = await upsertIngredientUserCustomization(
-        userId,
-        params.ingredientId,
-        parsedOverlay.data,
-      );
+      // Non-admins only edit their shopping overlay on global ingredients.
+      if (!isAdmin) {
+        const ingredient = await upsertIngredientUserCustomization(
+          userId,
+          params.ingredientId,
+          parsedOverlay.data,
+        );
 
-      if (!ingredient) {
+        if (!ingredient) {
+          return {
+            type: "error",
+            message: "Couldn't save your shopping preferences. Try again.",
+          };
+        }
+
         return {
-          type: "error",
-          message: "Couldn't save your shopping preferences. Try again.",
+          type: "success",
+          ingredient: ingredient as unknown as IngredientType,
         };
       }
 
-      return {
-        type: "success",
-        ingredient: ingredient as unknown as IngredientType,
-      };
+      // Admins may also update canonical fields below; overlay is saved after full update.
     }
 
     if (existing.userId !== null && existing.userId !== userId && !isAdmin) {
@@ -143,8 +149,21 @@ async function saveIngredient(
   }
 
   const { visibility, ...parsedWithoutVisibility } = parsed.data;
+  const isGlobalCreate = !params.ingredientId && isAdmin && visibility === "global";
+  const isGlobalEdit =
+    params.ingredientId != null &&
+    (await getIngredientById(params.ingredientId))?.userId === null;
+
   const normalizedPayload = {
     ...parsedWithoutVisibility,
+    // Grocery fields on global ingredients live in per-user overlays, not canonical rows.
+    ...(isGlobalCreate || isGlobalEdit
+      ? {
+          supermarketUrl: null,
+          groceryAdditionalInfo: null,
+          grocerySubstitutionNote: null,
+        }
+      : {}),
     defaultUnitId: resolveDefaultUnitId({
       preferredDefaultUnitId: parsed.data.defaultUnitId ?? null,
       unitConversions: parsed.data.unitConversions,
@@ -154,7 +173,7 @@ async function saveIngredient(
 
   const ownerUserId = params.ingredientId
     ? (await getIngredientById(params.ingredientId))?.userId ?? userId
-    : isAdmin && visibility === "global"
+    : isGlobalCreate
       ? null
       : userId;
 
@@ -231,6 +250,34 @@ async function saveIngredient(
         ? "Couldn't update ingredient. Try again."
         : "Couldn't create ingredient. Try again.",
     };
+  }
+
+  // Persist grocery overlay for global ingredients (create + admin edit).
+  if (isGlobalCreate || isGlobalEdit) {
+    const parsedOverlay = ingredientShoppingOverlaySchema.safeParse({
+      supermarketUrl: formData.supermarketUrl,
+      groceryAdditionalInfo: formData.groceryAdditionalInfo,
+      grocerySubstitutionNote: formData.grocerySubstitutionNote,
+    });
+
+    if (!parsedOverlay.success) {
+      return {
+        type: "error",
+        message:
+          parsedOverlay.error.issues[0]?.message ??
+          "Check shopping fields and try again.",
+      };
+    }
+
+    const overlayIngredient = await upsertIngredientUserCustomization(
+      userId,
+      ingredient.id,
+      parsedOverlay.data,
+    );
+
+    if (overlayIngredient) {
+      ingredient = overlayIngredient as IngredientType;
+    }
   }
 
   return {
