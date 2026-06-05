@@ -19,6 +19,7 @@ type EditIngredientDialogProps = IngredientFormDependencies & {
   ingredient?: IngredientType;
   onOpenChange: (open: boolean) => void;
   onUpdated: (ingredient: IngredientType) => void;
+  isAdmin?: boolean;
 };
 
 export function EditIngredientDialog({
@@ -30,6 +31,7 @@ export function EditIngredientDialog({
   units,
   gramsUnitId,
   iconOptions,
+  isAdmin = false,
 }: EditIngredientDialogProps) {
   if (!ingredient) {
     return null;
@@ -43,6 +45,7 @@ export function EditIngredientDialog({
         <IngredientForm
           mode="dialog"
           ingredient={ingredient}
+          isAdmin={isAdmin}
           categories={categories}
           units={units}
           gramsUnitId={gramsUnitId}

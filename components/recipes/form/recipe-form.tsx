@@ -81,6 +81,7 @@ type RecipeFormProps = {
   };
   recipe?: RecipeType;
   familyMembers: FamilyMemberRow[];
+  isAdmin?: boolean;
 };
 
 export function sanitizeInstructionRows<
@@ -127,6 +128,7 @@ export default function RecipeForm({
   ingredientFormDependencies,
   recipe,
   familyMembers,
+  isAdmin = false,
 }: RecipeFormProps) {
   // Keep delete confirmation local to the edit form state.
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -902,6 +904,7 @@ export default function RecipeForm({
             }
           }}
           onCreated={handleIngredientCreated}
+          isAdmin={isAdmin}
           categories={ingredientFormDependencies.categories}
           units={ingredientFormDependencies.units}
           gramsUnitId={ingredientFormDependencies.gramsUnitId}
@@ -928,6 +931,7 @@ export default function RecipeForm({
           units={ingredientFormDependencies.units}
           gramsUnitId={ingredientFormDependencies.gramsUnitId}
           iconOptions={ingredientFormDependencies.iconOptions}
+          isAdmin={isAdmin}
         />
       </form>
     </Form>

@@ -11,6 +11,7 @@ type IconPickerProps = {
   value: string | null;
   onChange: (value: string | null) => void;
   options: string[];
+  disabled?: boolean;
 };
 
 export function iconLabel(fileName: string) {
@@ -29,7 +30,7 @@ export function buildIconPickerOptions(
   }));
 }
 
-export function IconPicker({ value, onChange, options }: IconPickerProps) {
+export function IconPicker({ value, onChange, options, disabled }: IconPickerProps) {
   const iconOptions = React.useMemo<SearchableSelectOption[]>(
     () => buildIconPickerOptions(options),
     [options],
@@ -42,6 +43,7 @@ export function IconPicker({ value, onChange, options }: IconPickerProps) {
       options={iconOptions}
       value={value}
       onValueChange={onChange}
+      disabled={disabled}
       placeholder="Select icon..."
       searchPlaceholder="Search icons..."
       emptyLabel="No icon found."

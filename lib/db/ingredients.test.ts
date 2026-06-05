@@ -26,6 +26,7 @@ describe("findIngredientIdentityDuplicate", () => {
       descriptor: "Boneless",
       brand: "Tesco",
       categoryId: "category-1",
+      ownerUserId: "user-1",
     });
 
     expect(findFirstMock).toHaveBeenCalledWith({
@@ -34,6 +35,7 @@ describe("findIngredientIdentityDuplicate", () => {
         descriptor: { equals: "Boneless", mode: "insensitive" },
         brand: { equals: "Tesco", mode: "insensitive" },
         categoryId: "category-1",
+        userId: "user-1",
       },
       select: { id: true },
     });
@@ -48,6 +50,7 @@ describe("findIngredientIdentityDuplicate", () => {
       descriptor: null,
       brand: null,
       categoryId: "category-1",
+      ownerUserId: null,
       excludeIngredientId: "current-ingredient",
     });
 
@@ -57,6 +60,7 @@ describe("findIngredientIdentityDuplicate", () => {
         descriptor: null,
         brand: null,
         categoryId: "category-1",
+        userId: null,
         id: { not: "current-ingredient" },
       },
       select: { id: true },
@@ -71,6 +75,7 @@ describe("findIngredientIdentityDuplicate", () => {
       descriptor: null,
       brand: null,
       categoryId: "cat-fruits",
+      ownerUserId: "user-1",
     });
 
     expect(findFirstMock).toHaveBeenCalledWith(

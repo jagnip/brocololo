@@ -15,7 +15,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
-import { SubstitutionsAllowedControl } from "@/components/groceries/substitutions-allowed-control";
 import type {
   GroceriesEditableRow,
   GroceriesEditIngredientOption,
@@ -309,38 +308,27 @@ function GroceriesEditRowComponent({
             placeholder="Enter additional info"
           />
 
-          <div className="grid grid-cols-1 gap-y-2 md:grid-cols-[max-content_minmax(0,1fr)] md:gap-x-2">
-            <SubstitutionsAllowedControl
-              checked={row.substitutionsAllowed}
-              onCheckedChange={(checked) =>
-                onRowChange(row.id, { substitutionsAllowed: checked })
+          <Input
+            className="w-full"
+            defaultValue={substitutionNotePropValue}
+            onChange={(event) => {
+              const nextValue = event.target.value;
+              substitutionNoteInputRef.current = nextValue;
+              if (substitutionNoteCommitTimerRef.current) {
+                clearTimeout(substitutionNoteCommitTimerRef.current);
               }
-              // Keep this label on one line in the dense groceries edit grid.
-              labelClassName="whitespace-nowrap"
-            />
-            <Input
-              className="w-full"
-              defaultValue={substitutionNotePropValue}
-              onChange={(event) => {
-                const nextValue = event.target.value;
-                substitutionNoteInputRef.current = nextValue;
-                if (substitutionNoteCommitTimerRef.current) {
-                  clearTimeout(substitutionNoteCommitTimerRef.current);
-                }
-                substitutionNoteCommitTimerRef.current = setTimeout(() => {
-                  commitSubstitutionNote(nextValue);
-                }, EDIT_COMMIT_DEBOUNCE_MS);
-              }}
-              onBlur={() => commitSubstitutionNote(substitutionNoteInputRef.current)}
-              placeholder="Enter substitutions"
-              disabled={!row.substitutionsAllowed}
-            />
-          </div>
+              substitutionNoteCommitTimerRef.current = setTimeout(() => {
+                commitSubstitutionNote(nextValue);
+              }, EDIT_COMMIT_DEBOUNCE_MS);
+            }}
+            onBlur={() => commitSubstitutionNote(substitutionNoteInputRef.current)}
+            placeholder="Enter substitutions"
+          />
         </div>
       </div>
 
       {/* Desktop layout: keep all controls in one horizontal row for faster scanning/editing. */}
-      <div className="hidden xl:grid xl:grid-cols-[minmax(0,1.3fr)_7rem_10rem_minmax(0,1fr)_max-content_minmax(0,1fr)_auto] xl:items-start xl:gap-2">
+      <div className="hidden xl:grid xl:grid-cols-[minmax(0,1.3fr)_7rem_10rem_minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-start xl:gap-2">
         <SearchableSelect
           className="min-w-0 w-full font-normal"
           options={resolvedIngredientOptions}
@@ -462,16 +450,6 @@ function GroceriesEditRowComponent({
           placeholder="Enter additional info"
         />
 
-        {/* Top-align switcher with adjacent inputs to keep row baselines consistent. */}
-        <div className="flex h-10 items-start">
-          <SubstitutionsAllowedControl
-            checked={row.substitutionsAllowed}
-            onCheckedChange={(checked) => onRowChange(row.id, { substitutionsAllowed: checked })}
-            // Keep this label on one line in the dense groceries edit grid.
-            labelClassName="whitespace-nowrap"
-          />
-        </div>
-
         <Input
           className="w-full"
           defaultValue={substitutionNotePropValue}
@@ -487,7 +465,6 @@ function GroceriesEditRowComponent({
           }}
           onBlur={() => commitSubstitutionNote(substitutionNoteInputRef.current)}
           placeholder="Enter substitutions"
-          disabled={!row.substitutionsAllowed}
         />
 
         <div className="flex justify-end">

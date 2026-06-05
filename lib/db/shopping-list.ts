@@ -1,8 +1,10 @@
 import type { Prisma } from "@/src/generated/client";
 import { getPlanForGroceries } from "@/lib/db/planner";
 import { transformPlanToShoppingListRows } from "@/lib/groceries/helpers";
+import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
 import type { PlanSlotData } from "@/lib/groceries/helpers";
 import { prisma } from "@/lib/db/index";
+import { getIngredientCustomizationMap } from "@/lib/db/ingredients";
 
 async function assertPlanOwned(userId: string, planId: string) {
   const plan = await prisma.plan.findFirst({
@@ -253,6 +255,17 @@ export async function generateShoppingListForPlan(
 
   const distinctIngredientIds = [...new Set(rows.map((r) => r.ingredientId))];
 
+  const [ingredientOwners, customizationMap] = await Promise.all([
+    prisma.ingredient.findMany({
+      where: { id: { in: distinctIngredientIds } },
+      select: { id: true, userId: true },
+    }),
+    getIngredientCustomizationMap(userId, distinctIngredientIds),
+  ]);
+  const ingredientOwnerById = new Map(
+    ingredientOwners.map((row) => [row.id, row.userId] as const),
+  );
+
   const shoppingListId = await prisma.$transaction(
     async (tx) => {
       const presetId = await ensureDefaultShoppingLayoutPreset(tx);
@@ -299,6 +312,14 @@ export async function generateShoppingListForPlan(
             line.unitId ??
             (line.unitName === "g" && line.amount !== null ? gramUnitId : null);
           const profile = profileByIngredientId.get(line.ingredientId);
+          const isGlobalIngredient = ingredientOwnerById.get(line.ingredientId) === null;
+          const overlay = customizationMap.get(line.ingredientId);
+          const additionalInfo = isGlobalIngredient
+            ? overlay?.additionalInfo ?? null
+            : profile?.additionalInfo ?? null;
+          const substitutionNote = isGlobalIngredient
+            ? overlay?.substitutionNote ?? null
+            : profile?.substitutionNote ?? null;
 
           createPayload.push({
             shoppingListId: list.id,
@@ -307,9 +328,9 @@ export async function generateShoppingListForPlan(
             displayLabel: line.ingredientName,
             unitId: resolvedUnitId,
             amount: line.amount,
-            additionalInfo: profile?.additionalInfo ?? null,
-            substitutionsAllowed: profile?.substitutionsAllowed ?? false,
-            substitutionNote: profile?.substitutionNote ?? null,
+            additionalInfo,
+            substitutionsAllowed: deriveSubstitutionsAllowed(substitutionNote),
+            substitutionNote,
             purchased: false,
             recipeAttribution:
               line.recipeNames.length > 0 ? line.recipeNames.join(", ") : null,
@@ -361,6 +382,7 @@ export async function getShoppingListById(shoppingListId: string) {
                   ingredient: {
                     select: {
                       id: true,
+                      userId: true,
                       icon: true,
                       supermarketUrl: true,
                     },
@@ -423,6 +445,68 @@ export async function getShoppingListById(shoppingListId: string) {
   };
 }
 
+/** Apply per-user grocery overlays on global catalog ingredients when reading lists. */
+async function applyUserGroceryOverrides<
+  T extends {
+    items: Array<{
+      additionalInfo: string | null;
+      substitutionsAllowed: boolean;
+      substitutionNote: string | null;
+      groceryIngredient: {
+        ingredient: {
+          id: string;
+          userId: string | null;
+          supermarketUrl: string | null;
+        };
+      } | null;
+    }>;
+  },
+>(userId: string, list: T): Promise<T> {
+  const globalIngredientIds = list.items
+    .map((item) => item.groceryIngredient?.ingredient)
+    .filter(
+      (ingredient): ingredient is NonNullable<typeof ingredient> =>
+        Boolean(ingredient && ingredient.userId === null),
+    )
+    .map((ingredient) => ingredient.id);
+
+  if (globalIngredientIds.length === 0) {
+    return list;
+  }
+
+  const customizationMap = await getIngredientCustomizationMap(
+    userId,
+    globalIngredientIds,
+  );
+
+  return {
+    ...list,
+    items: list.items.map((item) => {
+      const ingredient = item.groceryIngredient?.ingredient;
+      if (!ingredient || ingredient.userId !== null) {
+        return item;
+      }
+
+      const overlay = customizationMap.get(ingredient.id);
+      const substitutionNote = overlay?.substitutionNote ?? null;
+
+      return {
+        ...item,
+        additionalInfo: overlay?.additionalInfo ?? null,
+        substitutionsAllowed: deriveSubstitutionsAllowed(substitutionNote),
+        substitutionNote,
+        groceryIngredient: {
+          ...item.groceryIngredient!,
+          ingredient: {
+            ...ingredient,
+            supermarketUrl: overlay?.supermarketUrl ?? null,
+          },
+        },
+      };
+    }),
+  };
+}
+
 /** Shopping list for an owned plan (auth via userId). */
 export async function getShoppingListByPlanId(userId: string, planId: string) {
   await assertPlanOwned(userId, planId);
@@ -431,7 +515,9 @@ export async function getShoppingListByPlanId(userId: string, planId: string) {
     select: { id: true },
   });
   if (!row) return null;
-  return getShoppingListById(row.id);
+  const list = await getShoppingListById(row.id);
+  if (!list) return null;
+  return applyUserGroceryOverrides(userId, list);
 }
 
 export async function setShoppingListActiveLayoutPresetForList(input: {
@@ -791,7 +877,9 @@ export async function updateShoppingListItems(input: {
               unitId: row.unitId,
               amount: row.amount,
               additionalInfo: row.additionalInfo,
-              substitutionsAllowed: row.substitutionsAllowed,
+              substitutionsAllowed: deriveSubstitutionsAllowed(
+                row.substitutionNote,
+              ),
               substitutionNote: row.substitutionNote,
               purchased: false,
               // User-added rows have no recipe attribution.
@@ -827,7 +915,9 @@ export async function updateShoppingListItems(input: {
             unitId: row.unitId,
             amount: row.amount,
             additionalInfo: row.additionalInfo,
-            substitutionsAllowed: row.substitutionsAllowed,
+            substitutionsAllowed: deriveSubstitutionsAllowed(
+              row.substitutionNote,
+            ),
             substitutionNote: row.substitutionNote,
           },
         });

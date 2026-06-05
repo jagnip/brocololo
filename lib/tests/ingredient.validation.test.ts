@@ -18,7 +18,6 @@ const baseIngredientInput = {
   defaultUnitId: gramsUnitId,
   groceryAdditionalInfo: null,
   grocerySubstitutionNote: null,
-  grocerySubstitutionsAllowed: false,
   unitConversions: [{ unitId: gramsUnitId, gramsPerUnit: 1 }],
 };
 
@@ -30,18 +29,16 @@ describe("makeIngredientSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("keeps grocery defaults optional and substitutions disabled by default", () => {
+  it("keeps grocery defaults optional", () => {
     const schema = makeIngredientSchema(gramsUnitId);
     const parsed = schema.parse({
       ...baseIngredientInput,
       groceryAdditionalInfo: undefined,
       grocerySubstitutionNote: undefined,
-      grocerySubstitutionsAllowed: undefined,
     });
 
     expect(parsed.groceryAdditionalInfo).toBeNull();
     expect(parsed.grocerySubstitutionNote).toBeNull();
-    expect(parsed.grocerySubstitutionsAllowed).toBe(false);
   });
 
   it("normalizes grocery notes and substitution text fields", () => {
@@ -50,12 +47,10 @@ describe("makeIngredientSchema", () => {
       ...baseIngredientInput,
       groceryAdditionalInfo: "  organic only  ",
       grocerySubstitutionNote: "   ",
-      grocerySubstitutionsAllowed: true,
     });
 
     expect(parsed.groceryAdditionalInfo).toBe("organic only");
     expect(parsed.grocerySubstitutionNote).toBeNull();
-    expect(parsed.grocerySubstitutionsAllowed).toBe(true);
   });
 
   it("allows optional additional conversions besides grams", () => {

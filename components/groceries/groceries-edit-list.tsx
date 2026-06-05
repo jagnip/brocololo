@@ -106,7 +106,6 @@ export function toComparableRows(rows: GroceriesEditableRow[]) {
       displayLabel: row.displayLabel,
       amount: row.amount,
       unitId: row.unitId,
-      substitutionsAllowed: row.substitutionsAllowed,
       substitutionNote: row.substitutionNote ?? null,
       additionalInfo: row.additionalInfo ?? null,
     }))

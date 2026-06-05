@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import IngredientForm from "./ingredient-form";
+import { requireUser } from "@/lib/auth/session";
 import {
   getIngredientBySlugOrNull,
   getIngredientFormDependencies,
@@ -10,10 +11,12 @@ export default async function IngredientFormContainer({
 }: {
   ingredientSlug?: string;
 }) {
-  const [{ categories, units, gramsUnitId, iconOptions }, ingredient] = await Promise.all([
-    getIngredientFormDependencies(),
-    getIngredientBySlugOrNull(ingredientSlug),
-  ]);
+  const [{ categories, units, gramsUnitId, iconOptions }, ingredient, user] =
+    await Promise.all([
+      getIngredientFormDependencies(),
+      getIngredientBySlugOrNull(ingredientSlug),
+      requireUser(),
+    ]);
 
   if (ingredientSlug && !ingredient) {
     notFound();
@@ -28,6 +31,7 @@ export default async function IngredientFormContainer({
         gramsUnitId={gramsUnitId}
         iconOptions={iconOptions}
         ingredient={ingredient ?? undefined}
+        isAdmin={user.isAdmin}
       />
     </>
   );

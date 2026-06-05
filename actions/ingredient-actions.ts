@@ -9,11 +9,14 @@ import {
   findAvailableSlug,
   findIngredientIdentityDuplicate,
   getGramsUnit,
+  getIngredientById,
   getIngredientCategorySlugById,
   getIngredientDeleteUsages,
   updateIngredient,
+  upsertIngredientUserCustomization,
 } from "@/lib/db/ingredients";
 import {
+  ingredientShoppingOverlaySchema,
   makeIngredientSchema,
   type IngredientFormValues,
 } from "@/lib/validations/ingredient";
@@ -45,7 +48,6 @@ function resolveDefaultUnitId(input: {
 }) {
   const availableUnitIds = new Set(input.unitConversions.map((conversion) => conversion.unitId));
 
-  // Respect explicit default whenever it points to an existing conversion.
   if (
     input.preferredDefaultUnitId != null &&
     availableUnitIds.has(input.preferredDefaultUnitId)
@@ -53,7 +55,6 @@ function resolveDefaultUnitId(input: {
     return input.preferredDefaultUnitId;
   }
 
-  // Keep existing fallback behavior stable for backward compatibility.
   if (availableUnitIds.has(input.gramsUnitId)) {
     return input.gramsUnitId;
   }
@@ -73,13 +74,68 @@ async function saveIngredient(
   formData: IngredientFormValues,
   params: { ingredientId?: string },
 ): Promise<IngredientInlineActionResult> {
-  const { id: userId } = await requireUser();
+  const { id: userId, isAdmin } = await requireUser();
   const gramsUnit = await getGramsUnit();
   if (!gramsUnit) {
     return {
       type: "error",
       message: "Base unit 'g' is missing. Contact support",
     };
+  }
+
+  if (params.ingredientId) {
+    const existing = await getIngredientById(params.ingredientId);
+    if (!existing) {
+      return { type: "error", message: "Ingredient no longer exists" };
+    }
+
+    // Global ingredients persist grocery fields in per-user overlays only.
+    if (existing.userId === null) {
+      const parsedOverlay = ingredientShoppingOverlaySchema.safeParse({
+        supermarketUrl: formData.supermarketUrl,
+        groceryAdditionalInfo: formData.groceryAdditionalInfo,
+        grocerySubstitutionNote: formData.grocerySubstitutionNote,
+      });
+
+      if (!parsedOverlay.success) {
+        return {
+          type: "error",
+          message:
+            parsedOverlay.error.issues[0]?.message ??
+            "Check shopping fields and try again.",
+        };
+      }
+
+      // Non-admins only edit their shopping overlay on global ingredients.
+      if (!isAdmin) {
+        const ingredient = await upsertIngredientUserCustomization(
+          userId,
+          params.ingredientId,
+          parsedOverlay.data,
+        );
+
+        if (!ingredient) {
+          return {
+            type: "error",
+            message: "Couldn't save your shopping preferences. Try again.",
+          };
+        }
+
+        return {
+          type: "success",
+          ingredient: ingredient as unknown as IngredientType,
+        };
+      }
+
+      // Admins may also update canonical fields below; overlay is saved after full update.
+    }
+
+    if (existing.userId !== null && existing.userId !== userId && !isAdmin) {
+      return {
+        type: "error",
+        message: "You don't have permission to edit this ingredient",
+      };
+    }
   }
 
   const parsed = makeIngredientSchema(gramsUnit.id).safeParse(formData);
@@ -92,9 +148,22 @@ async function saveIngredient(
     };
   }
 
+  const { visibility, ...parsedWithoutVisibility } = parsed.data;
+  const isGlobalCreate = !params.ingredientId && isAdmin && visibility === "global";
+  const isGlobalEdit =
+    params.ingredientId != null &&
+    (await getIngredientById(params.ingredientId))?.userId === null;
+
   const normalizedPayload = {
-    ...parsed.data,
-    // Normalize on the server so old clients can still submit safely.
+    ...parsedWithoutVisibility,
+    // Grocery fields on global ingredients live in per-user overlays, not canonical rows.
+    ...(isGlobalCreate || isGlobalEdit
+      ? {
+          supermarketUrl: null,
+          groceryAdditionalInfo: null,
+          grocerySubstitutionNote: null,
+        }
+      : {}),
     defaultUnitId: resolveDefaultUnitId({
       preferredDefaultUnitId: parsed.data.defaultUnitId ?? null,
       unitConversions: parsed.data.unitConversions,
@@ -102,12 +171,18 @@ async function saveIngredient(
     }),
   };
 
-  // Identity is now scoped per category, so we forward categoryId into the duplicate check.
+  const ownerUserId = params.ingredientId
+    ? (await getIngredientById(params.ingredientId))?.userId ?? userId
+    : isGlobalCreate
+      ? null
+      : userId;
+
   const duplicate = await findIngredientIdentityDuplicate({
     name: parsed.data.name,
     descriptor: parsed.data.descriptor,
     brand: parsed.data.brand,
     categoryId: parsed.data.categoryId,
+    ownerUserId,
     excludeIngredientId: params.ingredientId,
   });
 
@@ -118,7 +193,6 @@ async function saveIngredient(
     };
   }
 
-  // Look up the category slug once so it can be folded into slug generation.
   const categorySlug = await getIngredientCategorySlugById(parsed.data.categoryId);
 
   const slug = await findAvailableSlug(
@@ -128,32 +202,36 @@ async function saveIngredient(
       brand: parsed.data.brand,
       categorySlug,
     },
-    params.ingredientId,
+    {
+      ownerUserId,
+      excludeIngredientId: params.ingredientId,
+    },
   );
 
   let ingredient: IngredientType;
   let conversionFallback: IngredientActionSuccess["conversionFallback"];
 
   try {
-    // Keep one save path for both page and inline dialog flows.
     if (params.ingredientId) {
       const updated = await updateIngredient(
         params.ingredientId,
         {
           ...normalizedPayload,
           slug,
+          // Satisfies IngredientPayload; ignored on update (visibility is create-only).
+          visibility,
         },
         { gramsUnitId: gramsUnit.id },
       );
       ingredient = updated.ingredient as IngredientType;
-      // Bubble up migration impact so the UI can show a non-blocking success message.
       if (updated.fallbackStats.updatedRows > 0) {
         conversionFallback = updated.fallbackStats;
       }
     } else {
-      ingredient = (await createIngredient(userId, {
+      ingredient = (await createIngredient(ownerUserId, {
         ...normalizedPayload,
         slug,
+        visibility,
       })) as IngredientType;
     }
   } catch (error) {
@@ -174,6 +252,34 @@ async function saveIngredient(
         ? "Couldn't update ingredient. Try again."
         : "Couldn't create ingredient. Try again.",
     };
+  }
+
+  // Persist grocery overlay for global ingredients (create + admin edit).
+  if (isGlobalCreate || isGlobalEdit) {
+    const parsedOverlay = ingredientShoppingOverlaySchema.safeParse({
+      supermarketUrl: formData.supermarketUrl,
+      groceryAdditionalInfo: formData.groceryAdditionalInfo,
+      grocerySubstitutionNote: formData.grocerySubstitutionNote,
+    });
+
+    if (!parsedOverlay.success) {
+      return {
+        type: "error",
+        message:
+          parsedOverlay.error.issues[0]?.message ??
+          "Check shopping fields and try again.",
+      };
+    }
+
+    const overlayIngredient = await upsertIngredientUserCustomization(
+      userId,
+      ingredient.id,
+      parsedOverlay.data,
+    );
+
+    if (overlayIngredient) {
+      ingredient = overlayIngredient as unknown as IngredientType;
+    }
   }
 
   return {
@@ -218,10 +324,30 @@ export const updateIngredientInlineAction = async (
 };
 
 export const deleteIngredientAction = async (ingredientId: string) => {
+  const { id: userId, isAdmin } = await requireUser();
+  const existing = await getIngredientById(ingredientId);
+
+  if (!existing) {
+    return { type: "error", message: "Ingredient no longer exists" };
+  }
+
+  if (existing.userId === null && !isAdmin) {
+    return {
+      type: "error",
+      message: "You don't have permission to delete global ingredients",
+    };
+  }
+
+  if (existing.userId !== null && existing.userId !== userId && !isAdmin) {
+    return {
+      type: "error",
+      message: "You don't have permission to delete this ingredient",
+    };
+  }
+
   const usage = await getIngredientDeleteUsages(ingredientId);
 
   if (usage.length > 0) {
-    // Keep the toast readable if there are many linked recipes.
     const recipeList = usage
       .slice(0, 5)
       .map((item) => item.recipeName)

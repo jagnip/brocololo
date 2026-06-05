@@ -6,6 +6,7 @@ import {
   getIngredientBySlug,
 } from "@/lib/db/ingredients";
 import { getUnits } from "@/lib/db/units";
+import { requireUser } from "@/lib/auth/session";
 
 async function getIngredientIconOptions() {
   const iconDirectory = path.join(process.cwd(), "public", "icons", "ingredients");
@@ -42,5 +43,6 @@ export async function getIngredientBySlugOrNull(ingredientSlug?: string) {
     return null;
   }
 
-  return getIngredientBySlug(ingredientSlug);
+  const { id: userId } = await requireUser();
+  return getIngredientBySlug(userId, ingredientSlug);
 }

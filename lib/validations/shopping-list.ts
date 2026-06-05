@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
 
 const nullableTrimmedText = (max: number, message: string) =>
   z
@@ -15,7 +16,7 @@ const nullableTrimmedText = (max: number, message: string) =>
 // non-empty displayLabel are filtered out and deleted by the action layer; the
 // schema deliberately allows them through so that "cleared" rows aren't blocked
 // at validation time. Amount and unit are independent — either can be set alone.
-export const shoppingListEditableItemSchema = z.object({
+const shoppingListEditableItemBaseSchema = z.object({
   id: z.string().min(1),
   // True when the row was added in the edit form and hasn't been persisted yet;
   // the action layer uses this to route the row through create instead of update.
@@ -26,12 +27,19 @@ export const shoppingListEditableItemSchema = z.object({
   unitId: z.string().min(1).nullish().transform((value) => value ?? null),
   amount: z.number().positive().nullish().transform((value) => value ?? null),
   additionalInfo: nullableTrimmedText(200, "Keep notes under 200 characters."),
+  // Kept for API compat; overwritten from substitutionNote during parse.
   substitutionsAllowed: z.boolean(),
   substitutionNote: nullableTrimmedText(
     200,
     "Keep substitutions under 200 characters.",
   ),
 });
+
+export const shoppingListEditableItemSchema =
+  shoppingListEditableItemBaseSchema.transform((row) => ({
+    ...row,
+    substitutionsAllowed: deriveSubstitutionsAllowed(row.substitutionNote),
+  }));
 
 export const saveShoppingListEditsSchema = z.object({
   planId: z.string().min(1),

@@ -133,7 +133,10 @@ export function IngredientsInfiniteList({
         {/* Each row is now its own bordered card; space them with `gap-item` instead of dividers. */}
         <ul className="flex flex-col gap-item">
           {items.map((ingredient) => (
-            <IngredientRow key={ingredient.id} ingredient={ingredient} />
+            <IngredientRow
+              key={ingredient.id}
+              ingredient={ingredient}
+            />
           ))}
 
           {items.length === 0 && (
