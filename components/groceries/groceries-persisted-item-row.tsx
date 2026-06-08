@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
-import { ArrowRightLeft, CircleAlert, ExternalLink } from "lucide-react";
+import { ArrowRightLeft, CircleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { setShoppingListItemPurchasedByShareAction } from "@/actions/shopping-list-share-actions";
 import { setShoppingListItemPurchasedAction } from "@/actions/shopping-list-actions";
+import { IngredientSupermarketLinkButton } from "@/components/groceries/ingredient-supermarket-link-button";
 import { IngredientIcon } from "@/components/ingredient-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -131,22 +131,14 @@ export function GroceriesPersistedItemRow({
                 {row.displayLabel}
               </div>
               {ing?.supermarketUrl ? (
-                <div className="self-start" onClick={(event) => event.stopPropagation()}>
-                  <Button
-                    asChild
-                    variant="ghost"
-                    size="icon-sm"
-                  className="h-6 w-6 p-0 text-muted-foreground hover:text-muted-foreground [&_svg]:text-muted-foreground [&_svg]:opacity-70"
-                    aria-label={`Open ${row.displayLabel} in supermarket`}
-                  >
-                    <Link
-                      href={ing.supermarketUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </Link>
-                  </Button>
+                <div
+                  className="self-start"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <IngredientSupermarketLinkButton
+                    href={ing.supermarketUrl}
+                    ingredientLabel={row.displayLabel}
+                  />
                 </div>
               ) : null}
             </div>
