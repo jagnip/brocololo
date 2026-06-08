@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getRecipeBySlug } from "@/lib/db/recipes";
 import { getIngredients } from "@/lib/db/ingredients";
+import { mergeRecipeIngredientGroceries } from "@/lib/ingredients/merge-recipe-ingredient-groceries";
 import { getLogs } from "@/lib/db/logs";
 import RecipePage from "./recipe-page";
 import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
@@ -29,10 +30,12 @@ export default async function RecipePageContainer({
   }
 
   const logDateKeys = getLogDateKeys(logs);
+  // Nested recipe ingredients omit overlay merge; reuse resolved catalog URLs.
+  const resolvedRecipe = mergeRecipeIngredientGroceries(recipe, ingredients);
 
   return (
     <RecipePageProvider
-      recipe={recipe}
+      recipe={resolvedRecipe}
       ingredients={ingredients}
       familyMembers={familyMembers}
       availableLogDateKeys={logDateKeys}
