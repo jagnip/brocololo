@@ -27,8 +27,8 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
 
   return (
     <Link href={url} scroll={false} >
-      <Card className="h-full cursor-pointer transition-shadow hover:shadow-md overflow-hidden py-0 gap-0">
-        <div className="relative w-full overflow-hidden aspect-2/1 sm:aspect-3/2">
+      <Card className="card-interactive h-full cursor-pointer overflow-hidden p-4 py-0 gap-0">
+        <div className="relative m-4 mb-0 aspect-2/1 overflow-hidden rounded-3xl sm:aspect-3/2">
           {/* Keep card heights stable when a recipe has no uploaded image. */}
           {imageUrl ? (
             <Image

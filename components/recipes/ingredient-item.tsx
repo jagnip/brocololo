@@ -283,7 +283,7 @@ export function IngredientItem({
   );
 
   return (
-    <li className="flex flex-col gap-item rounded-md border border-border/60 p-nest">
+    <li className="flex flex-col gap-item rounded-2xl border border-transparent bg-muted p-4 transition-colors hover:bg-card hover:ring-1 hover:ring-ring">
       <div className="flex items-center gap-item md:flex-col md:items-stretch lg:flex-row lg:items-center">
         {/* <IngredientIcon icon={ingredient.icon} name={ingredient.name} /> */}
         {canRenderAmountAndUnit && (

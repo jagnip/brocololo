@@ -1,17 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Quicksand } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { ClerkProvider } from "@clerk/nextjs";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const quicksand = Quicksand({
+  variable: "--font-quicksand",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -35,10 +31,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up">
+      <body className={`${quicksand.variable} font-sans antialiased`}>
+        <ClerkProvider
+          signInUrl="/sign-in"
+          signUpUrl="/sign-up"
+          appearance={{
+            cssLayerName: "clerk",
+            variables: {
+              colorPrimary: "var(--primary)",
+              colorBackground: "var(--background)",
+              colorText: "var(--foreground)",
+              colorInputBackground: "var(--card)",
+              colorInputText: "var(--foreground)",
+              borderRadius: "var(--radius)",
+            },
+          }}
+        >
           {children}
           <Toaster />
         </ClerkProvider>

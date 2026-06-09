@@ -103,8 +103,8 @@ export function ImageUploader({
                   )} */}
 
                   {error && (
-                    <div className="absolute inset-0 bg-red-500/50 flex items-center justify-center">
-                      <div className="text-white text-xs text-center px-2">
+                    <div className="absolute inset-0 flex items-center justify-center bg-destructive/50">
+                      <div className="px-2 text-center text-xs text-primary-foreground">
                         {error}
                       </div>
                     </div>
@@ -118,7 +118,7 @@ export function ImageUploader({
 
       {/* NEW: Global error message */}
       {Object.keys(errors).length > 0 && (
-        <p className="text-sm text-red-500">
+        <p className="text-sm text-destructive">
           Some images failed to upload. Please try again.
         </p>
       )}

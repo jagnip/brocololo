@@ -46,7 +46,7 @@ export function PlannerSlotCard({
     const canAdd = onReplace && recipes && recipes.length > 0;
 
     return (
-      <div className="flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed border-border/60 bg-card p-0 py-0 shadow-none transition-colors">
+      <div className="flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-[2rem] border-2 border-dashed border-border bg-muted/50 p-0 py-0 shadow-none transition-colors">
         {canAdd ? (
           <RecipeReplacePopover
             currentRecipeId=""
@@ -82,11 +82,11 @@ export function PlannerSlotCard({
   return (
     <Card
       className={cn(
-        "h-full overflow-hidden py-0 gap-0 transition-shadow",
+        "card-interactive h-full gap-0 overflow-hidden border-border py-0",
         slot.used && "opacity-50",
       )}
     >
-      <div className="relative w-full overflow-hidden aspect-2/1 sm:aspect-3/2">
+      <div className="relative m-3 mb-0 aspect-2/1 overflow-hidden rounded-xl sm:aspect-3/2">
         {/* Always render a media header for visual rhythm across slot cards. */}
         {imageUrl ? (
           <Image
@@ -122,7 +122,8 @@ export function PlannerSlotCard({
               fridgeMatchIngredients.map((name) => (
                 <Badge
                   key={name}
-                  className="border-green-200 bg-green-100 text-green-800 text-xs"
+                  variant="produce"
+                  className="text-xs"
                 >
                   {name}
                 </Badge>
@@ -138,7 +139,7 @@ export function PlannerSlotCard({
                   onClick={onToggleUsed}
                 >
                   <Check
-                    className={cn("h-4 w-4", slot.used && "text-white")}
+                    className="h-4 w-4"
                     strokeWidth={2}
                   />
                 </Button>

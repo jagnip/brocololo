@@ -19,9 +19,9 @@ export function AppSidebarContainer({
         <Suspense fallback={<AppSidebarSkeleton />}>
           <AppSidebar />
         </Suspense>
-        <SidebarInset>
+        <SidebarInset className="bg-background">
           <AppTopbar />
-          <main>{children}</main>
+          <main className="bg-background">{children}</main>
         </SidebarInset>
       </TopbarProvider>
     </SidebarProvider>

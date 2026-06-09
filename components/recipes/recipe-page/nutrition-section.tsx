@@ -33,10 +33,12 @@ export function NutritionSection() {
   };
 
   return (
-    // Extra bottom padding + reserved reset slot keep ingredients from jumping when scaling is active.
-    <div className="flex flex-col gap-item pb-item">
+    // Dark nutrition panel from mockup recipe detail page.
+    <div className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 p-8 text-white shadow-xl">
+      <div className="pointer-events-none absolute -right-8 -top-8 size-32 rounded-full bg-primary/20 blur-2xl" />
+      <div className="relative flex flex-col gap-item pb-item">
       <div className="flex min-h-8 items-center gap-item">
-        <Subheader>Nutrition (per serving)</Subheader>
+        <Subheader className="text-white">Nutrition (per serving)</Subheader>
         <Button
           variant="ghost"
           size="icon-sm"
@@ -45,6 +47,7 @@ export function NutritionSection() {
           aria-hidden={!hasActiveNutritionScaling}
           tabIndex={hasActiveNutritionScaling ? 0 : -1}
           className={cn(
+            "text-white hover:bg-white/10 hover:text-white",
             !hasActiveNutritionScaling && "pointer-events-none invisible",
           )}
         >
@@ -58,9 +61,10 @@ export function NutritionSection() {
         const isFocused = focusedCaloriesMemberId === row.familyMemberId;
 
         return (
-          <NutritionPersonCard key={row.familyMemberId}>
+          <NutritionPersonCard key={row.familyMemberId} variant="dark">
             <NutritionPersonSummaryRow
               personLabel={row.label}
+              tone="dark"
               caloriesArea={
                 <EditableCaloriesBadge
                   ariaLabel={caloriesAriaLabel(row.label)}
@@ -86,6 +90,7 @@ export function NutritionSection() {
           </NutritionPersonCard>
         );
       })}
+      </div>
     </div>
   );
 }

@@ -87,11 +87,11 @@ export function InstructionsSection() {
                       prev === member.id ? null : member.id,
                     )
                   }
-                  className={`${
+                  className={
                     isSelected
-                      ? "bg-foreground text-background border-foreground hover:bg-foreground/90 hover:text-background"
+                      ? "border-ring bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground"
                       : "bg-background text-foreground"
-                  }`}
+                  }
                 >
                   {label}
                 </Button>
@@ -124,23 +124,21 @@ export function InstructionsSection() {
               event.preventDefault();
               setSelectedInstructionId(instruction.id);
             }}
-            className={`flex items-start gap-item rounded-lg border p-nest cursor-pointer transition-colors ${
+            className={`group flex cursor-pointer items-start gap-item rounded-2xl border p-nest transition-colors ${
               isSelected
-                ? "border-border/60 bg-muted/60"
+                ? "border-ring bg-accent/50"
                 : "border-border/60 bg-card hover:bg-muted/40"
             }`}
           >
-            {/* Increase active-state contrast so step index remains visible on selection. */}
+            {/* NomNom step number tile — rose accent on hover/selection. */}
             <div
-              className={`self-start flex size-5 shrink-0 items-center justify-center rounded-full ${
-                isSelected ? "bg-foreground" : "bg-muted"
+              className={`flex size-10 shrink-0 items-center justify-center self-start rounded-xl transition-colors ${
+                isSelected
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-accent text-primary group-hover:bg-primary group-hover:text-primary-foreground"
               }`}
             >
-              <div
-                className={`type-micro ${
-                  isSelected ? "text-background" : "text-secondary-foreground"
-                }`}
-              >
+              <div className="type-micro font-bold">
                 {index + 1}
               </div>
             </div>

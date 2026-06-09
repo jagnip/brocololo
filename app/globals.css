@@ -6,8 +6,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-quicksand);
+  --font-mono: var(--font-quicksand);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -42,6 +42,16 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-premium: var(--premium);
+  --color-premium-foreground: var(--premium-foreground);
+  --color-category-produce: var(--category-produce);
+  --color-category-produce-foreground: var(--category-produce-foreground);
+  --color-category-dairy: var(--category-dairy);
+  --color-category-dairy-foreground: var(--category-dairy-foreground);
+  --color-category-dinner: var(--category-dinner);
+  --color-category-dinner-foreground: var(--category-dinner-foreground);
+  --color-category-lunch: var(--category-lunch);
+  --color-category-lunch-foreground: var(--category-lunch-foreground);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -51,43 +61,56 @@
   --radius-4xl: calc(var(--radius) + 16px);
 
   /* Spacing — recipes list + recipe detail primitives (described by UI element). */
-  --spacing-gutter: 1rem; /* outer horizontal/bottom breathing space of the recipes grid wrapper */
-  --spacing-block: 1rem; /* major section-to-section gaps in recipe detail columns and top-level blocks */
-  --spacing-item: 0.5rem; /* default inner spacing between related controls/items (chips, rows, list items) */
-  --spacing-tight: 0.25rem; /* compact inline micro-gaps (small icon+text/meta clusters) */
-  --spacing-comfort: 0.75rem; /* vertical spacing between empty-state icon, heading, and supporting text */
-  --spacing-cozy: 0.375rem; /* tight heading-to-subtitle spacing in small empty-state text groups */
-  --spacing-nest: 0.5rem; /* inset padding inside nested panels/cards (instruction step card, notes box, nutrient rows) */
-  --spacing-sheet: 1rem; /* recipes tabs container padding (the segmented tabs block) */
-  --spacing-card-x: 1rem; /* recipe card header horizontal padding */
-  --spacing-card-y: 0.75rem; /* recipe card header vertical padding */
-  --spacing-empty-x: 1.5rem; /* empty-state horizontal padding inside dashed container */
-  --spacing-empty-y: 3.5rem; /* empty-state vertical padding inside dashed container */
+  --spacing-gutter: 1rem;
+  --spacing-block: 1rem;
+  --spacing-item: 0.5rem;
+  --spacing-tight: 0.25rem;
+  --spacing-comfort: 0.75rem;
+  --spacing-cozy: 0.375rem;
+  --spacing-nest: 0.5rem;
+  --spacing-sheet: 1rem;
+  --spacing-card-x: 1rem;
+  --spacing-card-y: 0.75rem;
+  --spacing-empty-x: 1.5rem;
+  --spacing-empty-y: 3.5rem;
+
+  /* Rose-tinted elevation shadows (NomNom mockup pattern). */
+  --shadow-rose-sm: 0 1px 2px 0 color-mix(in oklch, var(--rose-100) 60%, transparent);
+  --shadow-rose-md: 0 4px 6px -1px color-mix(in oklch, var(--rose-100) 70%, transparent);
+  --shadow-rose-lg: 0 10px 15px -3px color-mix(in oklch, var(--rose-100) 80%, transparent);
+  --shadow-rose-xl: 0 20px 25px -5px color-mix(in oklch, var(--rose-100) 90%, transparent);
 }
 
 :root {
-  /* Typography presets — metrics for @utility type-* (single class = full stack) */
-  --type-h1-size: 1.5rem;
-  --type-h1-line-height: 2rem;
-  --type-h1-weight: 600;
+  /* NomNom brand palette — rose primary, slate neutrals, warm canvas. */
+  --rose-50: oklch(0.969 0.015 12.4);
+  --rose-100: oklch(0.941 0.03 12.4);
+  --rose-300: oklch(0.81 0.117 11.6);
+  --rose-400: oklch(0.712 0.194 13.4);
+  --rose-500: oklch(0.645 0.246 16.4);
+
+  /* Typography presets — Quicksand-forward, bolder headings per mockup. */
+  --type-h1-size: 1.875rem;
+  --type-h1-line-height: 2.25rem;
+  --type-h1-weight: 700;
   --type-h1-tracking: -0.02em;
-  --type-h2-size: 1rem;
-  --type-h2-line-height: 1.25rem;
-  --type-h2-weight: 600;
+  --type-h2-size: 1.25rem;
+  --type-h2-line-height: 1.75rem;
+  --type-h2-weight: 700;
   --type-h2-tracking: -0.01em;
-  --type-h3-size: 1rem;
-  --type-h3-line-height: 1.25rem;
-  --type-h3-weight: 500;
+  --type-h3-size: 1.125rem;
+  --type-h3-line-height: 1.5rem;
+  --type-h3-weight: 700;
   --type-h3-tracking: 0em;
   --type-body-size: 0.875rem;
   --type-body-line-height: 1.25rem;
   --type-body-weight: 400;
   --type-body-tracking: 0em;
   --type-body-relaxed-line-height: 1.625rem;
-  --type-overline-size: 0.75rem;
+  --type-overline-size: 0.65rem;
   --type-overline-line-height: 1rem;
-  --type-overline-weight: 600;
-  --type-overline-tracking: 0.05em;
+  --type-overline-weight: 800;
+  --type-overline-tracking: 0.1em;
   --type-caption-size: 0.75rem;
   --type-caption-line-height: 1rem;
   --type-caption-weight: 400;
@@ -97,65 +120,78 @@
   --type-micro-weight: 500;
   --type-micro-tracking: 0em;
 
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
+  --radius: 1rem;
+  --background: oklch(0.992 0.008 350);
+  --foreground: oklch(0.372 0.044 257.3);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
+  --card-foreground: oklch(0.279 0.041 260.3);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.21 0.006 285.885);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.279 0.041 260.3);
+  --primary: var(--rose-400);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.984 0.003 247.9);
+  --secondary-foreground: oklch(0.279 0.041 260.3);
+  --muted: oklch(0.984 0.003 247.9);
+  --muted-foreground: oklch(0.554 0.046 257.4);
+  --accent: var(--rose-50);
+  --accent-foreground: var(--rose-500);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.705 0.015 286.067);
+  --border: var(--rose-100);
+  --input: oklch(0.929 0.013 255.5);
+  --ring: var(--rose-100);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  /* Categorical colors — mostly chart hue, lightly softened for muted surfaces */
   --muted-chart-1: color-mix(in oklch, var(--chart-1) 88%, var(--muted) 12%);
   --muted-chart-2: color-mix(in oklch, var(--chart-2) 88%, var(--muted) 12%);
   --muted-chart-3: color-mix(in oklch, var(--chart-3) 88%, var(--muted) 12%);
   --muted-chart-4: color-mix(in oklch, var(--chart-4) 88%, var(--muted) 12%);
   --muted-chart-5: color-mix(in oklch, var(--chart-5) 88%, var(--muted) 12%);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.21 0.006 285.885);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.705 0.015 286.067);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.372 0.044 257.3);
+  --sidebar-primary: var(--rose-400);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: var(--rose-50);
+  --sidebar-accent-foreground: var(--rose-500);
+  --sidebar-border: var(--rose-100);
+  --sidebar-ring: var(--rose-100);
+
+  /* Premium / violet promo surfaces (mockup sidebar upsell). */
+  --premium: oklch(0.969 0.016 293.8);
+  --premium-foreground: oklch(0.491 0.27 292.6);
+
+  /* Meal / category accent colors — semantic, not brand primary. */
+  --category-produce: oklch(0.962 0.044 156.7);
+  --category-produce-foreground: oklch(0.527 0.154 150.1);
+  --category-dairy: oklch(0.969 0.016 293.8);
+  --category-dairy-foreground: oklch(0.606 0.25 292.7);
+  --category-dinner: oklch(0.954 0.038 75.2);
+  --category-dinner-foreground: oklch(0.646 0.222 41.1);
+  --category-lunch: oklch(0.932 0.032 255.6);
+  --category-lunch-foreground: oklch(0.546 0.245 262.9);
 }
 
 .dark {
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.92 0.004 286.32);
-  --primary-foreground: oklch(0.21 0.006 285.885);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: oklch(0.18 0.02 260);
+  --foreground: oklch(0.984 0.003 247.9);
+  --card: oklch(0.22 0.025 260);
+  --card-foreground: oklch(0.984 0.003 247.9);
+  --popover: oklch(0.22 0.025 260);
+  --popover-foreground: oklch(0.984 0.003 247.9);
+  --primary: var(--rose-400);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.28 0.03 260);
+  --secondary-foreground: oklch(0.984 0.003 247.9);
+  --muted: oklch(0.28 0.03 260);
+  --muted-foreground: oklch(0.704 0.04 256.8);
+  --accent: oklch(0.32 0.04 15);
+  --accent-foreground: var(--rose-400);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.552 0.016 285.938);
+  --ring: oklch(0.45 0.08 15);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -166,14 +202,24 @@
   --muted-chart-3: color-mix(in oklch, var(--chart-3) 88%, var(--muted) 12%);
   --muted-chart-4: color-mix(in oklch, var(--chart-4) 88%, var(--muted) 12%);
   --muted-chart-5: color-mix(in oklch, var(--chart-5) 88%, var(--muted) 12%);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.552 0.016 285.938);
+  --sidebar: oklch(0.22 0.025 260);
+  --sidebar-foreground: oklch(0.984 0.003 247.9);
+  --sidebar-primary: var(--rose-400);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.32 0.04 15);
+  --sidebar-accent-foreground: var(--rose-400);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.45 0.08 15);
+  --premium: oklch(0.28 0.06 293);
+  --premium-foreground: oklch(0.75 0.15 293);
+  --category-produce: oklch(0.28 0.05 156);
+  --category-produce-foreground: oklch(0.75 0.12 156);
+  --category-dairy: oklch(0.28 0.06 293);
+  --category-dairy-foreground: oklch(0.75 0.15 293);
+  --category-dinner: oklch(0.28 0.05 75);
+  --category-dinner-foreground: oklch(0.75 0.12 75);
+  --category-lunch: oklch(0.28 0.05 255);
+  --category-lunch-foreground: oklch(0.75 0.12 255);
 }
 
 @layer base {
@@ -203,7 +249,7 @@
   line-height: var(--type-h2-line-height);
   font-weight: var(--type-h2-weight);
   letter-spacing: var(--type-h2-tracking);
-} 
+}
 
 /* Card/subsection heading utility. Used in recipe cards and recipe empty states. */
 @utility type-h3 {
@@ -260,9 +306,31 @@
   letter-spacing: var(--type-micro-tracking);
 }
 
-/* Reusable recipe/log section shell to avoid repeating base card styles. */
+/* Reusable recipe/log section shell — NomNom rounded panels with soft rose border. */
 @utility section-container {
-  @apply rounded-xl bg-card antialiased;
+  @apply rounded-[2rem] border border-border bg-card antialiased;
+}
+
+/* Interactive card hover pattern from mockups (lift + rose-tinted shadow). */
+@utility card-interactive {
+  @apply border-border transition-all duration-300 hover:-translate-y-1 hover:border-ring hover:shadow-xl;
+  box-shadow: var(--shadow-rose-sm);
+}
+
+@utility shadow-rose-sm {
+  box-shadow: var(--shadow-rose-sm);
+}
+
+@utility shadow-rose-md {
+  box-shadow: var(--shadow-rose-md);
+}
+
+@utility shadow-rose-lg {
+  box-shadow: var(--shadow-rose-lg);
+}
+
+@utility shadow-rose-xl {
+  box-shadow: var(--shadow-rose-xl);
 }
 
 @layer utilities {
@@ -270,10 +338,15 @@
   .page-container {
     margin-inline: auto;
     width: 100%;
-    /* max-width: 80rem; */
     @apply p-gutter;
   }
+
+  /* Hide scrollbars while keeping scroll (mockup pattern). */
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
-
-
-
