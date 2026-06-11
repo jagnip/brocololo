@@ -35,7 +35,7 @@ function SearchFieldInput({ className, ...props }: AriaInputProps) {
     <AriaInput
       className={composeRenderProps(className, (className) =>
         cn(
-          "min-w-0 flex-1 bg-background px-2 py-1.5 outline outline-0 placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:hidden",
+          "min-w-0 flex-1 bg-card px-2 py-1.5 outline outline-0 placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:hidden",
           className
         )
       )}
@@ -49,7 +49,7 @@ function SearchFieldGroup({ className, ...props }: AriaGroupProps) {
     <AriaGroup
       className={composeRenderProps(className, (className) =>
         cn(
-          "flex h-10 w-full items-center overflow-hidden rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background",
+          "flex h-10 w-full items-center overflow-hidden rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background",
           /* Focus Within */
           "data-[focus-within]:outline-none data-[focus-within]:ring-2 data-[focus-within]:ring-ring data-[focus-within]:ring-offset-2",
           /* Disabled */

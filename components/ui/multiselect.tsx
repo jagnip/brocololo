@@ -460,7 +460,7 @@ const MultipleSelector = React.forwardRef<
         <div
           className={cn(
             // Keep control height aligned with standard text inputs in forms.
-            "flex min-h-9 items-center justify-between rounded-md border border-input px-2 py-1 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+            "flex min-h-9 items-center justify-between rounded-md border border-input bg-card px-2 py-1 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
             {
               "cursor-text": !disabled && selected.length !== 0,
             },
