@@ -67,7 +67,7 @@ export function PortionSplitCard({ members, scopeLabel }: PortionSplitCardProps)
   const ariaLabel = buildAriaLabel(members, percentages, scopeLabel);
 
   return (
-    <div className="mb-item rounded-lg border border-border bg-muted p-nest">
+    <div className="mb-item rounded-lg border border-border bg-card p-nest">
       <div className="flex items-start gap-item">
         <div
           className="relative size-10 shrink-0 rounded-full border border-border"

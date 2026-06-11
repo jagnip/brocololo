@@ -58,7 +58,7 @@ export function InstructionsSection() {
 
   return (
     // Shared section container utility keeps card shell styling consistent.
-    <div className="section-container">
+    <div className="section-container border-0">
       <div className="mb-item flex flex-wrap items-center justify-between gap-item">
         <Subheader>Instructions</Subheader>
         {/* Hide person filter when the recipe audience is a single cook. */}
@@ -90,7 +90,7 @@ export function InstructionsSection() {
                   className={
                     isSelected
                       ? "border-ring bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                      : "bg-background text-foreground"
+                      : "bg-card text-foreground hover:bg-muted/40"
                   }
                 >
                   {label}
@@ -246,7 +246,7 @@ export function InstructionsSection() {
                         <span>{baseBadgeLabel}</span>
                         {mutedGramsLabel ? (
                           // Same hue as badge label; opacity only (not muted-foreground gray).
-                          <span className="opacity-60">{mutedGramsLabel}</span>
+                          <span className="opacity-75">{mutedGramsLabel}</span>
                         ) : null}
                       </Badge>
                     );
