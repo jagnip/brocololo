@@ -35,16 +35,16 @@ export function AppSidebar() {
         {/* NomNom-style logo block from mockup sidebar header */}
         <Link
           href={ROUTES.recipes}
-          className="flex items-center gap-3 px-2 group-data-[collapsible=icon]:justify-center"
+          className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center"
         >
           <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-rose-lg">
             <CookingPot className="size-5" />
           </div>
-          <span className="type-h2 truncate text-card-foreground tracking-tight group-data-[collapsible=icon]:hidden">
-            Brocololo
+          <span className="type-h2 whitespace-nowrap text-card-foreground tracking-tight group-data-[collapsible=icon]:hidden">
+            NomNom
           </span>
         </Link>
-        <SidebarMenu className="flex-1 gap-2">
+        <SidebarMenu className="gap-1.5">
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isRecipes} tooltip="Recipes">
               <Link
@@ -109,8 +109,6 @@ export function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-        </SidebarMenu>
-        <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild

@@ -22,7 +22,7 @@ const quicksand = Quicksand({
 });
 
 export const metadata: Metadata = {
-  title: "Brocololo",
+  title: "NomNom",
   description: "Recipes",
 };
 
@@ -51,6 +51,9 @@ export default function RootLayout({
           signUpUrl="/sign-up"
           appearance={{
             cssLayerName: "clerk",
+            layout: {
+              applicationName: "NomNom",
+            },
             variables: {
               colorPrimary: "var(--primary)",
               colorBackground: "var(--background)",
