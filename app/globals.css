@@ -84,11 +84,12 @@
 
 :root {
   /* NomNom brand palette — rose primary, slate neutrals, warm canvas. */
-  --rose-50: oklch(0.969 0.015 12.4);
-  --rose-100: oklch(0.941 0.03 12.4);
-  --rose-300: oklch(0.81 0.117 11.6);
-  --rose-400: oklch(0.712 0.194 13.4);
-  --rose-500: oklch(0.645 0.246 16.4);
+  /* Slightly desaturated vs original: softer chips/buttons (mockup “6 items” reference). */
+  --rose-50: oklch(0.969 0.012 12.4);
+  --rose-100: oklch(0.941 0.024 12.4);
+  --rose-300: oklch(0.815 0.098 11.6);
+  --rose-400: oklch(0.72 0.165 13.4);
+  --rose-500: oklch(0.67 0.2 15);
 
   /* Typography presets — Quicksand display headings, bolder scale per mockup. */
   --type-h1-size: 1.875rem;
