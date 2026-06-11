@@ -59,8 +59,9 @@ const DateSegment = ({ className, ...props }: DateSegmentProps) => {
   );
 };
 
+// bg-card matches Input/Select — white fill instead of rose-tinted bg-background.
 const dateInputStyle =
-  "relative inline-flex h-9 w-full items-center overflow-hidden whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs transition-shadow data-[focus-within]:border-ring data-[disabled]:opacity-50 data-[focus-within]:outline-none data-[focus-within]:ring-[3px] data-[focus-within]:ring-ring/20";
+  "relative inline-flex h-9 w-full items-center overflow-hidden whitespace-nowrap rounded-md border border-input bg-card px-3 py-2 text-sm shadow-xs transition-shadow data-[focus-within]:border-ring data-[disabled]:opacity-50 data-[focus-within]:outline-none data-[focus-within]:ring-[3px] data-[focus-within]:ring-ring/20";
 
 interface DateInputProps extends DateInputPropsRac {
   className?: string;
