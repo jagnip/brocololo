@@ -19,7 +19,7 @@ export function ImageGallery({ images }: ImageGalleryProps) {
 
   return (
     <div className="space-y-block">
-      <div className="relative aspect-video w-full overflow-hidden rounded-[3rem]">
+      <div className="relative aspect-video w-full overflow-hidden rounded-xl">
         {/* Show a first-class fallback so the detail layout stays aligned without uploads. */}
         {coverImageUrl ? (
           <Image

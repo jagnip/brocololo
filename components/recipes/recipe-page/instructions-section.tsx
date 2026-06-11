@@ -124,15 +124,15 @@ export function InstructionsSection() {
               event.preventDefault();
               setSelectedInstructionId(instruction.id);
             }}
-            className={`group flex cursor-pointer items-start gap-item rounded-2xl border p-nest transition-colors ${
+            className={`group flex cursor-pointer items-start gap-item rounded-lg border p-nest transition-colors ${
               isSelected
                 ? "border-ring bg-accent/50"
                 : "border-border/60 bg-card hover:bg-muted/40"
             }`}
           >
-            {/* NomNom step number tile — rose accent on hover/selection. */}
+            {/* Step number — rose accent on hover/selection. */}
             <div
-              className={`flex size-10 shrink-0 items-center justify-center self-start rounded-xl transition-colors ${
+              className={`flex size-5 shrink-0 items-center justify-center self-start rounded-full transition-colors ${
                 isSelected
                   ? "bg-primary text-primary-foreground"
                   : "bg-accent text-primary group-hover:bg-primary group-hover:text-primary-foreground"

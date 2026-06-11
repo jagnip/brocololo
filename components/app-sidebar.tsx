@@ -37,7 +37,7 @@ export function AppSidebar() {
           href={ROUTES.recipes}
           className="flex items-center gap-3 px-2 group-data-[collapsible=icon]:justify-center"
         >
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-rose-lg">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-rose-lg">
             <CookingPot className="size-5" />
           </div>
           <span className="type-h2 truncate text-card-foreground tracking-tight group-data-[collapsible=icon]:hidden">

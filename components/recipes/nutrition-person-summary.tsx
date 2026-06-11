@@ -19,8 +19,8 @@ export function NutritionPersonCard({
     <div
       className={
         variant === "dark"
-          ? "flex flex-col gap-item rounded-2xl border border-white/5 bg-white/10 px-nest py-nest backdrop-blur-md"
-          : "flex flex-col gap-item rounded-2xl border border-border bg-card px-nest py-nest"
+          ? "flex flex-col gap-item rounded-lg border border-white/5 bg-white/10 px-nest py-nest backdrop-blur-md"
+          : "flex flex-col gap-item rounded-lg border border-border bg-card px-nest py-nest"
       }
     >
       {children}

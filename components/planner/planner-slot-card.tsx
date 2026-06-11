@@ -46,7 +46,7 @@ export function PlannerSlotCard({
     const canAdd = onReplace && recipes && recipes.length > 0;
 
     return (
-      <div className="flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-[2rem] border-2 border-dashed border-border bg-muted/50 p-0 py-0 shadow-none transition-colors">
+      <div className="flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed border-border/60 bg-card p-0 py-0 shadow-none transition-colors">
         {canAdd ? (
           <RecipeReplacePopover
             currentRecipeId=""
@@ -86,7 +86,7 @@ export function PlannerSlotCard({
         slot.used && "opacity-50",
       )}
     >
-      <div className="relative m-3 mb-0 aspect-2/1 overflow-hidden rounded-xl sm:aspect-3/2">
+      <div className="relative w-full overflow-hidden aspect-2/1 sm:aspect-3/2">
         {/* Always render a media header for visual rhythm across slot cards. */}
         {imageUrl ? (
           <Image

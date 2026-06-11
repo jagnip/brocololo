@@ -23,7 +23,7 @@ export function PlannerPlanColumnEmpty({
   return (
     <Card
       className={cn(
-        "flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-[2rem] border-2 border-dashed border-border bg-muted/50 p-0 py-0 shadow-none",
+        "flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed border-border bg-muted/50 p-0 py-0 shadow-none",
         className,
       )}
     >

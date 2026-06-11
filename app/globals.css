@@ -121,7 +121,7 @@
   --type-micro-weight: 500;
   --type-micro-tracking: 0em;
 
-  --radius: 1rem;
+  --radius: 0.625rem;
   --background: oklch(0.992 0.008 350);
   --foreground: oklch(0.372 0.044 257.3);
   --card: oklch(1 0 0);
@@ -309,7 +309,7 @@
 
 /* Reusable recipe/log section shell — NomNom rounded panels with soft rose border. */
 @utility section-container {
-  @apply rounded-[2rem] border border-border bg-card antialiased;
+  @apply rounded-xl bg-card antialiased;
 }
 
 /* Interactive card hover pattern from mockups (lift + rose-tinted shadow). */

@@ -34,7 +34,7 @@ export function NutritionSection() {
 
   return (
     // Dark nutrition panel from mockup recipe detail page.
-    <div className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 p-8 text-white shadow-xl">
+    <div className="relative overflow-hidden rounded-xl bg-slate-900 p-8 text-white shadow-xl">
       <div className="pointer-events-none absolute -right-8 -top-8 size-32 rounded-full bg-primary/20 blur-2xl" />
       <div className="relative flex flex-col gap-item pb-item">
       <div className="flex min-h-8 items-center gap-item">

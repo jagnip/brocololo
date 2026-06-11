@@ -96,7 +96,7 @@ export function GroceriesPersistedItemRow({
     <li className="py-0">
       <div
         className={cn(
-          "flex items-start justify-between gap-3 rounded-2xl px-2 py-3 transition-colors hover:bg-muted/60",
+          "flex items-start justify-between gap-3 py-3 transition-colors hover:bg-muted/60",
           !isPending && "cursor-pointer",
           hasMeta ? "border-b border-dashed pb-3" : "",
         )}
@@ -171,7 +171,7 @@ export function GroceriesPersistedItemRow({
         <div className="flex shrink-0 flex-col items-center gap-1 self-start -mt-0.5">
           <div onClick={(event) => event.stopPropagation()}>
             <Checkbox
-              className="size-6 rounded-lg"
+              className="h-5 w-5 rounded-full"
               checked={isPurchased}
               onCheckedChange={(checked) => onTogglePurchased(checked === true)}
               disabled={isPending}

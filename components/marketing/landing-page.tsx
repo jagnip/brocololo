@@ -45,7 +45,7 @@ export function LandingPage() {
       <header className="sticky top-0 z-20 border-b border-border bg-background">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <Link href={ROUTES.home} className="flex items-center gap-2 type-h2 text-foreground">
-            <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-rose-sm">
+            <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-rose-sm">
               <CookingPot className="size-4" />
             </span>
             Brocololo
@@ -88,7 +88,7 @@ export function LandingPage() {
                 <li key={title}>
                   <Card className="card-interactive h-full">
                     <CardHeader>
-                      <div className="mb-2 flex size-9 items-center justify-center rounded-xl bg-accent text-accent-foreground shadow-sm">
+                      <div className="mb-2 flex size-9 items-center justify-center rounded-md bg-accent text-accent-foreground shadow-sm">
                         <Icon className="size-5" />
                       </div>
                       <CardTitle className="type-h2">{title}</CardTitle>
