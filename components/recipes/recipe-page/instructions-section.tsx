@@ -245,9 +245,8 @@ export function InstructionsSection() {
                       >
                         <span>{baseBadgeLabel}</span>
                         {mutedGramsLabel ? (
-                          <span className="text-muted-foreground">
-                            {mutedGramsLabel}
-                          </span>
+                          // Same hue as badge label; opacity only (not muted-foreground gray).
+                          <span className="opacity-60">{mutedGramsLabel}</span>
                         ) : null}
                       </Badge>
                     );

@@ -130,8 +130,9 @@
   --popover-foreground: oklch(0.279 0.041 260.3);
   --primary: var(--rose-400);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.984 0.003 247.9);
-  --secondary-foreground: oklch(0.279 0.041 260.3);
+  /* Neutral chip — used by buttons, selects, outline labels (not badges). */
+  --secondary: oklch(0.962 0.004 247.9);
+  --secondary-foreground: oklch(0.52 0.042 257.4);
   --muted: oklch(0.984 0.003 247.9);
   --muted-foreground: oklch(0.554 0.046 257.4);
   --accent: var(--rose-50);
@@ -183,8 +184,8 @@
   --popover-foreground: oklch(0.984 0.003 247.9);
   --primary: var(--rose-400);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.28 0.03 260);
-  --secondary-foreground: oklch(0.984 0.003 247.9);
+  --secondary: oklch(0.26 0.03 260);
+  --secondary-foreground: oklch(0.72 0.04 256.8);
   --muted: oklch(0.28 0.03 260);
   --muted-foreground: oklch(0.704 0.04 256.8);
   --accent: oklch(0.32 0.04 15);
