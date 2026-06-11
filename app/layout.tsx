@@ -41,10 +41,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${quicksand.variable} antialiased`}
-      >
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} ${quicksand.variable}`}
+    >
+      <body className="font-sans antialiased">
         <ClerkProvider
           signInUrl="/sign-in"
           signUpUrl="/sign-up"

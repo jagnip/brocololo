@@ -90,7 +90,7 @@
   --rose-400: oklch(0.712 0.194 13.4);
   --rose-500: oklch(0.645 0.246 16.4);
 
-  /* Typography presets — Quicksand-forward, bolder headings per mockup. */
+  /* Typography presets — Quicksand display headings, bolder scale per mockup. */
   --type-h1-size: 1.875rem;
   --type-h1-line-height: 2.25rem;
   --type-h1-weight: 700;
@@ -236,7 +236,7 @@
 
 /* Page title utility. Used for top-level headers like `PageHeader` titles. */
 @utility type-h1 {
-  font-family: var(--font-display);
+  font-family: var(--font-quicksand), ui-sans-serif, system-ui, sans-serif;
   font-size: var(--type-h1-size);
   line-height: var(--type-h1-line-height);
   font-weight: var(--type-h1-weight);
@@ -245,7 +245,7 @@
 
 /* Section heading utility. Used in recipe detail sections (Ingredients, Instructions, Notes, Nutrition). */
 @utility type-h2 {
-  font-family: var(--font-display);
+  font-family: var(--font-quicksand), ui-sans-serif, system-ui, sans-serif;
   font-size: var(--type-h2-size);
   line-height: var(--type-h2-line-height);
   font-weight: var(--type-h2-weight);
@@ -254,7 +254,7 @@
 
 /* Card/subsection heading utility. Used in recipe cards and recipe empty states. */
 @utility type-h3 {
-  font-family: var(--font-display);
+  font-family: var(--font-quicksand), ui-sans-serif, system-ui, sans-serif;
   font-size: var(--type-h3-size);
   line-height: var(--type-h3-line-height);
   font-weight: var(--type-h3-weight);
