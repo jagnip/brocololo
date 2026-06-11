@@ -92,7 +92,7 @@ export function IngredientItem({
       className="flex flex-wrap items-center justify-end gap-1"
     >
       {memberBadges.map((badge) => (
-        <Badge key={badge.familyMemberId} variant="secondary">
+        <Badge key={badge.familyMemberId} variant="outline">
           {badge.label}
         </Badge>
       ))}

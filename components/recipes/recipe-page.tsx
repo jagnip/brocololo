@@ -116,12 +116,12 @@ export default function RecipePage({
         <div className="contents md:col-span-2 md:block md:space-y-block">
           <div className="order-3 md:order-0 flex flex-col gap-block">
             <div className="flex gap-item flex-wrap">
-              <Badge variant="secondary">
+              <Badge variant="outline">
                 Hands-on: {recipe.handsOnTime} min
               </Badge>
-              <Badge variant="secondary">Total: {recipe.totalTime} min</Badge>
+              <Badge variant="outline">Total: {recipe.totalTime} min</Badge>
               {recipe.excludeFromPlanner ? (
-                <Badge variant="secondary">Excluded from planner</Badge>
+                <Badge variant="outline">Excluded from planner</Badge>
               ) : null}
             </div>
             <NutritionSection />

@@ -58,7 +58,7 @@ export function InstructionsSection() {
 
   return (
     // Shared section container utility keeps card shell styling consistent.
-    <div className="section-container border-0">
+    <div className="section-container">
       <div className="mb-item flex flex-wrap items-center justify-between gap-item">
         <Subheader>Instructions</Subheader>
         {/* Hide person filter when the recipe audience is a single cook. */}
