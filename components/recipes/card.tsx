@@ -7,6 +7,7 @@ import { Card, CardHeader } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { useSearchParams } from "next/navigation";
 import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
+import { getProteinBadgeVariant } from "@/lib/recipes/protein-badge-variant";
 import { RecipeImagePlaceholder } from "./recipe-image-placeholder";
 
 type RecipeCardProps = {
@@ -53,7 +54,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
                 proteinCategories.map((category) => (
                   <Badge
                     key={category.id}
-                    variant="secondary"
+                    variant={getProteinBadgeVariant(category.slug)}
                     className="text-xs"
                   >
                     {category.name}

@@ -94,8 +94,18 @@ export const TIME_LIMIT_DEFAULTS: Record<number, MealTimeLimits> = {
   6: { ...WEEKEND_TIME_LIMIT_DEFAULTS },
 };
 
-//Add more categories that you want to group here
-export const PROTEIN_GROUP_MAP: Record<string, string> = {
+/** Recipe-card protein badge groups — every seeded protein maps to one of these. */
+export const PROTEIN_BADGE_GROUPS = [
+  "poultry",
+  "fish",
+  "red-meat",
+  "vegetarian",
+] as const;
+
+export type ProteinBadgeGroup = (typeof PROTEIN_BADGE_GROUPS)[number];
+
+// Add new protein slugs here so they always resolve to a badge group (never outline).
+export const PROTEIN_GROUP_MAP: Record<string, ProteinBadgeGroup> = {
   beef: "red-meat",
   pork: "red-meat",
   eggs: "vegetarian",
@@ -103,6 +113,7 @@ export const PROTEIN_GROUP_MAP: Record<string, string> = {
   dairy: "vegetarian",
   turkey: "poultry",
   chicken: "poultry",
+  fish: "fish",
 };
 
 //Sum should be 1.0, add categories or groups here
@@ -113,10 +124,4 @@ export const PROTEIN_TARGETS: Record<string, number> = {
   vegetarian: 0.10,
 };
 
-// Card accent colors by protein group key (used in planner view)
-export const PROTEIN_COLORS: Record<string, string> = {
-  poultry: "border-l-blue-400",
-  fish: "border-l-cyan-400",
-  "red-meat": "border-l-red-400",
-  vegetarian: "border-l-green-400",
-};
+// Recipe-card protein chip colors: --category-protein-* in globals.css + getProteinBadgeVariant().

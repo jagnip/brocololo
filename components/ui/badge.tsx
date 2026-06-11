@@ -26,12 +26,20 @@ const badgeVariants = cva(
           "border-transparent bg-category-dinner text-category-dinner-foreground",
         lunch:
           "border-transparent bg-category-lunch text-category-lunch-foreground",
+        poultry:
+          "border-transparent bg-category-protein-poultry text-category-protein-poultry-foreground",
+        fish:
+          "border-transparent bg-category-protein-fish text-category-protein-fish-foreground",
+        "red-meat":
+          "border-transparent bg-category-protein-red-meat text-category-protein-red-meat-foreground",
+        vegetarian:
+          "border-transparent bg-category-protein-vegetarian text-category-protein-vegetarian-foreground",
       },
     },
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 );
 
 function Badge({
