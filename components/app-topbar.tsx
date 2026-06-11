@@ -87,8 +87,9 @@ export function AppTopbar() {
   );
 
   // z-20: stay above page controls that use z-10 (e.g. log card remove buttons) while scrolling.
+  // bg-sidebar matches the sidebar shell (--sidebar), not page bg-background.
   return (
-    <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background px-4">
+    <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-sidebar px-4">
       <SidebarTrigger className="shrink-0 lg:hidden" />
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <div className="min-w-0 flex-1 overflow-hidden">
