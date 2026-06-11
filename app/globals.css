@@ -307,9 +307,9 @@
   letter-spacing: var(--type-micro-tracking);
 }
 
-/* Reusable recipe/log section shell — NomNom rounded panels with soft rose border. */
+/* Section shell on the rose canvas; form controls use bg-card so they read as white fields. */
 @utility section-container {
-  @apply rounded-xl bg-card antialiased;
+  @apply rounded-xl border border-border bg-background antialiased;
 }
 
 /* Interactive card hover pattern from mockups (lift + rose-tinted shadow). */
