@@ -65,7 +65,7 @@ export function RecipeNutritionPreviewSection({
             <NutritionPersonSummaryRow
               personLabel={row.label}
               caloriesArea={
-                <Badge variant="secondary">
+                <Badge variant="default">
                   {roundNutritionCalories(row.nutrition.calories)} kcal
                 </Badge>
               }

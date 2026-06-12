@@ -59,7 +59,7 @@ export function LandingPage() {
       <main className="flex flex-1 flex-col">
         {/* Hero */}
         <section className="mx-auto flex max-w-6xl flex-col items-center px-4 py-16 text-center sm:py-24">
-          <Badge variant="secondary" className="mb-4">
+          <Badge variant="default" className="mb-4">
             Meal planning
           </Badge>
           <h1 className="type-h1 max-w-2xl">
