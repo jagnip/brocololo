@@ -16,7 +16,7 @@ export function RecipeImagePlaceholder({
     <div
       className={cn(
         // Keep placeholder neutral and token-driven so it matches light/dark themes.
-        "absolute inset-0 flex items-center justify-center bg-linear-to-br from-muted via-muted to-muted-foreground/25",
+        "absolute inset-0 flex items-center justify-center bg-accent",
         className,
       )}
       aria-hidden

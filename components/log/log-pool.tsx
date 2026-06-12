@@ -15,7 +15,7 @@ export function LogPool({ items }: LogPlannerPoolProps) {
       <Subheader>Planned meals</Subheader>
       {/* md–2xl: four columns (¼ width) when pool is full-width; 2xl sidebar stacks one column. */}
       {items.length === 0 ? (
-        <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+        <div className="rounded-md border border-dashed border-border bg-card p-3 text-xs text-muted-foreground">
           No planner meals left in pool.
         </div>
       ) : (

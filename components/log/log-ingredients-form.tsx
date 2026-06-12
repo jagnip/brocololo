@@ -296,14 +296,14 @@ export function LogIngredientsForm({
 
           <section className="px-4 py-4 md:px-6 md:py-6 border-b">
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">
+              <Badge variant="default">
                 {macros.calories.toFixed(0)} kcal
               </Badge>
-              <Badge variant="secondary">
+              <Badge variant="default">
                 {macros.proteins.toFixed(1)}g protein
               </Badge>
-              <Badge variant="secondary">{macros.fats.toFixed(1)}g fat</Badge>
-              <Badge variant="secondary">
+              <Badge variant="default">{macros.fats.toFixed(1)}g fat</Badge>
+              <Badge variant="default">
                 {macros.carbs.toFixed(1)}g carbs
               </Badge>
             </div>

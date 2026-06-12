@@ -82,7 +82,7 @@ export function PlannerSlotCard({
   return (
     <Card
       className={cn(
-        "h-full overflow-hidden py-0 gap-0 transition-shadow",
+        "card-interactive h-full gap-0 overflow-hidden border-border py-0",
         slot.used && "opacity-50",
       )}
     >
@@ -122,7 +122,8 @@ export function PlannerSlotCard({
               fridgeMatchIngredients.map((name) => (
                 <Badge
                   key={name}
-                  className="border-green-200 bg-green-100 text-green-800 text-xs"
+                  variant="produce"
+                  className="text-xs"
                 >
                   {name}
                 </Badge>
@@ -138,7 +139,7 @@ export function PlannerSlotCard({
                   onClick={onToggleUsed}
                 >
                   <Check
-                    className={cn("h-4 w-4", slot.used && "text-white")}
+                    className="h-4 w-4"
                     strokeWidth={2}
                   />
                 </Button>

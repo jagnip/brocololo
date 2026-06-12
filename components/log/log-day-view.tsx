@@ -985,7 +985,7 @@ export function LogDayViewController({
   if (visibleDays.length === 0) {
     return (
       <section
-        className="rounded-lg border p-6 space-y-3 data-[pending=true]:animate-pulse"
+        className="rounded-lg border border-border bg-card p-6 space-y-3 data-[pending=true]:animate-pulse"
         data-pending={isContentPending}
       >
         <h2 className="text-lg font-medium">No log entries in selected range</h2>

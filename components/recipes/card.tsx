@@ -7,6 +7,7 @@ import { Card, CardHeader } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { useSearchParams } from "next/navigation";
 import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
+import { getProteinBadgeVariant } from "@/lib/recipes/protein-badge-variant";
 import { RecipeImagePlaceholder } from "./recipe-image-placeholder";
 
 type RecipeCardProps = {
@@ -27,7 +28,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
 
   return (
     <Link href={url} scroll={false} >
-      <Card className="h-full cursor-pointer transition-shadow hover:shadow-md overflow-hidden py-0 gap-0">
+      <Card className="card-interactive h-full cursor-pointer overflow-hidden py-0 gap-0">
         <div className="relative w-full overflow-hidden aspect-2/1 sm:aspect-3/2">
           {/* Keep card heights stable when a recipe has no uploaded image. */}
           {imageUrl ? (
@@ -53,7 +54,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
                 proteinCategories.map((category) => (
                   <Badge
                     key={category.id}
-                    variant="secondary"
+                    variant={getProteinBadgeVariant(category.slug)}
                     className="text-xs"
                   >
                     {category.name}

@@ -33,9 +33,8 @@ export function NutritionSection() {
   };
 
   return (
-    // Extra bottom padding + reserved reset slot keep ingredients from jumping when scaling is active.
-    <div className="flex flex-col gap-item pb-item">
-      <div className="flex min-h-8 items-center gap-item">
+    <div>
+      <div className="mb-item flex min-h-8 items-center gap-item">
         <Subheader>Nutrition (per serving)</Subheader>
         <Button
           variant="ghost"
@@ -52,40 +51,42 @@ export function NutritionSection() {
         </Button>
       </div>
 
-      {nutritionRows.map((row) => {
+      <div className="flex flex-col gap-item">
+        {nutritionRows.map((row) => {
         const isAnchor =
           calorieTarget?.familyMemberId === row.familyMemberId;
         const isFocused = focusedCaloriesMemberId === row.familyMemberId;
 
-        return (
-          <NutritionPersonCard key={row.familyMemberId}>
-            <NutritionPersonSummaryRow
-              personLabel={row.label}
-              caloriesArea={
-                <EditableCaloriesBadge
-                  ariaLabel={caloriesAriaLabel(row.label)}
-                  value={
-                    isAnchor && calorieTarget ? calorieTarget.calories : null
-                  }
-                  placeholder={
-                    isFocused ? "" : (row.nutrition.calories.toString() ?? "0")
-                  }
-                  onChange={(value) =>
-                    onCaloriesChange(row.familyMemberId, value)
-                  }
-                  onFocus={() =>
-                    setFocusedCaloriesMemberId(row.familyMemberId)
-                  }
-                  onBlur={() => setFocusedCaloriesMemberId(null)}
-                />
-              }
-              protein={row.nutrition.protein}
-              fat={row.nutrition.fat}
-              carbs={row.nutrition.carbs}
-            />
-          </NutritionPersonCard>
-        );
-      })}
+          return (
+            <NutritionPersonCard key={row.familyMemberId}>
+              <NutritionPersonSummaryRow
+                personLabel={row.label}
+                caloriesArea={
+                  <EditableCaloriesBadge
+                    ariaLabel={caloriesAriaLabel(row.label)}
+                    value={
+                      isAnchor && calorieTarget ? calorieTarget.calories : null
+                    }
+                    placeholder={
+                      isFocused ? "" : (row.nutrition.calories.toString() ?? "0")
+                    }
+                    onChange={(value) =>
+                      onCaloriesChange(row.familyMemberId, value)
+                    }
+                    onFocus={() =>
+                      setFocusedCaloriesMemberId(row.familyMemberId)
+                    }
+                    onBlur={() => setFocusedCaloriesMemberId(null)}
+                  />
+                }
+                protein={row.nutrition.protein}
+                fat={row.nutrition.fat}
+                carbs={row.nutrition.carbs}
+              />
+            </NutritionPersonCard>
+          );
+        })}
+      </div>
     </div>
   );
 }

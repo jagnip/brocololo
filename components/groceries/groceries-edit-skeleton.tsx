@@ -46,12 +46,9 @@ export function GroceriesEditSkeleton() {
                         <Skeleton className="h-10 w-full" />
                         <Skeleton className="h-10 w-10 md:justify-self-end" />
                       </div>
-                      <div className="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                      <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                         <Skeleton className="h-10 w-full" />
-                        <div className="grid grid-cols-1 gap-y-2 md:grid-cols-[max-content_minmax(0,1fr)] md:gap-x-2">
-                          <Skeleton className="h-10 w-36" />
-                          <Skeleton className="h-10 w-full" />
-                        </div>
+                        <Skeleton className="h-10 w-full" />
                       </div>
                     </div>
 

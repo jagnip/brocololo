@@ -322,7 +322,7 @@ export function GroceriesEditLibraryPanel({
 
         {lists.length === 0 ? (
           // Empty-library state: nudge the user to create their first list.
-          <div className="rounded-lg border border-dashed bg-muted/30 p-4 text-center">
+          <div className="rounded-lg border border-dashed border-border bg-card p-4 text-center">
             <p className="text-sm font-medium">No lists yet</p>
             <p className="mt-1 text-xs text-muted-foreground">
               Create a list to save ingredients you add often.

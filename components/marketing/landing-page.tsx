@@ -42,10 +42,13 @@ export function LandingPage() {
   return (
     <>
       {/* Top bar */}
-      <header className="sticky top-0 z-20 border-b bg-background">
+      <header className="sticky top-0 z-20 border-b border-border bg-background">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link href={ROUTES.home} className="type-h2 text-foreground">
-            Brocololo
+          <Link href={ROUTES.home} className="flex items-center gap-2 type-h2 text-foreground">
+            <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-rose-sm">
+              <CookingPot className="size-4" />
+            </span>
+            NomNom
           </Link>
           <Button variant="outline" asChild>
             <Link href={ROUTES.signIn}>Sign in</Link>
@@ -56,14 +59,14 @@ export function LandingPage() {
       <main className="flex flex-1 flex-col">
         {/* Hero */}
         <section className="mx-auto flex max-w-6xl flex-col items-center px-4 py-16 text-center sm:py-24">
-          <Badge variant="secondary" className="mb-4">
+          <Badge variant="default" className="mb-4">
             Meal planning
           </Badge>
-          <h1 className="type-h1 max-w-2xl text-3xl sm:text-4xl sm:leading-tight">
+          <h1 className="type-h1 max-w-2xl">
             Plan meals. Shop smarter. Cook with confidence.
           </h1>
           <p className="type-body mt-4 max-w-xl text-muted-foreground">
-            Brocololo brings your recipes, weekly meal plan, ingredient library,
+            NomNom brings your recipes, weekly meal plan, ingredient library,
             and grocery lists together — so dinner decisions take less mental
             energy.
           </p>
@@ -83,10 +86,10 @@ export function LandingPage() {
             <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {features.map(({ icon: Icon, title, description }) => (
                 <li key={title}>
-                  <Card className="h-full">
+                  <Card className="card-interactive h-full">
                     <CardHeader>
-                      <div className="mb-2 flex size-9 items-center justify-center rounded-md border bg-background">
-                        <Icon className="size-5 text-muted-foreground" />
+                      <div className="mb-2 flex size-9 items-center justify-center rounded-md bg-accent text-accent-foreground shadow-sm">
+                        <Icon className="size-5" />
                       </div>
                       <CardTitle className="type-h2">{title}</CardTitle>
                       <CardDescription>{description}</CardDescription>

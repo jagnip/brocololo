@@ -58,8 +58,8 @@ export function InstructionStepsEditor({
       {value.map((step, index) => (
         <div
           key={step.id ?? `new-step-${index}`}
-          // Match ingredient-row container spacing so both editors feel consistent.
-          className="border rounded-md p-2 space-y-2"
+          // White surface like other form fields (bg-card), not rose-tinted section bg.
+          className="space-y-2 rounded-md border border-border bg-card p-2"
         >
           <Textarea
             value={step.text}

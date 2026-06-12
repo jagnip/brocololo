@@ -291,7 +291,8 @@ function GroceriesEditRowComponent({
           </div>
         </div>
 
-        <div className="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:items-start">
+        {/* lg+: side-by-side; parent is xl:hidden so use lg here (xl: never applied). */}
+        <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
           <Input
             defaultValue={additionalInfoPropValue}
             onChange={(event) => {

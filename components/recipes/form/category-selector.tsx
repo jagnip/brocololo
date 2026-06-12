@@ -35,7 +35,7 @@ export function CategorySelector({
       }))}
       placeholder="Select categories"
       emptyIndicator={
-        <p className="text-center text-lg leading-10 text-gray-600 dark:text-gray-400">
+        <p className="text-center text-lg leading-10 text-muted-foreground">
           No results found.
         </p>
       }
