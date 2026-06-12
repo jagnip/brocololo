@@ -77,7 +77,8 @@ export function GroceriesPersistedList({
             <h2 className="text-base font-semibold tracking-tight text-foreground">
               {section.title}
             </h2>
-            <ul className="divide-y">
+            {/* Card rows with gap — matches ingredients list (not divide-y on rose canvas). */}
+            <ul className="flex flex-col gap-tight">
               {section.rows.map((row) => (
                 <GroceriesPersistedItemRow
                   key={row.id}

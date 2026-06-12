@@ -93,12 +93,11 @@ export function GroceriesPersistedItemRow({
   };
 
   return (
-    <li className="py-0">
+    <li className="overflow-hidden rounded-md border border-border/60 bg-card transition-colors hover:bg-muted/40">
       <div
         className={cn(
-          "flex items-start justify-between gap-3 py-3 transition-colors hover:bg-muted/60",
+          "flex items-start justify-between gap-3 p-nest",
           !isPending && "cursor-pointer",
-          hasMeta ? "border-b border-dashed pb-3" : "",
         )}
         role="button"
         tabIndex={0}
@@ -182,7 +181,7 @@ export function GroceriesPersistedItemRow({
       </div>
 
       {hasMeta ? (
-        <div className="space-y-1 bg-muted/50 px-3 py-2 text-sm">
+        <div className="space-y-1 border-t border-border/60 bg-card px-nest py-2 text-sm">
           {row.additionalInfo ? (
             <p
               className={cn(

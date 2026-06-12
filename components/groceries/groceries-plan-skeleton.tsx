@@ -17,17 +17,15 @@ export function GroceriesPlanSkeleton() {
         {Array.from({ length: 3 }).map((_, index) => (
           <section key={index} className="space-y-3">
             <Skeleton className="h-5 w-40" />
-            {/* The real view uses a plain <ul className="divide-y"> list. */}
-            <ul className="divide-y">
-              <li className="py-3">
-                <Skeleton className="h-9 w-full" />
-              </li>
-              <li className="py-3">
-                <Skeleton className="h-9 w-full" />
-              </li>
-              <li className="py-3">
-                <Skeleton className="h-9 w-full" />
-              </li>
+            <ul className="flex flex-col gap-tight">
+              {Array.from({ length: 3 }).map((_, rowIndex) => (
+                <li
+                  key={rowIndex}
+                  className="rounded-md border border-border/60 bg-card p-nest"
+                >
+                  <Skeleton className="h-9 w-full" />
+                </li>
+              ))}
             </ul>
           </section>
         ))}
