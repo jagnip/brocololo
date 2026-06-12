@@ -487,7 +487,7 @@ export function PlannerForm({
                   control={form.control}
                   name="audienceFamilyMemberIds"
                   render={({ field }) => (
-                    <FormItem className="mt-4 rounded-xl border border-border bg-background p-4">
+                    <FormItem className="mt-4 rounded-xl border border-border bg-card p-4">
                       <FormLabel
                         tooltip="Only recipes that include everyone selected here can be planned."
                         tooltipIcon="help"
@@ -524,7 +524,7 @@ export function PlannerForm({
                     </FormItem>
                   )}
                 />
-                <div className="mt-4 rounded-xl border border-border bg-background p-4">
+                <div className="mt-4 rounded-xl border border-border bg-card p-4">
                   <FormField
                     control={form.control}
                     name="rollingRecipes"

@@ -237,8 +237,8 @@ export function PlannerLogSharedShell({
             </Tabs>
           </div>
           <div className="flex w-full items-center gap-2 sm:w-auto sm:min-w-[20rem] sm:max-w-md lg:min-w-[24rem] lg:max-w-lg">
-            {/* Keep heading style while preserving one-row layout composition. */}
-            <Label className="type-h3 shrink-0">
+            {/* Match the Plan label so typography stays consistent with the picker input. */}
+            <Label className="shrink-0 text-xs text-muted-foreground">
               Date range
             </Label>
             <WeekPicker
@@ -313,7 +313,7 @@ export function PlannerLogSharedShell({
               allowDayManagement={false}
             />
           ) : (
-            <section className="rounded-lg border p-6">
+            <section className="rounded-lg border border-border bg-card p-6">
               <h2 className="text-lg font-medium">No log yet for this plan</h2>
               <p className="text-sm text-muted-foreground">
                 A log will appear automatically for newly created plans.

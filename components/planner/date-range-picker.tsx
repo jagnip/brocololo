@@ -115,9 +115,13 @@ export function WeekPicker({
       }}
       className={cn(compact ? "w-full" : "space-y-2", className)}
     >
-      {/* Compact mode hides the visible label to match log selector layout. */}
+      {/* Compact mode: screen-reader label only (visible label lives beside the control). */}
       <AriaLabel className={compact ? "sr-only" : undefined}>
-        <Label className="pb-1">Plan for</Label>
+        {compact ? (
+          "Date range"
+        ) : (
+          <Label className="pb-1 text-xs text-muted-foreground">Plan for</Label>
+        )}
       </AriaLabel>
       <div className="flex">
         <Group className={cn(dateInputStyle, "relative w-full min-w-0 pe-9")}>

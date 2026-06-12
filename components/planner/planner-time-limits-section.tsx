@@ -407,7 +407,7 @@ export function PlannerTimeLimitsSection({
   }
 
   return (
-    <div className="mt-4 rounded-xl border border-border bg-background p-4">
+    <div className="mt-4 rounded-xl border border-border bg-card p-4">
       <div className="mb-3 flex items-center gap-1.5">
         <Button
           type="button"

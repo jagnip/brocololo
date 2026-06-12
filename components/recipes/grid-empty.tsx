@@ -3,7 +3,7 @@ import { IngredientIcon } from "@/components/ingredient-icon";
 export function RecipeGridEmpty() {
   return (
     <div
-      className="col-span-full flex min-h-[min(320px,50vh)] flex-col items-center justify-center gap-comfort rounded-xl border border-dashed border-border/80 bg-muted/30 px-empty-x py-empty-y text-center"
+      className="col-span-full flex min-h-[min(320px,50vh)] flex-col items-center justify-center gap-comfort rounded-xl border border-dashed border-border/80 bg-card px-empty-x py-empty-y text-center"
       role="status"
       aria-live="polite"
     >
