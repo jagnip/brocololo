@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeftRight, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DialogFooter } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -232,6 +233,14 @@ export function PlanSlotMealForm({
     selectedRecipeId,
   ]);
 
+  const handleCustomNameChange = (nextName: string) => {
+    setCustomName(nextName);
+    // Switch to custom mode but keep any ingredient rows (e.g. prefilled from a recipe).
+    if (nextName.trim().length > 0 && selectedRecipeId != null) {
+      setSelectedRecipeId(null);
+    }
+  };
+
   const handleRecipeChange = (nextRecipeId: string | null) => {
     setSelectedRecipeId(nextRecipeId);
     if (!nextRecipeId) {
@@ -333,65 +342,64 @@ export function PlanSlotMealForm({
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+        {/* Recipe or custom name — compact field widths match planner selects (max-w-md). */}
         <div className="border-b px-4 py-4 text-left md:px-6 md:py-6">
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Recipe (optional)
-            </p>
-            <SearchableSelect
-              options={recipes.map((recipe) => ({
-                value: recipe.id,
-                label: recipe.name,
-              }))}
-              value={selectedRecipeId}
-              onValueChange={handleRecipeChange}
-              placeholder="Select a recipe..."
-              searchPlaceholder="Search recipe..."
-              emptyLabel="No recipe found."
-              allowClear
-              clearLabel="Clear recipe"
-            />
-          </div>
-        </div>
-
-        {isCustomMode ? (
-          <div className="border-b px-4 py-4 text-left md:px-6 md:py-6">
+          <div className="flex w-full max-w-md flex-col gap-4">
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Meal name
+                Recipe
+              </p>
+              <SearchableSelect
+                options={recipes.map((recipe) => ({
+                  value: recipe.id,
+                  label: recipe.name,
+                }))}
+                value={selectedRecipeId}
+                onValueChange={handleRecipeChange}
+                placeholder="Select a recipe..."
+                searchPlaceholder="Search recipe..."
+                emptyLabel="No recipe found."
+                allowClear
+                clearLabel="Clear recipe"
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Separator className="flex-1" />
+              <span className="text-xs text-muted-foreground">or</span>
+              <Separator className="flex-1" />
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Custom meal name
               </p>
               <Input
                 value={customName}
-                onChange={(event) => setCustomName(event.target.value)}
+                onChange={(event) => handleCustomNameChange(event.target.value)}
                 placeholder="e.g. Pasta from Instagram"
               />
-              <p className="text-xs text-muted-foreground">
-                Ingredient amounts are added to your grocery list as entered.
-              </p>
             </div>
           </div>
-        ) : null}
+        </div>
 
-        {isCustomMode ? (
-          <section className="px-4 py-4 md:px-6 md:py-6 border-b">
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="default">{macros.calories.toFixed(0)} kcal</Badge>
-              <Badge variant="default">
-                {macros.proteins.toFixed(1)}g protein
-              </Badge>
-              <Badge variant="default">{macros.fats.toFixed(1)}g fat</Badge>
-              <Badge variant="default">{macros.carbs.toFixed(1)}g carbs</Badge>
-            </div>
-          </section>
-        ) : null}
+        <section className="px-4 py-4 md:px-6 md:py-6 border-b">
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="default">{macros.calories.toFixed(0)} kcal</Badge>
+            <Badge variant="default">
+              {macros.proteins.toFixed(1)}g protein
+            </Badge>
+            <Badge variant="default">{macros.fats.toFixed(1)}g fat</Badge>
+            <Badge variant="default">{macros.carbs.toFixed(1)}g carbs</Badge>
+          </div>
+        </section>
 
-        {isCustomMode ? (
-          <section
-            className={cn(
-              "flex flex-col px-4 py-4 md:px-6 md:py-6",
-              rows.length > 0 && "gap-4",
-            )}
-          >
+        <section
+          className={cn(
+            "flex flex-col px-4 py-4 md:px-6 md:py-6",
+            rows.length > 0 && "gap-4",
+          )}
+        >
             {rows.length > 0 ? (
               <div className="space-y-2">
                 {rows.map((row) => {
@@ -537,10 +545,9 @@ export function PlanSlotMealForm({
               className="w-full sm:w-auto sm:self-start"
               onClick={handleAddRow}
             >
-              Add ingredient
-            </Button>
-          </section>
-        ) : null}
+            Add ingredient
+          </Button>
+        </section>
       </div>
 
       <DialogFooter className="border-t px-4 py-4 md:px-6">
