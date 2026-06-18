@@ -215,6 +215,8 @@ function slotsToPlanSlotData(
 ): PlanSlotData[] {
   return slots.map((s) => ({
     recipe: s.recipe as PlanSlotData["recipe"],
+    customName: s.customName,
+    customIngredients: s.customIngredients,
   }));
 }
 

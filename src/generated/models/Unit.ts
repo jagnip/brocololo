@@ -170,6 +170,7 @@ export type UnitWhereInput = {
   defaultForIngredients?: Prisma.IngredientListRelationFilter
   recipeIngredients?: Prisma.RecipeIngredientListRelationFilter
   logIngredients?: Prisma.LogIngredientListRelationFilter
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientListRelationFilter
   shoppingListItems?: Prisma.ShoppingListItemListRelationFilter
 }
 
@@ -181,6 +182,7 @@ export type UnitOrderByWithRelationInput = {
   defaultForIngredients?: Prisma.IngredientOrderByRelationAggregateInput
   recipeIngredients?: Prisma.RecipeIngredientOrderByRelationAggregateInput
   logIngredients?: Prisma.LogIngredientOrderByRelationAggregateInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientOrderByRelationAggregateInput
   shoppingListItems?: Prisma.ShoppingListItemOrderByRelationAggregateInput
 }
 
@@ -195,6 +197,7 @@ export type UnitWhereUniqueInput = Prisma.AtLeast<{
   defaultForIngredients?: Prisma.IngredientListRelationFilter
   recipeIngredients?: Prisma.RecipeIngredientListRelationFilter
   logIngredients?: Prisma.LogIngredientListRelationFilter
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientListRelationFilter
   shoppingListItems?: Prisma.ShoppingListItemListRelationFilter
 }, "id" | "name">
 
@@ -224,6 +227,7 @@ export type UnitCreateInput = {
   defaultForIngredients?: Prisma.IngredientCreateNestedManyWithoutDefaultUnitInput
   recipeIngredients?: Prisma.RecipeIngredientCreateNestedManyWithoutUnitInput
   logIngredients?: Prisma.LogIngredientCreateNestedManyWithoutUnitInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientCreateNestedManyWithoutUnitInput
   shoppingListItems?: Prisma.ShoppingListItemCreateNestedManyWithoutUnitInput
 }
 
@@ -235,6 +239,7 @@ export type UnitUncheckedCreateInput = {
   defaultForIngredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutDefaultUnitInput
   recipeIngredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutUnitInput
   logIngredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutUnitInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUncheckedCreateNestedManyWithoutUnitInput
   shoppingListItems?: Prisma.ShoppingListItemUncheckedCreateNestedManyWithoutUnitInput
 }
 
@@ -246,6 +251,7 @@ export type UnitUpdateInput = {
   defaultForIngredients?: Prisma.IngredientUpdateManyWithoutDefaultUnitNestedInput
   recipeIngredients?: Prisma.RecipeIngredientUpdateManyWithoutUnitNestedInput
   logIngredients?: Prisma.LogIngredientUpdateManyWithoutUnitNestedInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUpdateManyWithoutUnitNestedInput
   shoppingListItems?: Prisma.ShoppingListItemUpdateManyWithoutUnitNestedInput
 }
 
@@ -257,6 +263,7 @@ export type UnitUncheckedUpdateInput = {
   defaultForIngredients?: Prisma.IngredientUncheckedUpdateManyWithoutDefaultUnitNestedInput
   recipeIngredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutUnitNestedInput
   logIngredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutUnitNestedInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUncheckedUpdateManyWithoutUnitNestedInput
   shoppingListItems?: Prisma.ShoppingListItemUncheckedUpdateManyWithoutUnitNestedInput
 }
 
@@ -320,6 +327,22 @@ export type UnitUpdateOneWithoutShoppingListItemsNestedInput = {
   delete?: Prisma.UnitWhereInput | boolean
   connect?: Prisma.UnitWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UnitUpdateToOneWithWhereWithoutShoppingListItemsInput, Prisma.UnitUpdateWithoutShoppingListItemsInput>, Prisma.UnitUncheckedUpdateWithoutShoppingListItemsInput>
+}
+
+export type UnitCreateNestedOneWithoutPlanSlotCustomIngredientsInput = {
+  create?: Prisma.XOR<Prisma.UnitCreateWithoutPlanSlotCustomIngredientsInput, Prisma.UnitUncheckedCreateWithoutPlanSlotCustomIngredientsInput>
+  connectOrCreate?: Prisma.UnitCreateOrConnectWithoutPlanSlotCustomIngredientsInput
+  connect?: Prisma.UnitWhereUniqueInput
+}
+
+export type UnitUpdateOneWithoutPlanSlotCustomIngredientsNestedInput = {
+  create?: Prisma.XOR<Prisma.UnitCreateWithoutPlanSlotCustomIngredientsInput, Prisma.UnitUncheckedCreateWithoutPlanSlotCustomIngredientsInput>
+  connectOrCreate?: Prisma.UnitCreateOrConnectWithoutPlanSlotCustomIngredientsInput
+  upsert?: Prisma.UnitUpsertWithoutPlanSlotCustomIngredientsInput
+  disconnect?: Prisma.UnitWhereInput | boolean
+  delete?: Prisma.UnitWhereInput | boolean
+  connect?: Prisma.UnitWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UnitUpdateToOneWithWhereWithoutPlanSlotCustomIngredientsInput, Prisma.UnitUpdateWithoutPlanSlotCustomIngredientsInput>, Prisma.UnitUncheckedUpdateWithoutPlanSlotCustomIngredientsInput>
 }
 
 export type UnitCreateNestedOneWithoutDefaultForIngredientsInput = {
@@ -392,6 +415,7 @@ export type UnitCreateWithoutShoppingListItemsInput = {
   defaultForIngredients?: Prisma.IngredientCreateNestedManyWithoutDefaultUnitInput
   recipeIngredients?: Prisma.RecipeIngredientCreateNestedManyWithoutUnitInput
   logIngredients?: Prisma.LogIngredientCreateNestedManyWithoutUnitInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientCreateNestedManyWithoutUnitInput
 }
 
 export type UnitUncheckedCreateWithoutShoppingListItemsInput = {
@@ -402,6 +426,7 @@ export type UnitUncheckedCreateWithoutShoppingListItemsInput = {
   defaultForIngredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutDefaultUnitInput
   recipeIngredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutUnitInput
   logIngredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutUnitInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUncheckedCreateNestedManyWithoutUnitInput
 }
 
 export type UnitCreateOrConnectWithoutShoppingListItemsInput = {
@@ -428,6 +453,7 @@ export type UnitUpdateWithoutShoppingListItemsInput = {
   defaultForIngredients?: Prisma.IngredientUpdateManyWithoutDefaultUnitNestedInput
   recipeIngredients?: Prisma.RecipeIngredientUpdateManyWithoutUnitNestedInput
   logIngredients?: Prisma.LogIngredientUpdateManyWithoutUnitNestedInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUpdateManyWithoutUnitNestedInput
 }
 
 export type UnitUncheckedUpdateWithoutShoppingListItemsInput = {
@@ -438,6 +464,67 @@ export type UnitUncheckedUpdateWithoutShoppingListItemsInput = {
   defaultForIngredients?: Prisma.IngredientUncheckedUpdateManyWithoutDefaultUnitNestedInput
   recipeIngredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutUnitNestedInput
   logIngredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutUnitNestedInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUncheckedUpdateManyWithoutUnitNestedInput
+}
+
+export type UnitCreateWithoutPlanSlotCustomIngredientsInput = {
+  id?: string
+  name: string
+  namePlural?: string | null
+  ingredientUnits?: Prisma.IngredientUnitCreateNestedManyWithoutUnitInput
+  defaultForIngredients?: Prisma.IngredientCreateNestedManyWithoutDefaultUnitInput
+  recipeIngredients?: Prisma.RecipeIngredientCreateNestedManyWithoutUnitInput
+  logIngredients?: Prisma.LogIngredientCreateNestedManyWithoutUnitInput
+  shoppingListItems?: Prisma.ShoppingListItemCreateNestedManyWithoutUnitInput
+}
+
+export type UnitUncheckedCreateWithoutPlanSlotCustomIngredientsInput = {
+  id?: string
+  name: string
+  namePlural?: string | null
+  ingredientUnits?: Prisma.IngredientUnitUncheckedCreateNestedManyWithoutUnitInput
+  defaultForIngredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutDefaultUnitInput
+  recipeIngredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutUnitInput
+  logIngredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutUnitInput
+  shoppingListItems?: Prisma.ShoppingListItemUncheckedCreateNestedManyWithoutUnitInput
+}
+
+export type UnitCreateOrConnectWithoutPlanSlotCustomIngredientsInput = {
+  where: Prisma.UnitWhereUniqueInput
+  create: Prisma.XOR<Prisma.UnitCreateWithoutPlanSlotCustomIngredientsInput, Prisma.UnitUncheckedCreateWithoutPlanSlotCustomIngredientsInput>
+}
+
+export type UnitUpsertWithoutPlanSlotCustomIngredientsInput = {
+  update: Prisma.XOR<Prisma.UnitUpdateWithoutPlanSlotCustomIngredientsInput, Prisma.UnitUncheckedUpdateWithoutPlanSlotCustomIngredientsInput>
+  create: Prisma.XOR<Prisma.UnitCreateWithoutPlanSlotCustomIngredientsInput, Prisma.UnitUncheckedCreateWithoutPlanSlotCustomIngredientsInput>
+  where?: Prisma.UnitWhereInput
+}
+
+export type UnitUpdateToOneWithWhereWithoutPlanSlotCustomIngredientsInput = {
+  where?: Prisma.UnitWhereInput
+  data: Prisma.XOR<Prisma.UnitUpdateWithoutPlanSlotCustomIngredientsInput, Prisma.UnitUncheckedUpdateWithoutPlanSlotCustomIngredientsInput>
+}
+
+export type UnitUpdateWithoutPlanSlotCustomIngredientsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  namePlural?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ingredientUnits?: Prisma.IngredientUnitUpdateManyWithoutUnitNestedInput
+  defaultForIngredients?: Prisma.IngredientUpdateManyWithoutDefaultUnitNestedInput
+  recipeIngredients?: Prisma.RecipeIngredientUpdateManyWithoutUnitNestedInput
+  logIngredients?: Prisma.LogIngredientUpdateManyWithoutUnitNestedInput
+  shoppingListItems?: Prisma.ShoppingListItemUpdateManyWithoutUnitNestedInput
+}
+
+export type UnitUncheckedUpdateWithoutPlanSlotCustomIngredientsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  namePlural?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ingredientUnits?: Prisma.IngredientUnitUncheckedUpdateManyWithoutUnitNestedInput
+  defaultForIngredients?: Prisma.IngredientUncheckedUpdateManyWithoutDefaultUnitNestedInput
+  recipeIngredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutUnitNestedInput
+  logIngredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutUnitNestedInput
+  shoppingListItems?: Prisma.ShoppingListItemUncheckedUpdateManyWithoutUnitNestedInput
 }
 
 export type UnitCreateWithoutDefaultForIngredientsInput = {
@@ -447,6 +534,7 @@ export type UnitCreateWithoutDefaultForIngredientsInput = {
   ingredientUnits?: Prisma.IngredientUnitCreateNestedManyWithoutUnitInput
   recipeIngredients?: Prisma.RecipeIngredientCreateNestedManyWithoutUnitInput
   logIngredients?: Prisma.LogIngredientCreateNestedManyWithoutUnitInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientCreateNestedManyWithoutUnitInput
   shoppingListItems?: Prisma.ShoppingListItemCreateNestedManyWithoutUnitInput
 }
 
@@ -457,6 +545,7 @@ export type UnitUncheckedCreateWithoutDefaultForIngredientsInput = {
   ingredientUnits?: Prisma.IngredientUnitUncheckedCreateNestedManyWithoutUnitInput
   recipeIngredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutUnitInput
   logIngredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutUnitInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUncheckedCreateNestedManyWithoutUnitInput
   shoppingListItems?: Prisma.ShoppingListItemUncheckedCreateNestedManyWithoutUnitInput
 }
 
@@ -483,6 +572,7 @@ export type UnitUpdateWithoutDefaultForIngredientsInput = {
   ingredientUnits?: Prisma.IngredientUnitUpdateManyWithoutUnitNestedInput
   recipeIngredients?: Prisma.RecipeIngredientUpdateManyWithoutUnitNestedInput
   logIngredients?: Prisma.LogIngredientUpdateManyWithoutUnitNestedInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUpdateManyWithoutUnitNestedInput
   shoppingListItems?: Prisma.ShoppingListItemUpdateManyWithoutUnitNestedInput
 }
 
@@ -493,6 +583,7 @@ export type UnitUncheckedUpdateWithoutDefaultForIngredientsInput = {
   ingredientUnits?: Prisma.IngredientUnitUncheckedUpdateManyWithoutUnitNestedInput
   recipeIngredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutUnitNestedInput
   logIngredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutUnitNestedInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUncheckedUpdateManyWithoutUnitNestedInput
   shoppingListItems?: Prisma.ShoppingListItemUncheckedUpdateManyWithoutUnitNestedInput
 }
 
@@ -503,6 +594,7 @@ export type UnitCreateWithoutIngredientUnitsInput = {
   defaultForIngredients?: Prisma.IngredientCreateNestedManyWithoutDefaultUnitInput
   recipeIngredients?: Prisma.RecipeIngredientCreateNestedManyWithoutUnitInput
   logIngredients?: Prisma.LogIngredientCreateNestedManyWithoutUnitInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientCreateNestedManyWithoutUnitInput
   shoppingListItems?: Prisma.ShoppingListItemCreateNestedManyWithoutUnitInput
 }
 
@@ -513,6 +605,7 @@ export type UnitUncheckedCreateWithoutIngredientUnitsInput = {
   defaultForIngredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutDefaultUnitInput
   recipeIngredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutUnitInput
   logIngredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutUnitInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUncheckedCreateNestedManyWithoutUnitInput
   shoppingListItems?: Prisma.ShoppingListItemUncheckedCreateNestedManyWithoutUnitInput
 }
 
@@ -539,6 +632,7 @@ export type UnitUpdateWithoutIngredientUnitsInput = {
   defaultForIngredients?: Prisma.IngredientUpdateManyWithoutDefaultUnitNestedInput
   recipeIngredients?: Prisma.RecipeIngredientUpdateManyWithoutUnitNestedInput
   logIngredients?: Prisma.LogIngredientUpdateManyWithoutUnitNestedInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUpdateManyWithoutUnitNestedInput
   shoppingListItems?: Prisma.ShoppingListItemUpdateManyWithoutUnitNestedInput
 }
 
@@ -549,6 +643,7 @@ export type UnitUncheckedUpdateWithoutIngredientUnitsInput = {
   defaultForIngredients?: Prisma.IngredientUncheckedUpdateManyWithoutDefaultUnitNestedInput
   recipeIngredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutUnitNestedInput
   logIngredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutUnitNestedInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUncheckedUpdateManyWithoutUnitNestedInput
   shoppingListItems?: Prisma.ShoppingListItemUncheckedUpdateManyWithoutUnitNestedInput
 }
 
@@ -559,6 +654,7 @@ export type UnitCreateWithoutRecipeIngredientsInput = {
   ingredientUnits?: Prisma.IngredientUnitCreateNestedManyWithoutUnitInput
   defaultForIngredients?: Prisma.IngredientCreateNestedManyWithoutDefaultUnitInput
   logIngredients?: Prisma.LogIngredientCreateNestedManyWithoutUnitInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientCreateNestedManyWithoutUnitInput
   shoppingListItems?: Prisma.ShoppingListItemCreateNestedManyWithoutUnitInput
 }
 
@@ -569,6 +665,7 @@ export type UnitUncheckedCreateWithoutRecipeIngredientsInput = {
   ingredientUnits?: Prisma.IngredientUnitUncheckedCreateNestedManyWithoutUnitInput
   defaultForIngredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutDefaultUnitInput
   logIngredients?: Prisma.LogIngredientUncheckedCreateNestedManyWithoutUnitInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUncheckedCreateNestedManyWithoutUnitInput
   shoppingListItems?: Prisma.ShoppingListItemUncheckedCreateNestedManyWithoutUnitInput
 }
 
@@ -595,6 +692,7 @@ export type UnitUpdateWithoutRecipeIngredientsInput = {
   ingredientUnits?: Prisma.IngredientUnitUpdateManyWithoutUnitNestedInput
   defaultForIngredients?: Prisma.IngredientUpdateManyWithoutDefaultUnitNestedInput
   logIngredients?: Prisma.LogIngredientUpdateManyWithoutUnitNestedInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUpdateManyWithoutUnitNestedInput
   shoppingListItems?: Prisma.ShoppingListItemUpdateManyWithoutUnitNestedInput
 }
 
@@ -605,6 +703,7 @@ export type UnitUncheckedUpdateWithoutRecipeIngredientsInput = {
   ingredientUnits?: Prisma.IngredientUnitUncheckedUpdateManyWithoutUnitNestedInput
   defaultForIngredients?: Prisma.IngredientUncheckedUpdateManyWithoutDefaultUnitNestedInput
   logIngredients?: Prisma.LogIngredientUncheckedUpdateManyWithoutUnitNestedInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUncheckedUpdateManyWithoutUnitNestedInput
   shoppingListItems?: Prisma.ShoppingListItemUncheckedUpdateManyWithoutUnitNestedInput
 }
 
@@ -615,6 +714,7 @@ export type UnitCreateWithoutLogIngredientsInput = {
   ingredientUnits?: Prisma.IngredientUnitCreateNestedManyWithoutUnitInput
   defaultForIngredients?: Prisma.IngredientCreateNestedManyWithoutDefaultUnitInput
   recipeIngredients?: Prisma.RecipeIngredientCreateNestedManyWithoutUnitInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientCreateNestedManyWithoutUnitInput
   shoppingListItems?: Prisma.ShoppingListItemCreateNestedManyWithoutUnitInput
 }
 
@@ -625,6 +725,7 @@ export type UnitUncheckedCreateWithoutLogIngredientsInput = {
   ingredientUnits?: Prisma.IngredientUnitUncheckedCreateNestedManyWithoutUnitInput
   defaultForIngredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutDefaultUnitInput
   recipeIngredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutUnitInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUncheckedCreateNestedManyWithoutUnitInput
   shoppingListItems?: Prisma.ShoppingListItemUncheckedCreateNestedManyWithoutUnitInput
 }
 
@@ -651,6 +752,7 @@ export type UnitUpdateWithoutLogIngredientsInput = {
   ingredientUnits?: Prisma.IngredientUnitUpdateManyWithoutUnitNestedInput
   defaultForIngredients?: Prisma.IngredientUpdateManyWithoutDefaultUnitNestedInput
   recipeIngredients?: Prisma.RecipeIngredientUpdateManyWithoutUnitNestedInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUpdateManyWithoutUnitNestedInput
   shoppingListItems?: Prisma.ShoppingListItemUpdateManyWithoutUnitNestedInput
 }
 
@@ -661,6 +763,7 @@ export type UnitUncheckedUpdateWithoutLogIngredientsInput = {
   ingredientUnits?: Prisma.IngredientUnitUncheckedUpdateManyWithoutUnitNestedInput
   defaultForIngredients?: Prisma.IngredientUncheckedUpdateManyWithoutDefaultUnitNestedInput
   recipeIngredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutUnitNestedInput
+  planSlotCustomIngredients?: Prisma.PlanSlotCustomIngredientUncheckedUpdateManyWithoutUnitNestedInput
   shoppingListItems?: Prisma.ShoppingListItemUncheckedUpdateManyWithoutUnitNestedInput
 }
 
@@ -674,6 +777,7 @@ export type UnitCountOutputType = {
   defaultForIngredients: number
   recipeIngredients: number
   logIngredients: number
+  planSlotCustomIngredients: number
   shoppingListItems: number
 }
 
@@ -682,6 +786,7 @@ export type UnitCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   defaultForIngredients?: boolean | UnitCountOutputTypeCountDefaultForIngredientsArgs
   recipeIngredients?: boolean | UnitCountOutputTypeCountRecipeIngredientsArgs
   logIngredients?: boolean | UnitCountOutputTypeCountLogIngredientsArgs
+  planSlotCustomIngredients?: boolean | UnitCountOutputTypeCountPlanSlotCustomIngredientsArgs
   shoppingListItems?: boolean | UnitCountOutputTypeCountShoppingListItemsArgs
 }
 
@@ -726,6 +831,13 @@ export type UnitCountOutputTypeCountLogIngredientsArgs<ExtArgs extends runtime.T
 /**
  * UnitCountOutputType without action
  */
+export type UnitCountOutputTypeCountPlanSlotCustomIngredientsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PlanSlotCustomIngredientWhereInput
+}
+
+/**
+ * UnitCountOutputType without action
+ */
 export type UnitCountOutputTypeCountShoppingListItemsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ShoppingListItemWhereInput
 }
@@ -739,6 +851,7 @@ export type UnitSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   defaultForIngredients?: boolean | Prisma.Unit$defaultForIngredientsArgs<ExtArgs>
   recipeIngredients?: boolean | Prisma.Unit$recipeIngredientsArgs<ExtArgs>
   logIngredients?: boolean | Prisma.Unit$logIngredientsArgs<ExtArgs>
+  planSlotCustomIngredients?: boolean | Prisma.Unit$planSlotCustomIngredientsArgs<ExtArgs>
   shoppingListItems?: boolean | Prisma.Unit$shoppingListItemsArgs<ExtArgs>
   _count?: boolean | Prisma.UnitCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["unit"]>
@@ -767,6 +880,7 @@ export type UnitInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   defaultForIngredients?: boolean | Prisma.Unit$defaultForIngredientsArgs<ExtArgs>
   recipeIngredients?: boolean | Prisma.Unit$recipeIngredientsArgs<ExtArgs>
   logIngredients?: boolean | Prisma.Unit$logIngredientsArgs<ExtArgs>
+  planSlotCustomIngredients?: boolean | Prisma.Unit$planSlotCustomIngredientsArgs<ExtArgs>
   shoppingListItems?: boolean | Prisma.Unit$shoppingListItemsArgs<ExtArgs>
   _count?: boolean | Prisma.UnitCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -780,6 +894,7 @@ export type $UnitPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     defaultForIngredients: Prisma.$IngredientPayload<ExtArgs>[]
     recipeIngredients: Prisma.$RecipeIngredientPayload<ExtArgs>[]
     logIngredients: Prisma.$LogIngredientPayload<ExtArgs>[]
+    planSlotCustomIngredients: Prisma.$PlanSlotCustomIngredientPayload<ExtArgs>[]
     shoppingListItems: Prisma.$ShoppingListItemPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1184,6 +1299,7 @@ export interface Prisma__UnitClient<T, Null = never, ExtArgs extends runtime.Typ
   defaultForIngredients<T extends Prisma.Unit$defaultForIngredientsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Unit$defaultForIngredientsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IngredientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   recipeIngredients<T extends Prisma.Unit$recipeIngredientsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Unit$recipeIngredientsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecipeIngredientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   logIngredients<T extends Prisma.Unit$logIngredientsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Unit$logIngredientsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LogIngredientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  planSlotCustomIngredients<T extends Prisma.Unit$planSlotCustomIngredientsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Unit$planSlotCustomIngredientsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlanSlotCustomIngredientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   shoppingListItems<T extends Prisma.Unit$shoppingListItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Unit$shoppingListItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShoppingListItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1698,6 +1814,30 @@ export type Unit$logIngredientsArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.LogIngredientScalarFieldEnum | Prisma.LogIngredientScalarFieldEnum[]
+}
+
+/**
+ * Unit.planSlotCustomIngredients
+ */
+export type Unit$planSlotCustomIngredientsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PlanSlotCustomIngredient
+   */
+  select?: Prisma.PlanSlotCustomIngredientSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PlanSlotCustomIngredient
+   */
+  omit?: Prisma.PlanSlotCustomIngredientOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PlanSlotCustomIngredientInclude<ExtArgs> | null
+  where?: Prisma.PlanSlotCustomIngredientWhereInput
+  orderBy?: Prisma.PlanSlotCustomIngredientOrderByWithRelationInput | Prisma.PlanSlotCustomIngredientOrderByWithRelationInput[]
+  cursor?: Prisma.PlanSlotCustomIngredientWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PlanSlotCustomIngredientScalarFieldEnum | Prisma.PlanSlotCustomIngredientScalarFieldEnum[]
 }
 
 /**

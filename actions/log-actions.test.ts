@@ -192,22 +192,23 @@ describe("placePlannerPoolItemAction", () => {
     vi.clearAllMocks();
   });
 
-  it("maps NO_UNUSED_PLAN_SLOT_FOR_RECIPE to user-friendly error", async () => {
+  it("maps NO_UNUSED_PLAN_SLOT to user-friendly error", async () => {
     vi.mocked(placePlannerPoolItemInEntry).mockRejectedValue(
-      new Error("NO_UNUSED_PLAN_SLOT_FOR_RECIPE"),
+      new Error("NO_UNUSED_PLAN_SLOT"),
     );
 
     const result = await placePlannerPoolItemAction({
       logId: "log-1",
-      person: "PRIMARY",
+      familyMemberId: "member-1",
       entryId: "entry-1",
       sourceRecipeId: "recipe-1",
+      planSlotId: "slot-1",
       ingredients: [{ ingredientId: "ing-1", unitId: "unit-g", amount: 120 }],
     });
 
     expect(result).toEqual({
       type: "error",
-      message: "No remaining planner slots for this recipe.",
+      message: "No remaining planner slots for this meal.",
     });
   });
 });

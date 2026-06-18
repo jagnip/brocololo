@@ -13,6 +13,7 @@ function mkSlot(dateKey: string, mealType: PlannerMealType, recipeId: string | n
     date: new Date(`${dateKey}T00:00:00.000Z`),
     mealType,
     recipe: recipeId ? mkRecipe(recipeId) : null,
+    customMeal: null,
     alternatives: recipeId ? [mkRecipe(`${recipeId}-alt`)] : [],
     used: false,
   };

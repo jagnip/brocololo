@@ -25,7 +25,7 @@ import {
   shouldShowGeneratedPlan,
 } from "./planner-plan-column-state";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PlanInputType } from "@/types/planner";
+import { PlanInputType, PlanSlotMealPayload } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
 import type {
   DayTimeLimitsType,
@@ -52,6 +52,7 @@ import {
   type TimeLimitGroups,
 } from "@/lib/planner/time-limit-mapping";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
+import { ingredientsToLogIngredientOptions } from "@/lib/ingredients/to-log-ingredient-options";
 
 type PlannerFormProps = {
   ingredients: IngredientType[];
@@ -188,24 +189,47 @@ export function PlannerForm({
       return prev.map((slot) => {
         const key = `${slot.date.toISOString()}-${slot.mealType}`;
         if (key !== slotKey) return slot;
-        return { ...slot, recipe: null };
+        return { ...slot, recipe: null, customMeal: null, alternatives: [] };
       });
     });
   }, []);
 
-  const handleReplace = useCallback(
-    (slotKey: string, newRecipe: RecipeType) => {
+  const handleSetMeal = useCallback(
+    (slotKey: string, payload: PlanSlotMealPayload) => {
       setPlan((prev) => {
         if (!prev) return prev;
         return prev.map((slot) => {
           const key = `${slot.date.toISOString()}-${slot.mealType}`;
           if (key !== slotKey) return slot;
+
+          if (payload.kind === "recipe") {
+            return {
+              ...slot,
+              recipe: payload.recipe,
+              customMeal: null,
+              alternatives: slot.alternatives.filter(
+                (recipe) => recipe.id !== payload.recipe.id,
+              ),
+            };
+          }
+
+          if (payload.kind === "custom") {
+            return {
+              ...slot,
+              recipe: null,
+              customMeal: {
+                name: payload.name,
+                ingredients: payload.ingredients,
+              },
+              alternatives: [],
+            };
+          }
+
           return {
             ...slot,
-            recipe: newRecipe,
-            alternatives: slot.alternatives.filter(
-              (r) => r.id !== newRecipe.id,
-            ),
+            recipe: null,
+            customMeal: null,
+            alternatives: [],
           };
         });
       });
@@ -269,6 +293,7 @@ export function PlannerForm({
   const showPlanColumn = planColumnMode !== "idle";
   const fridgeIngredientIds = (form.watch("fridgeIngredientIds") ??
     []) as string[];
+  const ingredientOptions = ingredientsToLogIngredientOptions(ingredients);
   // Save stays in the global top bar; Find meals lives under the planner column on this page.
   const topbarActions = [
     {
@@ -579,8 +604,9 @@ export function PlannerForm({
             lastGenerationError={lastGenerationError}
             fridgeIngredientIds={fridgeIngredientIds}
             recipes={recipes}
+            ingredientOptions={ingredientOptions}
             onShuffle={handleShuffle}
-            onReplace={handleReplace}
+            onSetMeal={handleSetMeal}
             onRemove={handleRemove}
           />
         </div>
@@ -592,8 +618,9 @@ export function PlannerForm({
               lastGenerationError={lastGenerationError}
               fridgeIngredientIds={fridgeIngredientIds}
               recipes={recipes}
+              ingredientOptions={ingredientOptions}
               onShuffle={handleShuffle}
-              onReplace={handleReplace}
+              onSetMeal={handleSetMeal}
               onRemove={handleRemove}
             />
           </div>

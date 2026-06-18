@@ -15,6 +15,8 @@ import { formatDateRangeLabel } from "@/lib/format-date-range-label";
 import { requireUser } from "@/lib/auth/session";
 import { ensureSelfFamilyMember } from "@/lib/db/family-members";
 import { filterFamilyMembersToPlanAudience } from "@/lib/planner/plan-audience";
+import { ingredientsToLogIngredientOptions } from "@/lib/ingredients/to-log-ingredient-options";
+import { LogMealType } from "@/src/generated/enums";
 
 type PlannerLogCombinedPageProps = {
   planId: string;
@@ -127,6 +129,34 @@ export async function PlannerLogCombinedPage({
     label: formatDateRangeLabel(plan.startDate, plan.endDate),
   }));
 
+  const ingredientOptions = ingredientsToLogIngredientOptions(ingredients);
+
+  const plannedMealsBySlotKey = Object.fromEntries(
+    planSlots.flatMap((slot) => {
+      if (!slot.customMeal) return [];
+      const mealType =
+        slot.mealType === "BREAKFAST"
+          ? LogMealType.BREAKFAST
+          : slot.mealType === "LUNCH"
+            ? LogMealType.LUNCH
+            : LogMealType.DINNER;
+      const key = `${toDateKey(slot.date)}-${mealType}`;
+      return [
+        [
+          key,
+          {
+            name: slot.customMeal.name,
+            ingredients: slot.customMeal.ingredients.map((row) => ({
+              ingredientId: row.ingredientId,
+              unitId: row.unitId,
+              amount: row.amount,
+            })),
+          },
+        ],
+      ];
+    }),
+  );
+
   let logData: {
     logId: string;
     days: ReturnType<typeof buildLogDays>;
@@ -149,6 +179,7 @@ export async function PlannerLogCombinedPage({
     const plannerPool = buildVisiblePlannerPoolCards({
       items: poolItemsRaw.map((item) => ({
         ...item,
+        planSlotId: item.planSlotId,
         dateKey: item.date.toISOString().slice(0, 10),
         mealLabel:
           item.mealType === "BREAKFAST"
@@ -172,7 +203,7 @@ export async function PlannerLogCombinedPage({
       }),
     }));
 
-    const ingredientOptions = ingredients.map((ingredient) => ({
+    const ingredientOptionsForLog = ingredients.map((ingredient) => ({
       id: ingredient.id,
       name: ingredient.name,
       brand: ingredient.brand,
@@ -196,7 +227,7 @@ export async function PlannerLogCombinedPage({
       days,
       plannerPool,
       recipeOptions,
-      ingredientOptions,
+      ingredientOptions: ingredientOptionsForLog,
     };
   }
 
@@ -208,6 +239,8 @@ export async function PlannerLogCombinedPage({
       initialDateRange={initialDateRange}
       initialPlan={planSlots}
       plannerRecipes={plannerRecipes}
+      ingredientOptions={ingredientOptions}
+      plannedMealsBySlotKey={plannedMealsBySlotKey}
       familyMembers={planAudienceMembers}
       familyMemberId={selectedFamilyMember.id}
       logData={logData}

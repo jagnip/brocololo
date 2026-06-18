@@ -9,6 +9,7 @@ import {
   findDateCollisionsTx,
   releaseReservedPlanSlotTx,
   reserveNextUnusedPlanSlotTx,
+  reservePlanSlotByIdTx,
 } from "./planner";
 import type {
   ParsedAddRecipeToLogInput,
@@ -589,13 +590,13 @@ export async function placePlannerPoolItemInEntry(
 
     await releasePlanSlotsLinkedToEntryRecipes(tx, input.entryId);
 
-    const reservedPlanSlotId = await reserveNextUnusedPlanSlotTx({
+    const reserved = await reservePlanSlotByIdTx({
       tx,
       planId: log.planId,
-      recipeId: input.sourceRecipeId,
+      planSlotId: input.planSlotId,
     });
-    if (!reservedPlanSlotId) {
-      throw new Error("NO_UNUSED_PLAN_SLOT_FOR_RECIPE");
+    if (!reserved) {
+      throw new Error("NO_UNUSED_PLAN_SLOT");
     }
 
     await tx.logIngredient.deleteMany({
@@ -610,21 +611,36 @@ export async function placePlannerPoolItemInEntry(
       },
     });
 
-    const entryRecipe = await tx.logEntryRecipe.create({
-      data: {
-        entryId: input.entryId,
-        sourceRecipeId: input.sourceRecipeId,
-        planSlotId: reservedPlanSlotId,
-        position: 0,
-      },
-      select: { id: true },
-    });
+    if (input.sourceRecipeId) {
+      const entryRecipe = await tx.logEntryRecipe.create({
+        data: {
+          entryId: input.entryId,
+          sourceRecipeId: input.sourceRecipeId,
+          planSlotId: input.planSlotId,
+          position: 0,
+        },
+        select: { id: true },
+      });
+
+      if (input.ingredients.length > 0) {
+        await tx.logIngredient.createMany({
+          data: input.ingredients.map((row) => ({
+            entryId: input.entryId,
+            entryRecipeId: entryRecipe.id,
+            ingredientId: row.ingredientId,
+            amount: row.amount,
+            unitId: row.unitId,
+          })),
+        });
+      }
+      return;
+    }
 
     if (input.ingredients.length > 0) {
       await tx.logIngredient.createMany({
         data: input.ingredients.map((row) => ({
           entryId: input.entryId,
-          entryRecipeId: entryRecipe.id,
+          entryRecipeId: null,
           ingredientId: row.ingredientId,
           amount: row.amount,
           unitId: row.unitId,

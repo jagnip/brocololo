@@ -21,6 +21,21 @@ export type PlanSlotData = {
       amount: number | null;
     }>;
   } | null;
+  customName?: string | null;
+  customIngredients?: Array<{
+    ingredient: {
+      id: string;
+      name: string;
+      brand?: string | null;
+      descriptor?: string | null;
+      icon: string | null;
+      supermarketUrl: string | null;
+      unitConversions: Array<{ unitId: string; gramsPerUnit: number }>;
+      category: { id: string; name: string; sortOrder: number };
+    };
+    unit: { id: string; name: string } | null;
+    amount: number | null;
+  }>;
 };
 
 type ScaledIngredient = {
@@ -38,49 +53,93 @@ type ScaledIngredient = {
   categorySortOrder: number;
 };
 
+function mapCustomIngredients(slot: PlanSlotData): ScaledIngredient[] {
+  if (!slot.customName || !slot.customIngredients?.length) {
+    return [];
+  }
+
+  return slot.customIngredients.flatMap((row) => {
+    const unit = row.unit;
+    const conversion =
+      unit == null
+        ? null
+        : row.ingredient.unitConversions.find((uc) => uc.unitId === unit.id);
+
+    if (row.amount == null || unit == null) {
+      return [];
+    }
+
+    return [
+      {
+        ingredientId: row.ingredient.id,
+        ingredientCategoryId: row.ingredient.category.id,
+        ingredientName: getIngredientDisplayName(
+          row.ingredient.name,
+          row.ingredient.brand ?? null,
+          row.ingredient.descriptor ?? null,
+        ),
+        ingredientIcon: row.ingredient.icon,
+        supermarketUrl: row.ingredient.supermarketUrl,
+        unitId: unit.id,
+        unitName: unit.name,
+        // Custom planned meals use amounts as entered (no serving scaling).
+        amount: row.amount,
+        recipeName: slot.customName!,
+        gramsPerUnit: conversion?.gramsPerUnit ?? null,
+        categoryName: row.ingredient.category.name,
+        categorySortOrder: row.ingredient.category.sortOrder,
+      },
+    ];
+  });
+}
+
 /**
  * Phase A: Scale each ingredient amount for 2 people,
  * producing a flat list with IDs for aggregation.
  */
 function scaleIngredients(slots: PlanSlotData[]): ScaledIngredient[] {
   return slots.flatMap((slot) => {
-    if (!slot.recipe) return [];
+    const recipeItems = (() => {
+      if (!slot.recipe) return [];
 
-    const { servingScalingFactor } = calculateServingScalingFactor(
-      2,
-      slot.recipe.servings,
-    );
+      const { servingScalingFactor } = calculateServingScalingFactor(
+        2,
+        slot.recipe.servings,
+      );
 
-    return slot.recipe.ingredients.map((ri) => {
-      const unit = ri.unit;
-      const conversion =
-        unit == null
-          ? null
-          : ri.ingredient.unitConversions.find((uc) => uc.unitId === unit.id);
+      return slot.recipe.ingredients.map((ri) => {
+        const unit = ri.unit;
+        const conversion =
+          unit == null
+            ? null
+            : ri.ingredient.unitConversions.find((uc) => uc.unitId === unit.id);
 
-      return {
-        ingredientId: ri.ingredient.id,
-        ingredientCategoryId: ri.ingredient.category.id,
-        ingredientName: getIngredientDisplayName(
-          ri.ingredient.name,
-          ri.ingredient.brand ?? null,
-          ri.ingredient.descriptor ?? null,
-        ),
-        ingredientIcon: ri.ingredient.icon,
-        supermarketUrl: ri.ingredient.supermarketUrl,
-        unitId: unit?.id ?? null,
-        unitName: unit?.name ?? null,
-        // Unitless items are always non-quantified in grocery output.
-        amount:
-          ri.amount !== null && unit != null
-            ? ri.amount * servingScalingFactor
-            : null,
-        recipeName: slot.recipe!.name,
-        gramsPerUnit: conversion?.gramsPerUnit ?? null,
-        categoryName: ri.ingredient.category.name,
-        categorySortOrder: ri.ingredient.category.sortOrder,
-      };
-    });
+        return {
+          ingredientId: ri.ingredient.id,
+          ingredientCategoryId: ri.ingredient.category.id,
+          ingredientName: getIngredientDisplayName(
+            ri.ingredient.name,
+            ri.ingredient.brand ?? null,
+            ri.ingredient.descriptor ?? null,
+          ),
+          ingredientIcon: ri.ingredient.icon,
+          supermarketUrl: ri.ingredient.supermarketUrl,
+          unitId: unit?.id ?? null,
+          unitName: unit?.name ?? null,
+          // Unitless items are always non-quantified in grocery output.
+          amount:
+            ri.amount !== null && unit != null
+              ? ri.amount * servingScalingFactor
+              : null,
+          recipeName: slot.recipe!.name,
+          gramsPerUnit: conversion?.gramsPerUnit ?? null,
+          categoryName: ri.ingredient.category.name,
+          categorySortOrder: ri.ingredient.category.sortOrder,
+        };
+      });
+    })();
+
+    return [...recipeItems, ...mapCustomIngredients(slot)];
   });
 }
 

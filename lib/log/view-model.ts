@@ -81,6 +81,7 @@ export type LogDayData = {
 
 export type PlannerPoolCardData = {
   id: string;
+  planSlotId: string;
   date: Date;
   dateKey: string;
   mealType: LogMealType;
@@ -293,7 +294,7 @@ export function buildGroupedPlannerPoolCards(
   const grouped = new Map<string, PlannerPoolGroupedCardData>();
 
   for (const item of items) {
-    const key = item.sourceRecipeId ?? `fallback-${item.id}`;
+    const key = item.planSlotId;
     const existing = grouped.get(key);
     if (existing) {
       existing.count += 1;

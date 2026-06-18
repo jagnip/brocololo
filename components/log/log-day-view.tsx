@@ -153,6 +153,10 @@ type LogDayViewProps = {
     initialRows: EditableIngredientRow[];
   }>;
   ingredientOptions?: LogIngredientOption[];
+  plannedMealsBySlotKey?: Record<
+    string,
+    { name: string; ingredients: EditableIngredientRow[] }
+  >;
   ingredientFormDependencies?: IngredientFormDependencies;
 };
 
@@ -187,6 +191,7 @@ export function LogDayViewController({
   allowDayManagement = true,
   recipeOptions = [],
   ingredientOptions = [],
+  plannedMealsBySlotKey = {},
 }: LogDayViewProps) {
   const selectedFamilyMemberId = familyMemberId ?? person ?? familyMembers[0]?.id;
   const router = useRouter();
@@ -378,8 +383,16 @@ export function LogDayViewController({
       mealLabel: slot.label,
       selectedRecipeId: null,
       initialSelectedRecipeId: null,
-      subtitle: `${formatDayLabel(day.date)}`,
-      initialRows: [],
+      subtitle: (() => {
+        const planned = plannedMealsBySlotKey[`${day.dateKey}-${slot.mealType}`];
+        if (!planned) {
+          return `${formatDayLabel(day.date)}`;
+        }
+        return `${planned.name} · ${formatDayLabel(day.date)}`;
+      })(),
+      initialRows:
+        plannedMealsBySlotKey[`${day.dateKey}-${slot.mealType}`]?.ingredients ??
+        [],
     });
   };
 
@@ -631,7 +644,10 @@ export function LogDayViewController({
       entryRecipeId: null,
       sourceRecipeId: plannerItem.sourceRecipeId,
       mealLabel: targetSlot.label,
-      cardKind: "recipe" as const,
+      cardKind:
+        plannerItem.sourceRecipeId == null
+          ? ("custom" as const)
+          : ("recipe" as const),
       title: plannerItem.title,
       slug: null,
       imageUrl: plannerItem.imageUrl,
@@ -694,7 +710,8 @@ export function LogDayViewController({
         logId,
         familyMemberId: selectedFamilyMemberId,
         entryId: targetEntryId,
-        sourceRecipeId: plannerItem.sourceRecipeId ?? "",
+        sourceRecipeId: plannerItem.sourceRecipeId,
+        planSlotId: plannerItem.planSlotId,
         ingredients: plannerItem.ingredients,
       });
 
@@ -747,12 +764,10 @@ export function LogDayViewController({
       }) ?? [];
 
     const optimisticPoolItem =
-      removedRecipe?.sourceRecipeId &&
-      removedRecipe.planSlotId &&
-      optimisticPoolIngredients.length > 0 &&
-      targetDay != null
+      removedRecipe?.planSlotId && targetDay != null
         ? {
-            id: removedRecipe.id,
+            id: `plan-${removedRecipe.planSlotId}`,
+            planSlotId: removedRecipe.planSlotId,
             date: targetDate,
             dateKey: targetDateKey,
             mealType: slot.mealType,

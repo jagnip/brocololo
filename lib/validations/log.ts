@@ -57,7 +57,8 @@ export const placePlannerPoolItemSchema = z.object({
   logId: z.string().min(1),
   familyMemberId: z.string().min(1),
   entryId: z.string().min(1),
-  sourceRecipeId: z.string().min(1),
+  sourceRecipeId: z.string().min(1).nullable(),
+  planSlotId: z.string().min(1),
   ingredients: z.array(plannerPoolIngredientSchema).max(200),
 });
 
