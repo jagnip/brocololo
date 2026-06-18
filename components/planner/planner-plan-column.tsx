@@ -1,6 +1,6 @@
 "use client";
 
-import type { PlanInputType } from "@/types/planner";
+import type { PlanInputType, PlanSlotMealPayload } from "@/types/planner";
 import type { RecipeType } from "@/types/recipe";
 import { PlanView } from "./plan-view";
 import { PlanViewSkeleton } from "./plan-view-skeleton";
@@ -9,6 +9,7 @@ import {
   getPlannerPlanColumnMode,
   type PlannerPlanColumnMode,
 } from "./planner-plan-column-state";
+import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
 
 export { getPlannerPlanColumnMode, type PlannerPlanColumnMode };
 
@@ -18,8 +19,9 @@ type PlannerPlanColumnProps = {
   lastGenerationError: string | null;
   fridgeIngredientIds: string[];
   recipes: RecipeType[];
+  ingredientOptions: LogIngredientOption[];
   onShuffle?: (slotKey: string) => void;
-  onReplace?: (slotKey: string, recipe: RecipeType) => void;
+  onSetMeal?: (slotKey: string, payload: PlanSlotMealPayload) => void;
   onRemove?: (slotKey: string) => void;
 };
 
@@ -29,8 +31,9 @@ export function PlannerPlanColumn({
   lastGenerationError,
   fridgeIngredientIds,
   recipes,
+  ingredientOptions,
   onShuffle,
-  onReplace,
+  onSetMeal,
   onRemove,
 }: PlannerPlanColumnProps) {
   if (mode === "loading") {
@@ -43,8 +46,9 @@ export function PlannerPlanColumn({
         plan={plan}
         fridgeIngredientIds={fridgeIngredientIds}
         recipes={recipes}
+        ingredientOptions={ingredientOptions}
         onShuffle={onShuffle}
-        onReplace={onReplace}
+        onSetMeal={onSetMeal}
         onRemove={onRemove}
       />
     );

@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PlanInputType } from "@/types/planner";
 import { PlannerMealType } from "@/src/generated/enums";
+const emptyIngredientOptions: never[] = [];
 
 const pushMock = vi.hoisted(() => vi.fn());
 const refreshMock = vi.hoisted(() => vi.fn());
@@ -131,11 +132,12 @@ describe("PlanEditor autosave", () => {
         mealType: "DINNER" as any,
         recipe: recipeA,
         alternatives: [recipeB, recipeC],
+        customMeal: null,
         used: false,
       },
     ];
 
-    renderPlanEditor({ planId: "plan-1", initialPlan, recipes: [] });
+    renderPlanEditor({ planId: "plan-1", initialPlan, recipes: [], ingredientOptions: emptyIngredientOptions });
 
     await user.click(screen.getByRole("button", { name: "Shuffle" }));
 
@@ -165,11 +167,12 @@ describe("PlanEditor autosave", () => {
         mealType: "DINNER" as any,
         recipe: recipeA,
         alternatives: [recipeB, recipeC],
+        customMeal: null,
         used: false,
       },
     ];
 
-    renderPlanEditor({ planId: "plan-1", initialPlan, recipes: [] });
+    renderPlanEditor({ planId: "plan-1", initialPlan, recipes: [], ingredientOptions: emptyIngredientOptions });
 
     await user.click(screen.getByRole("button", { name: "Shuffle" }));
     await waitFor(() => {
@@ -208,11 +211,12 @@ describe("PlanEditor autosave", () => {
         mealType: "DINNER" as any,
         recipe: recipeA,
         alternatives: [recipeB, recipeC],
+        customMeal: null,
         used: false,
       },
     ];
 
-    renderPlanEditor({ planId: "plan-1", initialPlan, recipes: [] });
+    renderPlanEditor({ planId: "plan-1", initialPlan, recipes: [], ingredientOptions: emptyIngredientOptions });
 
     await user.click(screen.getByRole("button", { name: "Shuffle" }));
     await waitFor(() => {
@@ -250,11 +254,13 @@ describe("PlanEditor autosave", () => {
           date: new Date("2026-03-17T00:00:00.000Z"),
           mealType: "DINNER" as any,
           recipe: recipeA,
+          customMeal: null,
           alternatives: [recipeB, recipeC],
           used: false,
         },
       ],
       recipes: [],
+      ingredientOptions: emptyIngredientOptions,
     });
 
     await user.click(screen.getByRole("button", { name: "Shuffle" }));
@@ -289,11 +295,13 @@ describe("PlanEditor autosave", () => {
           date: new Date("2026-03-17T00:00:00.000Z"),
           mealType: "DINNER" as any,
           recipe: recipeA,
+          customMeal: null,
           alternatives: [recipeB, recipeC],
           used: false,
         },
       ],
       recipes: [],
+      ingredientOptions: emptyIngredientOptions,
     });
 
     await user.click(screen.getByRole("button", { name: "Shuffle" }));
@@ -314,7 +322,7 @@ describe("PlanEditor autosave", () => {
   it("rebase creates empty slots and marks editor dirty when date range changes", async () => {
     const user = userEvent.setup();
 
-    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlanForTests(), recipes: [] });
+    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlanForTests(), recipes: [], ingredientOptions: emptyIngredientOptions });
 
     // When the range expands, the editor should create empty meal slots for the new days,
     // and mark editor dirty so generation is blocked until autosave finishes.
@@ -341,6 +349,7 @@ describe("PlanEditor autosave", () => {
         mealType: PlannerMealType.DINNER,
         recipe: recipe17,
         alternatives: [],
+        customMeal: null,
         used: false,
       },
       {
@@ -348,6 +357,7 @@ describe("PlanEditor autosave", () => {
         mealType: PlannerMealType.DINNER,
         recipe: recipe18,
         alternatives: [],
+        customMeal: null,
         used: false,
       },
       {
@@ -355,11 +365,12 @@ describe("PlanEditor autosave", () => {
         mealType: PlannerMealType.DINNER,
         recipe: recipe19,
         alternatives: [],
+        customMeal: null,
         used: false,
       },
     ];
 
-    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlan3Days, recipes: [] });
+    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlan3Days, recipes: [], ingredientOptions: emptyIngredientOptions });
 
     // Before shrinking, we should see dinner recipes for all 3 days.
     expect(screen.getByLabelText("dinner-by-day").textContent).toContain("2026-03-17:recipe-17");
@@ -383,7 +394,7 @@ describe("PlanEditor autosave", () => {
   it("disables Generate log when the editor is dirty", async () => {
     const user = userEvent.setup();
 
-    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlanForTests(), recipes: [] });
+    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlanForTests(), recipes: [], ingredientOptions: emptyIngredientOptions });
 
     const generateButton = screen.getByRole("button", { name: "Generate log" });
     expect(generateButton).toBeEnabled();
@@ -401,7 +412,7 @@ describe("PlanEditor autosave", () => {
       logId: "log-1",
     });
 
-    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlanForTests(), recipes: [] });
+    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlanForTests(), recipes: [], ingredientOptions: emptyIngredientOptions });
 
     await user.click(screen.getByRole("button", { name: "Generate log" }));
 
@@ -417,7 +428,7 @@ describe("PlanEditor autosave", () => {
       logId: "log-1",
     });
 
-    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlanForTests(), recipes: [] });
+    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlanForTests(), recipes: [], ingredientOptions: emptyIngredientOptions });
 
     await user.click(screen.getByRole("button", { name: "Generate log" }));
 
@@ -433,7 +444,7 @@ describe("PlanEditor autosave", () => {
       dates: ["2026-04-10", "2026-04-12"],
     });
 
-    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlanForTests(), recipes: [] });
+    renderPlanEditor({ planId: "plan-1", initialPlan: initialPlanForTests(), recipes: [], ingredientOptions: emptyIngredientOptions });
 
     await user.click(screen.getByRole("button", { name: "Generate log" }));
 
@@ -447,7 +458,7 @@ describe("PlanEditor autosave", () => {
     const user = userEvent.setup();
     vi.mocked(deletePlanAction).mockResolvedValue({ type: "success" });
 
-    render(<PlanEditor planId="plan-1" initialPlan={initialPlanForTests()} recipes={[]} />);
+    render(<PlanEditor planId="plan-1" initialPlan={initialPlanForTests()} recipes={[]} ingredientOptions={emptyIngredientOptions} />);
 
     await user.click(screen.getByRole("button", { name: "Delete plan" }));
     const dialog = screen.getByRole("alertdialog");
@@ -469,6 +480,7 @@ function initialPlanForTests(): PlanInputType {
       date: new Date("2026-03-17T00:00:00.000Z"),
       mealType: "DINNER" as any,
       recipe: recipeA,
+      customMeal: null,
       alternatives: [recipeB, recipeC],
       used: false,
     },

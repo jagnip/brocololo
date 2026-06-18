@@ -1,5 +1,9 @@
 import { cache } from "react";
-import { SlotInputType, SlotSaveData } from "@/types/planner";
+import {
+  PlanCustomMeal,
+  SlotInputType,
+  SlotSaveData,
+} from "@/types/planner";
 import { getFamilyMemberIngredientAmountPerMeal } from "@/lib/log/helpers";
 import {
   LogMealType,
@@ -83,6 +87,90 @@ const recipeInclude = {
   },
   memberPortions: true,
 } as const;
+
+function mapCustomMealFromSlot(slot: {
+  customName: string | null;
+  customIngredients: Array<{
+    ingredientId: string;
+    unitId: string | null;
+    amount: number | null;
+  }>;
+}): PlanCustomMeal | null {
+  if (!slot.customName) {
+    return null;
+  }
+
+  return {
+    name: slot.customName,
+    ingredients: slot.customIngredients.map((row) => ({
+      ingredientId: row.ingredientId,
+      unitId: row.unitId,
+      amount: row.amount,
+    })),
+  };
+}
+
+function buildCustomIngredientCreates(customMeal: PlanCustomMeal | null | undefined) {
+  if (!customMeal || customMeal.ingredients.length === 0) {
+    return undefined;
+  }
+
+  return {
+    create: customMeal.ingredients.map((row, index) => ({
+      ingredientId: row.ingredientId,
+      unitId: row.unitId,
+      amount: row.amount,
+      position: index,
+    })),
+  };
+}
+
+function slotInputToCreateData(s: SlotInputType) {
+  const customMeal = s.customMeal;
+  const hasCustom = customMeal != null;
+
+  return {
+    date: s.date,
+    mealType: s.mealType,
+    recipeId: hasCustom ? null : (s.recipe?.id ?? null),
+    customName: hasCustom ? customMeal.name : null,
+    used: s.used,
+    customIngredients: hasCustom
+      ? buildCustomIngredientCreates(customMeal)
+      : undefined,
+    alternatives: hasCustom
+      ? undefined
+      : {
+          create: s.alternatives.map((alt, index) => ({
+            recipeId: alt.id,
+            rank: index,
+          })),
+        },
+  };
+}
+
+function slotSaveDataToCreateData(s: SlotSaveData) {
+  const hasCustom = s.customMeal != null;
+
+  return {
+    date: s.date,
+    mealType: s.mealType,
+    recipeId: hasCustom ? null : s.recipeId,
+    customName: hasCustom ? s.customMeal!.name : null,
+    used: s.used,
+    customIngredients: hasCustom
+      ? buildCustomIngredientCreates(s.customMeal)
+      : undefined,
+    alternatives: hasCustom
+      ? undefined
+      : {
+          create: s.alternativeRecipeIds.map((recipeId, index) => ({
+            recipeId,
+            rank: index,
+          })),
+        },
+  };
+}
 
 export async function getPlans(userId: string) {
   return prisma.plan.findMany({
@@ -177,6 +265,14 @@ export async function getPlanById(userId: string, planId: string) {
       slots: {
         include: {
           recipe: { include: recipeInclude },
+          customIngredients: {
+            orderBy: { position: "asc" },
+            select: {
+              ingredientId: true,
+              unitId: true,
+              amount: true,
+            },
+          },
           alternatives: {
             orderBy: { rank: "asc" },
             include: {
@@ -194,9 +290,11 @@ export async function getPlanById(userId: string, planId: string) {
   );
 
   return plan.slots.map((slot) => ({
+    id: slot.id,
     date: slot.date,
     mealType: slot.mealType,
     recipe: slot.recipe,
+    customMeal: mapCustomMealFromSlot(slot),
     alternatives: slot.alternatives.map((a) => a.recipe),
     cookingFamilyMemberIds,
     used: slot.used,
@@ -218,6 +316,7 @@ export type PlannerPoolIngredientRow = {
 
 export type PlannerPoolItem = {
   id: string;
+  planSlotId: string;
   date: Date;
   mealType: LogMealType;
   title: string;
@@ -313,6 +412,24 @@ export async function getPlanForGroceries(userId: string, planId: string) {
               },
             },
           },
+          customIngredients: {
+            orderBy: { position: "asc" },
+            include: {
+              ingredient: {
+                select: {
+                  id: true,
+                  name: true,
+                  brand: true,
+                  descriptor: true,
+                  icon: true,
+                  supermarketUrl: true,
+                  unitConversions: true,
+                  category: { select: { id: true, name: true, sortOrder: true } },
+                },
+              },
+              unit: { select: { id: true, name: true } },
+            },
+          },
         },
       },
     },
@@ -324,6 +441,8 @@ export async function getPlanForGroceries(userId: string, planId: string) {
     slots: plan.slots.map((s) => ({
       date: s.date.toISOString(),
       recipe: s.recipe,
+      customName: s.customName,
+      customIngredients: s.customIngredients,
     })),
     startDate: plan.startDate.toISOString(),
     endDate: plan.endDate.toISOString(),
@@ -379,18 +498,7 @@ export async function createPlan(
           ].map((familyMemberId) => ({ familyMemberId })),
         },
         slots: {
-          create: slots.map((s) => ({
-            date: s.date,
-            mealType: s.mealType,
-            recipeId: s.recipe?.id ?? null,
-            used: s.used,
-            alternatives: {
-              create: s.alternatives.map((alt, index) => ({
-                recipeId: alt.id,
-                rank: index,
-              })),
-            },
-          })),
+          create: slots.map((s) => slotInputToCreateData(s)),
         },
       },
       include: { slots: true },
@@ -472,44 +580,82 @@ export async function getPlannerPoolItemsForPlan(params: {
   // Pool = unused plan slots only: matches planner "used" checkmarks and reserveNextUnusedPlanSlot.
   const items: PlannerPoolItem[] = [];
   for (const slot of slots) {
-    if (!slot.recipe) continue;
     if (slot.used) {
       continue;
     }
+
+    const hasRecipe = slot.recipe != null;
+    const hasCustom = slot.customMeal != null;
+    if (!hasRecipe && !hasCustom) {
+      continue;
+    }
+
+    if (!slot.id) {
+      continue;
+    }
+
     const dayKey = slot.date.toISOString().slice(0, 10);
     const mealType = toLogMealType(slot.mealType);
 
-    items.push({
-      id: `plan-${dayKey}-${mealType}-${slot.recipe.id}`,
-      date: slot.date,
-      mealType,
-      title: slot.recipe.name,
-      sourceRecipeId: slot.recipe.id,
-      // Share the same cover-first fallback as all recipe image surfaces.
-      imageUrl: getRecipeDisplayImageUrl(slot.recipe.images),
-      ingredients: slot.recipe.ingredients
-        .map((ri) => {
-          const personAmount = getFamilyMemberIngredientAmountPerMeal({
-            amount: ri.amount,
-            appliesToEveryone: ri.appliesToEveryone,
-            targetFamilyMemberIds: ri.memberTargets.map(
-              (target) => target.familyMemberId,
-            ),
-            familyMemberId: params.familyMemberId,
-            recipeServings: slot.recipe!.servings,
-            familyMembers,
-            memberPortions: slot.recipe!.memberPortions,
-            cookingFamilyMemberIds: slot.cookingFamilyMemberIds,
-          });
-          if (personAmount == null || ri.unitId == null) return null;
-          return {
-            ingredientId: ri.ingredientId,
-            unitId: ri.unitId,
-            amount: Math.round(personAmount * 1000) / 1000,
-          };
-        })
-        .filter((row): row is PlannerPoolIngredientRow => row != null),
-    });
+    if (hasRecipe && slot.recipe) {
+      items.push({
+        id: `plan-${slot.id}`,
+        planSlotId: slot.id,
+        date: slot.date,
+        mealType,
+        title: slot.recipe.name,
+        sourceRecipeId: slot.recipe.id,
+        imageUrl: getRecipeDisplayImageUrl(slot.recipe.images),
+        ingredients: slot.recipe.ingredients
+          .map((ri) => {
+            const personAmount = getFamilyMemberIngredientAmountPerMeal({
+              amount: ri.amount,
+              appliesToEveryone: ri.appliesToEveryone,
+              targetFamilyMemberIds: ri.memberTargets.map(
+                (target) => target.familyMemberId,
+              ),
+              familyMemberId: params.familyMemberId,
+              recipeServings: slot.recipe!.servings,
+              familyMembers,
+              memberPortions: slot.recipe!.memberPortions,
+              cookingFamilyMemberIds: slot.cookingFamilyMemberIds,
+            });
+            if (personAmount == null || ri.unitId == null) return null;
+            return {
+              ingredientId: ri.ingredientId,
+              unitId: ri.unitId,
+              amount: Math.round(personAmount * 1000) / 1000,
+            };
+          })
+          .filter((row): row is PlannerPoolIngredientRow => row != null),
+      });
+      continue;
+    }
+
+    if (hasCustom && slot.customMeal) {
+      items.push({
+        id: `plan-${slot.id}`,
+        planSlotId: slot.id,
+        date: slot.date,
+        mealType,
+        title: slot.customMeal.name,
+        sourceRecipeId: null,
+        imageUrl: null,
+        ingredients: slot.customMeal.ingredients
+          .filter(
+            (row): row is PlannerPoolIngredientRow =>
+              row.ingredientId != null &&
+              row.unitId != null &&
+              row.amount != null &&
+              row.amount > 0,
+          )
+          .map((row) => ({
+            ingredientId: row.ingredientId,
+            unitId: row.unitId!,
+            amount: row.amount!,
+          })),
+      });
+    }
   }
 
   return items.sort((a, b) => {
@@ -517,6 +663,53 @@ export async function getPlannerPoolItemsForPlan(params: {
     if (dayCmp !== 0) return dayCmp;
     return a.mealType.localeCompare(b.mealType);
   });
+}
+
+export async function reservePlanSlotById(params: {
+  planId: string;
+  planSlotId: string;
+}): Promise<boolean> {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const reserved = await prisma.$transaction(async (tx) => {
+      const updated = await tx.planSlot.updateMany({
+        where: {
+          id: params.planSlotId,
+          planId: params.planId,
+          used: false,
+        },
+        data: { used: true },
+      });
+
+      if (updated.count === 0) {
+        return false;
+      }
+
+      return true;
+    });
+
+    if (reserved) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export async function reservePlanSlotByIdTx(params: {
+  tx: Prisma.TransactionClient;
+  planId: string;
+  planSlotId: string;
+}): Promise<boolean> {
+  const updated = await params.tx.planSlot.updateMany({
+    where: {
+      id: params.planSlotId,
+      planId: params.planId,
+      used: false,
+    },
+    data: { used: true },
+  });
+
+  return updated.count > 0;
 }
 
 export async function reserveNextUnusedPlanSlot(params: {
@@ -670,6 +863,7 @@ export async function updatePlan(
           select: {
             date: true,
             recipeId: true,
+            customName: true,
           },
         },
       },
@@ -699,7 +893,9 @@ export async function updatePlan(
     }
 
     const impactedPlanMealsCount = existingPlan.slots.filter(
-      (slot) => removedDateKeys.includes(toDateKey(slot.date)) && slot.recipeId != null,
+      (slot) =>
+        removedDateKeys.includes(toDateKey(slot.date)) &&
+        (slot.recipeId != null || slot.customName != null),
     ).length;
 
     let impactedLogMealsCount = 0;
@@ -734,18 +930,7 @@ export async function updatePlan(
         startDate,
         endDate,
         slots: {
-          create: slots.map((s) => ({
-            date: s.date,
-            mealType: s.mealType,
-            recipeId: s.recipeId,
-            used: s.used,
-            alternatives: {
-              create: s.alternativeRecipeIds.map((recipeId, index) => ({
-                recipeId,
-                rank: index,
-              })),
-            },
-          })),
+          create: slots.map((s) => slotSaveDataToCreateData(s)),
         },
       },
       include: { slots: true },

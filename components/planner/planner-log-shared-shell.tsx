@@ -47,6 +47,11 @@ type PlannerLogShellProps = {
   initialDateRange: DateRangeValue;
   initialPlan: PlanInputType;
   plannerRecipes: RecipeType[];
+  ingredientOptions: LogIngredientOption[];
+  plannedMealsBySlotKey: Record<
+    string,
+    { name: string; ingredients: EditableIngredientRow[] }
+  >;
   familyMembers: FamilyMemberRow[];
   familyMemberId: string;
   logData: {
@@ -71,6 +76,8 @@ export function PlannerLogSharedShell({
   initialDateRange,
   initialPlan,
   plannerRecipes,
+  ingredientOptions,
+  plannedMealsBySlotKey,
   familyMembers,
   familyMemberId,
   logData,
@@ -293,6 +300,7 @@ export function PlannerLogSharedShell({
             planId={planId}
             initialPlan={initialPlan}
             recipes={plannerRecipes}
+            ingredientOptions={ingredientOptions}
             sharedDateRange={dateRange}
             hideInlineControls
             hidePageHeader
@@ -309,6 +317,7 @@ export function PlannerLogSharedShell({
               familyMemberId={familyMemberId}
               recipeOptions={logData.recipeOptions}
               ingredientOptions={logData.ingredientOptions}
+              plannedMealsBySlotKey={plannedMealsBySlotKey}
               dateRange={dateRange}
               allowDayManagement={false}
             />

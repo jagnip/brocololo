@@ -52,3 +52,38 @@ export type RollingRecipeType = z.infer<typeof rollingRecipeSchema>;
 export type DayTimeLimitsType = z.infer<typeof dayTimeLimitsSchema>;
 export type PlannerCriteriaInputType = z.input<typeof plannerCriteriaSchema>;
 export type PlannerCriteriaOutputType = z.infer<typeof plannerCriteriaSchema>;
+
+export const planCustomMealIngredientSchema = z.object({
+  ingredientId: z.string().min(1),
+  unitId: z.string().min(1).nullable(),
+  amount: z.coerce.number().positive().nullable(),
+});
+
+export const planCustomMealSchema = z.object({
+  name: z.string().trim().min(1, "Meal name is required"),
+  ingredients: z.array(planCustomMealIngredientSchema).max(200),
+});
+
+export const slotSaveDataSchema = z
+  .object({
+    date: z.coerce.date(),
+    mealType: z.enum(["BREAKFAST", "LUNCH", "DINNER"]),
+    recipeId: z.string().min(1).nullable(),
+    customMeal: planCustomMealSchema.nullable(),
+    alternativeRecipeIds: z.array(z.string().min(1)),
+    used: z.boolean(),
+  })
+  .superRefine((slot, ctx) => {
+    const hasRecipe = slot.recipeId != null;
+    const hasCustom = slot.customMeal != null;
+
+    if (hasRecipe && hasCustom) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A slot cannot have both a recipe and a custom meal",
+        path: ["customMeal"],
+      });
+    }
+  });
+
+export const planSlotsSaveSchema = z.array(slotSaveDataSchema).min(1);

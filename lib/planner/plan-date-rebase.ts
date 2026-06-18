@@ -67,6 +67,7 @@ export function rebasePlanSlotsByDateRangeDelta(params: {
         date: day,
         mealType,
         recipe: null,
+        customMeal: null,
         alternatives: [],
         used: false,
       });

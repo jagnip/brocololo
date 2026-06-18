@@ -198,21 +198,40 @@ model ShoppingListItem {
 }
 
 model PlanSlot {
-  id       String          @id @default(cuid())
-  planId   String          @map("plan_id")
-  date     DateTime        @db.Date
-  mealType PlannerMealType @map("meal_type")
-  recipeId String?         @map("recipe_id")
-  used     Boolean         @default(false)
+  id         String          @id @default(cuid())
+  planId     String          @map("plan_id")
+  date       DateTime        @db.Date
+  mealType   PlannerMealType @map("meal_type")
+  recipeId   String?         @map("recipe_id")
+  customName String?         @map("custom_name")
+  used       Boolean         @default(false)
 
-  plan            Plan                  @relation(fields: [planId], references: [id], onDelete: Cascade)
-  recipe          Recipe?               @relation("recipe_plan_slots", fields: [recipeId], references: [id], onDelete: Cascade)
-  alternatives    PlanSlotAlternative[]
-  logEntryRecipes LogEntryRecipe[]
+  plan              Plan                       @relation(fields: [planId], references: [id], onDelete: Cascade)
+  recipe            Recipe?                    @relation("recipe_plan_slots", fields: [recipeId], references: [id], onDelete: Cascade)
+  alternatives      PlanSlotAlternative[]
+  customIngredients PlanSlotCustomIngredient[]
+  logEntryRecipes   LogEntryRecipe[]
 
   @@index([planId])
   @@index([recipeId])
   @@map("plan_slots")
+}
+
+model PlanSlotCustomIngredient {
+  id           String  @id @default(cuid())
+  planSlotId   String  @map("plan_slot_id")
+  ingredientId String  @map("ingredient_id")
+  unitId       String? @map("unit_id")
+  amount       Float?
+  position     Int     @default(0)
+
+  planSlot   PlanSlot   @relation(fields: [planSlotId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  unit       Unit?      @relation(fields: [unitId], references: [id], onDelete: SetNull)
+
+  @@index([planSlotId, position])
+  @@index([ingredientId])
+  @@map("plan_slot_custom_ingredients")
 }
 
 model PlanSlotAlternative {
@@ -307,6 +326,7 @@ model Ingredient {
   recipes                    RecipeIngredient[]
   unitConversions            IngredientUnit[]
   logIngredients             LogIngredient[]
+  planSlotCustomIngredients  PlanSlotCustomIngredient[]
   groceryIngredient          GroceryIngredient?
   ingredientLists            IngredientListItem[]
   userCustomizations         IngredientUserCustomization[]
@@ -345,6 +365,7 @@ model Unit {
   defaultForIngredients Ingredient[]       @relation("ingredient_default_unit")
   recipeIngredients     RecipeIngredient[]
   logIngredients        LogIngredient[]
+  planSlotCustomIngredients PlanSlotCustomIngredient[]
   shoppingListItems     ShoppingListItem[]
 
   @@map("units")

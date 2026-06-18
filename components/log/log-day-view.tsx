@@ -17,6 +17,7 @@ import { LogMealType } from "@/src/generated/enums";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import {
   buildGroupedPlannerPoolCards,
+  LOG_MEAL_LABELS,
   type LogDayData,
   type PlannerPoolCardData,
 } from "@/lib/log/view-model";
@@ -153,6 +154,10 @@ type LogDayViewProps = {
     initialRows: EditableIngredientRow[];
   }>;
   ingredientOptions?: LogIngredientOption[];
+  plannedMealsBySlotKey?: Record<
+    string,
+    { name: string; ingredients: EditableIngredientRow[] }
+  >;
   ingredientFormDependencies?: IngredientFormDependencies;
 };
 
@@ -187,6 +192,7 @@ export function LogDayViewController({
   allowDayManagement = true,
   recipeOptions = [],
   ingredientOptions = [],
+  plannedMealsBySlotKey = {},
 }: LogDayViewProps) {
   const selectedFamilyMemberId = familyMemberId ?? person ?? familyMembers[0]?.id;
   const router = useRouter();
@@ -378,8 +384,16 @@ export function LogDayViewController({
       mealLabel: slot.label,
       selectedRecipeId: null,
       initialSelectedRecipeId: null,
-      subtitle: `${formatDayLabel(day.date)}`,
-      initialRows: [],
+      subtitle: (() => {
+        const planned = plannedMealsBySlotKey[`${day.dateKey}-${slot.mealType}`];
+        if (!planned) {
+          return `${formatDayLabel(day.date)}`;
+        }
+        return `${planned.name} · ${formatDayLabel(day.date)}`;
+      })(),
+      initialRows:
+        plannedMealsBySlotKey[`${day.dateKey}-${slot.mealType}`]?.ingredients ??
+        [],
     });
   };
 
@@ -629,9 +643,15 @@ export function LogDayViewController({
       id: `placed-${targetEntryId}-${plannerItem.id}`,
       entryId: targetEntryId,
       entryRecipeId: null,
+      planSlotId: plannerItem.planSlotId,
+      plannedPoolDate: plannerItem.date,
+      plannedPoolMealType: plannerItem.mealType,
       sourceRecipeId: plannerItem.sourceRecipeId,
       mealLabel: targetSlot.label,
-      cardKind: "recipe" as const,
+      cardKind:
+        plannerItem.sourceRecipeId == null
+          ? ("custom" as const)
+          : ("recipe" as const),
       title: plannerItem.title,
       slug: null,
       imageUrl: plannerItem.imageUrl,
@@ -694,7 +714,8 @@ export function LogDayViewController({
         logId,
         familyMemberId: selectedFamilyMemberId,
         entryId: targetEntryId,
-        sourceRecipeId: plannerItem.sourceRecipeId ?? "",
+        sourceRecipeId: plannerItem.sourceRecipeId,
+        planSlotId: plannerItem.planSlotId,
         ingredients: plannerItem.ingredients,
       });
 
@@ -728,6 +749,12 @@ export function LogDayViewController({
     const targetDate = targetDay?.date ?? new Date();
     const targetDateKey = targetDay?.dateKey ?? targetDate.toISOString().slice(0, 10);
     const removedRecipe = slot.recipes[0] ?? null;
+    const poolDate = removedRecipe?.plannedPoolDate ?? targetDate;
+    const poolDateKey =
+      removedRecipe?.plannedPoolDate?.toISOString().slice(0, 10) ??
+      targetDateKey;
+    const poolMealType = removedRecipe?.plannedPoolMealType ?? slot.mealType;
+    const poolMealLabel = LOG_MEAL_LABELS[poolMealType];
     const optimisticPoolIngredients =
       removedRecipe?.ingredients?.flatMap((ingredient) => {
         if (
@@ -747,16 +774,14 @@ export function LogDayViewController({
       }) ?? [];
 
     const optimisticPoolItem =
-      removedRecipe?.sourceRecipeId &&
-      removedRecipe.planSlotId &&
-      optimisticPoolIngredients.length > 0 &&
-      targetDay != null
+      removedRecipe?.planSlotId && targetDay != null
         ? {
-            id: removedRecipe.id,
-            date: targetDate,
-            dateKey: targetDateKey,
-            mealType: slot.mealType,
-            mealLabel: slot.label,
+            id: `plan-${removedRecipe.planSlotId}`,
+            planSlotId: removedRecipe.planSlotId,
+            date: poolDate,
+            dateKey: poolDateKey,
+            mealType: poolMealType,
+            mealLabel: poolMealLabel,
             title: removedRecipe.title,
             sourceRecipeId: removedRecipe.sourceRecipeId,
             imageUrl: removedRecipe.imageUrl,

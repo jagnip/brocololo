@@ -205,11 +205,60 @@ describe("buildLogDays", () => {
       carbs: 10,
     });
   });
+
+  it("renders planned custom pool meals as custom cards with plan slot title", () => {
+    const days = buildLogDays([
+      {
+        id: "entry-1",
+        date: new Date("2026-03-30T00:00:00.000Z"),
+        mealType: LogMealType.DINNER,
+        recipes: [
+          {
+            id: "er-planned-custom",
+            planSlotId: "slot-custom-1",
+            planSlot: {
+              id: "slot-custom-1",
+              customName: "Friday pasta",
+              date: new Date("2026-03-30T00:00:00.000Z"),
+              mealType: "DINNER",
+            },
+            sourceRecipe: null,
+          },
+        ],
+        ingredients: [
+          {
+            entryRecipeId: "er-planned-custom",
+            amount: 200,
+            unit: { id: "unit-g", name: "g" },
+            ingredient: {
+              id: "ing-pasta",
+              name: "Pasta",
+              calories: 350,
+              proteins: 12,
+              fats: 2,
+              carbs: 70,
+              unitConversions: [{ unitId: "unit-g", gramsPerUnit: 1 }],
+            },
+          },
+        ],
+      },
+    ]);
+
+    const dinner = days[0]?.slots.find((slot) => slot.mealType === LogMealType.DINNER);
+    expect(dinner?.recipes[0]).toMatchObject({
+      cardKind: "custom",
+      title: "Friday pasta",
+      planSlotId: "slot-custom-1",
+      plannedPoolDate: new Date("2026-03-30T00:00:00.000Z"),
+      plannedPoolMealType: LogMealType.DINNER,
+    });
+  });
 });
 
 describe("buildVisiblePlannerPoolCards", () => {
   const poolItem = (id: string, recipeId: string) => ({
     id,
+    planSlotId: id,
     date: new Date("2026-03-30T00:00:00.000Z"),
     dateKey: "2026-03-30",
     mealType: LogMealType.DINNER,

@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
+import { getDefaultAmountAndUnitForGroceryAdd } from "@/lib/groceries/default-add-amount";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
 import type {
   GroceriesEditableRow,
@@ -51,6 +51,16 @@ type GroceriesEditRowProps = {
 };
 
 const EDIT_COMMIT_DEBOUNCE_MS = 180;
+
+function getGroceryAddDefaultsForIngredient(ingredient: GroceriesEditIngredientOption) {
+  return getDefaultAmountAndUnitForGroceryAdd({
+    defaultUnitId: ingredient.defaultUnitId,
+    unitConversions: ingredient.unitConversions.map((conversion) => ({
+      unitId: conversion.unitId,
+      unit: { name: conversion.unit.name },
+    })),
+  });
+}
 
 function GroceriesEditRowComponent({
   row,
@@ -111,6 +121,11 @@ function GroceriesEditRowComponent({
       }
     };
   }, []);
+
+  // Uncontrolled amount input: remount via key on ingredient change; keep ref aligned too.
+  useEffect(() => {
+    amountInputRef.current = amountPropValue;
+  }, [row.ingredientId, amountPropValue]);
 
   const selectedIngredient = row.ingredientId
     ? ingredientById.get(row.ingredientId) ?? null
@@ -187,13 +202,8 @@ function GroceriesEditRowComponent({
               const nextIngredient = ingredientById.get(nextIngredientId);
               if (!nextIngredient) return;
 
-              const nextUnitId = getDefaultUnitIdForIngredient({
-                defaultUnitId: nextIngredient.defaultUnitId,
-                unitConversions: nextIngredient.unitConversions.map((conversion) => ({
-                  unitId: conversion.unitId,
-                  unit: { name: conversion.unit.name },
-                })),
-              });
+              const { unitId: nextUnitId, amount: nextAmount } =
+                getGroceryAddDefaultsForIngredient(nextIngredient);
 
               // Ingredient changes should update category + label to keep rows aligned with section ordering.
               onRowChange(row.id, {
@@ -201,8 +211,8 @@ function GroceriesEditRowComponent({
                 ingredientCategoryId: nextIngredient.categoryId,
                 displayLabel: nextIngredient.name,
                 unitId: nextUnitId,
-                // Reset amount to avoid carrying stale values across ingredient/unit changes.
-                amount: null,
+                // Reset amount when switching ingredients; countable units get 1, others stay empty.
+                amount: nextAmount,
               });
             }}
             onCreateOption={(typedName) => {
@@ -225,6 +235,7 @@ function GroceriesEditRowComponent({
           />
 
           <Input
+            key={`${row.id}-amount-${row.ingredientId ?? "none"}`}
             type="number"
             min={0}
             step="any"
@@ -350,20 +361,15 @@ function GroceriesEditRowComponent({
             const nextIngredient = ingredientById.get(nextIngredientId);
             if (!nextIngredient) return;
 
-            const nextUnitId = getDefaultUnitIdForIngredient({
-              defaultUnitId: nextIngredient.defaultUnitId,
-              unitConversions: nextIngredient.unitConversions.map((conversion) => ({
-                unitId: conversion.unitId,
-                unit: { name: conversion.unit.name },
-              })),
-            });
+            const { unitId: nextUnitId, amount: nextAmount } =
+              getGroceryAddDefaultsForIngredient(nextIngredient);
 
             onRowChange(row.id, {
               ingredientId: nextIngredient.id,
               ingredientCategoryId: nextIngredient.categoryId,
               displayLabel: nextIngredient.name,
               unitId: nextUnitId,
-              amount: null,
+              amount: nextAmount,
             });
           }}
           onCreateOption={(typedName) => {
@@ -383,60 +389,61 @@ function GroceriesEditRowComponent({
           emptyLabel="No ingredient found."
         />
 
-        <Input
-          type="number"
-          min={0}
-          step="any"
-          defaultValue={amountPropValue}
-          placeholder="Amount"
-          onChange={(event) => {
-            const nextValue = event.target.value;
-            amountInputRef.current = nextValue;
-            if (amountCommitTimerRef.current) clearTimeout(amountCommitTimerRef.current);
-            amountCommitTimerRef.current = setTimeout(() => {
-              commitAmount(nextValue);
-            }, EDIT_COMMIT_DEBOUNCE_MS);
-          }}
-          onBlur={() => commitAmount(amountInputRef.current)}
-        />
+          <Input
+            key={`${row.id}-amount-${row.ingredientId ?? "none"}`}
+            type="number"
+            min={0}
+            step="any"
+            defaultValue={amountPropValue}
+            placeholder="Amount"
+            onChange={(event) => {
+              const nextValue = event.target.value;
+              amountInputRef.current = nextValue;
+              if (amountCommitTimerRef.current) clearTimeout(amountCommitTimerRef.current);
+              amountCommitTimerRef.current = setTimeout(() => {
+                commitAmount(nextValue);
+              }, EDIT_COMMIT_DEBOUNCE_MS);
+            }}
+            onBlur={() => commitAmount(amountInputRef.current)}
+          />
 
-        <Select
-          value={row.unitId ?? ""}
-          onValueChange={(nextUnitId) => onRowChange(row.id, { unitId: nextUnitId || null })}
-          disabled={selectedIngredient ? availableUnits.length === 0 : adHocUnits.length === 0}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Unit" />
-          </SelectTrigger>
-          <SelectContent>
-            {selectedIngredient
-              ? availableUnits.map((conversion) => {
-                  const unit = unitById.get(conversion.unitId);
-                  if (!unit) return null;
-                  return (
-                    <SelectItem key={conversion.unitId} value={conversion.unitId}>
+          <Select
+            value={row.unitId ?? ""}
+            onValueChange={(nextUnitId) => onRowChange(row.id, { unitId: nextUnitId || null })}
+            disabled={selectedIngredient ? availableUnits.length === 0 : adHocUnits.length === 0}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Unit" />
+            </SelectTrigger>
+            <SelectContent>
+              {selectedIngredient
+                ? availableUnits.map((conversion) => {
+                    const unit = unitById.get(conversion.unitId);
+                    if (!unit) return null;
+                    return (
+                      <SelectItem key={conversion.unitId} value={conversion.unitId}>
+                        {getUnitDisplayName({
+                          amount: row.amount,
+                          unitName: unit.name,
+                          unitNamePlural: unit.namePlural,
+                        })}
+                      </SelectItem>
+                    );
+                  })
+                : adHocUnits.map((unit) => (
+                    <SelectItem key={unit.id} value={unit.id}>
                       {getUnitDisplayName({
                         amount: row.amount,
                         unitName: unit.name,
                         unitNamePlural: unit.namePlural,
                       })}
                     </SelectItem>
-                  );
-                })
-              : adHocUnits.map((unit) => (
-                  <SelectItem key={unit.id} value={unit.id}>
-                    {getUnitDisplayName({
-                      amount: row.amount,
-                      unitName: unit.name,
-                      unitNamePlural: unit.namePlural,
-                    })}
-                  </SelectItem>
-                ))}
-          </SelectContent>
-        </Select>
+                  ))}
+            </SelectContent>
+          </Select>
 
-        <Input
-          defaultValue={additionalInfoPropValue}
+          <Input
+            defaultValue={additionalInfoPropValue}
           onChange={(event) => {
             const nextValue = event.target.value;
             additionalInfoInputRef.current = nextValue;

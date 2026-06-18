@@ -120,6 +120,7 @@ describe("LogDayView", () => {
         plannerPool={[
           {
             id: "pool-1",
+            planSlotId: "slot-1",
             date: new Date("2026-03-17T00:00:00.000Z"),
             dateKey: "2026-03-17",
             mealType: LogMealType.DINNER,
@@ -131,6 +132,7 @@ describe("LogDayView", () => {
           },
           {
             id: "pool-2",
+            planSlotId: "slot-2",
             date: new Date("2026-03-18T00:00:00.000Z"),
             dateKey: "2026-03-18",
             mealType: LogMealType.BREAKFAST,

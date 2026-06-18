@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { PlanInputType, SlotSaveData, type SlotInputType } from "@/types/planner";
+import { PlanInputType, PlanSlotMealPayload, SlotSaveData, type SlotInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PlanView } from "./plan-view";
 import { toast } from "sonner";
@@ -23,11 +23,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { usePlanTopbarState } from "@/components/planner/plan-topbar-state-context";
 import { PageHeader } from "@/components/page-header";
+import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
 
 type PlanEditorProps = {
   planId: string;
   initialPlan: PlanInputType;
   recipes: RecipeType[];
+  ingredientOptions: LogIngredientOption[];
   sharedDateRange?: DateRangeValue;
   hideInlineControls?: boolean;
   hidePageHeader?: boolean;
@@ -46,6 +48,7 @@ export function PlanEditor({
   planId,
   initialPlan,
   recipes,
+  ingredientOptions,
   sharedDateRange,
   hideInlineControls = false,
   hidePageHeader = false,
@@ -121,6 +124,7 @@ export function PlanEditor({
       date: new Date(s.date),
       mealType: s.mealType,
       recipeId: s.recipe?.id ?? null,
+      customMeal: s.customMeal,
       alternativeRecipeIds: s.alternatives.map((a) => a.id),
       used: s.used,
     }));
@@ -258,42 +262,58 @@ export function PlanEditor({
     );
   }, []);
 
-  const handleReplace = useCallback((slotKey: string, newRecipe: RecipeType) => {
-    allSlotsRef.current = allSlotsRef.current.map((slot) => {
+  const handleSetMeal = useCallback((slotKey: string, payload: PlanSlotMealPayload) => {
+    const applyPayload = (slot: SlotInputType): SlotInputType => {
       const key = `${slot.date.toISOString()}-${slot.mealType}`;
       if (key !== slotKey) return slot;
-      return {
-        ...slot,
-        recipe: newRecipe,
-        alternatives: slot.alternatives.filter((r) => r.id !== newRecipe.id),
-      };
-    });
 
-    setPlan((prev) =>
-      prev.map((slot) => {
-        const key = `${slot.date.toISOString()}-${slot.mealType}`;
-        if (key !== slotKey) return slot;
+      if (payload.kind === "recipe") {
         return {
           ...slot,
-          recipe: newRecipe,
-          alternatives: slot.alternatives.filter((r) => r.id !== newRecipe.id),
+          recipe: payload.recipe,
+          customMeal: null,
+          alternatives: slot.alternatives.filter(
+            (recipe) => recipe.id !== payload.recipe.id,
+          ),
         };
-      }),
-    );
+      }
+
+      if (payload.kind === "custom") {
+        return {
+          ...slot,
+          recipe: null,
+          customMeal: {
+            name: payload.name,
+            ingredients: payload.ingredients,
+          },
+          alternatives: [],
+        };
+      }
+
+      return {
+        ...slot,
+        recipe: null,
+        customMeal: null,
+        alternatives: [],
+      };
+    };
+
+    allSlotsRef.current = allSlotsRef.current.map(applyPayload);
+    setPlan((prev) => prev.map(applyPayload));
   }, []);
 
   const handleRemove = useCallback((slotKey: string) => {
     allSlotsRef.current = allSlotsRef.current.map((slot) => {
       const key = `${slot.date.toISOString()}-${slot.mealType}`;
       if (key !== slotKey) return slot;
-      return { ...slot, recipe: null };
+      return { ...slot, recipe: null, customMeal: null, alternatives: [] };
     });
 
     setPlan((prev) =>
       prev.map((slot) => {
         const key = `${slot.date.toISOString()}-${slot.mealType}`;
         if (key !== slotKey) return slot;
-        return { ...slot, recipe: null };
+        return { ...slot, recipe: null, customMeal: null, alternatives: [] };
       }),
     );
   }, []);
@@ -482,8 +502,9 @@ export function PlanEditor({
       <PlanView
         plan={plan}
         recipes={recipes}
+        ingredientOptions={ingredientOptions}
         onShuffle={markEdited(handleShuffle)}
-        onReplace={markEdited(handleReplace)}
+        onSetMeal={markEdited(handleSetMeal)}
         onRemove={markEdited(handleRemove)}
         onToggleUsed={markEdited(handleToggleUsed)}
       />

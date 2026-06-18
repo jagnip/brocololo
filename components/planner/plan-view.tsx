@@ -5,11 +5,12 @@ import {
   getMealsForDate,
   groupSlotsByDate,
 } from "@/lib/planner/helpers";
-import { PlanInputType, SlotInputType } from "@/types/planner";
+import { PlanInputType, PlanSlotMealPayload, SlotInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PlannerSlotCard } from "./planner-slot-card";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { getIngredientDisplayName } from "@/lib/ingredients/format";
+import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
 
 function getFridgeMatchIngredients(
   recipe: RecipeType,
@@ -34,14 +35,24 @@ function getSlotKey(slot: SlotInputType): string {
 type PlanViewProps = {
   plan: PlanInputType;
   fridgeIngredientIds?: string[];
-  recipes?: RecipeType[];
+  recipes: RecipeType[];
+  ingredientOptions: LogIngredientOption[];
   onShuffle?: (slotKey: string) => void;
-  onReplace?: (slotKey: string, recipe: RecipeType) => void;
+  onSetMeal?: (slotKey: string, payload: PlanSlotMealPayload) => void;
   onRemove?: (slotKey: string) => void;
   onToggleUsed?: (slotKey: string) => void;
 };
 
-export function PlanView({ plan, fridgeIngredientIds = [], recipes, onShuffle, onReplace, onRemove, onToggleUsed }: PlanViewProps) {
+export function PlanView({
+  plan,
+  fridgeIngredientIds = [],
+  recipes,
+  ingredientOptions,
+  onShuffle,
+  onSetMeal,
+  onRemove,
+  onToggleUsed,
+}: PlanViewProps) {
   if (plan.length === 0) {
     return null;
   }
@@ -58,10 +69,11 @@ export function PlanView({ plan, fridgeIngredientIds = [], recipes, onShuffle, o
           slot.recipe ? getFridgeMatchIngredients(slot.recipe, fridgeIngredientIds) : []
         }
         onShuffle={onShuffle ? () => onShuffle(slotKey) : undefined}
-        onReplace={onReplace ? (recipe) => onReplace(slotKey, recipe) : undefined}
+        onSetMeal={onSetMeal ? (payload) => onSetMeal(slotKey, payload) : undefined}
         onRemove={onRemove ? () => onRemove(slotKey) : undefined}
         onToggleUsed={onToggleUsed ? () => onToggleUsed(slotKey) : undefined}
         recipes={recipes}
+        ingredientOptions={ingredientOptions}
       />
     );
   }

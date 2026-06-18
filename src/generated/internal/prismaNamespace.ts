@@ -396,6 +396,7 @@ export const ModelName = {
   ShoppingListShare: 'ShoppingListShare',
   ShoppingListItem: 'ShoppingListItem',
   PlanSlot: 'PlanSlot',
+  PlanSlotCustomIngredient: 'PlanSlotCustomIngredient',
   PlanSlotAlternative: 'PlanSlotAlternative',
   Recipe: 'Recipe',
   RecipeAudienceMember: 'RecipeAudienceMember',
@@ -432,7 +433,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "category" | "user" | "familyMember" | "plan" | "planAudienceMember" | "groceryIngredient" | "shoppingLayoutPreset" | "shoppingLayoutPresetCategory" | "shoppingList" | "shoppingListShare" | "shoppingListItem" | "planSlot" | "planSlotAlternative" | "recipe" | "recipeAudienceMember" | "recipeMemberPortion" | "ingredient" | "ingredientUserCustomization" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientMemberTarget" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage" | "log" | "logEntry" | "logEntryRecipe" | "logIngredient" | "ingredientList" | "ingredientListItem"
+    modelProps: "category" | "user" | "familyMember" | "plan" | "planAudienceMember" | "groceryIngredient" | "shoppingLayoutPreset" | "shoppingLayoutPresetCategory" | "shoppingList" | "shoppingListShare" | "shoppingListItem" | "planSlot" | "planSlotCustomIngredient" | "planSlotAlternative" | "recipe" | "recipeAudienceMember" | "recipeMemberPortion" | "ingredient" | "ingredientUserCustomization" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientMemberTarget" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage" | "log" | "logEntry" | "logEntryRecipe" | "logIngredient" | "ingredientList" | "ingredientListItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1321,6 +1322,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.PlanSlotCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.PlanSlotCountAggregateOutputType> | number
+        }
+      }
+    }
+    PlanSlotCustomIngredient: {
+      payload: Prisma.$PlanSlotCustomIngredientPayload<ExtArgs>
+      fields: Prisma.PlanSlotCustomIngredientFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PlanSlotCustomIngredientFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotCustomIngredientPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PlanSlotCustomIngredientFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotCustomIngredientPayload>
+        }
+        findFirst: {
+          args: Prisma.PlanSlotCustomIngredientFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotCustomIngredientPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PlanSlotCustomIngredientFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotCustomIngredientPayload>
+        }
+        findMany: {
+          args: Prisma.PlanSlotCustomIngredientFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotCustomIngredientPayload>[]
+        }
+        create: {
+          args: Prisma.PlanSlotCustomIngredientCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotCustomIngredientPayload>
+        }
+        createMany: {
+          args: Prisma.PlanSlotCustomIngredientCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PlanSlotCustomIngredientCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotCustomIngredientPayload>[]
+        }
+        delete: {
+          args: Prisma.PlanSlotCustomIngredientDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotCustomIngredientPayload>
+        }
+        update: {
+          args: Prisma.PlanSlotCustomIngredientUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotCustomIngredientPayload>
+        }
+        deleteMany: {
+          args: Prisma.PlanSlotCustomIngredientDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PlanSlotCustomIngredientUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PlanSlotCustomIngredientUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotCustomIngredientPayload>[]
+        }
+        upsert: {
+          args: Prisma.PlanSlotCustomIngredientUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotCustomIngredientPayload>
+        }
+        aggregate: {
+          args: Prisma.PlanSlotCustomIngredientAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePlanSlotCustomIngredient>
+        }
+        groupBy: {
+          args: Prisma.PlanSlotCustomIngredientGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlanSlotCustomIngredientGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PlanSlotCustomIngredientCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlanSlotCustomIngredientCountAggregateOutputType> | number
         }
       }
     }
@@ -3045,10 +3120,23 @@ export const PlanSlotScalarFieldEnum = {
   date: 'date',
   mealType: 'mealType',
   recipeId: 'recipeId',
+  customName: 'customName',
   used: 'used'
 } as const
 
 export type PlanSlotScalarFieldEnum = (typeof PlanSlotScalarFieldEnum)[keyof typeof PlanSlotScalarFieldEnum]
+
+
+export const PlanSlotCustomIngredientScalarFieldEnum = {
+  id: 'id',
+  planSlotId: 'planSlotId',
+  ingredientId: 'ingredientId',
+  unitId: 'unitId',
+  amount: 'amount',
+  position: 'position'
+} as const
+
+export type PlanSlotCustomIngredientScalarFieldEnum = (typeof PlanSlotCustomIngredientScalarFieldEnum)[keyof typeof PlanSlotCustomIngredientScalarFieldEnum]
 
 
 export const PlanSlotAlternativeScalarFieldEnum = {
@@ -3522,6 +3610,7 @@ export type GlobalOmitConfig = {
   shoppingListShare?: Prisma.ShoppingListShareOmit
   shoppingListItem?: Prisma.ShoppingListItemOmit
   planSlot?: Prisma.PlanSlotOmit
+  planSlotCustomIngredient?: Prisma.PlanSlotCustomIngredientOmit
   planSlotAlternative?: Prisma.PlanSlotAlternativeOmit
   recipe?: Prisma.RecipeOmit
   recipeAudienceMember?: Prisma.RecipeAudienceMemberOmit

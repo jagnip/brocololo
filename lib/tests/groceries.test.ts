@@ -138,6 +138,49 @@ describe("transformPlanToShoppingListRows", () => {
     expect(rows[0]?.unitName).toBe("g");
     expect(rows[0]?.unitId).toBeNull();
   });
+
+  it("includes custom planned meal ingredients with attribution", () => {
+    const rows = transformPlanToShoppingListRows([
+      {
+        recipe: null,
+        customName: "Friday pasta",
+        customIngredients: [
+          {
+            ingredient: {
+              id: "ing-2",
+              name: "Pasta",
+              icon: null,
+              supermarketUrl: null,
+              unitConversions: [{ unitId: "unit-g", gramsPerUnit: 1 }],
+              category: { id: "cat-dry", name: "Dry goods", sortOrder: 1 },
+            },
+            unit: { id: "unit-g", name: "g" },
+            amount: 300,
+          },
+        ],
+      },
+    ]);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      ingredientName: "Pasta",
+      amount: 300,
+      unitName: "g",
+      recipeNames: ["Friday pasta"],
+    });
+  });
+
+  it("returns empty for name-only custom slots", () => {
+    expect(
+      transformPlanToShoppingListRows([
+        {
+          recipe: null,
+          customName: "Eating out",
+          customIngredients: [],
+        },
+      ]),
+    ).toEqual([]);
+  });
 });
 
 describe("formatAmount", () => {

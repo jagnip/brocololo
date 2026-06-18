@@ -9,6 +9,7 @@ import {
   findDateCollisionsTx,
   releaseReservedPlanSlotTx,
   reserveNextUnusedPlanSlotTx,
+  reservePlanSlotByIdTx,
 } from "./planner";
 import type {
   ParsedAddRecipeToLogInput,
@@ -128,6 +129,14 @@ export async function getLogById(
               id: true,
               position: true,
               planSlotId: true,
+              planSlot: {
+                select: {
+                  id: true,
+                  customName: true,
+                  date: true,
+                  mealType: true,
+                },
+              },
               sourceRecipe: {
                 select: {
                   id: true,
@@ -589,13 +598,13 @@ export async function placePlannerPoolItemInEntry(
 
     await releasePlanSlotsLinkedToEntryRecipes(tx, input.entryId);
 
-    const reservedPlanSlotId = await reserveNextUnusedPlanSlotTx({
+    const reserved = await reservePlanSlotByIdTx({
       tx,
       planId: log.planId,
-      recipeId: input.sourceRecipeId,
+      planSlotId: input.planSlotId,
     });
-    if (!reservedPlanSlotId) {
-      throw new Error("NO_UNUSED_PLAN_SLOT_FOR_RECIPE");
+    if (!reserved) {
+      throw new Error("NO_UNUSED_PLAN_SLOT");
     }
 
     await tx.logIngredient.deleteMany({
@@ -610,11 +619,12 @@ export async function placePlannerPoolItemInEntry(
       },
     });
 
+    // Always link pool placements to a LogEntryRecipe so planSlotId is released on clear.
     const entryRecipe = await tx.logEntryRecipe.create({
       data: {
         entryId: input.entryId,
         sourceRecipeId: input.sourceRecipeId,
-        planSlotId: reservedPlanSlotId,
+        planSlotId: input.planSlotId,
         position: 0,
       },
       select: { id: true },
