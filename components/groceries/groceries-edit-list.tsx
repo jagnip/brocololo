@@ -21,7 +21,7 @@ import type {
   GroceriesEditUnitOption,
 } from "@/components/groceries/groceries-edit-types";
 import type { IngredientListWithItems } from "@/lib/db/ingredient-lists";
-import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
+import { getDefaultAmountAndUnitForGroceryAdd } from "@/lib/groceries/default-add-amount";
 import { ROUTES } from "@/lib/constants";
 import { formatDateRangeLabel } from "@/lib/format-date-range-label";
 import { TopbarConfigController } from "@/components/topbar-config";
@@ -385,13 +385,14 @@ export function GroceriesEditList({
       const ingredient = ingredientById.get(ingredientId);
       if (!ingredient) return;
 
-      const nextUnitId = getDefaultUnitIdForIngredient({
-        defaultUnitId: ingredient.defaultUnitId,
-        unitConversions: ingredient.unitConversions.map((conversion) => ({
-          unitId: conversion.unitId,
-          unit: { name: conversion.unit.name },
-        })),
-      });
+      const { unitId: nextUnitId, amount: nextAmount } =
+        getDefaultAmountAndUnitForGroceryAdd({
+          defaultUnitId: ingredient.defaultUnitId,
+          unitConversions: ingredient.unitConversions.map((conversion) => ({
+            unitId: conversion.unitId,
+            unit: { name: conversion.unit.name },
+          })),
+        });
 
       const newRowId = crypto.randomUUID();
       setRows((prev) => [
@@ -403,7 +404,7 @@ export function GroceriesEditList({
           ingredientId: ingredient.id,
           ingredientCategoryId: ingredient.categoryId,
           displayLabel: ingredient.name,
-          amount: null,
+          amount: nextAmount,
           unitId: nextUnitId,
           substitutionsAllowed: false,
           substitutionNote: null,
