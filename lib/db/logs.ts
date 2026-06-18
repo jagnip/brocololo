@@ -129,6 +129,14 @@ export async function getLogById(
               id: true,
               position: true,
               planSlotId: true,
+              planSlot: {
+                select: {
+                  id: true,
+                  customName: true,
+                  date: true,
+                  mealType: true,
+                },
+              },
               sourceRecipe: {
                 select: {
                   id: true,
@@ -611,36 +619,22 @@ export async function placePlannerPoolItemInEntry(
       },
     });
 
-    if (input.sourceRecipeId) {
-      const entryRecipe = await tx.logEntryRecipe.create({
-        data: {
-          entryId: input.entryId,
-          sourceRecipeId: input.sourceRecipeId,
-          planSlotId: input.planSlotId,
-          position: 0,
-        },
-        select: { id: true },
-      });
-
-      if (input.ingredients.length > 0) {
-        await tx.logIngredient.createMany({
-          data: input.ingredients.map((row) => ({
-            entryId: input.entryId,
-            entryRecipeId: entryRecipe.id,
-            ingredientId: row.ingredientId,
-            amount: row.amount,
-            unitId: row.unitId,
-          })),
-        });
-      }
-      return;
-    }
+    // Always link pool placements to a LogEntryRecipe so planSlotId is released on clear.
+    const entryRecipe = await tx.logEntryRecipe.create({
+      data: {
+        entryId: input.entryId,
+        sourceRecipeId: input.sourceRecipeId,
+        planSlotId: input.planSlotId,
+        position: 0,
+      },
+      select: { id: true },
+    });
 
     if (input.ingredients.length > 0) {
       await tx.logIngredient.createMany({
         data: input.ingredients.map((row) => ({
           entryId: input.entryId,
-          entryRecipeId: null,
+          entryRecipeId: entryRecipe.id,
           ingredientId: row.ingredientId,
           amount: row.amount,
           unitId: row.unitId,

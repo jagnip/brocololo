@@ -1,5 +1,5 @@
 import type { RecipeType } from "@/types/recipe";
-import { PlannerMealType } from "@/src/generated/client";
+import type { PlannerMealType } from "@/src/generated/enums";
 
 export type PlanCustomMealIngredient = {
   ingredientId: string;

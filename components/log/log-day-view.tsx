@@ -17,6 +17,7 @@ import { LogMealType } from "@/src/generated/enums";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import {
   buildGroupedPlannerPoolCards,
+  LOG_MEAL_LABELS,
   type LogDayData,
   type PlannerPoolCardData,
 } from "@/lib/log/view-model";
@@ -642,6 +643,9 @@ export function LogDayViewController({
       id: `placed-${targetEntryId}-${plannerItem.id}`,
       entryId: targetEntryId,
       entryRecipeId: null,
+      planSlotId: plannerItem.planSlotId,
+      plannedPoolDate: plannerItem.date,
+      plannedPoolMealType: plannerItem.mealType,
       sourceRecipeId: plannerItem.sourceRecipeId,
       mealLabel: targetSlot.label,
       cardKind:
@@ -745,6 +749,12 @@ export function LogDayViewController({
     const targetDate = targetDay?.date ?? new Date();
     const targetDateKey = targetDay?.dateKey ?? targetDate.toISOString().slice(0, 10);
     const removedRecipe = slot.recipes[0] ?? null;
+    const poolDate = removedRecipe?.plannedPoolDate ?? targetDate;
+    const poolDateKey =
+      removedRecipe?.plannedPoolDate?.toISOString().slice(0, 10) ??
+      targetDateKey;
+    const poolMealType = removedRecipe?.plannedPoolMealType ?? slot.mealType;
+    const poolMealLabel = LOG_MEAL_LABELS[poolMealType];
     const optimisticPoolIngredients =
       removedRecipe?.ingredients?.flatMap((ingredient) => {
         if (
@@ -768,10 +778,10 @@ export function LogDayViewController({
         ? {
             id: `plan-${removedRecipe.planSlotId}`,
             planSlotId: removedRecipe.planSlotId,
-            date: targetDate,
-            dateKey: targetDateKey,
-            mealType: slot.mealType,
-            mealLabel: slot.label,
+            date: poolDate,
+            dateKey: poolDateKey,
+            mealType: poolMealType,
+            mealLabel: poolMealLabel,
             title: removedRecipe.title,
             sourceRecipeId: removedRecipe.sourceRecipeId,
             imageUrl: removedRecipe.imageUrl,

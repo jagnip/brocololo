@@ -1,5 +1,13 @@
-import { LogMealType } from "@/src/generated/enums";
+import { LogMealType, PlannerMealType } from "@/src/generated/enums";
 import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
+
+function plannerMealTypeToLogMealType(
+  mealType: PlannerMealType,
+): LogMealType {
+  if (mealType === PlannerMealType.BREAKFAST) return LogMealType.BREAKFAST;
+  if (mealType === PlannerMealType.LUNCH) return LogMealType.LUNCH;
+  return LogMealType.DINNER;
+}
 
 type LogIngredientRow = {
   entryRecipeId: string | null;
@@ -23,6 +31,12 @@ type LogRecipeRow = {
   id: string;
   /** Set when this row came from dragging a planner-pool card (reserves a plan slot). */
   planSlotId?: string | null;
+  planSlot?: {
+    id: string;
+    customName: string | null;
+    date?: Date;
+    mealType?: PlannerMealType;
+  } | null;
   sourceRecipe:
     | {
         id: string;
@@ -47,6 +61,9 @@ export type LogRecipeCardData = {
   entryRecipeId: string | null;
   /** Present only when this card consumed a planned pool slot. */
   planSlotId?: string | null;
+  /** Original plan slot date/meal when placed from the planner pool. */
+  plannedPoolDate?: Date;
+  plannedPoolMealType?: LogMealType;
   sourceRecipeId: string | null;
   mealLabel: LogSlotData["label"];
   cardKind: "recipe" | "custom" | "removed";
@@ -107,7 +124,7 @@ export const LOG_MEAL_ORDER: LogMealType[] = [
   LogMealType.DINNER,
 ];
 
-const LOG_MEAL_LABELS: Record<LogMealType, LogSlotData["label"]> = {
+export const LOG_MEAL_LABELS: Record<LogMealType, LogSlotData["label"]> = {
   [LogMealType.BREAKFAST]: "Breakfast",
   [LogMealType.LUNCH]: "Lunch",
   [LogMealType.SNACK]: "Snack",
@@ -203,16 +220,30 @@ export function buildLogDays(entries: LogEntryRow[]): LogDayData[] {
         (ingredient) => ingredient.entryRecipeId === recipe.id,
       );
       const macros = toRecipeMacros(linkedIngredients);
+      const isPlannedCustom =
+        recipe.sourceRecipe == null && recipe.planSlotId != null;
 
       return {
         id: recipe.id,
         entryId: entry.id,
         entryRecipeId: recipe.id,
         planSlotId: recipe.planSlotId ?? null,
+        plannedPoolDate: recipe.planSlotId ? recipe.planSlot?.date : undefined,
+        plannedPoolMealType:
+          recipe.planSlotId && recipe.planSlot?.mealType
+            ? plannerMealTypeToLogMealType(recipe.planSlot.mealType)
+            : undefined,
         sourceRecipeId: recipe.sourceRecipe?.id ?? null,
         mealLabel: LOG_MEAL_LABELS[entry.mealType],
-        cardKind: recipe.sourceRecipe ? "recipe" : "removed",
-        title: recipe.sourceRecipe?.name ?? "Recipe removed",
+        cardKind: recipe.sourceRecipe
+          ? "recipe"
+          : isPlannedCustom
+            ? "custom"
+            : "removed",
+        title: recipe.sourceRecipe?.name
+          ?? (isPlannedCustom
+            ? recipe.planSlot?.customName ?? "Custom meal"
+            : "Recipe removed"),
         slug: recipe.sourceRecipe?.slug ?? null,
         // Keep image selection consistent with recipe cards/details.
         imageUrl: getRecipeDisplayImageUrl(recipe.sourceRecipe?.images),
