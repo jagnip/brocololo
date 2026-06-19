@@ -669,6 +669,50 @@ describe("RecipePage nutrition integration", () => {
     expect(instructionSectionText.toLowerCase()).not.toContain("side veg jagoda");
     expectInstructionStepTextToRemainVisible();
   });
+
+  it("shows name-only instruction badges for amount-less linked ingredients", () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    const saltIngredient = createMockIngredient({
+      id: "ing-salt",
+      name: "Salt",
+      slug: "salt",
+      unitConversions: [],
+    });
+    const saltRow = createMockRecipeIngredient({
+      id: "ri-salt",
+      position: 3,
+      amount: null,
+      unitId: null,
+      unit: null,
+      additionalInfo: "to taste",
+      ingredient: saltIngredient,
+    });
+    const recipeWithSalt = {
+      ...recipe,
+      ingredients: [...recipe.ingredients, saltRow],
+      instructions: recipe.instructions.map((instruction, index) =>
+        index === 0
+          ? {
+              ...instruction,
+              ingredients: [
+                ...instruction.ingredients,
+                {
+                  id: "step-link-salt",
+                  recipeInstructionId: instruction.id,
+                  recipeIngredientId: saltRow.id,
+                  recipeIngredient: saltRow,
+                },
+              ],
+            }
+          : instruction,
+      ),
+    };
+
+    renderRecipePage(recipeWithSalt, [...ingredients, saltIngredient]);
+
+    expectInstructionSectionToContain("salt (to taste)");
+    expectInstructionBadgesVisibleForNoFilter();
+  });
 });
 
 describe("RecipePage shared portion split chart", () => {

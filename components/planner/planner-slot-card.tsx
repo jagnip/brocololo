@@ -126,22 +126,18 @@ export function PlannerSlotCard({
           }}
         >
           <div className="relative w-full overflow-hidden aspect-2/1 sm:aspect-3/2">
-            <RecipeImagePlaceholder showLabel={false} />
+            {/* Custom meals have no cook time — use a larger placeholder icon instead of a time badge. */}
+            <RecipeImagePlaceholder showLabel={false} iconSize="lg" />
           </div>
           <CardHeader className="px-card-x py-card-y">
             <div className="min-w-0">
-              <div className="flex items-start gap-2">
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate type-h3" title={customMeal.name}>
-                    {customMeal.name}
-                  </h3>
-                  <p className="type-body mt-0.5 text-sm text-muted-foreground">
-                    {mealLabel}
-                  </p>
-                </div>
-                <Badge variant="outline" className="shrink-0">
-                  Custom
-                </Badge>
+              <div>
+                <h3 className="truncate type-h3" title={customMeal.name}>
+                  {customMeal.name}
+                </h3>
+                <p className="type-body mt-0.5 text-sm text-muted-foreground">
+                  {mealLabel}
+                </p>
               </div>
               {(canShuffle || canEdit || onRemove || onToggleUsed) && (
                 <div className="mt-item flex w-full justify-start gap-1">

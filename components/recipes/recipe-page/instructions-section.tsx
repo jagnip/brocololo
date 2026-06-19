@@ -174,35 +174,48 @@ export function InstructionsSection() {
                       selectedUnits[recipeIngredient.id] ||
                       recipeIngredient.unit?.id ||
                       null;
-                    const rowScaleFactor =
-                      getIngredientDisplayScalingFactor(recipeIngredient.id) *
-                      getIngredientCalorieFactor(recipeIngredient);
-                    const badgeAmount = getInstructionIngredientBadgeAmount({
-                      amount: recipeIngredient.amount,
-                      appliesToEveryone: recipeIngredient.appliesToEveryone,
-                      targetFamilyMemberIds:
-                        recipeIngredient.memberTargets.map(
-                          (target) => target.familyMemberId,
-                        ),
-                      selectedFamilyMemberId:
-                        selectedInstructionFamilyMemberId,
-                      familyMembers,
-                      memberPortions,
-                      cookingFamilyMemberIds,
-                      rowScaleFactor,
-                    });
-                    if (badgeAmount == null) {
+                    // Amount-less rows (e.g. "to taste") still get a name-only badge.
+                    const hasAmount = recipeIngredient.amount != null;
+                    const badgeAmount = hasAmount
+                      ? getInstructionIngredientBadgeAmount({
+                          amount: recipeIngredient.amount,
+                          appliesToEveryone: recipeIngredient.appliesToEveryone,
+                          targetFamilyMemberIds:
+                            recipeIngredient.memberTargets.map(
+                              (target) => target.familyMemberId,
+                            ),
+                          selectedFamilyMemberId:
+                            selectedInstructionFamilyMemberId,
+                          familyMembers,
+                          memberPortions,
+                          cookingFamilyMemberIds,
+                          rowScaleFactor:
+                            getIngredientDisplayScalingFactor(
+                              recipeIngredient.id,
+                            ) * getIngredientCalorieFactor(recipeIngredient),
+                        })
+                      : null;
+                    // Hide only when we expected a numeric badge but could not resolve one.
+                    if (hasAmount && badgeAmount == null) {
                       return null;
                     }
-                    const display = getIngredientDisplay(
-                      badgeAmount,
-                      recipeIngredient.unit?.id ?? null,
-                      recipeIngredient.unit?.name ?? null,
-                      selectedUnitId,
-                      recipeIngredient.ingredient.unitConversions,
-                      1,
-                      1,
-                    );
+                    const display = hasAmount
+                      ? getIngredientDisplay(
+                          badgeAmount,
+                          recipeIngredient.unit?.id ?? null,
+                          recipeIngredient.unit?.name ?? null,
+                          selectedUnitId,
+                          recipeIngredient.ingredient.unitConversions,
+                          1,
+                          1,
+                        )
+                      : {
+                          displayAmount: null,
+                          rawAmount: null,
+                          rawAmountInGrams: null,
+                          displayUnitName: "",
+                          displayUnitNamePlural: null,
+                        };
                     const fullBadgeLabel = formatInstructionIngredientBadge({
                       rawAmount: display.rawAmount,
                       rawAmountInGrams: display.rawAmountInGrams,
@@ -214,6 +227,7 @@ export function InstructionsSection() {
                       additionalInfo: recipeIngredient.additionalInfo,
                     });
                     const shouldShowMutedGrams =
+                      hasAmount &&
                       display.rawAmountInGrams != null &&
                       !isGramUnit(display.displayUnitName);
                     // Narrow nullable grams value once to satisfy strict TS checks.

@@ -351,7 +351,7 @@ describe("formatInstructionIngredientBadge", () => {
       rawAmountInGrams: null,
       displayAmount: null,
       displayUnitName: "g",
-      ingredientName: "salt",
+      ingredientName: "Salt",
       additionalInfo: "to taste",
     });
 

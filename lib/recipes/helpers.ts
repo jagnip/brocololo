@@ -303,7 +303,7 @@ export function formatInstructionIngredientBadge(input: {
 
   if (rawAmount == null || displayAmount == null) {
     return formatIngredientLabel({
-      ingredientName,
+      ingredientName: toSentenceCaseIngredientName(ingredientName),
       additionalInfo,
     });
   }
