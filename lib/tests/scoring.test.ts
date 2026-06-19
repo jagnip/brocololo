@@ -14,7 +14,7 @@ function createCtx(
 ): ScoringContext {
   return {
     assignedSlots: [],
-    currentSlot: { date: new Date("2026-02-10"), mealType: "DINNER", alternatives: [], customMeal: null, used: false, excludeFromGroceries: false },
+    currentSlot: { date: new Date("2026-02-10"), mealType: "DINNER", alternatives: [], customMeal: null, used: false },
     maxDaysSinceLastUsedCandidate: 30,
     fridgeIngredientIds: [],
     rollingRecipeIds: [],
@@ -101,7 +101,7 @@ describe("scoreAlreadyInPlan", () => {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
           recipe: createMockRecipe({ id: "recipe-A" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
       ],
     });
@@ -117,13 +117,13 @@ describe("scoreAlreadyInPlan", () => {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
           recipe: createMockRecipe({ id: "recipe-A" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
         {
           date: new Date("2026-02-09"),
           mealType: "DINNER",
           recipe: createMockRecipe({ id: "recipe-A" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
       ],
     });
@@ -139,19 +139,19 @@ describe("scoreAlreadyInPlan", () => {
           date: new Date("2026-02-08"),
           mealType: "DINNER",
           recipe: createMockRecipe({ id: "recipe-A" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
         {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
           recipe: createMockRecipe({ id: "recipe-A" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
         {
           date: new Date("2026-02-09"),
           mealType: "DINNER",
           recipe: createMockRecipe({ id: "recipe-A" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
       ],
     });
@@ -167,13 +167,13 @@ describe("scoreAlreadyInPlan", () => {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
           recipe: createMockRecipe({ id: "recipe-B" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
         {
           date: new Date("2026-02-09"),
           mealType: "DINNER",
           recipe: createMockRecipe({ id: "recipe-C" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
       ],
     });
@@ -225,7 +225,7 @@ describe("pickBestCandidate", () => {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
           recipe: createMockRecipe({ id: "already-picked" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
       ],
     });
@@ -313,7 +313,7 @@ describe("scoreProteinBalance", () => {
     // Only a breakfast slot assigned — should behave like empty savoury plan
     const ctx = createCtx({
       assignedSlots: [
-        { date: new Date("2026-02-09"), mealType: "BREAKFAST", recipe: chickenRecipe("breakfast-chicken"), alternatives: [], customMeal: null, used: false, excludeFromGroceries: false },
+        { date: new Date("2026-02-09"), mealType: "BREAKFAST", recipe: chickenRecipe("breakfast-chicken"), alternatives: [], used: false },
       ],
     });
 
@@ -324,8 +324,8 @@ describe("scoreProteinBalance", () => {
     // 2 savoury slots: both chicken
     const ctx = createCtx({
       assignedSlots: [
-        { date: new Date("2026-02-09"), mealType: "LUNCH", recipe: chickenRecipe("c1"), alternatives: [], customMeal: null, used: false, excludeFromGroceries: false },
-        { date: new Date("2026-02-09"), mealType: "DINNER", recipe: chickenRecipe("c2"), alternatives: [], customMeal: null, used: false, excludeFromGroceries: false },
+        { date: new Date("2026-02-09"), mealType: "LUNCH", recipe: chickenRecipe("c1"), alternatives: [], used: false },
+        { date: new Date("2026-02-09"), mealType: "DINNER", recipe: chickenRecipe("c2"), alternatives: [], used: false },
       ],
     });
 
@@ -345,13 +345,13 @@ describe("scoreProteinBalance", () => {
       date: new Date("2026-02-09"),
       mealType: "LUNCH" as const,
       recipe: fishRecipe(`f${i}`),
-      alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+      alternatives: [], customMeal: null, used: false,
     }));
     const chickenSlots = Array.from({ length: 8 }, (_, i) => ({
       date: new Date("2026-02-09"),
       mealType: "DINNER" as const,
       recipe: chickenRecipe(`c${i}`),
-      alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+      alternatives: [], customMeal: null, used: false,
     }));
 
     const ctx = createCtx({
@@ -365,10 +365,10 @@ describe("scoreProteinBalance", () => {
     // 4 savoury slots: 3 chicken, 1 beef
     const ctx = createCtx({
       assignedSlots: [
-        { date: new Date("2026-02-09"), mealType: "LUNCH", recipe: chickenRecipe("c1"), alternatives: [], customMeal: null, used: false, excludeFromGroceries: false },
-        { date: new Date("2026-02-09"), mealType: "DINNER", recipe: chickenRecipe("c2"), alternatives: [], customMeal: null, used: false, excludeFromGroceries: false },
-        { date: new Date("2026-02-10"), mealType: "LUNCH", recipe: chickenRecipe("c3"), alternatives: [], customMeal: null, used: false, excludeFromGroceries: false },
-        { date: new Date("2026-02-10"), mealType: "DINNER", recipe: beefRecipe("b1"), alternatives: [], customMeal: null, used: false, excludeFromGroceries: false },
+        { date: new Date("2026-02-09"), mealType: "LUNCH", recipe: chickenRecipe("c1"), alternatives: [], used: false },
+        { date: new Date("2026-02-09"), mealType: "DINNER", recipe: chickenRecipe("c2"), alternatives: [], used: false },
+        { date: new Date("2026-02-10"), mealType: "LUNCH", recipe: chickenRecipe("c3"), alternatives: [], used: false },
+        { date: new Date("2026-02-10"), mealType: "DINNER", recipe: beefRecipe("b1"), alternatives: [], used: false },
       ],
     });
 
@@ -390,8 +390,8 @@ describe("scoreProteinBalance", () => {
     // 2 savoury slots: both red-meat (target 0.05, current 1.0, gap = -0.95)
     const ctx = createCtx({
       assignedSlots: [
-        { date: new Date("2026-02-09"), mealType: "LUNCH", recipe: beefRecipe("b1"), alternatives: [], customMeal: null, used: false, excludeFromGroceries: false },
-        { date: new Date("2026-02-09"), mealType: "DINNER", recipe: beefRecipe("b2"), alternatives: [], customMeal: null, used: false, excludeFromGroceries: false },
+        { date: new Date("2026-02-09"), mealType: "LUNCH", recipe: beefRecipe("b1"), alternatives: [], used: false },
+        { date: new Date("2026-02-09"), mealType: "DINNER", recipe: beefRecipe("b2"), alternatives: [], used: false },
       ],
     });
 
@@ -405,7 +405,7 @@ describe("scoreProteinBalance", () => {
       date: new Date("2026-02-09"),
       mealType: i % 2 === 0 ? ("LUNCH" as const) : ("DINNER" as const),
       recipe: chickenRecipe(`c${i}`),
-      alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+      alternatives: [], customMeal: null, used: false,
     }));
 
     const ctx = createCtx({ assignedSlots: slots });
@@ -483,7 +483,7 @@ describe("scoreFridgeIngredients", () => {
     const ctx = createCtx({
       fridgeIngredientIds: ["ingredient-1"],
       assignedSlots: [
-        { date: new Date("2026-02-09"), mealType: "LUNCH", recipe: assignedRecipe, alternatives: [], customMeal: null, used: false, excludeFromGroceries: false },
+        { date: new Date("2026-02-09"), mealType: "LUNCH", recipe: assignedRecipe, alternatives: [], used: false },
       ],
     });
 
@@ -499,7 +499,7 @@ describe("scoreFridgeIngredients", () => {
     const ctx = createCtx({
       fridgeIngredientIds: ["ingredient-1", "ing-rice"],
       assignedSlots: [
-        { date: new Date("2026-02-09"), mealType: "LUNCH", recipe: assignedRecipe, alternatives: [], customMeal: null, used: false, excludeFromGroceries: false },
+        { date: new Date("2026-02-09"), mealType: "LUNCH", recipe: assignedRecipe, alternatives: [], used: false },
       ],
     });
 
@@ -514,7 +514,7 @@ describe("scoreFridgeIngredients", () => {
     const ctx = createCtx({
       fridgeIngredientIds: ["ingredient-1"],
       assignedSlots: [
-        { date: new Date("2026-02-09"), mealType: "LUNCH", recipe: assignedRecipe, alternatives: [], customMeal: null, used: false, excludeFromGroceries: false },
+        { date: new Date("2026-02-09"), mealType: "LUNCH", recipe: assignedRecipe, alternatives: [], used: false },
       ],
     });
 

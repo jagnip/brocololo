@@ -35,7 +35,6 @@ export type SlotInputType = {
   alternatives: RecipeType[];
   cookingFamilyMemberIds?: string[];
   used: boolean;
-  excludeFromGroceries: boolean;
 };
 
 export type PlanInputType = SlotInputType[];
@@ -47,5 +46,4 @@ export type SlotSaveData = {
   customMeal: PlanCustomMeal | null;
   alternativeRecipeIds: string[];
   used: boolean;
-  excludeFromGroceries: boolean;
 };

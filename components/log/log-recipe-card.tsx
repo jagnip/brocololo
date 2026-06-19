@@ -54,7 +54,7 @@ export function LogRecipeCard({
         // Scope hover/focus interactions (like remove icon reveal) to this specific card.
         "group/row",
         hasActions && "relative",
-        isSelected ? "border-foreground bg-muted/60" : "border-border/60 bg-card",
+        isSelected ? "border-foreground bg-muted/60" : "border-border bg-card",
         onClick && !isSelected && "cursor-pointer hover:bg-muted/40",
         onClick && isSelected && "cursor-pointer",
       )}

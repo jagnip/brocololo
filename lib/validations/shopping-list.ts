@@ -55,3 +55,12 @@ export const deleteActiveShoppingLayoutPresetSchema = z.object({
 export type SaveShoppingListEditsPayload = z.infer<
   typeof saveShoppingListEditsSchema
 >;
+
+export const groceryGenerationExclusionsSchema = z.object({
+  excludedRecipeIds: z.array(z.string().min(1)),
+  excludedCustomMealNames: z.array(z.string().min(1)),
+});
+
+export type GroceryGenerationExclusionsPayload = z.infer<
+  typeof groceryGenerationExclusionsSchema
+>;

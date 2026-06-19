@@ -15,7 +15,7 @@ const buttonVariants = cva(
           "bg-destructive text-primary-foreground hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         // Same shell surface as nav/top bar; avoid bg-background (rose tint) and hover:bg-accent (pink).
         outline:
-          "border border-border bg-sidebar text-secondary-foreground shadow-xs hover:border-ring hover:bg-muted dark:border-input",
+          "border border-border bg-sidebar text-secondary-foreground shadow-xs hover:border-ring hover:bg-muted",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost:

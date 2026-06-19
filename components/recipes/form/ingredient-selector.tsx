@@ -961,7 +961,7 @@ export function IngredientSelector({
   }) => {
     const laneRows = getLaneRows(lane.groupTempKey);
     const laneContainerClassName =
-      "min-w-0 max-w-full space-y-1 rounded-md border border-border/60 bg-card p-2";
+      "min-w-0 max-w-full space-y-1 rounded-md border border-border bg-card p-2";
     return (
       <section
         key={lane.groupTempKey ?? UNGROUPED_LANE_KEY}

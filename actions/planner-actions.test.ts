@@ -33,7 +33,7 @@ describe("planner-actions collisions", () => {
         recipe: null,
         customMeal: null,
         alternatives: [],
-        used: false, excludeFromGroceries: false,
+        used: false,
       },
     ]);
 
@@ -60,7 +60,7 @@ describe("planner-actions collisions", () => {
         recipeId: null,
         customMeal: null,
         alternativeRecipeIds: [],
-        used: false, excludeFromGroceries: false,
+        used: false,
       },
     ]);
 
@@ -104,7 +104,7 @@ describe("updateSavedPlan", () => {
         recipeId: "recipe-1",
         customMeal: null,
         alternativeRecipeIds: [],
-        used: false, excludeFromGroceries: false,
+        used: false,
       },
     ]);
 
@@ -122,7 +122,7 @@ describe("updateSavedPlan", () => {
         recipeId: "recipe-1",
         customMeal: null,
         alternativeRecipeIds: [],
-        used: false, excludeFromGroceries: false,
+        used: false,
       },
     ]);
 

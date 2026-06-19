@@ -203,9 +203,8 @@ model PlanSlot {
   date       DateTime        @db.Date
   mealType   PlannerMealType @map("meal_type")
   recipeId   String?         @map("recipe_id")
-  customName           String? @map("custom_name")
-  used                 Boolean @default(false)
-  excludeFromGroceries Boolean @default(false) @map("exclude_from_groceries")
+  customName String?         @map("custom_name")
+  used       Boolean         @default(false)
 
   plan              Plan                       @relation(fields: [planId], references: [id], onDelete: Cascade)
   recipe            Recipe?                    @relation("recipe_plan_slots", fields: [recipeId], references: [id], onDelete: Cascade)

@@ -417,7 +417,7 @@ export function GroceriesEditLibraryPanel({
                     <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       {section.categoryName}
                     </h3>
-                    <ul className="divide-y divide-border/60">
+                    <ul className="divide-y divide-border">
                       {section.items.map((ingredient) => (
                         <li key={ingredient.id}>
                           <GroceriesEditLibraryRow

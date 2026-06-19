@@ -12,7 +12,7 @@ function createCtx(
 ): ScoringContext {
   return {
     assignedSlots: [],
-    currentSlot: { date: new Date("2026-02-10"), mealType: "DINNER", alternatives: [], customMeal: null, used: false, excludeFromGroceries: false },
+    currentSlot: { date: new Date("2026-02-10"), mealType: "DINNER", alternatives: [], customMeal: null, used: false },
     maxDaysSinceLastUsedCandidate: 30,
     fridgeIngredientIds: [],
     rollingRecipeIds: [],
@@ -99,7 +99,7 @@ describe("scoreAlreadyInPlan", () => {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
           recipe: createMockRecipe({ id: "recipe-A" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
       ],
     });
@@ -115,13 +115,13 @@ describe("scoreAlreadyInPlan", () => {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
           recipe: createMockRecipe({ id: "recipe-A" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
         {
           date: new Date("2026-02-09"),
           mealType: "DINNER",
           recipe: createMockRecipe({ id: "recipe-A" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
       ],
     });
@@ -137,19 +137,19 @@ describe("scoreAlreadyInPlan", () => {
           date: new Date("2026-02-08"),
           mealType: "DINNER",
           recipe: createMockRecipe({ id: "recipe-A" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
         {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
           recipe: createMockRecipe({ id: "recipe-A" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
         {
           date: new Date("2026-02-09"),
           mealType: "DINNER",
           recipe: createMockRecipe({ id: "recipe-A" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
       ],
     });
@@ -165,13 +165,13 @@ describe("scoreAlreadyInPlan", () => {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
           recipe: createMockRecipe({ id: "recipe-B" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
         {
           date: new Date("2026-02-09"),
           mealType: "DINNER",
           recipe: createMockRecipe({ id: "recipe-C" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
       ],
     });
@@ -223,7 +223,7 @@ describe("pickBestCandidate", () => {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
           recipe: createMockRecipe({ id: "already-picked" }),
-          alternatives: [], customMeal: null, used: false, excludeFromGroceries: false,
+          alternatives: [], customMeal: null, used: false,
         },
       ],
     });

@@ -16,7 +16,7 @@ export default function IngredientsPageSkeleton() {
         {Array.from({ length: 5 }, (_, index) => (
           <li
             key={index}
-            className="flex flex-col gap-item rounded-md border border-border/60 bg-card p-nest"
+            className="flex flex-col gap-item rounded-md border border-border bg-card p-nest"
           >
             <div className="flex items-start justify-between gap-item md:items-center">
               <div className="flex min-w-0 flex-1 items-start gap-item md:items-center">

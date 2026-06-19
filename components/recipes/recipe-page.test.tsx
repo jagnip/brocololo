@@ -432,9 +432,7 @@ describe("RecipePage nutrition integration", () => {
     const createOption = await screen.findByText('Create "cottage chee"');
     await user.click(createOption);
 
-    expect(
-      screen.getByText("Add a missing ingredient without leaving your current flow."),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Create ingredient" })).toBeInTheDocument();
     expect(
       within(addToLogDialog).getByText(`Add ${recipe.name.toLowerCase()} to log`),
     ).toBeInTheDocument();

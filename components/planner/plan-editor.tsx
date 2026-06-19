@@ -127,7 +127,6 @@ export function PlanEditor({
       customMeal: s.customMeal,
       alternativeRecipeIds: s.alternatives.map((a) => a.id),
       used: s.used,
-      excludeFromGroceries: s.excludeFromGroceries,
     }));
 
     const result = await updateSavedPlan(planId, saveData);
@@ -335,22 +334,6 @@ export function PlanEditor({
     );
   }, []);
 
-  const handleToggleExcludeFromGroceries = useCallback((slotKey: string) => {
-    allSlotsRef.current = allSlotsRef.current.map((slot) => {
-      const key = `${slot.date.toISOString()}-${slot.mealType}`;
-      if (key !== slotKey) return slot;
-      return { ...slot, excludeFromGroceries: !slot.excludeFromGroceries };
-    });
-
-    setPlan((prev) =>
-      prev.map((slot) => {
-        const key = `${slot.date.toISOString()}-${slot.mealType}`;
-        if (key !== slotKey) return slot;
-        return { ...slot, excludeFromGroceries: !slot.excludeFromGroceries };
-      }),
-    );
-  }, []);
-
   useEffect(() => {
     if (!sharedDateRange) {
       return;
@@ -524,7 +507,6 @@ export function PlanEditor({
         onSetMeal={markEdited(handleSetMeal)}
         onRemove={markEdited(handleRemove)}
         onToggleUsed={markEdited(handleToggleUsed)}
-        onToggleExcludeFromGroceries={markEdited(handleToggleExcludeFromGroceries)}
       />
     </>
   );

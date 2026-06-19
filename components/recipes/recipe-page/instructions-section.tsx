@@ -126,7 +126,7 @@ export function InstructionsSection() {
             className={`group flex cursor-pointer items-start gap-item rounded-lg border p-nest transition-colors ${
               isSelected
                 ? "border-ring bg-accent/50"
-                : "border-border/60 bg-card hover:bg-muted/40"
+                : "border-border bg-card hover:bg-muted/40"
             }`}
           >
             {/* Step number — rose accent on hover/selection. */}

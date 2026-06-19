@@ -72,7 +72,6 @@ export const slotSaveDataSchema = z
     customMeal: planCustomMealSchema.nullable(),
     alternativeRecipeIds: z.array(z.string().min(1)),
     used: z.boolean(),
-    excludeFromGroceries: z.boolean(),
   })
   .superRefine((slot, ctx) => {
     const hasRecipe = slot.recipeId != null;

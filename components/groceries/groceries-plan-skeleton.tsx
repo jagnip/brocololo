@@ -21,7 +21,7 @@ export function GroceriesPlanSkeleton() {
               {Array.from({ length: 3 }).map((_, rowIndex) => (
                 <li
                   key={rowIndex}
-                  className="rounded-md border border-border/60 bg-card p-nest"
+                  className="rounded-md border border-border bg-card p-nest"
                 >
                   <Skeleton className="h-9 w-full" />
                 </li>

@@ -27,7 +27,7 @@ export function IngredientNutritionalInfo({
   }
 
   return (
-    <div className="mt-1 rounded-md border border-border/60 bg-card p-2">
+    <div className="mt-1 rounded-md border border-border bg-card p-2">
       <div className="overflow-x-auto">
         {/* Keep layout table-like so the three macro perspectives are easy to compare. */}
         <table className="w-full table-fixed text-xs">

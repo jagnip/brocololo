@@ -38,7 +38,7 @@ export function LogSlots({
           "flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed p-0 py-0 shadow-none transition-colors",
           isEmptyEditorActive
             ? "border-foreground bg-muted/60"
-            : "border-border/60 bg-card",
+            : "border-border bg-card",
         )}
       >
         <button

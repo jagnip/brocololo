@@ -54,46 +54,49 @@ describe("transformPlanToShoppingListRows", () => {
     });
   });
 
-  it("excludes ingredients from slots marked excludeFromGroceries", () => {
-    const rows = transformPlanToShoppingListRows([
-      {
-        ...slotFromRecipe(baseRecipe({ name: "Stocked meal" })),
-        excludeFromGroceries: true,
-      },
-      slotFromRecipe(baseRecipe({ name: "Shop meal" })),
-    ]);
+  it("excludes ingredients from recipes passed in generation exclusions", () => {
+    const rows = transformPlanToShoppingListRows(
+      [
+        { ...slotFromRecipe(baseRecipe({ name: "Stocked meal" })), recipeId: "recipe-stocked" },
+        { ...slotFromRecipe(baseRecipe({ name: "Shop meal" })), recipeId: "recipe-shop" },
+      ],
+      { excludedRecipeIds: ["recipe-stocked"], excludedCustomMealNames: [] },
+    );
 
     expect(rows).toHaveLength(1);
     expect(rows[0]?.amount).toBe(400);
     expect(rows[0]?.recipeNames).toEqual(["Shop meal"]);
   });
 
-  it("still aggregates shared ingredients when only one slot is excluded", () => {
-    const rows = transformPlanToShoppingListRows([
-      {
-        ...slotFromRecipe(baseRecipe({ name: "Stocked meal" })),
-        excludeFromGroceries: true,
-      },
-      slotFromRecipe(
-        baseRecipe({
-          name: "Shop meal",
-          ingredients: [
-            {
-              ingredient: {
-                id: "ing-1",
-                name: "Chicken thighs",
-                icon: null,
-                supermarketUrl: null,
-                unitConversions: [{ unitId: "unit-g", gramsPerUnit: 1 }],
-                category: { id: "cat-meat", name: "Meat", sortOrder: 2 },
-              },
-              unit: { id: "unit-g", name: "g" },
-              amount: 200,
-            },
-          ],
-        }),
-      ),
-    ]);
+  it("still aggregates shared ingredients when only one recipe is excluded", () => {
+    const rows = transformPlanToShoppingListRows(
+      [
+        { ...slotFromRecipe(baseRecipe({ name: "Stocked meal" })), recipeId: "recipe-stocked" },
+        {
+          ...slotFromRecipe(
+            baseRecipe({
+              name: "Shop meal",
+              ingredients: [
+                {
+                  ingredient: {
+                    id: "ing-1",
+                    name: "Chicken thighs",
+                    icon: null,
+                    supermarketUrl: null,
+                    unitConversions: [{ unitId: "unit-g", gramsPerUnit: 1 }],
+                    category: { id: "cat-meat", name: "Meat", sortOrder: 2 },
+                  },
+                  unit: { id: "unit-g", name: "g" },
+                  amount: 200,
+                },
+              ],
+            }),
+          ),
+          recipeId: "recipe-shop",
+        },
+      ],
+      { excludedRecipeIds: ["recipe-stocked"], excludedCustomMealNames: [] },
+    );
 
     expect(rows).toHaveLength(1);
     expect(rows[0]?.amount).toBe(200);

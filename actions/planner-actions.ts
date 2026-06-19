@@ -88,10 +88,10 @@ export async function generatePlan(
         if (batchRecipe) {
           // Batch carry-forward slot: use forced recipe, alternatives from scoring (excluding the batch recipe)
           const alts = [winner, ...alternatives].filter((r) => r.id !== batchRecipe.id).slice(0, 10);
-          plan.push({ date: new Date(day), mealType, recipe: batchRecipe, customMeal: null, alternatives: alts, cookingFamilyMemberIds: selectedAudienceIds, used: false, excludeFromGroceries: false });
+          plan.push({ date: new Date(day), mealType, recipe: batchRecipe, customMeal: null, alternatives: alts, cookingFamilyMemberIds: selectedAudienceIds, used: false });
         } else {
           // Normal slot: use scoring winner
-          plan.push({ date: new Date(day), mealType, recipe: winner, customMeal: null, alternatives, cookingFamilyMemberIds: selectedAudienceIds, used: false, excludeFromGroceries: false });
+          plan.push({ date: new Date(day), mealType, recipe: winner, customMeal: null, alternatives, cookingFamilyMemberIds: selectedAudienceIds, used: false });
 
           // Mark batch carry-forward slots for this recipe
           const rollingEntry = rollingRecipes.find((r) => r.recipeId === winner.id);

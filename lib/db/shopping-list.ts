@@ -1,5 +1,8 @@
-import type { Prisma } from "@/src/generated/client";
 import { getPlanForGroceries } from "@/lib/db/planner";
+import type { Prisma } from "@/src/generated/client";
+import type { GroceryGenerationExclusions } from "@/lib/groceries/generation-options";
+import { buildGroceryMealOptionsFromSlots } from "@/lib/groceries/generation-options";
+import type { GroceryMealOption } from "@/lib/groceries/generation-options";
 import { transformPlanToShoppingListRows } from "@/lib/groceries/helpers";
 import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
 import type { PlanSlotData } from "@/lib/groceries/helpers";
@@ -214,11 +217,20 @@ function slotsToPlanSlotData(
   slots: NonNullable<Awaited<ReturnType<typeof getPlanForGroceries>>>["slots"],
 ): PlanSlotData[] {
   return slots.map((s) => ({
+    recipeId: s.recipeId,
     recipe: s.recipe as PlanSlotData["recipe"],
     customName: s.customName,
     customIngredients: s.customIngredients,
-    excludeFromGroceries: s.excludeFromGroceries,
   }));
+}
+
+export async function getGroceryGenerationMealOptionsForPlan(
+  userId: string,
+  planId: string,
+): Promise<GroceryMealOption[] | null> {
+  const plan = await getPlanForGroceries(userId, planId);
+  if (!plan) return null;
+  return buildGroceryMealOptionsFromSlots(plan.slots);
 }
 
 /**
@@ -227,6 +239,10 @@ function slotsToPlanSlotData(
 export async function generateShoppingListForPlan(
   userId: string,
   planId: string,
+  exclusions: GroceryGenerationExclusions = {
+    excludedRecipeIds: [],
+    excludedCustomMealNames: [],
+  },
 ): Promise<
   | { ok: true; shoppingListId: string }
   | { ok: false; error: "plan_not_found" | "no_gram_unit" }
@@ -237,7 +253,10 @@ export async function generateShoppingListForPlan(
   const gramUnitId = await getGramUnitId();
   if (!gramUnitId) return { ok: false, error: "no_gram_unit" };
 
-  const rows = transformPlanToShoppingListRows(slotsToPlanSlotData(plan.slots));
+  const rows = transformPlanToShoppingListRows(
+    slotsToPlanSlotData(plan.slots),
+    exclusions,
+  );
   if (rows.length === 0) {
     const emptyListId = await prisma.$transaction(
       async (tx) => {
