@@ -27,6 +27,14 @@
   --color-muted-chart-3: var(--muted-chart-3);
   --color-muted-chart-2: var(--muted-chart-2);
   --color-muted-chart-1: var(--muted-chart-1);
+  --color-portion-chart-8: var(--portion-chart-8);
+  --color-portion-chart-7: var(--portion-chart-7);
+  --color-portion-chart-6: var(--portion-chart-6);
+  --color-portion-chart-5: var(--portion-chart-5);
+  --color-portion-chart-4: var(--portion-chart-4);
+  --color-portion-chart-3: var(--portion-chart-3);
+  --color-portion-chart-2: var(--portion-chart-2);
+  --color-portion-chart-1: var(--portion-chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -192,6 +200,16 @@
   --category-protein-poultry-foreground: oklch(0.55 0.12 85);
   --category-protein-fish: oklch(0.94 0.03 250);
   --category-protein-fish-foreground: oklch(0.5 0.12 250);
+
+  /* Portion split chart — NomNom hues at chart-tuned lightness (not badge fills/text). */
+  --portion-chart-1: oklch(0.74 0.15 13);
+  --portion-chart-2: oklch(0.72 0.12 250);
+  --portion-chart-3: oklch(0.74 0.13 150);
+  --portion-chart-4: oklch(0.77 0.13 88);
+  --portion-chart-5: oklch(0.73 0.14 293);
+  --portion-chart-6: oklch(0.75 0.14 41);
+  --portion-chart-7: oklch(0.73 0.11 195);
+  --portion-chart-8: oklch(0.74 0.13 330);
 }
 
 .dark {
@@ -250,6 +268,15 @@
   --category-protein-poultry-foreground: oklch(0.75 0.12 95);
   --category-protein-fish: oklch(0.28 0.05 250);
   --category-protein-fish-foreground: oklch(0.75 0.12 250);
+
+  --portion-chart-1: oklch(0.62 0.15 13);
+  --portion-chart-2: oklch(0.60 0.12 250);
+  --portion-chart-3: oklch(0.62 0.13 150);
+  --portion-chart-4: oklch(0.65 0.13 88);
+  --portion-chart-5: oklch(0.61 0.14 293);
+  --portion-chart-6: oklch(0.63 0.14 41);
+  --portion-chart-7: oklch(0.61 0.11 195);
+  --portion-chart-8: oklch(0.62 0.13 330);
 }
 
 @layer base {

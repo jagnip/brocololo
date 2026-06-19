@@ -125,3 +125,4 @@ export const PROTEIN_TARGETS: Record<string, number> = {
 };
 
 // Recipe-card protein chip colors: --category-protein-* in globals.css + getProteinBadgeVariant().
+// Portion split chart slices: --portion-chart-1..8 (dedicated viz palette; 9+ cycles).
