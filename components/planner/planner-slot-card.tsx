@@ -17,6 +17,10 @@ import { PlanSlotMealDialog } from "./plan-slot-meal-dialog";
 import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
 import { formatDayLabel } from "@/lib/planner/helpers";
 
+/** Warm off-white on primary — matches --rose-50 accent surface. */
+const MEAL_DONE_ICON_CLASS =
+  "text-[var(--rose-50)] hover:text-[var(--rose-50)] [&_svg]:text-[var(--rose-50)]";
+
 type PlannerSlotCardProps = {
   slot: SlotInputType;
   fridgeMatchIngredients?: string[];
@@ -145,9 +149,13 @@ export function PlannerSlotCard({
                       type="button"
                       variant={slot.used ? "default" : "outline"}
                       size="icon"
+                      className={slot.used ? MEAL_DONE_ICON_CLASS : undefined}
                       onClick={onToggleUsed}
                     >
-                      <Check className="h-4 w-4" strokeWidth={2} />
+                      <Check
+                        className="h-4 w-4"
+                        strokeWidth={slot.used ? 2.5 : 2}
+                      />
                     </Button>
                   )}
                   {canEdit && (
@@ -268,9 +276,13 @@ export function PlannerSlotCard({
                     type="button"
                     variant={slot.used ? "default" : "outline"}
                     size="icon"
+                    className={slot.used ? MEAL_DONE_ICON_CLASS : undefined}
                     onClick={onToggleUsed}
                   >
-                    <Check className="h-4 w-4" strokeWidth={2} />
+                    <Check
+                      className="h-4 w-4"
+                      strokeWidth={slot.used ? 2.5 : 2}
+                    />
                   </Button>
                 )}
                 {canShuffle && (
