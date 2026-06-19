@@ -9,7 +9,14 @@ import Link from "next/link";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, Shuffle, X, ArrowLeftRight } from "lucide-react";
+import {
+  ArrowLeftRight,
+  Check,
+  PackageCheck,
+  ShoppingCart,
+  Shuffle,
+  X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
 import { RecipeImagePlaceholder } from "@/components/recipes/recipe-image-placeholder";
@@ -24,9 +31,148 @@ type PlannerSlotCardProps = {
   onSetMeal?: (payload: PlanSlotMealPayload) => void;
   onRemove?: () => void;
   onToggleUsed?: () => void;
+  onToggleExcludeFromGroceries?: () => void;
   recipes: RecipeType[];
   ingredientOptions: LogIngredientOption[];
 };
+
+function hasGroceryRelevantContent(slot: SlotInputType): boolean {
+  if (slot.recipe) return true;
+  return (slot.customMeal?.ingredients.length ?? 0) > 0;
+}
+
+function SlotGroceryToggle({
+  excluded,
+  onToggle,
+}: {
+  excluded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant={excluded ? "default" : "outline"}
+      size="icon"
+      onClick={(event) => {
+        event.stopPropagation();
+        onToggle();
+      }}
+      aria-label={
+        excluded
+          ? "Already stocked — skip groceries"
+          : "Include in grocery list"
+      }
+      title={
+        excluded
+          ? "Already stocked — skip groceries"
+          : "Include in grocery list"
+      }
+    >
+      {excluded ? (
+        <PackageCheck className="h-4 w-4" strokeWidth={2} />
+      ) : (
+        <ShoppingCart className="h-4 w-4" strokeWidth={2} />
+      )}
+    </Button>
+  );
+}
+
+type SlotActionRowProps = {
+  slot: SlotInputType;
+  canShuffle: boolean;
+  canEdit: boolean;
+  onEdit?: () => void;
+  onShuffle?: () => void;
+  onRemove?: () => void;
+  onToggleUsed?: () => void;
+  onToggleExcludeFromGroceries?: () => void;
+};
+
+function SlotActionRow({
+  slot,
+  canShuffle,
+  canEdit,
+  onEdit,
+  onShuffle,
+  onRemove,
+  onToggleUsed,
+  onToggleExcludeFromGroceries,
+}: SlotActionRowProps) {
+  const showGroceryToggle =
+    Boolean(onToggleExcludeFromGroceries) && hasGroceryRelevantContent(slot);
+  const showLeftActions =
+    canShuffle || canEdit || Boolean(onRemove) || Boolean(onToggleUsed);
+
+  if (!showLeftActions && !showGroceryToggle) {
+    return null;
+  }
+
+  return (
+    <div className="mt-item flex w-full items-center justify-between gap-1">
+      <div className="flex gap-1">
+        {onToggleUsed ? (
+          <Button
+            type="button"
+            variant={slot.used ? "default" : "outline"}
+            size="icon"
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleUsed();
+            }}
+          >
+            <Check className="h-4 w-4" strokeWidth={2} />
+          </Button>
+        ) : null}
+        {canShuffle && onShuffle ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={(event) => {
+              event.stopPropagation();
+              onShuffle();
+            }}
+          >
+            <Shuffle className="h-4 w-4" />
+          </Button>
+        ) : null}
+        {canEdit && onEdit ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit();
+            }}
+            aria-label="Change meal"
+          >
+            <ArrowLeftRight className="h-4 w-4" />
+          </Button>
+        ) : null}
+        {onRemove ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={(event) => {
+              event.stopPropagation();
+              onRemove();
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        ) : null}
+      </div>
+      {showGroceryToggle && onToggleExcludeFromGroceries ? (
+        <SlotGroceryToggle
+          excluded={slot.excludeFromGroceries}
+          onToggle={onToggleExcludeFromGroceries}
+        />
+      ) : null}
+    </div>
+  );
+}
 
 export function PlannerSlotCard({
   slot,
@@ -35,6 +181,7 @@ export function PlannerSlotCard({
   onSetMeal,
   onRemove,
   onToggleUsed,
+  onToggleExcludeFromGroceries,
   recipes,
   ingredientOptions,
 }: PlannerSlotCardProps) {
@@ -62,6 +209,10 @@ export function PlannerSlotCard({
     await onSetMeal(payload);
     setIsDialogOpen(false);
   };
+
+  const stockedCardClassName = slot.excludeFromGroceries
+    ? "ring-1 ring-muted"
+    : undefined;
 
   if (isEmpty) {
     return (
@@ -117,6 +268,7 @@ export function PlannerSlotCard({
           className={cn(
             "card-interactive h-full gap-0 overflow-hidden border-border py-0",
             slot.used && "opacity-50",
+            stockedCardClassName,
             canEdit && "cursor-pointer",
           )}
           onClick={(event) => {
@@ -138,42 +290,21 @@ export function PlannerSlotCard({
                 <p className="type-body mt-0.5 text-sm text-muted-foreground">
                   {mealLabel}
                 </p>
+                {slot.excludeFromGroceries ? (
+                  <Badge variant="outline" className="mt-1 text-xs">
+                    Stocked
+                  </Badge>
+                ) : null}
               </div>
-              {(canShuffle || canEdit || onRemove || onToggleUsed) && (
-                <div className="mt-item flex w-full justify-start gap-1">
-                  {onToggleUsed && (
-                    <Button
-                      type="button"
-                      variant={slot.used ? "default" : "outline"}
-                      size="icon"
-                      onClick={onToggleUsed}
-                    >
-                      <Check className="h-4 w-4" strokeWidth={2} />
-                    </Button>
-                  )}
-                  {canEdit && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={openDialog}
-                      aria-label="Change meal"
-                    >
-                      <ArrowLeftRight className="h-4 w-4" />
-                    </Button>
-                  )}
-                  {onRemove && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={onRemove}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              )}
+              <SlotActionRow
+                slot={slot}
+                canShuffle={canShuffle}
+                canEdit={canEdit}
+                onEdit={openDialog}
+                onRemove={onRemove}
+                onToggleUsed={onToggleUsed}
+                onToggleExcludeFromGroceries={onToggleExcludeFromGroceries}
+              />
             </div>
           </CardHeader>
         </Card>
@@ -203,7 +334,7 @@ export function PlannerSlotCard({
   }
 
   const imageUrl = getRecipeDisplayImageUrl(recipe!.images);
-  const canShuffle = onShuffle && slot.alternatives.length > 0;
+  const canShuffle = Boolean(onShuffle && slot.alternatives.length > 0);
 
   return (
     <>
@@ -211,6 +342,7 @@ export function PlannerSlotCard({
         className={cn(
           "card-interactive h-full gap-0 overflow-hidden border-border py-0",
           slot.used && "opacity-50",
+          stockedCardClassName,
           canEdit && "cursor-pointer",
         )}
         onClick={(event) => {
@@ -248,6 +380,11 @@ export function PlannerSlotCard({
                 <p className="type-body mt-0.5 text-sm text-muted-foreground">
                   {mealLabel}
                 </p>
+                {slot.excludeFromGroceries ? (
+                  <Badge variant="outline" className="mt-1 text-xs">
+                    Stocked
+                  </Badge>
+                ) : null}
               </div>
               <Badge variant="outline" className="shrink-0">
                 {recipe!.handsOnTime} min
@@ -262,51 +399,16 @@ export function PlannerSlotCard({
                   </Badge>
                 ))}
             </div>
-            {(canShuffle || canEdit || onRemove || onToggleUsed) && (
-              <div className="mt-item flex w-full justify-start gap-1">
-                {onToggleUsed && (
-                  <Button
-                    type="button"
-                    variant={slot.used ? "default" : "outline"}
-                    size="icon"
-                    onClick={onToggleUsed}
-                  >
-                    <Check className="h-4 w-4" strokeWidth={2} />
-                  </Button>
-                )}
-                {canShuffle && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={onShuffle}
-                  >
-                    <Shuffle className="h-4 w-4" />
-                  </Button>
-                )}
-                {canEdit && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={openDialog}
-                    aria-label="Change meal"
-                  >
-                    <ArrowLeftRight className="h-4 w-4" />
-                  </Button>
-                )}
-                {onRemove && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={onRemove}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            )}
+            <SlotActionRow
+              slot={slot}
+              canShuffle={canShuffle}
+              canEdit={canEdit}
+              onEdit={openDialog}
+              onShuffle={onShuffle}
+              onRemove={onRemove}
+              onToggleUsed={onToggleUsed}
+              onToggleExcludeFromGroceries={onToggleExcludeFromGroceries}
+            />
           </div>
         </CardHeader>
       </Card>

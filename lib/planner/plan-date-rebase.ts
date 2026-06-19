@@ -70,6 +70,7 @@ export function rebasePlanSlotsByDateRangeDelta(params: {
         customMeal: null,
         alternatives: [],
         used: false,
+        excludeFromGroceries: false,
       });
     }
   }

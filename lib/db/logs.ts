@@ -312,6 +312,7 @@ export async function appendNextLogDay(input: { userId: string; logId: string })
         mealType,
         recipeId: null,
         used: false,
+        excludeFromGroceries: false,
       })),
     });
     if (nextDate > log.plan.endDate) {

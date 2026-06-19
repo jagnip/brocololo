@@ -18,9 +18,11 @@ vi.mock("./plan-view", () => ({
   PlanView: ({
     plan,
     onShuffle,
+    onToggleExcludeFromGroceries,
   }: {
     plan: PlanInputType;
     onShuffle?: (slotKey: string) => void;
+    onToggleExcludeFromGroceries?: (slotKey: string) => void;
   }) => {
     const first = plan[0];
     const slotKey = `${first.date.toISOString()}-${first.mealType}`;
@@ -36,6 +38,12 @@ vi.mock("./plan-view", () => ({
         <div aria-label="dinner-by-day">{dinnerByDay}</div>
         <button type="button" onClick={() => onShuffle?.(slotKey)}>
           Shuffle
+        </button>
+        <button
+          type="button"
+          onClick={() => onToggleExcludeFromGroceries?.(slotKey)}
+        >
+          Toggle stocked
         </button>
       </div>
     );
@@ -133,7 +141,7 @@ describe("PlanEditor autosave", () => {
         recipe: recipeA,
         alternatives: [recipeB, recipeC],
         customMeal: null,
-        used: false,
+        used: false, excludeFromGroceries: false,
       },
     ];
 
@@ -168,7 +176,7 @@ describe("PlanEditor autosave", () => {
         recipe: recipeA,
         alternatives: [recipeB, recipeC],
         customMeal: null,
-        used: false,
+        used: false, excludeFromGroceries: false,
       },
     ];
 
@@ -189,6 +197,39 @@ describe("PlanEditor autosave", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Generate log" })).toBeEnabled();
     });
+  });
+
+  it("autosaves excludeFromGroceries when user toggles stocked on a slot", async () => {
+    const user = userEvent.setup();
+    vi.mocked(updateSavedPlan).mockResolvedValue({ type: "success" } as any);
+
+    const initialPlan: PlanInputType = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        mealType: "DINNER" as any,
+        recipe: createRecipe("recipe-a"),
+        alternatives: [],
+        customMeal: null,
+        used: false,
+        excludeFromGroceries: false,
+      },
+    ];
+
+    renderPlanEditor({
+      planId: "plan-1",
+      initialPlan,
+      recipes: [],
+      ingredientOptions: emptyIngredientOptions,
+    });
+
+    await user.click(screen.getByRole("button", { name: "Toggle stocked" }));
+
+    await waitFor(() => {
+      expect(updateSavedPlan).toHaveBeenCalledTimes(1);
+    }, { timeout: 2500 });
+
+    const [, slotsArg] = vi.mocked(updateSavedPlan).mock.calls[0]!;
+    expect(slotsArg[0]?.excludeFromGroceries).toBe(true);
   });
 
   it("keeps the plan dirty if edits happen while autosave is in-flight", async () => {
@@ -212,7 +253,7 @@ describe("PlanEditor autosave", () => {
         recipe: recipeA,
         alternatives: [recipeB, recipeC],
         customMeal: null,
-        used: false,
+        used: false, excludeFromGroceries: false,
       },
     ];
 
@@ -256,7 +297,7 @@ describe("PlanEditor autosave", () => {
           recipe: recipeA,
           customMeal: null,
           alternatives: [recipeB, recipeC],
-          used: false,
+          used: false, excludeFromGroceries: false,
         },
       ],
       recipes: [],
@@ -297,7 +338,7 @@ describe("PlanEditor autosave", () => {
           recipe: recipeA,
           customMeal: null,
           alternatives: [recipeB, recipeC],
-          used: false,
+          used: false, excludeFromGroceries: false,
         },
       ],
       recipes: [],
@@ -350,7 +391,7 @@ describe("PlanEditor autosave", () => {
         recipe: recipe17,
         alternatives: [],
         customMeal: null,
-        used: false,
+        used: false, excludeFromGroceries: false,
       },
       {
         date: new Date("2026-03-18T00:00:00.000Z"),
@@ -358,7 +399,7 @@ describe("PlanEditor autosave", () => {
         recipe: recipe18,
         alternatives: [],
         customMeal: null,
-        used: false,
+        used: false, excludeFromGroceries: false,
       },
       {
         date: new Date("2026-03-19T00:00:00.000Z"),
@@ -366,7 +407,7 @@ describe("PlanEditor autosave", () => {
         recipe: recipe19,
         alternatives: [],
         customMeal: null,
-        used: false,
+        used: false, excludeFromGroceries: false,
       },
     ];
 
@@ -482,7 +523,7 @@ function initialPlanForTests(): PlanInputType {
       recipe: recipeA,
       customMeal: null,
       alternatives: [recipeB, recipeC],
-      used: false,
+      used: false, excludeFromGroceries: false,
     },
   ];
 }

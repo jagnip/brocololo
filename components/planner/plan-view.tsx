@@ -41,6 +41,7 @@ type PlanViewProps = {
   onSetMeal?: (slotKey: string, payload: PlanSlotMealPayload) => void;
   onRemove?: (slotKey: string) => void;
   onToggleUsed?: (slotKey: string) => void;
+  onToggleExcludeFromGroceries?: (slotKey: string) => void;
 };
 
 export function PlanView({
@@ -52,6 +53,7 @@ export function PlanView({
   onSetMeal,
   onRemove,
   onToggleUsed,
+  onToggleExcludeFromGroceries,
 }: PlanViewProps) {
   if (plan.length === 0) {
     return null;
@@ -72,6 +74,11 @@ export function PlanView({
         onSetMeal={onSetMeal ? (payload) => onSetMeal(slotKey, payload) : undefined}
         onRemove={onRemove ? () => onRemove(slotKey) : undefined}
         onToggleUsed={onToggleUsed ? () => onToggleUsed(slotKey) : undefined}
+        onToggleExcludeFromGroceries={
+          onToggleExcludeFromGroceries
+            ? () => onToggleExcludeFromGroceries(slotKey)
+            : undefined
+        }
         recipes={recipes}
         ingredientOptions={ingredientOptions}
       />

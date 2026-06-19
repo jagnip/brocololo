@@ -54,6 +54,52 @@ describe("transformPlanToShoppingListRows", () => {
     });
   });
 
+  it("excludes ingredients from slots marked excludeFromGroceries", () => {
+    const rows = transformPlanToShoppingListRows([
+      {
+        ...slotFromRecipe(baseRecipe({ name: "Stocked meal" })),
+        excludeFromGroceries: true,
+      },
+      slotFromRecipe(baseRecipe({ name: "Shop meal" })),
+    ]);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.amount).toBe(400);
+    expect(rows[0]?.recipeNames).toEqual(["Shop meal"]);
+  });
+
+  it("still aggregates shared ingredients when only one slot is excluded", () => {
+    const rows = transformPlanToShoppingListRows([
+      {
+        ...slotFromRecipe(baseRecipe({ name: "Stocked meal" })),
+        excludeFromGroceries: true,
+      },
+      slotFromRecipe(
+        baseRecipe({
+          name: "Shop meal",
+          ingredients: [
+            {
+              ingredient: {
+                id: "ing-1",
+                name: "Chicken thighs",
+                icon: null,
+                supermarketUrl: null,
+                unitConversions: [{ unitId: "unit-g", gramsPerUnit: 1 }],
+                category: { id: "cat-meat", name: "Meat", sortOrder: 2 },
+              },
+              unit: { id: "unit-g", name: "g" },
+              amount: 200,
+            },
+          ],
+        }),
+      ),
+    ]);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.amount).toBe(200);
+    expect(rows[0]?.recipeNames).toEqual(["Shop meal"]);
+  });
+
   it("aggregates same ingredient and unit across recipes", () => {
     const slots: PlanSlotData[] = [
       slotFromRecipe(baseRecipe({ name: "Recipe A" })),

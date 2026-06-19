@@ -3,6 +3,7 @@ import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import { ShoppingListGeneratedLine } from "@/types/groceries";
 
 export type PlanSlotData = {
+  excludeFromGroceries?: boolean;
   recipe: {
     name: string;
     servings: number;
@@ -264,7 +265,8 @@ function aggregateIngredients(
 export function transformPlanToShoppingListRows(
   slots: PlanSlotData[],
 ): ShoppingListGeneratedLine[] {
-  const scaled = scaleIngredients(slots);
+  const eligibleSlots = slots.filter((slot) => !slot.excludeFromGroceries);
+  const scaled = scaleIngredients(eligibleSlots);
   return aggregateIngredients(scaled);
 }
 

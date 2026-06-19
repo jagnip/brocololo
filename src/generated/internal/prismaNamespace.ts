@@ -3121,7 +3121,8 @@ export const PlanSlotScalarFieldEnum = {
   mealType: 'mealType',
   recipeId: 'recipeId',
   customName: 'customName',
-  used: 'used'
+  used: 'used',
+  excludeFromGroceries: 'excludeFromGroceries'
 } as const
 
 export type PlanSlotScalarFieldEnum = (typeof PlanSlotScalarFieldEnum)[keyof typeof PlanSlotScalarFieldEnum]

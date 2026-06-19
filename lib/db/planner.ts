@@ -135,6 +135,7 @@ function slotInputToCreateData(s: SlotInputType) {
     recipeId: hasCustom ? null : (s.recipe?.id ?? null),
     customName: hasCustom ? customMeal.name : null,
     used: s.used,
+    excludeFromGroceries: s.excludeFromGroceries,
     customIngredients: hasCustom
       ? buildCustomIngredientCreates(customMeal)
       : undefined,
@@ -158,6 +159,7 @@ function slotSaveDataToCreateData(s: SlotSaveData) {
     recipeId: hasCustom ? null : s.recipeId,
     customName: hasCustom ? s.customMeal!.name : null,
     used: s.used,
+    excludeFromGroceries: s.excludeFromGroceries,
     customIngredients: hasCustom
       ? buildCustomIngredientCreates(s.customMeal)
       : undefined,
@@ -298,6 +300,7 @@ export async function getPlanById(userId: string, planId: string) {
     alternatives: slot.alternatives.map((a) => a.recipe),
     cookingFamilyMemberIds,
     used: slot.used,
+    excludeFromGroceries: slot.excludeFromGroceries,
   }));
 }
 
@@ -443,6 +446,7 @@ export async function getPlanForGroceries(userId: string, planId: string) {
       recipe: s.recipe,
       customName: s.customName,
       customIngredients: s.customIngredients,
+      excludeFromGroceries: s.excludeFromGroceries,
     })),
     startDate: plan.startDate.toISOString(),
     endDate: plan.endDate.toISOString(),

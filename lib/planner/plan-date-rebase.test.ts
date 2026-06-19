@@ -16,6 +16,7 @@ function mkSlot(dateKey: string, mealType: PlannerMealType, recipeId: string | n
     customMeal: null,
     alternatives: recipeId ? [mkRecipe(`${recipeId}-alt`)] : [],
     used: false,
+    excludeFromGroceries: false,
   };
 }
 

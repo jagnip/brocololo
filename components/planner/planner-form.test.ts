@@ -20,7 +20,7 @@ describe("planner-form visibility helpers", () => {
         recipe: null,
         customMeal: null,
         alternatives: [],
-        used: false,
+        used: false, excludeFromGroceries: false,
       },
     ];
 
@@ -39,7 +39,7 @@ describe("planner-form visibility helpers", () => {
         recipe: null,
         customMeal: null,
         alternatives: [],
-        used: false,
+        used: false, excludeFromGroceries: false,
       },
     ];
 
@@ -54,7 +54,7 @@ describe("planner-form visibility helpers", () => {
         recipe: null,
         customMeal: null,
         alternatives: [],
-        used: false,
+        used: false, excludeFromGroceries: false,
       },
     ];
 
@@ -82,7 +82,7 @@ describe("planner-form visibility helpers", () => {
         recipe: null,
         customMeal: null,
         alternatives: [],
-        used: false,
+        used: false, excludeFromGroceries: false,
       },
     ];
 
@@ -113,7 +113,7 @@ describe("planner-form visibility helpers", () => {
         recipe: null,
         customMeal: null,
         alternatives: [],
-        used: false,
+        used: false, excludeFromGroceries: false,
       },
     ];
 

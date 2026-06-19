@@ -217,6 +217,7 @@ function slotsToPlanSlotData(
     recipe: s.recipe as PlanSlotData["recipe"],
     customName: s.customName,
     customIngredients: s.customIngredients,
+    excludeFromGroceries: s.excludeFromGroceries,
   }));
 }
 
