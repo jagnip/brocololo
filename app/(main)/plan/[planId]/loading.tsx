@@ -6,12 +6,12 @@ export default function Loading() {
   return (
     <div className="page-container">
       <div className="space-y-4 pb-2">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
           <div className="flex items-center gap-2">
             <Skeleton className="h-9 w-24 rounded-md" />
             <Skeleton className="h-9 w-28 rounded-md" />
           </div>
-          <div className="flex items-center gap-2 sm:min-w-[20rem] lg:min-w-[24rem]">
+          <div className="flex min-w-0 flex-1 items-center gap-2 basis-full sm:basis-auto sm:min-w-48 sm:max-w-md">
             <Skeleton className="h-4 w-20 rounded-md" />
             <Skeleton className="h-9 w-full rounded-md" />
             <Skeleton className="h-9 w-9 rounded-md" />

@@ -17,6 +17,10 @@ import { PlanSlotMealDialog } from "./plan-slot-meal-dialog";
 import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
 import { formatDayLabel } from "@/lib/planner/helpers";
 
+/** Warm off-white on primary — matches --rose-50 accent surface. */
+const MEAL_DONE_ICON_CLASS =
+  "text-[var(--rose-50)] hover:text-[var(--rose-50)] [&_svg]:text-[var(--rose-50)]";
+
 type PlannerSlotCardProps = {
   slot: SlotInputType;
   fridgeMatchIngredients?: string[];
@@ -66,7 +70,7 @@ export function PlannerSlotCard({
   if (isEmpty) {
     return (
       <>
-        <div className="flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed border-border/60 bg-card p-0 py-0 shadow-none transition-colors">
+        <div className="flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed border-border bg-card p-0 py-0 shadow-none transition-colors">
           {canEdit ? (
             <Button
               type="button"
@@ -126,22 +130,17 @@ export function PlannerSlotCard({
           }}
         >
           <div className="relative w-full overflow-hidden aspect-2/1 sm:aspect-3/2">
-            <RecipeImagePlaceholder showLabel={false} />
+            <RecipeImagePlaceholder showLabel={false} iconSize="lg" />
           </div>
           <CardHeader className="px-card-x py-card-y">
             <div className="min-w-0">
-              <div className="flex items-start gap-2">
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate type-h3" title={customMeal.name}>
-                    {customMeal.name}
-                  </h3>
-                  <p className="type-body mt-0.5 text-sm text-muted-foreground">
-                    {mealLabel}
-                  </p>
-                </div>
-                <Badge variant="outline" className="shrink-0">
-                  Custom
-                </Badge>
+              <div>
+                <h3 className="truncate type-h3" title={customMeal.name}>
+                  {customMeal.name}
+                </h3>
+                <p className="type-body mt-0.5 text-sm text-muted-foreground">
+                  {mealLabel}
+                </p>
               </div>
               {(canShuffle || canEdit || onRemove || onToggleUsed) && (
                 <div className="mt-item flex w-full justify-start gap-1">
@@ -150,9 +149,13 @@ export function PlannerSlotCard({
                       type="button"
                       variant={slot.used ? "default" : "outline"}
                       size="icon"
+                      className={slot.used ? MEAL_DONE_ICON_CLASS : undefined}
                       onClick={onToggleUsed}
                     >
-                      <Check className="h-4 w-4" strokeWidth={2} />
+                      <Check
+                        className="h-4 w-4"
+                        strokeWidth={slot.used ? 2.5 : 2}
+                      />
                     </Button>
                   )}
                   {canEdit && (
@@ -273,9 +276,13 @@ export function PlannerSlotCard({
                     type="button"
                     variant={slot.used ? "default" : "outline"}
                     size="icon"
+                    className={slot.used ? MEAL_DONE_ICON_CLASS : undefined}
                     onClick={onToggleUsed}
                   >
-                    <Check className="h-4 w-4" strokeWidth={2} />
+                    <Check
+                      className="h-4 w-4"
+                      strokeWidth={slot.used ? 2.5 : 2}
+                    />
                   </Button>
                 )}
                 {canShuffle && (

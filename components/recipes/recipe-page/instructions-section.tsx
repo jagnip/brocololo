@@ -3,11 +3,10 @@ import { Button } from "@/components/ui/button";
 import { parseMarkdownLinks } from "@/lib/recipes/text-formatting";
 import { useState } from "react";
 import {
-  formatIngredientAmount,
-  formatInstructionIngredientBadge,
   getIngredientDisplay,
   getInstructionIngredientBadgeAmount,
-  isGramUnit,
+  getInstructionIngredientBadgeParts,
+  getInstructionIngredientBadgeTailSegments,
   isInstructionIngredientVisibleForPerson,
 } from "@/lib/recipes/helpers";
 import { useRecipePageInstructionsSectionData } from "@/components/context/recipe-page-context";
@@ -127,7 +126,7 @@ export function InstructionsSection() {
             className={`group flex cursor-pointer items-start gap-item rounded-lg border p-nest transition-colors ${
               isSelected
                 ? "border-ring bg-accent/50"
-                : "border-border/60 bg-card hover:bg-muted/40"
+                : "border-border bg-card hover:bg-muted/40"
             }`}
           >
             {/* Step number — rose accent on hover/selection. */}
@@ -174,38 +173,49 @@ export function InstructionsSection() {
                       selectedUnits[recipeIngredient.id] ||
                       recipeIngredient.unit?.id ||
                       null;
-                    const rowScaleFactor =
-                      getIngredientDisplayScalingFactor(recipeIngredient.id) *
-                      getIngredientCalorieFactor(recipeIngredient);
-                    const badgeAmount = getInstructionIngredientBadgeAmount({
-                      amount: recipeIngredient.amount,
-                      appliesToEveryone: recipeIngredient.appliesToEveryone,
-                      targetFamilyMemberIds:
-                        recipeIngredient.memberTargets.map(
-                          (target) => target.familyMemberId,
-                        ),
-                      selectedFamilyMemberId:
-                        selectedInstructionFamilyMemberId,
-                      familyMembers,
-                      memberPortions,
-                      cookingFamilyMemberIds,
-                      rowScaleFactor,
-                    });
-                    if (badgeAmount == null) {
+                    // Amount-less rows (e.g. "to taste") still get a name-only badge.
+                    const hasAmount = recipeIngredient.amount != null;
+                    const badgeAmount = hasAmount
+                      ? getInstructionIngredientBadgeAmount({
+                          amount: recipeIngredient.amount,
+                          appliesToEveryone: recipeIngredient.appliesToEveryone,
+                          targetFamilyMemberIds:
+                            recipeIngredient.memberTargets.map(
+                              (target) => target.familyMemberId,
+                            ),
+                          selectedFamilyMemberId:
+                            selectedInstructionFamilyMemberId,
+                          familyMembers,
+                          memberPortions,
+                          cookingFamilyMemberIds,
+                          rowScaleFactor:
+                            getIngredientDisplayScalingFactor(
+                              recipeIngredient.id,
+                            ) * getIngredientCalorieFactor(recipeIngredient),
+                        })
+                      : null;
+                    // Hide only when we expected a numeric badge but could not resolve one.
+                    if (hasAmount && badgeAmount == null) {
                       return null;
                     }
-                    const display = getIngredientDisplay(
-                      badgeAmount,
-                      recipeIngredient.unit?.id ?? null,
-                      recipeIngredient.unit?.name ?? null,
-                      selectedUnitId,
-                      recipeIngredient.ingredient.unitConversions,
-                      1,
-                      1,
-                    );
-                    const fullBadgeLabel = formatInstructionIngredientBadge({
+                    const display = hasAmount
+                      ? getIngredientDisplay(
+                          badgeAmount,
+                          recipeIngredient.unit?.id ?? null,
+                          recipeIngredient.unit?.name ?? null,
+                          selectedUnitId,
+                          recipeIngredient.ingredient.unitConversions,
+                          1,
+                          1,
+                        )
+                      : {
+                          displayAmount: null,
+                          rawAmount: null,
+                          displayUnitName: "",
+                          displayUnitNamePlural: null,
+                        };
+                    const badgeParts = getInstructionIngredientBadgeParts({
                       rawAmount: display.rawAmount,
-                      rawAmountInGrams: display.rawAmountInGrams,
                       displayAmount: display.displayAmount,
                       displayUnitName: display.displayUnitName,
                       displayUnitNamePlural: display.displayUnitNamePlural,
@@ -213,28 +223,6 @@ export function InstructionsSection() {
                       ingredientName: recipeIngredient.ingredient.name,
                       additionalInfo: recipeIngredient.additionalInfo,
                     });
-                    const shouldShowMutedGrams =
-                      display.rawAmountInGrams != null &&
-                      !isGramUnit(display.displayUnitName);
-                    // Narrow nullable grams value once to satisfy strict TS checks.
-                    const gramsValue = shouldShowMutedGrams
-                      ? display.rawAmountInGrams
-                      : null;
-                    const compactGramsText =
-                      gramsValue == null
-                        ? null
-                        : gramsValue > 0 && gramsValue < 0.1
-                          ? "<0.1g"
-                          : `${formatIngredientAmount(gramsValue, 2)}g`;
-                    // Keep existing amount/unit/name formatting and split grams into a muted tail.
-                    const baseBadgeLabel =
-                      shouldShowMutedGrams && compactGramsText
-                        ? fullBadgeLabel.replace(` (${compactGramsText})`, "")
-                        : fullBadgeLabel;
-                    const mutedGramsLabel =
-                      shouldShowMutedGrams && compactGramsText
-                        ? `· ${compactGramsText.replace(/g$/, " g")}`
-                        : null;
 
                     return (
                       <Badge
@@ -243,11 +231,17 @@ export function InstructionsSection() {
                         // Make badges more prominent inside the selected step.
                         className={isSelected ? "bg-background border-foreground/20" : undefined}
                       >
-                        <span>{baseBadgeLabel}</span>
-                        {mutedGramsLabel ? (
-                          // Same hue as badge label; opacity only (not muted-foreground gray).
-                          <span className="opacity-75">{mutedGramsLabel}</span>
-                        ) : null}
+                        <span>{badgeParts.ingredientName}</span>
+                        {getInstructionIngredientBadgeTailSegments(badgeParts).map(
+                          (segment, index) => (
+                            <span
+                              key={`${segment}-${index}`}
+                              className="opacity-75"
+                            >
+                              {` · ${segment}`}
+                            </span>
+                          ),
+                        )}
                       </Badge>
                     );
                   })}

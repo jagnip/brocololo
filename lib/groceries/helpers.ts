@@ -1,8 +1,11 @@
+import { filterSlotsForGroceryGeneration } from "@/lib/groceries/generation-options";
+import type { GroceryGenerationExclusions } from "@/lib/groceries/generation-options";
 import { calculateServingScalingFactor } from "@/lib/recipes/helpers";
 import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import { ShoppingListGeneratedLine } from "@/types/groceries";
 
 export type PlanSlotData = {
+  recipeId?: string | null;
   recipe: {
     name: string;
     servings: number;
@@ -263,8 +266,13 @@ function aggregateIngredients(
 
 export function transformPlanToShoppingListRows(
   slots: PlanSlotData[],
+  exclusions: GroceryGenerationExclusions = {
+    excludedRecipeIds: [],
+    excludedCustomMealNames: [],
+  },
 ): ShoppingListGeneratedLine[] {
-  const scaled = scaleIngredients(slots);
+  const eligibleSlots = filterSlotsForGroceryGeneration(slots, exclusions);
+  const scaled = scaleIngredients(eligibleSlots);
   return aggregateIngredients(scaled);
 }
 

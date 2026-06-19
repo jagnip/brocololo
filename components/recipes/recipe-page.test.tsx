@@ -249,9 +249,9 @@ function expectInstructionSectionToContain(...fragments: string[]): void {
 function expectInstructionBadgesVisibleForNoFilter(): void {
   // Default mode shows full amounts for all linked instruction ingredients.
   expectInstructionSectionToContain(
-    "300 grams shared Protein",
-    "100 grams side Veg Jagoda",
-    "100 grams side Sauce Nelson",
+    "shared protein · 300 grams",
+    "side veg jagoda · 100 grams",
+    "side sauce nelson · 100 grams",
   );
 }
 
@@ -432,9 +432,7 @@ describe("RecipePage nutrition integration", () => {
     const createOption = await screen.findByText('Create "cottage chee"');
     await user.click(createOption);
 
-    expect(
-      screen.getByText("Add a missing ingredient without leaving your current flow."),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Create ingredient" })).toBeInTheDocument();
     expect(
       within(addToLogDialog).getByText(`Add ${recipe.name.toLowerCase()} to log`),
     ).toBeInTheDocument();
@@ -610,8 +608,8 @@ describe("RecipePage nutrition integration", () => {
 
     // Jagoda sees PRIMARY_ONLY + Jagoda share of BOTH (1/3 of 300 = 100).
     expectInstructionSectionToContain(
-      "100 grams shared Protein",
-      "100 grams side Veg Jagoda",
+      "shared protein · 100 grams",
+      "side veg jagoda · 100 grams",
     );
     expect(instructionSectionText.toLowerCase()).not.toContain("side sauce nelson");
     expectInstructionStepTextToRemainVisible();
@@ -626,8 +624,8 @@ describe("RecipePage nutrition integration", () => {
 
     // Nelson sees SECONDARY_ONLY + Nelson share of BOTH (2/3 of 300 = 200).
     expectInstructionSectionToContain(
-      "200 grams shared Protein",
-      "100 grams side Sauce Nelson",
+      "shared protein · 200 grams",
+      "side sauce nelson · 100 grams",
     );
     expect(instructionSectionText.toLowerCase()).not.toContain("side veg jagoda");
     expectInstructionStepTextToRemainVisible();
@@ -663,11 +661,55 @@ describe("RecipePage nutrition integration", () => {
 
     // Nelson share of scaled BOTH amount: 600 * 2/3 = 400.
     expectInstructionSectionToContain(
-      "400 grams shared Protein",
-      "200 grams side Sauce Nelson",
+      "shared protein · 400 grams",
+      "side sauce nelson · 200 grams",
     );
     expect(instructionSectionText.toLowerCase()).not.toContain("side veg jagoda");
     expectInstructionStepTextToRemainVisible();
+  });
+
+  it("shows name-only instruction badges for amount-less linked ingredients", () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    const saltIngredient = createMockIngredient({
+      id: "ing-salt",
+      name: "Salt",
+      slug: "salt",
+      unitConversions: [],
+    });
+    const saltRow = createMockRecipeIngredient({
+      id: "ri-salt",
+      position: 3,
+      amount: null,
+      unitId: null,
+      unit: null,
+      additionalInfo: "to taste",
+      ingredient: saltIngredient,
+    });
+    const recipeWithSalt = {
+      ...recipe,
+      ingredients: [...recipe.ingredients, saltRow],
+      instructions: recipe.instructions.map((instruction, index) =>
+        index === 0
+          ? {
+              ...instruction,
+              ingredients: [
+                ...instruction.ingredients,
+                {
+                  id: "step-link-salt",
+                  recipeInstructionId: instruction.id,
+                  recipeIngredientId: saltRow.id,
+                  recipeIngredient: saltRow,
+                },
+              ],
+            }
+          : instruction,
+      ),
+    };
+
+    renderRecipePage(recipeWithSalt, [...ingredients, saltIngredient]);
+
+    expectInstructionSectionToContain("salt · to taste");
+    expectInstructionBadgesVisibleForNoFilter();
   });
 });
 

@@ -4,9 +4,6 @@ import type { IngredientType } from "@/types/ingredient";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import IngredientForm from "@/components/ingredients/form/ingredient-form";
 
@@ -38,15 +35,10 @@ export function CreateIngredientDialog({
 }: CreateIngredientDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>Create ingredient</DialogTitle>
-          <DialogDescription>
-            {/* Reused across recipe and log contexts, so keep copy flow-agnostic. */}
-            Add a missing ingredient without leaving your current flow.
-          </DialogDescription>
-        </DialogHeader>
-
+      {/* Title lives inside IngredientForm (dialog mode) — same as EditIngredientDialog. */}
+      <DialogContent
+        className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-[min(48rem,calc(100vw-3rem))] sm:max-w-3xl max-h-[90vh] overflow-y-auto"
+      >
         <IngredientForm
           mode="dialog"
           initialName={initialName}

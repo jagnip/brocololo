@@ -140,7 +140,7 @@ export function IngredientsInfiniteList({
           ))}
 
           {items.length === 0 && (
-            <li className="rounded-md border border-border/60 bg-card p-nest text-sm text-muted-foreground">
+            <li className="rounded-md border border-border bg-card p-nest text-sm text-muted-foreground">
               No ingredients found.
             </li>
           )}

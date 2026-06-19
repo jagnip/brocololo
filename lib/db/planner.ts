@@ -439,6 +439,7 @@ export async function getPlanForGroceries(userId: string, planId: string) {
 
   return {
     slots: plan.slots.map((s) => ({
+      recipeId: s.recipeId,
       date: s.date.toISOString(),
       recipe: s.recipe,
       customName: s.customName,

@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth/session";
 import {
   deleteActiveShoppingLayoutPreset,
   generateShoppingListForPlan,
+  getGroceryGenerationMealOptionsForPlan,
   saveShoppingLayoutPreset,
   setShoppingListActiveLayoutPreset,
   setShoppingListItemPurchased,
@@ -13,15 +14,45 @@ import {
 } from "@/lib/db/shopping-list";
 import {
   deleteActiveShoppingLayoutPresetSchema,
+  groceryGenerationExclusionsSchema,
   saveShoppingListEditsSchema,
 } from "@/lib/validations/shopping-list";
+import type { GroceryMealOption } from "@/lib/groceries/generation-options";
 
-export async function generateGroceryListFromPlan(planId: string): Promise<
-  | { type: "success"; shoppingListId: string }
-  | { type: "error"; code: "plan_not_found" | "no_gram_unit"; message: string }
+export async function getGroceryGenerationMealOptions(planId: string): Promise<
+  | { type: "success"; meals: GroceryMealOption[] }
+  | { type: "error"; code: "plan_not_found"; message: string }
 > {
   const { id: userId } = await requireUser();
-  const result = await generateShoppingListForPlan(userId, planId);
+  const meals = await getGroceryGenerationMealOptionsForPlan(userId, planId);
+  if (!meals) {
+    return {
+      type: "error",
+      code: "plan_not_found",
+      message: "Plan not found.",
+    };
+  }
+  return { type: "success", meals };
+}
+
+export async function generateGroceryListFromPlan(
+  planId: string,
+  exclusionsInput: unknown,
+): Promise<
+  | { type: "success"; shoppingListId: string }
+  | { type: "error"; code: "plan_not_found" | "no_gram_unit" | "invalid_exclusions"; message: string }
+> {
+  const parsed = groceryGenerationExclusionsSchema.safeParse(exclusionsInput);
+  if (!parsed.success) {
+    return {
+      type: "error",
+      code: "invalid_exclusions",
+      message: "Invalid meal selection. Try again.",
+    };
+  }
+
+  const { id: userId } = await requireUser();
+  const result = await generateShoppingListForPlan(userId, planId, parsed.data);
   if (!result.ok) {
     if (result.error === "plan_not_found") {
       return {

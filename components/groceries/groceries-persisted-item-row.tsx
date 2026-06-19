@@ -93,7 +93,7 @@ export function GroceriesPersistedItemRow({
   };
 
   return (
-    <li className="overflow-hidden rounded-md border border-border/60 bg-card transition-colors hover:bg-muted/40">
+    <li className="overflow-hidden rounded-md border border-border bg-card transition-colors hover:bg-muted/40">
       <div
         className={cn(
           "flex items-start justify-between gap-3 p-nest",
@@ -181,7 +181,7 @@ export function GroceriesPersistedItemRow({
       </div>
 
       {hasMeta ? (
-        <div className="space-y-1 border-t border-border/60 bg-card px-nest py-2 text-sm">
+        <div className="space-y-1 border-t border-border bg-card px-nest py-2 text-sm">
           {row.additionalInfo ? (
             <p
               className={cn(

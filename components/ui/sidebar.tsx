@@ -469,15 +469,15 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
     <li
       data-slot="sidebar-menu-item"
       data-sidebar="menu-item"
-      className={cn("group/menu-item relative", className)}
+      className={cn("group/menu-item relative group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center", className)}
       {...props}
     />
   )
 }
 
 const sidebarMenuButtonVariants = cva(
-  // h-9 (36px) with py-2.5 centers the 16px icon vertically.
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md px-2 py-2.5 text-left text-sm font-medium text-muted-foreground outline-hidden ring-sidebar-ring transition-[width,height,padding,colors] hover:bg-muted hover:text-primary focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-bold data-[active=true]:text-sidebar-accent-foreground data-[active=true]:shadow-sm data-[active=true]:ring-1 data-[active=true]:ring-sidebar-ring data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+  // Icon mode: fixed 32×32 hit target, hide labels, center the icon.
+  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md px-2 py-2.5 text-left text-sm font-medium text-muted-foreground outline-hidden ring-sidebar-ring transition-[width,height,padding,colors] hover:bg-muted hover:text-primary focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-bold data-[active=true]:text-sidebar-accent-foreground data-[active=true]:shadow-sm data-[active=true]:ring-1 data-[active=true]:ring-sidebar-ring data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:w-8! group-data-[collapsible=icon]:justify-center! group-data-[collapsible=icon]:gap-0! group-data-[collapsible=icon]:p-2! group-data-[collapsible=icon]:[&>span:last-child]:hidden [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {

@@ -34,9 +34,15 @@ import type {
 } from "@/components/log/log-ingredients-form";
 import { useEffect, useOptimistic, useTransition } from "react";
 import { ROUTES } from "@/lib/constants";
-import { generateGroceryListFromPlan } from "@/actions/shopping-list-actions";
+import {
+  generateGroceryListFromPlan,
+  getGroceryGenerationMealOptions,
+} from "@/actions/shopping-list-actions";
 import { PlanSelect, type PlanSelectOption } from "@/components/planner/plan-select";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
+import { GroceryMealSelectionDialog } from "@/components/planner/grocery-meal-selection-dialog";
+import type { GroceryGenerationExclusions } from "@/lib/groceries/generation-options";
+import type { GroceryMealOption } from "@/lib/groceries/generation-options";
 
 type PlannerLogTab = "plan" | "log";
 
@@ -85,7 +91,6 @@ export function PlannerLogSharedShell({
 }: PlannerLogShellProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Shared range is local UI state so both tabs update instantly without route refresh.
   const [dateRange, setDateRange] = useState<DateRangeValue>(initialDateRange);
 
   const tabFromUrl = searchParams.get("tab");
@@ -98,10 +103,14 @@ export function PlannerLogSharedShell({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isOverwriteGroceryDialogOpen, setIsOverwriteGroceryDialogOpen] =
     useState(false);
+  const [isMealSelectionOpen, setIsMealSelectionOpen] = useState(false);
+  const [isLoadingMeals, setIsLoadingMeals] = useState(false);
+  const [mealOptions, setMealOptions] = useState<GroceryMealOption[]>([]);
+  const [pendingExclusions, setPendingExclusions] =
+    useState<GroceryGenerationExclusions | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { setState: setPlanTopbarState, resetState: resetPlanTopbarState } =
     usePlanTopbarState();
-  // Keep the tab highlight responsive during URL transitions.
   const displayedTab = isTabPending ? optimisticTab : activeTab;
 
   const setTab = (nextTab: PlannerLogTab) => {
@@ -115,21 +124,52 @@ export function PlannerLogSharedShell({
   const hasLogData = useMemo(() => logData != null, [logData]);
   const isTrackTab = displayedTab === "log";
 
-  const runGenerateGroceries = () => {
+  const runGenerateGroceries = (exclusions: GroceryGenerationExclusions) => {
     startGroceryTransition(async () => {
-      const result = await generateGroceryListFromPlan(planId);
+      const result = await generateGroceryListFromPlan(planId, exclusions);
       if (result.type === "error") {
         toast.error(result.message);
         return;
       }
+      setPendingExclusions(null);
       toast.success("Grocery list generated.");
       router.push(ROUTES.groceriesView(planId));
       router.refresh();
     });
   };
 
+  const openMealSelectionDialog = () => {
+    setIsMealSelectionOpen(true);
+    setIsLoadingMeals(true);
+    setMealOptions([]);
+
+    void (async () => {
+      const result = await getGroceryGenerationMealOptions(planId);
+      setIsLoadingMeals(false);
+      if (result.type === "error") {
+        toast.error(result.message);
+        setIsMealSelectionOpen(false);
+        return;
+      }
+      setMealOptions(result.meals);
+    })();
+  };
+
+  const handleMealSelectionConfirm = (
+    exclusions: GroceryGenerationExclusions,
+  ) => {
+    setIsMealSelectionOpen(false);
+
+    if (hasExistingShoppingList) {
+      setPendingExclusions(exclusions);
+      setIsOverwriteGroceryDialogOpen(true);
+      return;
+    }
+
+    runGenerateGroceries(exclusions);
+  };
+
   useEffect(() => {
-    // Shared shell owns delete action availability for both Manage and Track tabs.
     setPlanTopbarState({
       isGenerateDisabled: true,
       isGenerating: false,
@@ -145,7 +185,20 @@ export function PlannerLogSharedShell({
   }, [isDeleting, resetPlanTopbarState, setPlanTopbarState]);
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
+      <GroceryMealSelectionDialog
+        open={isMealSelectionOpen}
+        meals={mealOptions}
+        isLoading={isLoadingMeals}
+        isGenerating={isGeneratingGroceries}
+        onConfirm={handleMealSelectionConfirm}
+        onCancel={() => {
+          if (!isGeneratingGroceries) {
+            setIsMealSelectionOpen(false);
+          }
+        }}
+      />
+
       <AlertDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
@@ -204,11 +257,19 @@ export function PlannerLogSharedShell({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel
+              onClick={() => {
+                setPendingExclusions(null);
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 setIsOverwriteGroceryDialogOpen(false);
-                runGenerateGroceries();
+                if (pendingExclusions) {
+                  runGenerateGroceries(pendingExclusions);
+                }
               }}
             >
               Replace list
@@ -217,34 +278,31 @@ export function PlannerLogSharedShell({
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-center gap-2 whitespace-nowrap">
-            {/* Keep plan switcher in the same row as tabs and controls. */}
-            <div className="flex min-w-0 items-center gap-2">
-              <Label className="shrink-0 text-xs text-muted-foreground">Plan</Label>
-              <PlanSelect plans={planOptions} currentPlanId={planId} />
-            </div>
-            <Tabs
-              value={displayedTab}
-              onValueChange={(value) => {
-                if (value === "plan" || value === "log") {
-                  setOptimisticTab(value);
-                  startTabTransition(() => {
-                    setTab(value);
-                  });
-                }
-              }}
-              className="w-fit shrink-0"
-            >
-              <TabsList>
-                <TabsTrigger value="plan">Manage</TabsTrigger>
-                <TabsTrigger value="log">Track</TabsTrigger>
-              </TabsList>
-            </Tabs>
+      {/* Toolbar: flex-wrap so plan/tabs/date/actions never force horizontal scroll. */}
+      <div className="flex min-w-0 flex-col gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <Label className="shrink-0 text-xs text-muted-foreground">Plan</Label>
+            <PlanSelect plans={planOptions} currentPlanId={planId} />
           </div>
-          <div className="flex w-full items-center gap-2 sm:w-auto sm:min-w-[20rem] sm:max-w-md lg:min-w-[24rem] lg:max-w-lg">
-            {/* Match the Plan label so typography stays consistent with the picker input. */}
+          <Tabs
+            value={displayedTab}
+            onValueChange={(value) => {
+              if (value === "plan" || value === "log") {
+                setOptimisticTab(value);
+                startTabTransition(() => {
+                  setTab(value);
+                });
+              }
+            }}
+            className="w-fit shrink-0"
+          >
+            <TabsList className="h-10 gap-[2px] shadow-xs">
+              <TabsTrigger value="plan">Manage</TabsTrigger>
+              <TabsTrigger value="log">Track</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <div className="flex min-w-0 flex-1 items-center gap-2 basis-full sm:basis-auto sm:min-w-48 sm:max-w-md lg:max-w-lg">
             <Label className="shrink-0 text-xs text-muted-foreground">
               Date range
             </Label>
@@ -254,25 +312,23 @@ export function PlannerLogSharedShell({
               compact
               className="min-w-0 flex-1"
             />
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
             <Button
               type="button"
               variant="outline"
               size="default"
-              className="shrink-0 gap-2"
-              disabled={isGeneratingGroceries || isDeleting}
-              aria-busy={isGeneratingGroceries}
-              onClick={() => {
-                if (hasExistingShoppingList) {
-                  setIsOverwriteGroceryDialogOpen(true);
-                } else {
-                  runGenerateGroceries();
-                }
-              }}
+              className="gap-2"
+              disabled={isGeneratingGroceries || isDeleting || isLoadingMeals}
+              aria-busy={isGeneratingGroceries || isLoadingMeals}
+              onClick={openMealSelectionDialog}
             >
               <span className="whitespace-nowrap">
                 {isGeneratingGroceries
                   ? "Generating…"
-                  : "Generate grocery list"}
+                  : isLoadingMeals
+                    ? "Loading…"
+                    : "Generate grocery list"}
               </span>
             </Button>
             <Button

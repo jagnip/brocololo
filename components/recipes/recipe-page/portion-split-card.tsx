@@ -17,13 +17,16 @@ type PortionSplitCardProps = {
   scopeLabel: string;
 };
 
-/** Chart-based categorical palette — see `--muted-chart-*` in globals.css */
-const CATEGORY_COLOR_VARS = [
-  "var(--muted-chart-1)",
-  "var(--muted-chart-2)",
-  "var(--muted-chart-3)",
-  "var(--muted-chart-4)",
-  "var(--muted-chart-5)",
+/** NomNom categorical chart hues — see `--portion-chart-*` in globals.css */
+const PORTION_CHART_COLOR_VARS = [
+  "var(--portion-chart-1)",
+  "var(--portion-chart-2)",
+  "var(--portion-chart-3)",
+  "var(--portion-chart-4)",
+  "var(--portion-chart-5)",
+  "var(--portion-chart-6)",
+  "var(--portion-chart-7)",
+  "var(--portion-chart-8)",
 ] as const;
 
 function buildConicGradient(percentages: number[]): string {
@@ -36,7 +39,7 @@ function buildConicGradient(percentages: number[]): string {
 
   percentages.forEach((pct, index) => {
     const color =
-      CATEGORY_COLOR_VARS[index % CATEGORY_COLOR_VARS.length];
+      PORTION_CHART_COLOR_VARS[index % PORTION_CHART_COLOR_VARS.length];
     const end = cumulative + pct;
     stops.push(`${color} ${cumulative}% ${end}%`);
     cumulative = end;
@@ -92,7 +95,7 @@ export function PortionSplitCard({ members, scopeLabel }: PortionSplitCardProps)
                   className="inline-block size-2 shrink-0 rounded-full"
                   style={{
                     backgroundColor:
-                      CATEGORY_COLOR_VARS[index % CATEGORY_COLOR_VARS.length],
+                      PORTION_CHART_COLOR_VARS[index % PORTION_CHART_COLOR_VARS.length],
                   }}
                 />
                 <span>{member.label}</span>

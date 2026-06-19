@@ -17,8 +17,9 @@ const badgeVariants = cva(
           "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/80",
         destructive:
           "border-transparent bg-destructive text-primary-foreground [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+        // Neutral grey border — distinct from rose structural borders.
         outline:
-          "border-border bg-card text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+          "border-secondary-foreground/20 bg-card text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground dark:border-secondary-foreground/28",
         produce:
           "border-transparent bg-category-produce text-category-produce-foreground",
         dairy:
