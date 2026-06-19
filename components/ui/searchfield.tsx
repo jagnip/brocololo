@@ -49,7 +49,7 @@ function SearchFieldGroup({ className, ...props }: AriaGroupProps) {
     <AriaGroup
       className={composeRenderProps(className, (className) =>
         cn(
-          "flex h-10 w-full items-center overflow-hidden rounded-md border border-input bg-card px-3 py-2 text-sm ring-offset-background",
+          "flex h-10 w-full items-center overflow-hidden rounded-md border border-input bg-card px-3 py-2 text-sm shadow-xs ring-offset-background transition-shadow",
           /* Focus Within */
           "data-[focus-within]:outline-none data-[focus-within]:ring-2 data-[focus-within]:ring-ring data-[focus-within]:ring-offset-2",
           /* Disabled */
