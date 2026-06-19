@@ -335,72 +335,67 @@ describe("formatInstructionIngredientBadge", () => {
   it("shows less-than floor for tiny non-zero amounts", () => {
     const label = formatInstructionIngredientBadge({
       rawAmount: 0.04,
-      rawAmountInGrams: 0.04,
       displayAmount: "0.0",
       displayUnitName: "g",
       ingredientName: "salt",
       additionalInfo: null,
     });
 
-    expect(label).toBe("<0.1 g salt");
+    expect(label).toBe("salt · <0.1 g");
   });
 
   it("shows ingredient name only when amount is null", () => {
     const label = formatInstructionIngredientBadge({
       rawAmount: null,
-      rawAmountInGrams: null,
       displayAmount: null,
       displayUnitName: "g",
       ingredientName: "Salt",
       additionalInfo: "to taste",
     });
 
-    expect(label).toBe("salt (to taste)");
+    expect(label).toBe("salt · to taste");
+  });
+
+  it("shows amount and additional info with mid dots", () => {
+    const label = formatInstructionIngredientBadge({
+      rawAmount: 1,
+      displayAmount: "1",
+      displayUnitName: "slice",
+      displayUnitNamePlural: "slices",
+      ingredientName: "Bread",
+      additionalInfo: "well baked",
+    });
+
+    expect(label).toBe("bread · well baked · 1 slice");
   });
 
   it("omits trailing .0 for whole numbers", () => {
     const label = formatInstructionIngredientBadge({
       rawAmount: 50,
-      rawAmountInGrams: 50,
       displayAmount: "50.0",
       displayUnitName: "g",
       ingredientName: "carrot",
       additionalInfo: null,
     });
 
-    expect(label).toBe("50 g carrot");
+    expect(label).toBe("carrot · 50 g");
   });
 
-  it("appends grams in parentheses for non-gram units", () => {
+  it("shows selected unit only for non-gram units", () => {
     const label = formatInstructionIngredientBadge({
       rawAmount: 0.4,
-      rawAmountInGrams: 0.1,
       displayAmount: "0.4",
       displayUnitName: "tsp",
       ingredientName: "garlic powder",
       additionalInfo: null,
     });
 
-    expect(label).toBe("0.4 tsp (0.1g) garlic powder");
-  });
-
-  it("does not append duplicate grams when display unit is gram", () => {
-    const label = formatInstructionIngredientBadge({
-      rawAmount: 80,
-      rawAmountInGrams: 80,
-      displayAmount: "80",
-      displayUnitName: "g",
-      ingredientName: "rice",
-      additionalInfo: null,
-    });
-
-    expect(label).toBe("80 g rice");
+    expect(label).toBe("garlic powder · 0.4 tsp");
   });
 
   it("hides piece/pieces unit token in badges", () => {
     const label = formatInstructionIngredientBadge({
       rawAmount: 6,
-      rawAmountInGrams: 600,
       displayAmount: "6",
       displayUnitName: "piece",
       displayUnitNamePlural: "pieces",
@@ -408,20 +403,19 @@ describe("formatInstructionIngredientBadge", () => {
       additionalInfo: null,
     });
 
-    expect(label).toBe("6 (600g) egg (L)");
+    expect(label).toBe("egg (L) · 6");
   });
 
-  it("shows less-than floor for tiny gram parenthetical", () => {
+  it("shows user additional info before amount", () => {
     const label = formatInstructionIngredientBadge({
       rawAmount: 0.4,
-      rawAmountInGrams: 0.04,
       displayAmount: "0.4",
       displayUnitName: "tsp",
       ingredientName: "chili powder",
-      additionalInfo: null,
+      additionalInfo: "finely ground",
     });
 
-    expect(label).toBe("0.4 tsp (<0.1g) chili powder");
+    expect(label).toBe("chili powder · finely ground · 0.4 tsp");
   });
 });
 

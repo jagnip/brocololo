@@ -282,18 +282,26 @@ export function recipeToFormData(recipe: RecipeType): UpdateRecipeFormValues {
   };
 }
 
-export function formatInstructionIngredientBadge(input: {
+export type InstructionIngredientBadgeParts = {
+  ingredientName: string;
+  amountUnit: string | null;
+  additionalInfo: string | null;
+};
+
+type InstructionIngredientBadgeInput = {
   rawAmount: number | null;
-  rawAmountInGrams?: number | null;
   displayAmount: string | null;
   displayUnitName: string;
   displayUnitNamePlural?: string | null;
   ingredientName: string;
   additionalInfo?: string | null;
-}): string {
+};
+
+export function getInstructionIngredientBadgeParts(
+  input: InstructionIngredientBadgeInput,
+): InstructionIngredientBadgeParts {
   const {
     rawAmount,
-    rawAmountInGrams,
     displayAmount,
     displayUnitName,
     displayUnitNamePlural,
@@ -301,11 +309,15 @@ export function formatInstructionIngredientBadge(input: {
     additionalInfo,
   } = input;
 
+  const normalizedAdditionalInfo = additionalInfo?.trim() || null;
+  const sentenceCaseName = toSentenceCaseIngredientName(ingredientName);
+
   if (rawAmount == null || displayAmount == null) {
-    return formatIngredientLabel({
-      ingredientName: toSentenceCaseIngredientName(ingredientName),
-      additionalInfo,
-    });
+    return {
+      ingredientName: sentenceCaseName,
+      amountUnit: null,
+      additionalInfo: normalizedAdditionalInfo,
+    };
   }
 
   const amountText =
@@ -320,23 +332,41 @@ export function formatInstructionIngredientBadge(input: {
     unitNamePlural: displayUnitNamePlural ?? null,
   });
   const shouldHideUnit = isPieceUnit(resolvedUnitName);
-  const shouldShowGrams =
-    rawAmountInGrams != null && !isGramUnit(resolvedUnitName);
-  const gramsText = shouldShowGrams
-    ? rawAmountInGrams > 0 && rawAmountInGrams < 0.1
-      ? "<0.1g"
-      : `${formatIngredientAmount(rawAmountInGrams, 2)}g`
-    : null;
 
-  const base = [
-    amountText,
-    shouldHideUnit ? null : resolvedUnitName,
-    gramsText ? `(${gramsText})` : null,
-    toSentenceCaseIngredientName(ingredientName),
-  ]
+  const amountUnit = [amountText, shouldHideUnit ? null : resolvedUnitName]
     .filter((token): token is string => Boolean(token))
     .join(" ");
-  return additionalInfo ? `${base} (${additionalInfo})` : base;
+
+  return {
+    ingredientName: sentenceCaseName,
+    amountUnit: amountUnit.length > 0 ? amountUnit : null,
+    additionalInfo: normalizedAdditionalInfo,
+  };
+}
+
+/** Muted badge tails: user additional info first, then amount/unit. */
+export function getInstructionIngredientBadgeTailSegments(
+  parts: InstructionIngredientBadgeParts,
+): string[] {
+  const segments: string[] = [];
+
+  if (parts.additionalInfo) {
+    segments.push(parts.additionalInfo);
+  }
+  if (parts.amountUnit) {
+    segments.push(parts.amountUnit);
+  }
+
+  return segments;
+}
+
+export function formatInstructionIngredientBadge(
+  input: InstructionIngredientBadgeInput,
+): string {
+  const parts = getInstructionIngredientBadgeParts(input);
+  return [parts.ingredientName, ...getInstructionIngredientBadgeTailSegments(parts)].join(
+    " · ",
+  );
 }
 
 export type NutritionPerPortion = {

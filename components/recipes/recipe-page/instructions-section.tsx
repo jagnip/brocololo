@@ -3,11 +3,10 @@ import { Button } from "@/components/ui/button";
 import { parseMarkdownLinks } from "@/lib/recipes/text-formatting";
 import { useState } from "react";
 import {
-  formatIngredientAmount,
-  formatInstructionIngredientBadge,
   getIngredientDisplay,
   getInstructionIngredientBadgeAmount,
-  isGramUnit,
+  getInstructionIngredientBadgeParts,
+  getInstructionIngredientBadgeTailSegments,
   isInstructionIngredientVisibleForPerson,
 } from "@/lib/recipes/helpers";
 import { useRecipePageInstructionsSectionData } from "@/components/context/recipe-page-context";
@@ -212,13 +211,11 @@ export function InstructionsSection() {
                       : {
                           displayAmount: null,
                           rawAmount: null,
-                          rawAmountInGrams: null,
                           displayUnitName: "",
                           displayUnitNamePlural: null,
                         };
-                    const fullBadgeLabel = formatInstructionIngredientBadge({
+                    const badgeParts = getInstructionIngredientBadgeParts({
                       rawAmount: display.rawAmount,
-                      rawAmountInGrams: display.rawAmountInGrams,
                       displayAmount: display.displayAmount,
                       displayUnitName: display.displayUnitName,
                       displayUnitNamePlural: display.displayUnitNamePlural,
@@ -226,29 +223,6 @@ export function InstructionsSection() {
                       ingredientName: recipeIngredient.ingredient.name,
                       additionalInfo: recipeIngredient.additionalInfo,
                     });
-                    const shouldShowMutedGrams =
-                      hasAmount &&
-                      display.rawAmountInGrams != null &&
-                      !isGramUnit(display.displayUnitName);
-                    // Narrow nullable grams value once to satisfy strict TS checks.
-                    const gramsValue = shouldShowMutedGrams
-                      ? display.rawAmountInGrams
-                      : null;
-                    const compactGramsText =
-                      gramsValue == null
-                        ? null
-                        : gramsValue > 0 && gramsValue < 0.1
-                          ? "<0.1g"
-                          : `${formatIngredientAmount(gramsValue, 2)}g`;
-                    // Keep existing amount/unit/name formatting and split grams into a muted tail.
-                    const baseBadgeLabel =
-                      shouldShowMutedGrams && compactGramsText
-                        ? fullBadgeLabel.replace(` (${compactGramsText})`, "")
-                        : fullBadgeLabel;
-                    const mutedGramsLabel =
-                      shouldShowMutedGrams && compactGramsText
-                        ? `· ${compactGramsText.replace(/g$/, " g")}`
-                        : null;
 
                     return (
                       <Badge
@@ -257,11 +231,17 @@ export function InstructionsSection() {
                         // Make badges more prominent inside the selected step.
                         className={isSelected ? "bg-background border-foreground/20" : undefined}
                       >
-                        <span>{baseBadgeLabel}</span>
-                        {mutedGramsLabel ? (
-                          // Same hue as badge label; opacity only (not muted-foreground gray).
-                          <span className="opacity-75">{mutedGramsLabel}</span>
-                        ) : null}
+                        <span>{badgeParts.ingredientName}</span>
+                        {getInstructionIngredientBadgeTailSegments(badgeParts).map(
+                          (segment, index) => (
+                            <span
+                              key={`${segment}-${index}`}
+                              className="opacity-75"
+                            >
+                              {` · ${segment}`}
+                            </span>
+                          ),
+                        )}
                       </Badge>
                     );
                   })}
