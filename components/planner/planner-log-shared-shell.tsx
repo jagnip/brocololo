@@ -185,7 +185,7 @@ export function PlannerLogSharedShell({
   }, [isDeleting, resetPlanTopbarState, setPlanTopbarState]);
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       <GroceryMealSelectionDialog
         open={isMealSelectionOpen}
         meals={mealOptions}
@@ -278,32 +278,31 @@ export function PlannerLogSharedShell({
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-center gap-2 whitespace-nowrap">
-            <div className="flex min-w-0 items-center gap-2">
-              <Label className="shrink-0 text-xs text-muted-foreground">Plan</Label>
-              <PlanSelect plans={planOptions} currentPlanId={planId} />
-            </div>
-            <Tabs
-              value={displayedTab}
-              onValueChange={(value) => {
-                if (value === "plan" || value === "log") {
-                  setOptimisticTab(value);
-                  startTabTransition(() => {
-                    setTab(value);
-                  });
-                }
-              }}
-              className="w-fit shrink-0"
-            >
-              <TabsList>
-                <TabsTrigger value="plan">Manage</TabsTrigger>
-                <TabsTrigger value="log">Track</TabsTrigger>
-              </TabsList>
-            </Tabs>
+      {/* Toolbar: flex-wrap so plan/tabs/date/actions never force horizontal scroll. */}
+      <div className="flex min-w-0 flex-col gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <Label className="shrink-0 text-xs text-muted-foreground">Plan</Label>
+            <PlanSelect plans={planOptions} currentPlanId={planId} />
           </div>
-          <div className="flex w-full items-center gap-2 sm:w-auto sm:min-w-[20rem] sm:max-w-md lg:min-w-[24rem] lg:max-w-lg">
+          <Tabs
+            value={displayedTab}
+            onValueChange={(value) => {
+              if (value === "plan" || value === "log") {
+                setOptimisticTab(value);
+                startTabTransition(() => {
+                  setTab(value);
+                });
+              }
+            }}
+            className="w-fit shrink-0"
+          >
+            <TabsList className="h-10 gap-[2px] shadow-xs">
+              <TabsTrigger value="plan">Manage</TabsTrigger>
+              <TabsTrigger value="log">Track</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <div className="flex min-w-0 flex-1 items-center gap-2 basis-full sm:basis-auto sm:min-w-48 sm:max-w-md lg:max-w-lg">
             <Label className="shrink-0 text-xs text-muted-foreground">
               Date range
             </Label>
@@ -313,11 +312,13 @@ export function PlannerLogSharedShell({
               compact
               className="min-w-0 flex-1"
             />
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
             <Button
               type="button"
               variant="outline"
               size="default"
-              className="shrink-0 gap-2"
+              className="gap-2"
               disabled={isGeneratingGroceries || isDeleting || isLoadingMeals}
               aria-busy={isGeneratingGroceries || isLoadingMeals}
               onClick={openMealSelectionDialog}

@@ -37,7 +37,7 @@ export function LogSlots({
           // Fills grid row height so empty columns match taller sibling slots (see LogSlot h-full chain).
           "flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed p-0 py-0 shadow-none transition-colors",
           isEmptyEditorActive
-            ? "border-foreground bg-muted/60"
+            ? "border-primary bg-accent/50"
             : "border-border bg-card",
         )}
       >

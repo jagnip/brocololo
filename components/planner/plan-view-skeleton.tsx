@@ -6,7 +6,7 @@ export function PlanViewSkeleton() {
       {Array.from({ length: 3 }).map((_, dayIndex) => (
         <article key={dayIndex} className="space-y-4">
           <Skeleton className="h-5 w-36 rounded-md" />
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+          <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }).map((_, slotIndex) => (
               <div
                 key={slotIndex}

@@ -31,20 +31,20 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-sidebar-border">
-      <SidebarHeader className="flex h-full flex-col gap-4 p-4">
+      <SidebarHeader className="flex h-full flex-col gap-4 p-4 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-2 group-data-[collapsible=icon]:p-2">
         {/* NomNom-style logo block from mockup sidebar header */}
         <Link
           href={ROUTES.recipes}
           className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center"
         >
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-rose-lg">
-            <CookingPot className="size-5" />
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-rose-lg group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:shadow-xs">
+            <CookingPot className="size-5 group-data-[collapsible=icon]:size-4" />
           </div>
           <span className="type-h2 whitespace-nowrap text-card-foreground tracking-tight group-data-[collapsible=icon]:hidden">
             NomNom
           </span>
         </Link>
-        <SidebarMenu className="gap-1.5">
+        <SidebarMenu className="gap-1.5 group-data-[collapsible=icon]:items-center">
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isRecipes} tooltip="Recipes">
               <Link

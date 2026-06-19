@@ -59,6 +59,7 @@ import type { IngredientType } from "@/types/ingredient";
 import type { UnitType } from "@/types/unit";
 import { MESSAGES } from "@/lib/messages";
 import { ROUTES } from "@/lib/constants";
+import { toSentenceCaseIngredientName } from "@/lib/recipes/helpers";
 import {
   buildDefaultUnitOptions,
   getFallbackUnitIdFromUnitIds,
@@ -346,8 +347,7 @@ export default function IngredientForm({
         : isPageEditMode
           ? [
               { label: "Ingredients", href: ROUTES.ingredients },
-              { label: ingredient?.name ?? "Ingredient" },
-              { label: "Edit ingredient" },
+              { label: `Edit ${toSentenceCaseIngredientName(ingredient?.name ?? "ingredient")}` },
             ]
           : [],
       actions: [

@@ -79,7 +79,7 @@ export function PlanView({
   }
 
   return (
-    <section className="space-y-8">
+    <section className="min-w-0 space-y-8">
       {sortedDates.map((dateKey) => {
         const { date, breakfast, lunch, dinner } = getMealsForDate(
           slotsByDate,
@@ -87,9 +87,9 @@ export function PlanView({
         );
 
         return (
-          <article key={dateKey} className="space-y-4">
+          <article key={dateKey} className="min-w-0 space-y-4">
             <Subheader>{formatDayLabel(date)}</Subheader>
-            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+            <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {breakfast && (
                 <div>
                   {renderSlot(breakfast)}

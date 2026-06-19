@@ -54,7 +54,7 @@ export function LogRecipeCard({
         // Scope hover/focus interactions (like remove icon reveal) to this specific card.
         "group/row",
         hasActions && "relative",
-        isSelected ? "border-foreground bg-muted/60" : "border-border bg-card",
+        isSelected ? "border-primary bg-accent/50" : "border-border bg-card",
         onClick && !isSelected && "cursor-pointer hover:bg-muted/40",
         onClick && isSelected && "cursor-pointer",
       )}
@@ -168,7 +168,7 @@ export function LogRecipeCard({
             variant="outline"
             className={cn(
               "px-1 py-0 text-[10px] tabular-nums",
-              isSelected && "border-foreground/20 bg-background",
+              isSelected && "border-primary/20 bg-background",
             )}
           >
             {calories.toFixed(0)} kcal
@@ -177,7 +177,7 @@ export function LogRecipeCard({
             variant="outline"
             className={cn(
               "px-1 py-0 text-[10px] tabular-nums",
-              isSelected && "border-foreground/20 bg-background",
+              isSelected && "border-primary/20 bg-background",
             )}
           >
             {proteins.toFixed(1)}g protein
@@ -186,7 +186,7 @@ export function LogRecipeCard({
             variant="outline"
             className={cn(
               "px-1 py-0 text-[10px] tabular-nums",
-              isSelected && "border-foreground/20 bg-background",
+              isSelected && "border-primary/20 bg-background",
             )}
           >
             {fats.toFixed(1)}g fat
@@ -195,7 +195,7 @@ export function LogRecipeCard({
             variant="outline"
             className={cn(
               "px-1 py-0 text-[10px] tabular-nums",
-              isSelected && "border-foreground/20 bg-background",
+              isSelected && "border-primary/20 bg-background",
             )}
           >
             {carbs.toFixed(1)}g carbs
