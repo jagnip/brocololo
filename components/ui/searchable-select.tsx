@@ -299,27 +299,28 @@ export function SearchableSelect({
                     setOpen(false);
                   }}
                 >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      renderLabel ? "mt-0.5" : undefined,
-                      option.value === value ? "opacity-100" : "opacity-0",
-                    )}
-                  />
                   {renderIcon ? (
-                    <span className={cn("mr-2 shrink-0", renderLabel && "mt-0.5")}>
+                    <span className={cn("shrink-0", renderLabel && "mt-0.5")}>
                       {renderIcon(option)}
                     </span>
                   ) : null}
                   <span
                     className={cn(
-                      renderLabel ? "min-w-0 flex-1 text-left" : "truncate",
+                      renderLabel ? "min-w-0 flex-1 text-left" : "min-w-0 flex-1 truncate",
                     )}
                   >
                     {renderLabel?.(option) ?? (
                       <DefaultSearchableSelectLabel option={option} />
                     )}
                   </span>
+                  {/* Match SelectItem: selected tick on the right. */}
+                  <Check
+                    className={cn(
+                      "h-4 w-4 shrink-0",
+                      renderLabel ? "mt-0.5" : undefined,
+                      option.value === value ? "opacity-100" : "opacity-0",
+                    )}
+                  />
                 </CommandItem>
               ))}
             </CommandGroup>
