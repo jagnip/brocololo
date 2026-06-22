@@ -108,6 +108,17 @@ export function toSentenceCaseIngredientName(name: string): string {
   return `${name.charAt(0).toLowerCase()}${name.slice(1)}`;
 }
 
+/**
+ * Capitalizes the first letter of ingredient names for instruction badges.
+ * Examples: "egg" -> "Egg", "Egg (L)" stays unchanged, "BBQ sauce" stays unchanged.
+ */
+export function toCapitalizedIngredientName(name: string): string {
+  if (!/^[a-z]/.test(name)) {
+    return name;
+  }
+  return `${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+}
+
 function normalizeUnitToken(unitName: string | null | undefined): string {
   return (unitName ?? "").trim().toLowerCase();
 }
@@ -310,11 +321,12 @@ export function getInstructionIngredientBadgeParts(
   } = input;
 
   const normalizedAdditionalInfo = additionalInfo?.trim() || null;
-  const sentenceCaseName = toSentenceCaseIngredientName(ingredientName);
+  // Instruction badges show a capitalized ingredient name; tails stay as entered.
+  const capitalizedName = toCapitalizedIngredientName(ingredientName);
 
   if (rawAmount == null || displayAmount == null) {
     return {
-      ingredientName: sentenceCaseName,
+      ingredientName: capitalizedName,
       amountUnit: null,
       additionalInfo: normalizedAdditionalInfo,
     };
@@ -338,7 +350,7 @@ export function getInstructionIngredientBadgeParts(
     .join(" ");
 
   return {
-    ingredientName: sentenceCaseName,
+    ingredientName: capitalizedName,
     amountUnit: amountUnit.length > 0 ? amountUnit : null,
     additionalInfo: normalizedAdditionalInfo,
   };

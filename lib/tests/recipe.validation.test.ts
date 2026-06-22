@@ -341,7 +341,7 @@ describe("formatInstructionIngredientBadge", () => {
       additionalInfo: null,
     });
 
-    expect(label).toBe("salt · <0.1 g");
+    expect(label).toBe("Salt · <0.1 g");
   });
 
   it("shows ingredient name only when amount is null", () => {
@@ -353,7 +353,7 @@ describe("formatInstructionIngredientBadge", () => {
       additionalInfo: "to taste",
     });
 
-    expect(label).toBe("salt · to taste");
+    expect(label).toBe("Salt · to taste");
   });
 
   it("shows amount and additional info with mid dots", () => {
@@ -366,7 +366,7 @@ describe("formatInstructionIngredientBadge", () => {
       additionalInfo: "well baked",
     });
 
-    expect(label).toBe("bread · well baked · 1 slice");
+    expect(label).toBe("Bread · well baked · 1 slice");
   });
 
   it("omits trailing .0 for whole numbers", () => {
@@ -378,7 +378,7 @@ describe("formatInstructionIngredientBadge", () => {
       additionalInfo: null,
     });
 
-    expect(label).toBe("carrot · 50 g");
+    expect(label).toBe("Carrot · 50 g");
   });
 
   it("shows selected unit only for non-gram units", () => {
@@ -390,7 +390,7 @@ describe("formatInstructionIngredientBadge", () => {
       additionalInfo: null,
     });
 
-    expect(label).toBe("garlic powder · 0.4 tsp");
+    expect(label).toBe("Garlic powder · 0.4 tsp");
   });
 
   it("hides piece/pieces unit token in badges", () => {
@@ -403,7 +403,7 @@ describe("formatInstructionIngredientBadge", () => {
       additionalInfo: null,
     });
 
-    expect(label).toBe("egg (L) · 6");
+    expect(label).toBe("Egg (L) · 6");
   });
 
   it("shows user additional info before amount", () => {
@@ -415,7 +415,7 @@ describe("formatInstructionIngredientBadge", () => {
       additionalInfo: "finely ground",
     });
 
-    expect(label).toBe("chili powder · finely ground · 0.4 tsp");
+    expect(label).toBe("Chili powder · finely ground · 0.4 tsp");
   });
 });
 
