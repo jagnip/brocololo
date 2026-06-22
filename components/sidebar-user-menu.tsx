@@ -64,7 +64,7 @@ export function SidebarUserMenu() {
             <button
               type="button"
               className={cn(
-                "flex w-full items-center gap-2 overflow-hidden rounded-md px-2 py-2.5 text-left text-sm font-medium text-muted-foreground outline-hidden ring-sidebar-ring transition-[width,height,padding,colors] hover:bg-muted hover:text-primary focus-visible:ring-2",
+                "group flex w-full items-center gap-2 overflow-hidden rounded-md px-2 py-2.5 text-left text-sm font-medium text-muted-foreground outline-hidden ring-sidebar-ring transition-[width,height,padding,colors] hover:bg-muted hover:text-primary focus-visible:ring-2",
                 "group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:p-2",
               )}
               aria-label={`Account menu for ${email}`}
@@ -73,7 +73,7 @@ export function SidebarUserMenu() {
                 <AvatarImage src={user.imageUrl} alt="" />
                 <AvatarFallback>{getUserInitials(user)}</AvatarFallback>
               </Avatar>
-              <span className="min-w-0 flex-1 truncate group-data-[collapsible=icon]:hidden">
+              <span className="min-w-0 flex-1 truncate underline-offset-2 group-hover:underline group-data-[collapsible=icon]:hidden">
                 {email}
               </span>
             </button>

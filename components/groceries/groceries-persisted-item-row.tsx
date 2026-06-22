@@ -120,26 +120,13 @@ export function GroceriesPersistedItemRow({
             <IngredientIcon icon={ing?.icon ?? null} name={row.displayLabel} />
           </div>
           <div className="min-w-0 space-y-1">
-            <div className="flex items-start gap-1">
-              <div
-                className={cn(
-                  "font-medium text-foreground",
-                  isPurchased && "text-muted-foreground line-through",
-                )}
-              >
-                {row.displayLabel}
-              </div>
-              {ing?.supermarketUrl ? (
-                <div
-                  className="self-start"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <IngredientSupermarketLinkButton
-                    href={ing.supermarketUrl}
-                    ingredientLabel={row.displayLabel}
-                  />
-                </div>
-              ) : null}
+            <div
+              className={cn(
+                "font-medium text-foreground",
+                isPurchased && "text-muted-foreground line-through",
+              )}
+            >
+              {row.displayLabel}
             </div>
             <div
               className={cn(
@@ -162,6 +149,17 @@ export function GroceriesPersistedItemRow({
                       {name}
                     </Badge>
                   ))}
+                </span>
+              ) : null}
+              {ing?.supermarketUrl ? (
+                <span
+                  className="inline-flex shrink-0"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <IngredientSupermarketLinkButton
+                    href={ing.supermarketUrl}
+                    ingredientLabel={row.displayLabel}
+                  />
                 </span>
               ) : null}
             </div>

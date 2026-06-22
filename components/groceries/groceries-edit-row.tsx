@@ -37,6 +37,7 @@ type GroceriesEditRowProps = {
   ingredientOptions: SearchableSelectOption[];
   renderIngredientDropdownLabel: (option: SearchableSelectOption) => React.ReactNode;
   renderIngredientTriggerLabel: (option: SearchableSelectOption) => React.ReactNode;
+  getSelectedIngredientOptionHref?: (option: SearchableSelectOption) => string | null | undefined;
   ingredientById: Map<string, GroceriesEditIngredientOption>;
   unitById: Map<string, GroceriesEditUnitOption>;
   onRowChange: (rowId: string, next: Partial<GroceriesEditableRow>) => void;
@@ -67,6 +68,7 @@ function GroceriesEditRowComponent({
   ingredientOptions,
   renderIngredientDropdownLabel,
   renderIngredientTriggerLabel,
+  getSelectedIngredientOptionHref,
   ingredientById,
   unitById,
   onRowChange,
@@ -185,6 +187,7 @@ function GroceriesEditRowComponent({
             options={resolvedIngredientOptions}
             renderLabel={renderIngredientDropdownLabel}
             renderTriggerLabel={renderIngredientTriggerLabel}
+            getSelectedOptionHref={getSelectedIngredientOptionHref}
             value={row.ingredientId ?? (row.displayLabel.trim() ? freeTextOptionValue : null)}
             onValueChange={(nextIngredientId) => {
               if (nextIngredientId === freeTextOptionValue) return;
@@ -346,6 +349,7 @@ function GroceriesEditRowComponent({
           options={resolvedIngredientOptions}
           renderLabel={renderIngredientDropdownLabel}
           renderTriggerLabel={renderIngredientTriggerLabel}
+          getSelectedOptionHref={getSelectedIngredientOptionHref}
           value={row.ingredientId ?? (row.displayLabel.trim() ? freeTextOptionValue : null)}
           onValueChange={(nextIngredientId) => {
             if (nextIngredientId === freeTextOptionValue) return;

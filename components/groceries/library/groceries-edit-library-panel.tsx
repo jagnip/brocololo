@@ -123,6 +123,7 @@ export function GroceriesEditLibraryPanel({
       ingredientsToSearchableSelectOptions(
         ingredients.map((ingredient) => ({
           id: ingredient.id,
+          slug: ingredient.slug,
           name: ingredient.name,
           brand: ingredient.brand,
           descriptor: ingredient.descriptor,
@@ -137,6 +138,7 @@ export function GroceriesEditLibraryPanel({
       buildIngredientSearchSourceMap(
         ingredients.map((ingredient) => ({
           id: ingredient.id,
+          slug: ingredient.slug,
           name: ingredient.name,
           brand: ingredient.brand,
           descriptor: ingredient.descriptor,
@@ -422,9 +424,9 @@ export function GroceriesEditLibraryPanel({
                         <li key={ingredient.id}>
                           <GroceriesEditLibraryRow
                             ingredientId={ingredient.id}
+                            ingredientSlug={ingredient.slug}
                             ingredientName={ingredient.name}
                             ingredientDescriptor={ingredient.descriptor}
-                            supermarketUrl={ingredient.supermarketUrl}
                             onAddToGroceries={onAddIngredientToGroceries}
                             onRemoveFromList={handleRemoveIngredientFromList}
                           />

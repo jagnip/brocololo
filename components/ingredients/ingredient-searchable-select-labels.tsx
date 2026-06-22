@@ -1,10 +1,12 @@
 "use client";
 
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
+import { IngredientNameLink } from "@/components/ingredients/ingredient-name-link";
 
 /** Minimal ingredient fields used by shared SearchableSelect label renderers. */
 export type IngredientSearchSelectSource = {
   id: string;
+  slug?: string;
   name: string;
   brand: string | null;
   descriptor?: string | null;
@@ -54,7 +56,13 @@ export function renderIngredientSearchDropdownLabel(
   const secondaryParts = metadataParts(ing);
   return (
     <span className="flex min-w-0 flex-col gap-0.5 text-left">
-      <span className="truncate font-normal text-foreground">{option.label}</span>
+      <IngredientNameLink
+        name={option.label}
+        slug={ing?.slug}
+        className="truncate font-normal text-foreground"
+        onClick={(event) => event.stopPropagation()}
+        onMouseDown={(event) => event.stopPropagation()}
+      />
       {secondaryParts.length > 0 ? (
         <span className="truncate text-xs leading-snug text-muted-foreground">
           {secondaryParts.join(" · ")}
@@ -73,7 +81,9 @@ export function renderIngredientSearchTriggerLabel(
   const descriptor = ing?.descriptor?.trim();
   return (
     <span className="flex min-w-0 max-w-full items-baseline gap-x-1.5 truncate text-left">
-      <span className="shrink-0 font-normal text-foreground">{option.label}</span>
+      <span className="shrink-0 font-normal text-foreground group-hover/trigger:underline group-focus-visible/trigger:underline underline-offset-2">
+        {option.label}
+      </span>
       {descriptor ? (
         <span className="min-w-0 truncate font-normal text-muted-foreground">
           · {descriptor}

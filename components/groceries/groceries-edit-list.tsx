@@ -40,6 +40,8 @@ import { Label } from "@/components/ui/label";
 import {
   buildIngredientSearchSourceMap,
   ingredientsToSearchableSelectOptions,
+  renderIngredientSearchDropdownLabel,
+  renderIngredientSearchTriggerLabel,
   type IngredientSearchSelectSource,
 } from "@/components/ingredients/ingredient-searchable-select-labels";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
@@ -175,6 +177,7 @@ export function GroceriesEditList({
       const bucket = sourcesByCategoryId.get(ingredient.category.id) ?? [];
       bucket.push({
         id: ingredient.id,
+        slug: ingredient.slug,
         name: ingredient.name,
         brand: ingredient.brand,
         descriptor: ingredient.descriptor,
@@ -195,6 +198,7 @@ export function GroceriesEditList({
       buildIngredientSearchSourceMap(
         ingredients.map((ingredient) => ({
           id: ingredient.id,
+          slug: ingredient.slug,
           name: ingredient.name,
           brand: ingredient.brand,
           descriptor: ingredient.descriptor,
@@ -204,36 +208,19 @@ export function GroceriesEditList({
     [ingredients],
   );
   const renderIngredientDropdownLabel = useCallback(
-    (option: SearchableSelectOption) => {
-      const ingredient = ingredientByIdForSelect.get(option.value);
-      const descriptor = ingredient?.descriptor?.trim();
-      return (
-        <span className="flex min-w-0 flex-col gap-0.5 text-left">
-          <span className="truncate font-normal text-foreground">{option.label}</span>
-          {descriptor ? (
-            <span className="truncate text-xs leading-snug text-muted-foreground">
-              {descriptor}
-            </span>
-          ) : null}
-        </span>
-      );
-    },
+    (option: SearchableSelectOption) =>
+      renderIngredientSearchDropdownLabel(option, ingredientByIdForSelect),
     [ingredientByIdForSelect],
   );
   const renderIngredientTriggerLabel = useCallback(
+    (option: SearchableSelectOption) =>
+      renderIngredientSearchTriggerLabel(option, ingredientByIdForSelect),
+    [ingredientByIdForSelect],
+  );
+  const getSelectedIngredientOptionHref = useCallback(
     (option: SearchableSelectOption) => {
       const ingredient = ingredientByIdForSelect.get(option.value);
-      const descriptor = ingredient?.descriptor?.trim();
-      return (
-        <span className="flex min-w-0 max-w-full items-baseline gap-x-1.5 truncate text-left">
-          <span className="shrink-0 font-normal text-foreground">{option.label}</span>
-          {descriptor ? (
-            <span className="min-w-0 truncate font-normal text-muted-foreground">
-              · {descriptor}
-            </span>
-          ) : null}
-        </span>
-      );
+      return ingredient?.slug ? ROUTES.ingredientEdit(ingredient.slug) : null;
     },
     [ingredientByIdForSelect],
   );
@@ -820,6 +807,7 @@ export function GroceriesEditList({
               ingredientOptionsByCategoryId={ingredientOptionsByCategoryId}
               renderIngredientDropdownLabel={renderIngredientDropdownLabel}
               renderIngredientTriggerLabel={renderIngredientTriggerLabel}
+              getSelectedIngredientOptionHref={getSelectedIngredientOptionHref}
               ingredientById={ingredientById}
               unitById={unitById}
               // Row updates are centralized here so section components stay stateless.

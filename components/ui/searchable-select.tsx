@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Check, ChevronsUpDown, X } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -39,6 +40,8 @@ type SearchableSelectProps = {
   renderLabel?: (option: SearchableSelectOption) => React.ReactNode;
   /** Closed trigger only; dropdown rows still use `renderLabel` (or default). Keeps compact one-line triggers. */
   renderTriggerLabel?: (option: SearchableSelectOption) => React.ReactNode;
+  /** When set for the selected option, the trigger label becomes a link (e.g. ingredient edit page). */
+  getSelectedOptionHref?: (option: SearchableSelectOption) => string | null | undefined;
   triggerIcon?: React.ReactNode;
   size?: "default" | "sm";
   className?: string;
@@ -136,6 +139,7 @@ export function SearchableSelect({
   renderIcon,
   renderLabel,
   renderTriggerLabel,
+  getSelectedOptionHref,
   triggerIcon,
   size = "default",
   className,
@@ -160,6 +164,46 @@ export function SearchableSelect({
       }),
   );
 
+  const selectedHref =
+    selectedOption && getSelectedOptionHref
+      ? getSelectedOptionHref(selectedOption)
+      : null;
+
+  const selectedTriggerLabel = selectedOption
+    ? renderTriggerLabel?.(selectedOption) ??
+      renderLabel?.(selectedOption) ?? (
+        <DefaultSearchableSelectLabel option={selectedOption} />
+      )
+    : placeholder;
+
+  const clearButton = showInlineClearButton ? (
+    <span
+      role="button"
+      aria-label={clearLabel}
+      className="inline-flex cursor-pointer items-center justify-center rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
+      onPointerDown={(event) => {
+        // Keep inline clear from toggling popover open/close.
+        event.preventDefault();
+        event.stopPropagation();
+      }}
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onValueChange(null);
+        setOpen(false);
+      }}
+    >
+      {/* Match clear icon sizing with the standard Select component. */}
+      <X className="size-3.5" />
+    </span>
+  ) : null;
+
+  const chevronButton = triggerIcon ?? (
+    <ChevronsUpDown className="h-4 w-4 text-muted-foreground opacity-50" />
+  );
+
+  const triggerSizeClass = size === "sm" ? "min-h-8 text-sm" : "min-h-9 text-sm";
+
   React.useEffect(() => {
     if (!open) {
       setSearchValue("");
@@ -182,79 +226,104 @@ export function SearchableSelect({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          // Mirror Input/Button API: allow a compact trigger via size="default".
-          size={size}
-          role="combobox"
-          aria-expanded={open}
-          disabled={disabled}
-          className={cn(
-            // Keep trigger horizontal padding aligned with Input/Select defaults.
-            "w-full justify-between px-3",
-            !selectedOption && "text-muted-foreground",
-            className,
-          )}
-        >
-          <span
+      {selectedHref ? (
+        <PopoverTrigger asChild>
+          <div
+            role="combobox"
+            aria-expanded={open}
             className={cn(
-              "inline-flex min-w-0 gap-2",
-              triggerUsesListStyleLabel ? "items-start" : "items-center",
+              "flex w-full min-w-0 items-stretch overflow-hidden rounded-md border border-input bg-card shadow-xs",
+              triggerSizeClass,
+              disabled && "cursor-not-allowed opacity-50",
+              className,
             )}
           >
-            {shouldRenderSearchableSelectIcon({
-              option: selectedOption,
-              hasRenderIcon: Boolean(renderIcon),
-            }) ? (
-              <span className="shrink-0">{renderIcon?.(selectedOption!)}</span>
-            ) : null}
+            <Link
+              href={selectedHref}
+              className={cn(
+                "group/trigger flex min-w-0 flex-1 items-center gap-2 px-3 py-2",
+                triggerUsesListStyleLabel ? "items-start" : "items-center",
+                disabled && "pointer-events-none",
+              )}
+              onClick={(event) => event.stopPropagation()}
+            >
+              {shouldRenderSearchableSelectIcon({
+                option: selectedOption,
+                hasRenderIcon: Boolean(renderIcon),
+              }) ? (
+                <span className="shrink-0">{renderIcon?.(selectedOption!)}</span>
+              ) : null}
+              <span
+                className={cn(
+                  triggerUsesListStyleLabel
+                    ? "min-w-0 flex-1 text-left"
+                    : "min-w-0 truncate",
+                )}
+              >
+                {selectedTriggerLabel}
+              </span>
+            </Link>
+            <div className="flex shrink-0 items-center gap-1 border-l border-input px-2">
+              {clearButton}
+              <button
+                type="button"
+                disabled={disabled}
+                aria-label="Open options"
+                className="inline-flex items-center justify-center rounded-sm text-muted-foreground hover:text-foreground disabled:pointer-events-none"
+                onClick={() => setOpen((current) => !current)}
+              >
+                {chevronButton}
+              </button>
+            </div>
+          </div>
+        </PopoverTrigger>
+      ) : (
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            // Mirror Input/Button API: allow a compact trigger via size="default".
+            size={size}
+            role="combobox"
+            aria-expanded={open}
+            disabled={disabled}
+            className={cn(
+              // Keep trigger horizontal padding aligned with Input/Select defaults.
+              "w-full justify-between px-3",
+              !selectedOption && "text-muted-foreground",
+              className,
+            )}
+          >
             <span
               className={cn(
-                triggerUsesListStyleLabel
-                  ? "min-w-0 flex-1 text-left"
-                  : "truncate",
-                !selectedOption && "font-normal",
+                "inline-flex min-w-0 gap-2",
+                triggerUsesListStyleLabel ? "items-start" : "items-center",
               )}
             >
-              {selectedOption
-                ? renderTriggerLabel?.(selectedOption) ??
-                  renderLabel?.(selectedOption) ?? (
-                    <DefaultSearchableSelectLabel option={selectedOption} />
-                  )
-                : placeholder}
-            </span>
-          </span>
-          <span className="ml-2 inline-flex items-center gap-1 shrink-0">
-            {showInlineClearButton ? (
+              {shouldRenderSearchableSelectIcon({
+                option: selectedOption,
+                hasRenderIcon: Boolean(renderIcon),
+              }) ? (
+                <span className="shrink-0">{renderIcon?.(selectedOption!)}</span>
+              ) : null}
               <span
-                role="button"
-                aria-label={clearLabel}
-                className="inline-flex cursor-pointer items-center justify-center rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
-                onPointerDown={(event) => {
-                  // Keep inline clear from toggling popover open/close.
-                  event.preventDefault();
-                  event.stopPropagation();
-                }}
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onValueChange(null);
-                  setOpen(false);
-                }}
+                className={cn(
+                  triggerUsesListStyleLabel
+                    ? "min-w-0 flex-1 text-left"
+                    : "truncate",
+                  !selectedOption && "font-normal",
+                )}
               >
-                {/* Match clear icon sizing with the standard Select component. */}
-                <X className="size-3.5" />
+                {selectedTriggerLabel}
               </span>
-            ) : null}
-            {/* Match icon tone with standard Select trigger affordance. */}
-            {triggerIcon ?? (
-              <ChevronsUpDown className="h-4 w-4 text-muted-foreground opacity-50" />
-            )}
-          </span>
-        </Button>
-      </PopoverTrigger>
+            </span>
+            <span className="ml-2 inline-flex shrink-0 items-center gap-1">
+              {clearButton}
+              {chevronButton}
+            </span>
+          </Button>
+        </PopoverTrigger>
+      )}
 
       <PopoverContent
         ref={popoverContentRef}
