@@ -1,8 +1,8 @@
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
-  SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
@@ -12,46 +12,37 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function AppSidebarSkeleton() {
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <SidebarMenu className="gap-1.5">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <SidebarMenuItem key={`primary-${index}`}>
-              {/* Keep top-level nav placeholders stable to reduce sidebar shift. */}
-              {/* Match SidebarMenuButton default size (h-9 / 36px). */}
-              <div className="flex h-9 items-center gap-2 rounded-md px-2 py-2.5">
-                <Skeleton className="h-4 w-4 rounded-sm" />
-                <Skeleton
-                  className="h-4 rounded-sm"
-                  style={{ width: `${Math.max(56, 84 - index * 8)}%` }}
-                />
-              </div>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
+      <SidebarHeader className="gap-4 p-4 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-2 group-data-[collapsible=icon]:p-2">
+        <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
+          <Skeleton className="size-10 shrink-0 rounded-md group-data-[collapsible=icon]:size-8" />
+          <Skeleton className="h-6 w-20 rounded-sm group-data-[collapsible=icon]:hidden" />
+        </div>
       </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {Array.from({ length: 6 }).map((_, index) => (
-                <SidebarMenuItem key={`group-${index}`}>
-                  {/* Match SidebarMenuButton default size (h-9 / 36px). */}
-              <div className="flex h-9 items-center gap-2 rounded-md px-2 py-2.5">
-                    {index % 2 === 0 ? (
-                      <Skeleton className="h-4 w-4 rounded-sm" />
-                    ) : null}
-                    <Skeleton
-                      className="h-4 rounded-sm"
-                      style={{ width: `${58 + (index % 3) * 12}%` }}
-                    />
-                  </div>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
+      <SidebarContent className="group-data-[collapsible=icon]:items-center">
+        <SidebarGroup className="p-4 pt-0 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:p-2">
+          <SidebarMenu className="gap-1.5 group-data-[collapsible=icon]:items-center">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <SidebarMenuItem key={`primary-${index}`}>
+                <div className="flex h-9 items-center gap-2 rounded-md px-2 py-2.5 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2">
+                  <Skeleton className="size-4 shrink-0 rounded-sm" />
+                  <Skeleton
+                    className="h-4 rounded-sm group-data-[collapsible=icon]:hidden"
+                    style={{ width: `${Math.max(56, 84 - index * 8)}%` }}
+                  />
+                </div>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter className="p-4 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:p-2">
+        <div className="flex w-full items-center gap-2 rounded-md px-2 py-2.5 group-data-[collapsible=icon]:justify-center">
+          <Skeleton className="size-8 shrink-0 rounded-full" />
+          <Skeleton className="h-4 flex-1 rounded-sm group-data-[collapsible=icon]:hidden" />
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }

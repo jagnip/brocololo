@@ -9,8 +9,12 @@ import {
   Apple,
   Settings,
 } from "lucide-react";
+import { SidebarUserMenu } from "@/components/sidebar-user-menu";
 import {
   Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -31,7 +35,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-sidebar-border">
-      <SidebarHeader className="flex h-full flex-col gap-4 p-4 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-2 group-data-[collapsible=icon]:p-2">
+      <SidebarHeader className="gap-4 p-4 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-2 group-data-[collapsible=icon]:p-2">
         {/* NomNom-style logo block from mockup sidebar header */}
         <Link
           href={ROUTES.recipes}
@@ -44,91 +48,100 @@ export function AppSidebar() {
             NomNom
           </span>
         </Link>
-        <SidebarMenu className="gap-1.5 group-data-[collapsible=icon]:items-center">
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isRecipes} tooltip="Recipes">
-              <Link
-                href={ROUTES.recipes}
-                onClick={() => {
-                  if (!isMobile) return;
-                  setOpenMobile(false);
-                }}
-              >
-                <CookingPot />
-                <span>Recipes</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={isProgram} tooltip="Meal plan">
-              <Link
-                href={`${ROUTES.planCurrent}?tab=plan`}
-                onClick={() => {
-                  if (!isMobile) return;
-                  setOpenMobile(false);
-                }}
-              >
-                <UtensilsCrossed />
-                <span>Meal plan</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={isIngredients}
-              tooltip="Ingredients"
-            >
-              <Link
-                href={ROUTES.ingredients}
-                onClick={() => {
-                  if (!isMobile) return;
-                  setOpenMobile(false);
-                }}
-              >
-                <Apple />
-                <span>Ingredients</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={isGroceries}
-              tooltip="Groceries"
-            >
-              <Link
-                href={ROUTES.groceriesCurrent}
-                onClick={() => {
-                  if (!isMobile) return;
-                  setOpenMobile(false);
-                }}
-              >
-                <ShoppingCart />
-                <span>Groceries</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={isSettings}
-              tooltip="Settings"
-            >
-              <Link
-                href={ROUTES.settings}
-                onClick={() => {
-                  if (!isMobile) return;
-                  setOpenMobile(false);
-                }}
-              >
-                <Settings />
-                <span>Settings</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
       </SidebarHeader>
+
+      <SidebarContent className="group-data-[collapsible=icon]:items-center">
+        <SidebarGroup className="p-4 pt-0 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:p-2">
+          <SidebarMenu className="gap-1.5 group-data-[collapsible=icon]:items-center">
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={isRecipes} tooltip="Recipes">
+                <Link
+                  href={ROUTES.recipes}
+                  onClick={() => {
+                    if (!isMobile) return;
+                    setOpenMobile(false);
+                  }}
+                >
+                  <CookingPot />
+                  <span>Recipes</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={isProgram} tooltip="Meal plan">
+                <Link
+                  href={`${ROUTES.planCurrent}?tab=plan`}
+                  onClick={() => {
+                    if (!isMobile) return;
+                    setOpenMobile(false);
+                  }}
+                >
+                  <UtensilsCrossed />
+                  <span>Meal plan</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={isIngredients}
+                tooltip="Ingredients"
+              >
+                <Link
+                  href={ROUTES.ingredients}
+                  onClick={() => {
+                    if (!isMobile) return;
+                    setOpenMobile(false);
+                  }}
+                >
+                  <Apple />
+                  <span>Ingredients</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={isGroceries}
+                tooltip="Groceries"
+              >
+                <Link
+                  href={ROUTES.groceriesCurrent}
+                  onClick={() => {
+                    if (!isMobile) return;
+                    setOpenMobile(false);
+                  }}
+                >
+                  <ShoppingCart />
+                  <span>Groceries</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={isSettings}
+                tooltip="Settings"
+              >
+                <Link
+                  href={ROUTES.settings}
+                  onClick={() => {
+                    if (!isMobile) return;
+                    setOpenMobile(false);
+                  }}
+                >
+                  <Settings />
+                  <span>Settings</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter className="p-4 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:p-2">
+        <SidebarUserMenu />
+      </SidebarFooter>
     </Sidebar>
   );
 }
