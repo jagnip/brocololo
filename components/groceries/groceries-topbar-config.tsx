@@ -4,20 +4,23 @@ import { useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { GroceriesShareDialog } from "@/components/groceries/groceries-share-dialog";
 import { TopbarConfigController } from "@/components/topbar-config";
+import type { BreadcrumbSelectOption } from "@/components/ui/breadcrumb-select";
 import { ROUTES } from "@/lib/constants";
 
 type GroceriesTopbarConfigProps = {
   planId: string;
   /** Same label as plan switcher / groceries list (e.g. "Jan 3 - Jan 9"). */
   planDateRangeLabel: string;
+  planOptions: BreadcrumbSelectOption[];
   /** True when the persisted list exists and has at least one item (matches prior “Edit groceries” gate). */
   canEdit: boolean;
 };
 
-/** Registers groceries top bar: plan switcher + “Edit groceries” on the view route when allowed. */
+/** Registers groceries top bar: plan switcher on view breadcrumb + actions when allowed. */
 export function GroceriesTopbarConfig({
   planId,
   planDateRangeLabel,
+  planOptions,
   canEdit,
 }: GroceriesTopbarConfigProps) {
   const pathname = usePathname();
@@ -57,14 +60,21 @@ export function GroceriesTopbarConfig({
         ]
       : [
           { label: "Groceries", href: ROUTES.groceriesCurrent },
-          { label: planDateRangeLabel },
+          {
+            label: planDateRangeLabel,
+            select: {
+              kind: "groceries" as const,
+              options: planOptions,
+              currentId: planId,
+            },
+          },
         ];
 
     return {
       breadcrumbs,
       actions,
     };
-  }, [canEdit, isEditRoute, planDateRangeLabel, planId]);
+  }, [canEdit, isEditRoute, planDateRangeLabel, planId, planOptions]);
 
   return (
     <>

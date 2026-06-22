@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import { ROUTES } from "@/lib/constants";
 
-export type PlanNavigationKind = "plan";
+export type PlanNavigationKind = "plan" | "groceries";
 
 type UsePlanNavigationParams = {
   currentPlanId: string;
@@ -15,6 +15,9 @@ function getPlanPath(nextPlanId: string, kind: PlanNavigationKind) {
   switch (kind) {
     case "plan":
       return ROUTES.planView(nextPlanId);
+    case "groceries":
+      // Groceries switcher is view-only; edit route never mounts the switcher.
+      return ROUTES.groceriesView(nextPlanId);
   }
 }
 
@@ -30,14 +33,16 @@ export function usePlanNavigation({
 
   const handleValueChange = (nextPlanId: string) => {
     if (nextPlanId === optimisticPlanId) return;
-    setOptimisticPlanId(nextPlanId);
 
     // Preserve existing query params (e.g. tab=log, person filters) while switching plan id.
     const params = new URLSearchParams(searchParams.toString());
     const query = params.toString();
     const nextPath = getPlanPath(nextPlanId, kind);
 
+    // Optimistic update must run inside the same transition as navigation, otherwise
+    // React briefly reverts to the previous plan id (visible blink in the breadcrumb).
     startTransition(() => {
+      setOptimisticPlanId(nextPlanId);
       router.push(query ? `${nextPath}?${query}` : nextPath);
     });
   };

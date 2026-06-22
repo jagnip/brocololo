@@ -98,8 +98,14 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
             const isMiddle = !isFirst && !isLast;
             const isOnly = resolvedItems.length === 1;
 
+            // Select crumbs use a stable key so the switcher isn't remounted when the
+            // date-range label updates after navigation (avoids losing optimistic state).
+            const itemKey = item.select
+              ? `breadcrumb-select-${item.select.kind}-${index}`
+              : `${item.label}-${index}`;
+
             return (
-              <Fragment key={`${item.label}-${index}`}>
+              <Fragment key={itemKey}>
                 <BreadcrumbItem
                   className={cn(
                     "min-w-0",

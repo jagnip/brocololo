@@ -3,6 +3,7 @@ import { GroceriesTopbarConfig } from "@/components/groceries/groceries-topbar-c
 import { getPlansCached } from "@/lib/db/planner";
 import { getShoppingListByPlanId } from "@/lib/db/shopping-list";
 import { formatDateRangeLabel } from "@/lib/format-date-range-label";
+import { mapPlansToSwitcherOptions } from "@/lib/planner/plan-switcher-options";
 import { requireUser } from "@/lib/auth/session";
 
 /** Server entry from `app/groceries/[planId]/layout.tsx` so the top bar persists across plan switches. */
@@ -20,10 +21,13 @@ export async function GroceriesTopbar({ planId }: { planId: string }) {
     new Date(current.endDate),
   );
 
+  const planOptions = mapPlansToSwitcherOptions(plans);
+
   return (
     <GroceriesTopbarConfig
       planId={planId}
       planDateRangeLabel={planDateRangeLabel}
+      planOptions={planOptions}
       canEdit={canEdit}
     />
   );

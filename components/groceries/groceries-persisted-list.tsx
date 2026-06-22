@@ -2,10 +2,6 @@
 
 import { useState } from "react";
 import type { getShoppingListById } from "@/lib/db/shopping-list";
-import {
-  GroceriesPlanSelect,
-  type GroceriesPlanSelectOption,
-} from "@/components/groceries/groceries-plan-select";
 import { GroceriesPersistedItemRow } from "@/components/groceries/groceries-persisted-item-row";
 import { GroceriesViewLayoutControls } from "@/components/groceries/groceries-view-layout-controls";
 import { Label } from "@/components/ui/label";
@@ -17,13 +13,9 @@ export type GroceriesPersistedListModel = NonNullable<
 /** Read-only groceries list from persisted `ShoppingList` rows (grouped by ingredient category). */
 export function GroceriesPersistedList({
   list,
-  planOptions,
-  currentPlanId,
   shareToken,
 }: {
   list: GroceriesPersistedListModel;
-  planOptions?: GroceriesPlanSelectOption[];
-  currentPlanId?: string;
   shareToken?: string;
 }) {
   const [isLayoutPending, setIsLayoutPending] = useState(false);
@@ -42,18 +34,8 @@ export function GroceriesPersistedList({
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        {/* Replace the left-side title with the plan selector in page content. */}
-        {!shareToken && planOptions && currentPlanId ? (
-          <div className="flex min-w-0 items-center gap-2">
-            <Label className="shrink-0 text-xs text-muted-foreground">Groceries for</Label>
-            <GroceriesPlanSelect plans={planOptions} currentPlanId={currentPlanId} />
-          </div>
-        ) : (
-          <div className="min-w-0 flex-1" />
-        )}
-        {/* Header-right control mirrors planner/date-range composition:
-            inline label on the left, selector on the right. */}
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-end">
+        {/* Plan switcher lives in the top bar breadcrumb; layout controls stay in-page. */}
         <div className="flex items-center gap-2 sm:min-w-[20rem] lg:min-w-[24rem]">
           <Label className="shrink-0 whitespace-nowrap">Supermarket layout</Label>
           <GroceriesViewLayoutControls
