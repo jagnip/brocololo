@@ -12,6 +12,10 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import {
+  BreadcrumbSelect,
+  type BreadcrumbSelectConfig,
+} from "@/components/ui/breadcrumb-select";
 
 type BreadcrumbQueryBehavior = "none" | "all" | string[];
 
@@ -19,6 +23,8 @@ export type BreadcrumbsItem = {
   label: string;
   href?: string;
   preserveQuery?: BreadcrumbQueryBehavior;
+  /** Optional switcher on this crumb (e.g. plan list on the date-range leaf). */
+  select?: BreadcrumbSelectConfig;
 };
 
 type BreadcrumbsProps = {
@@ -97,6 +103,7 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
                 <BreadcrumbItem
                   className={cn(
                     "min-w-0",
+                    item.select && item.select.options.length > 1 && "relative z-10",
                     isOnly && "max-w-full flex-1 basis-0",
                     !isOnly && isFirst && "max-md:max-w-[min(40vw,9rem)] min-w-0 shrink-0",
                     !isOnly && isLast && "min-w-0 flex-1 basis-0",
@@ -104,7 +111,9 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
                       "max-md:max-w-[min(32vw,7.5rem)] shrink md:max-w-none",
                   )}
                 >
-                  {isLast || !item.href ? (
+                  {item.select && item.select.options.length > 1 ? (
+                    <BreadcrumbSelect label={item.label} select={item.select} />
+                  ) : isLast || !item.href ? (
                     <BreadcrumbPage className="block min-w-0 truncate">
                       {item.label}
                     </BreadcrumbPage>

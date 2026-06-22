@@ -16,5 +16,19 @@ export async function PlanTopbar({ planId }: { planId: string }) {
     new Date(current.endDate),
   );
 
-  return <PlanDetailTopbarConfig planDateRangeLabel={planDateRangeLabel} />;
+  const planOptions = plans.map((plan) => ({
+    id: plan.id,
+    label: formatDateRangeLabel(
+      new Date(plan.startDate),
+      new Date(plan.endDate),
+    ),
+  }));
+
+  return (
+    <PlanDetailTopbarConfig
+      planId={planId}
+      planDateRangeLabel={planDateRangeLabel}
+      planOptions={planOptions}
+    />
+  );
 }

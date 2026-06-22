@@ -38,9 +38,8 @@ import {
   generateGroceryListFromPlan,
   getGroceryGenerationMealOptions,
 } from "@/actions/shopping-list-actions";
-import { PlanSelect, type PlanSelectOption } from "@/components/planner/plan-select";
-import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { GroceryMealSelectionDialog } from "@/components/planner/grocery-meal-selection-dialog";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 import type { GroceryGenerationExclusions } from "@/lib/groceries/generation-options";
 import type { GroceryMealOption } from "@/lib/groceries/generation-options";
 
@@ -48,7 +47,6 @@ type PlannerLogTab = "plan" | "log";
 
 type PlannerLogShellProps = {
   planId: string;
-  planOptions: PlanSelectOption[];
   initialTab: PlannerLogTab;
   initialDateRange: DateRangeValue;
   initialPlan: PlanInputType;
@@ -77,7 +75,6 @@ type PlannerLogShellProps = {
 
 export function PlannerLogSharedShell({
   planId,
-  planOptions,
   initialTab,
   initialDateRange,
   initialPlan,
@@ -281,10 +278,6 @@ export function PlannerLogSharedShell({
       {/* Toolbar: flex-wrap so plan/tabs/date/actions never force horizontal scroll. */}
       <div className="flex min-w-0 flex-col gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <Label className="shrink-0 text-xs text-muted-foreground">Plan</Label>
-            <PlanSelect plans={planOptions} currentPlanId={planId} />
-          </div>
           <Tabs
             value={displayedTab}
             onValueChange={(value) => {

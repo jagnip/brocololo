@@ -184,21 +184,31 @@ function SelectLabel({
 function SelectItem({
   className,
   children,
+  indicatorPosition = "right",
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Item>) {
+}: React.ComponentProps<typeof SelectPrimitive.Item> & {
+  /** Where the selected checkmark appears (breadcrumb menus use left). */
+  indicatorPosition?: "left" | "right";
+}) {
+  const indicatorOnLeft = indicatorPosition === "left";
+
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
         // Match input text; rose highlight is background-only.
-        "text-foreground focus:bg-accent focus:text-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "text-foreground focus:bg-accent focus:text-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        indicatorOnLeft ? "pl-8 pr-2" : "pr-8 pl-2",
         className
       )}
       {...props}
     >
       <span
         data-slot="select-item-indicator"
-        className="absolute right-2 flex size-3.5 items-center justify-center"
+        className={cn(
+          "absolute flex size-3.5 items-center justify-center",
+          indicatorOnLeft ? "left-2" : "right-2",
+        )}
       >
         <SelectPrimitive.ItemIndicator>
           <CheckIcon className="size-4" />
