@@ -4,21 +4,45 @@ import { useState } from "react";
 import type { getShoppingListById } from "@/lib/db/shopping-list";
 import { GroceriesPersistedItemRow } from "@/components/groceries/groceries-persisted-item-row";
 import { GroceriesViewLayoutControls } from "@/components/groceries/groceries-view-layout-controls";
+import type { GroceriesLayoutSwitcherPreset } from "@/components/groceries/groceries-layout-switcher";
 
 export type GroceriesPersistedListModel = NonNullable<
   Awaited<ReturnType<typeof getShoppingListById>>
 >;
 
+type GroceriesPersistedListProps = {
+  list: GroceriesPersistedListModel;
+  shareToken?: string;
+  /** When provided, parent owns layout pending state (view shell). */
+  isLayoutPending?: boolean;
+  onLayoutSwitchPendingChange?: (isPending: boolean) => void;
+  /** Optimistic overrides from parent during dialog save/create/delete. */
+  layoutPresets?: GroceriesLayoutSwitcherPreset[];
+  activeLayoutPresetId?: string | null;
+};
+
 /** Read-only groceries list from persisted `ShoppingList` rows (grouped by ingredient category). */
 export function GroceriesPersistedList({
   list,
   shareToken,
-}: {
-  list: GroceriesPersistedListModel;
-  shareToken?: string;
-}) {
-  const [isLayoutPending, setIsLayoutPending] = useState(false);
+  isLayoutPending: isLayoutPendingProp,
+  onLayoutSwitchPendingChange,
+  layoutPresets: layoutPresetsProp,
+  activeLayoutPresetId: activeLayoutPresetIdProp,
+}: GroceriesPersistedListProps) {
+  const [internalLayoutPending, setInternalLayoutPending] = useState(false);
+  const isLayoutPending = isLayoutPendingProp ?? internalLayoutPending;
+  const onSwitchPendingChange = onLayoutSwitchPendingChange ?? setInternalLayoutPending;
   const { plan, items } = list;
+
+  const layoutPresets =
+    layoutPresetsProp ??
+    list.layoutPresets.map((preset) => ({
+      id: preset.id,
+      name: preset.name,
+      isBuiltIn: preset.isBuiltIn,
+    }));
+  const activeLayoutPresetId = activeLayoutPresetIdProp ?? list.activeLayoutPresetId;
 
   const sections: { title: string; rows: typeof items }[] = [];
   for (const item of items) {
@@ -37,13 +61,10 @@ export function GroceriesPersistedList({
         <GroceriesViewLayoutControls
           planId={plan.id}
           shareToken={shareToken}
-          presets={list.layoutPresets.map((preset) => ({
-            id: preset.id,
-            name: preset.name,
-            isBuiltIn: preset.isBuiltIn,
-          }))}
-          activePresetId={list.activeLayoutPresetId}
-          onPendingChange={setIsLayoutPending}
+          presets={layoutPresets}
+          activePresetId={activeLayoutPresetId}
+          isLayoutPending={isLayoutPending}
+          onPendingChange={onSwitchPendingChange}
         />
       </header>
 

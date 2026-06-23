@@ -176,14 +176,16 @@ export async function saveShoppingLayoutPresetAction(input: {
   planId: string;
   presetName: string;
   orderedCategoryIds: string[];
-}): Promise<{ type: "success" } | { type: "error"; message: string }> {
+}): Promise<
+  { type: "success"; presetId: string } | { type: "error"; message: string }
+> {
   try {
     const { id: userId } = await requireUser();
     const updated = await saveShoppingLayoutPreset({ userId, ...input });
     revalidatePath(ROUTES.groceries);
     revalidatePath(ROUTES.groceriesView(updated.planId));
     revalidatePath(ROUTES.groceriesEdit(updated.planId));
-    return { type: "success" };
+    return { type: "success", presetId: updated.presetId };
   } catch (error) {
     if (error instanceof Error && error.message === "SHOPPING_LAYOUT_PRESET_NAME_REQUIRED") {
       return {

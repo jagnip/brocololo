@@ -44,6 +44,9 @@ type GroceriesLayoutEditDialogProps = {
   presets: GroceriesLayoutPreset[];
   activePresetId: string | null;
   defaultCategoryOrderIds: string[];
+  onLayoutPendingChange?: (pending: boolean) => void;
+  onLayoutCreated?: (preset: { id: string; name: string }) => void;
+  onLayoutDeletedActive?: () => void;
 };
 
 function getPresetOrderIds(
@@ -82,6 +85,9 @@ export function GroceriesLayoutEditDialog({
   presets,
   activePresetId,
   defaultCategoryOrderIds,
+  onLayoutPendingChange,
+  onLayoutCreated,
+  onLayoutDeletedActive,
 }: GroceriesLayoutEditDialogProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -114,6 +120,20 @@ export function GroceriesLayoutEditDialog({
     setOrderedCategoryIds(defaultCategoryOrderIds);
     setLayoutNameInput("");
   }, [defaultCategoryOrderIds]);
+
+  const finishLayoutMutation = useCallback(
+    async (shouldPulseList: boolean) => {
+      if (shouldPulseList) {
+        onLayoutPendingChange?.(true);
+      }
+      onOpenChange(false);
+      await router.refresh();
+      if (shouldPulseList) {
+        onLayoutPendingChange?.(false);
+      }
+    },
+    [onLayoutPendingChange, onOpenChange, router],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -157,12 +177,12 @@ export function GroceriesLayoutEditDialog({
           toast.error(result.message);
           return;
         }
+        onLayoutCreated?.({ id: result.presetId, name: presetName });
         toast.success(`Saved "${presetName}" layout.`);
-        onOpenChange(false);
-        router.refresh();
+        await finishLayoutMutation(true);
       });
     },
-    [onOpenChange, orderedCategoryIds, planId, router],
+    [finishLayoutMutation, onLayoutCreated, orderedCategoryIds, planId],
   );
 
   const persistUpdate = useCallback(() => {
@@ -172,6 +192,8 @@ export function GroceriesLayoutEditDialog({
       toast.error("Layout name cannot be empty.");
       return;
     }
+
+    const shouldPulseList = selectedPreset.id === activePresetId;
 
     startTransition(async () => {
       if (trimmedName !== selectedPreset.name) {
@@ -196,15 +218,14 @@ export function GroceriesLayoutEditDialog({
         return;
       }
       toast.success(`Saved "${trimmedName}" layout.`);
-      onOpenChange(false);
-      router.refresh();
+      await finishLayoutMutation(shouldPulseList);
     });
   }, [
+    activePresetId,
+    finishLayoutMutation,
     layoutNameInput,
-    onOpenChange,
     orderedCategoryIds,
     planId,
-    router,
     selectedPreset,
   ]);
 
@@ -232,13 +253,15 @@ export function GroceriesLayoutEditDialog({
         toast.error(result.message);
         return;
       }
+      if (result.wasActive) {
+        onLayoutDeletedActive?.();
+      }
       toast.success(
         result.wasActive
           ? `Removed "${result.deletedPresetName}" and switched to Default layout.`
           : `Removed "${result.deletedPresetName}".`,
       );
-      onOpenChange(false);
-      router.refresh();
+      await finishLayoutMutation(result.wasActive);
     });
   };
 
@@ -248,6 +271,14 @@ export function GroceriesLayoutEditDialog({
     : editablePresets.length === 0
       ? "You don't have any custom layouts yet. Create one from the menu."
       : "Update the layout name and drag categories into your preferred order.";
+
+  const saveButtonLabel = isCreateMode
+    ? isPending
+      ? "Creating…"
+      : "Create layout"
+    : isPending
+      ? "Saving…"
+      : "Save layout";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -323,7 +354,7 @@ export function GroceriesLayoutEditDialog({
               Cancel
             </Button>
             <Button type="button" onClick={onSaveClick} disabled={isSaveDisabled}>
-              {isPending ? "Saving…" : "Save"}
+              {saveButtonLabel}
             </Button>
           </div>
         </DialogFooter>

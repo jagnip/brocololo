@@ -16,6 +16,8 @@ type GroceriesViewLayoutControlsProps = {
   presets: GroceriesLayoutSwitcherPreset[];
   activePresetId: string | null;
   onAddLayout?: () => void;
+  /** Parent-owned pending (e.g. dialog save/delete); merged with in-switch pending. */
+  isLayoutPending?: boolean;
   onPendingChange?: (isPending: boolean) => void;
 };
 
@@ -25,10 +27,11 @@ export function GroceriesViewLayoutControls({
   presets,
   activePresetId,
   onAddLayout,
+  isLayoutPending = false,
   onPendingChange,
 }: GroceriesViewLayoutControlsProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isSwitchPending, startTransition] = useTransition();
   const [optimisticPresetId, setOptimisticPresetId] = useOptimistic(activePresetId);
 
   const safePresetId = useMemo(
@@ -54,8 +57,8 @@ export function GroceriesViewLayoutControls({
   };
 
   useEffect(() => {
-    onPendingChange?.(isPending);
-  }, [isPending, onPendingChange]);
+    onPendingChange?.(isSwitchPending);
+  }, [isSwitchPending, onPendingChange]);
 
   return (
     <GroceriesLayoutSwitcher
@@ -63,7 +66,7 @@ export function GroceriesViewLayoutControls({
       activePresetId={safePresetId}
       onPresetChange={onPresetChange}
       onAddLayout={onAddLayout}
-      disabled={isPending || presets.length === 0}
+      disabled={isSwitchPending || isLayoutPending || presets.length === 0}
     />
   );
 }
