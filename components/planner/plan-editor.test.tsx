@@ -1,3 +1,4 @@
+import type { ComponentProps } from "react";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -5,8 +6,10 @@ import type { PlanInputType } from "@/types/planner";
 import { PlannerMealType } from "@/src/generated/enums";
 const emptyIngredientOptions: never[] = [];
 
-const pushMock = vi.hoisted(() => vi.fn());
-const refreshMock = vi.hoisted(() => vi.fn());
+const routerMock = vi.hoisted(() => ({
+  push: vi.fn(),
+  refresh: vi.fn(),
+}));
 
 vi.mock("@/actions/planner-actions", () => ({
   updateSavedPlan: vi.fn(),
@@ -76,7 +79,7 @@ vi.mock("next/navigation", async () => {
   const actual = await vi.importActual<typeof import("next/navigation")>("next/navigation");
   return {
     ...actual,
-    useRouter: () => ({ push: pushMock, refresh: refreshMock }),
+    useRouter: () => routerMock,
   };
 });
 
@@ -118,7 +121,7 @@ function TestPlanTopbarActions() {
   );
 }
 
-function renderPlanEditor(props: React.ComponentProps<typeof PlanEditor>) {
+function renderPlanEditor(props: ComponentProps<typeof PlanEditor>) {
   return render(
     <PlanTopbarStateProvider>
       <TestPlanTopbarActions />
@@ -130,8 +133,8 @@ function renderPlanEditor(props: React.ComponentProps<typeof PlanEditor>) {
 describe("PlanEditor autosave", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    pushMock.mockClear();
-    refreshMock.mockClear();
+    routerMock.push.mockClear();
+    routerMock.refresh.mockClear();
   });
 
   it("auto-saves after a short debounce when user edits the plan", async () => {
@@ -432,7 +435,7 @@ describe("PlanEditor autosave", () => {
     await user.click(screen.getByRole("button", { name: "Generate log" }));
 
     expect(vi.mocked(generateLogFromPlan)).toHaveBeenCalledWith("plan-1");
-    expect(pushMock).toHaveBeenCalledWith("/log/log-1");
+    expect(routerMock.push).toHaveBeenCalledWith("/log/log-1");
   });
 
   it("shows info and stays on plan when log already exists", async () => {
@@ -448,7 +451,7 @@ describe("PlanEditor autosave", () => {
     await user.click(screen.getByRole("button", { name: "Generate log" }));
 
     expect(toast.info).toHaveBeenCalledWith("Log already generated for this plan.");
-    expect(pushMock).not.toHaveBeenCalled();
+    expect(routerMock.push).not.toHaveBeenCalled();
   });
 
   it("shows conflict dates and stays on plan when plan days already exist in logs", async () => {
@@ -466,7 +469,7 @@ describe("PlanEditor autosave", () => {
     expect(toast.info).toHaveBeenCalledWith(
       "Cannot generate log. These dates already exist in a log: Apr 10, 2026, Apr 12, 2026",
     );
-    expect(pushMock).not.toHaveBeenCalled();
+    expect(routerMock.push).not.toHaveBeenCalled();
   });
 
   it("redirects to current planner route after deleting a plan", async () => {
@@ -500,8 +503,8 @@ describe("PlanEditor autosave", () => {
     await user.click(within(dialog).getByRole("button", { name: "Delete plan" }));
 
     expect(vi.mocked(deletePlanAction)).toHaveBeenCalledWith("plan-1");
-    expect(pushMock).toHaveBeenCalledWith("/plan/current");
-    expect(refreshMock).toHaveBeenCalled();
+    expect(routerMock.push).toHaveBeenCalledWith("/plan/current");
+    expect(routerMock.refresh).toHaveBeenCalled();
   });
 });
 

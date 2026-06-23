@@ -61,6 +61,9 @@ export function PlanEditor({
   const [isDirty, setIsDirty] = useState(false);
   const editVersionRef = useRef(0);
   const router = useRouter();
+  // Router identity from `useRouter()` can change every render in tests; keep push stable for topbar effect deps.
+  const routerRef = useRef(router);
+  routerRef.current = router;
   const [deleteStatus, setDeleteStatus] = useState<"idle" | "deleting">("idle");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [syncConflict, setSyncConflict] = useState<SyncConflictState | null>(null);
@@ -352,7 +355,7 @@ export function PlanEditor({
   const handleGenerateLog = useCallback(async () => {
     const result = await generateLogFromPlan(planId);
     if (result.type === "success") {
-      router.push(ROUTES.logView(result.logId));
+      routerRef.current.push(ROUTES.logView(result.logId));
       return;
     }
     if (result.type === "already_exists") {
@@ -366,7 +369,7 @@ export function PlanEditor({
       return;
     }
     toast.error(result.message);
-  }, [planId, router]);
+  }, [planId]);
 
   useEffect(() => {
     if (disableDeleteDialog) {
