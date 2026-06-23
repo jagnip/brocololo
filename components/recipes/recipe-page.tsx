@@ -111,7 +111,7 @@ export default function RecipePage({
         </div>
 
         <div className="contents md:col-span-3 md:block">
-          <div className="order-2 md:order-0 overflow-hidden rounded-xl bg-accent shadow-sm md:mb-block">
+          <div className="order-2 md:order-0 md:mb-block">
             <ImageGallery images={recipe.images || []} />
           </div>
 
