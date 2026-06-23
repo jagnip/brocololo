@@ -1,7 +1,6 @@
 "use client";
 
 import { useClerk, useUser } from "@clerk/nextjs";
-import type { UserResource } from "@clerk/types";
 import { LogOut, UserCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -22,7 +21,9 @@ import {
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-function getUserInitials(user: UserResource): string {
+function getUserInitials(
+  user: NonNullable<ReturnType<typeof useUser>["user"]>,
+): string {
   if (user.firstName && user.lastName) {
     return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
   }
