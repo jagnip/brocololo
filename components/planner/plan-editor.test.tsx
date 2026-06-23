@@ -82,7 +82,7 @@ vi.mock("next/navigation", async () => {
 
 import { toast } from "sonner";
 import { deletePlanAction, generateLogFromPlan, updateSavedPlan } from "@/actions/planner-actions";
-import { PlanTopbarStateProvider } from "@/components/planner/plan-topbar-state-context";
+import { PlanTopbarStateProvider, usePlanTopbarState } from "@/components/planner/plan-topbar-state-context";
 import { PlanEditor } from "./plan-editor";
 
 function createRecipe(id: string) {
@@ -104,9 +104,24 @@ function createRecipe(id: string) {
   } as any;
 }
 
+function TestPlanTopbarActions() {
+  const { state } = usePlanTopbarState();
+
+  return (
+    <button
+      type="button"
+      disabled={state.isGenerateDisabled ?? true}
+      onClick={() => void state.onGenerateLog?.()}
+    >
+      Generate log
+    </button>
+  );
+}
+
 function renderPlanEditor(props: React.ComponentProps<typeof PlanEditor>) {
   return render(
     <PlanTopbarStateProvider>
+      <TestPlanTopbarActions />
       <PlanEditor {...props} />
     </PlanTopbarStateProvider>,
   );
@@ -458,9 +473,29 @@ describe("PlanEditor autosave", () => {
     const user = userEvent.setup();
     vi.mocked(deletePlanAction).mockResolvedValue({ type: "success" });
 
-    render(<PlanEditor planId="plan-1" initialPlan={initialPlanForTests()} recipes={[]} ingredientOptions={emptyIngredientOptions} />);
+    function DeletePlanTrigger() {
+      const { state } = usePlanTopbarState();
+      return (
+        <button type="button" onClick={() => state.onDeletePlan?.()}>
+          Open delete plan dialog
+        </button>
+      );
+    }
 
-    await user.click(screen.getByRole("button", { name: "Delete plan" }));
+    render(
+      <PlanTopbarStateProvider>
+        <TestPlanTopbarActions />
+        <DeletePlanTrigger />
+        <PlanEditor
+          planId="plan-1"
+          initialPlan={initialPlanForTests()}
+          recipes={[]}
+          ingredientOptions={emptyIngredientOptions}
+        />
+      </PlanTopbarStateProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Open delete plan dialog" }));
     const dialog = screen.getByRole("alertdialog");
     await user.click(within(dialog).getByRole("button", { name: "Delete plan" }));
 

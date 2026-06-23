@@ -14,6 +14,10 @@ import { toast } from "sonner";
 import { Info, Loader2, Pencil, Trash2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  SegmentedFilterButton,
+  SegmentedFilterGroup,
+} from "@/components/ui/segmented-filter-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -992,34 +996,27 @@ export default function IngredientForm({
                   <FormItem>
                     <FormLabel>Who can see this ingredient</FormLabel>
                     <FormControl>
-                      <div
-                        className="flex flex-wrap gap-2"
-                        role="radiogroup"
+                      <SegmentedFilterGroup
                         aria-label="Ingredient visibility"
+                        className="gap-2"
                       >
-                        <Button
-                          type="button"
+                        <SegmentedFilterButton
+                          selected={field.value === "global"}
                           role="radio"
                           aria-checked={field.value === "global"}
-                          variant={
-                            field.value === "global" ? "default" : "outline"
-                          }
                           onClick={() => field.onChange("global")}
                         >
                           Shared catalog (all users)
-                        </Button>
-                        <Button
-                          type="button"
+                        </SegmentedFilterButton>
+                        <SegmentedFilterButton
+                          selected={field.value === "private"}
                           role="radio"
                           aria-checked={field.value === "private"}
-                          variant={
-                            field.value === "private" ? "default" : "outline"
-                          }
                           onClick={() => field.onChange("private")}
                         >
                           Private (only me)
-                        </Button>
-                      </div>
+                        </SegmentedFilterButton>
+                      </SegmentedFilterGroup>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1028,31 +1025,28 @@ export default function IngredientForm({
             ) : (
               <div className="grid gap-2">
                 <Label>Who can see this ingredient</Label>
-                <div
-                  className="flex flex-wrap gap-2"
-                  role="radiogroup"
+                <SegmentedFilterGroup
                   aria-label="Ingredient visibility"
+                  className="gap-2"
                   aria-readonly
                 >
-                  <Button
-                    type="button"
+                  <SegmentedFilterButton
+                    selected={ingredient.userId === null}
                     role="radio"
                     aria-checked={ingredient.userId === null}
-                    variant={ingredient.userId === null ? "default" : "outline"}
                     disabled
                   >
                     Shared catalog (all users)
-                  </Button>
-                  <Button
-                    type="button"
+                  </SegmentedFilterButton>
+                  <SegmentedFilterButton
+                    selected={ingredient.userId !== null}
                     role="radio"
                     aria-checked={ingredient.userId !== null}
-                    variant={ingredient.userId !== null ? "default" : "outline"}
                     disabled
                   >
                     Private (only me)
-                  </Button>
-                </div>
+                  </SegmentedFilterButton>
+                </SegmentedFilterGroup>
               </div>
             )}
           </div>

@@ -47,6 +47,7 @@ export type LogActiveDayViewProps = {
   familyMembers: FamilyMemberRow[];
   showDayControls?: boolean;
   showDayManagementActions?: boolean;
+  hideDayPersonInHeader?: boolean;
   showPageHeader?: boolean;
   onSelectDay: (dateKey: string) => void;
   onAddDay: () => void;
@@ -113,6 +114,7 @@ export function LogActiveDayView({
   familyMembers,
   showDayControls = true,
   showDayManagementActions = true,
+  hideDayPersonInHeader = false,
   showPageHeader = true,
   onSelectDay,
   onAddDay,
@@ -144,6 +146,7 @@ export function LogActiveDayView({
         onRemoveDay={onRemoveDay}
         showDayControls={showDayControls}
         showDayManagementActions={showDayManagementActions}
+        hideDayPersonInHeader={hideDayPersonInHeader}
         showPageHeader={showPageHeader}
       />
 

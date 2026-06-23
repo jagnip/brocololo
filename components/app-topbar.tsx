@@ -148,8 +148,8 @@ export function AppTopbar() {
           ) : null}
           {shouldShowPlanTopbarSkeleton ? (
             <>
-              <Skeleton className="h-9 w-48 rounded-md" />
-              <Skeleton className="h-9 w-24 rounded-md" />
+              <Skeleton className="h-9 w-28 rounded-md" />
+              <Skeleton className="h-9 w-9 rounded-md" />
             </>
           ) : null}
           {shouldShowPlanCreateTopbarSkeleton ? (

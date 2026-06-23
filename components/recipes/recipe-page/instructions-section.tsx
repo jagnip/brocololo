@@ -1,5 +1,8 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import {
+  SegmentedFilterButton,
+  SegmentedFilterGroup,
+} from "@/components/ui/segmented-filter-button";
 import { parseMarkdownLinks } from "@/lib/recipes/text-formatting";
 import { useState } from "react";
 import {
@@ -62,10 +65,9 @@ export function InstructionsSection() {
         <Subheader>Instructions</Subheader>
         {/* Hide person filter when the recipe audience is a single cook. */}
         {showPersonFilter ? (
-          <div
-            className="flex min-w-0 flex-wrap items-center justify-start gap-item max-md:basis-full"
-            role="radiogroup"
+          <SegmentedFilterGroup
             aria-label="Instruction person filter"
+            className="max-md:basis-full"
           >
             {familyMembers.map((member, index) => {
               const isSelected =
@@ -74,29 +76,22 @@ export function InstructionsSection() {
                 member.name.trim() ||
                 (member.isSelf ? "You" : `Family member ${index}`);
               return (
-                <Button
+                <SegmentedFilterButton
                   key={member.id}
-                  type="button"
-                  size="default"
+                  selected={isSelected}
                   role="radio"
                   aria-checked={isSelected}
-                  variant="outline"
                   onClick={() =>
                     setSelectedInstructionFamilyMemberId((prev) =>
                       prev === member.id ? null : member.id,
                     )
                   }
-                  className={
-                    isSelected
-                      ? "border-ring bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground"
-                      : "bg-card text-foreground hover:bg-muted/40"
-                  }
                 >
                   {label}
-                </Button>
+                </SegmentedFilterButton>
               );
             })}
-          </div>
+          </SegmentedFilterGroup>
         ) : null}
       </div>
       <ol className="flex flex-col gap-item">

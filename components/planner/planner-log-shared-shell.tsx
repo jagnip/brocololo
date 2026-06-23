@@ -1,15 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, Trash2 } from "lucide-react";
-import {
-  WeekPicker,
-  type DateRangeValue,
-} from "@/components/planner/date-range-picker";
+import { type DateRangeValue } from "@/components/planner/date-range-picker";
+import { PlanDateRangeDialog } from "@/components/planner/plan-date-range-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { PlanEditor } from "@/components/planner/plan-editor";
 import { LogDayViewController } from "@/components/log/log-day-view";
 import { usePlanTopbarState } from "@/components/planner/plan-topbar-state-context";
@@ -32,7 +27,7 @@ import type {
   LogIngredientOption,
   EditableIngredientRow,
 } from "@/components/log/log-ingredients-form";
-import { useEffect, useOptimistic, useTransition } from "react";
+import { useOptimistic, useTransition } from "react";
 import { ROUTES } from "@/lib/constants";
 import {
   generateGroceryListFromPlan,
@@ -98,6 +93,7 @@ export function PlannerLogSharedShell({
   const [optimisticTab, setOptimisticTab] =
     useOptimistic<PlannerLogTab>(activeTab);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDateRangeDialogOpen, setIsDateRangeDialogOpen] = useState(false);
   const [isOverwriteGroceryDialogOpen, setIsOverwriteGroceryDialogOpen] =
     useState(false);
   const [isMealSelectionOpen, setIsMealSelectionOpen] = useState(false);
@@ -106,6 +102,8 @@ export function PlannerLogSharedShell({
   const [pendingExclusions, setPendingExclusions] =
     useState<GroceryGenerationExclusions | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [trackToolbarControls, setTrackToolbarControls] =
+    useState<ReactNode | null>(null);
   const { setState: setPlanTopbarState, resetState: resetPlanTopbarState } =
     usePlanTopbarState();
   const displayedTab = isTabPending ? optimisticTab : activeTab;
@@ -121,21 +119,7 @@ export function PlannerLogSharedShell({
   const hasLogData = useMemo(() => logData != null, [logData]);
   const isTrackTab = displayedTab === "log";
 
-  const runGenerateGroceries = (exclusions: GroceryGenerationExclusions) => {
-    startGroceryTransition(async () => {
-      const result = await generateGroceryListFromPlan(planId, exclusions);
-      if (result.type === "error") {
-        toast.error(result.message);
-        return;
-      }
-      setPendingExclusions(null);
-      toast.success("Grocery list generated.");
-      router.push(ROUTES.groceriesView(planId));
-      router.refresh();
-    });
-  };
-
-  const openMealSelectionDialog = () => {
+  const openMealSelectionDialog = useCallback(() => {
     setIsMealSelectionOpen(true);
     setIsLoadingMeals(true);
     setMealOptions([]);
@@ -150,7 +134,24 @@ export function PlannerLogSharedShell({
       }
       setMealOptions(result.meals);
     })();
-  };
+  }, [planId]);
+
+  const runGenerateGroceries = useCallback(
+    (exclusions: GroceryGenerationExclusions) => {
+      startGroceryTransition(async () => {
+        const result = await generateGroceryListFromPlan(planId, exclusions);
+        if (result.type === "error") {
+          toast.error(result.message);
+          return;
+        }
+        setPendingExclusions(null);
+        toast.success("Grocery list generated.");
+        router.push(ROUTES.groceriesView(planId));
+        router.refresh();
+      });
+    },
+    [planId, router, startGroceryTransition],
+  );
 
   const handleMealSelectionConfirm = (
     exclusions: GroceryGenerationExclusions,
@@ -166,23 +167,51 @@ export function PlannerLogSharedShell({
     runGenerateGroceries(exclusions);
   };
 
+  const actionBusy =
+    isDeleting || isGeneratingGroceries || isLoadingMeals;
+
   useEffect(() => {
     setPlanTopbarState({
-      isGenerateDisabled: true,
-      isGenerating: false,
-      isDeleteDisabled: isDeleting,
-      isDeleting,
-      onGenerateLog: undefined,
+      onEditDates: () => setIsDateRangeDialogOpen(true),
+      onGenerateGroceryList: openMealSelectionDialog,
       onDeletePlan: () => setIsDeleteDialogOpen(true),
+      isEditDatesDisabled: actionBusy,
+      isGenerateDisabled: false,
+      isGenerating: isGeneratingGroceries,
+      isLoadingMeals,
+      isDeleteDisabled: actionBusy,
+      isDeleting,
     });
 
     return () => {
       resetPlanTopbarState();
     };
-  }, [isDeleting, resetPlanTopbarState, setPlanTopbarState]);
+  }, [
+    actionBusy,
+    isDeleting,
+    isGeneratingGroceries,
+    isLoadingMeals,
+    openMealSelectionDialog,
+    resetPlanTopbarState,
+    setPlanTopbarState,
+  ]);
+
+  useEffect(() => {
+    if (!isTrackTab) {
+      setTrackToolbarControls(null);
+    }
+  }, [isTrackTab]);
 
   return (
     <div className="min-w-0 space-y-4">
+      <PlanDateRangeDialog
+        open={isDateRangeDialogOpen}
+        onOpenChange={setIsDateRangeDialogOpen}
+        value={dateRange}
+        disabled={actionBusy}
+        onSave={setDateRange}
+      />
+
       <GroceryMealSelectionDialog
         open={isMealSelectionOpen}
         meals={mealOptions}
@@ -275,76 +304,37 @@ export function PlannerLogSharedShell({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Toolbar: flex-wrap so plan/tabs/date/actions never force horizontal scroll. */}
-      <div className="flex min-w-0 flex-col gap-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
-          <Tabs
-            value={displayedTab}
-            onValueChange={(value) => {
-              if (value === "plan" || value === "log") {
-                setOptimisticTab(value);
-                startTabTransition(() => {
-                  setTab(value);
-                });
-              }
-            }}
-            className="w-fit shrink-0"
-          >
-            <TabsList className="h-10 gap-[2px] shadow-xs">
-              <TabsTrigger value="plan">Manage</TabsTrigger>
-              <TabsTrigger value="log">Track</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <div className="flex min-w-0 flex-1 items-center gap-2 basis-full sm:basis-auto sm:min-w-48 sm:max-w-md lg:max-w-lg">
-            <Label className="shrink-0 text-xs text-muted-foreground">
-              Date range
-            </Label>
-            <WeekPicker
-              value={dateRange}
-              onChange={setDateRange}
-              compact
-              className="min-w-0 flex-1"
-            />
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <Tabs
+          value={displayedTab}
+          onValueChange={(value) => {
+            if (value === "plan" || value === "log") {
+              setOptimisticTab(value);
+              startTabTransition(() => {
+                setTab(value);
+              });
+            }
+          }}
+          className="w-fit shrink-0"
+        >
+          <TabsList className="h-10 gap-[2px] shadow-xs">
+            <TabsTrigger value="plan">Manage</TabsTrigger>
+            <TabsTrigger value="log">Track</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        {isTrackTab && trackToolbarControls ? (
+          <div className="flex min-w-0 items-center gap-2">
+            {trackToolbarControls}
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="default"
-              className="gap-2"
-              disabled={isGeneratingGroceries || isDeleting || isLoadingMeals}
-              aria-busy={isGeneratingGroceries || isLoadingMeals}
-              onClick={openMealSelectionDialog}
-            >
-              <span className="whitespace-nowrap">
-                {isGeneratingGroceries
-                  ? "Generating…"
-                  : isLoadingMeals
-                    ? "Loading…"
-                    : "Generate grocery list"}
-              </span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label="Delete plan"
-              aria-busy={isDeleting}
-              disabled={isDeleting}
-              onClick={() => setIsDeleteDialogOpen(true)}
-            >
-              {isDeleting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-        </div>
+        ) : null}
       </div>
 
       <Tabs value={displayedTab} className="w-full">
-        <TabsContent value="plan">
+        <TabsContent
+          value="plan"
+          forceMount
+          className={displayedTab !== "plan" ? "hidden" : undefined}
+        >
           <PlanEditor
             planId={planId}
             initialPlan={initialPlan}
@@ -369,6 +359,8 @@ export function PlannerLogSharedShell({
               plannedMealsBySlotKey={plannedMealsBySlotKey}
               dateRange={dateRange}
               allowDayManagement={false}
+              hideDayPersonInHeader
+              onRegisterToolbarControls={setTrackToolbarControls}
             />
           ) : (
             <section className="rounded-lg border border-border bg-card p-6">

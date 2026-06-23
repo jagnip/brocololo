@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
+import {
+  SegmentedFilterButton,
+  SegmentedFilterGroup,
+} from "@/components/ui/segmented-filter-button";
 import { FormField } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -408,24 +411,27 @@ export function PlannerTimeLimitsSection({
 
   return (
     <div className="mt-4 rounded-xl border border-border bg-card p-4">
-      <div className="mb-3 flex items-center gap-1.5">
-        <Button
-          type="button"
-          size="default"
-          variant={timeLimitsMode === "grouped" ? "default" : "outline"}
+      <SegmentedFilterGroup
+        aria-label="Time limits grouping mode"
+        className="mb-3 gap-1.5"
+      >
+        <SegmentedFilterButton
+          selected={timeLimitsMode === "grouped"}
+          role="radio"
+          aria-checked={timeLimitsMode === "grouped"}
           onClick={onSwitchToGrouped}
         >
           Weekdays & weekends
-        </Button>
-        <Button
-          type="button"
-          size="default"
-          variant={timeLimitsMode === "daily" ? "default" : "outline"}
+        </SegmentedFilterButton>
+        <SegmentedFilterButton
+          selected={timeLimitsMode === "daily"}
+          role="radio"
+          aria-checked={timeLimitsMode === "daily"}
           onClick={onSwitchToDaily}
         >
           All days
-        </Button>
-      </div>
+        </SegmentedFilterButton>
+      </SegmentedFilterGroup>
       {timeLimitsMode === "grouped" ? (
         <div className="flex flex-col gap-4">
           {hasWeekdays ? (
