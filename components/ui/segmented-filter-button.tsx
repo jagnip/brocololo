@@ -4,10 +4,20 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /** Selected/unselected shell classes shared by instruction person filters and planner toggles. */
-const segmentedFilterSelectedClassName =
+export const segmentedFilterSelectedClassName =
   "border-ring bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground";
-const segmentedFilterUnselectedClassName =
-  "bg-card text-foreground hover:bg-muted/40";
+export const segmentedFilterUnselectedClassName =
+  "border-border bg-card text-foreground shadow-xs hover:border-ring hover:bg-muted/40";
+
+/** Shared muted toggle surface for segmented buttons and checkbox chips. */
+export function getSegmentedFilterSurfaceClassName(selected: boolean) {
+  return cn(
+    "border transition-all",
+    selected
+      ? segmentedFilterSelectedClassName
+      : segmentedFilterUnselectedClassName,
+  );
+}
 
 type SegmentedFilterButtonProps = Omit<
   ComponentProps<typeof Button>,
@@ -28,9 +38,7 @@ export function SegmentedFilterButton({
       size={size}
       variant="outline"
       className={cn(
-        selected
-          ? segmentedFilterSelectedClassName
-          : segmentedFilterUnselectedClassName,
+        getSegmentedFilterSurfaceClassName(selected),
         className,
       )}
       {...props}
