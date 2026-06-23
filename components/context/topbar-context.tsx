@@ -22,8 +22,24 @@ export type TopbarActionConfig = {
   icon?: ReactNode;
 };
 
+export type TopbarOverflowMenuItem = {
+  id: string;
+  label: string;
+  href?: string;
+  onSelect?: () => void;
+  disabled?: boolean;
+  destructive?: boolean;
+  icon?: ReactNode;
+};
+
+export type TopbarOverflowMenuConfig = {
+  ariaLabel: string;
+  items: TopbarOverflowMenuItem[];
+};
+
 export type TopbarConfig = {
   actions: TopbarActionConfig[];
+  overflowMenu?: TopbarOverflowMenuConfig;
   /** When set, shown in the app header next to the sidebar trigger (see AppTopbar). */
   breadcrumbs?: BreadcrumbsItem[];
   badge?: TopbarBadgeConfig;

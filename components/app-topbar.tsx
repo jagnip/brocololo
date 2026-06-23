@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useTopbar } from "@/components/context/topbar-context";
+import { TopbarOverflowMenu } from "@/components/topbar-overflow-menu";
 import {
   Breadcrumbs,
   type BreadcrumbsItem,
@@ -103,7 +104,7 @@ export function AppTopbar() {
           {shouldShowRecipeTopbarSkeleton ? (
             <>
               <Skeleton className="h-9 w-24 rounded-md" />
-              <Skeleton className="h-9 w-24 rounded-md" />
+              <Skeleton className="h-9 w-9 rounded-md" />
             </>
           ) : null}
           {shouldShowRecipesIndexTopbarSkeleton ? (
@@ -119,7 +120,6 @@ export function AppTopbar() {
             <>
               <Skeleton className="h-9 w-20 rounded-md" />
               <Skeleton className="h-9 w-28 rounded-md" />
-              <Skeleton className="h-9 w-9 rounded-md" />
             </>
           ) : null}
           {shouldShowLogTopbarSkeleton ? (
@@ -212,6 +212,9 @@ export function AppTopbar() {
               </Button>
             );
           })}
+          {config?.overflowMenu ? (
+            <TopbarOverflowMenu config={config.overflowMenu} />
+          ) : null}
         </div>
       </div>
     </header>

@@ -8,7 +8,7 @@ import {
 } from "@/lib/validations/recipe";
 import { toast } from "sonner";
 import { Resolver, useForm, useWatch } from "react-hook-form";
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
@@ -24,7 +24,6 @@ import { CategoryType } from "@/types/category";
 import { Button } from "../../ui/button";
 import {
   createRecipeAction,
-  deleteRecipeAction,
   updateRecipeAction,
 } from "@/actions/recipe-actions";
 import { ImageUploader } from "./image-uploader";
@@ -43,14 +42,6 @@ import { IngredientSelector } from "./ingredient-selector";
 import { CheckboxWithLabel } from "@/components/ui/checkbox";
 import { InstructionStepsEditor } from "./instruction-steps-editor";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   SearchableSelect,
   SearchableSelectOption,
 } from "@/components/ui/searchable-select";
@@ -63,7 +54,6 @@ import { useRouter } from "next/navigation";
 import { getRecipesListHrefWithStoredFilters } from "@/lib/recipes/recipes-list-filters-storage";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { ROUTES } from "@/lib/constants";
-import { Trash2 } from "lucide-react";
 import { Subheader } from "../recipe-page/subheader";
 import MultipleSelector from "@/components/ui/multiselect";
 import { RecipeNutritionPreviewSection } from "./recipe-nutrition-preview-section";
@@ -130,9 +120,6 @@ export default function RecipeForm({
   familyMembers,
   isAdmin = false,
 }: RecipeFormProps) {
-  // Keep delete confirmation local to the edit form state.
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [isDeleting, startDeleteTransition] = useTransition();
   // Keep categories local so newly created options appear instantly in selects.
   const [localCategories, setLocalCategories] = useState(categories);
   // Keep ingredients local so inline create/edit updates are immediately selectable.
@@ -145,10 +132,15 @@ export default function RecipeForm({
     ingredientId: string;
   } | null>(null);
   const router = useRouter();
-  // Restore last `/recipes` query (filters) when leaving create/edit via Cancel.
-  const handleCancelToRecipesList = useCallback(() => {
+  const handleCancel = useCallback(() => {
+    if (recipe) {
+      // Edit flow: return to the recipe being edited, not the list.
+      router.push(ROUTES.recipe(recipe.slug));
+      return;
+    }
+    // Create flow: restore last `/recipes` query (filters).
     router.push(getRecipesListHrefWithStoredFilters());
-  }, [router]);
+  }, [router, recipe]);
   const formSchema = recipe ? updateRecipeSchema : createRecipeSchema;
   const mealOccasionCategories = useMemo(
     () => localCategories.filter((category) => category.type === "MEAL_OCCASION"),
@@ -384,22 +376,6 @@ export default function RecipeForm({
     void form.handleSubmit(onSubmit)();
   }
 
-  function onConfirmDelete() {
-    if (!recipe) {
-      return;
-    }
-
-    startDeleteTransition(async () => {
-      const result = await deleteRecipeAction(recipe.id);
-
-      // Action redirects on success, so only show errors here.
-      if (result?.type === "error") {
-        toast.error(result.message);
-        setIsDeleteOpen(false);
-      }
-    });
-  }
-
   function handleIngredientCreated(createdIngredient: IngredientType) {
     setLocalIngredients((prev) => {
       // Avoid duplicate inserts if create callback fires more than once.
@@ -498,10 +474,12 @@ export default function RecipeForm({
         {
           id: "cancel-recipe",
           label: "Cancel",
-          onClick: handleCancelToRecipesList,
+          onClick: handleCancel,
           variant: "outline" as const,
           size: "default" as const,
-          ariaLabel: "Cancel and go back to recipes",
+          ariaLabel: isEditMode
+            ? "Cancel and go back to recipe"
+            : "Cancel and go back to recipes",
         },
         {
           id: "submit-recipe",
@@ -515,29 +493,10 @@ export default function RecipeForm({
           variant: "default" as const,
           size: "default" as const,
         },
-        ...(isEditMode
-          ? [
-              {
-                id: "delete-recipe",
-                label: "Delete recipe",
-                onClick: () => {
-                  // Keep delete confirmation flow centralized in the existing dialog state.
-                  setIsDeleteOpen(true);
-                },
-                disabled: isDeleting,
-                ariaBusy: isDeleting,
-                ariaLabel: "Delete recipe",
-                icon: <Trash2 className="h-4 w-4" />,
-                variant: "outline" as const,
-                size: "icon" as const,
-              },
-            ]
-          : []),
       ],
     }),
     [
-      handleCancelToRecipesList,
-      isDeleting,
+      handleCancel,
       isEditMode,
       isSubmitting,
       recipe,
@@ -861,39 +820,6 @@ export default function RecipeForm({
             </div>
           </div>
         </section>
-
-        {isEditMode ? (
-          <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Delete recipe?</DialogTitle>
-                <DialogDescription>
-                  Are you sure you want to delete{" "}
-                  <strong>{recipe?.name ?? "this recipe"}</strong>? This action
-                  cannot be undone.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isDeleting}
-                  onClick={() => setIsDeleteOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  disabled={isDeleting}
-                  onClick={onConfirmDelete}
-                >
-                  {isDeleting ? "Deleting..." : "Yes, delete"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        ) : null}
 
         <CreateIngredientDialog
           open={Boolean(createIngredientState)}
