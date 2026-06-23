@@ -615,7 +615,7 @@ export async function setShoppingListActiveLayoutPreset(input: {
   });
 }
 
-export async function deleteActiveShoppingLayoutPreset(input: {
+export async function deleteShoppingLayoutPreset(input: {
   userId: string;
   planId: string;
   presetId: string;
@@ -627,23 +627,22 @@ export async function deleteActiveShoppingLayoutPreset(input: {
     });
     if (!list) throw new Error("SHOPPING_LIST_NOT_FOUND");
 
-    if (!list.activeLayoutPresetId || list.activeLayoutPresetId !== input.presetId) {
-      throw new Error("SHOPPING_LAYOUT_PRESET_NOT_ACTIVE");
-    }
-
     const preset = await tx.shoppingLayoutPreset.findUnique({
       where: { id: input.presetId },
-      select: { id: true, isBuiltIn: true },
+      select: { id: true, isBuiltIn: true, name: true },
     });
     if (!preset) throw new Error("SHOPPING_LAYOUT_PRESET_NOT_FOUND");
     if (preset.isBuiltIn) throw new Error("SHOPPING_LAYOUT_PRESET_BUILT_IN");
 
-    // Always transition the list back to the built-in layout before deleting.
     const defaultPresetId = await ensureDefaultShoppingLayoutPreset(tx);
-    await tx.shoppingList.update({
-      where: { id: list.id },
-      data: { activeLayoutPresetId: defaultPresetId },
-    });
+    const wasActive = list.activeLayoutPresetId === preset.id;
+
+    if (wasActive) {
+      await tx.shoppingList.update({
+        where: { id: list.id },
+        data: { activeLayoutPresetId: defaultPresetId },
+      });
+    }
 
     await tx.shoppingLayoutPreset.delete({
       where: { id: preset.id },
@@ -652,9 +651,119 @@ export async function deleteActiveShoppingLayoutPreset(input: {
     return {
       planId: list.planId,
       deletedPresetId: preset.id,
-      activePresetId: defaultPresetId,
+      deletedPresetName: preset.name,
+      activePresetId: wasActive ? defaultPresetId : list.activeLayoutPresetId,
+      wasActive,
     };
   });
+}
+
+/** @deprecated Use deleteShoppingLayoutPreset — kept as an alias for callers. */
+export async function deleteActiveShoppingLayoutPreset(input: {
+  userId: string;
+  planId: string;
+  presetId: string;
+}) {
+  return deleteShoppingLayoutPreset(input);
+}
+
+/** Updates category order on an existing custom layout preset (built-in presets cannot be edited). */
+export async function updateShoppingLayoutPreset(input: {
+  userId: string;
+  planId: string;
+  presetId: string;
+  orderedCategoryIds: string[];
+}) {
+  return prisma.$transaction(async (tx) => {
+    const list = await tx.shoppingList.findFirst({
+      where: { planId: input.planId, plan: { userId: input.userId } },
+      select: { id: true, planId: true },
+    });
+    if (!list) throw new Error("SHOPPING_LIST_NOT_FOUND");
+
+    const preset = await tx.shoppingLayoutPreset.findUnique({
+      where: { id: input.presetId },
+      select: { id: true, isBuiltIn: true },
+    });
+    if (!preset) throw new Error("SHOPPING_LAYOUT_PRESET_NOT_FOUND");
+    if (preset.isBuiltIn) throw new Error("SHOPPING_LAYOUT_PRESET_BUILT_IN");
+
+    const allCategories = await tx.ingredientCategory.findMany({
+      orderBy: { sortOrder: "asc" },
+      select: { id: true },
+    });
+    const normalizedCategoryOrder = buildCategoryOrderIds({
+      categoryIdsByDefaultOrder: allCategories.map((category) => category.id),
+      categoryOrders: input.orderedCategoryIds.map((ingredientCategoryId, position) => ({
+        ingredientCategoryId,
+        position,
+      })),
+    });
+
+    await tx.shoppingLayoutPresetCategory.deleteMany({
+      where: { presetId: preset.id },
+    });
+    await tx.shoppingLayoutPresetCategory.createMany({
+      data: normalizedCategoryOrder.map((ingredientCategoryId, position) => ({
+        presetId: preset.id,
+        ingredientCategoryId,
+        position,
+      })),
+    });
+
+    return { planId: list.planId, presetId: preset.id };
+  });
+}
+
+export async function renameShoppingLayoutPreset(input: {
+  userId: string;
+  planId: string;
+  presetId: string;
+  name: string;
+}) {
+  const trimmedName = input.name.trim();
+  if (!trimmedName) throw new Error("SHOPPING_LAYOUT_PRESET_NAME_REQUIRED");
+
+  await assertPlanOwned(input.userId, input.planId);
+
+  const preset = await prisma.shoppingLayoutPreset.findUnique({
+    where: { id: input.presetId },
+    select: { id: true, isBuiltIn: true, name: true },
+  });
+  if (!preset) throw new Error("SHOPPING_LAYOUT_PRESET_NOT_FOUND");
+  if (preset.isBuiltIn) throw new Error("SHOPPING_LAYOUT_PRESET_BUILT_IN");
+
+  const duplicate = await prisma.shoppingLayoutPreset.findFirst({
+    where: {
+      name: trimmedName,
+      id: { not: preset.id },
+    },
+    select: { id: true },
+  });
+  if (duplicate) throw new Error("SHOPPING_LAYOUT_PRESET_NAME_TAKEN");
+
+  await prisma.shoppingLayoutPreset.update({
+    where: { id: preset.id },
+    data: { name: trimmedName },
+  });
+
+  return { planId: input.planId, presetId: preset.id, name: trimmedName };
+}
+
+/** Removes the shopping list for a plan (items and share links cascade). */
+export async function deleteShoppingListForPlan(input: {
+  userId: string;
+  planId: string;
+}) {
+  await assertPlanOwned(input.userId, input.planId);
+  const list = await prisma.shoppingList.findUnique({
+    where: { planId: input.planId },
+    select: { id: true },
+  });
+  if (!list) throw new Error("SHOPPING_LIST_NOT_FOUND");
+
+  await prisma.shoppingList.delete({ where: { id: list.id } });
+  return { planId: input.planId };
 }
 
 export async function saveShoppingLayoutPreset(input: {

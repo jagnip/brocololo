@@ -6,15 +6,16 @@ import { toast } from "sonner";
 import { setShoppingLayoutPresetByShareAction } from "@/actions/shopping-list-share-actions";
 import { setShoppingLayoutPresetAction } from "@/actions/shopping-list-actions";
 import {
-  GroceriesLayoutSelector,
-  type GroceriesLayoutPresetOption,
-} from "@/components/groceries/groceries-layout-selector";
+  GroceriesLayoutSwitcher,
+  type GroceriesLayoutSwitcherPreset,
+} from "@/components/groceries/groceries-layout-switcher";
 
 type GroceriesViewLayoutControlsProps = {
   planId: string;
   shareToken?: string;
-  presets: GroceriesLayoutPresetOption[];
+  presets: GroceriesLayoutSwitcherPreset[];
   activePresetId: string | null;
+  onAddLayout?: () => void;
   onPendingChange?: (isPending: boolean) => void;
 };
 
@@ -23,6 +24,7 @@ export function GroceriesViewLayoutControls({
   shareToken,
   presets,
   activePresetId,
+  onAddLayout,
   onPendingChange,
 }: GroceriesViewLayoutControlsProps) {
   const router = useRouter();
@@ -35,7 +37,6 @@ export function GroceriesViewLayoutControls({
   );
 
   const onPresetChange = (presetId: string) => {
-    // Optimistically reflect selection in the topbar before server revalidation completes.
     setOptimisticPresetId(presetId);
     startTransition(async () => {
       const result = shareToken
@@ -53,18 +54,16 @@ export function GroceriesViewLayoutControls({
   };
 
   useEffect(() => {
-    // Bubble transition state up so the persisted list can show the same
-    // pending pulse pattern used in other list/filter UIs.
     onPendingChange?.(isPending);
   }, [isPending, onPendingChange]);
 
   return (
-    <GroceriesLayoutSelector
+    <GroceriesLayoutSwitcher
       presets={presets}
-      value={safePresetId}
-      onValueChange={onPresetChange}
+      activePresetId={safePresetId}
+      onPresetChange={onPresetChange}
+      onAddLayout={onAddLayout}
       disabled={isPending || presets.length === 0}
-      triggerClassName="w-[200px]"
     />
   );
 }

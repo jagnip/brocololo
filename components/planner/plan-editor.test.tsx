@@ -133,6 +133,7 @@ function renderPlanEditor(props: ComponentProps<typeof PlanEditor>) {
 describe("PlanEditor autosave", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(updateSavedPlan).mockResolvedValue({ type: "success" } as any);
     routerMock.push.mockClear();
     routerMock.refresh.mockClear();
   });

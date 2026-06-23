@@ -5,13 +5,12 @@ import {
   useEffect,
   useMemo,
   useState,
-  useTransition,
   type ReactNode,
 } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import { Info, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Info, Pencil, Trash2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,19 +34,10 @@ import {
 import {
   createIngredientAction,
   createIngredientInlineAction,
-  deleteIngredientAction,
   updateIngredientInlineAction,
   updateIngredientAction,
 } from "@/actions/ingredient-actions";
 import { IconPicker } from "./icon-picker";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -140,8 +130,6 @@ export default function IngredientForm({
   onSubmitted,
   onCancel,
 }: IngredientFormProps) {
-  // Keep delete confirmation local to the edit form state.
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   // Keep a local unit list so inline unit creation is immediately selectable.
   const [availableUnits, setAvailableUnits] = useState(units);
   // Track the conversion row that requested creating a brand new unit.
@@ -153,7 +141,6 @@ export default function IngredientForm({
     rowIndex: number;
     unit: UnitType;
   } | null>(null);
-  const [isDeleting, startDeleteTransition] = useTransition();
 
   const formSchema = useMemo(
     () => makeIngredientSchema(gramsUnitId),
@@ -310,27 +297,11 @@ export default function IngredientForm({
     }
   }
 
-  function onConfirmDelete() {
-    if (!ingredient) {
-      return;
-    }
-
-    startDeleteTransition(async () => {
-      const result = await deleteIngredientAction(ingredient.id);
-
-      // Action redirects on success, so only show errors here.
-      if (result?.type === "error") {
-        toast.error(result.message);
-        setIsDeleteOpen(false);
-      }
-    });
-  }
   const isSubmitting = form.formState.isSubmitting;
   const isPageCreateMode = mode === "page" && !ingredient;
   const isPageEditMode = mode === "page" && Boolean(ingredient);
   const isGlobalIngredient = ingredient?.userId === null;
   const canonicalDisabled = Boolean(ingredient && isGlobalIngredient && !isAdmin);
-  const canDelete = isAdmin || (ingredient?.userId != null);
   // Substitutions are per-user overlay fields on global ingredients.
   const groceriesSubstitutionDisabled = false;
   const handleTopbarCreateClick = useCallback(() => {
@@ -395,21 +366,6 @@ export default function IngredientForm({
                 disabled: isSubmitting,
                 ariaBusy: isSubmitting,
               },
-              {
-                id: "delete-ingredient",
-                label: "Delete ingredient",
-                // Match planner/log delete UX: show spinner icon while delete is pending.
-                icon: isDeleting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Trash2 className="h-4 w-4" />
-                ),
-                size: "icon" as const,
-                variant: "outline" as const,
-                ariaLabel: "Delete ingredient",
-                disabled: isDeleting || !canDelete,
-                onClick: () => setIsDeleteOpen(true),
-              },
             ]
           : []),
       ],
@@ -418,8 +374,6 @@ export default function IngredientForm({
       handleTopbarCreateClick,
       handleTopbarUpdateClick,
       ingredient?.name,
-      canDelete,
-      isDeleting,
       isPageCreateMode,
       isPageEditMode,
       isSubmitting,
@@ -1077,45 +1031,6 @@ export default function IngredientForm({
           ) : null}
         </div>
 
-        {mode === "page" && ingredient ? (
-          <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Delete ingredient?</DialogTitle>
-                <DialogDescription>
-                  Are you sure you want to delete{" "}
-                  <strong>{ingredient.name}</strong>? This action cannot be
-                  undone.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isDeleting}
-                  onClick={() => setIsDeleteOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  disabled={isDeleting}
-                  onClick={onConfirmDelete}
-                >
-                  {isDeleting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Deleting...</span>
-                    </>
-                  ) : (
-                    "Yes, delete"
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        ) : null}
       </form>
 
       <CreateUnitDialog

@@ -160,8 +160,8 @@ export function AppTopbar() {
           ) : null}
           {shouldShowGroceriesPlanTopbarSkeleton ? (
             <>
-              <Skeleton className="h-9 w-36 rounded-md sm:w-48" />
-              <Skeleton className="h-9 w-28 rounded-md" />
+              <Skeleton className="h-9 w-20 rounded-md" />
+              <Skeleton className="h-9 w-9 rounded-md" />
             </>
           ) : null}
           {shouldShowGroceriesPlanEditTopbarSkeleton ? (

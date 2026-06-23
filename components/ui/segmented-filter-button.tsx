@@ -3,20 +3,16 @@ import type { ComponentProps, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-/** Selected/unselected shell classes shared by instruction person filters and planner toggles. */
+/** Selected shell for segmented toggles; unselected uses Button `outline` unchanged. */
 export const segmentedFilterSelectedClassName =
   "border-ring bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground";
-export const segmentedFilterUnselectedClassName =
-  "border-border bg-card text-foreground shadow-xs hover:border-ring hover:bg-muted/40";
 
-/** Shared muted toggle surface for segmented buttons and checkbox chips. */
+/** Checkbox chips and segmented buttons share selected styling only. */
 export function getSegmentedFilterSurfaceClassName(selected: boolean) {
-  return cn(
-    "border transition-all",
-    selected
-      ? segmentedFilterSelectedClassName
-      : segmentedFilterUnselectedClassName,
-  );
+  if (!selected) {
+    return null;
+  }
+  return cn("transition-all", segmentedFilterSelectedClassName);
 }
 
 type SegmentedFilterButtonProps = Omit<
