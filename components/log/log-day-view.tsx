@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, useCallback, type ReactNode } from "react";
 import {
   DndContext,
   type DragEndEvent,
@@ -40,6 +40,7 @@ import {
 } from "./log-active-day-view";
 import { LogRemoveDayAlertDialog } from "./log-remove-day-alert-dialog";
 import { LogDuplicateEntryDialog } from "./log-duplicate-entry-dialog";
+import { LogDayPersonToolbarControls } from "./log-day-person-toolbar-controls";
 import type { DateRangeValue } from "@/components/planner/date-range-picker";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 
@@ -159,6 +160,8 @@ type LogDayViewProps = {
     { name: string; ingredients: EditableIngredientRow[] }
   >;
   ingredientFormDependencies?: IngredientFormDependencies;
+  hideDayPersonInHeader?: boolean;
+  onRegisterToolbarControls?: (node: ReactNode | null) => void;
 };
 
 type RemoveDayWarningState = {
@@ -193,6 +196,8 @@ export function LogDayViewController({
   recipeOptions = [],
   ingredientOptions = [],
   plannedMealsBySlotKey = {},
+  hideDayPersonInHeader = false,
+  onRegisterToolbarControls,
 }: LogDayViewProps) {
   const selectedFamilyMemberId = familyMemberId ?? person ?? familyMembers[0]?.id;
   const router = useRouter();
@@ -913,10 +918,41 @@ export function LogDayViewController({
     });
   };
 
-  const handleSelectDay = (dateKey: string) => {
+  const handleSelectDay = useCallback((dateKey: string) => {
     setSelectedDayKey(dateKey);
     setSelectedSlot(null);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!onRegisterToolbarControls || !hideDayPersonInHeader) {
+      return;
+    }
+
+    if (!selectedDayKey || visibleDays.length === 0) {
+      onRegisterToolbarControls(null);
+      return;
+    }
+
+    onRegisterToolbarControls(
+      <LogDayPersonToolbarControls
+        days={visibleDays}
+        selectedDayKey={selectedDayKey}
+        onSelectDay={handleSelectDay}
+        familyMembers={familyMembers}
+      />,
+    );
+
+    return () => {
+      onRegisterToolbarControls(null);
+    };
+  }, [
+    familyMembers,
+    hideDayPersonInHeader,
+    handleSelectDay,
+    onRegisterToolbarControls,
+    selectedDayKey,
+    visibleDays,
+  ]);
 
   const handleAddDay = () => {
     if (!allowDayManagement) return;
@@ -1058,8 +1094,9 @@ export function LogDayViewController({
             isAddingDay={isAddingDay}
             isRemovingDay={isRemovingDay}
             logId={logId}
-            showDayControls
+            showDayControls={!hideDayPersonInHeader || allowDayManagement}
             showDayManagementActions={allowDayManagement}
+            hideDayPersonInHeader={hideDayPersonInHeader}
             showPageHeader={false}
             onSelectDay={handleSelectDay}
             onAddDay={handleAddDay}

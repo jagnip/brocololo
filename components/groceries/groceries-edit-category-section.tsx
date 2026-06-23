@@ -18,6 +18,7 @@ type GroceriesEditCategorySectionProps = {
   ingredientOptionsByCategoryId: Map<string, SearchableSelectOption[]>;
   renderIngredientDropdownLabel: (option: SearchableSelectOption) => React.ReactNode;
   renderIngredientTriggerLabel: (option: SearchableSelectOption) => React.ReactNode;
+  getSelectedIngredientOptionHref?: (option: SearchableSelectOption) => string | null | undefined;
   ingredientById: Map<string, GroceriesEditIngredientOption>;
   unitById: Map<string, GroceriesEditUnitOption>;
   onRowChange: (rowId: string, next: Partial<GroceriesEditableRow>) => void;
@@ -42,6 +43,7 @@ export function GroceriesEditCategorySection({
   ingredientOptionsByCategoryId,
   renderIngredientDropdownLabel,
   renderIngredientTriggerLabel,
+  getSelectedIngredientOptionHref,
   ingredientById,
   unitById,
   onRowChange,
@@ -68,6 +70,7 @@ export function GroceriesEditCategorySection({
             ingredientOptions={ingredientOptions}
             renderIngredientDropdownLabel={renderIngredientDropdownLabel}
             renderIngredientTriggerLabel={renderIngredientTriggerLabel}
+            getSelectedIngredientOptionHref={getSelectedIngredientOptionHref}
             ingredientById={ingredientById}
             unitById={unitById}
             onRowChange={onRowChange}

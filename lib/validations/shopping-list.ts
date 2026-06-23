@@ -52,6 +52,22 @@ export const deleteActiveShoppingLayoutPresetSchema = z.object({
   presetId: z.string().min(1),
 });
 
+export const updateShoppingLayoutPresetSchema = z.object({
+  planId: z.string().min(1),
+  presetId: z.string().min(1),
+  orderedCategoryIds: z.array(z.string().min(1)).min(1),
+});
+
+export const renameShoppingLayoutPresetSchema = z.object({
+  planId: z.string().min(1),
+  presetId: z.string().min(1),
+  name: z.string().trim().min(1).max(60),
+});
+
+export const deleteShoppingListSchema = z.object({
+  planId: z.string().min(1),
+});
+
 export type SaveShoppingListEditsPayload = z.infer<
   typeof saveShoppingListEditsSchema
 >;

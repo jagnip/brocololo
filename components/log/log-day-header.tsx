@@ -3,14 +3,7 @@
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LogPersonSelectFromUrl } from "@/components/log/log-person-select";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { LogDayPersonToolbarControls } from "@/components/log/log-day-person-toolbar-controls";
 import type { LogDayData } from "@/lib/log/view-model";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import { PageHeader } from "../page-header";
@@ -44,6 +37,7 @@ export type LogDayPanelHeaderProps = {
   onRemoveDay: () => void;
   showDayControls?: boolean;
   showDayManagementActions?: boolean;
+  hideDayPersonInHeader?: boolean;
   showPageHeader?: boolean;
   familyMembers: FamilyMemberRow[];
 };
@@ -60,6 +54,7 @@ export function LogDayHeader({
   onRemoveDay,
   showDayControls = true,
   showDayManagementActions = true,
+  hideDayPersonInHeader = false,
   showPageHeader = true,
   familyMembers,
 }: LogDayPanelHeaderProps) {
@@ -72,31 +67,14 @@ export function LogDayHeader({
       <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-2">
         {showDayControls ? (
           <div className="flex flex-nowrap items-center gap-1.5 md:flex-wrap md:gap-2">
-            {/* Day selector; person lives in the app top bar next to the log switcher. */}
-            <div className="min-w-0 flex-1 md:flex-none md:w-48">
-              {/* Day is always required; disable shared Select inline clear (X). */}
-              <Select
-                value={selectedDayKey}
-                onValueChange={onSelectDay}
-                allowInlineClear={false}
-              >
-                <SelectTrigger className="w-full min-w-0">
-                  <SelectValue placeholder="Select a day" />
-                </SelectTrigger>
-                <SelectContent>
-                  {days.map((d) => (
-                    <SelectItem key={d.dateKey} value={d.dateKey}>
-                      {formatDayLabel(d.date)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Hide when plan audience is a single person (no meaningful switch). */}
-            {familyMembers.length > 1 ? (
-              <LogPersonSelectFromUrl familyMembers={familyMembers} />
-            ) : null}
+            {hideDayPersonInHeader ? null : (
+              <LogDayPersonToolbarControls
+                days={days}
+                selectedDayKey={selectedDayKey}
+                onSelectDay={onSelectDay}
+                familyMembers={familyMembers}
+              />
+            )}
 
             {showDayManagementActions ? (
               <>

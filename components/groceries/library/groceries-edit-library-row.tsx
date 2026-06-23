@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
-import { IngredientSupermarketLinkButton } from "@/components/groceries/ingredient-supermarket-link-button";
+import { IngredientNameLink } from "@/components/ingredients/ingredient-name-link";
 import { Button } from "@/components/ui/button";
 
 // One row in the library panel: a single ingredient that can either be
@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button";
 // Kept presentational/stateless on purpose — the parent panel owns all data.
 type GroceriesEditLibraryRowProps = {
   ingredientId: string;
+  ingredientSlug: string;
   ingredientName: string;
   ingredientDescriptor: string | null;
-  supermarketUrl: string | null;
   isAddingToGroceries?: boolean;
   isRemovingFromList?: boolean;
   onAddToGroceries: (ingredientId: string) => void;
@@ -20,9 +20,9 @@ type GroceriesEditLibraryRowProps = {
 
 export function GroceriesEditLibraryRow({
   ingredientId,
+  ingredientSlug,
   ingredientName,
   ingredientDescriptor,
-  supermarketUrl,
   isAddingToGroceries = false,
   isRemovingFromList = false,
   onAddToGroceries,
@@ -32,22 +32,15 @@ export function GroceriesEditLibraryRow({
 
   return (
     <div className="flex items-center gap-2 py-1.5">
-      {/* Name + optional supermarket link + descriptor; truncates so long names don't push buttons off. */}
+      {/* Name links to ingredient edit; descriptor stays muted below. */}
       <div className="min-w-0 flex-1">
-        <div className="flex min-w-0 items-center gap-1">
-          <div className="truncate text-sm leading-none text-foreground">
-            {ingredientName}
-          </div>
-          <IngredientSupermarketLinkButton
-            href={supermarketUrl}
-            ingredientLabel={ingredientName}
-            className="-mt-px"
-          />
-        </div>
+        <IngredientNameLink
+          name={ingredientName}
+          slug={ingredientSlug}
+          className="truncate text-sm leading-none text-foreground"
+        />
         {descriptor ? (
-          <div className="truncate text-xs text-muted-foreground">
-            {descriptor}
-          </div>
+          <div className="truncate text-xs text-muted-foreground">{descriptor}</div>
         ) : null}
       </div>
 

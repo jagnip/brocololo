@@ -314,8 +314,7 @@ export function PlannerForm({
       // Keep action visible for discoverability; enable only when plan exists.
       disabled: !generatedPlan || isSaving,
       ariaBusy: isSaving,
-      // Requested UX: keep planner create-page actions outlined.
-      variant: "outline" as const,
+      variant: "default" as const,
       size: "default" as const,
     },
   ];
@@ -576,7 +575,7 @@ export function PlannerForm({
           </Form>
           <Button
             type="button"
-            variant="default"
+            variant="outline"
             size="default"
             className={cn(
               "w-full shrink-0 sm:w-fit",

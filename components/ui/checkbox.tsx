@@ -6,6 +6,7 @@ import { CheckIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
+import { getSegmentedFilterSurfaceClassName } from "@/components/ui/segmented-filter-button"
 
 function Checkbox({
   className,
@@ -15,7 +16,8 @@ function Checkbox({
     <CheckboxPrimitive.Root
       data-slot="checkbox"
       className={cn(
-        "peer size-4 shrink-0 rounded-[4px] border border-input shadow-xs transition-shadow outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground dark:bg-input/30 dark:aria-invalid:ring-destructive/40 dark:data-[state=checked]:bg-primary",
+        // Muted shell aligned with SegmentedFilterButton instead of primary fill.
+        "peer size-4 shrink-0 rounded-[4px] border border-border bg-card shadow-xs transition-shadow outline-none hover:bg-muted/40 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 data-[state=checked]:border-ring data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground data-[state=checked]:hover:bg-accent",
         className
       )}
       {...props}
@@ -48,29 +50,28 @@ function CheckboxWithLabel({
 }: CheckboxWithLabelProps) {
   const generatedId = React.useId()
   const checkboxId = id ?? generatedId
-
-  function handleLabelClick(event: React.MouseEvent<HTMLLabelElement>) {
-    if (disabled || checked === undefined) {
-      return
-    }
-    event.preventDefault()
-    onCheckedChange?.(checked === true ? false : true)
-  }
+  const isChecked = checked === true
 
   return (
-    <div className={cn("flex items-center gap-2", wrapperClassName)}>
-      <Checkbox
-        id={checkboxId}
-        checked={checked}
-        disabled={disabled}
-        onCheckedChange={onCheckedChange}
-        {...props}
-      />
+    <div className={cn("inline-flex", wrapperClassName)}>
       <Label
         htmlFor={checkboxId}
-        className={cn("cursor-pointer normal-case tracking-normal", labelClassName)}
-        onClick={handleLabelClick}
+        className={cn(
+          // Chip-style toggle matches SegmentedFilterButton (e.g. Weekdays & weekends).
+          "inline-flex h-9 cursor-pointer items-center justify-center rounded-md px-4 text-sm font-medium normal-case tracking-normal text-foreground select-none focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50",
+          getSegmentedFilterSurfaceClassName(isChecked),
+          disabled && "pointer-events-none opacity-50",
+          labelClassName,
+        )}
       >
+        <Checkbox
+          id={checkboxId}
+          className="sr-only"
+          checked={checked}
+          disabled={disabled}
+          onCheckedChange={onCheckedChange}
+          {...props}
+        />
         {label}
       </Label>
     </div>

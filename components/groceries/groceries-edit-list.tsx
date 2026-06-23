@@ -1,17 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { GripVertical, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import {
-  deleteActiveShoppingLayoutPresetAction,
-  saveShoppingLayoutPresetAction,
-  saveShoppingListEditsAction,
-  setShoppingLayoutPresetAction,
-} from "@/actions/shopping-list-actions";
+import { saveShoppingListEditsAction } from "@/actions/shopping-list-actions";
 import { GroceriesEditCategorySection } from "@/components/groceries/groceries-edit-category-section";
-import { GroceriesLayoutSelector } from "@/components/groceries/groceries-layout-selector";
 import { GroceriesEditLibraryPanel } from "@/components/groceries/library/groceries-edit-library-panel";
 import type {
   GroceriesEditableRow,
@@ -26,20 +19,11 @@ import { ROUTES } from "@/lib/constants";
 import { formatDateRangeLabel } from "@/lib/format-date-range-label";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { badgeVariants } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   buildIngredientSearchSourceMap,
   ingredientsToSearchableSelectOptions,
+  renderIngredientSearchDropdownLabel,
+  renderIngredientSearchTriggerLabel,
   type IngredientSearchSelectSource,
 } from "@/components/ingredients/ingredient-searchable-select-labels";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
@@ -49,20 +33,6 @@ import { cn } from "@/lib/utils";
 // 1.5s is long enough to grab attention without nagging the user when they
 // already know where the row is.
 const ROW_HIGHLIGHT_DURATION_MS = 1500;
-
-function moveCategoryIdToIndex(input: {
-  categoryIds: string[];
-  movedCategoryId: string;
-  targetIndex: number;
-}) {
-  const sourceIndex = input.categoryIds.indexOf(input.movedCategoryId);
-  if (sourceIndex < 0) return input.categoryIds;
-  const next = [...input.categoryIds];
-  const [moved] = next.splice(sourceIndex, 1);
-  const boundedTarget = Math.max(0, Math.min(input.targetIndex, next.length));
-  next.splice(boundedTarget, 0, moved);
-  return next;
-}
 
 type GroceriesEditListProps = {
   list: GroceriesEditListModel;
@@ -147,17 +117,10 @@ export function GroceriesEditList({
     categories[0]?.id ?? null,
   );
   const [optimisticCategoryId, setOptimisticCategoryId] = useState<string | null>(null);
-  const [categoryOrderIds, setCategoryOrderIds] = useState<string[]>(
+  const categoryOrderIds = useMemo(
     () => list.effectiveCategoryOrderIds ?? categories.map((category) => category.id),
+    [categories, list.effectiveCategoryOrderIds],
   );
-  const [activeLayoutPresetId, setActiveLayoutPresetId] = useState<string | null>(
-    list.activeLayoutPresetId,
-  );
-  const [draggingCategoryId, setDraggingCategoryId] = useState<string | null>(null);
-  const [activeBadgeDropIndex, setActiveBadgeDropIndex] = useState<number | null>(null);
-  const [isReorderMode, setIsReorderMode] = useState(false);
-  const [isSavePresetDialogOpen, setIsSavePresetDialogOpen] = useState(false);
-  const [presetNameInput, setPresetNameInput] = useState("");
 
   const ingredientById = useMemo(
     () => new Map(ingredients.map((ingredient) => [ingredient.id, ingredient] as const)),
@@ -175,6 +138,7 @@ export function GroceriesEditList({
       const bucket = sourcesByCategoryId.get(ingredient.category.id) ?? [];
       bucket.push({
         id: ingredient.id,
+        slug: ingredient.slug,
         name: ingredient.name,
         brand: ingredient.brand,
         descriptor: ingredient.descriptor,
@@ -195,6 +159,7 @@ export function GroceriesEditList({
       buildIngredientSearchSourceMap(
         ingredients.map((ingredient) => ({
           id: ingredient.id,
+          slug: ingredient.slug,
           name: ingredient.name,
           brand: ingredient.brand,
           descriptor: ingredient.descriptor,
@@ -204,36 +169,19 @@ export function GroceriesEditList({
     [ingredients],
   );
   const renderIngredientDropdownLabel = useCallback(
-    (option: SearchableSelectOption) => {
-      const ingredient = ingredientByIdForSelect.get(option.value);
-      const descriptor = ingredient?.descriptor?.trim();
-      return (
-        <span className="flex min-w-0 flex-col gap-0.5 text-left">
-          <span className="truncate font-normal text-foreground">{option.label}</span>
-          {descriptor ? (
-            <span className="truncate text-xs leading-snug text-muted-foreground">
-              {descriptor}
-            </span>
-          ) : null}
-        </span>
-      );
-    },
+    (option: SearchableSelectOption) =>
+      renderIngredientSearchDropdownLabel(option, ingredientByIdForSelect),
     [ingredientByIdForSelect],
   );
   const renderIngredientTriggerLabel = useCallback(
+    (option: SearchableSelectOption) =>
+      renderIngredientSearchTriggerLabel(option, ingredientByIdForSelect),
+    [ingredientByIdForSelect],
+  );
+  const getSelectedIngredientOptionHref = useCallback(
     (option: SearchableSelectOption) => {
       const ingredient = ingredientByIdForSelect.get(option.value);
-      const descriptor = ingredient?.descriptor?.trim();
-      return (
-        <span className="flex min-w-0 max-w-full items-baseline gap-x-1.5 truncate text-left">
-          <span className="shrink-0 font-normal text-foreground">{option.label}</span>
-          {descriptor ? (
-            <span className="min-w-0 truncate font-normal text-muted-foreground">
-              · {descriptor}
-            </span>
-          ) : null}
-        </span>
-      );
+      return ingredient?.slug ? ROUTES.ingredientEdit(ingredient.slug) : null;
     },
     [ingredientByIdForSelect],
   );
@@ -429,28 +377,11 @@ export function GroceriesEditList({
     };
   }, []);
   const onCategoryBadgeClick = useCallback((categoryId: string) => {
-    if (isReorderMode) return;
-    // Optimistically mark the clicked section active before scroll settles.
     setOptimisticCategoryId(categoryId);
     const sectionElement = sectionElementByCategoryIdRef.current.get(categoryId);
     if (!sectionElement) return;
     sectionElement.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [isReorderMode]);
-  const onDropCategoryToIndex = useCallback(
-    (targetIndex: number) => {
-      if (!draggingCategoryId) return;
-      setCategoryOrderIds((prev) =>
-        moveCategoryIdToIndex({
-          categoryIds: prev,
-          movedCategoryId: draggingCategoryId,
-          targetIndex,
-        }),
-      );
-      setActiveBadgeDropIndex(null);
-      setDraggingCategoryId(null);
-    },
-    [draggingCategoryId],
-  );
+  }, []);
   useEffect(() => {
     // Keep a valid active section when categories change.
     if (categories.length === 0) {
@@ -462,11 +393,6 @@ export function GroceriesEditList({
       prev && categories.some((category) => category.id === prev) ? prev : categories[0].id,
     );
   }, [categories]);
-  useEffect(() => {
-    // Keep local category order synced with persisted active preset after refresh/navigation.
-    setCategoryOrderIds(list.effectiveCategoryOrderIds ?? categories.map((category) => category.id));
-    setActiveLayoutPresetId(list.activeLayoutPresetId);
-  }, [categories, list.activeLayoutPresetId, list.effectiveCategoryOrderIds]);
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -495,139 +421,6 @@ export function GroceriesEditList({
     return () => observer.disconnect();
   }, [groupedSections]);
   const selectedCategoryId = optimisticCategoryId ?? activeCategoryId;
-  const orderedCategoryIdsForSave = useMemo(
-    () => groupedSections.map((section) => section.categoryId),
-    [groupedSections],
-  );
-  // Resolve current active preset metadata so UI can guard destructive actions.
-  const activeLayoutPreset = useMemo(
-    () =>
-      list.layoutPresets.find((preset) => preset.id === activeLayoutPresetId) ?? null,
-    [activeLayoutPresetId, list.layoutPresets],
-  );
-  const isActivePresetBuiltIn = activeLayoutPreset?.isBuiltIn ?? false;
-  const isDeleteLayoutDisabled = isPending || !activeLayoutPreset || isActivePresetBuiltIn;
-  const deleteLayoutButtonTitle = isActivePresetBuiltIn
-    ? "Default layout cannot be removed"
-    : "Delete current custom layout and switch to default layout";
-  const onLayoutPresetSelect = useCallback(
-    (presetId: string) => {
-      const selectedPreset = list.layoutPresets.find((preset) => preset.id === presetId);
-      if (!selectedPreset) return;
-      // Optimistically switch both selector state and rendered order.
-      setActiveLayoutPresetId(presetId);
-      setCategoryOrderIds(selectedPreset.categoryOrderIds);
-      startTransition(async () => {
-        const result = await setShoppingLayoutPresetAction({
-          planId: list.plan.id,
-          presetId,
-        });
-        if (result.type === "error") {
-          toast.error(result.message);
-          return;
-        }
-        router.refresh();
-      });
-    },
-    [list.layoutPresets, list.plan.id, router, startTransition],
-  );
-  const onSaveAsPreset = useCallback(
-    async (presetNameRaw: string) => {
-      const presetName = presetNameRaw.trim();
-      if (!presetName) {
-        toast.error("Preset name cannot be empty.");
-        return;
-      }
-      const result = await saveShoppingLayoutPresetAction({
-        planId: list.plan.id,
-        presetName,
-        orderedCategoryIds: orderedCategoryIdsForSave,
-      });
-      if (result.type === "error") {
-        toast.error(result.message);
-        return;
-      }
-      toast.success(`Saved "${presetName}" layout preset.`);
-      setIsSavePresetDialogOpen(false);
-      setPresetNameInput("");
-      router.refresh();
-    },
-    [list.plan.id, orderedCategoryIdsForSave, router],
-  );
-  const onSavePresetDialogConfirm = useCallback(() => {
-    const presetName = presetNameInput.trim();
-    if (!presetName) {
-      toast.error("Preset name cannot be empty.");
-      return;
-    }
-    startTransition(async () => {
-      await onSaveAsPreset(presetName);
-    });
-  }, [onSaveAsPreset, presetNameInput, startTransition]);
-  const onCancelReorder = useCallback(() => {
-    // Cancel discards unsaved reorder changes and restores persisted order.
-    setCategoryOrderIds(list.effectiveCategoryOrderIds ?? categories.map((category) => category.id));
-    setDraggingCategoryId(null);
-    setActiveBadgeDropIndex(null);
-    setIsReorderMode(false);
-  }, [categories, list.effectiveCategoryOrderIds]);
-  const onDeleteActiveLayoutPreset = useCallback(() => {
-    if (!activeLayoutPresetId) return;
-    startTransition(async () => {
-      const result = await deleteActiveShoppingLayoutPresetAction({
-        planId: list.plan.id,
-        presetId: activeLayoutPresetId,
-      });
-      if (result.type === "error") {
-        toast.error(result.message);
-        return;
-      }
-      toast.success("Removed current custom layout and switched to Default.");
-      setIsReorderMode(false);
-      router.refresh();
-    });
-  }, [activeLayoutPresetId, list.plan.id, router, startTransition]);
-
-  const renderBadgeDropSlot = (params: { index: number; side: "left" | "right" }) => {
-    const isDragging = Boolean(draggingCategoryId) && isReorderMode;
-    const isActiveSlot = activeBadgeDropIndex === params.index;
-    return (
-      <div
-        className={cn(
-          // Overlay-only drop area: does not affect badge layout position.
-          "absolute top-1/2 z-10 -translate-y-1/2 rounded border border-dashed transition-colors",
-          params.side === "left"
-            ? "right-full -mr-1.5"
-            : "left-full -ml-1.5",
-          isDragging
-            ? "pointer-events-auto h-9 w-14 border-muted-foreground/30 bg-muted/30"
-            : "pointer-events-none h-px w-px border-transparent bg-transparent",
-          isActiveSlot && isDragging && "border-primary/70 bg-primary/10",
-        )}
-        onDragOver={(event) => {
-          if (!isReorderMode) return;
-          event.preventDefault();
-          setActiveBadgeDropIndex(params.index);
-        }}
-        onDragEnter={(event) => {
-          if (!isReorderMode) return;
-          event.preventDefault();
-          setActiveBadgeDropIndex(params.index);
-        }}
-        onDragLeave={() => {
-          if (activeBadgeDropIndex === params.index) {
-            setActiveBadgeDropIndex(null);
-          }
-        }}
-        onDrop={(event) => {
-          if (!isReorderMode) return;
-          event.preventDefault();
-          onDropCategoryToIndex(params.index);
-        }}
-        aria-hidden
-      />
-    );
-  };
 
   const planDateRangeLabel = formatDateRangeLabel(
     new Date(list.plan.startDate),
@@ -700,112 +493,23 @@ export function GroceriesEditList({
             const isActive = selectedCategoryId === section.categoryId;
             const isPopulated = (sectionRowCountByCategoryId.get(section.categoryId) ?? 0) > 0;
             const variant = isActive ? "default" : isPopulated ? "outline" : "secondary";
-            const sectionIndex = groupedSections.findIndex(
-              (candidate) => candidate.categoryId === section.categoryId,
-            );
             return (
-              <div key={section.categoryId} className="relative">
-                {isReorderMode && sectionIndex === 0
-                  ? renderBadgeDropSlot({ index: 0, side: "left" })
-                  : null}
-                <button
-                  type="button"
-                  className={cn(
-                    badgeVariants({ variant }),
-                    "transition-colors focus-visible:outline-none",
-                    isReorderMode
-                      ? "cursor-grab active:cursor-grabbing"
-                      : "cursor-pointer",
-                    draggingCategoryId === section.categoryId && "opacity-60",
-                  )}
-                  draggable={isReorderMode}
-                  aria-pressed={isActive}
-                  onClick={() => onCategoryBadgeClick(section.categoryId)}
-                  onDragStart={() => {
-                    if (!isReorderMode) return;
-                    setDraggingCategoryId(section.categoryId);
-                  }}
-                  onDragEnd={() => {
-                    if (!isReorderMode) return;
-                    setActiveBadgeDropIndex(null);
-                    setDraggingCategoryId(null);
-                  }}
-                >
-                  {isReorderMode ? (
-                    <GripVertical className="h-3.5 w-3.5 opacity-70" aria-hidden />
-                  ) : null}
-                  {section.title}
-                </button>
-                {isReorderMode
-                  ? renderBadgeDropSlot({ index: sectionIndex + 1, side: "right" })
-                  : null}
-              </div>
+              <button
+                key={section.categoryId}
+                type="button"
+                className={cn(
+                  badgeVariants({ variant }),
+                  "cursor-pointer transition-colors focus-visible:outline-none",
+                )}
+                aria-pressed={isActive}
+                onClick={() => onCategoryBadgeClick(section.categoryId)}
+              >
+                {section.title}
+              </button>
             );
           })}
         </div>
       </div>
-
-      {/* Keep controls below sticky badges and above category list content. */}
-      <section className="space-y-2">
-        <div className="flex flex-wrap items-end gap-2">
-          <div className="space-y-1">
-            <Label htmlFor="groceries-layout-selector">Supermarket layout</Label>
-            <GroceriesLayoutSelector
-              presets={list.layoutPresets.map((preset) => ({
-                id: preset.id,
-                name: preset.name,
-              }))}
-              value={activeLayoutPresetId}
-              onValueChange={onLayoutPresetSelect}
-              disabled={isPending || list.layoutPresets.length === 0}
-              triggerClassName="w-[220px]"
-            />
-          </div>
-          {isReorderMode ? (
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancelReorder}
-                disabled={isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsSavePresetDialogOpen(true)}
-                disabled={isPending}
-              >
-                Save as preset
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsReorderMode(true)}
-                disabled={isPending}
-              >
-                Reorder layout
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="text-muted-foreground hover:text-destructive"
-                aria-label="Delete current custom layout and switch to default layout"
-                title={deleteLayoutButtonTitle}
-                onClick={onDeleteActiveLayoutPreset}
-                disabled={isDeleteLayoutDisabled}
-              >
-                <Trash2 className="h-4 w-4" aria-hidden />
-              </Button>
-            </>
-          )}
-        </div>
-      </section>
 
       <div className="grid w-full gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-8">
@@ -820,6 +524,7 @@ export function GroceriesEditList({
               ingredientOptionsByCategoryId={ingredientOptionsByCategoryId}
               renderIngredientDropdownLabel={renderIngredientDropdownLabel}
               renderIngredientTriggerLabel={renderIngredientTriggerLabel}
+              getSelectedIngredientOptionHref={getSelectedIngredientOptionHref}
               ingredientById={ingredientById}
               unitById={unitById}
               // Row updates are centralized here so section components stay stateless.
@@ -832,10 +537,9 @@ export function GroceriesEditList({
           ))}
         </div>
 
-        {/* Library panel lives in the right column, below the sticky badges.
-            It owns its own server-action mutations; the only callback the
-            edit list provides is the duplicate-aware "+ to grocery list". */}
-        <div className="hidden lg:block lg:pt-2">
+        {/* Spacer matches category section heading + gap so the library aligns with rows. */}
+        <div className="hidden lg:flex lg:flex-col">
+          <div aria-hidden className="h-7 shrink-0" />
           <GroceriesEditLibraryPanel
             planId={list.plan.id}
             lists={ingredientLists}
@@ -845,43 +549,6 @@ export function GroceriesEditList({
           />
         </div>
       </div>
-
-      <Dialog open={isSavePresetDialogOpen} onOpenChange={setIsSavePresetDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Save supermarket layout preset</DialogTitle>
-            <DialogDescription>
-              Save the current category order as a reusable supermarket layout preset.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="preset-name-input">Preset name</Label>
-            <Input
-              id="preset-name-input"
-              value={presetNameInput}
-              onChange={(event) => setPresetNameInput(event.target.value)}
-              placeholder="e.g. Lidl Layout"
-              onKeyDown={(event) => {
-                if (event.key !== "Enter") return;
-                event.preventDefault();
-                onSavePresetDialogConfirm();
-              }}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsSavePresetDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="button" onClick={onSavePresetDialogConfirm} disabled={isPending}>
-              Save preset
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

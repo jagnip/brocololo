@@ -19,7 +19,7 @@ const planTopbarConfig = {
   actions: PLAN_TOPBAR_ACTIONS,
 };
 
-/** Registers plan detail top bar actions only (selector lives in page content). */
+/** Registers plan top bar actions; plan switcher is on the breadcrumb leaf crumb. */
 export function PlanTopbarConfig() {
   return <TopbarConfigController config={planTopbarConfig} />;
 }

@@ -6,15 +6,18 @@ import { toast } from "sonner";
 import { setShoppingLayoutPresetByShareAction } from "@/actions/shopping-list-share-actions";
 import { setShoppingLayoutPresetAction } from "@/actions/shopping-list-actions";
 import {
-  GroceriesLayoutSelector,
-  type GroceriesLayoutPresetOption,
-} from "@/components/groceries/groceries-layout-selector";
+  GroceriesLayoutSwitcher,
+  type GroceriesLayoutSwitcherPreset,
+} from "@/components/groceries/groceries-layout-switcher";
 
 type GroceriesViewLayoutControlsProps = {
   planId: string;
   shareToken?: string;
-  presets: GroceriesLayoutPresetOption[];
+  presets: GroceriesLayoutSwitcherPreset[];
   activePresetId: string | null;
+  onAddLayout?: () => void;
+  /** Parent-owned pending (e.g. dialog save/delete); merged with in-switch pending. */
+  isLayoutPending?: boolean;
   onPendingChange?: (isPending: boolean) => void;
 };
 
@@ -23,10 +26,12 @@ export function GroceriesViewLayoutControls({
   shareToken,
   presets,
   activePresetId,
+  onAddLayout,
+  isLayoutPending = false,
   onPendingChange,
 }: GroceriesViewLayoutControlsProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [isSwitchPending, startTransition] = useTransition();
   const [optimisticPresetId, setOptimisticPresetId] = useOptimistic(activePresetId);
 
   const safePresetId = useMemo(
@@ -35,7 +40,6 @@ export function GroceriesViewLayoutControls({
   );
 
   const onPresetChange = (presetId: string) => {
-    // Optimistically reflect selection in the topbar before server revalidation completes.
     setOptimisticPresetId(presetId);
     startTransition(async () => {
       const result = shareToken
@@ -53,18 +57,16 @@ export function GroceriesViewLayoutControls({
   };
 
   useEffect(() => {
-    // Bubble transition state up so the persisted list can show the same
-    // pending pulse pattern used in other list/filter UIs.
-    onPendingChange?.(isPending);
-  }, [isPending, onPendingChange]);
+    onPendingChange?.(isSwitchPending);
+  }, [isSwitchPending, onPendingChange]);
 
   return (
-    <GroceriesLayoutSelector
+    <GroceriesLayoutSwitcher
       presets={presets}
-      value={safePresetId}
-      onValueChange={onPresetChange}
-      disabled={isPending || presets.length === 0}
-      triggerClassName="w-[200px]"
+      activePresetId={safePresetId}
+      onPresetChange={onPresetChange}
+      onAddLayout={onAddLayout}
+      disabled={isSwitchPending || isLayoutPending || presets.length === 0}
     />
   );
 }

@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import RecipePage from "./recipe-page";
 import { RecipePageProvider } from "@/components/context/recipe-page-context";
 import { TopbarProvider, useTopbar } from "@/components/context/topbar-context";
+import { TopbarOverflowMenu } from "@/components/topbar-overflow-menu";
 import { Button } from "@/components/ui/button";
 import {
   calculateNutritionPerServing,
@@ -77,7 +78,7 @@ const mockFamilyMembers: FamilyMemberRow[] = [
 /** Renders topbar actions registered by RecipePage for jsdom tests. */
 function TestTopbarActions() {
   const { config } = useTopbar();
-  if (!config?.actions?.length) {
+  if (!config?.actions?.length && !config?.overflowMenu) {
     return null;
   }
   return (
@@ -97,8 +98,28 @@ function TestTopbarActions() {
           </Button>
         ),
       )}
+      {config.overflowMenu ? (
+        <TopbarOverflowMenu config={config.overflowMenu} />
+      ) : null}
     </div>
   );
+}
+
+async function openRecipeActionsMenu(user: ReturnType<typeof userEvent.setup>) {
+  await waitFor(() => {
+    expect(
+      screen.getByRole("button", { name: "Recipe actions" }),
+    ).toBeInTheDocument();
+  });
+  await user.click(screen.getByRole("button", { name: "Recipe actions" }));
+}
+
+async function chooseRecipeAction(
+  user: ReturnType<typeof userEvent.setup>,
+  label: string,
+) {
+  await openRecipeActionsMenu(user);
+  await user.click(screen.getByRole("menuitem", { name: label }));
 }
 
 function renderRecipePage(
@@ -412,6 +433,23 @@ describe("RecipePage nutrition integration", () => {
     expect(within(secondDialog).getByText(formatDatePickerLabel(
       new Date().toLocaleDateString("en-CA"),
     ))).toBeInTheDocument();
+  });
+
+  it("opens delete confirmation from recipe actions menu", async () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    const user = userEvent.setup();
+    renderRecipePage(recipe, ingredients);
+
+    await chooseRecipeAction(user, "Delete recipe");
+
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText("Delete recipe?")).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(recipe.name, { exact: false }),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("button", { name: "Yes, delete" }),
+    ).toBeInTheDocument();
   });
 
   // Add-to-log rows use SearchableSelect without inline create; covered in log-day-view tests.

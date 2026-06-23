@@ -16,6 +16,7 @@ import { RecipeImagePlaceholder } from "@/components/recipes/recipe-image-placeh
 import { PlanSlotMealDialog } from "./plan-slot-meal-dialog";
 import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
 import { formatDayLabel } from "@/lib/planner/helpers";
+import { ROUTES } from "@/lib/constants";
 
 /** Warm off-white on primary — matches --rose-50 accent surface. */
 const MEAL_DONE_ICON_CLASS =
@@ -244,13 +245,12 @@ export function PlannerSlotCard({
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
                 <Link
-                  href={`/recipes/${recipe!.slug}`}
-                  className="block hover:underline"
+                  href={ROUTES.recipe(recipe!.slug)}
+                  className="block min-w-0 truncate type-h3 hover:underline underline-offset-2"
+                  title={recipe!.name}
                   onClick={(event) => event.stopPropagation()}
                 >
-                  <h3 className="truncate type-h3" title={recipe!.name}>
-                    {recipe!.name}
-                  </h3>
+                  {recipe!.name}
                 </Link>
                 <p className="type-body mt-0.5 text-sm text-muted-foreground">
                   {mealLabel}

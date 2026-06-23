@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { Suspense, useMemo } from "react";
 import { usePathname } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useTopbar } from "@/components/context/topbar-context";
+import { TopbarOverflowMenu } from "@/components/topbar-overflow-menu";
 import {
   Breadcrumbs,
   type BreadcrumbsItem,
@@ -104,7 +104,7 @@ export function AppTopbar() {
           {shouldShowRecipeTopbarSkeleton ? (
             <>
               <Skeleton className="h-9 w-24 rounded-md" />
-              <Skeleton className="h-9 w-24 rounded-md" />
+              <Skeleton className="h-9 w-9 rounded-md" />
             </>
           ) : null}
           {shouldShowRecipesIndexTopbarSkeleton ? (
@@ -120,7 +120,6 @@ export function AppTopbar() {
             <>
               <Skeleton className="h-9 w-20 rounded-md" />
               <Skeleton className="h-9 w-28 rounded-md" />
-              <Skeleton className="h-9 w-9 rounded-md" />
             </>
           ) : null}
           {shouldShowLogTopbarSkeleton ? (
@@ -149,8 +148,8 @@ export function AppTopbar() {
           ) : null}
           {shouldShowPlanTopbarSkeleton ? (
             <>
-              <Skeleton className="h-9 w-48 rounded-md" />
-              <Skeleton className="h-9 w-24 rounded-md" />
+              <Skeleton className="h-9 w-28 rounded-md" />
+              <Skeleton className="h-9 w-9 rounded-md" />
             </>
           ) : null}
           {shouldShowPlanCreateTopbarSkeleton ? (
@@ -161,8 +160,8 @@ export function AppTopbar() {
           ) : null}
           {shouldShowGroceriesPlanTopbarSkeleton ? (
             <>
-              <Skeleton className="h-9 w-36 rounded-md sm:w-48" />
-              <Skeleton className="h-9 w-28 rounded-md" />
+              <Skeleton className="h-9 w-20 rounded-md" />
+              <Skeleton className="h-9 w-9 rounded-md" />
             </>
           ) : null}
           {shouldShowGroceriesPlanEditTopbarSkeleton ? (
@@ -213,9 +212,11 @@ export function AppTopbar() {
               </Button>
             );
           })}
+          {config?.overflowMenu ? (
+            <TopbarOverflowMenu config={config.overflowMenu} />
+          ) : null}
         </div>
       </div>
-      <UserButton />
     </header>
   );
 }

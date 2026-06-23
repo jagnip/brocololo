@@ -7,6 +7,7 @@ import type { IngredientsPageData } from "@/lib/db/ingredients";
 
 type IngredientsInfiniteListProps = {
   initialData: IngredientsPageData;
+  isAdmin: boolean;
   q?: string;
   // Active category slug from the URL; used to keep paged fetches aligned with the server's first page.
   categorySlug?: string;
@@ -14,6 +15,7 @@ type IngredientsInfiniteListProps = {
 
 export function IngredientsInfiniteList({
   initialData,
+  isAdmin,
   q,
   categorySlug,
 }: IngredientsInfiniteListProps) {
@@ -136,6 +138,7 @@ export function IngredientsInfiniteList({
             <IngredientRow
               key={ingredient.id}
               ingredient={ingredient}
+              isAdmin={isAdmin}
             />
           ))}
 

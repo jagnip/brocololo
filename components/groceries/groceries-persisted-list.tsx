@@ -2,32 +2,47 @@
 
 import { useState } from "react";
 import type { getShoppingListById } from "@/lib/db/shopping-list";
-import {
-  GroceriesPlanSelect,
-  type GroceriesPlanSelectOption,
-} from "@/components/groceries/groceries-plan-select";
 import { GroceriesPersistedItemRow } from "@/components/groceries/groceries-persisted-item-row";
 import { GroceriesViewLayoutControls } from "@/components/groceries/groceries-view-layout-controls";
-import { Label } from "@/components/ui/label";
+import type { GroceriesLayoutSwitcherPreset } from "@/components/groceries/groceries-layout-switcher";
 
 export type GroceriesPersistedListModel = NonNullable<
   Awaited<ReturnType<typeof getShoppingListById>>
 >;
 
+type GroceriesPersistedListProps = {
+  list: GroceriesPersistedListModel;
+  shareToken?: string;
+  /** When provided, parent owns layout pending state (view shell). */
+  isLayoutPending?: boolean;
+  onLayoutSwitchPendingChange?: (isPending: boolean) => void;
+  /** Optimistic overrides from parent during dialog save/create/delete. */
+  layoutPresets?: GroceriesLayoutSwitcherPreset[];
+  activeLayoutPresetId?: string | null;
+};
+
 /** Read-only groceries list from persisted `ShoppingList` rows (grouped by ingredient category). */
 export function GroceriesPersistedList({
   list,
-  planOptions,
-  currentPlanId,
   shareToken,
-}: {
-  list: GroceriesPersistedListModel;
-  planOptions?: GroceriesPlanSelectOption[];
-  currentPlanId?: string;
-  shareToken?: string;
-}) {
-  const [isLayoutPending, setIsLayoutPending] = useState(false);
+  isLayoutPending: isLayoutPendingProp,
+  onLayoutSwitchPendingChange,
+  layoutPresets: layoutPresetsProp,
+  activeLayoutPresetId: activeLayoutPresetIdProp,
+}: GroceriesPersistedListProps) {
+  const [internalLayoutPending, setInternalLayoutPending] = useState(false);
+  const isLayoutPending = isLayoutPendingProp ?? internalLayoutPending;
+  const onSwitchPendingChange = onLayoutSwitchPendingChange ?? setInternalLayoutPending;
   const { plan, items } = list;
+
+  const layoutPresets =
+    layoutPresetsProp ??
+    list.layoutPresets.map((preset) => ({
+      id: preset.id,
+      name: preset.name,
+      isBuiltIn: preset.isBuiltIn,
+    }));
+  const activeLayoutPresetId = activeLayoutPresetIdProp ?? list.activeLayoutPresetId;
 
   const sections: { title: string; rows: typeof items }[] = [];
   for (const item of items) {
@@ -42,42 +57,26 @@ export function GroceriesPersistedList({
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        {/* Replace the left-side title with the plan selector in page content. */}
-        {!shareToken && planOptions && currentPlanId ? (
-          <div className="flex min-w-0 items-center gap-2">
-            <Label className="shrink-0 text-xs text-muted-foreground">Groceries for</Label>
-            <GroceriesPlanSelect plans={planOptions} currentPlanId={currentPlanId} />
-          </div>
-        ) : (
-          <div className="min-w-0 flex-1" />
-        )}
-        {/* Header-right control mirrors planner/date-range composition:
-            inline label on the left, selector on the right. */}
-        <div className="flex items-center gap-2 sm:min-w-[20rem] lg:min-w-[24rem]">
-          <Label className="shrink-0 whitespace-nowrap">Supermarket layout</Label>
-          <GroceriesViewLayoutControls
-            planId={plan.id}
-            shareToken={shareToken}
-            presets={list.layoutPresets.map((preset) => ({
-              id: preset.id,
-              name: preset.name,
-            }))}
-            activePresetId={list.activeLayoutPresetId}
-            onPendingChange={setIsLayoutPending}
-          />
-        </div>
+      <header className="flex justify-start">
+        <GroceriesViewLayoutControls
+          planId={plan.id}
+          shareToken={shareToken}
+          presets={layoutPresets}
+          activePresetId={activeLayoutPresetId}
+          isLayoutPending={isLayoutPending}
+          onPendingChange={onSwitchPendingChange}
+        />
       </header>
 
-      {/* Pulse the content area while a new layout preset is applying, mirroring
-          list pending feedback patterns used elsewhere in the app. */}
-      <div className="space-y-8 data-[pending=true]:animate-pulse" data-pending={isLayoutPending}>
+      <div
+        className="space-y-8 data-[pending=true]:animate-pulse"
+        data-pending={isLayoutPending}
+      >
         {sections.map((section) => (
           <section key={section.title} className="space-y-3">
             <h2 className="text-base font-semibold tracking-tight text-foreground">
               {section.title}
             </h2>
-            {/* Card rows with gap — matches ingredients list (not divide-y on rose canvas). */}
             <ul className="flex flex-col gap-tight">
               {section.rows.map((row) => (
                 <GroceriesPersistedItemRow

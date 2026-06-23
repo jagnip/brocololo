@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getPlanById, getPlansCached } from "@/lib/db/planner";
+import { getPlanById } from "@/lib/db/planner";
 import { getRecipes } from "@/lib/db/recipes";
 import { getLogByPlanId } from "@/lib/db/logs";
 import { getPlannerPoolItemsForPlan } from "@/lib/db/planner";
@@ -11,7 +11,6 @@ import type { DateRangeValue } from "@/components/planner/date-range-picker";
 import { PlannerLogSharedShell } from "@/components/planner/planner-log-shared-shell";
 import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
 import { planHasShoppingList } from "@/lib/db/shopping-list";
-import { formatDateRangeLabel } from "@/lib/format-date-range-label";
 import { requireUser } from "@/lib/auth/session";
 import { ensureSelfFamilyMember } from "@/lib/db/family-members";
 import { filterFamilyMembersToPlanAudience } from "@/lib/planner/plan-audience";
@@ -93,7 +92,6 @@ export async function PlannerLogCombinedPage({
     allRecipes,
     ingredients,
     hasExistingShoppingList,
-    allPlans,
     familyMembers,
   ] =
     await Promise.all([
@@ -102,7 +100,6 @@ export async function PlannerLogCombinedPage({
       getRecipes(userId),
       getIngredients(userId),
       planHasShoppingList(userId, planId),
-      getPlansCached(userId),
       ensureSelfFamilyMember(userId),
     ]);
 
@@ -124,10 +121,6 @@ export async function PlannerLogCombinedPage({
   const log = await getLogByPlanId(userId, planId, selectedFamilyMember.id);
 
   const initialDateRange = toInitialDateRange(planSlots);
-  const planOptions = allPlans.map((plan) => ({
-    id: plan.id,
-    label: formatDateRangeLabel(plan.startDate, plan.endDate),
-  }));
 
   const ingredientOptions = ingredientsToLogIngredientOptions(ingredients);
 
@@ -234,7 +227,6 @@ export async function PlannerLogCombinedPage({
   return (
     <PlannerLogSharedShell
       planId={planId}
-      planOptions={planOptions}
       initialTab={initialTab}
       initialDateRange={initialDateRange}
       initialPlan={planSlots}

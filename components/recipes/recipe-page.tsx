@@ -12,6 +12,7 @@ import { InstructionsSection } from "@/components/recipes/recipe-page/instructio
 import { IngredientsSection } from "@/components/recipes/recipe-page/ingredients-section";
 import { NotesSection } from "@/components/recipes/recipe-page/notes-section";
 import { RecipeAddToLogDialogContainer } from "@/components/recipes/recipe-page/add-to-log/add-to-log-dialog-container";
+import { RecipeDeleteDialog } from "@/components/recipes/recipe-delete-dialog";
 import {
   useRecipePageAddToLogData,
   useRecipePageBaseData,
@@ -30,11 +31,13 @@ export default function RecipePage({
   ingredientFormDependencies,
 }: RecipePageProps) {
   const [isAddToLogOpen, setIsAddToLogOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const { recipe, ingredients, familyMembers } = useRecipePageBaseData();
   const addToLogData = useRecipePageAddToLogData();
 
   useEffect(() => {
     setIsAddToLogOpen(false);
+    setIsDeleteOpen(false);
   }, [recipe.id, recipe.servings]);
 
   const ingredientOptionsForLogDialog = useMemo<LogIngredientOption[]>(
@@ -74,19 +77,27 @@ export default function RecipePage({
         {
           id: "add-to-log",
           label: "Add to log",
-          // Open only; dialog now owns add-to-log context state.
           onClick: () => setIsAddToLogOpen(true),
           variant: "outline" as const,
           size: "default" as const,
         },
-        {
-          id: "edit-recipe",
-          label: "Edit recipe",
-          href: ROUTES.recipeEdit(recipe.slug),
-          variant: "outline" as const,
-          size: "default" as const,
-        },
       ],
+      overflowMenu: {
+        ariaLabel: "Recipe actions",
+        items: [
+          {
+            id: "edit-recipe",
+            label: "Edit recipe",
+            href: ROUTES.recipeEdit(recipe.slug),
+          },
+          {
+            id: "delete-recipe",
+            label: "Delete recipe",
+            destructive: true,
+            onSelect: () => setIsDeleteOpen(true),
+          },
+        ],
+      },
     }),
     [recipe.name, recipe.slug],
   );
@@ -100,7 +111,7 @@ export default function RecipePage({
         </div>
 
         <div className="contents md:col-span-3 md:block">
-          <div className="order-2 md:order-0 overflow-hidden rounded-xl bg-accent shadow-sm md:mb-block">
+          <div className="order-2 md:order-0 md:mb-block">
             <ImageGallery images={recipe.images || []} />
           </div>
 
@@ -149,6 +160,12 @@ export default function RecipePage({
           ingredientFormDependencies={ingredientFormDependencies}
         />
       ) : null}
+      <RecipeDeleteDialog
+        recipeId={recipe.id}
+        recipeName={recipe.name}
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+      />
     </div>
   );
 }

@@ -5,17 +5,24 @@ import { ROUTES } from "@/lib/constants";
 import { requireUser } from "@/lib/auth/session";
 import {
   deleteActiveShoppingLayoutPreset,
+  deleteShoppingLayoutPreset,
+  deleteShoppingListForPlan,
   generateShoppingListForPlan,
   getGroceryGenerationMealOptionsForPlan,
+  renameShoppingLayoutPreset,
   saveShoppingLayoutPreset,
   setShoppingListActiveLayoutPreset,
   setShoppingListItemPurchased,
+  updateShoppingLayoutPreset,
   updateShoppingListItems,
 } from "@/lib/db/shopping-list";
 import {
   deleteActiveShoppingLayoutPresetSchema,
+  deleteShoppingListSchema,
   groceryGenerationExclusionsSchema,
+  renameShoppingLayoutPresetSchema,
   saveShoppingListEditsSchema,
+  updateShoppingLayoutPresetSchema,
 } from "@/lib/validations/shopping-list";
 import type { GroceryMealOption } from "@/lib/groceries/generation-options";
 
@@ -169,14 +176,16 @@ export async function saveShoppingLayoutPresetAction(input: {
   planId: string;
   presetName: string;
   orderedCategoryIds: string[];
-}): Promise<{ type: "success" } | { type: "error"; message: string }> {
+}): Promise<
+  { type: "success"; presetId: string } | { type: "error"; message: string }
+> {
   try {
     const { id: userId } = await requireUser();
     const updated = await saveShoppingLayoutPreset({ userId, ...input });
     revalidatePath(ROUTES.groceries);
     revalidatePath(ROUTES.groceriesView(updated.planId));
     revalidatePath(ROUTES.groceriesEdit(updated.planId));
-    return { type: "success" };
+    return { type: "success", presetId: updated.presetId };
   } catch (error) {
     if (error instanceof Error && error.message === "SHOPPING_LAYOUT_PRESET_NAME_REQUIRED") {
       return {
@@ -187,6 +196,114 @@ export async function saveShoppingLayoutPresetAction(input: {
     return {
       type: "error",
       message: "Could not save grocery layout preset. Try again.",
+    };
+  }
+}
+
+export async function updateShoppingLayoutPresetAction(input: unknown): Promise<
+  { type: "success" } | { type: "error"; message: string }
+> {
+  const parsed = updateShoppingLayoutPresetSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      type: "error",
+      message: "Could not save grocery layout. Invalid request payload.",
+    };
+  }
+
+  try {
+    const { id: userId } = await requireUser();
+    const updated = await updateShoppingLayoutPreset({ userId, ...parsed.data });
+    revalidatePath(ROUTES.groceries);
+    revalidatePath(ROUTES.groceriesView(updated.planId));
+    revalidatePath(ROUTES.groceriesEdit(updated.planId));
+    return { type: "success" };
+  } catch (error) {
+    if (error instanceof Error && error.message === "SHOPPING_LAYOUT_PRESET_BUILT_IN") {
+      return {
+        type: "error",
+        message: "Default layout cannot be edited. Save as a new layout instead.",
+      };
+    }
+    return {
+      type: "error",
+      message: "Could not save grocery layout. Try again.",
+    };
+  }
+}
+
+export async function renameShoppingLayoutPresetAction(input: unknown): Promise<
+  { type: "success" } | { type: "error"; message: string }
+> {
+  const parsed = renameShoppingLayoutPresetSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      type: "error",
+      message: "Could not rename grocery layout. Invalid request payload.",
+    };
+  }
+
+  try {
+    const { id: userId } = await requireUser();
+    const updated = await renameShoppingLayoutPreset({ userId, ...parsed.data });
+    revalidatePath(ROUTES.groceries);
+    revalidatePath(ROUTES.groceriesView(updated.planId));
+    revalidatePath(ROUTES.groceriesEdit(updated.planId));
+    return { type: "success" };
+  } catch (error) {
+    if (error instanceof Error && error.message === "SHOPPING_LAYOUT_PRESET_BUILT_IN") {
+      return {
+        type: "error",
+        message: "Default layout cannot be renamed.",
+      };
+    }
+    if (error instanceof Error && error.message === "SHOPPING_LAYOUT_PRESET_NAME_TAKEN") {
+      return {
+        type: "error",
+        message: "A layout with this name already exists.",
+      };
+    }
+    if (error instanceof Error && error.message === "SHOPPING_LAYOUT_PRESET_NAME_REQUIRED") {
+      return {
+        type: "error",
+        message: "Layout name cannot be empty.",
+      };
+    }
+    return {
+      type: "error",
+      message: "Could not rename grocery layout. Try again.",
+    };
+  }
+}
+
+export async function deleteShoppingListAction(input: unknown): Promise<
+  { type: "success" } | { type: "error"; message: string }
+> {
+  const parsed = deleteShoppingListSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      type: "error",
+      message: "Could not delete grocery list. Invalid request payload.",
+    };
+  }
+
+  try {
+    const { id: userId } = await requireUser();
+    const deleted = await deleteShoppingListForPlan({ userId, ...parsed.data });
+    revalidatePath(ROUTES.groceries);
+    revalidatePath(ROUTES.groceriesView(deleted.planId));
+    revalidatePath(ROUTES.planView(deleted.planId));
+    return { type: "success" };
+  } catch (error) {
+    if (error instanceof Error && error.message === "SHOPPING_LIST_NOT_FOUND") {
+      return {
+        type: "error",
+        message: "No grocery list to delete.",
+      };
+    }
+    return {
+      type: "error",
+      message: "Could not delete grocery list. Try again.",
     };
   }
 }
@@ -216,10 +333,41 @@ export async function deleteActiveShoppingLayoutPresetAction(input: unknown): Pr
         message: "Default layout cannot be removed.",
       };
     }
-    if (error instanceof Error && error.message === "SHOPPING_LAYOUT_PRESET_NOT_ACTIVE") {
+    return {
+      type: "error",
+      message: "Could not remove grocery layout. Try again.",
+    };
+  }
+}
+
+export async function deleteShoppingLayoutPresetAction(input: unknown): Promise<
+  | { type: "success"; wasActive: boolean; deletedPresetName: string }
+  | { type: "error"; message: string }
+> {
+  const parsed = deleteActiveShoppingLayoutPresetSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      type: "error",
+      message: "Could not remove grocery layout. Invalid request payload.",
+    };
+  }
+
+  try {
+    const { id: userId } = await requireUser();
+    const updated = await deleteShoppingLayoutPreset({ userId, ...parsed.data });
+    revalidatePath(ROUTES.groceries);
+    revalidatePath(ROUTES.groceriesView(updated.planId));
+    revalidatePath(ROUTES.groceriesEdit(updated.planId));
+    return {
+      type: "success",
+      wasActive: updated.wasActive,
+      deletedPresetName: updated.deletedPresetName,
+    };
+  } catch (error) {
+    if (error instanceof Error && error.message === "SHOPPING_LAYOUT_PRESET_BUILT_IN") {
       return {
         type: "error",
-        message: "Only the currently active custom layout can be removed.",
+        message: "Default layout cannot be removed.",
       };
     }
     return {

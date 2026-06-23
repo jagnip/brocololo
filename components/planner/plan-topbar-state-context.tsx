@@ -3,13 +3,17 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
-type PlanTopbarState = {
-  isGenerateDisabled: boolean;
-  isGenerating: boolean;
-  isDeleteDisabled: boolean;
-  isDeleting: boolean;
+export type PlanTopbarState = {
+  onEditDates?: () => void;
+  onGenerateGroceryList?: () => void;
   onGenerateLog?: () => void | Promise<void>;
   onDeletePlan?: () => void;
+  isEditDatesDisabled?: boolean;
+  isGenerateDisabled?: boolean;
+  isGenerating?: boolean;
+  isLoadingMeals?: boolean;
+  isDeleteDisabled?: boolean;
+  isDeleting?: boolean;
 };
 
 type PlanTopbarStateContextValue = {
@@ -19,12 +23,12 @@ type PlanTopbarStateContextValue = {
 };
 
 const DEFAULT_PLAN_TOPBAR_STATE: PlanTopbarState = {
+  isEditDatesDisabled: true,
   isGenerateDisabled: true,
   isGenerating: false,
+  isLoadingMeals: false,
   isDeleteDisabled: true,
   isDeleting: false,
-  onGenerateLog: undefined,
-  onDeletePlan: undefined,
 };
 
 const PlanTopbarStateContext = createContext<PlanTopbarStateContextValue | null>(null);

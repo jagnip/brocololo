@@ -8,7 +8,7 @@ import { PlanView } from "./plan-view";
 import { toast } from "sonner";
 import { ROUTES } from "@/lib/constants";
 import { useRouter } from "next/navigation";
-import { deletePlanAction, updateSavedPlan } from "@/actions/planner-actions";
+import { deletePlanAction, generateLogFromPlan, updateSavedPlan } from "@/actions/planner-actions";
 import { WeekPicker, getDefaultDateRange, type DateRangeValue } from "./date-range-picker";
 import { rebasePlanSlotsByDateRangeDelta } from "@/lib/planner/plan-date-rebase";
 import {
@@ -21,8 +21,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { usePlanTopbarState } from "@/components/planner/plan-topbar-state-context";
 import { PageHeader } from "@/components/page-header";
+import { usePlanTopbarState } from "@/components/planner/plan-topbar-state-context";
 import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
 
 type PlanEditorProps = {
@@ -61,11 +61,15 @@ export function PlanEditor({
   const [isDirty, setIsDirty] = useState(false);
   const editVersionRef = useRef(0);
   const router = useRouter();
+  // Router identity from `useRouter()` can change every render in tests; keep push stable for topbar effect deps.
+  const routerRef = useRef(router);
+  routerRef.current = router;
   const [deleteStatus, setDeleteStatus] = useState<"idle" | "deleting">("idle");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [syncConflict, setSyncConflict] = useState<SyncConflictState | null>(null);
   const blockedAutosaveVersionRef = useRef<number | null>(null);
-  const { setState: setPlanTopbarState, resetState: resetPlanTopbarState } = usePlanTopbarState();
+  const { setState: setPlanTopbarState, resetState: resetPlanTopbarState } =
+    usePlanTopbarState();
 
   function formatDateKeysForToast(dateKeys: string[]) {
     // Format YYYY-MM-DD as a readable UTC date string to avoid timezone drift.
@@ -348,15 +352,39 @@ export function PlanEditor({
     handleDateRangeChange(sharedDateRange);
   }, [dateRange.end, dateRange.start, handleDateRangeChange, sharedDateRange]);
 
+  const handleGenerateLog = useCallback(async () => {
+    const result = await generateLogFromPlan(planId);
+    if (result.type === "success") {
+      routerRef.current.push(ROUTES.logView(result.logId));
+      return;
+    }
+    if (result.type === "already_exists") {
+      toast.info("Log already generated for this plan.");
+      return;
+    }
+    if (result.type === "date_conflict") {
+      toast.info(
+        `Cannot generate log. These dates already exist in a log: ${formatDateKeysForToast(result.dates).join(", ")}`,
+      );
+      return;
+    }
+    toast.error(result.message);
+  }, [planId]);
+
   useEffect(() => {
-    // Keep plan topbar action state in sync with editor runtime state.
+    if (disableDeleteDialog) {
+      return;
+    }
+
+    // Standalone PlanEditor routes wire generate/delete through topbar state; shell owns actions when embedded.
     setPlanTopbarState({
-      isGenerateDisabled: true,
+      isGenerateDisabled:
+        isDirty || saveStatus === "saving" || deleteStatus === "deleting",
       isGenerating: false,
+      onGenerateLog: handleGenerateLog,
+      onDeletePlan: () => setIsDeleteDialogOpen(true),
       isDeleteDisabled: saveStatus === "saving" || deleteStatus === "deleting",
       isDeleting: deleteStatus === "deleting",
-      onGenerateLog: undefined,
-      onDeletePlan: () => setIsDeleteDialogOpen(true),
     });
 
     return () => {
@@ -364,6 +392,9 @@ export function PlanEditor({
     };
   }, [
     deleteStatus,
+    disableDeleteDialog,
+    handleGenerateLog,
+    isDirty,
     resetPlanTopbarState,
     saveStatus,
     setPlanTopbarState,

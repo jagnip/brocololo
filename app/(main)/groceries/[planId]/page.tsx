@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getPlanDateRangeById, getPlansCached } from "@/lib/db/planner";
+import { GroceriesViewShell } from "@/components/groceries/groceries-view-shell";
+import { getPlanDateRangeById } from "@/lib/db/planner";
 import { getShoppingListByPlanId } from "@/lib/db/shopping-list";
-import { GroceriesPersistedList } from "@/components/groceries/groceries-persisted-list";
+import { getIngredientCategories } from "@/lib/db/ingredients";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
-import { formatDateRangeLabel } from "@/lib/format-date-range-label";
 import { requireUser } from "@/lib/auth/session";
 
 export default async function GroceriesPlanPage({
@@ -16,28 +16,25 @@ export default async function GroceriesPlanPage({
   const { planId } = await params;
   const { id: userId } = await requireUser();
 
-  const [dateRange, list, plans] = await Promise.all([
+  const [dateRange, list, categories] = await Promise.all([
     getPlanDateRangeById(userId, planId),
     getShoppingListByPlanId(userId, planId),
-    getPlansCached(userId),
+    getIngredientCategories(),
   ]);
 
   if (!dateRange) {
     notFound();
   }
 
-  const planOptions = plans.map((plan) => ({
-    id: plan.id,
-    label: formatDateRangeLabel(plan.startDate, plan.endDate),
-  }));
-
   return (
     <div className="page-container space-y-8 py-8">
       {list && list.items.length > 0 ? (
-        <GroceriesPersistedList
+        <GroceriesViewShell
           list={list}
-          planOptions={planOptions}
-          currentPlanId={planId}
+          categories={categories.map((category) => ({
+            id: category.id,
+            name: category.name,
+          }))}
         />
       ) : (
         <section className="mx-auto max-w-lg space-y-4 rounded-xl border bg-card p-8 text-center">
