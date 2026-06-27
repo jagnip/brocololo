@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { saveShoppingListEditsAction } from "@/actions/shopping-list-actions";
 import { GroceriesEditCategorySection } from "@/components/groceries/groceries-edit-category-section";
 import { GroceriesEditLibraryPanel } from "@/components/groceries/library/groceries-edit-library-panel";
+import { CreateIngredientDialog } from "@/components/recipes/form/create-ingredient-dialog";
+import { EditIngredientDialog } from "@/components/recipes/form/edit-ingredient-dialog";
 import type {
   GroceriesEditableRow,
   GroceriesEditCategoryOption,
@@ -28,6 +30,8 @@ import {
 } from "@/components/ingredients/ingredient-searchable-select-labels";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 import { cn } from "@/lib/utils";
+import { reconcileGroceryRowUnitsAfterIngredientUpdate } from "@/lib/groceries/reconcile-grocery-row-units-after-ingredient-update";
+import type { IngredientType } from "@/types/ingredient";
 
 // How long the new-row highlight ring stays on after a library "+" lands.
 // 1.5s is long enough to grab attention without nagging the user when they
@@ -46,6 +50,13 @@ type GroceriesEditListProps = {
   // fetches them on the edit page so initial render is hydrated; subsequent
   // mutations go through server actions and `revalidatePath`.
   ingredientLists: IngredientListWithItems[];
+  ingredientFormDependencies: {
+    categories: Array<{ id: string; name: string }>;
+    units: Array<{ id: string; name: string; namePlural: string | null }>;
+    gramsUnitId: string;
+    iconOptions: string[];
+  };
+  isAdmin?: boolean;
 };
 
 function toEditableRows(list: GroceriesEditListModel): GroceriesEditableRow[] {
@@ -110,9 +121,21 @@ export function GroceriesEditList({
   categories,
   units,
   ingredientLists,
+  ingredientFormDependencies,
+  isAdmin = false,
 }: GroceriesEditListProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  // Keep ingredients local so inline create/edit updates are immediately selectable.
+  const [localIngredients, setLocalIngredients] =
+    useState<GroceriesEditIngredientOption[]>(ingredients);
+  const [createIngredientState, setCreateIngredientState] = useState<{
+    rowId: string;
+    initialName: string;
+  } | null>(null);
+  const [editIngredientState, setEditIngredientState] = useState<{
+    ingredientId: string;
+  } | null>(null);
   const [initialRows, setInitialRows] = useState<GroceriesEditableRow[]>(() =>
     toEditableRows(list),
   );
@@ -135,8 +158,9 @@ export function GroceriesEditList({
   );
 
   const ingredientById = useMemo(
-    () => new Map(ingredients.map((ingredient) => [ingredient.id, ingredient] as const)),
-    [ingredients],
+    () =>
+      new Map(localIngredients.map((ingredient) => [ingredient.id, ingredient] as const)),
+    [localIngredients],
   );
   const unitById = useMemo(
     () => new Map(units.map((unit) => [unit.id, unit] as const)),
@@ -146,7 +170,7 @@ export function GroceriesEditList({
   const ingredientOptionsByCategoryId = useMemo(() => {
     const sourcesByCategoryId = new Map<string, IngredientSearchSelectSource[]>();
 
-    for (const ingredient of ingredients) {
+    for (const ingredient of localIngredients) {
       const bucket = sourcesByCategoryId.get(ingredient.category.id) ?? [];
       bucket.push({
         id: ingredient.id,
@@ -165,11 +189,11 @@ export function GroceriesEditList({
         ingredientsToSearchableSelectOptions(sources),
       ]),
     );
-  }, [ingredients]);
+  }, [localIngredients]);
   const ingredientByIdForSelect = useMemo(
     () =>
       buildIngredientSearchSourceMap(
-        ingredients.map((ingredient) => ({
+        localIngredients.map((ingredient) => ({
           id: ingredient.id,
           slug: ingredient.slug,
           name: ingredient.name,
@@ -178,7 +202,7 @@ export function GroceriesEditList({
           icon: ingredient.icon,
         })),
       ),
-    [ingredients],
+    [localIngredients],
   );
   const renderIngredientDropdownLabel = useCallback(
     (option: SearchableSelectOption) =>
@@ -385,6 +409,94 @@ export function GroceriesEditList({
       }
     };
   }, []);
+
+  // Sync local ingredient options when server-provided ingredients change.
+  useEffect(() => {
+    setLocalIngredients(ingredients);
+  }, [ingredients]);
+
+  const onCreateIngredientRequested = useCallback(
+    (rowId: string, initialName: string) => {
+      setCreateIngredientState({ rowId, initialName });
+    },
+    [],
+  );
+
+  const onEditIngredientRequested = useCallback((ingredientId: string) => {
+    setEditIngredientState({ ingredientId });
+  }, []);
+
+  const handleIngredientCreated = useCallback(
+    (createdIngredient: IngredientType) => {
+      setLocalIngredients((prev) => {
+        if (prev.some((ingredient) => ingredient.id === createdIngredient.id)) {
+          return prev;
+        }
+        return [...prev, createdIngredient as GroceriesEditIngredientOption].sort(
+          (a, b) => a.name.localeCompare(b.name),
+        );
+      });
+
+      if (!createIngredientState) {
+        return;
+      }
+
+      const { rowId } = createIngredientState;
+      setRows((prev) => {
+        const rowIndex = prev.findIndex((row) => row.id === rowId);
+        if (rowIndex === -1) {
+          return prev;
+        }
+
+        const existingRow = prev[rowIndex];
+        const allowedUnitIds = new Set(
+          createdIngredient.unitConversions.map((conversion) => conversion.unitId),
+        );
+        const linkUpdate: Partial<GroceriesEditableRow> = {
+          ingredientId: createdIngredient.id,
+          displayLabel: createdIngredient.name,
+        };
+        // Clear ad-hoc unit when it is not valid for the newly linked ingredient.
+        if (existingRow.unitId != null && !allowedUnitIds.has(existingRow.unitId)) {
+          linkUpdate.unitId = null;
+        }
+
+        const nextRows = [...prev];
+        nextRows[rowIndex] = { ...existingRow, ...linkUpdate };
+        return nextRows;
+      });
+      setCreateIngredientState(null);
+    },
+    [createIngredientState],
+  );
+
+  const handleIngredientUpdated = useCallback(
+    (updatedIngredient: IngredientType) => {
+      setLocalIngredients((prev) =>
+        prev.map((ingredient) =>
+          ingredient.id === updatedIngredient.id
+            ? (updatedIngredient as GroceriesEditIngredientOption)
+            : ingredient,
+        ),
+      );
+
+      setRows((prev) => {
+        const { rows: reconciledRows, fixedRowsCount } =
+          reconcileGroceryRowUnitsAfterIngredientUpdate({
+            rows: prev,
+            updatedIngredient,
+          });
+        if (fixedRowsCount > 0) {
+          toast.info(
+            `Updated ingredient changed available units. Auto-adjusted ${fixedRowsCount} row${fixedRowsCount > 1 ? "s" : ""}.`,
+          );
+        }
+        return reconciledRows;
+      });
+      setEditIngredientState(null);
+    },
+    [],
+  );
   const onCategoryBadgeClick = useCallback((categoryId: string) => {
     setOptimisticCategoryId(categoryId);
     const sectionElement = sectionElementByCategoryIdRef.current.get(categoryId);
@@ -540,6 +652,8 @@ export function GroceriesEditList({
               onRowChange={onRowChange}
               onRowRemove={onRowRemove}
               onAddRow={onAddRow}
+              onCreateIngredientRequested={onCreateIngredientRequested}
+              onEditIngredientRequested={onEditIngredientRequested}
               registerRowRef={registerRowRef}
               highlightedRowId={highlightedRowId}
             />
@@ -552,12 +666,51 @@ export function GroceriesEditList({
           <GroceriesEditLibraryPanel
             planId={list.plan.id}
             lists={ingredientLists}
-            ingredients={ingredients}
+            ingredients={localIngredients}
             categories={categories}
             onAddIngredientToGroceries={onAddIngredientFromLibrary}
+            onEditIngredientRequested={onEditIngredientRequested}
           />
         </div>
       </div>
+
+      <CreateIngredientDialog
+        open={Boolean(createIngredientState)}
+        initialName={createIngredientState?.initialName}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCreateIngredientState(null);
+          }
+        }}
+        onCreated={handleIngredientCreated}
+        isAdmin={isAdmin}
+        categories={ingredientFormDependencies.categories}
+        units={ingredientFormDependencies.units}
+        gramsUnitId={ingredientFormDependencies.gramsUnitId}
+        iconOptions={ingredientFormDependencies.iconOptions}
+      />
+
+      <EditIngredientDialog
+        open={Boolean(editIngredientState)}
+        ingredient={
+          editIngredientState
+            ? localIngredients.find(
+                (ingredient) => ingredient.id === editIngredientState.ingredientId,
+              )
+            : undefined
+        }
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditIngredientState(null);
+          }
+        }}
+        onUpdated={handleIngredientUpdated}
+        categories={ingredientFormDependencies.categories}
+        units={ingredientFormDependencies.units}
+        gramsUnitId={ingredientFormDependencies.gramsUnitId}
+        iconOptions={ingredientFormDependencies.iconOptions}
+        isAdmin={isAdmin}
+      />
     </div>
   );
 }

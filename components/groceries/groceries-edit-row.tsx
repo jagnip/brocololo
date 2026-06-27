@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useRef } from "react";
-import { Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SearchableSelect, type SearchableSelectOption } from "@/components/ui/searchable-select";
@@ -14,6 +14,10 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { getDefaultAmountAndUnitForGroceryAdd } from "@/lib/groceries/default-add-amount";
+import {
+  canManageGroceriesRowIngredient,
+  getGroceriesRowIngredientActionState,
+} from "@/lib/groceries/groceries-row-ingredient-action";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
 import type {
   GroceriesEditableRow,
@@ -41,6 +45,8 @@ type GroceriesEditRowProps = {
   unitById: Map<string, GroceriesEditUnitOption>;
   onRowChange: (rowId: string, next: Partial<GroceriesEditableRow>) => void;
   onRowRemove: (rowId: string) => void;
+  onCreateIngredientRequested: (rowId: string, initialName: string) => void;
+  onEditIngredientRequested: (ingredientId: string) => void;
   // Optional ref registration callback so the parent can register this row's
   // DOM node and scroll to it (e.g. when a library-panel "+" lands on this row).
   registerRowRef?: (rowId: string, node: HTMLElement | null) => void;
@@ -62,6 +68,69 @@ function getGroceryAddDefaultsForIngredient(ingredient: GroceriesEditIngredientO
   });
 }
 
+// Plus (free-text → create dialog) or Pencil (DB row → edit dialog) beside Trash.
+function GroceriesEditRowActions({
+  row,
+  onCreateIngredientRequested,
+  onEditIngredientRequested,
+  onRowRemove,
+}: {
+  row: GroceriesEditableRow;
+  onCreateIngredientRequested: (rowId: string, initialName: string) => void;
+  onEditIngredientRequested: (ingredientId: string) => void;
+  onRowRemove: (rowId: string) => void;
+}) {
+  const actionState = getGroceriesRowIngredientActionState(row);
+  const canManageIngredient = canManageGroceriesRowIngredient(row);
+  const removeLabel = row.displayLabel.trim() || "item";
+  const isLinkedIngredient = actionState === "edit";
+
+  return (
+    <div className="flex items-center justify-end gap-1">
+      {isLinkedIngredient ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          aria-label={`Edit ${row.displayLabel}`}
+          onClick={() => {
+            if (!row.ingredientId) return;
+            onEditIngredientRequested(row.ingredientId);
+          }}
+        >
+          <Pencil className="h-4 w-4" aria-hidden />
+        </Button>
+      ) : (
+        // Empty and free-text rows show Plus; disabled until a name is entered.
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          disabled={!canManageIngredient}
+          aria-label={
+            canManageIngredient
+              ? `Create ingredient from ${row.displayLabel}`
+              : "Create ingredient"
+          }
+          onClick={() => onCreateIngredientRequested(row.id, row.displayLabel.trim())}
+        >
+          <Plus className="h-4 w-4" aria-hidden />
+        </Button>
+      )}
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="text-muted-foreground hover:text-destructive"
+        aria-label={`Remove ${removeLabel}`}
+        onClick={() => onRowRemove(row.id)}
+      >
+        <Trash2 className="h-4 w-4" aria-hidden />
+      </Button>
+    </div>
+  );
+}
+
 function GroceriesEditRowComponent({
   row,
   ingredientOptions,
@@ -71,6 +140,8 @@ function GroceriesEditRowComponent({
   unitById,
   onRowChange,
   onRowRemove,
+  onCreateIngredientRequested,
+  onEditIngredientRequested,
   registerRowRef,
   highlighted = false,
 }: GroceriesEditRowProps) {
@@ -287,19 +358,13 @@ function GroceriesEditRowComponent({
             </SelectContent>
           </Select>
 
-          {/* Row-level delete action: remove this ingredient from the edit draft. */}
-          <div className="flex md:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="text-muted-foreground hover:text-destructive"
-              aria-label={`Remove ${row.displayLabel}`}
-              onClick={() => onRowRemove(row.id)}
-            >
-              <Trash2 className="h-4 w-4" aria-hidden />
-            </Button>
-          </div>
+          {/* Row actions: create/edit ingredient + remove from draft. */}
+          <GroceriesEditRowActions
+            row={row}
+            onCreateIngredientRequested={onCreateIngredientRequested}
+            onEditIngredientRequested={onEditIngredientRequested}
+            onRowRemove={onRowRemove}
+          />
         </div>
 
         {/* lg+: side-by-side; parent is xl:hidden so use lg here (xl: never applied). */}
@@ -475,18 +540,12 @@ function GroceriesEditRowComponent({
           placeholder="Enter substitutions"
         />
 
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="text-muted-foreground hover:text-destructive"
-            aria-label={`Remove ${row.displayLabel}`}
-            onClick={() => onRowRemove(row.id)}
-          >
-            <Trash2 className="h-4 w-4" aria-hidden />
-          </Button>
-        </div>
+        <GroceriesEditRowActions
+          row={row}
+          onCreateIngredientRequested={onCreateIngredientRequested}
+          onEditIngredientRequested={onEditIngredientRequested}
+          onRowRemove={onRowRemove}
+        />
       </div>
 
       {/* Bottom badges listing every planner recipe that contributed

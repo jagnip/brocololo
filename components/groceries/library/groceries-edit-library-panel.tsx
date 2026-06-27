@@ -55,6 +55,7 @@ type GroceriesEditLibraryPanelProps = {
   ingredients: GroceriesEditIngredientOption[];
   categories: GroceriesEditCategoryOption[];
   onAddIngredientToGroceries: (ingredientId: string) => void;
+  onEditIngredientRequested: (ingredientId: string) => void;
   className?: string;
 };
 
@@ -77,6 +78,7 @@ export function GroceriesEditLibraryPanel({
   ingredients,
   categories,
   onAddIngredientToGroceries,
+  onEditIngredientRequested,
   className,
 }: GroceriesEditLibraryPanelProps) {
   const [, startTransition] = useTransition();
@@ -432,6 +434,7 @@ export function GroceriesEditLibraryPanel({
                             ingredientName={ingredient.name}
                             ingredientDescriptor={ingredient.descriptor}
                             onAddToGroceries={onAddIngredientToGroceries}
+                            onEditIngredientRequested={onEditIngredientRequested}
                             onRemoveFromList={handleRemoveIngredientFromList}
                           />
                         </li>

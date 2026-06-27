@@ -22,6 +22,8 @@ type GroceriesEditCategorySectionProps = {
   unitById: Map<string, GroceriesEditUnitOption>;
   onRowChange: (rowId: string, next: Partial<GroceriesEditableRow>) => void;
   onRowRemove: (rowId: string) => void;
+  onCreateIngredientRequested: (rowId: string, initialName: string) => void;
+  onEditIngredientRequested: (ingredientId: string) => void;
   // Appends a new empty row to this section. Receives the section's category
   // id so the parent can scope the new row to the correct category.
   onAddRow: (categoryId: string) => void;
@@ -46,6 +48,8 @@ export function GroceriesEditCategorySection({
   unitById,
   onRowChange,
   onRowRemove,
+  onCreateIngredientRequested,
+  onEditIngredientRequested,
   onAddRow,
   registerRowRef,
   highlightedRowId,
@@ -72,6 +76,8 @@ export function GroceriesEditCategorySection({
             unitById={unitById}
             onRowChange={onRowChange}
             onRowRemove={onRowRemove}
+            onCreateIngredientRequested={onCreateIngredientRequested}
+            onEditIngredientRequested={onEditIngredientRequested}
             // Wire each row's DOM node up through the section to the parent
             // edit-list so library "+" can scrollIntoView the right element.
             registerRowRef={registerRowRef}
