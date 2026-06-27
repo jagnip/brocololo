@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  getDeletedPersistedItemIds,
   hasGroceriesEditChanges,
   toComparableRows,
 } from "@/components/groceries/groceries-edit-list";
@@ -47,5 +48,34 @@ describe("hasGroceriesEditChanges", () => {
     const initial = [makeRow()];
     const current = [makeRow({ ingredientId: "ingredient-2" })];
     expect(hasGroceriesEditChanges(initial, current)).toBe(true);
+  });
+});
+
+describe("getDeletedPersistedItemIds", () => {
+  it("returns ids of persisted rows removed from the draft", () => {
+    const initial = [
+      makeRow({ id: "item-1" }),
+      makeRow({ id: "item-2", displayLabel: "Onion" }),
+    ];
+    const current = [makeRow({ id: "item-1" })];
+
+    expect(getDeletedPersistedItemIds(initial, current)).toEqual(["item-2"]);
+  });
+
+  it("ignores unsaved new rows that were removed", () => {
+    const initial = [
+      makeRow({ id: "item-1" }),
+      makeRow({ id: "temp-1", isNew: true, displayLabel: "Draft" }),
+    ];
+    const current = [makeRow({ id: "item-1" })];
+
+    expect(getDeletedPersistedItemIds(initial, current)).toEqual([]);
+  });
+
+  it("returns empty when no persisted rows were removed", () => {
+    const initial = [makeRow()];
+    const current = [makeRow({ amount: 200 })];
+
+    expect(getDeletedPersistedItemIds(initial, current)).toEqual([]);
   });
 });

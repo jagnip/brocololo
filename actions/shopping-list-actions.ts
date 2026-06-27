@@ -130,9 +130,12 @@ export async function saveShoppingListEditsAction(input: unknown): Promise<
     const itemsToUpdate = items.filter(
       (item) => !item.isNew && hasName(item),
     );
-    const itemIdsToDelete = items
+    const clearedNameIds = items
       .filter((item) => !item.isNew && !hasName(item))
       .map((item) => item.id);
+    const itemIdsToDelete = [
+      ...new Set([...parsed.data.deletedItemIds, ...clearedNameIds]),
+    ];
 
     await updateShoppingListItems({
       userId,

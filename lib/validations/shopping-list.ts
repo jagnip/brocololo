@@ -45,6 +45,9 @@ export const saveShoppingListEditsSchema = z.object({
   planId: z.string().min(1),
   // Allow saving even when every row was cleared (results in a full delete).
   items: z.array(shoppingListEditableItemSchema),
+  // Persisted row ids removed via trash (omitted from items); merged with
+  // cleared-name deletes in the action layer.
+  deletedItemIds: z.array(z.string().min(1)).default([]),
 });
 
 export const deleteActiveShoppingLayoutPresetSchema = z.object({

@@ -400,10 +400,14 @@ export function GroceriesEditLibraryPanel({
               allowClear={false}
               disabled={!activeList}
               renderLabel={(option) =>
-                renderIngredientSearchDropdownLabel(option, ingredientLabelLookup)
+                renderIngredientSearchDropdownLabel(option, ingredientLabelLookup, {
+                  linkable: false,
+                })
               }
               renderTriggerLabel={(option) =>
-                renderIngredientSearchTriggerLabel(option, ingredientLabelLookup)
+                renderIngredientSearchTriggerLabel(option, ingredientLabelLookup, {
+                  linkable: false,
+                })
               }
             />
 

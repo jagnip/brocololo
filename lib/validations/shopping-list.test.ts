@@ -87,4 +87,27 @@ describe("saveShoppingListEditsSchema", () => {
     });
     expect(result.success).toBe(true);
   });
+
+  it("accepts explicit deletedItemIds for trash removals", () => {
+    const result = saveShoppingListEditsSchema.safeParse({
+      planId: "plan-1",
+      deletedItemIds: ["item-1", "item-2"],
+      items: [],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.deletedItemIds).toEqual(["item-1", "item-2"]);
+    }
+  });
+
+  it("defaults deletedItemIds to empty when omitted", () => {
+    const result = saveShoppingListEditsSchema.safeParse({
+      planId: "plan-1",
+      items: [makeValidRow()],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.deletedItemIds).toEqual([]);
+    }
+  });
 });

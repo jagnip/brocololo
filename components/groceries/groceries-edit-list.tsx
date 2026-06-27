@@ -92,6 +92,18 @@ export function hasGroceriesEditChanges(
   );
 }
 
+/** Persisted row ids removed via trash (not sent in items payload). */
+export function getDeletedPersistedItemIds(
+  initialRows: GroceriesEditableRow[],
+  currentRows: GroceriesEditableRow[],
+) {
+  const currentIds = new Set(currentRows.map((row) => row.id));
+  return initialRows
+    .filter((row) => !row.isNew)
+    .map((row) => row.id)
+    .filter((id) => !currentIds.has(id));
+}
+
 export function GroceriesEditList({
   list,
   ingredients,
@@ -170,19 +182,16 @@ export function GroceriesEditList({
   );
   const renderIngredientDropdownLabel = useCallback(
     (option: SearchableSelectOption) =>
-      renderIngredientSearchDropdownLabel(option, ingredientByIdForSelect),
+      renderIngredientSearchDropdownLabel(option, ingredientByIdForSelect, {
+        linkable: false,
+      }),
     [ingredientByIdForSelect],
   );
   const renderIngredientTriggerLabel = useCallback(
     (option: SearchableSelectOption) =>
-      renderIngredientSearchTriggerLabel(option, ingredientByIdForSelect),
-    [ingredientByIdForSelect],
-  );
-  const getSelectedIngredientOptionHref = useCallback(
-    (option: SearchableSelectOption) => {
-      const ingredient = ingredientByIdForSelect.get(option.value);
-      return ingredient?.slug ? ROUTES.ingredientEdit(ingredient.slug) : null;
-    },
+      renderIngredientSearchTriggerLabel(option, ingredientByIdForSelect, {
+        linkable: false,
+      }),
     [ingredientByIdForSelect],
   );
 
@@ -453,6 +462,7 @@ export function GroceriesEditList({
             startTransition(async () => {
               const result = await saveShoppingListEditsAction({
                 planId: list.plan.id,
+                deletedItemIds: getDeletedPersistedItemIds(initialRows, rows),
                 items: rows.map((row) => ({
                   ...row,
                   ingredientId:
@@ -478,7 +488,7 @@ export function GroceriesEditList({
         },
       ],
     }),
-    [isPending, isSaveDisabled, list.plan.id, planDateRangeLabel, router, rows, startTransition],
+    [initialRows, isPending, isSaveDisabled, list.plan.id, planDateRangeLabel, router, rows, startTransition],
   );
 
   return (
@@ -524,7 +534,6 @@ export function GroceriesEditList({
               ingredientOptionsByCategoryId={ingredientOptionsByCategoryId}
               renderIngredientDropdownLabel={renderIngredientDropdownLabel}
               renderIngredientTriggerLabel={renderIngredientTriggerLabel}
-              getSelectedIngredientOptionHref={getSelectedIngredientOptionHref}
               ingredientById={ingredientById}
               unitById={unitById}
               // Row updates are centralized here so section components stay stateless.

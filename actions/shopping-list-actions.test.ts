@@ -8,6 +8,10 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
+vi.mock("@/lib/auth/session", () => ({
+  requireUser: vi.fn().mockResolvedValue({ id: "user-1", clerkId: "clerk-1" }),
+}));
+
 vi.mock("@/lib/db/shopping-list", async () => {
   const actual =
     await vi.importActual<typeof import("@/lib/db/shopping-list")>(
@@ -66,6 +70,7 @@ describe("saveShoppingListEditsAction", () => {
 
     expect(result).toEqual({ type: "success" });
     expect(updateShoppingListItems).toHaveBeenCalledWith({
+      userId: "user-1",
       planId: "plan-1",
       itemsToCreate: [],
       itemsToUpdate: makeValidInput().items,
@@ -85,5 +90,54 @@ describe("saveShoppingListEditsAction", () => {
       type: "error",
       message: "Could not save grocery edits. Try again.",
     });
+  });
+
+  it("forwards trash-removed row ids to itemIdsToDelete", async () => {
+    vi.mocked(updateShoppingListItems).mockResolvedValue({ planId: "plan-1" });
+
+    const result = await saveShoppingListEditsAction({
+      planId: "plan-1",
+      deletedItemIds: ["item-removed"],
+      items: [],
+    });
+
+    expect(result).toEqual({ type: "success" });
+    expect(updateShoppingListItems).toHaveBeenCalledWith({
+      userId: "user-1",
+      planId: "plan-1",
+      itemsToCreate: [],
+      itemsToUpdate: [],
+      itemIdsToDelete: ["item-removed"],
+    });
+  });
+
+  it("merges trash deletes with cleared-name deletes", async () => {
+    vi.mocked(updateShoppingListItems).mockResolvedValue({ planId: "plan-1" });
+
+    const result = await saveShoppingListEditsAction({
+      planId: "plan-1",
+      deletedItemIds: ["item-trashed"],
+      items: [
+        {
+          id: "item-cleared",
+          isNew: false,
+          ingredientId: null,
+          ingredientCategoryId: "category-1",
+          displayLabel: "",
+          unitId: null,
+          amount: null,
+          additionalInfo: null,
+          substitutionsAllowed: false,
+          substitutionNote: null,
+        },
+      ],
+    });
+
+    expect(result).toEqual({ type: "success" });
+    expect(updateShoppingListItems).toHaveBeenCalledWith(
+      expect.objectContaining({
+        itemIdsToDelete: expect.arrayContaining(["item-trashed", "item-cleared"]),
+      }),
+    );
   });
 });
