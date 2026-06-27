@@ -1,12 +1,18 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import { IngredientNameLink } from "@/components/ingredients/ingredient-name-link";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // One row in the library panel: a single ingredient that can either be
-// pushed into the grocery list (+) or removed from this library list (trash).
-// Kept presentational/stateless on purpose — the parent panel owns all data.
+// pushed into the grocery list (+) or managed via overflow menu (edit /
+// remove from this saved list). Kept presentational/stateless on purpose.
 type GroceriesEditLibraryRowProps = {
   ingredientId: string;
   ingredientSlug: string;
@@ -15,6 +21,7 @@ type GroceriesEditLibraryRowProps = {
   isAddingToGroceries?: boolean;
   isRemovingFromList?: boolean;
   onAddToGroceries: (ingredientId: string) => void;
+  onEditIngredientRequested: (ingredientId: string) => void;
   onRemoveFromList: (ingredientId: string) => void;
 };
 
@@ -26,6 +33,7 @@ export function GroceriesEditLibraryRow({
   isAddingToGroceries = false,
   isRemovingFromList = false,
   onAddToGroceries,
+  onEditIngredientRequested,
   onRemoveFromList,
 }: GroceriesEditLibraryRowProps) {
   const descriptor = ingredientDescriptor?.trim() ?? "";
@@ -58,19 +66,34 @@ export function GroceriesEditLibraryRow({
         <Plus className="h-4 w-4" aria-hidden />
       </Button>
 
-      {/* Trash removes this ingredient from THIS library list (not from the
-          grocery list and not from the global ingredients DB). */}
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-        aria-label={`Remove ${ingredientName} from list`}
-        disabled={isRemovingFromList}
-        onClick={() => onRemoveFromList(ingredientId)}
-      >
-        <Trash2 className="h-4 w-4" aria-hidden />
-      </Button>
+      {/* Overflow menu: edit ingredient in dialog or remove from this list. */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0"
+            aria-label={`Actions for ${ingredientName}`}
+            disabled={isRemovingFromList}
+          >
+            <MoreHorizontal className="h-4 w-4" aria-hidden />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onEditIngredientRequested(ingredientId)}>
+            <Pencil className="h-4 w-4" aria-hidden />
+            Edit ingredient
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => onRemoveFromList(ingredientId)}
+          >
+            <Trash2 className="h-4 w-4" aria-hidden />
+            Remove from list
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
