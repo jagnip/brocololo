@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 type NutritionPersonCardProps = {
   children: ReactNode;
   /** Dark glass panel on recipe detail; light card in form preview. */
-  variant?: "light" | "dark";
+  variant?: "light" | "dark" | "spotlight";
 };
 
 /** Bordered card shell matching recipe page nutrition blocks. */
@@ -20,7 +20,10 @@ export function NutritionPersonCard({
       className={
         variant === "dark"
           ? "flex flex-col gap-item rounded-lg border border-white/5 bg-white/10 px-nest py-nest backdrop-blur-md"
-          : "flex flex-col gap-item rounded-lg border border-border bg-card px-nest py-nest"
+          : variant === "spotlight"
+            ? // Dark inset on light canvases (groceries quick add) — stronger contrast than hero glass.
+              "flex flex-col gap-item rounded-lg border border-foreground/15 bg-foreground px-nest py-nest text-background shadow-sm"
+            : "flex flex-col gap-item rounded-lg border border-border bg-card px-nest py-nest"
       }
     >
       {children}

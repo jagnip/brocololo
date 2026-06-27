@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { saveShoppingListEditsAction } from "@/actions/shopping-list-actions";
 import { GroceriesEditCategorySection } from "@/components/groceries/groceries-edit-category-section";
+import { GroceriesEditQuickAddSection } from "@/components/groceries/groceries-edit-quick-add-section";
 import { GroceriesEditLibraryPanel } from "@/components/groceries/library/groceries-edit-library-panel";
 import { CreateIngredientDialog } from "@/components/recipes/form/create-ingredient-dialog";
 import { EditIngredientDialog } from "@/components/recipes/form/edit-ingredient-dialog";
@@ -16,7 +17,12 @@ import type {
   GroceriesEditUnitOption,
 } from "@/components/groceries/groceries-edit-types";
 import type { IngredientListWithItems } from "@/lib/db/ingredient-lists";
-import { getDefaultAmountAndUnitForGroceryAdd } from "@/lib/groceries/default-add-amount";
+import {
+  resolveAddIngredientToGroceries,
+  shouldScrollAfterIngredientAdd,
+  type QuickAddDraft,
+  type QuickAddRowDraft,
+} from "@/lib/groceries/groceries-add-ingredient";
 import { ROUTES } from "@/lib/constants";
 import { formatDateRangeLabel } from "@/lib/format-date-range-label";
 import { TopbarConfigController } from "@/components/topbar-config";
@@ -352,52 +358,64 @@ export function GroceriesEditList({
     }, ROW_HIGHLIGHT_DURATION_MS);
   }, []);
 
-  // Library "+" handler: if the ingredient is already in the grocery list,
-  // scroll to its existing row instead of duplicating. Otherwise append a
-  // new row with the ingredient + default unit pre-filled and scroll to it
-  // once the new DOM node is registered.
-  const onAddIngredientFromLibrary = useCallback(
-    (ingredientId: string) => {
-      const existingRow = rows.find((row) => row.ingredientId === ingredientId);
-      if (existingRow) {
-        scrollAndHighlightRow(existingRow.id);
-        return;
+  // Shared add path for library "+" and Quick add search. Duplicates always
+  // scroll to the existing row; new rows optionally scroll (library) or stay
+  // put (Quick add batch flow).
+  const addIngredientToGroceries = useCallback(
+    (
+      ingredientId: string,
+      options: { scrollOnNewAdd: boolean; draft?: QuickAddRowDraft },
+    ): boolean => {
+      const result = resolveAddIngredientToGroceries({
+        ingredientId,
+        rows,
+        ingredient: ingredientById.get(ingredientId),
+        createRowId: () => crypto.randomUUID(),
+        draft: options.draft,
+      });
+
+      if (result.type === "not_found") {
+        return false;
       }
-      const ingredient = ingredientById.get(ingredientId);
-      if (!ingredient) return;
 
-      const { unitId: nextUnitId, amount: nextAmount } =
-        getDefaultAmountAndUnitForGroceryAdd({
-          defaultUnitId: ingredient.defaultUnitId,
-          unitConversions: ingredient.unitConversions.map((conversion) => ({
-            unitId: conversion.unitId,
-            unit: { name: conversion.unit.name },
-          })),
-        });
+      if (result.type === "added") {
+        setRows((prev) => [...prev, result.newRow]);
+      }
 
-      const newRowId = crypto.randomUUID();
-      setRows((prev) => [
-        ...prev,
-        {
-          id: newRowId,
-          // Library-added rows are unsaved drafts until the user hits Save.
-          isNew: true,
-          ingredientId: ingredient.id,
-          ingredientCategoryId: ingredient.categoryId,
-          displayLabel: ingredient.name,
-          amount: nextAmount,
-          unitId: nextUnitId,
-          substitutionsAllowed: false,
-          substitutionNote: null,
-          additionalInfo: null,
-          recipeAttribution: null,
-        },
-      ]);
-      // Wait one frame so the new row is mounted and registered before we
-      // try to scroll to it; rAF beats setTimeout(0) here for layout stability.
-      requestAnimationFrame(() => scrollAndHighlightRow(newRowId));
+      if (shouldScrollAfterIngredientAdd(result, options.scrollOnNewAdd)) {
+        const rowIdToScroll =
+          result.type === "duplicate" ? result.existingRowId : result.newRow.id;
+        // Wait one frame so the new row is mounted and registered before we
+        // try to scroll to it; rAF beats setTimeout(0) here for layout stability.
+        requestAnimationFrame(() => scrollAndHighlightRow(rowIdToScroll));
+      }
+
+      return result.type === "added";
     },
     [ingredientById, rows, scrollAndHighlightRow],
+  );
+
+  const onAddIngredientFromLibrary = useCallback(
+    (ingredientId: string) => {
+      addIngredientToGroceries(ingredientId, { scrollOnNewAdd: true });
+    },
+    [addIngredientToGroceries],
+  );
+
+  const onAddItemFromQuickAdd = useCallback(
+    (draft: QuickAddDraft): boolean => {
+      if (!draft.ingredientId) return false;
+      return addIngredientToGroceries(draft.ingredientId, {
+        scrollOnNewAdd: false,
+        draft: {
+          amount: draft.amount,
+          unitId: draft.unitId,
+          additionalInfo: draft.additionalInfo,
+          substitutionNote: draft.substitutionNote,
+        },
+      });
+    },
+    [addIngredientToGroceries],
   );
 
   // Clear any pending highlight timeout when the component unmounts so we
@@ -635,6 +653,15 @@ export function GroceriesEditList({
 
       <div className="grid w-full gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-8">
+          <GroceriesEditQuickAddSection
+            ingredients={localIngredients}
+            ingredientById={ingredientById}
+            unitById={unitById}
+            renderIngredientDropdownLabel={renderIngredientDropdownLabel}
+            renderIngredientTriggerLabel={renderIngredientTriggerLabel}
+            onAddItem={onAddItemFromQuickAdd}
+            onEditIngredientRequested={onEditIngredientRequested}
+          />
           {groupedSections.map((section) => (
             <GroceriesEditCategorySection
               key={section.categoryId}
