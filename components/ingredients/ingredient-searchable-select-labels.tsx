@@ -2,6 +2,7 @@
 
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 import { IngredientNameLink } from "@/components/ingredients/ingredient-name-link";
+import { cn } from "@/lib/utils";
 
 /** Minimal ingredient fields used by shared SearchableSelect label renderers. */
 export type IngredientSearchSelectSource = {
@@ -51,18 +52,24 @@ function metadataParts(ing: IngredientSearchSelectSource | undefined): string[] 
 export function renderIngredientSearchDropdownLabel(
   option: SearchableSelectOption,
   byId: Map<string, IngredientSearchSelectSource>,
+  options?: { linkable?: boolean },
 ) {
   const ing = byId.get(option.value);
   const secondaryParts = metadataParts(ing);
+  const linkable = options?.linkable ?? true;
   return (
     <span className="flex min-w-0 flex-col gap-0.5 text-left">
-      <IngredientNameLink
-        name={option.label}
-        slug={ing?.slug}
-        className="truncate font-normal text-foreground"
-        onClick={(event) => event.stopPropagation()}
-        onMouseDown={(event) => event.stopPropagation()}
-      />
+      {linkable ? (
+        <IngredientNameLink
+          name={option.label}
+          slug={ing?.slug}
+          className="truncate font-normal text-foreground"
+          onClick={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
+        />
+      ) : (
+        <span className="truncate font-normal text-foreground">{option.label}</span>
+      )}
       {secondaryParts.length > 0 ? (
         <span className="truncate text-xs leading-snug text-muted-foreground">
           {secondaryParts.join(" · ")}
@@ -76,12 +83,20 @@ export function renderIngredientSearchDropdownLabel(
 export function renderIngredientSearchTriggerLabel(
   option: SearchableSelectOption,
   byId: Map<string, IngredientSearchSelectSource>,
+  options?: { linkable?: boolean },
 ) {
   const ing = byId.get(option.value);
   const descriptor = ing?.descriptor?.trim();
+  const linkable = options?.linkable ?? true;
   return (
     <span className="flex min-w-0 max-w-full items-baseline gap-x-1.5 truncate text-left">
-      <span className="shrink-0 font-normal text-foreground group-hover/trigger:underline group-focus-visible/trigger:underline underline-offset-2">
+      <span
+        className={cn(
+          "shrink-0 font-normal text-foreground",
+          linkable &&
+            "group-hover/trigger:underline group-focus-visible/trigger:underline underline-offset-2",
+        )}
+      >
         {option.label}
       </span>
       {descriptor ? (
