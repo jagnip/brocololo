@@ -44,7 +44,7 @@ export function useSelectOpenOnTabFromAdjacent(options: {
 }
 
 /** Call from the amount field: Tab (forward) should open the unit menu on focus. */
-export function markUnitSelectOpenOnAmountTab(event: KeyboardEvent) {
+export function markUnitSelectOpenOnAmountTab(event: Pick<KeyboardEvent, "key" | "shiftKey">) {
   if (event.key === "Tab" && !event.shiftKey) {
     return true;
   }
