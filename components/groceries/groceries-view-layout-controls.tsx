@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useOptimistic, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useOptimistic, useTransition } from "react";
 import { toast } from "sonner";
 import { setShoppingLayoutPresetByShareAction } from "@/actions/shopping-list-share-actions";
 import { setShoppingLayoutPresetAction } from "@/actions/shopping-list-actions";
 import {
   GroceriesLayoutSwitcher,
+  shouldShowLayoutSwitcher,
   type GroceriesLayoutSwitcherPreset,
 } from "@/components/groceries/groceries-layout-switcher";
 
@@ -16,9 +16,10 @@ type GroceriesViewLayoutControlsProps = {
   presets: GroceriesLayoutSwitcherPreset[];
   activePresetId: string | null;
   onAddLayout?: () => void;
-  /** Parent-owned pending (e.g. dialog save/delete); merged with in-switch pending. */
   isLayoutPending?: boolean;
-  onPendingChange?: (isPending: boolean) => void;
+  beginLayoutSync?: () => void;
+  completeLayoutSync?: () => Promise<void>;
+  cancelLayoutSync?: () => void;
 };
 
 export function GroceriesViewLayoutControls({
@@ -28,9 +29,10 @@ export function GroceriesViewLayoutControls({
   activePresetId,
   onAddLayout,
   isLayoutPending = false,
-  onPendingChange,
+  beginLayoutSync,
+  completeLayoutSync,
+  cancelLayoutSync,
 }: GroceriesViewLayoutControlsProps) {
-  const router = useRouter();
   const [isSwitchPending, startTransition] = useTransition();
   const [optimisticPresetId, setOptimisticPresetId] = useOptimistic(activePresetId);
 
@@ -40,6 +42,7 @@ export function GroceriesViewLayoutControls({
   );
 
   const onPresetChange = (presetId: string) => {
+    beginLayoutSync?.();
     setOptimisticPresetId(presetId);
     startTransition(async () => {
       const result = shareToken
@@ -49,16 +52,20 @@ export function GroceriesViewLayoutControls({
           })
         : await setShoppingLayoutPresetAction({ planId, presetId });
       if (result.type === "error") {
+        cancelLayoutSync?.();
         toast.error(result.message);
         return;
       }
-      router.refresh();
+      if (completeLayoutSync) {
+        await completeLayoutSync();
+        return;
+      }
     });
   };
 
-  useEffect(() => {
-    onPendingChange?.(isSwitchPending);
-  }, [isSwitchPending, onPendingChange]);
+  if (!shouldShowLayoutSwitcher(presets)) {
+    return null;
+  }
 
   return (
     <GroceriesLayoutSwitcher

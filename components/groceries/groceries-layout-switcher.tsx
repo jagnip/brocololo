@@ -23,8 +23,15 @@ type GroceriesLayoutSwitcherProps = {
   fallbackToFirstPreset?: boolean;
 };
 
+/** Show in-page switcher only when the user has at least one custom layout. */
+export function shouldShowLayoutSwitcher(
+  presets: GroceriesLayoutSwitcherPreset[],
+) {
+  return presets.some((preset) => !preset.isBuiltIn);
+}
+
 function getLayoutPresetLabel(preset: GroceriesLayoutSwitcherPreset) {
-  return preset.isBuiltIn ? "Default layout" : preset.name;
+  return preset.isBuiltIn ? "Default" : preset.name;
 }
 
 /** In-page button group for switching supermarket layout presets. */
