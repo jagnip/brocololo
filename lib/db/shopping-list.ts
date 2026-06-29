@@ -86,6 +86,21 @@ function buildCategoryOrderIds(input: {
   return [...orderedFromPreset, ...missingByDefaultOrder];
 }
 
+/** Built-in "Default" always follows IngredientCategory.sortOrder — never stale DB rows. */
+export function resolvePresetCategoryOrderIds(
+  preset:
+    | { isBuiltIn: boolean; categoryOrders: CategoryOrderSource[] }
+    | null
+    | undefined,
+  categoryIdsByDefaultOrder: string[],
+) {
+  if (preset?.isBuiltIn) return categoryIdsByDefaultOrder;
+  return buildCategoryOrderIds({
+    categoryIdsByDefaultOrder,
+    categoryOrders: preset?.categoryOrders ?? [],
+  });
+}
+
 /** Resolves the canonical gram unit id for aggregated grocery rows (unitName "g", unitId null). */
 export async function getGramUnitId(): Promise<string | null> {
   if (cachedGramUnitId !== undefined) return cachedGramUnitId;
@@ -117,21 +132,17 @@ export async function ensureDefaultShoppingLayoutPreset(
     select: { id: true },
   });
 
-  const existingRows = await tx.shoppingLayoutPresetCategory.findMany({
+  // Fully replace built-in aisle order so DB stays aligned with sortOrder.
+  await tx.shoppingLayoutPresetCategory.deleteMany({
     where: { presetId: preset.id },
-    select: { ingredientCategoryId: true },
   });
-  const existingCategoryIds = new Set(existingRows.map((row) => row.ingredientCategoryId));
-  const missingCategories = categories.filter((category) => !existingCategoryIds.has(category.id));
-  if (missingCategories.length > 0) {
-    const nextBasePosition = existingRows.length;
+  if (categories.length > 0) {
     await tx.shoppingLayoutPresetCategory.createMany({
-      data: missingCategories.map((category, index) => ({
+      data: categories.map((category, position) => ({
         presetId: preset.id,
         ingredientCategoryId: category.id,
-        position: nextBasePosition + index,
+        position,
       })),
-      skipDuplicates: true,
     });
   }
 
@@ -161,11 +172,15 @@ export async function rebuildAllShoppingLayoutPresetCategoryOrders(
     },
   });
 
+  const categoryIdsByDefaultOrder = categories.map((category) => category.id);
+
   for (const preset of presets) {
-    const mergedCategoryOrder = buildCategoryOrderIds({
-      categoryIdsByDefaultOrder: categories.map((category) => category.id),
-      categoryOrders: preset.categoryOrders,
-    });
+    const mergedCategoryOrder = preset.isBuiltIn
+      ? categoryIdsByDefaultOrder
+      : buildCategoryOrderIds({
+          categoryIdsByDefaultOrder,
+          categoryOrders: preset.categoryOrders,
+        });
     await tx.shoppingLayoutPresetCategory.deleteMany({
       where: { presetId: preset.id },
     });
@@ -435,10 +450,10 @@ export async function getShoppingListById(shoppingListId: string) {
     "getShoppingListById:shoppingLayoutPreset.findMany",
   );
   const categoryIdsByDefaultOrder = allCategories.map((category) => category.id);
-  const effectiveCategoryOrderIds = buildCategoryOrderIds({
+  const effectiveCategoryOrderIds = resolvePresetCategoryOrderIds(
+    list.activeLayoutPreset,
     categoryIdsByDefaultOrder,
-    categoryOrders: list.activeLayoutPreset?.categoryOrders ?? [],
-  });
+  );
   const categoryOrderRank = new Map(
     effectiveCategoryOrderIds.map((categoryId, index) => [categoryId, index] as const),
   );
@@ -460,10 +475,10 @@ export async function getShoppingListById(shoppingListId: string) {
       id: preset.id,
       name: preset.name,
       isBuiltIn: preset.isBuiltIn,
-      categoryOrderIds: buildCategoryOrderIds({
+      categoryOrderIds: resolvePresetCategoryOrderIds(
+        preset,
         categoryIdsByDefaultOrder,
-        categoryOrders: preset.categoryOrders,
-      }),
+      ),
     })),
   };
 }

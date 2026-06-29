@@ -129,7 +129,9 @@ export function GroceriesPersistedItemRow({
                 isPurchased && "line-through",
               )}
             >
-              <span className="shrink-0">{amountLabel}</span>
+              {amountLabel ? (
+                <span className="shrink-0">{amountLabel}</span>
+              ) : null}
               {recipeNames.length > 0 ? (
                 <span
                   className="flex flex-wrap items-center gap-1.5"

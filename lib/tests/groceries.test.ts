@@ -261,12 +261,12 @@ describe("formatGroceryViewAmountLabel", () => {
     ).toBe("200 g");
   });
 
-  it("returns em dash when amount and unit are missing", () => {
+  it("returns empty string when amount and unit are missing", () => {
     expect(
       formatGroceryViewAmountLabel({
         amount: null,
         unitName: null,
       }),
-    ).toBe("—");
+    ).toBe("");
   });
 });

@@ -299,7 +299,7 @@ export function formatGroceryViewAmountLabel(input: {
   });
 
   if (input.amount === null) {
-    return displayUnit || "—";
+    return displayUnit || "";
   }
 
   const amountText = formatAmount(input.amount);
