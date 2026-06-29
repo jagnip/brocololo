@@ -1,5 +1,6 @@
 "use client";
 
+import type { KeyboardEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pencil } from "lucide-react";
 import { ingredientsToSearchableSelectOptions } from "@/components/ingredients/ingredient-searchable-select-labels";
@@ -26,8 +27,14 @@ import {
   type QuickAddDraft,
 } from "@/lib/groceries/groceries-add-ingredient";
 import { getQuickAddDraftForIngredient } from "@/lib/groceries/grocery-row-ingredient-patch";
-import { focusVisibleAmountInputInContainer } from "@/lib/focus-input-after-layout";
+import {
+  focusQuickAddAdditionalInfoInput,
+  focusQuickAddIngredientSelector,
+  focusVisibleAmountInputInContainer,
+} from "@/lib/focus-input-after-layout";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
+import { useIsXl } from "@/hooks/use-is-xl";
+import { useSelectOpenOnTabFromAdjacent, markUnitSelectOpenOnAmountTab } from "@/lib/use-select-open-on-focus";
 
 type GroceriesEditQuickAddSectionProps = {
   ingredients: GroceriesEditIngredientOption[];
@@ -54,6 +61,8 @@ export function GroceriesEditQuickAddSection({
 }: GroceriesEditQuickAddSectionProps) {
   const [draft, setDraft] = useState<QuickAddDraft>(EMPTY_QUICK_ADD_DRAFT);
   const sectionRef = useRef<HTMLElement>(null);
+  // Set when user picks a unit; consumed in Select onCloseAutoFocus (after Radix closes).
+  const pendingFocusAdditionalInfoRef = useRef(false);
 
   const ingredientSearchOptions = useMemo<SearchableSelectOption[]>(
     () =>
@@ -100,16 +109,63 @@ export function GroceriesEditQuickAddSection({
     focusVisibleAmountInputInContainer(sectionRef.current);
   }, [draft.ingredientId]);
 
+  const amountValue = draft.amount === null ? "" : String(draft.amount);
+  const fieldsDisabled = !selectedIngredient;
+  const unitSelectDisabled = fieldsDisabled || availableUnits.length === 0;
+  const isXl = useIsXl();
+  const unitSelectFocus = useSelectOpenOnTabFromAdjacent({
+    disabled: unitSelectDisabled,
+    resetKey: draft.ingredientId,
+  });
+
+  const handleUnitChange = useCallback(
+    (nextUnitId: string) => {
+      const normalized = nextUnitId || null;
+      if (normalized) {
+        pendingFocusAdditionalInfoRef.current = true;
+      }
+      unitSelectFocus.clearTabOpenIntent();
+      setDraft((prev) => ({ ...prev, unitId: normalized }));
+    },
+    [unitSelectFocus],
+  );
+
+  // Radix returns focus to the unit trigger on close — override only after a real selection.
+  const handleUnitSelectCloseAutoFocus = useCallback((event: Event) => {
+    if (!pendingFocusAdditionalInfoRef.current) return;
+    pendingFocusAdditionalInfoRef.current = false;
+    event.preventDefault();
+    focusQuickAddAdditionalInfoInput(sectionRef.current);
+  }, []);
+
   const handleAddItem = useCallback(() => {
     if (!draft.ingredientId) return;
     const added = onAddItem(draft);
     if (added) {
       setDraft(EMPTY_QUICK_ADD_DRAFT);
+      focusQuickAddIngredientSelector(sectionRef.current);
     }
   }, [draft, onAddItem]);
 
-  const amountValue = draft.amount === null ? "" : String(draft.amount);
-  const fieldsDisabled = !selectedIngredient;
+  // Amount + note fields: Enter commits the row (unit select keeps native open behavior).
+  const handleCommitFieldKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLInputElement>) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      handleAddItem();
+    },
+    [handleAddItem],
+  );
+
+  const handleAmountKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLInputElement>) => {
+      if (markUnitSelectOpenOnAmountTab(event)) {
+        unitSelectFocus.markOpenOnTabFromAdjacent();
+      }
+      handleCommitFieldKeyDown(event);
+    },
+    [handleCommitFieldKeyDown, unitSelectFocus],
+  );
 
   const addItemButton = (
     <Button
@@ -139,17 +195,19 @@ export function GroceriesEditQuickAddSection({
           {/* Mobile/tablet: stacked layout mirrors category row xl:hidden block. */}
           <div className="space-y-2 xl:hidden">
             <div className="grid items-start gap-2 md:grid-cols-[minmax(0,1fr)_7rem_10rem_auto]">
-              <SearchableSelect
-                className="min-w-0 w-full font-normal"
-                options={ingredientSearchOptions}
-                renderLabel={renderIngredientDropdownLabel}
-                renderTriggerLabel={renderIngredientTriggerLabel}
-                value={draft.ingredientId}
-                onValueChange={handleIngredientChange}
-                placeholder="Search ingredients..."
-                searchPlaceholder="Search ingredients..."
-                emptyLabel={QUICK_ADD_EMPTY_LABEL}
-              />
+              <div data-quick-add-ingredient-select className="min-w-0 w-full">
+                <SearchableSelect
+                  className="min-w-0 w-full font-normal"
+                  options={ingredientSearchOptions}
+                  renderLabel={renderIngredientDropdownLabel}
+                  renderTriggerLabel={renderIngredientTriggerLabel}
+                  value={draft.ingredientId}
+                  onValueChange={handleIngredientChange}
+                  placeholder="Search ingredients..."
+                  searchPlaceholder="Search ingredients..."
+                  emptyLabel={QUICK_ADD_EMPTY_LABEL}
+                />
+              </div>
 
               <Input
                 key={`quick-add-amount-${draft.ingredientId ?? "none"}`}
@@ -160,6 +218,7 @@ export function GroceriesEditQuickAddSection({
                 value={amountValue}
                 placeholder="Amount"
                 disabled={fieldsDisabled}
+                onKeyDown={handleAmountKeyDown}
                 onChange={(event) => {
                   const nextValue = event.target.value.trim();
                   setDraft((prev) => {
@@ -173,15 +232,19 @@ export function GroceriesEditQuickAddSection({
 
               <Select
                 value={draft.unitId ?? ""}
-                onValueChange={(nextUnitId) =>
-                  setDraft((prev) => ({ ...prev, unitId: nextUnitId || null }))
-                }
-                disabled={fieldsDisabled || availableUnits.length === 0}
+                onValueChange={handleUnitChange}
+                // Only the visible layout may be open — both Selects share state but both mount in the DOM.
+                open={unitSelectFocus.open && !isXl}
+                onOpenChange={unitSelectFocus.onOpenChange}
+                disabled={unitSelectDisabled}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger
+                  className="w-full"
+                  onFocus={unitSelectFocus.handleTriggerFocus}
+                >
                   <SelectValue placeholder="Unit" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent onCloseAutoFocus={handleUnitSelectCloseAutoFocus}>
                   {availableUnits.map((conversion) => {
                     const unit = unitById.get(conversion.unitId);
                     if (!unit) return null;
@@ -219,8 +282,10 @@ export function GroceriesEditQuickAddSection({
 
             <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
               <Input
+                data-quick-add-additional-info
                 value={draft.additionalInfo ?? ""}
                 disabled={fieldsDisabled}
+                onKeyDown={handleCommitFieldKeyDown}
                 onChange={(event) =>
                   setDraft((prev) => ({
                     ...prev,
@@ -233,6 +298,7 @@ export function GroceriesEditQuickAddSection({
               <Input
                 value={draft.substitutionNote ?? ""}
                 disabled={fieldsDisabled}
+                onKeyDown={handleCommitFieldKeyDown}
                 onChange={(event) =>
                   setDraft((prev) => ({
                     ...prev,
@@ -246,17 +312,19 @@ export function GroceriesEditQuickAddSection({
 
           {/* Desktop: single horizontal row mirrors category row xl:grid block. */}
           <div className="hidden xl:grid xl:grid-cols-[minmax(0,1.3fr)_7rem_10rem_minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-start xl:gap-2">
-            <SearchableSelect
-              className="min-w-0 w-full font-normal"
-              options={ingredientSearchOptions}
-              renderLabel={renderIngredientDropdownLabel}
-              renderTriggerLabel={renderIngredientTriggerLabel}
-              value={draft.ingredientId}
-              onValueChange={handleIngredientChange}
-              placeholder="Search ingredients..."
-              searchPlaceholder="Search ingredients..."
-              emptyLabel={QUICK_ADD_EMPTY_LABEL}
-            />
+            <div data-quick-add-ingredient-select className="min-w-0 w-full">
+              <SearchableSelect
+                className="min-w-0 w-full font-normal"
+                options={ingredientSearchOptions}
+                renderLabel={renderIngredientDropdownLabel}
+                renderTriggerLabel={renderIngredientTriggerLabel}
+                value={draft.ingredientId}
+                onValueChange={handleIngredientChange}
+                placeholder="Search ingredients..."
+                searchPlaceholder="Search ingredients..."
+                emptyLabel={QUICK_ADD_EMPTY_LABEL}
+              />
+            </div>
 
             <Input
               key={`quick-add-amount-desktop-${draft.ingredientId ?? "none"}`}
@@ -267,6 +335,7 @@ export function GroceriesEditQuickAddSection({
               value={amountValue}
               placeholder="Amount"
               disabled={fieldsDisabled}
+              onKeyDown={handleAmountKeyDown}
               onChange={(event) => {
                 const nextValue = event.target.value.trim();
                 setDraft((prev) => {
@@ -280,15 +349,18 @@ export function GroceriesEditQuickAddSection({
 
             <Select
               value={draft.unitId ?? ""}
-              onValueChange={(nextUnitId) =>
-                setDraft((prev) => ({ ...prev, unitId: nextUnitId || null }))
-              }
-              disabled={fieldsDisabled || availableUnits.length === 0}
+              onValueChange={handleUnitChange}
+              open={unitSelectFocus.open && isXl}
+              onOpenChange={unitSelectFocus.onOpenChange}
+              disabled={unitSelectDisabled}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger
+                className="w-full"
+                onFocus={unitSelectFocus.handleTriggerFocus}
+              >
                 <SelectValue placeholder="Unit" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent onCloseAutoFocus={handleUnitSelectCloseAutoFocus}>
                 {availableUnits.map((conversion) => {
                   const unit = unitById.get(conversion.unitId);
                   if (!unit) return null;
@@ -306,8 +378,10 @@ export function GroceriesEditQuickAddSection({
             </Select>
 
             <Input
+              data-quick-add-additional-info
               value={draft.additionalInfo ?? ""}
               disabled={fieldsDisabled}
+              onKeyDown={handleCommitFieldKeyDown}
               onChange={(event) =>
                 setDraft((prev) => ({
                   ...prev,
@@ -320,6 +394,7 @@ export function GroceriesEditQuickAddSection({
             <Input
               value={draft.substitutionNote ?? ""}
               disabled={fieldsDisabled}
+              onKeyDown={handleCommitFieldKeyDown}
               onChange={(event) =>
                 setDraft((prev) => ({
                   ...prev,

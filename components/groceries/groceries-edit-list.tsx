@@ -156,6 +156,9 @@ export function GroceriesEditList({
   // Cleared by a setTimeout below so the highlight is genuinely transient.
   const [highlightedRowId, setHighlightedRowId] = useState<string | null>(null);
   const [focusAmountRowId, setFocusAmountRowId] = useState<string | null>(null);
+  const [openIngredientSelectorRowId, setOpenIngredientSelectorRowId] = useState<
+    string | null
+  >(null);
   const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(
     categories[0]?.id ?? null,
@@ -307,13 +310,14 @@ export function GroceriesEditList({
     setRows((prev) => prev.filter((row) => row.id !== rowId));
   }, []);
   const onAddRow = useCallback((categoryId: string) => {
+    const newRowId = crypto.randomUUID();
     // New rows live entirely in form state until save; they get a temp UUID as
     // an id (used as React key + sent through to the action) and isNew:true so
     // the action layer routes them to create instead of update.
     setRows((prev) => [
       ...prev,
       {
-        id: crypto.randomUUID(),
+        id: newRowId,
         isNew: true,
         ingredientId: null,
         ingredientCategoryId: categoryId,
@@ -326,6 +330,14 @@ export function GroceriesEditList({
         recipeAttribution: null,
       },
     ]);
+    // Wait one frame so the row is mounted before scroll + ingredient search open.
+    requestAnimationFrame(() => {
+      const element = rowElementByRowIdRef.current.get(newRowId);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      setOpenIngredientSelectorRowId(newRowId);
+    });
   }, []);
   const setSectionElement = useCallback((categoryId: string, node: HTMLElement | null) => {
     if (node) {
@@ -364,6 +376,10 @@ export function GroceriesEditList({
 
   const onAmountFocusHandled = useCallback(() => {
     setFocusAmountRowId(null);
+  }, []);
+
+  const onIngredientSelectorOpenHandled = useCallback(() => {
+    setOpenIngredientSelectorRowId(null);
   }, []);
 
   // Shared add path for library "+" and Quick add search. Duplicates always
@@ -697,6 +713,8 @@ export function GroceriesEditList({
               highlightedRowId={highlightedRowId}
               focusAmountRowId={focusAmountRowId}
               onAmountFocusHandled={onAmountFocusHandled}
+              openIngredientSelectorRowId={openIngredientSelectorRowId}
+              onIngredientSelectorOpenHandled={onIngredientSelectorOpenHandled}
             />
           ))}
         </div>

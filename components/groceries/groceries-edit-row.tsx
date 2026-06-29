@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useRef } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,8 +22,14 @@ import {
   getGroceryRowPatchForLinkedIngredient,
 } from "@/lib/groceries/grocery-row-ingredient-patch";
 import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
-import { focusVisibleAmountInputInContainer } from "@/lib/focus-input-after-layout";
+import {
+  blurFocusedElementInContainer,
+  focusGroceriesRowAdditionalInfoInput,
+  focusVisibleAmountInputInContainer,
+} from "@/lib/focus-input-after-layout";
+import { useIsXl } from "@/hooks/use-is-xl";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
+import { useSelectOpenOnTabFromAdjacent, markUnitSelectOpenOnAmountTab } from "@/lib/use-select-open-on-focus";
 import type {
   GroceriesEditableRow,
   GroceriesEditIngredientOption,
@@ -56,6 +62,8 @@ type GroceriesEditRowProps = {
   highlighted?: boolean;
   shouldFocusAmount?: boolean;
   onAmountFocusHandled?: () => void;
+  shouldOpenIngredientSelector?: boolean;
+  onIngredientSelectorOpenHandled?: () => void;
 };
 
 // Plus (free-text → create dialog) or Pencil (DB row → edit dialog) beside Trash.
@@ -135,12 +143,16 @@ function GroceriesEditRowComponent({
   highlighted = false,
   shouldFocusAmount = false,
   onAmountFocusHandled,
+  shouldOpenIngredientSelector = false,
+  onIngredientSelectorOpenHandled,
 }: GroceriesEditRowProps) {
   const amountValue = row.amount === null ? "" : String(row.amount);
   const additionalInfoValue = row.additionalInfo ?? "";
   const substitutionNoteValue = row.substitutionNote ?? "";
   const rowContainerRef = useRef<HTMLDivElement | null>(null);
   const prevIngredientIdRef = useRef(row.ingredientId);
+  const pendingFocusAdditionalInfoRef = useRef(false);
+  const [ingredientSelectorOpen, setIngredientSelectorOpen] = useState(false);
 
   // Focus amount when user picks a linked ingredient in this row.
   useEffect(() => {
@@ -158,6 +170,17 @@ function GroceriesEditRowComponent({
     focusVisibleAmountInputInContainer(rowContainerRef.current);
     onAmountFocusHandled?.();
   }, [shouldFocusAmount, onAmountFocusHandled]);
+
+  // Category "Add item": open ingredient search after the new row mounts.
+  useEffect(() => {
+    if (!shouldOpenIngredientSelector) return;
+    setIngredientSelectorOpen(true);
+    onIngredientSelectorOpenHandled?.();
+  }, [shouldOpenIngredientSelector, onIngredientSelectorOpenHandled]);
+
+  const handleCommitRow = useCallback(() => {
+    blurFocusedElementInContainer(rowContainerRef.current);
+  }, []);
 
   const handleAmountChange = useCallback(
     (value: string) => {
@@ -278,7 +301,50 @@ function GroceriesEditRowComponent({
     placeholder: "Select ingredient...",
     searchPlaceholder: "Search ingredient...",
     emptyLabel: "No ingredient found.",
+    onOpenChange: setIngredientSelectorOpen,
   };
+
+  const renderIngredientSelect = (layoutActive: boolean) => (
+    <SearchableSelect
+      {...ingredientSelectProps}
+      open={ingredientSelectorOpen && layoutActive}
+    />
+  );
+
+  const unitSelectDisabled = selectedIngredient
+    ? availableUnits.length === 0
+    : adHocUnits.length === 0;
+  const isXl = useIsXl();
+  const unitSelectFocus = useSelectOpenOnTabFromAdjacent({
+    disabled: unitSelectDisabled,
+    resetKey: row.ingredientId,
+  });
+
+  const handleCommitFieldKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      handleCommitRow();
+    },
+    [handleCommitRow],
+  );
+
+  const handleAmountKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (markUnitSelectOpenOnAmountTab(event)) {
+        unitSelectFocus.markOpenOnTabFromAdjacent();
+      }
+      handleCommitFieldKeyDown(event);
+    },
+    [handleCommitFieldKeyDown, unitSelectFocus],
+  );
+
+  const handleUnitSelectCloseAutoFocus = useCallback((event: Event) => {
+    if (!pendingFocusAdditionalInfoRef.current) return;
+    pendingFocusAdditionalInfoRef.current = false;
+    event.preventDefault();
+    focusGroceriesRowAdditionalInfoInput(rowContainerRef.current);
+  }, []);
 
   const amountInputProps = {
     key: `${row.id}-amount-${row.ingredientId ?? "none"}`,
@@ -290,18 +356,28 @@ function GroceriesEditRowComponent({
     placeholder: "Amount",
     onChange: (event: React.ChangeEvent<HTMLInputElement>) =>
       handleAmountChange(event.target.value),
+    onKeyDown: handleAmountKeyDown,
   };
 
-  const unitSelect = (
+  const renderUnitSelect = (layoutActive: boolean) => (
     <Select
       value={row.unitId ?? ""}
-      onValueChange={(nextUnitId) => onRowChange(row.id, { unitId: nextUnitId || null })}
-      disabled={selectedIngredient ? availableUnits.length === 0 : adHocUnits.length === 0}
+      onValueChange={(nextUnitId) => {
+        const normalized = nextUnitId || null;
+        if (normalized) {
+          pendingFocusAdditionalInfoRef.current = true;
+        }
+        unitSelectFocus.clearTabOpenIntent();
+        onRowChange(row.id, { unitId: normalized });
+      }}
+      open={layoutActive && unitSelectFocus.open}
+      onOpenChange={unitSelectFocus.onOpenChange}
+      disabled={unitSelectDisabled}
     >
-      <SelectTrigger className="w-full">
+      <SelectTrigger className="w-full" onFocus={unitSelectFocus.handleTriggerFocus}>
         <SelectValue placeholder="Unit" />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent onCloseAutoFocus={handleUnitSelectCloseAutoFocus}>
         {selectedIngredient
           ? availableUnits.map((conversion) => {
               const unit = unitById.get(conversion.unitId);
@@ -332,8 +408,10 @@ function GroceriesEditRowComponent({
   const additionalInfoInput = (
     <Input
       key={`${row.id}-additional-info-${row.ingredientId ?? "none"}`}
+      data-grocery-row-additional-info
       value={additionalInfoValue}
       onChange={(event) => handleAdditionalInfoChange(event.target.value)}
+      onKeyDown={handleCommitFieldKeyDown}
       placeholder="Enter additional info"
     />
   );
@@ -344,6 +422,7 @@ function GroceriesEditRowComponent({
       className="w-full"
       value={substitutionNoteValue}
       onChange={(event) => handleSubstitutionNoteChange(event.target.value)}
+      onKeyDown={handleCommitFieldKeyDown}
       placeholder="Enter substitutions"
     />
   );
@@ -369,9 +448,9 @@ function GroceriesEditRowComponent({
     >
       <div className="space-y-2 xl:hidden">
         <div className="grid items-start gap-2 md:grid-cols-[minmax(0,1fr)_7rem_10rem_auto]">
-          <SearchableSelect {...ingredientSelectProps} />
+          {renderIngredientSelect(!isXl)}
           <Input {...amountInputProps} />
-          {unitSelect}
+          {renderUnitSelect(!isXl)}
           {rowActions}
         </div>
         <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
@@ -381,9 +460,9 @@ function GroceriesEditRowComponent({
       </div>
 
       <div className="hidden xl:grid xl:grid-cols-[minmax(0,1.3fr)_7rem_10rem_minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-start xl:gap-2">
-        <SearchableSelect {...ingredientSelectProps} />
+        {renderIngredientSelect(isXl)}
         <Input {...amountInputProps} />
-        {unitSelect}
+        {renderUnitSelect(isXl)}
         {additionalInfoInput}
         {substitutionNoteInput}
         {rowActions}

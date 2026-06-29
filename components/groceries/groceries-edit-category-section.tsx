@@ -35,6 +35,8 @@ type GroceriesEditCategorySectionProps = {
   highlightedRowId?: string | null;
   focusAmountRowId?: string | null;
   onAmountFocusHandled?: () => void;
+  openIngredientSelectorRowId?: string | null;
+  onIngredientSelectorOpenHandled?: () => void;
 };
 
 export function GroceriesEditCategorySection({
@@ -57,6 +59,8 @@ export function GroceriesEditCategorySection({
   highlightedRowId,
   focusAmountRowId,
   onAmountFocusHandled,
+  openIngredientSelectorRowId,
+  onIngredientSelectorOpenHandled,
 }: GroceriesEditCategorySectionProps) {
   const ingredientOptions = ingredientOptionsByCategoryId.get(categoryId) ?? [];
 
@@ -88,6 +92,8 @@ export function GroceriesEditCategorySection({
             highlighted={highlightedRowId === row.id}
             shouldFocusAmount={focusAmountRowId === row.id}
             onAmountFocusHandled={onAmountFocusHandled}
+            shouldOpenIngredientSelector={openIngredientSelectorRowId === row.id}
+            onIngredientSelectorOpenHandled={onIngredientSelectorOpenHandled}
           />
         ))}
       </div>
