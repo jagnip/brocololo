@@ -5,6 +5,7 @@ import { buildGroceryMealOptionsFromSlots } from "@/lib/groceries/generation-opt
 import type { GroceryMealOption } from "@/lib/groceries/generation-options";
 import { transformPlanToShoppingListRows } from "@/lib/groceries/helpers";
 import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
+import { applyUserGroceryOverridesToListItems } from "@/lib/groceries/apply-user-grocery-overrides-to-list";
 import type { PlanSlotData } from "@/lib/groceries/helpers";
 import { prisma } from "@/lib/db/index";
 import { getIngredientCustomizationMap } from "@/lib/db/ingredients";
@@ -503,29 +504,7 @@ async function applyUserGroceryOverrides<
 
   return {
     ...list,
-    items: list.items.map((item) => {
-      const ingredient = item.groceryIngredient?.ingredient;
-      if (!ingredient || ingredient.userId !== null) {
-        return item;
-      }
-
-      const overlay = customizationMap.get(ingredient.id);
-      const substitutionNote = overlay?.substitutionNote ?? null;
-
-      return {
-        ...item,
-        additionalInfo: overlay?.additionalInfo ?? null,
-        substitutionsAllowed: deriveSubstitutionsAllowed(substitutionNote),
-        substitutionNote,
-        groceryIngredient: {
-          ...item.groceryIngredient!,
-          ingredient: {
-            ...ingredient,
-            supermarketUrl: overlay?.supermarketUrl ?? null,
-          },
-        },
-      };
-    }),
+    items: applyUserGroceryOverridesToListItems(list.items, customizationMap),
   };
 }
 

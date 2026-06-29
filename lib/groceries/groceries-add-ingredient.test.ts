@@ -44,6 +44,11 @@ function makeIngredient() {
         unit: { id: "unit-piece", name: "piece" },
       },
     ],
+    groceryIngredient: {
+      additionalInfo: "ripe",
+      substitutionNote: "or canned",
+      substitutionsAllowed: true,
+    },
   } as const;
 }
 
@@ -93,9 +98,9 @@ describe("resolveAddIngredientToGroceries", () => {
         displayLabel: "Tomato",
         amount: 1,
         unitId: "unit-piece",
-        substitutionsAllowed: false,
-        substitutionNote: null,
-        additionalInfo: null,
+        substitutionsAllowed: true,
+        substitutionNote: "or canned",
+        additionalInfo: "ripe",
         recipeAttribution: null,
       },
     });
@@ -129,7 +134,7 @@ describe("resolveAddIngredientToGroceries", () => {
     expect(result.newRow.unitId).toBe("unit-g");
   });
 
-  it("merges quick-add draft fields onto the new row", () => {
+  it("uses explicit draft notes when quick-add draft is provided", () => {
     const ingredient = makeIngredient();
 
     const result = resolveAddIngredientToGroceries({
@@ -155,7 +160,7 @@ describe("resolveAddIngredientToGroceries", () => {
         displayLabel: "Tomato",
         amount: 3,
         unitId: "unit-piece",
-        substitutionsAllowed: false,
+        substitutionsAllowed: true,
         substitutionNote: "or cherry tomatoes",
         additionalInfo: "organic",
         recipeAttribution: null,

@@ -111,6 +111,39 @@ describe("saveShoppingListEditsAction", () => {
     });
   });
 
+  it("forwards grocery note fields to updateShoppingListItems", async () => {
+    vi.mocked(updateShoppingListItems).mockResolvedValue({ planId: "plan-1" });
+
+    const input = {
+      planId: "plan-1",
+      items: [
+        {
+          id: "item-1",
+          isNew: false,
+          ingredientId: "ingredient-1",
+          ingredientCategoryId: "category-1",
+          displayLabel: "Tomato",
+          unitId: "unit-g",
+          amount: 120,
+          additionalInfo: "organic only",
+          substitutionsAllowed: true,
+          substitutionNote: "or cherry tomatoes",
+        },
+      ],
+    };
+
+    const result = await saveShoppingListEditsAction(input);
+
+    expect(result).toEqual({ type: "success" });
+    expect(updateShoppingListItems).toHaveBeenCalledWith({
+      userId: "user-1",
+      planId: "plan-1",
+      itemsToCreate: [],
+      itemsToUpdate: input.items,
+      itemIdsToDelete: [],
+    });
+  });
+
   it("merges trash deletes with cleared-name deletes", async () => {
     vi.mocked(updateShoppingListItems).mockResolvedValue({ planId: "plan-1" });
 

@@ -23,6 +23,8 @@ import {
   type QuickAddDraft,
   type QuickAddRowDraft,
 } from "@/lib/groceries/groceries-add-ingredient";
+import { getGroceryNotesFromIngredient } from "@/lib/groceries/get-grocery-notes-from-ingredient";
+import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
 import { ROUTES } from "@/lib/constants";
 import { formatDateRangeLabel } from "@/lib/format-date-range-label";
 import { TopbarConfigController } from "@/components/topbar-config";
@@ -473,7 +475,11 @@ export function GroceriesEditList({
         const linkUpdate: Partial<GroceriesEditableRow> = {
           ingredientId: createdIngredient.id,
           displayLabel: createdIngredient.name,
+          ...getGroceryNotesFromIngredient(createdIngredient),
         };
+        linkUpdate.substitutionsAllowed = deriveSubstitutionsAllowed(
+          linkUpdate.substitutionNote ?? null,
+        );
         // Clear ad-hoc unit when it is not valid for the newly linked ingredient.
         if (existingRow.unitId != null && !allowedUnitIds.has(existingRow.unitId)) {
           linkUpdate.unitId = null;
