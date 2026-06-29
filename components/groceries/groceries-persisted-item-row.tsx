@@ -10,8 +10,7 @@ import { IngredientIcon } from "@/components/ingredient-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { formatAmount } from "@/lib/groceries/helpers";
-import { getUnitDisplayName } from "@/lib/recipes/helpers";
+import { formatGroceryViewAmountLabel } from "@/lib/groceries/helpers";
 import { cn } from "@/lib/utils";
 
 type GroceriesPersistedItemRowProps = {
@@ -61,15 +60,11 @@ export function GroceriesPersistedItemRow({
   );
   const hasMeta = Boolean(row.additionalInfo || row.substitutionNote);
 
-  const displayUnit = getUnitDisplayName({
+  const amountLabel = formatGroceryViewAmountLabel({
     amount: row.amount,
     unitName: row.unit?.name ?? null,
     unitNamePlural: row.unit?.namePlural ?? null,
   });
-  const amountLabel =
-    row.amount !== null
-      ? `${formatAmount(row.amount)} ${displayUnit}`.trim()
-      : displayUnit || "—";
 
   const onTogglePurchased = (next: boolean) => {
     const previous = isPurchased;

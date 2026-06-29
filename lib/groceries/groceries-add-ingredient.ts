@@ -68,6 +68,10 @@ export function resolveAddIngredientToGroceries(input: {
     ? draft.substitutionNote?.trim() || null
     : noteDefaults.substitutionNote;
 
+  // Quick add passes a draft — use values literally (null unit/amount is intentional).
+  const amount = draft !== undefined ? draft.amount : defaultAmount;
+  const unitId = draft !== undefined ? draft.unitId : defaultUnitId;
+
   return {
     type: "added",
     newRow: {
@@ -76,8 +80,8 @@ export function resolveAddIngredientToGroceries(input: {
       ingredientId: ingredient.id,
       ingredientCategoryId: ingredient.categoryId,
       displayLabel: ingredient.name,
-      amount: draft?.amount ?? defaultAmount,
-      unitId: draft?.unitId ?? defaultUnitId,
+      amount,
+      unitId,
       substitutionsAllowed: deriveSubstitutionsAllowed(substitutionNote),
       substitutionNote,
       additionalInfo,

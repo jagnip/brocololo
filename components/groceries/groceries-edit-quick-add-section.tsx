@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pencil } from "lucide-react";
 import { ingredientsToSearchableSelectOptions } from "@/components/ingredients/ingredient-searchable-select-labels";
 import { NutritionPersonCard } from "@/components/recipes/nutrition-person-summary";
@@ -26,6 +26,7 @@ import {
   type QuickAddDraft,
 } from "@/lib/groceries/groceries-add-ingredient";
 import { getQuickAddDraftForIngredient } from "@/lib/groceries/grocery-row-ingredient-patch";
+import { focusVisibleAmountInputInContainer } from "@/lib/focus-input-after-layout";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
 
 type GroceriesEditQuickAddSectionProps = {
@@ -52,6 +53,7 @@ export function GroceriesEditQuickAddSection({
   onEditIngredientRequested,
 }: GroceriesEditQuickAddSectionProps) {
   const [draft, setDraft] = useState<QuickAddDraft>(EMPTY_QUICK_ADD_DRAFT);
+  const sectionRef = useRef<HTMLElement>(null);
 
   const ingredientSearchOptions = useMemo<SearchableSelectOption[]>(
     () =>
@@ -92,6 +94,12 @@ export function GroceriesEditQuickAddSection({
     [ingredientById],
   );
 
+  // After ingredient select, focus amount so the user can type immediately.
+  useEffect(() => {
+    if (!draft.ingredientId) return;
+    focusVisibleAmountInputInContainer(sectionRef.current);
+  }, [draft.ingredientId]);
+
   const handleAddItem = useCallback(() => {
     if (!draft.ingredientId) return;
     const added = onAddItem(draft);
@@ -116,7 +124,11 @@ export function GroceriesEditQuickAddSection({
   );
 
   return (
-    <section aria-label="Quick add ingredients" className="scroll-mt-28 space-y-3">
+    <section
+      ref={sectionRef}
+      aria-label="Quick add ingredients"
+      className="scroll-mt-28 space-y-3"
+    >
       <NutritionPersonCard variant="spotlight">
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
@@ -141,6 +153,7 @@ export function GroceriesEditQuickAddSection({
 
               <Input
                 key={`quick-add-amount-${draft.ingredientId ?? "none"}`}
+                data-grocery-amount-input
                 type="number"
                 min={0}
                 step="any"
@@ -247,6 +260,7 @@ export function GroceriesEditQuickAddSection({
 
             <Input
               key={`quick-add-amount-desktop-${draft.ingredientId ?? "none"}`}
+              data-grocery-amount-input
               type="number"
               min={0}
               step="any"

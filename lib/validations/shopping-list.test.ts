@@ -25,22 +25,22 @@ describe("shoppingListEditableItemSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects amount without unit", () => {
+  it("accepts amount without unit", () => {
     const result = shoppingListEditableItemSchema.safeParse({
       ...makeValidRow(),
       unitId: null,
       amount: 120,
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
-  it("rejects unit without amount", () => {
+  it("accepts unit without amount", () => {
     const result = shoppingListEditableItemSchema.safeParse({
       ...makeValidRow(),
       unitId: "unit-g",
       amount: null,
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("enforces substitution note max length", () => {

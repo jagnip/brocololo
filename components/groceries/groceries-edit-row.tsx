@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {
   getGroceryRowPatchForLinkedIngredient,
 } from "@/lib/groceries/grocery-row-ingredient-patch";
 import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
+import { focusVisibleAmountInputInContainer } from "@/lib/focus-input-after-layout";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
 import type {
   GroceriesEditableRow,
@@ -53,6 +54,8 @@ type GroceriesEditRowProps = {
   onEditIngredientRequested: (ingredientId: string) => void;
   registerRowRef?: (rowId: string, node: HTMLElement | null) => void;
   highlighted?: boolean;
+  shouldFocusAmount?: boolean;
+  onAmountFocusHandled?: () => void;
 };
 
 // Plus (free-text → create dialog) or Pencil (DB row → edit dialog) beside Trash.
@@ -130,10 +133,31 @@ function GroceriesEditRowComponent({
   onEditIngredientRequested,
   registerRowRef,
   highlighted = false,
+  shouldFocusAmount = false,
+  onAmountFocusHandled,
 }: GroceriesEditRowProps) {
   const amountValue = row.amount === null ? "" : String(row.amount);
   const additionalInfoValue = row.additionalInfo ?? "";
   const substitutionNoteValue = row.substitutionNote ?? "";
+  const rowContainerRef = useRef<HTMLDivElement | null>(null);
+  const prevIngredientIdRef = useRef(row.ingredientId);
+
+  // Focus amount when user picks a linked ingredient in this row.
+  useEffect(() => {
+    const previousIngredientId = prevIngredientIdRef.current;
+    prevIngredientIdRef.current = row.ingredientId;
+
+    if (row.ingredientId && row.ingredientId !== previousIngredientId) {
+      focusVisibleAmountInputInContainer(rowContainerRef.current);
+    }
+  }, [row.ingredientId]);
+
+  // Library "+" scroll path: parent requests focus on this row's amount field.
+  useEffect(() => {
+    if (!shouldFocusAmount) return;
+    focusVisibleAmountInputInContainer(rowContainerRef.current);
+    onAmountFocusHandled?.();
+  }, [shouldFocusAmount, onAmountFocusHandled]);
 
   const handleAmountChange = useCallback(
     (value: string) => {
@@ -234,7 +258,8 @@ function GroceriesEditRowComponent({
     [row.recipeAttribution],
   );
   const rowRef = useCallback(
-    (node: HTMLElement | null) => {
+    (node: HTMLDivElement | null) => {
+      rowContainerRef.current = node;
       registerRowRef?.(row.id, node);
     },
     [registerRowRef, row.id],
@@ -257,6 +282,7 @@ function GroceriesEditRowComponent({
 
   const amountInputProps = {
     key: `${row.id}-amount-${row.ingredientId ?? "none"}`,
+    "data-grocery-amount-input": true,
     type: "number" as const,
     min: 0,
     step: "any" as const,

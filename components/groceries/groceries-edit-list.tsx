@@ -155,6 +155,7 @@ export function GroceriesEditList({
   // Holds the most recently-added row id that should briefly show a ring.
   // Cleared by a setTimeout below so the highlight is genuinely transient.
   const [highlightedRowId, setHighlightedRowId] = useState<string | null>(null);
+  const [focusAmountRowId, setFocusAmountRowId] = useState<string | null>(null);
   const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(
     categories[0]?.id ?? null,
@@ -351,6 +352,7 @@ export function GroceriesEditList({
       element.scrollIntoView({ behavior: "smooth", block: "center" });
     }
     setHighlightedRowId(rowId);
+    setFocusAmountRowId(rowId);
     if (highlightTimeoutRef.current) {
       clearTimeout(highlightTimeoutRef.current);
     }
@@ -358,6 +360,10 @@ export function GroceriesEditList({
       setHighlightedRowId((current) => (current === rowId ? null : current));
       highlightTimeoutRef.current = null;
     }, ROW_HIGHLIGHT_DURATION_MS);
+  }, []);
+
+  const onAmountFocusHandled = useCallback(() => {
+    setFocusAmountRowId(null);
   }, []);
 
   // Shared add path for library "+" and Quick add search. Duplicates always
@@ -689,6 +695,8 @@ export function GroceriesEditList({
               onEditIngredientRequested={onEditIngredientRequested}
               registerRowRef={registerRowRef}
               highlightedRowId={highlightedRowId}
+              focusAmountRowId={focusAmountRowId}
+              onAmountFocusHandled={onAmountFocusHandled}
             />
           ))}
         </div>
