@@ -17,7 +17,7 @@ type GroceriesTopbarConfigProps = {
   canEdit: boolean;
 };
 
-/** Registers groceries top bar: plan switcher on view breadcrumb + Share + overflow actions. */
+/** Registers groceries top bar: plan switcher on view breadcrumb + Edit + overflow actions. */
 export function GroceriesTopbarConfig({
   planId,
   planDateRangeLabel,
@@ -35,9 +35,9 @@ export function GroceriesTopbarConfig({
       : canEdit
         ? [
             {
-              id: "share-groceries",
-              label: "Share",
-              onClick: () => setShareOpen(true),
+              id: "edit-groceries",
+              label: "Edit groceries",
+              href: ROUTES.groceriesEdit(planId),
               variant: "outline" as const,
               size: "default" as const,
             },
@@ -51,9 +51,9 @@ export function GroceriesTopbarConfig({
             ariaLabel: "Groceries actions",
             items: [
               {
-                id: "edit-groceries",
-                label: "Edit groceries",
-                href: ROUTES.groceriesEdit(planId),
+                id: "share-groceries",
+                label: "Share",
+                onSelect: () => setShareOpen(true),
               },
               {
                 id: "edit-supermarket-layout",

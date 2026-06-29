@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatAmount,
+  formatGroceryViewAmountLabel,
   transformPlanToShoppingListRows,
   type PlanSlotData,
 } from "../groceries/helpers";
@@ -237,5 +238,35 @@ describe("formatAmount", () => {
     expect(formatAmount(200)).toBe("200");
     expect(formatAmount(2.5)).toBe("2.5");
     expect(formatAmount(2.0)).toBe("2");
+  });
+});
+
+describe("formatGroceryViewAmountLabel", () => {
+  it("hides piece unit and shows amount only", () => {
+    expect(
+      formatGroceryViewAmountLabel({
+        amount: 3,
+        unitName: "piece",
+        unitNamePlural: "pieces",
+      }),
+    ).toBe("3");
+  });
+
+  it("shows grams unit normally", () => {
+    expect(
+      formatGroceryViewAmountLabel({
+        amount: 200,
+        unitName: "g",
+      }),
+    ).toBe("200 g");
+  });
+
+  it("returns empty string when amount and unit are missing", () => {
+    expect(
+      formatGroceryViewAmountLabel({
+        amount: null,
+        unitName: null,
+      }),
+    ).toBe("");
   });
 });

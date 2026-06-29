@@ -45,6 +45,8 @@ type SearchableSelectProps = {
   triggerIcon?: React.ReactNode;
   size?: "default" | "sm";
   className?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 // Keep selection lookup testable outside the component rendering layer.
@@ -143,9 +145,26 @@ export function SearchableSelect({
   triggerIcon,
   size = "default",
   className,
+  open: openProp,
+  onOpenChange,
 }: SearchableSelectProps) {
   const triggerUsesListStyleLabel = Boolean(renderLabel && !renderTriggerLabel);
-  const [open, setOpen] = React.useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
+  const isOpenControlled = openProp !== undefined;
+  const open = isOpenControlled ? openProp : uncontrolledOpen;
+  const setOpen = React.useCallback(
+    (next: boolean | ((current: boolean) => boolean)) => {
+      const resolved =
+        typeof next === "function"
+          ? next(isOpenControlled ? (openProp ?? false) : uncontrolledOpen)
+          : next;
+      if (!isOpenControlled) {
+        setUncontrolledOpen(resolved);
+      }
+      onOpenChange?.(resolved);
+    },
+    [isOpenControlled, onOpenChange, openProp, uncontrolledOpen],
+  );
   const [searchValue, setSearchValue] = React.useState("");
   const popoverContentRef = React.useRef<HTMLDivElement | null>(null);
 

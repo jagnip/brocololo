@@ -44,6 +44,11 @@ function makeIngredient() {
         unit: { id: "unit-piece", name: "piece" },
       },
     ],
+    groceryIngredient: {
+      additionalInfo: "ripe",
+      substitutionNote: "or canned",
+      substitutionsAllowed: true,
+    },
   } as const;
 }
 
@@ -91,17 +96,17 @@ describe("resolveAddIngredientToGroceries", () => {
         ingredientId: "ingredient-2",
         ingredientCategoryId: "category-produce",
         displayLabel: "Tomato",
-        amount: 1,
-        unitId: "unit-piece",
-        substitutionsAllowed: false,
-        substitutionNote: null,
-        additionalInfo: null,
+        amount: null,
+        unitId: null,
+        substitutionsAllowed: true,
+        substitutionNote: "or canned",
+        additionalInfo: "ripe",
         recipeAttribution: null,
       },
     });
   });
 
-  it("keeps grams/volume defaults empty when unit is not countable", () => {
+  it("defaults library add to null amount and unit for grams-only ingredients", () => {
     const ingredient = {
       ...makeIngredient(),
       defaultUnitId: "unit-g",
@@ -126,10 +131,44 @@ describe("resolveAddIngredientToGroceries", () => {
     }
 
     expect(result.newRow.amount).toBeNull();
-    expect(result.newRow.unitId).toBe("unit-g");
+    expect(result.newRow.unitId).toBeNull();
   });
 
-  it("merges quick-add draft fields onto the new row", () => {
+  it("uses quick-add draft literally when amount and unitId are null", () => {
+    const ingredient = {
+      ...makeIngredient(),
+      defaultUnitId: "unit-g",
+      unitConversions: [
+        {
+          unitId: "unit-g",
+          unit: { id: "unit-g", name: "g" },
+        },
+      ],
+    };
+
+    const result = resolveAddIngredientToGroceries({
+      ingredientId: ingredient.id,
+      rows: [],
+      ingredient,
+      createRowId: () => "quick-add-row",
+      draft: {
+        amount: null,
+        unitId: null,
+        additionalInfo: null,
+        substitutionNote: null,
+      },
+    });
+
+    expect(result.type).toBe("added");
+    if (result.type !== "added") {
+      throw new Error("Expected added result");
+    }
+
+    expect(result.newRow.amount).toBeNull();
+    expect(result.newRow.unitId).toBeNull();
+  });
+
+  it("uses explicit draft notes when quick-add draft is provided", () => {
     const ingredient = makeIngredient();
 
     const result = resolveAddIngredientToGroceries({
@@ -155,7 +194,7 @@ describe("resolveAddIngredientToGroceries", () => {
         displayLabel: "Tomato",
         amount: 3,
         unitId: "unit-piece",
-        substitutionsAllowed: false,
+        substitutionsAllowed: true,
         substitutionNote: "or cherry tomatoes",
         additionalInfo: "organic",
         recipeAttribution: null,

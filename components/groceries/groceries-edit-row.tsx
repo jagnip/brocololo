@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useRef } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,12 +13,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { getDefaultAmountAndUnitForGroceryAdd } from "@/lib/groceries/default-add-amount";
 import {
   canManageGroceriesRowIngredient,
   getGroceriesRowIngredientActionState,
 } from "@/lib/groceries/groceries-row-ingredient-action";
+import {
+  CLEAR_GROCERY_ROW_INGREDIENT_PATCH,
+  getGroceryRowPatchForLinkedIngredient,
+} from "@/lib/groceries/grocery-row-ingredient-patch";
+import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
+import {
+  blurFocusedElementInContainer,
+  focusGroceriesRowAdditionalInfoInput,
+  focusVisibleAmountInputInContainer,
+} from "@/lib/focus-input-after-layout";
+import { useIsXl } from "@/hooks/use-is-xl";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
+import { useSelectOpenOnTabFromAdjacent, markUnitSelectOpenOnAmountTab } from "@/lib/use-select-open-on-focus";
 import type {
   GroceriesEditableRow,
   GroceriesEditIngredientOption,
@@ -47,26 +58,13 @@ type GroceriesEditRowProps = {
   onRowRemove: (rowId: string) => void;
   onCreateIngredientRequested: (rowId: string, initialName: string) => void;
   onEditIngredientRequested: (ingredientId: string) => void;
-  // Optional ref registration callback so the parent can register this row's
-  // DOM node and scroll to it (e.g. when a library-panel "+" lands on this row).
   registerRowRef?: (rowId: string, node: HTMLElement | null) => void;
-  // When true, applies a transient ring/pulse so the user can spot the row
-  // that just received a library "+". The parent clears the flag after a
-  // short timeout.
   highlighted?: boolean;
+  shouldFocusAmount?: boolean;
+  onAmountFocusHandled?: () => void;
+  shouldOpenIngredientSelector?: boolean;
+  onIngredientSelectorOpenHandled?: () => void;
 };
-
-const EDIT_COMMIT_DEBOUNCE_MS = 180;
-
-function getGroceryAddDefaultsForIngredient(ingredient: GroceriesEditIngredientOption) {
-  return getDefaultAmountAndUnitForGroceryAdd({
-    defaultUnitId: ingredient.defaultUnitId,
-    unitConversions: ingredient.unitConversions.map((conversion) => ({
-      unitId: conversion.unitId,
-      unit: { name: conversion.unit.name },
-    })),
-  });
-}
 
 // Plus (free-text → create dialog) or Pencil (DB row → edit dialog) beside Trash.
 function GroceriesEditRowActions({
@@ -101,7 +99,6 @@ function GroceriesEditRowActions({
           <Pencil className="h-4 w-4" aria-hidden />
         </Button>
       ) : (
-        // Empty and free-text rows show Plus; disabled until a name is entered.
         <Button
           type="button"
           variant="outline"
@@ -144,27 +141,61 @@ function GroceriesEditRowComponent({
   onEditIngredientRequested,
   registerRowRef,
   highlighted = false,
+  shouldFocusAmount = false,
+  onAmountFocusHandled,
+  shouldOpenIngredientSelector = false,
+  onIngredientSelectorOpenHandled,
 }: GroceriesEditRowProps) {
-  const amountInputRef = useRef(row.amount === null ? "" : String(row.amount));
-  const additionalInfoInputRef = useRef(row.additionalInfo ?? "");
-  const substitutionNoteInputRef = useRef(row.substitutionNote ?? "");
-  const amountCommitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const additionalInfoCommitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const substitutionNoteCommitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const amountPropValue = row.amount === null ? "" : String(row.amount);
-  const additionalInfoPropValue = row.additionalInfo ?? "";
-  const substitutionNotePropValue = row.substitutionNote ?? "";
+  const amountValue = row.amount === null ? "" : String(row.amount);
+  const additionalInfoValue = row.additionalInfo ?? "";
+  const substitutionNoteValue = row.substitutionNote ?? "";
+  const rowContainerRef = useRef<HTMLDivElement | null>(null);
+  const prevIngredientIdRef = useRef(row.ingredientId);
+  const pendingFocusAdditionalInfoRef = useRef(false);
+  const [ingredientSelectorOpen, setIngredientSelectorOpen] = useState(false);
 
-  const commitAmount = useCallback(
+  // Focus amount when user picks a linked ingredient in this row.
+  useEffect(() => {
+    const previousIngredientId = prevIngredientIdRef.current;
+    prevIngredientIdRef.current = row.ingredientId;
+
+    if (row.ingredientId && row.ingredientId !== previousIngredientId) {
+      focusVisibleAmountInputInContainer(rowContainerRef.current);
+    }
+  }, [row.ingredientId]);
+
+  // Library "+" scroll path: parent requests focus on this row's amount field.
+  useEffect(() => {
+    if (!shouldFocusAmount) return;
+    focusVisibleAmountInputInContainer(rowContainerRef.current);
+    onAmountFocusHandled?.();
+  }, [shouldFocusAmount, onAmountFocusHandled]);
+
+  // Category "Add item": open ingredient search after the new row mounts.
+  useEffect(() => {
+    if (!shouldOpenIngredientSelector) return;
+    setIngredientSelectorOpen(true);
+    onIngredientSelectorOpenHandled?.();
+  }, [shouldOpenIngredientSelector, onIngredientSelectorOpenHandled]);
+
+  const handleCommitRow = useCallback(() => {
+    blurFocusedElementInContainer(rowContainerRef.current);
+  }, []);
+
+  const handleAmountChange = useCallback(
     (value: string) => {
-      const nextAmount = value.trim() === "" ? null : Number(value);
-      if (nextAmount !== null && Number.isNaN(nextAmount)) return;
-      if (row.amount === nextAmount) return;
+      if (value.trim() === "") {
+        if (row.amount !== null) onRowChange(row.id, { amount: null });
+        return;
+      }
+      const nextAmount = Number(value);
+      if (Number.isNaN(nextAmount) || row.amount === nextAmount) return;
       onRowChange(row.id, { amount: nextAmount });
     },
     [onRowChange, row.amount, row.id],
   );
-  const commitAdditionalInfo = useCallback(
+
+  const handleAdditionalInfoChange = useCallback(
     (value: string) => {
       const normalized = value || null;
       if (row.additionalInfo === normalized) return;
@@ -172,31 +203,53 @@ function GroceriesEditRowComponent({
     },
     [onRowChange, row.additionalInfo, row.id],
   );
-  const commitSubstitutionNote = useCallback(
+
+  const handleSubstitutionNoteChange = useCallback(
     (value: string) => {
       const normalized = value || null;
       if (row.substitutionNote === normalized) return;
-      onRowChange(row.id, { substitutionNote: normalized });
+      onRowChange(row.id, {
+        substitutionNote: normalized,
+        substitutionsAllowed: deriveSubstitutionsAllowed(normalized),
+      });
     },
     [onRowChange, row.id, row.substitutionNote],
   );
 
-  useEffect(() => {
-    return () => {
-      if (amountCommitTimerRef.current) clearTimeout(amountCommitTimerRef.current);
-      if (additionalInfoCommitTimerRef.current) {
-        clearTimeout(additionalInfoCommitTimerRef.current);
-      }
-      if (substitutionNoteCommitTimerRef.current) {
-        clearTimeout(substitutionNoteCommitTimerRef.current);
-      }
-    };
-  }, []);
+  const handleIngredientValueChange = useCallback(
+    (nextIngredientId: string | null, freeTextOptionValue: string) => {
+      if (nextIngredientId === freeTextOptionValue) return;
 
-  // Uncontrolled amount input: remount via key on ingredient change; keep ref aligned too.
-  useEffect(() => {
-    amountInputRef.current = amountPropValue;
-  }, [row.ingredientId, amountPropValue]);
+      if (!nextIngredientId) {
+        onRowChange(row.id, { ...CLEAR_GROCERY_ROW_INGREDIENT_PATCH });
+        return;
+      }
+
+      const nextIngredient = ingredientById.get(nextIngredientId);
+      if (!nextIngredient) return;
+
+      onRowChange(row.id, getGroceryRowPatchForLinkedIngredient(nextIngredient));
+    },
+    [ingredientById, onRowChange, row.id],
+  );
+
+  const handleCreateFreeTextOption = useCallback(
+    (typedName: string) => {
+      const label = typedName.trim();
+      if (!label) return;
+      onRowChange(row.id, {
+        ingredientId: null,
+        displayLabel: label,
+        ingredientCategoryId: row.ingredientCategoryId,
+        unitId: null,
+        amount: null,
+        additionalInfo: null,
+        substitutionNote: null,
+        substitutionsAllowed: false,
+      });
+    },
+    [onRowChange, row.id, row.ingredientCategoryId],
+  );
 
   const selectedIngredient = row.ingredientId
     ? ingredientById.get(row.ingredientId) ?? null
@@ -206,7 +259,6 @@ function GroceriesEditRowComponent({
     if (row.ingredientId || !row.displayLabel.trim()) {
       return ingredientOptions;
     }
-    // Keep created free-text visible in the trigger even though it's not from DB options.
     return [
       {
         value: freeTextOptionValue,
@@ -215,6 +267,7 @@ function GroceriesEditRowComponent({
       ...ingredientOptions,
     ];
   }, [freeTextOptionValue, ingredientOptions, row.displayLabel, row.ingredientId]);
+
   const availableUnits = useMemo(
     () => selectedIngredient?.unitConversions ?? [],
     [selectedIngredient],
@@ -228,328 +281,193 @@ function GroceriesEditRowComponent({
     [row.recipeAttribution],
   );
   const rowRef = useCallback(
-    (node: HTMLElement | null) => {
+    (node: HTMLDivElement | null) => {
+      rowContainerRef.current = node;
       registerRowRef?.(row.id, node);
     },
     [registerRowRef, row.id],
   );
 
+  const ingredientSelectProps = {
+    className: "min-w-0 w-full font-normal",
+    options: resolvedIngredientOptions,
+    renderLabel: renderIngredientDropdownLabel,
+    renderTriggerLabel: renderIngredientTriggerLabel,
+    value: row.ingredientId ?? (row.displayLabel.trim() ? freeTextOptionValue : null),
+    onValueChange: (nextIngredientId: string | null) =>
+      handleIngredientValueChange(nextIngredientId, freeTextOptionValue),
+    onCreateOption: handleCreateFreeTextOption,
+    createOptionLabel: (searchTerm: string) => `Add "${searchTerm}"`,
+    placeholder: "Select ingredient...",
+    searchPlaceholder: "Search ingredient...",
+    emptyLabel: "No ingredient found.",
+    onOpenChange: setIngredientSelectorOpen,
+  };
+
+  const renderIngredientSelect = (layoutActive: boolean) => (
+    <SearchableSelect
+      {...ingredientSelectProps}
+      open={ingredientSelectorOpen && layoutActive}
+    />
+  );
+
+  const unitSelectDisabled = selectedIngredient
+    ? availableUnits.length === 0
+    : adHocUnits.length === 0;
+  const isXl = useIsXl();
+  const unitSelectFocus = useSelectOpenOnTabFromAdjacent({
+    disabled: unitSelectDisabled,
+    resetKey: row.ingredientId,
+  });
+
+  const handleCommitFieldKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      handleCommitRow();
+    },
+    [handleCommitRow],
+  );
+
+  const handleAmountKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (markUnitSelectOpenOnAmountTab(event)) {
+        unitSelectFocus.markOpenOnTabFromAdjacent();
+      }
+      handleCommitFieldKeyDown(event);
+    },
+    [handleCommitFieldKeyDown, unitSelectFocus],
+  );
+
+  const handleUnitSelectCloseAutoFocus = useCallback((event: Event) => {
+    if (!pendingFocusAdditionalInfoRef.current) return;
+    pendingFocusAdditionalInfoRef.current = false;
+    event.preventDefault();
+    focusGroceriesRowAdditionalInfoInput(rowContainerRef.current);
+  }, []);
+
+  const amountInputProps = {
+    key: `${row.id}-amount-${row.ingredientId ?? "none"}`,
+    "data-grocery-amount-input": true,
+    type: "number" as const,
+    min: 0,
+    step: "any" as const,
+    value: amountValue,
+    placeholder: "Amount",
+    onChange: (event: React.ChangeEvent<HTMLInputElement>) =>
+      handleAmountChange(event.target.value),
+    onKeyDown: handleAmountKeyDown,
+  };
+
+  const renderUnitSelect = (layoutActive: boolean) => (
+    <Select
+      value={row.unitId ?? ""}
+      onValueChange={(nextUnitId) => {
+        const normalized = nextUnitId || null;
+        if (normalized) {
+          pendingFocusAdditionalInfoRef.current = true;
+        }
+        unitSelectFocus.clearTabOpenIntent();
+        onRowChange(row.id, { unitId: normalized });
+      }}
+      open={layoutActive && unitSelectFocus.open}
+      onOpenChange={unitSelectFocus.onOpenChange}
+      disabled={unitSelectDisabled}
+    >
+      <SelectTrigger className="w-full" onFocus={unitSelectFocus.handleTriggerFocus}>
+        <SelectValue placeholder="Unit" />
+      </SelectTrigger>
+      <SelectContent onCloseAutoFocus={handleUnitSelectCloseAutoFocus}>
+        {selectedIngredient
+          ? availableUnits.map((conversion) => {
+              const unit = unitById.get(conversion.unitId);
+              if (!unit) return null;
+              return (
+                <SelectItem key={conversion.unitId} value={conversion.unitId}>
+                  {getUnitDisplayName({
+                    amount: row.amount,
+                    unitName: unit.name,
+                    unitNamePlural: unit.namePlural,
+                  })}
+                </SelectItem>
+              );
+            })
+          : adHocUnits.map((unit) => (
+              <SelectItem key={unit.id} value={unit.id}>
+                {getUnitDisplayName({
+                  amount: row.amount,
+                  unitName: unit.name,
+                  unitNamePlural: unit.namePlural,
+                })}
+              </SelectItem>
+            ))}
+      </SelectContent>
+    </Select>
+  );
+
+  const additionalInfoInput = (
+    <Input
+      key={`${row.id}-additional-info-${row.ingredientId ?? "none"}`}
+      data-grocery-row-additional-info
+      value={additionalInfoValue}
+      onChange={(event) => handleAdditionalInfoChange(event.target.value)}
+      onKeyDown={handleCommitFieldKeyDown}
+      placeholder="Enter additional info"
+    />
+  );
+
+  const substitutionNoteInput = (
+    <Input
+      key={`${row.id}-substitution-note-${row.ingredientId ?? "none"}`}
+      className="w-full"
+      value={substitutionNoteValue}
+      onChange={(event) => handleSubstitutionNoteChange(event.target.value)}
+      onKeyDown={handleCommitFieldKeyDown}
+      placeholder="Enter substitutions"
+    />
+  );
+
+  const rowActions = (
+    <GroceriesEditRowActions
+      row={row}
+      onCreateIngredientRequested={onCreateIngredientRequested}
+      onEditIngredientRequested={onEditIngredientRequested}
+      onRowRemove={onRowRemove}
+    />
+  );
+
   return (
     <div
-      // scroll-mt-28 keeps the row from being hidden behind the sticky
-      // category navigator when the parent calls scrollIntoView.
       ref={rowRef}
       data-row-id={row.id}
       className={cn(
         "scroll-mt-28 space-y-2 rounded-lg border bg-card p-3 transition-shadow",
-        // Transient highlight applied when this row was just added via the
-        // library panel. The parent clears `highlighted` after ~1.5s.
         highlighted &&
           "ring-2 ring-primary/70 ring-offset-2 ring-offset-background",
       )}
     >
-      {/* Mobile/tablet layout remains stacked for readability and touch comfort. */}
       <div className="space-y-2 xl:hidden">
         <div className="grid items-start gap-2 md:grid-cols-[minmax(0,1fr)_7rem_10rem_auto]">
-          <SearchableSelect
-            className="min-w-0 w-full font-normal"
-            options={resolvedIngredientOptions}
-            renderLabel={renderIngredientDropdownLabel}
-            renderTriggerLabel={renderIngredientTriggerLabel}
-            value={row.ingredientId ?? (row.displayLabel.trim() ? freeTextOptionValue : null)}
-            onValueChange={(nextIngredientId) => {
-              if (nextIngredientId === freeTextOptionValue) return;
-              // null = user cleared the ingredient. Strip name + quantity so the
-              // row becomes "nameless" and gets dropped on save.
-              if (!nextIngredientId) {
-                onRowChange(row.id, {
-                  ingredientId: null,
-                  displayLabel: "",
-                  unitId: null,
-                  amount: null,
-                });
-                return;
-              }
-              const nextIngredient = ingredientById.get(nextIngredientId);
-              if (!nextIngredient) return;
-
-              const { unitId: nextUnitId, amount: nextAmount } =
-                getGroceryAddDefaultsForIngredient(nextIngredient);
-
-              // Ingredient changes should update category + label to keep rows aligned with section ordering.
-              onRowChange(row.id, {
-                ingredientId: nextIngredient.id,
-                ingredientCategoryId: nextIngredient.categoryId,
-                displayLabel: nextIngredient.name,
-                unitId: nextUnitId,
-                // Reset amount when switching ingredients; countable units get 1, others stay empty.
-                amount: nextAmount,
-              });
-            }}
-            onCreateOption={(typedName) => {
-              const label = typedName.trim();
-              if (!label) return;
-              onRowChange(row.id, {
-                ingredientId: null,
-                displayLabel: label,
-                // Keep free-text row in the current section category.
-                ingredientCategoryId: row.ingredientCategoryId,
-                // Leave unit empty for ad-hoc groceries until user explicitly picks one.
-                unitId: null,
-                amount: null,
-              });
-            }}
-            createOptionLabel={(searchTerm) => `Add "${searchTerm}"`}
-            placeholder="Select ingredient..."
-            searchPlaceholder="Search ingredient..."
-            emptyLabel="No ingredient found."
-          />
-
-          <Input
-            key={`${row.id}-amount-${row.ingredientId ?? "none"}`}
-            type="number"
-            min={0}
-            step="any"
-            defaultValue={amountPropValue}
-            placeholder="Amount"
-            onChange={(event) => {
-              const nextValue = event.target.value;
-              amountInputRef.current = nextValue;
-              if (amountCommitTimerRef.current) clearTimeout(amountCommitTimerRef.current);
-              amountCommitTimerRef.current = setTimeout(() => {
-                commitAmount(nextValue);
-              }, EDIT_COMMIT_DEBOUNCE_MS);
-            }}
-            onBlur={() => commitAmount(amountInputRef.current)}
-          />
-
-          <Select
-            value={row.unitId ?? ""}
-            onValueChange={(nextUnitId) => onRowChange(row.id, { unitId: nextUnitId || null })}
-            disabled={selectedIngredient ? availableUnits.length === 0 : adHocUnits.length === 0}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Unit" />
-            </SelectTrigger>
-            <SelectContent>
-              {selectedIngredient
-                ? availableUnits.map((conversion) => {
-                    const unit = unitById.get(conversion.unitId);
-                    if (!unit) return null;
-                    return (
-                      <SelectItem key={conversion.unitId} value={conversion.unitId}>
-                        {getUnitDisplayName({
-                          amount: row.amount,
-                          unitName: unit.name,
-                          unitNamePlural: unit.namePlural,
-                        })}
-                      </SelectItem>
-                    );
-                  })
-                : adHocUnits.map((unit) => (
-                    <SelectItem key={unit.id} value={unit.id}>
-                      {getUnitDisplayName({
-                        amount: row.amount,
-                        unitName: unit.name,
-                        unitNamePlural: unit.namePlural,
-                      })}
-                    </SelectItem>
-                  ))}
-            </SelectContent>
-          </Select>
-
-          {/* Row actions: create/edit ingredient + remove from draft. */}
-          <GroceriesEditRowActions
-            row={row}
-            onCreateIngredientRequested={onCreateIngredientRequested}
-            onEditIngredientRequested={onEditIngredientRequested}
-            onRowRemove={onRowRemove}
-          />
+          {renderIngredientSelect(!isXl)}
+          <Input {...amountInputProps} />
+          {renderUnitSelect(!isXl)}
+          {rowActions}
         </div>
-
-        {/* lg+: side-by-side; parent is xl:hidden so use lg here (xl: never applied). */}
         <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
-          <Input
-            defaultValue={additionalInfoPropValue}
-            onChange={(event) => {
-              const nextValue = event.target.value;
-              additionalInfoInputRef.current = nextValue;
-              if (additionalInfoCommitTimerRef.current) {
-                clearTimeout(additionalInfoCommitTimerRef.current);
-              }
-              additionalInfoCommitTimerRef.current = setTimeout(() => {
-                commitAdditionalInfo(nextValue);
-              }, EDIT_COMMIT_DEBOUNCE_MS);
-            }}
-            onBlur={() => commitAdditionalInfo(additionalInfoInputRef.current)}
-            placeholder="Enter additional info"
-          />
-
-          <Input
-            className="w-full"
-            defaultValue={substitutionNotePropValue}
-            onChange={(event) => {
-              const nextValue = event.target.value;
-              substitutionNoteInputRef.current = nextValue;
-              if (substitutionNoteCommitTimerRef.current) {
-                clearTimeout(substitutionNoteCommitTimerRef.current);
-              }
-              substitutionNoteCommitTimerRef.current = setTimeout(() => {
-                commitSubstitutionNote(nextValue);
-              }, EDIT_COMMIT_DEBOUNCE_MS);
-            }}
-            onBlur={() => commitSubstitutionNote(substitutionNoteInputRef.current)}
-            placeholder="Enter substitutions"
-          />
+          {additionalInfoInput}
+          {substitutionNoteInput}
         </div>
       </div>
 
-      {/* Desktop layout: keep all controls in one horizontal row for faster scanning/editing. */}
       <div className="hidden xl:grid xl:grid-cols-[minmax(0,1.3fr)_7rem_10rem_minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-start xl:gap-2">
-        <SearchableSelect
-          className="min-w-0 w-full font-normal"
-          options={resolvedIngredientOptions}
-          renderLabel={renderIngredientDropdownLabel}
-          renderTriggerLabel={renderIngredientTriggerLabel}
-          value={row.ingredientId ?? (row.displayLabel.trim() ? freeTextOptionValue : null)}
-          onValueChange={(nextIngredientId) => {
-            if (nextIngredientId === freeTextOptionValue) return;
-            if (!nextIngredientId) {
-              onRowChange(row.id, {
-                ingredientId: null,
-                displayLabel: "",
-                unitId: null,
-                amount: null,
-              });
-              return;
-            }
-            const nextIngredient = ingredientById.get(nextIngredientId);
-            if (!nextIngredient) return;
-
-            const { unitId: nextUnitId, amount: nextAmount } =
-              getGroceryAddDefaultsForIngredient(nextIngredient);
-
-            onRowChange(row.id, {
-              ingredientId: nextIngredient.id,
-              ingredientCategoryId: nextIngredient.categoryId,
-              displayLabel: nextIngredient.name,
-              unitId: nextUnitId,
-              amount: nextAmount,
-            });
-          }}
-          onCreateOption={(typedName) => {
-            const label = typedName.trim();
-            if (!label) return;
-            onRowChange(row.id, {
-              ingredientId: null,
-              displayLabel: label,
-              ingredientCategoryId: row.ingredientCategoryId,
-              unitId: null,
-              amount: null,
-            });
-          }}
-          createOptionLabel={(searchTerm) => `Add "${searchTerm}"`}
-          placeholder="Select ingredient..."
-          searchPlaceholder="Search ingredient..."
-          emptyLabel="No ingredient found."
-        />
-
-          <Input
-            key={`${row.id}-amount-${row.ingredientId ?? "none"}`}
-            type="number"
-            min={0}
-            step="any"
-            defaultValue={amountPropValue}
-            placeholder="Amount"
-            onChange={(event) => {
-              const nextValue = event.target.value;
-              amountInputRef.current = nextValue;
-              if (amountCommitTimerRef.current) clearTimeout(amountCommitTimerRef.current);
-              amountCommitTimerRef.current = setTimeout(() => {
-                commitAmount(nextValue);
-              }, EDIT_COMMIT_DEBOUNCE_MS);
-            }}
-            onBlur={() => commitAmount(amountInputRef.current)}
-          />
-
-          <Select
-            value={row.unitId ?? ""}
-            onValueChange={(nextUnitId) => onRowChange(row.id, { unitId: nextUnitId || null })}
-            disabled={selectedIngredient ? availableUnits.length === 0 : adHocUnits.length === 0}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Unit" />
-            </SelectTrigger>
-            <SelectContent>
-              {selectedIngredient
-                ? availableUnits.map((conversion) => {
-                    const unit = unitById.get(conversion.unitId);
-                    if (!unit) return null;
-                    return (
-                      <SelectItem key={conversion.unitId} value={conversion.unitId}>
-                        {getUnitDisplayName({
-                          amount: row.amount,
-                          unitName: unit.name,
-                          unitNamePlural: unit.namePlural,
-                        })}
-                      </SelectItem>
-                    );
-                  })
-                : adHocUnits.map((unit) => (
-                    <SelectItem key={unit.id} value={unit.id}>
-                      {getUnitDisplayName({
-                        amount: row.amount,
-                        unitName: unit.name,
-                        unitNamePlural: unit.namePlural,
-                      })}
-                    </SelectItem>
-                  ))}
-            </SelectContent>
-          </Select>
-
-          <Input
-            defaultValue={additionalInfoPropValue}
-          onChange={(event) => {
-            const nextValue = event.target.value;
-            additionalInfoInputRef.current = nextValue;
-            if (additionalInfoCommitTimerRef.current) {
-              clearTimeout(additionalInfoCommitTimerRef.current);
-            }
-            additionalInfoCommitTimerRef.current = setTimeout(() => {
-              commitAdditionalInfo(nextValue);
-            }, EDIT_COMMIT_DEBOUNCE_MS);
-          }}
-          onBlur={() => commitAdditionalInfo(additionalInfoInputRef.current)}
-          placeholder="Enter additional info"
-        />
-
-        <Input
-          className="w-full"
-          defaultValue={substitutionNotePropValue}
-          onChange={(event) => {
-            const nextValue = event.target.value;
-            substitutionNoteInputRef.current = nextValue;
-            if (substitutionNoteCommitTimerRef.current) {
-              clearTimeout(substitutionNoteCommitTimerRef.current);
-            }
-            substitutionNoteCommitTimerRef.current = setTimeout(() => {
-              commitSubstitutionNote(nextValue);
-            }, EDIT_COMMIT_DEBOUNCE_MS);
-          }}
-          onBlur={() => commitSubstitutionNote(substitutionNoteInputRef.current)}
-          placeholder="Enter substitutions"
-        />
-
-        <GroceriesEditRowActions
-          row={row}
-          onCreateIngredientRequested={onCreateIngredientRequested}
-          onEditIngredientRequested={onEditIngredientRequested}
-          onRowRemove={onRowRemove}
-        />
+        {renderIngredientSelect(isXl)}
+        <Input {...amountInputProps} />
+        {renderUnitSelect(isXl)}
+        {additionalInfoInput}
+        {substitutionNoteInput}
+        {rowActions}
       </div>
 
-      {/* Bottom badges listing every planner recipe that contributed
-          this ingredient. Kept background transparent per UI request. */}
       {recipeNames.length > 0 ? (
         <div className="-mx-3 -mb-3 rounded-b-lg px-3 pt-0 pb-2">
           <div className="flex flex-wrap items-center gap-1.5">

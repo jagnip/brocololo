@@ -10,16 +10,16 @@ import {
 } from "@/components/groceries/groceries-layout-edit-dialog";
 import type { GroceriesLayoutSwitcherPreset } from "@/components/groceries/groceries-layout-switcher";
 import { useGroceriesTopbarState } from "@/components/groceries/groceries-topbar-state-context";
+import { useGroceriesLayoutSync } from "@/components/groceries/use-groceries-layout-sync";
 
 type GroceriesViewShellProps = {
   list: GroceriesPersistedListModel;
   categories: Array<{ id: string; name: string }>;
 };
 
-type OptimisticPresetAction = {
-  type: "add";
-  preset: GroceriesLayoutSwitcherPreset;
-};
+type OptimisticPresetAction =
+  | { type: "add"; preset: GroceriesLayoutSwitcherPreset }
+  | { type: "remove"; presetId: string };
 
 /** Client shell for owned grocery list view: top bar handlers + layout/delete dialogs. */
 export function GroceriesViewShell({ list, categories }: GroceriesViewShellProps) {
@@ -29,8 +29,12 @@ export function GroceriesViewShell({ list, categories }: GroceriesViewShellProps
     useState<GroceriesLayoutEditDialogMode>("edit");
   const [deleteListOpen, setDeleteListOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isDialogLayoutPending, setIsDialogLayoutPending] = useState(false);
-  const [isSwitchLayoutPending, setIsSwitchLayoutPending] = useState(false);
+  const {
+    isLayoutSyncPending,
+    beginLayoutSync,
+    cancelLayoutSync,
+    completeLayoutSync,
+  } = useGroceriesLayoutSync(list);
 
   const baseLayoutPresets = useMemo(
     () =>
@@ -42,13 +46,16 @@ export function GroceriesViewShell({ list, categories }: GroceriesViewShellProps
     [list.layoutPresets],
   );
 
-  const [optimisticLayoutPresets, addOptimisticLayoutPreset] = useOptimistic(
+  const [optimisticLayoutPresets, applyOptimisticLayoutPreset] = useOptimistic(
     baseLayoutPresets,
     (state, action: OptimisticPresetAction) => {
-      if (state.some((preset) => preset.id === action.preset.id)) {
-        return state;
+      if (action.type === "add") {
+        if (state.some((preset) => preset.id === action.preset.id)) {
+          return state;
+        }
+        return [...state, action.preset];
       }
-      return [...state, action.preset];
+      return state.filter((preset) => preset.id !== action.presetId);
     },
   );
 
@@ -57,32 +64,38 @@ export function GroceriesViewShell({ list, categories }: GroceriesViewShellProps
     (_state, presetId: string) => presetId,
   );
 
-  const isLayoutPending = isDialogLayoutPending || isSwitchLayoutPending;
+  const isLayoutPending = isLayoutSyncPending;
 
   const openLayoutDialog = useCallback((mode: GroceriesLayoutEditDialogMode) => {
     setLayoutDialogMode(mode);
     setLayoutDialogOpen(true);
   }, []);
 
-  const hasCustomLayouts = list.layoutPresets.some((preset) => !preset.isBuiltIn);
+  const hasCustomLayouts = optimisticLayoutPresets.some((preset) => !preset.isBuiltIn);
 
   const onLayoutCreated = useCallback(
     (preset: { id: string; name: string }) => {
-      addOptimisticLayoutPreset({
+      applyOptimisticLayoutPreset({
         type: "add",
         preset: { id: preset.id, name: preset.name, isBuiltIn: false },
       });
       setOptimisticActivePresetId(preset.id);
     },
-    [addOptimisticLayoutPreset, setOptimisticActivePresetId],
+    [applyOptimisticLayoutPreset, setOptimisticActivePresetId],
   );
 
-  const onLayoutDeletedActive = useCallback(() => {
-    const defaultPreset = baseLayoutPresets.find((preset) => preset.isBuiltIn);
-    if (defaultPreset) {
-      setOptimisticActivePresetId(defaultPreset.id);
-    }
-  }, [baseLayoutPresets, setOptimisticActivePresetId]);
+  const onLayoutDeleted = useCallback(
+    (input: { presetId: string; wasActive: boolean }) => {
+      applyOptimisticLayoutPreset({ type: "remove", presetId: input.presetId });
+      if (input.wasActive) {
+        const defaultPreset = baseLayoutPresets.find((preset) => preset.isBuiltIn);
+        if (defaultPreset) {
+          setOptimisticActivePresetId(defaultPreset.id);
+        }
+      }
+    },
+    [applyOptimisticLayoutPreset, baseLayoutPresets, setOptimisticActivePresetId],
+  );
 
   useEffect(() => {
     setState({
@@ -111,7 +124,9 @@ export function GroceriesViewShell({ list, categories }: GroceriesViewShellProps
       <GroceriesPersistedList
         list={list}
         isLayoutPending={isLayoutPending}
-        onLayoutSwitchPendingChange={setIsSwitchLayoutPending}
+        beginLayoutSync={beginLayoutSync}
+        completeLayoutSync={completeLayoutSync}
+        cancelLayoutSync={cancelLayoutSync}
         layoutPresets={optimisticLayoutPresets}
         activeLayoutPresetId={optimisticActivePresetId}
       />
@@ -124,9 +139,11 @@ export function GroceriesViewShell({ list, categories }: GroceriesViewShellProps
         presets={layoutPresets}
         activePresetId={list.activeLayoutPresetId}
         defaultCategoryOrderIds={defaultCategoryOrderIds}
-        onLayoutPendingChange={setIsDialogLayoutPending}
+        beginLayoutSync={beginLayoutSync}
+        completeLayoutSync={completeLayoutSync}
+        cancelLayoutSync={cancelLayoutSync}
         onLayoutCreated={onLayoutCreated}
-        onLayoutDeletedActive={onLayoutDeletedActive}
+        onLayoutDeleted={onLayoutDeleted}
       />
       <GroceriesDeleteListDialog
         open={deleteListOpen}

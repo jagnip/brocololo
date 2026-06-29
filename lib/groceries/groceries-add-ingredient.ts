@@ -3,6 +3,8 @@ import type {
   GroceriesEditIngredientOption,
 } from "@/components/groceries/groceries-edit-types";
 import { getDefaultAmountAndUnitForGroceryAdd } from "@/lib/groceries/default-add-amount";
+import { getGroceryNotesFromIngredient } from "@/lib/groceries/get-grocery-notes-from-ingredient";
+import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
 
 export type QuickAddDraft = {
   ingredientId: string | null;
@@ -58,6 +60,17 @@ export function resolveAddIngredientToGroceries(input: {
 
   const newRowId = input.createRowId?.() ?? crypto.randomUUID();
   const draft = input.draft;
+  const noteDefaults = getGroceryNotesFromIngredient(ingredient);
+  const additionalInfo = draft
+    ? draft.additionalInfo?.trim() || null
+    : noteDefaults.additionalInfo;
+  const substitutionNote = draft
+    ? draft.substitutionNote?.trim() || null
+    : noteDefaults.substitutionNote;
+
+  // Quick add passes a draft — use values literally (null unit/amount is intentional).
+  const amount = draft !== undefined ? draft.amount : defaultAmount;
+  const unitId = draft !== undefined ? draft.unitId : defaultUnitId;
 
   return {
     type: "added",
@@ -67,11 +80,11 @@ export function resolveAddIngredientToGroceries(input: {
       ingredientId: ingredient.id,
       ingredientCategoryId: ingredient.categoryId,
       displayLabel: ingredient.name,
-      amount: draft?.amount ?? defaultAmount,
-      unitId: draft?.unitId ?? defaultUnitId,
-      substitutionsAllowed: false,
-      substitutionNote: draft?.substitutionNote?.trim() || null,
-      additionalInfo: draft?.additionalInfo?.trim() || null,
+      amount,
+      unitId,
+      substitutionsAllowed: deriveSubstitutionsAllowed(substitutionNote),
+      substitutionNote,
+      additionalInfo,
       recipeAttribution: null,
     },
   };

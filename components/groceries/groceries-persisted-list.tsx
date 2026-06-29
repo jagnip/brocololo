@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import type { getShoppingListById } from "@/lib/db/shopping-list";
 import { GroceriesPersistedItemRow } from "@/components/groceries/groceries-persisted-item-row";
 import { GroceriesViewLayoutControls } from "@/components/groceries/groceries-view-layout-controls";
-import type { GroceriesLayoutSwitcherPreset } from "@/components/groceries/groceries-layout-switcher";
+import {
+  shouldShowLayoutSwitcher,
+  type GroceriesLayoutSwitcherPreset,
+} from "@/components/groceries/groceries-layout-switcher";
+import { useGroceriesLayoutSync } from "@/components/groceries/use-groceries-layout-sync";
 
 export type GroceriesPersistedListModel = NonNullable<
   Awaited<ReturnType<typeof getShoppingListById>>
@@ -15,7 +18,9 @@ type GroceriesPersistedListProps = {
   shareToken?: string;
   /** When provided, parent owns layout pending state (view shell). */
   isLayoutPending?: boolean;
-  onLayoutSwitchPendingChange?: (isPending: boolean) => void;
+  beginLayoutSync?: () => void;
+  completeLayoutSync?: () => Promise<void>;
+  cancelLayoutSync?: () => void;
   /** Optimistic overrides from parent during dialog save/create/delete. */
   layoutPresets?: GroceriesLayoutSwitcherPreset[];
   activeLayoutPresetId?: string | null;
@@ -26,13 +31,18 @@ export function GroceriesPersistedList({
   list,
   shareToken,
   isLayoutPending: isLayoutPendingProp,
-  onLayoutSwitchPendingChange,
+  beginLayoutSync: beginLayoutSyncProp,
+  completeLayoutSync: completeLayoutSyncProp,
+  cancelLayoutSync: cancelLayoutSyncProp,
   layoutPresets: layoutPresetsProp,
   activeLayoutPresetId: activeLayoutPresetIdProp,
 }: GroceriesPersistedListProps) {
-  const [internalLayoutPending, setInternalLayoutPending] = useState(false);
-  const isLayoutPending = isLayoutPendingProp ?? internalLayoutPending;
-  const onSwitchPendingChange = onLayoutSwitchPendingChange ?? setInternalLayoutPending;
+  const internalLayoutSync = useGroceriesLayoutSync(list);
+  const beginLayoutSync = beginLayoutSyncProp ?? internalLayoutSync.beginLayoutSync;
+  const completeLayoutSync =
+    completeLayoutSyncProp ?? internalLayoutSync.completeLayoutSync;
+  const cancelLayoutSync = cancelLayoutSyncProp ?? internalLayoutSync.cancelLayoutSync;
+  const isLayoutPending = isLayoutPendingProp ?? internalLayoutSync.isLayoutSyncPending;
   const { plan, items } = list;
 
   const layoutPresets =
@@ -55,18 +65,24 @@ export function GroceriesPersistedList({
     }
   }
 
+  const showLayoutSwitcher = shouldShowLayoutSwitcher(layoutPresets);
+
   return (
     <div className="space-y-6">
-      <header className="flex justify-start">
-        <GroceriesViewLayoutControls
-          planId={plan.id}
-          shareToken={shareToken}
-          presets={layoutPresets}
-          activePresetId={activeLayoutPresetId}
-          isLayoutPending={isLayoutPending}
-          onPendingChange={onSwitchPendingChange}
-        />
-      </header>
+      {showLayoutSwitcher ? (
+        <header className="flex justify-start">
+          <GroceriesViewLayoutControls
+            planId={plan.id}
+            shareToken={shareToken}
+            presets={layoutPresets}
+            activePresetId={activeLayoutPresetId}
+            isLayoutPending={isLayoutPending}
+            beginLayoutSync={beginLayoutSync}
+            completeLayoutSync={completeLayoutSync}
+            cancelLayoutSync={cancelLayoutSync}
+          />
+        </header>
+      ) : null}
 
       <div
         className="space-y-8 data-[pending=true]:animate-pulse"

@@ -1,6 +1,10 @@
 import { filterSlotsForGroceryGeneration } from "@/lib/groceries/generation-options";
 import type { GroceryGenerationExclusions } from "@/lib/groceries/generation-options";
-import { calculateServingScalingFactor } from "@/lib/recipes/helpers";
+import {
+  calculateServingScalingFactor,
+  getUnitDisplayName,
+  isPieceUnit,
+} from "@/lib/recipes/helpers";
 import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import { ShoppingListGeneratedLine } from "@/types/groceries";
 
@@ -280,4 +284,28 @@ export function formatAmount(amount: number): string {
   return Number.isInteger(amount)
     ? String(amount)
     : amount.toFixed(2).replace(/\.?0+$/, "");
+}
+
+/** Read-only grocery list amount line; hides piece/pieces (matches recipe instruction badges). */
+export function formatGroceryViewAmountLabel(input: {
+  amount: number | null;
+  unitName: string | null;
+  unitNamePlural?: string | null;
+}): string {
+  const displayUnit = getUnitDisplayName({
+    amount: input.amount,
+    unitName: input.unitName,
+    unitNamePlural: input.unitNamePlural,
+  });
+
+  if (input.amount === null) {
+    return displayUnit || "";
+  }
+
+  const amountText = formatAmount(input.amount);
+  if (isPieceUnit(displayUnit)) {
+    return amountText;
+  }
+
+  return `${amountText} ${displayUnit}`.trim();
 }

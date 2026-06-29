@@ -44,9 +44,11 @@ type GroceriesLayoutEditDialogProps = {
   presets: GroceriesLayoutPreset[];
   activePresetId: string | null;
   defaultCategoryOrderIds: string[];
-  onLayoutPendingChange?: (pending: boolean) => void;
+  beginLayoutSync?: () => void;
+  completeLayoutSync?: () => Promise<void>;
+  cancelLayoutSync?: () => void;
   onLayoutCreated?: (preset: { id: string; name: string }) => void;
-  onLayoutDeletedActive?: () => void;
+  onLayoutDeleted?: (input: { presetId: string; wasActive: boolean }) => void;
 };
 
 function getPresetOrderIds(
@@ -85,9 +87,11 @@ export function GroceriesLayoutEditDialog({
   presets,
   activePresetId,
   defaultCategoryOrderIds,
-  onLayoutPendingChange,
+  beginLayoutSync,
+  completeLayoutSync,
+  cancelLayoutSync,
   onLayoutCreated,
-  onLayoutDeletedActive,
+  onLayoutDeleted,
 }: GroceriesLayoutEditDialogProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -121,19 +125,23 @@ export function GroceriesLayoutEditDialog({
     setLayoutNameInput("");
   }, [defaultCategoryOrderIds]);
 
-  const finishLayoutMutation = useCallback(
-    async (shouldPulseList: boolean) => {
-      if (shouldPulseList) {
-        onLayoutPendingChange?.(true);
-      }
+  const beginLayoutMutation = useCallback(
+    (shouldPulseList: boolean) => {
       onOpenChange(false);
-      await router.refresh();
       if (shouldPulseList) {
-        onLayoutPendingChange?.(false);
+        beginLayoutSync?.();
       }
     },
-    [onLayoutPendingChange, onOpenChange, router],
+    [beginLayoutSync, onOpenChange],
   );
+
+  const endLayoutMutation = useCallback(async () => {
+    if (completeLayoutSync) {
+      await completeLayoutSync();
+      return;
+    }
+    await router.refresh();
+  }, [completeLayoutSync, router]);
 
   useEffect(() => {
     if (!open) return;
@@ -167,6 +175,7 @@ export function GroceriesLayoutEditDialog({
 
   const persistCreate = useCallback(
     (presetName: string) => {
+      beginLayoutMutation(true);
       startTransition(async () => {
         const result = await saveShoppingLayoutPresetAction({
           planId,
@@ -174,15 +183,23 @@ export function GroceriesLayoutEditDialog({
           orderedCategoryIds,
         });
         if (result.type === "error") {
+          cancelLayoutSync?.();
           toast.error(result.message);
           return;
         }
         onLayoutCreated?.({ id: result.presetId, name: presetName });
         toast.success(`Saved "${presetName}" layout.`);
-        await finishLayoutMutation(true);
+        await endLayoutMutation();
       });
     },
-    [finishLayoutMutation, onLayoutCreated, orderedCategoryIds, planId],
+    [
+      beginLayoutMutation,
+      cancelLayoutSync,
+      endLayoutMutation,
+      onLayoutCreated,
+      orderedCategoryIds,
+      planId,
+    ],
   );
 
   const persistUpdate = useCallback(() => {
@@ -195,6 +212,7 @@ export function GroceriesLayoutEditDialog({
 
     const shouldPulseList = selectedPreset.id === activePresetId;
 
+    beginLayoutMutation(shouldPulseList);
     startTransition(async () => {
       if (trimmedName !== selectedPreset.name) {
         const renameResult = await renameShoppingLayoutPresetAction({
@@ -203,6 +221,9 @@ export function GroceriesLayoutEditDialog({
           name: trimmedName,
         });
         if (renameResult.type === "error") {
+          if (shouldPulseList) {
+            cancelLayoutSync?.();
+          }
           toast.error(renameResult.message);
           return;
         }
@@ -214,15 +235,20 @@ export function GroceriesLayoutEditDialog({
         orderedCategoryIds,
       });
       if (result.type === "error") {
+        if (shouldPulseList) {
+          cancelLayoutSync?.();
+        }
         toast.error(result.message);
         return;
       }
       toast.success(`Saved "${trimmedName}" layout.`);
-      await finishLayoutMutation(shouldPulseList);
+      await endLayoutMutation();
     });
   }, [
     activePresetId,
-    finishLayoutMutation,
+    beginLayoutMutation,
+    cancelLayoutSync,
+    endLayoutMutation,
     layoutNameInput,
     orderedCategoryIds,
     planId,
@@ -244,24 +270,28 @@ export function GroceriesLayoutEditDialog({
 
   const onDeleteLayout = () => {
     if (!selectedPreset) return;
+    const deletedPresetId = selectedPreset.id;
+    const wasActive = deletedPresetId === activePresetId;
+
+    beginLayoutMutation(true);
     startTransition(async () => {
+      onLayoutDeleted?.({ presetId: deletedPresetId, wasActive });
+
       const result = await deleteShoppingLayoutPresetAction({
         planId,
-        presetId: selectedPreset.id,
+        presetId: deletedPresetId,
       });
       if (result.type === "error") {
+        cancelLayoutSync?.();
         toast.error(result.message);
         return;
-      }
-      if (result.wasActive) {
-        onLayoutDeletedActive?.();
       }
       toast.success(
         result.wasActive
           ? `Removed "${result.deletedPresetName}" and switched to Default layout.`
           : `Removed "${result.deletedPresetName}".`,
       );
-      await finishLayoutMutation(result.wasActive);
+      await endLayoutMutation();
     });
   };
 

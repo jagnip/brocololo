@@ -6,7 +6,7 @@ function conversion(unitId: string, name: string) {
 }
 
 describe("getDefaultAmountAndUnitForGroceryAdd", () => {
-  it("prefers piece with amount 1 even when defaultUnitId is grams", () => {
+  it("returns null amount and unit for piece ingredients", () => {
     const result = getDefaultAmountAndUnitForGroceryAdd({
       defaultUnitId: "unit-g",
       unitConversions: [
@@ -15,19 +15,19 @@ describe("getDefaultAmountAndUnitForGroceryAdd", () => {
       ],
     });
 
-    expect(result).toEqual({ unitId: "unit-piece", amount: 1 });
+    expect(result).toEqual({ unitId: null, amount: null });
   });
 
-  it("returns null amount with grams unit when only g is available", () => {
+  it("returns null amount and unit when only g is available", () => {
     const result = getDefaultAmountAndUnitForGroceryAdd({
       defaultUnitId: null,
       unitConversions: [conversion("unit-g", "g")],
     });
 
-    expect(result).toEqual({ unitId: "unit-g", amount: null });
+    expect(result).toEqual({ unitId: null, amount: null });
   });
 
-  it("uses stick when piece is not available", () => {
+  it("returns null amount and unit for stick-only ingredients", () => {
     const result = getDefaultAmountAndUnitForGroceryAdd({
       defaultUnitId: "unit-g",
       unitConversions: [
@@ -36,10 +36,10 @@ describe("getDefaultAmountAndUnitForGroceryAdd", () => {
       ],
     });
 
-    expect(result).toEqual({ unitId: "unit-stick", amount: 1 });
+    expect(result).toEqual({ unitId: null, amount: null });
   });
 
-  it("does not auto-fill amount for volume-only ingredients", () => {
+  it("returns null amount and unit for volume-only ingredients", () => {
     const result = getDefaultAmountAndUnitForGroceryAdd({
       defaultUnitId: "unit-g",
       unitConversions: [
@@ -48,10 +48,10 @@ describe("getDefaultAmountAndUnitForGroceryAdd", () => {
       ],
     });
 
-    expect(result).toEqual({ unitId: "unit-g", amount: null });
+    expect(result).toEqual({ unitId: null, amount: null });
   });
 
-  it("returns null unit and amount when there are no conversions", () => {
+  it("returns null amount and unit when there are no conversions", () => {
     const result = getDefaultAmountAndUnitForGroceryAdd({
       defaultUnitId: null,
       unitConversions: [],

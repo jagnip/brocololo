@@ -23,6 +23,8 @@ import {
   type QuickAddDraft,
   type QuickAddRowDraft,
 } from "@/lib/groceries/groceries-add-ingredient";
+import { getGroceryNotesFromIngredient } from "@/lib/groceries/get-grocery-notes-from-ingredient";
+import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
 import { ROUTES } from "@/lib/constants";
 import { formatDateRangeLabel } from "@/lib/format-date-range-label";
 import { TopbarConfigController } from "@/components/topbar-config";
@@ -153,6 +155,10 @@ export function GroceriesEditList({
   // Holds the most recently-added row id that should briefly show a ring.
   // Cleared by a setTimeout below so the highlight is genuinely transient.
   const [highlightedRowId, setHighlightedRowId] = useState<string | null>(null);
+  const [focusAmountRowId, setFocusAmountRowId] = useState<string | null>(null);
+  const [openIngredientSelectorRowId, setOpenIngredientSelectorRowId] = useState<
+    string | null
+  >(null);
   const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(
     categories[0]?.id ?? null,
@@ -304,13 +310,14 @@ export function GroceriesEditList({
     setRows((prev) => prev.filter((row) => row.id !== rowId));
   }, []);
   const onAddRow = useCallback((categoryId: string) => {
+    const newRowId = crypto.randomUUID();
     // New rows live entirely in form state until save; they get a temp UUID as
     // an id (used as React key + sent through to the action) and isNew:true so
     // the action layer routes them to create instead of update.
     setRows((prev) => [
       ...prev,
       {
-        id: crypto.randomUUID(),
+        id: newRowId,
         isNew: true,
         ingredientId: null,
         ingredientCategoryId: categoryId,
@@ -323,6 +330,14 @@ export function GroceriesEditList({
         recipeAttribution: null,
       },
     ]);
+    // Wait one frame so the row is mounted before scroll + ingredient search open.
+    requestAnimationFrame(() => {
+      const element = rowElementByRowIdRef.current.get(newRowId);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      setOpenIngredientSelectorRowId(newRowId);
+    });
   }, []);
   const setSectionElement = useCallback((categoryId: string, node: HTMLElement | null) => {
     if (node) {
@@ -349,6 +364,7 @@ export function GroceriesEditList({
       element.scrollIntoView({ behavior: "smooth", block: "center" });
     }
     setHighlightedRowId(rowId);
+    setFocusAmountRowId(rowId);
     if (highlightTimeoutRef.current) {
       clearTimeout(highlightTimeoutRef.current);
     }
@@ -356,6 +372,14 @@ export function GroceriesEditList({
       setHighlightedRowId((current) => (current === rowId ? null : current));
       highlightTimeoutRef.current = null;
     }, ROW_HIGHLIGHT_DURATION_MS);
+  }, []);
+
+  const onAmountFocusHandled = useCallback(() => {
+    setFocusAmountRowId(null);
+  }, []);
+
+  const onIngredientSelectorOpenHandled = useCallback(() => {
+    setOpenIngredientSelectorRowId(null);
   }, []);
 
   // Shared add path for library "+" and Quick add search. Duplicates always
@@ -473,7 +497,11 @@ export function GroceriesEditList({
         const linkUpdate: Partial<GroceriesEditableRow> = {
           ingredientId: createdIngredient.id,
           displayLabel: createdIngredient.name,
+          ...getGroceryNotesFromIngredient(createdIngredient),
         };
+        linkUpdate.substitutionsAllowed = deriveSubstitutionsAllowed(
+          linkUpdate.substitutionNote ?? null,
+        );
         // Clear ad-hoc unit when it is not valid for the newly linked ingredient.
         if (existingRow.unitId != null && !allowedUnitIds.has(existingRow.unitId)) {
           linkUpdate.unitId = null;
@@ -683,6 +711,10 @@ export function GroceriesEditList({
               onEditIngredientRequested={onEditIngredientRequested}
               registerRowRef={registerRowRef}
               highlightedRowId={highlightedRowId}
+              focusAmountRowId={focusAmountRowId}
+              onAmountFocusHandled={onAmountFocusHandled}
+              openIngredientSelectorRowId={openIngredientSelectorRowId}
+              onIngredientSelectorOpenHandled={onIngredientSelectorOpenHandled}
             />
           ))}
         </div>

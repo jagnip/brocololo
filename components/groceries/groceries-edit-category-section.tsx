@@ -33,6 +33,10 @@ type GroceriesEditCategorySectionProps = {
   // Row id that was just added via the library "+" button. The matching row
   // briefly shows a highlight ring to draw the eye.
   highlightedRowId?: string | null;
+  focusAmountRowId?: string | null;
+  onAmountFocusHandled?: () => void;
+  openIngredientSelectorRowId?: string | null;
+  onIngredientSelectorOpenHandled?: () => void;
 };
 
 export function GroceriesEditCategorySection({
@@ -53,6 +57,10 @@ export function GroceriesEditCategorySection({
   onAddRow,
   registerRowRef,
   highlightedRowId,
+  focusAmountRowId,
+  onAmountFocusHandled,
+  openIngredientSelectorRowId,
+  onIngredientSelectorOpenHandled,
 }: GroceriesEditCategorySectionProps) {
   const ingredientOptions = ingredientOptionsByCategoryId.get(categoryId) ?? [];
 
@@ -82,6 +90,10 @@ export function GroceriesEditCategorySection({
             // edit-list so library "+" can scrollIntoView the right element.
             registerRowRef={registerRowRef}
             highlighted={highlightedRowId === row.id}
+            shouldFocusAmount={focusAmountRowId === row.id}
+            onAmountFocusHandled={onAmountFocusHandled}
+            shouldOpenIngredientSelector={openIngredientSelectorRowId === row.id}
+            onIngredientSelectorOpenHandled={onIngredientSelectorOpenHandled}
           />
         ))}
       </div>
