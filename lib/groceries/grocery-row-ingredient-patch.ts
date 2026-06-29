@@ -1,5 +1,6 @@
 import type { GroceriesEditIngredientOption } from "@/components/groceries/groceries-edit-types";
 import { getDefaultAmountAndUnitForGroceryAdd } from "@/lib/groceries/default-add-amount";
+import type { QuickAddDraft } from "@/lib/groceries/groceries-add-ingredient";
 import { getGroceryNotesFromIngredient } from "@/lib/groceries/get-grocery-notes-from-ingredient";
 import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
 
@@ -23,6 +24,20 @@ export function getGroceryRowPatchForLinkedIngredient(ingredient: GroceriesEditI
     additionalInfo: notes.additionalInfo,
     substitutionNote: notes.substitutionNote,
     substitutionsAllowed: deriveSubstitutionsAllowed(notes.substitutionNote),
+  };
+}
+
+/** Quick-add draft when a DB ingredient is selected (same defaults as category edit rows). */
+export function getQuickAddDraftForIngredient(
+  ingredient: GroceriesEditIngredientOption,
+): QuickAddDraft {
+  const patch = getGroceryRowPatchForLinkedIngredient(ingredient);
+  return {
+    ingredientId: patch.ingredientId,
+    amount: patch.amount,
+    unitId: patch.unitId,
+    additionalInfo: patch.additionalInfo,
+    substitutionNote: patch.substitutionNote,
   };
 }
 

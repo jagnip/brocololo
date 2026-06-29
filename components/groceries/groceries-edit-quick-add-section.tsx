@@ -21,11 +21,11 @@ import type {
   GroceriesEditIngredientOption,
   GroceriesEditUnitOption,
 } from "@/components/groceries/groceries-edit-types";
-import { getDefaultAmountAndUnitForGroceryAdd } from "@/lib/groceries/default-add-amount";
 import {
   EMPTY_QUICK_ADD_DRAFT,
   type QuickAddDraft,
 } from "@/lib/groceries/groceries-add-ingredient";
+import { getQuickAddDraftForIngredient } from "@/lib/groceries/grocery-row-ingredient-patch";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
 
 type GroceriesEditQuickAddSectionProps = {
@@ -41,16 +41,6 @@ type GroceriesEditQuickAddSectionProps = {
 // Hint shown when search has no DB match — free-text still lives in per-category "Add item".
 const QUICK_ADD_EMPTY_LABEL =
   "No ingredient found. Use Add item in a category below for custom items.";
-
-function getGroceryAddDefaultsForIngredient(ingredient: GroceriesEditIngredientOption) {
-  return getDefaultAmountAndUnitForGroceryAdd({
-    defaultUnitId: ingredient.defaultUnitId,
-    unitConversions: ingredient.unitConversions.map((conversion) => ({
-      unitId: conversion.unitId,
-      unit: { name: conversion.unit.name },
-    })),
-  });
-}
 
 export function GroceriesEditQuickAddSection({
   ingredients,
@@ -97,16 +87,7 @@ export function GroceriesEditQuickAddSection({
       const nextIngredient = ingredientById.get(nextIngredientId);
       if (!nextIngredient) return;
 
-      const { unitId: nextUnitId, amount: nextAmount } =
-        getGroceryAddDefaultsForIngredient(nextIngredient);
-
-      setDraft({
-        ingredientId: nextIngredient.id,
-        amount: nextAmount,
-        unitId: nextUnitId,
-        additionalInfo: null,
-        substitutionNote: null,
-      });
+      setDraft(getQuickAddDraftForIngredient(nextIngredient));
     },
     [ingredientById],
   );
