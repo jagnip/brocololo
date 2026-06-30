@@ -18,6 +18,7 @@ import type {
 } from "@/components/groceries/groceries-edit-types";
 import type { IngredientListWithItems } from "@/lib/db/ingredient-lists";
 import {
+  resolveAddFreeTextToGroceries,
   resolveAddIngredientToGroceries,
   shouldScrollAfterIngredientAdd,
   type QuickAddDraft,
@@ -45,6 +46,19 @@ import type { IngredientType } from "@/types/ingredient";
 // 1.5s is long enough to grab attention without nagging the user when they
 // already know where the row is.
 const ROW_HIGHLIGHT_DURATION_MS = 1500;
+
+function toQuickAddRowDraft(draft: QuickAddDraft): QuickAddRowDraft {
+  return {
+    amount: draft.amount,
+    unitId: draft.unitId,
+    additionalInfo: draft.additionalInfo,
+    substitutionNote: draft.substitutionNote,
+  };
+}
+
+type CreateIngredientState =
+  | { source: "row"; rowId: string; initialName: string }
+  | { source: "quick-add"; initialName: string; initialCategoryId?: string | null };
 
 type GroceriesEditListProps = {
   list: GroceriesEditListModel;
@@ -137,10 +151,8 @@ export function GroceriesEditList({
   // Keep ingredients local so inline create/edit updates are immediately selectable.
   const [localIngredients, setLocalIngredients] =
     useState<GroceriesEditIngredientOption[]>(ingredients);
-  const [createIngredientState, setCreateIngredientState] = useState<{
-    rowId: string;
-    initialName: string;
-  } | null>(null);
+  const [createIngredientState, setCreateIngredientState] =
+    useState<CreateIngredientState | null>(null);
   const [editIngredientState, setEditIngredientState] = useState<{
     ingredientId: string;
     targetRowId?: string;
@@ -149,6 +161,9 @@ export function GroceriesEditList({
   const [quickAddPreferredUnitId, setQuickAddPreferredUnitId] = useState<string | null>(
     null,
   );
+  const [quickAddLinkedIngredientId, setQuickAddLinkedIngredientId] = useState<
+    string | null
+  >(null);
   const [initialRows, setInitialRows] = useState<GroceriesEditableRow[]>(() =>
     toEditableRows(list),
   );
@@ -431,20 +446,47 @@ export function GroceriesEditList({
     [addIngredientToGroceries],
   );
 
+  const addFreeTextToGroceries = useCallback(
+    (draft: QuickAddDraft): boolean => {
+      const result = resolveAddFreeTextToGroceries({
+        displayLabel: draft.displayLabel,
+        ingredientCategoryId: draft.ingredientCategoryId,
+        rows,
+        createRowId: () => crypto.randomUUID(),
+        draft: toQuickAddRowDraft(draft),
+      });
+
+      if (result.type === "invalid") {
+        return false;
+      }
+
+      if (result.type === "added") {
+        setRows((prev) => [...prev, result.newRow]);
+      }
+
+      if (shouldScrollAfterIngredientAdd(result, false)) {
+        const rowIdToScroll =
+          result.type === "duplicate" ? result.existingRowId : result.newRow.id;
+        requestAnimationFrame(() => scrollAndHighlightRow(rowIdToScroll));
+      }
+
+      return result.type === "added";
+    },
+    [rows, scrollAndHighlightRow],
+  );
+
   const onAddItemFromQuickAdd = useCallback(
     (draft: QuickAddDraft): boolean => {
-      if (!draft.ingredientId) return false;
-      return addIngredientToGroceries(draft.ingredientId, {
-        scrollOnNewAdd: false,
-        draft: {
-          amount: draft.amount,
-          unitId: draft.unitId,
-          additionalInfo: draft.additionalInfo,
-          substitutionNote: draft.substitutionNote,
-        },
-      });
+      if (draft.ingredientId) {
+        return addIngredientToGroceries(draft.ingredientId, {
+          scrollOnNewAdd: false,
+          draft: toQuickAddRowDraft(draft),
+        });
+      }
+
+      return addFreeTextToGroceries(draft);
     },
-    [addIngredientToGroceries],
+    [addFreeTextToGroceries, addIngredientToGroceries],
   );
 
   // Clear any pending highlight timeout when the component unmounts so we
@@ -464,7 +506,18 @@ export function GroceriesEditList({
 
   const onCreateIngredientRequested = useCallback(
     (rowId: string, initialName: string) => {
-      setCreateIngredientState({ rowId, initialName });
+      setCreateIngredientState({ source: "row", rowId, initialName });
+    },
+    [],
+  );
+
+  const onCreateIngredientFromQuickAdd = useCallback(
+    (initialName: string, initialCategoryId?: string | null) => {
+      setCreateIngredientState({
+        source: "quick-add",
+        initialName,
+        initialCategoryId: initialCategoryId || undefined,
+      });
     },
     [],
   );
@@ -492,6 +545,12 @@ export function GroceriesEditList({
       });
 
       if (!createIngredientState) {
+        return;
+      }
+
+      if (createIngredientState.source === "quick-add") {
+        setQuickAddLinkedIngredientId(createdIngredient.id);
+        setCreateIngredientState(null);
         return;
       }
 
@@ -706,12 +765,16 @@ export function GroceriesEditList({
         <div className="space-y-8">
           <GroceriesEditQuickAddSection
             ingredients={localIngredients}
+            categories={categories}
             ingredientById={ingredientById}
             unitById={unitById}
             renderIngredientDropdownLabel={renderIngredientDropdownLabel}
             renderIngredientTriggerLabel={renderIngredientTriggerLabel}
             onAddItem={onAddItemFromQuickAdd}
             onEditIngredientRequested={onEditIngredientRequested}
+            onCreateIngredientRequested={onCreateIngredientFromQuickAdd}
+            linkedIngredientId={quickAddLinkedIngredientId}
+            onLinkedIngredientIdApplied={() => setQuickAddLinkedIngredientId(null)}
             preferredUnitId={quickAddPreferredUnitId}
             onPreferredUnitIdApplied={() => setQuickAddPreferredUnitId(null)}
           />
@@ -761,6 +824,11 @@ export function GroceriesEditList({
       <CreateIngredientDialog
         open={Boolean(createIngredientState)}
         initialName={createIngredientState?.initialName}
+        initialCategoryId={
+          createIngredientState?.source === "quick-add"
+            ? createIngredientState.initialCategoryId ?? undefined
+            : undefined
+        }
         onOpenChange={(open) => {
           if (!open) {
             setCreateIngredientState(null);

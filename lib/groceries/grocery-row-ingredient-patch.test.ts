@@ -48,8 +48,10 @@ describe("getQuickAddDraftForIngredient", () => {
 
     expect(getQuickAddDraftForIngredient(ingredient)).toEqual({
       ingredientId: "ingredient-1",
-      amount: 1,
-      unitId: "unit-piece",
+      displayLabel: "Tomato",
+      ingredientCategoryId: "category-produce",
+      amount: null,
+      unitId: null,
       additionalInfo: "organic",
       substitutionNote: "or cherry tomatoes",
     });
@@ -60,8 +62,10 @@ describe("getQuickAddDraftForIngredient", () => {
 
     expect(getQuickAddDraftForIngredient(ingredient)).toEqual({
       ingredientId: "ingredient-1",
-      amount: 1,
-      unitId: "unit-piece",
+      displayLabel: "Tomato",
+      ingredientCategoryId: "category-produce",
+      amount: null,
+      unitId: null,
       additionalInfo: null,
       substitutionNote: null,
     });
@@ -80,6 +84,8 @@ describe("getQuickAddDraftForIngredient", () => {
 
     expect(draft).toEqual({
       ingredientId: patch.ingredientId,
+      displayLabel: patch.displayLabel,
+      ingredientCategoryId: patch.ingredientCategoryId,
       amount: patch.amount,
       unitId: patch.unitId,
       additionalInfo: patch.additionalInfo,

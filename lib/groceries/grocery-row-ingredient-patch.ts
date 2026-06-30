@@ -34,6 +34,8 @@ export function getQuickAddDraftForIngredient(
   const patch = getGroceryRowPatchForLinkedIngredient(ingredient);
   return {
     ingredientId: patch.ingredientId,
+    displayLabel: patch.displayLabel,
+    ingredientCategoryId: patch.ingredientCategoryId,
     amount: patch.amount,
     unitId: patch.unitId,
     additionalInfo: patch.additionalInfo,

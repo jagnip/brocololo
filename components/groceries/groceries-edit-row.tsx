@@ -424,7 +424,7 @@ function GroceriesEditRowComponent({
       value={additionalInfoValue}
       onChange={(event) => handleAdditionalInfoChange(event.target.value)}
       onKeyDown={handleCommitFieldKeyDown}
-      placeholder="Enter additional info"
+      placeholder="Additional info"
     />
   );
 
@@ -435,7 +435,7 @@ function GroceriesEditRowComponent({
       value={substitutionNoteValue}
       onChange={(event) => handleSubstitutionNoteChange(event.target.value)}
       onKeyDown={handleCommitFieldKeyDown}
-      placeholder="Enter substitutions"
+      placeholder="Substitutions"
     />
   );
 
