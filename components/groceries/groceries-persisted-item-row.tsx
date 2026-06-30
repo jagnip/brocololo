@@ -8,7 +8,6 @@ import { setShoppingListItemPurchasedAction } from "@/actions/shopping-list-acti
 import { IngredientSupermarketLinkButton } from "@/components/groceries/ingredient-supermarket-link-button";
 import { IngredientIcon } from "@/components/ingredient-icon";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatGroceryViewAmountLabel } from "@/lib/groceries/helpers";
 import { cn } from "@/lib/utils";
@@ -35,6 +34,9 @@ type GroceriesPersistedItemRowProps = {
     // Comma-joined recipe names from list generation; shown as secondary badges.
     recipeAttribution: string | null;
   };
+  showCompleted: boolean;
+  isAnimatingOut?: boolean;
+  onPurchasedChange: (itemId: string, purchased: boolean) => void;
 };
 
 // Same split as groceries edit: attribution is stored as comma-joined names at generation time.
@@ -49,6 +51,9 @@ function parseRecipeNames(attribution: string | null): string[] {
 export function GroceriesPersistedItemRow({
   row,
   shareToken,
+  showCompleted,
+  isAnimatingOut = false,
+  onPurchasedChange,
 }: GroceriesPersistedItemRowProps & { shareToken?: string }) {
   const [isPending, startTransition] = useTransition();
   const [isPurchased, setIsPurchased] = useState(row.purchased);
@@ -59,6 +64,7 @@ export function GroceriesPersistedItemRow({
     [row.recipeAttribution],
   );
   const hasMeta = Boolean(row.additionalInfo || row.substitutionNote);
+  const showPurchasedStyle = isPurchased && showCompleted;
 
   const amountLabel = formatGroceryViewAmountLabel({
     amount: row.amount,
@@ -69,6 +75,7 @@ export function GroceriesPersistedItemRow({
   const onTogglePurchased = (next: boolean) => {
     const previous = isPurchased;
     setIsPurchased(next);
+    onPurchasedChange(row.id, next);
     startTransition(async () => {
       const result = shareToken
         ? await setShoppingListItemPurchasedByShareAction({
@@ -82,13 +89,20 @@ export function GroceriesPersistedItemRow({
           });
       if (result.type === "error") {
         setIsPurchased(previous);
+        onPurchasedChange(row.id, previous);
         toast.error(result.message);
       }
     });
   };
 
   return (
-    <li className="overflow-hidden rounded-md border border-border bg-card transition-colors hover:bg-muted/40">
+    <li
+      className={cn(
+        "overflow-hidden rounded-md border border-border bg-card transition-all duration-200 hover:bg-muted/40",
+        isAnimatingOut &&
+          "pointer-events-none max-h-0 border-transparent opacity-0",
+      )}
+    >
       <div
         className={cn(
           "flex items-start justify-between gap-3 p-nest",
@@ -118,7 +132,7 @@ export function GroceriesPersistedItemRow({
             <div
               className={cn(
                 "font-medium text-foreground",
-                isPurchased && "text-muted-foreground line-through",
+                showPurchasedStyle && "text-muted-foreground line-through",
               )}
             >
               {row.displayLabel}
@@ -126,7 +140,7 @@ export function GroceriesPersistedItemRow({
             <div
               className={cn(
                 "flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground",
-                isPurchased && "line-through",
+                showPurchasedStyle && "line-through",
               )}
             >
               {amountLabel ? (
@@ -181,7 +195,7 @@ export function GroceriesPersistedItemRow({
             <p
               className={cn(
                 "flex items-start gap-2 text-muted-foreground",
-                isPurchased && "opacity-60",
+                showPurchasedStyle && "opacity-60",
               )}
             >
               <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
@@ -192,7 +206,7 @@ export function GroceriesPersistedItemRow({
             <p
               className={cn(
                 "flex items-start gap-2 text-muted-foreground",
-                isPurchased && "opacity-60",
+                showPurchasedStyle && "opacity-60",
               )}
             >
               <ArrowRightLeft className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />

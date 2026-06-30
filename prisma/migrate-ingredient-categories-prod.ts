@@ -32,9 +32,9 @@ function toSlug(value: string): string {
 /** Old `IngredientCategory.slug` values → new aisle (for rows not covered by seed slug updates). */
 const LEGACY_SLUG_TO_TARGET: Record<string, IngredientCategorySeedName> = {
   produce: "Veg",
-  "dairy-and-eggs": "Dairy, Eggs & Cheese",
-  // Older `seed.ts` used shorter slugs for some rows — handle both.
-  "dairy-eggs": "Dairy, Eggs & Cheese",
+  "dairy-and-eggs": "Milk & Eggs",
+  "dairy-eggs": "Milk & Eggs",
+  "dairy-eggs-and-cheese": "Milk & Eggs",
   "grains-and-pasta": "Pasta, Rice & Beans",
   "grains-pasta": "Pasta, Rice & Beans",
   "bread-and-bakery": "Bakery",
@@ -59,6 +59,7 @@ function buildRetiredCatalogSlugSet(): Set<string> {
   const names = [
     "Produce",
     "Dairy & Eggs",
+    "Dairy, Eggs & Cheese",
     "Meat & Poultry",
     "Fish & Seafood",
     "Grains & Pasta",

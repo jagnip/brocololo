@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/searchable-select";
 import type {
   GroceriesEditIngredientOption,
+  GroceriesEditIngredientRequestContext,
   GroceriesEditUnitOption,
 } from "@/components/groceries/groceries-edit-types";
 import {
@@ -27,6 +28,7 @@ import {
   type QuickAddDraft,
 } from "@/lib/groceries/groceries-add-ingredient";
 import { getQuickAddDraftForIngredient } from "@/lib/groceries/grocery-row-ingredient-patch";
+import { resolveUnitForConversion } from "@/lib/groceries/resolve-unit-for-conversion";
 import {
   focusQuickAddAdditionalInfoInput,
   focusQuickAddIngredientSelector,
@@ -43,7 +45,13 @@ type GroceriesEditQuickAddSectionProps = {
   renderIngredientDropdownLabel: (option: SearchableSelectOption) => React.ReactNode;
   renderIngredientTriggerLabel: (option: SearchableSelectOption) => React.ReactNode;
   onAddItem: (draft: QuickAddDraft) => boolean;
-  onEditIngredientRequested: (ingredientId: string) => void;
+  onEditIngredientRequested: (
+    ingredientId: string,
+    context?: GroceriesEditIngredientRequestContext,
+  ) => void;
+  /** Set by parent after ingredient edit saves a new unit from quick-add. */
+  preferredUnitId?: string | null;
+  onPreferredUnitIdApplied?: () => void;
 };
 
 // Hint shown when search has no DB match — free-text still lives in per-category "Add item".
@@ -58,6 +66,8 @@ export function GroceriesEditQuickAddSection({
   renderIngredientTriggerLabel,
   onAddItem,
   onEditIngredientRequested,
+  preferredUnitId,
+  onPreferredUnitIdApplied,
 }: GroceriesEditQuickAddSectionProps) {
   const [draft, setDraft] = useState<QuickAddDraft>(EMPTY_QUICK_ADD_DRAFT);
   const sectionRef = useRef<HTMLElement>(null);
@@ -108,6 +118,13 @@ export function GroceriesEditQuickAddSection({
     if (!draft.ingredientId) return;
     focusVisibleAmountInputInContainer(sectionRef.current);
   }, [draft.ingredientId]);
+
+  // Parent sets this after saving a new unit from the quick-add edit dialog.
+  useEffect(() => {
+    if (!preferredUnitId) return;
+    setDraft((prev) => ({ ...prev, unitId: preferredUnitId }));
+    onPreferredUnitIdApplied?.();
+  }, [preferredUnitId, onPreferredUnitIdApplied]);
 
   const amountValue = draft.amount === null ? "" : String(draft.amount);
   const fieldsDisabled = !selectedIngredient;
@@ -246,7 +263,8 @@ export function GroceriesEditQuickAddSection({
                 </SelectTrigger>
                 <SelectContent onCloseAutoFocus={handleUnitSelectCloseAutoFocus}>
                   {availableUnits.map((conversion) => {
-                    const unit = unitById.get(conversion.unitId);
+                    // Prefer conversion.unit so units added via ingredient edit appear immediately.
+                    const unit = resolveUnitForConversion(conversion, unitById);
                     if (!unit) return null;
                     return (
                       <SelectItem key={conversion.unitId} value={conversion.unitId}>
@@ -273,7 +291,7 @@ export function GroceriesEditQuickAddSection({
                 }
                 onClick={() => {
                   if (!selectedIngredient) return;
-                  onEditIngredientRequested(selectedIngredient.id);
+                  onEditIngredientRequested(selectedIngredient.id, { source: "quick-add" });
                 }}
               >
                 <Pencil className="h-4 w-4" aria-hidden />
@@ -362,7 +380,8 @@ export function GroceriesEditQuickAddSection({
               </SelectTrigger>
               <SelectContent onCloseAutoFocus={handleUnitSelectCloseAutoFocus}>
                 {availableUnits.map((conversion) => {
-                  const unit = unitById.get(conversion.unitId);
+                  // Prefer conversion.unit so units added via ingredient edit appear immediately.
+                  const unit = resolveUnitForConversion(conversion, unitById);
                   if (!unit) return null;
                   return (
                     <SelectItem key={conversion.unitId} value={conversion.unitId}>
@@ -416,7 +435,7 @@ export function GroceriesEditQuickAddSection({
               }
               onClick={() => {
                 if (!selectedIngredient) return;
-                onEditIngredientRequested(selectedIngredient.id);
+                onEditIngredientRequested(selectedIngredient.id, { source: "quick-add" });
               }}
             >
               <Pencil className="h-4 w-4" aria-hidden />

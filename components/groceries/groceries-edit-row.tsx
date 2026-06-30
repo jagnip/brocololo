@@ -21,6 +21,7 @@ import {
   CLEAR_GROCERY_ROW_INGREDIENT_PATCH,
   getGroceryRowPatchForLinkedIngredient,
 } from "@/lib/groceries/grocery-row-ingredient-patch";
+import { resolveUnitForConversion } from "@/lib/groceries/resolve-unit-for-conversion";
 import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
 import {
   blurFocusedElementInContainer,
@@ -33,6 +34,7 @@ import { useSelectOpenOnTabFromAdjacent, markUnitSelectOpenOnAmountTab } from "@
 import type {
   GroceriesEditableRow,
   GroceriesEditIngredientOption,
+  GroceriesEditIngredientRequestContext,
   GroceriesEditUnitOption,
 } from "@/components/groceries/groceries-edit-types";
 import { cn } from "@/lib/utils";
@@ -57,7 +59,10 @@ type GroceriesEditRowProps = {
   onRowChange: (rowId: string, next: Partial<GroceriesEditableRow>) => void;
   onRowRemove: (rowId: string) => void;
   onCreateIngredientRequested: (rowId: string, initialName: string) => void;
-  onEditIngredientRequested: (ingredientId: string) => void;
+  onEditIngredientRequested: (
+    ingredientId: string,
+    context?: GroceriesEditIngredientRequestContext,
+  ) => void;
   registerRowRef?: (rowId: string, node: HTMLElement | null) => void;
   highlighted?: boolean;
   shouldFocusAmount?: boolean;
@@ -75,7 +80,10 @@ function GroceriesEditRowActions({
 }: {
   row: GroceriesEditableRow;
   onCreateIngredientRequested: (rowId: string, initialName: string) => void;
-  onEditIngredientRequested: (ingredientId: string) => void;
+  onEditIngredientRequested: (
+    ingredientId: string,
+    context?: GroceriesEditIngredientRequestContext,
+  ) => void;
   onRowRemove: (rowId: string) => void;
 }) {
   const actionState = getGroceriesRowIngredientActionState(row);
@@ -93,7 +101,10 @@ function GroceriesEditRowActions({
           aria-label={`Edit ${row.displayLabel}`}
           onClick={() => {
             if (!row.ingredientId) return;
-            onEditIngredientRequested(row.ingredientId);
+            onEditIngredientRequested(row.ingredientId, {
+              targetRowId: row.id,
+              source: "row",
+            });
           }}
         >
           <Pencil className="h-4 w-4" aria-hidden />
@@ -380,7 +391,8 @@ function GroceriesEditRowComponent({
       <SelectContent onCloseAutoFocus={handleUnitSelectCloseAutoFocus}>
         {selectedIngredient
           ? availableUnits.map((conversion) => {
-              const unit = unitById.get(conversion.unitId);
+              // Prefer conversion.unit so units added via ingredient edit appear immediately.
+              const unit = resolveUnitForConversion(conversion, unitById);
               if (!unit) return null;
               return (
                 <SelectItem key={conversion.unitId} value={conversion.unitId}>

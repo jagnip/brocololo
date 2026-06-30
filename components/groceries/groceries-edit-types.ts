@@ -21,6 +21,11 @@ export type GroceriesEditCategoryOption = Awaited<
 
 export type GroceriesEditUnitOption = Awaited<ReturnType<typeof getUnits>>[number];
 
+export type GroceriesEditIngredientRequestContext = {
+  targetRowId?: string;
+  source?: "row" | "quick-add";
+};
+
 export type GroceriesEditableRow = {
   id: string;
   // True when this row was added in the form and hasn't been persisted yet.
