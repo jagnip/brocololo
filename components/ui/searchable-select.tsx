@@ -32,6 +32,8 @@ type SearchableSelectProps = {
   searchPlaceholder: string;
   emptyLabel: string;
   disabled?: boolean;
+  /** Locked display: same look as enabled, but popover cannot open and clear is hidden. */
+  readOnly?: boolean;
   allowClear?: boolean;
   clearLabel?: string;
   onCreateOption?: (searchTerm: string) => void;
@@ -134,6 +136,7 @@ export function SearchableSelect({
   searchPlaceholder,
   emptyLabel,
   disabled = false,
+  readOnly = false,
   allowClear = true,
   clearLabel = "Clear selection",
   onCreateOption,
@@ -154,6 +157,9 @@ export function SearchableSelect({
   const open = isOpenControlled ? openProp : uncontrolledOpen;
   const setOpen = React.useCallback(
     (next: boolean | ((current: boolean) => boolean)) => {
+      if (readOnly) {
+        return;
+      }
       const resolved =
         typeof next === "function"
           ? next(isOpenControlled ? (openProp ?? false) : uncontrolledOpen)
@@ -163,15 +169,18 @@ export function SearchableSelect({
       }
       onOpenChange?.(resolved);
     },
-    [isOpenControlled, onOpenChange, openProp, uncontrolledOpen],
+    [isOpenControlled, onOpenChange, openProp, readOnly, uncontrolledOpen],
   );
   const [searchValue, setSearchValue] = React.useState("");
   const popoverContentRef = React.useRef<HTMLDivElement | null>(null);
 
   const selectedOption = getSelectedOption(options, value);
-  const showClearAction = shouldShowClearAction({ allowClear, value });
+  const showClearAction = shouldShowClearAction({
+    allowClear: allowClear && !readOnly,
+    value,
+  });
   const showInlineClearButton = shouldShowInlineClearButton({
-    disabled,
+    disabled: disabled || readOnly,
     showClearAction,
   });
   const trimmedSearchValue = searchValue.trim();
@@ -244,7 +253,7 @@ export function SearchableSelect({
   }, [open]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={readOnly ? false : open} onOpenChange={setOpen}>
       {selectedHref ? (
         <PopoverTrigger asChild>
           <div
@@ -307,9 +316,10 @@ export function SearchableSelect({
             aria-expanded={open}
             disabled={disabled}
             className={cn(
-              // Keep trigger horizontal padding aligned with Input/Select defaults.
-              "w-full justify-between px-3",
+              // bg-card (--card) is pure white; bg-transparent showed the rose-tinted page bg through.
+              "w-full justify-between px-3 text-foreground",
               !selectedOption && "text-muted-foreground",
+              readOnly && "cursor-default",
               className,
             )}
           >

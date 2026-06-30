@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { GroceriesEditableRow } from "@/components/groceries/groceries-edit-types";
 import {
+  normalizeGroceryDisplayLabel,
+  resolveAddFreeTextToGroceries,
   resolveAddIngredientToGroceries,
   shouldScrollAfterIngredientAdd,
 } from "@/lib/groceries/groceries-add-ingredient";
@@ -203,6 +205,111 @@ describe("resolveAddIngredientToGroceries", () => {
   });
 });
 
+describe("normalizeGroceryDisplayLabel", () => {
+  it("trims and lowercases for dedupe", () => {
+    expect(normalizeGroceryDisplayLabel("  Flour  ")).toBe("flour");
+  });
+});
+
+describe("resolveAddFreeTextToGroceries", () => {
+  it("returns invalid when label or category is missing", () => {
+    expect(
+      resolveAddFreeTextToGroceries({
+        displayLabel: "",
+        ingredientCategoryId: "category-1",
+        rows: [],
+      }),
+    ).toEqual({ type: "invalid" });
+
+    expect(
+      resolveAddFreeTextToGroceries({
+        displayLabel: "Paper towels",
+        ingredientCategoryId: null,
+        rows: [],
+      }),
+    ).toEqual({ type: "invalid" });
+  });
+
+  it("returns duplicate when same label and category already exist (case-insensitive)", () => {
+    const rows = [
+      makeRow({
+        id: "existing-row",
+        ingredientId: null,
+        ingredientCategoryId: "category-household",
+        displayLabel: "Paper towels",
+      }),
+    ];
+
+    const result = resolveAddFreeTextToGroceries({
+      displayLabel: "  paper towels ",
+      ingredientCategoryId: "category-household",
+      rows,
+    });
+
+    expect(result).toEqual({
+      type: "duplicate",
+      existingRowId: "existing-row",
+    });
+  });
+
+  it("allows same label in different categories", () => {
+    const rows = [
+      makeRow({
+        id: "bakery-flour",
+        ingredientId: null,
+        ingredientCategoryId: "category-bakery",
+        displayLabel: "Flour",
+      }),
+    ];
+
+    const result = resolveAddFreeTextToGroceries({
+      displayLabel: "Flour",
+      ingredientCategoryId: "category-pantry",
+      rows,
+      createRowId: () => "pantry-flour",
+    });
+
+    expect(result.type).toBe("added");
+    if (result.type !== "added") {
+      throw new Error("Expected added result");
+    }
+    expect(result.newRow.id).toBe("pantry-flour");
+    expect(result.newRow.ingredientCategoryId).toBe("category-pantry");
+  });
+
+  it("appends a free-text row with draft values", () => {
+    const result = resolveAddFreeTextToGroceries({
+      displayLabel: "Special spice",
+      ingredientCategoryId: "category-pantry",
+      rows: [],
+      createRowId: () => "free-text-row",
+      draft: {
+        amount: 2,
+        unitId: "unit-jar",
+        additionalInfo: "small jar",
+        substitutionNote: "any brand",
+      },
+    });
+
+    expect(result).toEqual({
+      type: "added",
+      newRow: {
+        id: "free-text-row",
+        isNew: true,
+        ingredientId: null,
+        ingredientCategoryId: "category-pantry",
+        displayLabel: "Special spice",
+        amount: 2,
+        unitId: "unit-jar",
+        substitutionsAllowed: true,
+        substitutionNote: "any brand",
+        additionalInfo: "small jar",
+        recipeAttribution: null,
+      },
+    });
+  });
+});
+
 describe("shouldScrollAfterIngredientAdd", () => {
   it("always scrolls for duplicates", () => {
     expect(
@@ -230,5 +337,18 @@ describe("shouldScrollAfterIngredientAdd", () => {
 
   it("does not scroll when ingredient was not found", () => {
     expect(shouldScrollAfterIngredientAdd({ type: "not_found" }, true)).toBe(false);
+  });
+
+  it("does not scroll when free-text add is invalid", () => {
+    expect(shouldScrollAfterIngredientAdd({ type: "invalid" }, true)).toBe(false);
+  });
+
+  it("scrolls free-text duplicates", () => {
+    expect(
+      shouldScrollAfterIngredientAdd(
+        { type: "duplicate", existingRowId: "row-1" },
+        false,
+      ),
+    ).toBe(true);
   });
 });

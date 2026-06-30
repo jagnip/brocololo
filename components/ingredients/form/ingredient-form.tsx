@@ -114,6 +114,7 @@ type IngredientFormProps = {
   };
   mode?: "page" | "dialog";
   initialName?: string;
+  initialCategoryId?: string;
   onSubmitted?: (ingredient: IngredientType) => void;
   onCancel?: () => void;
 };
@@ -127,6 +128,7 @@ export default function IngredientForm({
   isAdmin = false,
   mode = "page",
   initialName,
+  initialCategoryId,
   onSubmitted,
   onCancel,
 }: IngredientFormProps) {
@@ -199,7 +201,7 @@ export default function IngredientForm({
           icon: null,
           supermarketUrl: null,
           // Keep targeted nutrition fields empty so placeholders guide first input.
-          categoryId: "",
+          categoryId: initialCategoryId ?? "",
           // Keep create flow deterministic with grams-first default.
           defaultUnitId: gramsUnitId,
           groceryAdditionalInfo: null,
