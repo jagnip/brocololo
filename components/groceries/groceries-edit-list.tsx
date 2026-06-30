@@ -143,7 +143,12 @@ export function GroceriesEditList({
   } | null>(null);
   const [editIngredientState, setEditIngredientState] = useState<{
     ingredientId: string;
+    targetRowId?: string;
+    source?: "row" | "quick-add";
   } | null>(null);
+  const [quickAddPreferredUnitId, setQuickAddPreferredUnitId] = useState<string | null>(
+    null,
+  );
   const [initialRows, setInitialRows] = useState<GroceriesEditableRow[]>(() =>
     toEditableRows(list),
   );
@@ -464,9 +469,16 @@ export function GroceriesEditList({
     [],
   );
 
-  const onEditIngredientRequested = useCallback((ingredientId: string) => {
-    setEditIngredientState({ ingredientId });
-  }, []);
+  const onEditIngredientRequested = useCallback(
+    (ingredientId: string, context?: { targetRowId?: string; source?: "row" | "quick-add" }) => {
+      setEditIngredientState({
+        ingredientId,
+        targetRowId: context?.targetRowId,
+        source: context?.source,
+      });
+    },
+    [],
+  );
 
   const handleIngredientCreated = useCallback(
     (createdIngredient: IngredientType) => {
@@ -518,6 +530,11 @@ export function GroceriesEditList({
 
   const handleIngredientUpdated = useCallback(
     (updatedIngredient: IngredientType) => {
+      const previousIngredient = localIngredients.find(
+        (ingredient) => ingredient.id === updatedIngredient.id,
+      );
+      const editContext = editIngredientState;
+
       setLocalIngredients((prev) =>
         prev.map((ingredient) =>
           ingredient.id === updatedIngredient.id
@@ -527,21 +544,27 @@ export function GroceriesEditList({
       );
 
       setRows((prev) => {
-        const { rows: reconciledRows, fixedRowsCount } =
+        const { rows: reconciledRows, fixedRowsCount, newlyAddedUnitId } =
           reconcileGroceryRowUnitsAfterIngredientUpdate({
             rows: prev,
             updatedIngredient,
+            previousIngredient,
+            targetRowId: editContext?.targetRowId,
           });
         if (fixedRowsCount > 0) {
           toast.info(
             `Updated ingredient changed available units. Auto-adjusted ${fixedRowsCount} row${fixedRowsCount > 1 ? "s" : ""}.`,
           );
         }
+        if (editContext?.source === "quick-add" && newlyAddedUnitId) {
+          setQuickAddPreferredUnitId(newlyAddedUnitId);
+        }
         return reconciledRows;
       });
+
       setEditIngredientState(null);
     },
-    [],
+    [editIngredientState, localIngredients],
   );
   const onCategoryBadgeClick = useCallback((categoryId: string) => {
     setOptimisticCategoryId(categoryId);
@@ -689,6 +712,8 @@ export function GroceriesEditList({
             renderIngredientTriggerLabel={renderIngredientTriggerLabel}
             onAddItem={onAddItemFromQuickAdd}
             onEditIngredientRequested={onEditIngredientRequested}
+            preferredUnitId={quickAddPreferredUnitId}
+            onPreferredUnitIdApplied={() => setQuickAddPreferredUnitId(null)}
           />
           {groupedSections.map((section) => (
             <GroceriesEditCategorySection

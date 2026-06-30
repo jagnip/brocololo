@@ -6,6 +6,7 @@ import { GroceriesEditRow } from "@/components/groceries/groceries-edit-row";
 import type {
   GroceriesEditableRow,
   GroceriesEditIngredientOption,
+  GroceriesEditIngredientRequestContext,
   GroceriesEditUnitOption,
 } from "@/components/groceries/groceries-edit-types";
 
@@ -23,7 +24,10 @@ type GroceriesEditCategorySectionProps = {
   onRowChange: (rowId: string, next: Partial<GroceriesEditableRow>) => void;
   onRowRemove: (rowId: string) => void;
   onCreateIngredientRequested: (rowId: string, initialName: string) => void;
-  onEditIngredientRequested: (ingredientId: string) => void;
+  onEditIngredientRequested: (
+    ingredientId: string,
+    context?: GroceriesEditIngredientRequestContext,
+  ) => void;
   // Appends a new empty row to this section. Receives the section's category
   // id so the parent can scope the new row to the correct category.
   onAddRow: (categoryId: string) => void;

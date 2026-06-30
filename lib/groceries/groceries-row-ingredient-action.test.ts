@@ -71,17 +71,27 @@ describe("reconcileGroceryRowUnitsAfterIngredientUpdate", () => {
     recipeAttribution: null,
   };
 
+  const previousIngredient = {
+    id: "ing-1",
+    defaultUnitId: "unit-old",
+    unitConversions: [{ unitId: "unit-old" }],
+  } as IngredientType;
+
   const updatedIngredient = {
     id: "ing-1",
     defaultUnitId: "unit-new",
-    unitConversions: [{ unitId: "unit-new" }],
+    unitConversions: [{ unitId: "unit-old" }, { unitId: "unit-new" }],
   } as IngredientType;
 
   it("leaves unrelated rows unchanged", () => {
     const otherRow = { ...baseRow, id: "row-2", ingredientId: "ing-2" };
     const { rows, fixedRowsCount } = reconcileGroceryRowUnitsAfterIngredientUpdate({
       rows: [baseRow, otherRow],
-      updatedIngredient,
+      updatedIngredient: {
+        id: "ing-1",
+        defaultUnitId: "unit-new",
+        unitConversions: [{ unitId: "unit-new" }],
+      } as IngredientType,
     });
 
     expect(fixedRowsCount).toBe(1);
@@ -93,10 +103,39 @@ describe("reconcileGroceryRowUnitsAfterIngredientUpdate", () => {
     const row = { ...baseRow, unitId: "unit-new" };
     const { rows, fixedRowsCount } = reconcileGroceryRowUnitsAfterIngredientUpdate({
       rows: [row],
-      updatedIngredient,
+      updatedIngredient: {
+        id: "ing-1",
+        defaultUnitId: "unit-new",
+        unitConversions: [{ unitId: "unit-new" }],
+      } as IngredientType,
     });
 
     expect(fixedRowsCount).toBe(0);
     expect(rows[0]?.unitId).toBe("unit-new");
+  });
+
+  it("auto-selects a newly added unit on the row that triggered the edit", () => {
+    const { rows, newlyAddedUnitId } = reconcileGroceryRowUnitsAfterIngredientUpdate({
+      rows: [baseRow],
+      updatedIngredient,
+      previousIngredient,
+      targetRowId: "row-1",
+    });
+
+    expect(newlyAddedUnitId).toBe("unit-new");
+    expect(rows[0]?.unitId).toBe("unit-new");
+  });
+
+  it("does not auto-select a new unit on other rows for the same ingredient", () => {
+    const otherRow = { ...baseRow, id: "row-2", unitId: "unit-old" };
+    const { rows } = reconcileGroceryRowUnitsAfterIngredientUpdate({
+      rows: [baseRow, otherRow],
+      updatedIngredient,
+      previousIngredient,
+      targetRowId: "row-1",
+    });
+
+    expect(rows[0]?.unitId).toBe("unit-new");
+    expect(rows[1]?.unitId).toBe("unit-old");
   });
 });
