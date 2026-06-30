@@ -826,7 +826,7 @@ export function GroceriesEditList({
         initialName={createIngredientState?.initialName}
         initialCategoryId={
           createIngredientState?.source === "quick-add"
-            ? createIngredientState.initialCategoryId
+            ? createIngredientState.initialCategoryId ?? undefined
             : undefined
         }
         onOpenChange={(open) => {
