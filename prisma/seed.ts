@@ -227,13 +227,13 @@ async function main() {
     data: { name: 'Granulated Sugar', slug: 'granulated-sugar', supermarketUrl, calories: 387, proteins: 0.0, fats: 0.0, carbs: 100.0, categoryId: ic('Baking Items') },
   });
   const butter = await prisma.ingredient.create({
-    data: { name: 'Butter', slug: 'butter', supermarketUrl, calories: 717, proteins: 0.9, fats: 81.1, carbs: 0.1, categoryId: ic('Dairy, Eggs & Cheese') },
+    data: { name: 'Butter', slug: 'butter', supermarketUrl, calories: 717, proteins: 0.9, fats: 81.1, carbs: 0.1, categoryId: ic('Cheese, Butter & Cream') },
   });
   const eggs = await prisma.ingredient.create({
-    data: { name: 'Eggs', slug: 'eggs', supermarketUrl, calories: 155, proteins: 13.0, fats: 11.0, carbs: 1.1, categoryId: ic('Dairy, Eggs & Cheese') },
+    data: { name: 'Eggs', slug: 'eggs', supermarketUrl, calories: 155, proteins: 13.0, fats: 11.0, carbs: 1.1, categoryId: ic('Milk & Eggs') },
   });
   const milk = await prisma.ingredient.create({
-    data: { name: 'Whole Milk', slug: 'whole-milk', supermarketUrl, calories: 61, proteins: 3.2, fats: 3.3, carbs: 4.8, categoryId: ic('Dairy, Eggs & Cheese') },
+    data: { name: 'Whole Milk', slug: 'whole-milk', supermarketUrl, calories: 61, proteins: 3.2, fats: 3.3, carbs: 4.8, categoryId: ic('Milk & Eggs') },
   });
   const chickenIngredient = await prisma.ingredient.create({
     data: { name: 'Chicken Breast', slug: 'chicken-breast', supermarketUrl, calories: 165, proteins: 31.0, fats: 3.6, carbs: 0.0, categoryId: ic('Meat & Poultry') },
@@ -257,7 +257,7 @@ async function main() {
     data: { name: 'Turkey Breast', slug: 'turkey-breast', supermarketUrl, calories: 135, proteins: 30.0, fats: 1.0, carbs: 0.0, categoryId: ic('Meat & Poultry') },
   });
   const cheese = await prisma.ingredient.create({
-    data: { name: 'Mozzarella Cheese', slug: 'mozzarella-cheese', supermarketUrl, calories: 300, proteins: 22.0, fats: 22.0, carbs: 2.2, categoryId: ic('Dairy, Eggs & Cheese') },
+    data: { name: 'Mozzarella Cheese', slug: 'mozzarella-cheese', supermarketUrl, calories: 300, proteins: 22.0, fats: 22.0, carbs: 2.2, categoryId: ic('Cheese, Butter & Cream') },
   });
   const bread = await prisma.ingredient.create({
     data: { name: 'Bread', slug: 'bread', supermarketUrl, calories: 265, proteins: 9.0, fats: 3.2, carbs: 49.0, categoryId: ic('Bakery') },

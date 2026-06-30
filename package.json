@@ -11,6 +11,7 @@
     "lint": "eslint",
     "test": "vitest",
     "migrate:ingredient-categories": "npx tsx prisma/migrate-ingredient-categories-prod.ts",
+    "migrate:split-dairy-categories": "npx tsx prisma/migrate-split-dairy-categories.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
