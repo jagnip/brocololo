@@ -29,7 +29,10 @@ export function getNewlyAddedUnitId(
   if (newlyAddedUnitIds.length === 1) {
     return newlyAddedUnitIds[0] ?? null;
   }
-  if (newlyAddedUnitIds.includes(updatedIngredient.defaultUnitId)) {
+  if (
+    updatedIngredient.defaultUnitId &&
+    newlyAddedUnitIds.includes(updatedIngredient.defaultUnitId)
+  ) {
     return updatedIngredient.defaultUnitId;
   }
   return newlyAddedUnitIds[newlyAddedUnitIds.length - 1] ?? null;
