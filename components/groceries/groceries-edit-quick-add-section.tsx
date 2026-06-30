@@ -310,7 +310,7 @@ export function GroceriesEditQuickAddSection({
                     additionalInfo: event.target.value || null,
                   }))
                 }
-                placeholder="Enter additional info"
+                placeholder="Additional info"
               />
 
               <Input
@@ -323,7 +323,7 @@ export function GroceriesEditQuickAddSection({
                     substitutionNote: event.target.value || null,
                   }))
                 }
-                placeholder="Enter substitutions"
+                placeholder="Substitutions"
               />
             </div>
           </div>
@@ -407,7 +407,7 @@ export function GroceriesEditQuickAddSection({
                   additionalInfo: event.target.value || null,
                 }))
               }
-              placeholder="Enter additional info"
+              placeholder="Additional info"
             />
 
             <Input
@@ -420,7 +420,7 @@ export function GroceriesEditQuickAddSection({
                   substitutionNote: event.target.value || null,
                 }))
               }
-              placeholder="Enter substitutions"
+              placeholder="Substitutions"
             />
 
             <Button
