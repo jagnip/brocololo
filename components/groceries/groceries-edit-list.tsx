@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { saveShoppingListEditsAction } from "@/actions/shopping-list-actions";
 import { GroceriesEditCategorySection } from "@/components/groceries/groceries-edit-category-section";
 import { GroceriesEditQuickAddSection } from "@/components/groceries/groceries-edit-quick-add-section";
-import { GroceriesEditLibraryPanel } from "@/components/groceries/library/groceries-edit-library-panel";
+import { GroceriesEditLibraryShell } from "@/components/groceries/library/groceries-edit-library-shell";
 import { CreateIngredientDialog } from "@/components/recipes/form/create-ingredient-dialog";
 import { EditIngredientDialog } from "@/components/recipes/form/edit-ingredient-dialog";
 import type {
@@ -179,6 +179,7 @@ export function GroceriesEditList({
   const [openIngredientSelectorRowId, setOpenIngredientSelectorRowId] = useState<
     string | null
   >(null);
+  const [isLibraryCollapsed, setIsLibraryCollapsed] = useState(false);
   const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(
     categories[0]?.id ?? null,
@@ -731,6 +732,11 @@ export function GroceriesEditList({
     [initialRows, isPending, isSaveDisabled, list.plan.id, planDateRangeLabel, router, rows, startTransition],
   );
 
+  // Desktop split: grocery rows | lists sidebar, with collapsible right rail.
+  const desktopGridColumns = isLibraryCollapsed
+    ? "lg:grid-cols-[minmax(0,1fr)_2rem]"
+    : "lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]";
+
   return (
     // Keep the edit surface stretched so both main content and right panel can use page width.
     <div className="w-full space-y-8">
@@ -761,8 +767,25 @@ export function GroceriesEditList({
         </div>
       </div>
 
-      <div className="grid w-full gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-8">
+      <div
+        className={cn(
+          "flex w-full flex-col gap-8 lg:grid lg:items-start lg:gap-6",
+          desktopGridColumns,
+        )}
+      >
+        <GroceriesEditLibraryShell
+          className="order-1 lg:order-0 lg:col-start-2 lg:row-start-1"
+          collapsed={isLibraryCollapsed}
+          onCollapsedChange={setIsLibraryCollapsed}
+          planId={list.plan.id}
+          lists={ingredientLists}
+          ingredients={localIngredients}
+          categories={categories}
+          onAddIngredientToGroceries={onAddIngredientFromLibrary}
+          onEditIngredientRequested={onEditIngredientRequested}
+        />
+
+        <div className="order-2 flex flex-col gap-8 lg:order-0 lg:col-start-1">
           <GroceriesEditQuickAddSection
             ingredients={localIngredients}
             categories={categories}
@@ -805,19 +828,6 @@ export function GroceriesEditList({
               onIngredientSelectorOpenHandled={onIngredientSelectorOpenHandled}
             />
           ))}
-        </div>
-
-        {/* Spacer matches category section heading + gap so the library aligns with rows. */}
-        <div className="hidden lg:flex lg:flex-col">
-          <div aria-hidden className="h-7 shrink-0" />
-          <GroceriesEditLibraryPanel
-            planId={list.plan.id}
-            lists={ingredientLists}
-            ingredients={localIngredients}
-            categories={categories}
-            onAddIngredientToGroceries={onAddIngredientFromLibrary}
-            onEditIngredientRequested={onEditIngredientRequested}
-          />
         </div>
       </div>
 
