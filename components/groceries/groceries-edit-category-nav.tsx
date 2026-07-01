@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 import {
   SegmentedFilterButton,
   SegmentedFilterGroup,
@@ -19,43 +19,51 @@ type GroceriesEditCategoryNavProps = {
   className?: string;
 };
 
-// Matches --spacing-gutter; keeps first/last chips inset when scrolled to edges.
-const SCROLL_EDGE_PADDING_PX = 16;
+// Pause spy-driven centering while the user swipes the chip row manually.
+const USER_CHIP_SCROLL_IDLE_MS = 400;
 
 function isChipFullyVisible(container: HTMLElement, chip: HTMLElement) {
   const containerRect = container.getBoundingClientRect();
   const chipRect = chip.getBoundingClientRect();
   return (
-    chipRect.left >= containerRect.left + SCROLL_EDGE_PADDING_PX &&
-    chipRect.right <= containerRect.right - SCROLL_EDGE_PADDING_PX
+    chipRect.left >= containerRect.left &&
+    chipRect.right <= containerRect.right
   );
 }
 
-function scrollChipIntoView(container: HTMLElement, chip: HTMLElement) {
-  const containerRect = container.getBoundingClientRect();
-  const chipRect = chip.getBoundingClientRect();
-
-  if (chipRect.left < containerRect.left + SCROLL_EDGE_PADDING_PX) {
-    container.scrollTo({
-      left: Math.max(
-        0,
-        container.scrollLeft + (chipRect.left - containerRect.left - SCROLL_EDGE_PADDING_PX),
-      ),
-      behavior: "smooth",
-    });
-    return;
-  }
-
-  if (chipRect.right > containerRect.right - SCROLL_EDGE_PADDING_PX) {
-    container.scrollTo({
-      left: Math.max(
-        0,
-        container.scrollLeft + (chipRect.right - containerRect.right + SCROLL_EDGE_PADDING_PX),
-      ),
-      behavior: "smooth",
-    });
-  }
+/** Center the active chip in the strip when it is off-screen. */
+function centerChipInStrip(container: HTMLElement, chip: HTMLElement) {
+  const left = chip.offsetLeft - container.clientWidth / 2 + chip.offsetWidth / 2;
+  container.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
 }
+
+type CategoryChipProps = {
+  categoryId: string;
+  title: string;
+  selected: boolean;
+  chipRef: (node: HTMLButtonElement | null) => void;
+  onSelect: (categoryId: string) => void;
+};
+
+const CategoryChip = memo(function CategoryChip({
+  categoryId,
+  title,
+  selected,
+  chipRef,
+  onSelect,
+}: CategoryChipProps) {
+  return (
+    <SegmentedFilterButton
+      ref={chipRef}
+      selected={selected}
+      aria-pressed={selected}
+      className="shrink-0 snap-start transition-none"
+      onClick={() => onSelect(categoryId)}
+    >
+      {title}
+    </SegmentedFilterButton>
+  );
+});
 
 /** Sticky single-row category chips; swipe horizontally when categories overflow. */
 export function GroceriesEditCategoryNav({
@@ -66,76 +74,125 @@ export function GroceriesEditCategoryNav({
 }: GroceriesEditCategoryNavProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const chipRefs = useRef(new Map<string, HTMLButtonElement>());
-  // Skip horizontal nudge when the user tapped an already-visible chip.
-  const userClickedVisibleChipRef = useRef(false);
+  const chipRefCallbacks = useRef(
+    new Map<string, (node: HTMLButtonElement | null) => void>(),
+  );
+  const onCategorySelectRef = useRef(onCategorySelect);
+  const userScrollingChipsRef = useRef(false);
+  const userChipScrollIdleRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const isProgrammaticChipScrollRef = useRef(false);
+  const prevSelectedCategoryIdRef = useRef<string | null>(null);
+  onCategorySelectRef.current = onCategorySelect;
 
-  // Keep the active chip visible while scroll-spy updates (not after a visible tap).
-  useEffect(() => {
-    if (!selectedCategoryId) return;
-    const chip = chipRefs.current.get(selectedCategoryId);
+  const centerChip = useCallback((categoryId: string, force = false) => {
     const container = scrollContainerRef.current;
-    if (!chip || !container) return;
+    const chip = chipRefs.current.get(categoryId);
+    if (!container || !chip) return;
+    if (!force && isChipFullyVisible(container, chip)) return;
+    isProgrammaticChipScrollRef.current = true;
+    centerChipInStrip(container, chip);
+    requestAnimationFrame(() => {
+      isProgrammaticChipScrollRef.current = false;
+    });
+  }, []);
 
-    if (userClickedVisibleChipRef.current) {
-      userClickedVisibleChipRef.current = false;
-      return;
-    }
+  const getChipRef = useCallback((categoryId: string) => {
+    const existing = chipRefCallbacks.current.get(categoryId);
+    if (existing) return existing;
 
-    if (isChipFullyVisible(container, chip)) return;
+    const callback = (node: HTMLButtonElement | null) => {
+      if (node) {
+        chipRefs.current.set(categoryId, node);
+      } else {
+        chipRefs.current.delete(categoryId);
+      }
+    };
+    chipRefCallbacks.current.set(categoryId, callback);
+    return callback;
+  }, []);
+
+  const markUserChipScroll = useCallback(() => {
+    if (isProgrammaticChipScrollRef.current) return;
+    userScrollingChipsRef.current = true;
+    clearTimeout(userChipScrollIdleRef.current);
+    userChipScrollIdleRef.current = setTimeout(() => {
+      userScrollingChipsRef.current = false;
+    }, USER_CHIP_SCROLL_IDLE_MS);
+  }, []);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const onTouchStart = () => {
+      userScrollingChipsRef.current = true;
+    };
+
+    container.addEventListener("scroll", markUserChipScroll, { passive: true });
+    container.addEventListener("touchstart", onTouchStart, { passive: true });
+    container.addEventListener("touchend", markUserChipScroll, { passive: true });
+
+    return () => {
+      container.removeEventListener("scroll", markUserChipScroll);
+      container.removeEventListener("touchstart", onTouchStart);
+      container.removeEventListener("touchend", markUserChipScroll);
+      clearTimeout(userChipScrollIdleRef.current);
+    };
+  }, [markUserChipScroll]);
+
+  // Only re-center when scroll-spy picks a new category — not while the same chip stays active.
+  useEffect(() => {
+    if (!selectedCategoryId || userScrollingChipsRef.current) return;
+    if (prevSelectedCategoryIdRef.current === selectedCategoryId) return;
+    prevSelectedCategoryIdRef.current = selectedCategoryId;
 
     const frame = requestAnimationFrame(() => {
-      scrollChipIntoView(container, chip);
+      if (userScrollingChipsRef.current) return;
+      centerChip(selectedCategoryId);
     });
+
     return () => cancelAnimationFrame(frame);
-  }, [selectedCategoryId]);
+  }, [selectedCategoryId, centerChip]);
+
+  const onChipSelect = useCallback((categoryId: string) => {
+    prevSelectedCategoryIdRef.current = categoryId;
+    centerChip(categoryId, true);
+    onCategorySelectRef.current(categoryId);
+  }, [centerChip]);
 
   if (sections.length === 0) return null;
 
   return (
-    // Sticky shell: clip horizontal bleed here (safe on self) so w-max chips stay in the row.
     <div
       className={cn(
         "sticky top-14 z-10 w-full min-w-0 max-w-full overflow-x-hidden bg-background",
         className,
       )}
     >
-      <div
-        ref={scrollContainerRef}
-        className="w-full min-w-0 overflow-x-auto overscroll-x-contain hide-scrollbar py-2"
-      >
-        <SegmentedFilterGroup
-          aria-label="Grocery categories"
-          className="w-max max-w-none flex-nowrap gap-item px-gutter"
+      <div className="chip-strip-fade relative -mx-gutter px-gutter">
+        <div
+          ref={scrollContainerRef}
+          className="scroll-touch scroll-ps-gutter scroll-pe-gutter snap-x snap-mandatory w-full min-w-0 overflow-x-auto overflow-y-hidden overscroll-x-contain hide-scrollbar py-2.5 pb-3"
         >
-          {sections.map((section) => {
-            const isSelected = selectedCategoryId === section.categoryId;
-            return (
-              <SegmentedFilterButton
+          <SegmentedFilterGroup
+            aria-label="Grocery categories"
+            className="w-max max-w-none flex-nowrap gap-item"
+          >
+            {/* Edge spacers scroll with chips — inset at rest, edge-to-edge when scrolled. */}
+            <div className="w-gutter shrink-0 snap-none" aria-hidden />
+            {sections.map((section) => (
+              <CategoryChip
                 key={section.categoryId}
-                ref={(node) => {
-                  if (node) {
-                    chipRefs.current.set(section.categoryId, node);
-                  } else {
-                    chipRefs.current.delete(section.categoryId);
-                  }
-                }}
-                selected={isSelected}
-                aria-pressed={isSelected}
-                className="shrink-0"
-                onClick={() => {
-                  const container = scrollContainerRef.current;
-                  const chip = chipRefs.current.get(section.categoryId);
-                  if (container && chip && isChipFullyVisible(container, chip)) {
-                    userClickedVisibleChipRef.current = true;
-                  }
-                  onCategorySelect(section.categoryId);
-                }}
-              >
-                {section.title}
-              </SegmentedFilterButton>
-            );
-          })}
-        </SegmentedFilterGroup>
+                categoryId={section.categoryId}
+                title={section.title}
+                selected={selectedCategoryId === section.categoryId}
+                chipRef={getChipRef(section.categoryId)}
+                onSelect={onChipSelect}
+              />
+            ))}
+            <div className="w-gutter shrink-0 snap-none" aria-hidden />
+          </SegmentedFilterGroup>
+        </div>
       </div>
     </div>
   );

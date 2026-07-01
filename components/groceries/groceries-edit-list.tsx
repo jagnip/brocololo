@@ -623,12 +623,13 @@ export function GroceriesEditList({
     setOptimisticCategoryId(categoryId);
     const sectionElement = sectionElementByCategoryIdRef.current.get(categoryId);
     if (!sectionElement) return;
-    sectionElement.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-      // Avoid horizontal page scroll — that shifts main content over the app sidebar.
-      inline: "nearest",
-    });
+    // Manual scroll offset — mirrors Open Design scrollToSection (sticky header + chip strip).
+    const stickyChromeOffsetPx = 120;
+    const top =
+      sectionElement.getBoundingClientRect().top +
+      window.scrollY -
+      stickyChromeOffsetPx;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
   }, []);
   useEffect(() => {
     // Keep a valid active section when categories change.
@@ -642,31 +643,47 @@ export function GroceriesEditList({
     );
   }, [categories]);
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visibleEntries = entries.filter((entry) => entry.isIntersecting);
-        if (visibleEntries.length === 0) return;
-        const mostVisibleEntry = visibleEntries.sort(
-          (left, right) => right.intersectionRatio - left.intersectionRatio,
-        )[0];
-        const nextCategoryId = mostVisibleEntry.target.getAttribute("data-category-id");
-        if (!nextCategoryId) return;
-        setActiveCategoryId(nextCategoryId);
-        // Once scrollspy catches up with the optimistic choice, drop override.
-        setOptimisticCategoryId((prev) => (prev === nextCategoryId ? null : prev));
-      },
-      {
-        // Shift active selection slightly below sticky controls.
-        root: null,
-        rootMargin: "-120px 0px -55% 0px",
-        threshold: [0.1, 0.25, 0.5, 0.75],
-      },
-    );
-    const registeredElements = [...sectionElementByCategoryIdRef.current.values()];
-    for (const element of registeredElements) {
-      observer.observe(element);
-    }
-    return () => observer.disconnect();
+    const sectionEntries = groupedSections
+      .map((section) => ({
+        categoryId: section.categoryId,
+        element: sectionElementByCategoryIdRef.current.get(section.categoryId),
+      }))
+      .filter(
+        (entry): entry is { categoryId: string; element: HTMLElement } =>
+          Boolean(entry.element),
+      );
+
+    if (sectionEntries.length === 0) return;
+
+    let ticking = false;
+    // App topbar (h-14) + sticky chip strip — same intent as Open Design nav-sticky offset.
+    const scrollSpyOffsetPx = 120;
+
+    const updateActiveSection = () => {
+      ticking = false;
+      const scrollY = window.scrollY;
+      let currentCategoryId = sectionEntries[0].categoryId;
+
+      for (const entry of sectionEntries) {
+        const sectionTop = entry.element.getBoundingClientRect().top + scrollY;
+        if (sectionTop - scrollSpyOffsetPx <= scrollY) {
+          currentCategoryId = entry.categoryId;
+        }
+      }
+
+      setActiveCategoryId((prev) => (prev === currentCategoryId ? prev : currentCategoryId));
+      setOptimisticCategoryId((prev) => (prev === currentCategoryId ? null : prev));
+    };
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(updateActiveSection);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
   }, [groupedSections]);
   const selectedCategoryId = optimisticCategoryId ?? activeCategoryId;
 

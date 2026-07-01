@@ -7,11 +7,15 @@ export function GroceriesEditSkeleton() {
     <div className="flex min-w-0 w-full max-w-full flex-col">
       {/* Full-width category navigator placeholder — sticky under app topbar. */}
       <div className="sticky top-14 z-10 mb-gutter w-full min-w-0 max-w-full overflow-x-hidden bg-background">
-        <div className="w-full min-w-0 overflow-x-auto hide-scrollbar py-2">
-          <div className="flex w-max flex-nowrap gap-item px-gutter">
+        <div className="chip-strip-fade relative -mx-gutter px-gutter">
+          <div className="scroll-touch scroll-ps-gutter scroll-pe-gutter snap-x snap-mandatory w-full min-w-0 overflow-x-auto overflow-y-hidden hide-scrollbar py-2.5 pb-3">
+            <div className="flex w-max flex-nowrap gap-item">
+              <div className="w-gutter shrink-0" aria-hidden />
             {Array.from({ length: 8 }).map((_, index) => (
               <Skeleton key={index} className="h-9 w-24 shrink-0 rounded-md" />
             ))}
+              <div className="w-gutter shrink-0" aria-hidden />
+            </div>
           </div>
         </div>
       </div>

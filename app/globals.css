@@ -411,4 +411,29 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Momentum scrolling for horizontal chip rows on iOS. */
+  .scroll-touch {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Edge fade on overflowing chip strips (Open Design pattern 1). */
+  .chip-strip-fade::before,
+  .chip-strip-fade::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .chip-strip-fade::before {
+    left: 0;
+    background: linear-gradient(90deg, var(--background), transparent);
+  }
+  .chip-strip-fade::after {
+    right: 0;
+    background: linear-gradient(-90deg, var(--background), transparent);
+  }
 }
