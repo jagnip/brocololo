@@ -4,9 +4,9 @@ import { cn } from "@/lib/utils";
 export function GroceriesEditSkeleton() {
   return (
     // Match groceries edit page container: full-width canvas with gutter padding.
-    <div className="w-full space-y-8">
+    <div className="flex w-full flex-col gap-8">
       {/* Sticky category navigator placeholder (hidden on xs like real UI). */}
-      <div className="hidden w-full py-2 sm:block">
+      <div className="hidden w-full pt-2 sm:block">
         <div className="flex w-full flex-wrap gap-2">
           {Array.from({ length: 8 }).map((_, index) => (
             <Skeleton key={index} className="h-6 w-24 rounded-full" />
@@ -29,7 +29,7 @@ export function GroceriesEditSkeleton() {
       {/* Main edit grid: lists (mobile accordion / desktop sidebar) + grocery sections. */}
       <div
         className={cn(
-          "flex w-full flex-col gap-8 lg:grid lg:items-start lg:gap-6",
+          "flex w-full flex-col gap-gutter lg:grid lg:items-start lg:gap-6",
           "lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]",
         )}
       >
@@ -92,8 +92,22 @@ export function GroceriesEditSkeleton() {
                     key={rowIndex}
                     className="space-y-2 rounded-lg p-3"
                   >
-                    {/* Mobile/tablet row shape (stacked controls) matches `GroceriesEditRow`. */}
-                    <div className="space-y-2 xl:hidden">
+                    {/* Mobile row shape matches `GroceriesEditRow` (< md). */}
+                    <div className="space-y-2 md:hidden">
+                      <div className="grid items-start gap-2 grid-cols-[minmax(0,1fr)_auto_8rem]">
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-[calc(7ch+1.5rem)] shrink-0" />
+                        <Skeleton className="h-10 w-full" />
+                      </div>
+                      <div className="grid items-start gap-2 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-10 justify-self-end" />
+                      </div>
+                    </div>
+
+                    {/* Tablet row shape (md–xl). */}
+                    <div className="hidden space-y-2 md:block xl:hidden">
                       <div className="grid items-start gap-2 md:grid-cols-[minmax(0,1fr)_auto_8rem_auto]">
                         <Skeleton className="h-10 w-full" />
                         <Skeleton className="h-10 w-[calc(7ch+1.5rem)] shrink-0" />

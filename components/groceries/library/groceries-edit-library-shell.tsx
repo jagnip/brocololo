@@ -107,7 +107,7 @@ export function GroceriesEditLibraryShell({
   ...panelProps
 }: GroceriesEditLibraryShellProps) {
   const isLg = useIsLg();
-  const [accordionOpen, setAccordionOpen] = useState(true);
+  const [accordionOpen, setAccordionOpen] = useState(false);
   const createListOpenerRef = useRef<(() => void) | null>(null);
 
   const panel = (

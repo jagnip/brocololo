@@ -309,8 +309,8 @@ function GroceriesEditRowComponent({
       handleIngredientValueChange(nextIngredientId, freeTextOptionValue),
     onCreateOption: handleCreateFreeTextOption,
     createOptionLabel: (searchTerm: string) => `Add "${searchTerm}"`,
-    placeholder: "Select ingredient...",
-    searchPlaceholder: "Search ingredient...",
+    placeholder: "Ingredient",
+    searchPlaceholder: "Ingredient",
     emptyLabel: "No ingredient found.",
     onOpenChange: setIngredientSelectorOpen,
   };
@@ -461,7 +461,21 @@ function GroceriesEditRowComponent({
           "ring-2 ring-primary/70 ring-offset-2 ring-offset-background",
       )}
     >
-      <div className="space-y-2 xl:hidden">
+      <div className="space-y-2 md:hidden">
+        <div className="grid items-start gap-2 grid-cols-[minmax(0,1fr)_auto_8rem]">
+          {renderIngredientSelect(!isXl)}
+          <Input {...amountInputProps} />
+          {renderUnitSelect(!isXl)}
+        </div>
+        <div className="grid items-start gap-2 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+          {additionalInfoInput}
+          {substitutionNoteInput}
+          {rowActions}
+        </div>
+      </div>
+
+      {/* md–xl: ingredient · amount · unit · actions, then notes on row 2. */}
+      <div className="hidden space-y-2 md:block xl:hidden">
         <div className="grid items-start gap-2 md:grid-cols-[minmax(0,1fr)_auto_8rem_auto]">
           {renderIngredientSelect(!isXl)}
           <Input {...amountInputProps} />

@@ -31,7 +31,8 @@ export default async function GroceriesEditPage({
 
   return (
     // Match recipes list page feel: full-width content with gutter spacing, no max-width cap.
-    <div className="w-full px-gutter pb-gutter">
+    // Extra top gutter on mobile so lists accordion clears the sticky topbar.
+    <div className="w-full px-gutter pb-gutter pt-gutter lg:pt-0">
       <GroceriesEditList
         list={list}
         ingredients={ingredients}

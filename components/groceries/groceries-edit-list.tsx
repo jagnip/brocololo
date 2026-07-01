@@ -739,11 +739,11 @@ export function GroceriesEditList({
 
   return (
     // Keep the edit surface stretched so both main content and right panel can use page width.
-    <div className="w-full space-y-8">
+    <div className="flex w-full flex-col gap-8">
       <TopbarConfigController config={topbarConfig} />
 
       {/* Full-width sticky category navigator sits above all edit content. */}
-      <div className="supports-backdrop-filter:bg-background/80 sticky top-14 z-30 hidden w-full bg-background/95 py-2 backdrop-blur sm:block">
+      <div className="supports-backdrop-filter:bg-background/80 sticky top-14 z-30 hidden w-full bg-background/95 pt-2 backdrop-blur sm:block">
         <div className="flex w-full flex-wrap gap-2">
           {groupedSections.map((section) => {
             const isActive = selectedCategoryId === section.categoryId;
@@ -769,7 +769,7 @@ export function GroceriesEditList({
 
       <div
         className={cn(
-          "flex w-full flex-col gap-8 lg:grid lg:items-start lg:gap-6",
+          "flex w-full flex-col gap-gutter lg:grid lg:items-start lg:gap-6",
           desktopGridColumns,
         )}
       >

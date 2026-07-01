@@ -301,8 +301,8 @@ export function GroceriesEditQuickAddSection({
     onValueChange: handleIngredientValueChange,
     onCreateOption: handleCreateFreeTextOption,
     createOptionLabel: (searchTerm: string) => `Add "${searchTerm}"`,
-    placeholder: "Search ingredients...",
-    searchPlaceholder: "Search ingredients...",
+    placeholder: "Ingredient",
+    searchPlaceholder: "Ingredient",
     emptyLabel: "No ingredient found.",
   };
 
@@ -368,7 +368,7 @@ export function GroceriesEditQuickAddSection({
     <Input
       key={`quick-add-amount-${draft.ingredientId ?? (draft.displayLabel || "none")}`}
       data-grocery-amount-input
-      className="tabular-nums w-[calc(7ch+1.5rem)] shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      className="tabular-nums w-full min-w-0 md:w-[calc(7ch+1.5rem)] md:shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       type="number"
       min={0}
       step="any"
@@ -480,22 +480,24 @@ export function GroceriesEditQuickAddSection({
             {addItemButton}
           </div>
 
-          {/* Below md: ingredient full width, then amount · unit · category · action, then notes. */}
+          {/* Mobile: ingredient · category | amount · unit | notes · action. */}
           <div className="space-y-2 md:hidden">
-            <div data-quick-add-ingredient-select className="min-w-0 w-full">
-              {renderIngredientSelect()}
+            <div className="grid items-start gap-2 grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <div data-quick-add-ingredient-select className="min-w-0 w-full">
+                {renderIngredientSelect()}
+              </div>
+              {renderCategorySelect()}
             </div>
 
-            <div className="grid items-start gap-2">
+            <div className="grid items-start gap-2 grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               {amountInput}
               {renderUnitSelect(!isMd)}
-              {renderCategorySelect()}
-              {actionButton}
             </div>
 
-            <div className="grid gap-2">
+            <div className="grid items-start gap-2 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
               {additionalInfoInput}
               {substitutionNoteInput}
+              {actionButton}
             </div>
           </div>
 

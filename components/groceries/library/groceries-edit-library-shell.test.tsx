@@ -19,28 +19,29 @@ const baseProps = {
 };
 
 describe("GroceriesEditLibraryShell", () => {
-  it("renders accordion header with outlined chevron beside Lists below lg", () => {
+  it("renders accordion header collapsed by default below lg", () => {
     render(<GroceriesEditLibraryShell {...baseProps} />);
 
     expect(screen.getByRole("heading", { name: "Lists" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Collapse lists" })).toHaveAttribute(
-      "aria-expanded",
-      "true",
-    );
-    expect(screen.getByRole("button", { name: "Create new list" })).toBeInTheDocument();
-    expect(screen.getByText("No lists yet")).toBeInTheDocument();
-  });
-
-  it("collapses accordion content when the outlined chevron is clicked", async () => {
-    const user = userEvent.setup();
-    render(<GroceriesEditLibraryShell {...baseProps} />);
-
-    await user.click(screen.getByRole("button", { name: "Collapse lists" }));
-
     expect(screen.getByRole("button", { name: "Expand lists" })).toHaveAttribute(
       "aria-expanded",
       "false",
     );
+    expect(screen.getByRole("button", { name: "Create new list" })).toBeInTheDocument();
+    expect(screen.queryByText("No lists yet")).not.toBeInTheDocument();
+  });
+
+  it("expands accordion content when the outlined chevron is clicked", async () => {
+    const user = userEvent.setup();
+    render(<GroceriesEditLibraryShell {...baseProps} />);
+
+    await user.click(screen.getByRole("button", { name: "Expand lists" }));
+
+    expect(screen.getByRole("button", { name: "Collapse lists" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    expect(screen.getByText("No lists yet")).toBeInTheDocument();
   });
 
   it("renders outlined chevron beside Lists in the sidebar on lg+", async () => {
