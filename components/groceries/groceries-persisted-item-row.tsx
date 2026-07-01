@@ -96,125 +96,131 @@ export function GroceriesPersistedItemRow({
   };
 
   return (
+    // Grid row collapse (1fr → 0fr) animates height; max-h-0 cannot transition from auto.
     <li
       className={cn(
-        "overflow-hidden rounded-md border border-border bg-card transition-all duration-200 hover:bg-muted/40",
-        isAnimatingOut &&
-          "pointer-events-none max-h-0 border-transparent opacity-0",
+        "mb-tight grid transition-[grid-template-rows,opacity,margin-bottom] duration-200 ease-out",
+        isAnimatingOut
+          ? "pointer-events-none mb-0 opacity-0 grid-rows-[0fr]"
+          : "grid-rows-[1fr]",
       )}
     >
-      <div
-        className={cn(
-          "flex items-start justify-between gap-3 p-nest",
-          !isPending && "cursor-pointer",
-        )}
-        role="button"
-        tabIndex={0}
-        aria-label={`Toggle bought for ${row.displayLabel}`}
-        aria-pressed={isPurchased}
-        onClick={() => {
-          if (isPending) return;
-          onTogglePurchased(!isPurchased);
-        }}
-        onKeyDown={(event) => {
-          if (isPending) return;
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            onTogglePurchased(!isPurchased);
-          }
-        }}
-      >
-        <div className="flex min-w-0 flex-1 items-start gap-3">
-          <div className="self-start -mt-0.5">
-            <IngredientIcon icon={ing?.icon ?? null} name={row.displayLabel} />
-          </div>
-          <div className="min-w-0 space-y-1">
-            <div
-              className={cn(
-                "font-medium text-foreground",
-                showPurchasedStyle && "text-muted-foreground line-through",
-              )}
-            >
-              {row.displayLabel}
-            </div>
-            <div
-              className={cn(
-                "flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground",
-                showPurchasedStyle && "line-through",
-              )}
-            >
-              {amountLabel ? (
-                <span className="shrink-0">{amountLabel}</span>
-              ) : null}
-              {recipeNames.length > 0 ? (
-                <span
-                  className="flex flex-wrap items-center gap-1.5"
-                  onClick={(event) => event.stopPropagation()}
+      <div className="min-h-0 overflow-hidden">
+        <div className="rounded-md border border-border bg-card transition-colors duration-200 hover:bg-muted/40">
+          <div
+            className={cn(
+              "flex items-start justify-between gap-3 p-nest",
+              !isPending && "cursor-pointer",
+            )}
+            role="button"
+            tabIndex={0}
+            aria-label={`Toggle bought for ${row.displayLabel}`}
+            aria-pressed={isPurchased}
+            onClick={() => {
+              if (isPending) return;
+              onTogglePurchased(!isPurchased);
+            }}
+            onKeyDown={(event) => {
+              if (isPending) return;
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onTogglePurchased(!isPurchased);
+              }
+            }}
+          >
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              <div className="self-start -mt-0.5">
+                <IngredientIcon icon={ing?.icon ?? null} name={row.displayLabel} />
+              </div>
+              <div className="min-w-0 space-y-1">
+                <div
+                  className={cn(
+                    "font-medium text-foreground",
+                    showPurchasedStyle && "text-muted-foreground line-through",
+                  )}
                 >
-                  {recipeNames.map((name) => (
-                    <Badge
-                      key={name}
-                      variant="secondary"
-                      className="max-w-48 truncate font-normal"
+                  {row.displayLabel}
+                </div>
+                <div
+                  className={cn(
+                    "flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground",
+                    showPurchasedStyle && "line-through",
+                  )}
+                >
+                  {amountLabel ? (
+                    <span className="shrink-0">{amountLabel}</span>
+                  ) : null}
+                  {recipeNames.length > 0 ? (
+                    <span
+                      className="flex flex-wrap items-center gap-1.5"
+                      onClick={(event) => event.stopPropagation()}
                     >
-                      {name}
-                    </Badge>
-                  ))}
-                </span>
-              ) : null}
-              {ing?.supermarketUrl ? (
-                <span
-                  className="inline-flex shrink-0"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <IngredientSupermarketLinkButton
-                    href={ing.supermarketUrl}
-                    ingredientLabel={row.displayLabel}
-                  />
-                </span>
-              ) : null}
+                      {recipeNames.map((name) => (
+                        <Badge
+                          key={name}
+                          variant="secondary"
+                          className="max-w-48 truncate font-normal"
+                        >
+                          {name}
+                        </Badge>
+                      ))}
+                    </span>
+                  ) : null}
+                  {ing?.supermarketUrl ? (
+                    <span
+                      className="inline-flex shrink-0"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <IngredientSupermarketLinkButton
+                        href={ing.supermarketUrl}
+                        ingredientLabel={row.displayLabel}
+                      />
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+            <div className="flex shrink-0 flex-col items-center gap-1 self-start -mt-0.5">
+              <div onClick={(event) => event.stopPropagation()}>
+                <Checkbox
+                  className="h-5 w-5 rounded-full"
+                  checked={isPurchased}
+                  onCheckedChange={(checked) => onTogglePurchased(checked === true)}
+                  disabled={isPending}
+                  aria-label={`Mark ${row.displayLabel} as bought`}
+                />
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex shrink-0 flex-col items-center gap-1 self-start -mt-0.5">
-          <div onClick={(event) => event.stopPropagation()}>
-            <Checkbox
-              className="h-5 w-5 rounded-full"
-              checked={isPurchased}
-              onCheckedChange={(checked) => onTogglePurchased(checked === true)}
-              disabled={isPending}
-              aria-label={`Mark ${row.displayLabel} as bought`}
-            />
-          </div>
+
+          {hasMeta ? (
+            <div className="space-y-1 border-t border-border bg-card px-nest py-2 text-sm">
+              {row.additionalInfo ? (
+                <p
+                  className={cn(
+                    "flex items-start gap-2 text-muted-foreground",
+                    showPurchasedStyle && "opacity-60",
+                  )}
+                >
+                  <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                  {row.additionalInfo}
+                </p>
+              ) : null}
+              {row.substitutionNote ? (
+                <p
+                  className={cn(
+                    "flex items-start gap-2 text-muted-foreground",
+                    showPurchasedStyle && "opacity-60",
+                  )}
+                >
+                  <ArrowRightLeft className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                  {row.substitutionNote}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
-
-      {hasMeta ? (
-        <div className="space-y-1 border-t border-border bg-card px-nest py-2 text-sm">
-          {row.additionalInfo ? (
-            <p
-              className={cn(
-                "flex items-start gap-2 text-muted-foreground",
-                showPurchasedStyle && "opacity-60",
-              )}
-            >
-              <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-              {row.additionalInfo}
-            </p>
-          ) : null}
-          {row.substitutionNote ? (
-            <p
-              className={cn(
-                "flex items-start gap-2 text-muted-foreground",
-                showPurchasedStyle && "opacity-60",
-              )}
-            >
-              <ArrowRightLeft className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-              {row.substitutionNote}
-            </p>
-          ) : null}
-        </div>
-      ) : null}
     </li>
   );
 }

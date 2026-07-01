@@ -471,7 +471,8 @@ function GroceriesEditRowComponent({
         </div>
       </div>
 
-      <div className="hidden xl:grid xl:grid-cols-[minmax(0,1.3fr)_7rem_10rem_minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-start xl:gap-2">
+      {/* XL+: single row; 2XL widens ingredient/notes now that the library sidebar has more room. */}
+      <div className="hidden xl:grid xl:grid-cols-[minmax(0,1.3fr)_7rem_10rem_minmax(0,1fr)_minmax(0,1fr)_auto] 2xl:grid-cols-[minmax(0,1.5fr)_6.5rem_9rem_minmax(0,1.1fr)_minmax(0,1.1fr)_auto] xl:items-start xl:gap-2">
         {renderIngredientSelect(isXl)}
         <Input {...amountInputProps} />
         {renderUnitSelect(isXl)}

@@ -18,7 +18,8 @@ export type GroceriesPersistedListModel = NonNullable<
 
 type GroceriesPersistedListItem = GroceriesPersistedListModel["items"][number];
 
-const EXIT_ANIMATION_MS = 200;
+// Slightly longer than the row transition so collapse finishes before unmount.
+const EXIT_ANIMATION_MS = 220;
 
 type GroceriesPersistedListProps = {
   list: GroceriesPersistedListModel;
@@ -250,7 +251,8 @@ export function GroceriesPersistedList({
             <h2 className="text-base font-semibold tracking-tight text-foreground">
               {section.title}
             </h2>
-            <ul className="flex flex-col gap-tight">
+            {/* Row spacing lives on each <li> so exit animation can collapse margin too. */}
+            <ul className="flex flex-col">
               {section.rows.map((row) => (
                 <GroceriesPersistedItemRow
                   key={row.id}

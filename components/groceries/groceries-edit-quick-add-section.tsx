@@ -36,7 +36,8 @@ import {
   focusVisibleAmountInputInContainer,
 } from "@/lib/focus-input-after-layout";
 import { getUnitDisplayName } from "@/lib/recipes/helpers";
-import { useIsXl } from "@/hooks/use-is-xl";
+import { useIs2xl } from "@/hooks/use-is-2xl";
+import { useIsLg } from "@/hooks/use-is-lg";
 import { useSelectOpenOnTabFromAdjacent, markUnitSelectOpenOnAmountTab } from "@/lib/use-select-open-on-focus";
 
 // Synthetic select value for free-text quick-add drafts (mirrors category row pattern).
@@ -233,7 +234,10 @@ export function GroceriesEditQuickAddSection({
       (draft.displayLabel.trim() && draft.ingredientCategoryId),
   );
 
-  const isXl = useIsXl();
+  const isLg = useIsLg();
+  const is2xl = useIs2xl();
+  // Only the visible layout tier should control select open/focus behavior.
+  const isLgOnlyLayout = isLg && !is2xl;
   const unitSelectFocus = useSelectOpenOnTabFromAdjacent({
     disabled: unitSelectDisabled,
     resetKey: draft.ingredientId ?? draft.displayLabel,
@@ -475,41 +479,54 @@ export function GroceriesEditQuickAddSection({
             {addItemButton}
           </div>
 
-          {/* Mobile/tablet: ingredient full width, then amount · unit · category · action. */}
-          <div className="space-y-2 xl:hidden">
+          {/* Below lg: ingredient full width, then amount · unit · category · action, then notes. */}
+          <div className="space-y-2 lg:hidden">
             <div data-quick-add-ingredient-select className="min-w-0 w-full">
               {renderIngredientSelect()}
             </div>
 
             <div className="grid items-start gap-2 md:grid-cols-[7rem_10rem_minmax(0,1fr)_auto]">
               {amountInput}
-              {renderUnitSelect(!isXl)}
+              {renderUnitSelect(!isLg)}
               {renderCategorySelect()}
               {actionButton}
             </div>
 
-            <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
+            <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-start">
               {additionalInfoInput}
               {substitutionNoteInput}
             </div>
           </div>
 
-          {/* Desktop: row 1 = ingredient · amount · unit · category; row 2 = notes · action. */}
-          <div className="hidden xl:block xl:space-y-2">
-            <div className="grid items-start gap-2 xl:grid-cols-[minmax(0,1.3fr)_7rem_10rem_minmax(0,1fr)]">
+          {/* lg–2xl: row 1 = ingredient · amount · unit · category; row 2 = notes · action. */}
+          <div className="hidden lg:block 2xl:hidden lg:space-y-2">
+            <div className="grid items-start gap-2 lg:grid-cols-[minmax(0,1.3fr)_7rem_10rem_minmax(0,1fr)]">
               <div data-quick-add-ingredient-select className="min-w-0 w-full">
                 {renderIngredientSelect()}
               </div>
               {amountInput}
-              {renderUnitSelect(isXl)}
+              {renderUnitSelect(isLgOnlyLayout)}
               {renderCategorySelect()}
             </div>
 
-            <div className="grid items-start gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+            <div className="grid items-start gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
               {additionalInfoInput}
               {substitutionNoteInput}
               {actionButton}
             </div>
+          </div>
+
+          {/* 2XL: single row — ingredient gets the most space; amount/unit stay compact. */}
+          <div className="hidden 2xl:grid 2xl:items-start 2xl:gap-2 2xl:grid-cols-[minmax(0,1.5fr)_6.5rem_9rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+            <div data-quick-add-ingredient-select className="min-w-0 w-full">
+              {renderIngredientSelect()}
+            </div>
+            {amountInput}
+            {renderUnitSelect(is2xl)}
+            {renderCategorySelect()}
+            {additionalInfoInput}
+            {substitutionNoteInput}
+            {actionButton}
           </div>
         </div>
       </NutritionPersonCard>
