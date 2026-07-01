@@ -19,9 +19,10 @@ export function AppSidebarContainer({
         <Suspense fallback={<AppSidebarSkeleton />}>
           <AppSidebar />
         </Suspense>
-        <SidebarInset className="bg-background">
+        <SidebarInset className="min-w-0 bg-background">
           <AppTopbar />
-          <main className="bg-background">{children}</main>
+          {/* min-w-0: flex child must shrink so wide chip rows don't cause page horizontal scroll */}
+          <main className="min-w-0 bg-background">{children}</main>
         </SidebarInset>
       </TopbarProvider>
     </SidebarProvider>

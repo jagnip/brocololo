@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { saveShoppingListEditsAction } from "@/actions/shopping-list-actions";
+import { GroceriesEditCategoryNav } from "@/components/groceries/groceries-edit-category-nav";
 import { GroceriesEditCategorySection } from "@/components/groceries/groceries-edit-category-section";
 import { GroceriesEditQuickAddSection } from "@/components/groceries/groceries-edit-quick-add-section";
-import { GroceriesEditLibraryPanel } from "@/components/groceries/library/groceries-edit-library-panel";
+import { GroceriesEditLibraryShell } from "@/components/groceries/library/groceries-edit-library-shell";
 import { CreateIngredientDialog } from "@/components/recipes/form/create-ingredient-dialog";
 import { EditIngredientDialog } from "@/components/recipes/form/edit-ingredient-dialog";
 import type {
@@ -29,7 +30,6 @@ import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
 import { ROUTES } from "@/lib/constants";
 import { formatDateRangeLabel } from "@/lib/format-date-range-label";
 import { TopbarConfigController } from "@/components/topbar-config";
-import { badgeVariants } from "@/components/ui/badge";
 import {
   buildIngredientSearchSourceMap,
   ingredientsToSearchableSelectOptions,
@@ -179,6 +179,7 @@ export function GroceriesEditList({
   const [openIngredientSelectorRowId, setOpenIngredientSelectorRowId] = useState<
     string | null
   >(null);
+  const [isLibraryCollapsed, setIsLibraryCollapsed] = useState(false);
   const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(
     categories[0]?.id ?? null,
@@ -284,13 +285,6 @@ export function GroceriesEditList({
       rows: rowsByCategory.get(category.id) ?? [],
     }));
   }, [orderedCategories, rows]);
-  const sectionRowCountByCategoryId = useMemo(
-    () =>
-      new Map(
-        groupedSections.map((section) => [section.categoryId, section.rows.length] as const),
-      ),
-    [groupedSections],
-  );
   const rowIndexById = useMemo(
     () =>
       new Map(
@@ -629,7 +623,13 @@ export function GroceriesEditList({
     setOptimisticCategoryId(categoryId);
     const sectionElement = sectionElementByCategoryIdRef.current.get(categoryId);
     if (!sectionElement) return;
-    sectionElement.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Manual scroll offset — mirrors Open Design scrollToSection (sticky header + chip strip).
+    const stickyChromeOffsetPx = 120;
+    const top =
+      sectionElement.getBoundingClientRect().top +
+      window.scrollY -
+      stickyChromeOffsetPx;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
   }, []);
   useEffect(() => {
     // Keep a valid active section when categories change.
@@ -643,31 +643,47 @@ export function GroceriesEditList({
     );
   }, [categories]);
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visibleEntries = entries.filter((entry) => entry.isIntersecting);
-        if (visibleEntries.length === 0) return;
-        const mostVisibleEntry = visibleEntries.sort(
-          (left, right) => right.intersectionRatio - left.intersectionRatio,
-        )[0];
-        const nextCategoryId = mostVisibleEntry.target.getAttribute("data-category-id");
-        if (!nextCategoryId) return;
-        setActiveCategoryId(nextCategoryId);
-        // Once scrollspy catches up with the optimistic choice, drop override.
-        setOptimisticCategoryId((prev) => (prev === nextCategoryId ? null : prev));
-      },
-      {
-        // Shift active selection slightly below sticky controls.
-        root: null,
-        rootMargin: "-120px 0px -55% 0px",
-        threshold: [0.1, 0.25, 0.5, 0.75],
-      },
-    );
-    const registeredElements = [...sectionElementByCategoryIdRef.current.values()];
-    for (const element of registeredElements) {
-      observer.observe(element);
-    }
-    return () => observer.disconnect();
+    const sectionEntries = groupedSections
+      .map((section) => ({
+        categoryId: section.categoryId,
+        element: sectionElementByCategoryIdRef.current.get(section.categoryId),
+      }))
+      .filter(
+        (entry): entry is { categoryId: string; element: HTMLElement } =>
+          Boolean(entry.element),
+      );
+
+    if (sectionEntries.length === 0) return;
+
+    let ticking = false;
+    // App topbar (h-14) + sticky chip strip — same intent as Open Design nav-sticky offset.
+    const scrollSpyOffsetPx = 120;
+
+    const updateActiveSection = () => {
+      ticking = false;
+      const scrollY = window.scrollY;
+      let currentCategoryId = sectionEntries[0].categoryId;
+
+      for (const entry of sectionEntries) {
+        const sectionTop = entry.element.getBoundingClientRect().top + scrollY;
+        if (sectionTop - scrollSpyOffsetPx <= scrollY) {
+          currentCategoryId = entry.categoryId;
+        }
+      }
+
+      setActiveCategoryId((prev) => (prev === currentCategoryId ? prev : currentCategoryId));
+      setOptimisticCategoryId((prev) => (prev === currentCategoryId ? null : prev));
+    };
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(updateActiveSection);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
   }, [groupedSections]);
   const selectedCategoryId = optimisticCategoryId ?? activeCategoryId;
 
@@ -731,38 +747,46 @@ export function GroceriesEditList({
     [initialRows, isPending, isSaveDisabled, list.plan.id, planDateRangeLabel, router, rows, startTransition],
   );
 
+  // Desktop split: grocery rows | lists sidebar, with collapsible right rail.
+  const desktopGridColumns = isLibraryCollapsed
+    ? "lg:grid-cols-[minmax(0,1fr)_2rem]"
+    : "lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]";
+
   return (
     // Keep the edit surface stretched so both main content and right panel can use page width.
-    <div className="w-full space-y-8">
+    <div className="flex min-w-0 w-full max-w-full flex-col">
       <TopbarConfigController config={topbarConfig} />
 
-      {/* Full-width sticky category navigator sits above all edit content. */}
-      <div className="supports-backdrop-filter:bg-background/80 sticky top-14 z-30 hidden w-full bg-background/95 py-2 backdrop-blur sm:block">
-        <div className="flex w-full flex-wrap gap-2">
-          {groupedSections.map((section) => {
-            const isActive = selectedCategoryId === section.categoryId;
-            const isPopulated = (sectionRowCountByCategoryId.get(section.categoryId) ?? 0) > 0;
-            const variant = isActive ? "default" : isPopulated ? "outline" : "secondary";
-            return (
-              <button
-                key={section.categoryId}
-                type="button"
-                className={cn(
-                  badgeVariants({ variant }),
-                  "cursor-pointer transition-colors focus-visible:outline-none",
-                )}
-                aria-pressed={isActive}
-                onClick={() => onCategoryBadgeClick(section.categoryId)}
-              >
-                {section.title}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* Full-width strip directly under the app topbar (sticky top-14, z-10 < topbar z-20). */}
+      <GroceriesEditCategoryNav
+        className="mb-gutter"
+        sections={groupedSections.map((section) => ({
+          categoryId: section.categoryId,
+          title: section.title,
+        }))}
+        selectedCategoryId={selectedCategoryId}
+        onCategorySelect={onCategoryBadgeClick}
+      />
 
-      <div className="grid w-full gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-8">
+      <div
+        className={cn(
+          "flex w-full min-w-0 max-w-full flex-col gap-gutter overflow-x-clip px-gutter lg:grid lg:items-start lg:gap-6",
+          desktopGridColumns,
+        )}
+      >
+        <GroceriesEditLibraryShell
+          className="order-1 lg:order-0 lg:col-start-2 lg:row-start-1"
+          collapsed={isLibraryCollapsed}
+          onCollapsedChange={setIsLibraryCollapsed}
+          planId={list.plan.id}
+          lists={ingredientLists}
+          ingredients={localIngredients}
+          categories={categories}
+          onAddIngredientToGroceries={onAddIngredientFromLibrary}
+          onEditIngredientRequested={onEditIngredientRequested}
+        />
+
+        <div className="order-2 flex flex-col gap-8 lg:order-0 lg:col-start-1">
           <GroceriesEditQuickAddSection
             ingredients={localIngredients}
             categories={categories}
@@ -805,19 +829,6 @@ export function GroceriesEditList({
               onIngredientSelectorOpenHandled={onIngredientSelectorOpenHandled}
             />
           ))}
-        </div>
-
-        {/* Spacer matches category section heading + gap so the library aligns with rows. */}
-        <div className="hidden lg:flex lg:flex-col">
-          <div aria-hidden className="h-7 shrink-0" />
-          <GroceriesEditLibraryPanel
-            planId={list.plan.id}
-            lists={ingredientLists}
-            ingredients={localIngredients}
-            categories={categories}
-            onAddIngredientToGroceries={onAddIngredientFromLibrary}
-            onEditIngredientRequested={onEditIngredientRequested}
-          />
         </div>
       </div>
 

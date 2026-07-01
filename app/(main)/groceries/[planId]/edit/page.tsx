@@ -30,8 +30,7 @@ export default async function GroceriesEditPage({
   }
 
   return (
-    // Match recipes list page feel: full-width content with gutter spacing, no max-width cap.
-    <div className="w-full px-gutter pb-gutter">
+    <div className="min-w-0 w-full max-w-full pb-gutter pt-0">
       <GroceriesEditList
         list={list}
         ingredients={ingredients}

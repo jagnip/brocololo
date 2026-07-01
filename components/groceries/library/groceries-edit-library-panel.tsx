@@ -1,5 +1,6 @@
 "use client";
 
+import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -47,9 +48,11 @@ import { GroceriesEditLibraryListDialog } from "@/components/groceries/library/g
 import { GroceriesEditLibraryRow } from "@/components/groceries/library/groceries-edit-library-row";
 import { cn } from "@/lib/utils";
 
+export type GroceriesEditLibraryPanelChrome = "sidebar" | "embedded";
+
 // The panel needs `planId` purely so the server actions can revalidate the
 // groceries edit page that's currently open. Library data itself is global.
-type GroceriesEditLibraryPanelProps = {
+export type GroceriesEditLibraryPanelProps = {
   planId: string;
   lists: IngredientListWithItems[];
   ingredients: GroceriesEditIngredientOption[];
@@ -57,6 +60,12 @@ type GroceriesEditLibraryPanelProps = {
   onAddIngredientToGroceries: (ingredientId: string) => void;
   onEditIngredientRequested: (ingredientId: string) => void;
   className?: string;
+  /** When false, the shell owns the Lists title / create button (accordion header). */
+  showHeader?: boolean;
+  /** Sidebar chrome includes card border; embedded is used inside the shell card. */
+  chrome?: GroceriesEditLibraryPanelChrome;
+  /** Shell wires the accordion create button to open the create-list dialog. */
+  createListOpenerRef?: RefObject<(() => void) | null>;
 };
 
 // Local mirror of the active list's ingredient ids so add/remove feel instant.
@@ -80,6 +89,9 @@ export function GroceriesEditLibraryPanel({
   onAddIngredientToGroceries,
   onEditIngredientRequested,
   className,
+  showHeader = true,
+  chrome = "sidebar",
+  createListOpenerRef,
 }: GroceriesEditLibraryPanelProps) {
   const [, startTransition] = useTransition();
   const [activeListId, setActiveListId] = useState<string | null>(
@@ -91,6 +103,14 @@ export function GroceriesEditLibraryPanel({
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!createListOpenerRef) return;
+    createListOpenerRef.current = () => setCreateDialogOpen(true);
+    return () => {
+      createListOpenerRef.current = null;
+    };
+  }, [createListOpenerRef]);
 
   // Whenever the server-fetched lists change (after revalidatePath), reset the
   // optimistic mirror and make sure the active list still exists. If the
@@ -297,32 +317,24 @@ export function GroceriesEditLibraryPanel({
 
   // ---------- rendering ----------
 
-  return (
-    <aside
-      className={cn(
-        "rounded-xl border bg-card p-4",
-        // Sticky right column matches the previous placeholder behavior so
-        // long grocery lists don't push the panel out of view.
-        "xl:sticky xl:top-16 xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto",
-        className,
-      )}
-      aria-label="Ingredient lists library"
-    >
-      <div className="space-y-4">
-        {/* Header: title + create-list button. */}
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold tracking-tight">Lists</h2>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            aria-label="Create new list"
-            onClick={() => setCreateDialogOpen(true)}
-          >
-            <Plus className="h-4 w-4" aria-hidden />
-          </Button>
-        </div>
+  const panelLabel = "Ingredient lists library";
+  const panelBody = (
+    <div className="flex flex-col gap-4">
+        {showHeader ? (
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold tracking-tight">Lists</h2>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-8"
+              aria-label="Create new list"
+              onClick={() => setCreateDialogOpen(true)}
+            >
+              <Plus className="size-4" aria-hidden />
+            </Button>
+          </div>
+        ) : null}
 
         {lists.length === 0 ? (
           // Empty-library state: nudge the user to create their first list.
@@ -446,8 +458,11 @@ export function GroceriesEditLibraryPanel({
             )}
           </>
         )}
-      </div>
+    </div>
+  );
 
+  const panelDialogs = (
+    <>
       {/* Create dialog reuses the shared name dialog with empty `initialName`. */}
       <GroceriesEditLibraryListDialog
         open={createDialogOpen}
@@ -491,6 +506,31 @@ export function GroceriesEditLibraryPanel({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </>
+  );
+
+  if (chrome === "embedded") {
+    return (
+      <div className={cn("min-w-0", className)} aria-label={panelLabel}>
+        {panelBody}
+        {panelDialogs}
+      </div>
+    );
+  }
+
+  return (
+    <aside
+      className={cn(
+        "rounded-xl border bg-card p-4",
+        // Sticky right column matches the previous placeholder behavior so
+        // long grocery lists don't push the panel out of view.
+        "xl:sticky xl:top-16 xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto",
+        className,
+      )}
+      aria-label={panelLabel}
+    >
+      {panelBody}
+      {panelDialogs}
     </aside>
   );
 }

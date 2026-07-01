@@ -309,8 +309,8 @@ function GroceriesEditRowComponent({
       handleIngredientValueChange(nextIngredientId, freeTextOptionValue),
     onCreateOption: handleCreateFreeTextOption,
     createOptionLabel: (searchTerm: string) => `Add "${searchTerm}"`,
-    placeholder: "Select ingredient...",
-    searchPlaceholder: "Search ingredient...",
+    placeholder: "Ingredient",
+    searchPlaceholder: "Ingredient",
     emptyLabel: "No ingredient found.",
     onOpenChange: setIngredientSelectorOpen,
   };
@@ -360,6 +360,9 @@ function GroceriesEditRowComponent({
   const amountInputProps = {
     key: `${row.id}-amount-${row.ingredientId ?? "none"}`,
     "data-grocery-amount-input": true,
+    // 7ch fits "Amount" placeholder (6 letters; ch is narrower than m/o); +1.5rem = px-3 padding.
+    className:
+      "tabular-nums w-[calc(7ch+1.5rem)] shrink-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
     type: "number" as const,
     min: 0,
     step: "any" as const,
@@ -458,20 +461,35 @@ function GroceriesEditRowComponent({
           "ring-2 ring-primary/70 ring-offset-2 ring-offset-background",
       )}
     >
-      <div className="space-y-2 xl:hidden">
-        <div className="grid items-start gap-2 md:grid-cols-[minmax(0,1fr)_7rem_10rem_auto]">
+      <div className="space-y-2 md:hidden">
+        <div className="grid items-start gap-2 grid-cols-[minmax(0,1fr)_auto_8rem]">
+          {renderIngredientSelect(!isXl)}
+          <Input {...amountInputProps} />
+          {renderUnitSelect(!isXl)}
+        </div>
+        <div className="grid items-start gap-2 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+          {additionalInfoInput}
+          {substitutionNoteInput}
+          {rowActions}
+        </div>
+      </div>
+
+      {/* md–xl: ingredient · amount · unit · actions, then notes on row 2. */}
+      <div className="hidden space-y-2 md:block xl:hidden">
+        <div className="grid items-start gap-2 md:grid-cols-[minmax(0,1fr)_auto_8rem_auto]">
           {renderIngredientSelect(!isXl)}
           <Input {...amountInputProps} />
           {renderUnitSelect(!isXl)}
           {rowActions}
         </div>
-        <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
+        <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-start">
           {additionalInfoInput}
           {substitutionNoteInput}
         </div>
       </div>
 
-      <div className="hidden xl:grid xl:grid-cols-[minmax(0,1.3fr)_7rem_10rem_minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-start xl:gap-2">
+      {/* XL+: single row; 2XL widens ingredient/notes now that the library sidebar has more room. */}
+      <div className="hidden xl:grid xl:grid-cols-[minmax(0,1.3fr)_auto_8rem_minmax(0,1fr)_minmax(0,1fr)_auto] 2xl:grid-cols-[minmax(0,1.5fr)_auto_7.5rem_minmax(0,1.1fr)_minmax(0,1.1fr)_auto] xl:items-start xl:gap-2">
         {renderIngredientSelect(isXl)}
         <Input {...amountInputProps} />
         {renderUnitSelect(isXl)}
