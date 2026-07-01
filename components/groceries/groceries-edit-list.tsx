@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { saveShoppingListEditsAction } from "@/actions/shopping-list-actions";
+import { GroceriesEditCategoryNav } from "@/components/groceries/groceries-edit-category-nav";
 import { GroceriesEditCategorySection } from "@/components/groceries/groceries-edit-category-section";
 import { GroceriesEditQuickAddSection } from "@/components/groceries/groceries-edit-quick-add-section";
 import { GroceriesEditLibraryShell } from "@/components/groceries/library/groceries-edit-library-shell";
@@ -29,7 +30,6 @@ import { deriveSubstitutionsAllowed } from "@/lib/groceries/substitutions";
 import { ROUTES } from "@/lib/constants";
 import { formatDateRangeLabel } from "@/lib/format-date-range-label";
 import { TopbarConfigController } from "@/components/topbar-config";
-import { badgeVariants } from "@/components/ui/badge";
 import {
   buildIngredientSearchSourceMap,
   ingredientsToSearchableSelectOptions,
@@ -285,13 +285,6 @@ export function GroceriesEditList({
       rows: rowsByCategory.get(category.id) ?? [],
     }));
   }, [orderedCategories, rows]);
-  const sectionRowCountByCategoryId = useMemo(
-    () =>
-      new Map(
-        groupedSections.map((section) => [section.categoryId, section.rows.length] as const),
-      ),
-    [groupedSections],
-  );
   const rowIndexById = useMemo(
     () =>
       new Map(
@@ -630,7 +623,12 @@ export function GroceriesEditList({
     setOptimisticCategoryId(categoryId);
     const sectionElement = sectionElementByCategoryIdRef.current.get(categoryId);
     if (!sectionElement) return;
-    sectionElement.scrollIntoView({ behavior: "smooth", block: "start" });
+    sectionElement.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+      // Avoid horizontal page scroll — that shifts main content over the app sidebar.
+      inline: "nearest",
+    });
   }, []);
   useEffect(() => {
     // Keep a valid active section when categories change.
@@ -739,37 +737,23 @@ export function GroceriesEditList({
 
   return (
     // Keep the edit surface stretched so both main content and right panel can use page width.
-    <div className="flex w-full flex-col gap-8">
+    <div className="flex min-w-0 w-full max-w-full flex-col">
       <TopbarConfigController config={topbarConfig} />
 
-      {/* Full-width sticky category navigator sits above all edit content. */}
-      <div className="supports-backdrop-filter:bg-background/80 sticky top-14 z-30 hidden w-full bg-background/95 pt-2 backdrop-blur sm:block">
-        <div className="flex w-full flex-wrap gap-2">
-          {groupedSections.map((section) => {
-            const isActive = selectedCategoryId === section.categoryId;
-            const isPopulated = (sectionRowCountByCategoryId.get(section.categoryId) ?? 0) > 0;
-            const variant = isActive ? "default" : isPopulated ? "outline" : "secondary";
-            return (
-              <button
-                key={section.categoryId}
-                type="button"
-                className={cn(
-                  badgeVariants({ variant }),
-                  "cursor-pointer transition-colors focus-visible:outline-none",
-                )}
-                aria-pressed={isActive}
-                onClick={() => onCategoryBadgeClick(section.categoryId)}
-              >
-                {section.title}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* Full-width strip directly under the app topbar (sticky top-14, z-10 < topbar z-20). */}
+      <GroceriesEditCategoryNav
+        className="mb-gutter"
+        sections={groupedSections.map((section) => ({
+          categoryId: section.categoryId,
+          title: section.title,
+        }))}
+        selectedCategoryId={selectedCategoryId}
+        onCategorySelect={onCategoryBadgeClick}
+      />
 
       <div
         className={cn(
-          "flex w-full flex-col gap-gutter lg:grid lg:items-start lg:gap-6",
+          "flex w-full min-w-0 max-w-full flex-col gap-gutter overflow-x-clip px-gutter lg:grid lg:items-start lg:gap-6",
           desktopGridColumns,
         )}
       >

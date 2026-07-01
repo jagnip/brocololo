@@ -3,7 +3,7 @@ import { GroceriesEditSkeleton } from "@/components/groceries/groceries-edit-ske
 export default function Loading() {
   // Dedicated skeleton for groceries edit route transitions.
   return (
-    <div className="w-full px-gutter pb-gutter pt-gutter lg:pt-0">
+    <div className="min-w-0 w-full max-w-full pb-gutter pt-0">
       <GroceriesEditSkeleton />
     </div>
   );

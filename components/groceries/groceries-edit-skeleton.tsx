@@ -4,13 +4,15 @@ import { cn } from "@/lib/utils";
 export function GroceriesEditSkeleton() {
   return (
     // Match groceries edit page container: full-width canvas with gutter padding.
-    <div className="flex w-full flex-col gap-8">
-      {/* Sticky category navigator placeholder (hidden on xs like real UI). */}
-      <div className="hidden w-full pt-2 sm:block">
-        <div className="flex w-full flex-wrap gap-2">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <Skeleton key={index} className="h-6 w-24 rounded-full" />
-          ))}
+    <div className="flex min-w-0 w-full max-w-full flex-col">
+      {/* Full-width category navigator placeholder — sticky under app topbar. */}
+      <div className="sticky top-14 z-10 mb-gutter w-full min-w-0 max-w-full overflow-x-hidden bg-background">
+        <div className="w-full min-w-0 overflow-x-auto hide-scrollbar py-2">
+          <div className="flex w-max flex-nowrap gap-item px-gutter">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <Skeleton key={index} className="h-9 w-24 shrink-0 rounded-md" />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -29,7 +31,7 @@ export function GroceriesEditSkeleton() {
       {/* Main edit grid: lists (mobile accordion / desktop sidebar) + grocery sections. */}
       <div
         className={cn(
-          "flex w-full flex-col gap-gutter lg:grid lg:items-start lg:gap-6",
+          "flex w-full min-w-0 flex-col gap-gutter px-gutter lg:grid lg:items-start lg:gap-6",
           "lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]",
         )}
       >
