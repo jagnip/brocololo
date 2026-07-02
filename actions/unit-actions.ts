@@ -1,6 +1,7 @@
 "use server";
 
 import { Prisma } from "@/src/generated/client";
+import { requireUser } from "@/lib/auth/session";
 import { createUnit, getUnitById, renameUnit } from "@/lib/db/units";
 import { createUnitSchema, renameUnitSchema } from "@/lib/validations/unit";
 import type { UnitType } from "@/types/unit";
@@ -21,6 +22,14 @@ export type RenameUnitInlineActionResult = UnitActionError | UnitActionSuccess;
 export async function createUnitInlineAction(
   formData: { name: string; namePlural?: string },
 ): Promise<CreateUnitInlineActionResult> {
+  const { isAdmin } = await requireUser();
+  if (!isAdmin) {
+    return {
+      type: "error",
+      message: "You don't have permission to create units",
+    };
+  }
+
   const parsed = createUnitSchema.safeParse(formData);
   if (!parsed.success) {
     return {
@@ -55,6 +64,14 @@ export async function createUnitInlineAction(
 export async function renameUnitInlineAction(
   formData: { unitId: string; name: string; namePlural?: string },
 ): Promise<RenameUnitInlineActionResult> {
+  const { isAdmin } = await requireUser();
+  if (!isAdmin) {
+    return {
+      type: "error",
+      message: "You don't have permission to rename units",
+    };
+  }
+
   const parsed = renameUnitSchema.safeParse(formData);
   if (!parsed.success) {
     return {
