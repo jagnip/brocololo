@@ -719,13 +719,18 @@ export default function IngredientForm({
                             options={nonGramsUnitOptions}
                             value={field.value || null}
                             onValueChange={(next) => field.onChange(next ?? "")}
-                            onCreateOption={(typedName) => {
-                              // Route creatable option into explicit confirmation dialog.
-                              setCreateUnitState({
-                                rowIndex: index,
-                                unitName: typedName,
-                              });
-                            }}
+                            // Only admins may add new global units to the shared catalog.
+                            onCreateOption={
+                              isAdmin
+                                ? (typedName) => {
+                                    // Route creatable option into explicit confirmation dialog.
+                                    setCreateUnitState({
+                                      rowIndex: index,
+                                      unitName: typedName,
+                                    });
+                                  }
+                                : undefined
+                            }
                             placeholder="Select unit"
                             searchPlaceholder="Search units"
                             emptyLabel="No unit found"
@@ -764,7 +769,7 @@ export default function IngredientForm({
 
                 <div className="col-span-2 flex items-end gap-2 md:col-span-2">
                   {/* Phone: actions on second row; md+: keep existing inline layout. */}
-                  {mode === "page" ? (
+                  {isAdmin && mode === "page" ? (
                     <Button
                       type="button"
                       variant="outline"
