@@ -64,8 +64,10 @@ export async function PlannerLogCombinedPage({
 
   if (!planSlots) notFound();
 
-  // Track tab person selector: only members chosen when the plan was saved.
-  const planAudienceIds = planSlots[0]?.cookingFamilyMemberIds ?? [];
+  // Track tab person selector: union of everyone included on any planned meal.
+  const planAudienceIds = [
+    ...new Set(planSlots.flatMap((slot) => slot.cookingFamilyMemberIds ?? [])),
+  ];
   const planAudienceMembers = filterFamilyMembersToPlanAudience(
     familyMembers,
     planAudienceIds,

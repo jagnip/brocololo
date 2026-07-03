@@ -396,6 +396,7 @@ export const ModelName = {
   ShoppingListShare: 'ShoppingListShare',
   ShoppingListItem: 'ShoppingListItem',
   PlanSlot: 'PlanSlot',
+  PlanSlotAudienceMember: 'PlanSlotAudienceMember',
   PlanSlotCustomIngredient: 'PlanSlotCustomIngredient',
   PlanSlotAlternative: 'PlanSlotAlternative',
   Recipe: 'Recipe',
@@ -433,7 +434,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "category" | "user" | "familyMember" | "plan" | "planAudienceMember" | "groceryIngredient" | "shoppingLayoutPreset" | "shoppingLayoutPresetCategory" | "shoppingList" | "shoppingListShare" | "shoppingListItem" | "planSlot" | "planSlotCustomIngredient" | "planSlotAlternative" | "recipe" | "recipeAudienceMember" | "recipeMemberPortion" | "ingredient" | "ingredientUserCustomization" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientMemberTarget" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage" | "log" | "logEntry" | "logEntryRecipe" | "logIngredient" | "ingredientList" | "ingredientListItem"
+    modelProps: "category" | "user" | "familyMember" | "plan" | "planAudienceMember" | "groceryIngredient" | "shoppingLayoutPreset" | "shoppingLayoutPresetCategory" | "shoppingList" | "shoppingListShare" | "shoppingListItem" | "planSlot" | "planSlotAudienceMember" | "planSlotCustomIngredient" | "planSlotAlternative" | "recipe" | "recipeAudienceMember" | "recipeMemberPortion" | "ingredient" | "ingredientUserCustomization" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientMemberTarget" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage" | "log" | "logEntry" | "logEntryRecipe" | "logIngredient" | "ingredientList" | "ingredientListItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1322,6 +1323,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.PlanSlotCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.PlanSlotCountAggregateOutputType> | number
+        }
+      }
+    }
+    PlanSlotAudienceMember: {
+      payload: Prisma.$PlanSlotAudienceMemberPayload<ExtArgs>
+      fields: Prisma.PlanSlotAudienceMemberFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PlanSlotAudienceMemberFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAudienceMemberPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PlanSlotAudienceMemberFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAudienceMemberPayload>
+        }
+        findFirst: {
+          args: Prisma.PlanSlotAudienceMemberFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAudienceMemberPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PlanSlotAudienceMemberFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAudienceMemberPayload>
+        }
+        findMany: {
+          args: Prisma.PlanSlotAudienceMemberFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAudienceMemberPayload>[]
+        }
+        create: {
+          args: Prisma.PlanSlotAudienceMemberCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAudienceMemberPayload>
+        }
+        createMany: {
+          args: Prisma.PlanSlotAudienceMemberCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PlanSlotAudienceMemberCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAudienceMemberPayload>[]
+        }
+        delete: {
+          args: Prisma.PlanSlotAudienceMemberDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAudienceMemberPayload>
+        }
+        update: {
+          args: Prisma.PlanSlotAudienceMemberUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAudienceMemberPayload>
+        }
+        deleteMany: {
+          args: Prisma.PlanSlotAudienceMemberDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PlanSlotAudienceMemberUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PlanSlotAudienceMemberUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAudienceMemberPayload>[]
+        }
+        upsert: {
+          args: Prisma.PlanSlotAudienceMemberUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanSlotAudienceMemberPayload>
+        }
+        aggregate: {
+          args: Prisma.PlanSlotAudienceMemberAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePlanSlotAudienceMember>
+        }
+        groupBy: {
+          args: Prisma.PlanSlotAudienceMemberGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlanSlotAudienceMemberGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PlanSlotAudienceMemberCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlanSlotAudienceMemberCountAggregateOutputType> | number
         }
       }
     }
@@ -3127,6 +3202,14 @@ export const PlanSlotScalarFieldEnum = {
 export type PlanSlotScalarFieldEnum = (typeof PlanSlotScalarFieldEnum)[keyof typeof PlanSlotScalarFieldEnum]
 
 
+export const PlanSlotAudienceMemberScalarFieldEnum = {
+  planSlotId: 'planSlotId',
+  familyMemberId: 'familyMemberId'
+} as const
+
+export type PlanSlotAudienceMemberScalarFieldEnum = (typeof PlanSlotAudienceMemberScalarFieldEnum)[keyof typeof PlanSlotAudienceMemberScalarFieldEnum]
+
+
 export const PlanSlotCustomIngredientScalarFieldEnum = {
   id: 'id',
   planSlotId: 'planSlotId',
@@ -3610,6 +3693,7 @@ export type GlobalOmitConfig = {
   shoppingListShare?: Prisma.ShoppingListShareOmit
   shoppingListItem?: Prisma.ShoppingListItemOmit
   planSlot?: Prisma.PlanSlotOmit
+  planSlotAudienceMember?: Prisma.PlanSlotAudienceMemberOmit
   planSlotCustomIngredient?: Prisma.PlanSlotCustomIngredientOmit
   planSlotAlternative?: Prisma.PlanSlotAlternativeOmit
   recipe?: Prisma.RecipeOmit

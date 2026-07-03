@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { getPlannerMealCountForAudience } from "@/lib/planner/helpers";
+import { PlannerMealType } from "@/src/generated/enums";
+import { getPlannerMealCountForAudience, markBatchSlots } from "@/lib/planner/helpers";
+import type { RecipeType } from "@/types/recipe";
 
 describe("getPlannerMealCountForAudience", () => {
   it("counts meals by selected planner audience size", () => {
@@ -14,5 +16,35 @@ describe("getPlannerMealCountForAudience", () => {
 
   it("returns zero when no planner audience is selected", () => {
     expect(getPlannerMealCountForAudience({ servings: 4 }, 0)).toBe(0);
+  });
+});
+
+describe("markBatchSlots", () => {
+  const recipe = { id: "r-1", servings: 4 } as RecipeType;
+  const days = [
+    new Date("2026-03-17T00:00:00.000Z"),
+    new Date("2026-03-18T00:00:00.000Z"),
+    new Date("2026-03-19T00:00:00.000Z"),
+  ];
+
+  it("carries source-slot audience to batch-filled slots", () => {
+    const batchFilledSlots = new Map<string, RecipeType>();
+    const batchSlotAudience = new Map<string, string[]>();
+    const sourceAudience = ["fm-1", "fm-2"];
+
+    markBatchSlots(
+      recipe,
+      PlannerMealType.DINNER,
+      0,
+      days,
+      batchFilledSlots,
+      batchSlotAudience,
+      sourceAudience,
+      sourceAudience.length,
+    );
+
+    const nextKey = `${days[1]!.toISOString()}-${PlannerMealType.DINNER}`;
+    expect(batchFilledSlots.get(nextKey)).toBe(recipe);
+    expect(batchSlotAudience.get(nextKey)).toEqual(sourceAudience);
   });
 });

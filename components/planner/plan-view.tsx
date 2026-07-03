@@ -11,6 +11,7 @@ import { PlannerSlotCard } from "./planner-slot-card";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 function getFridgeMatchIngredients(
   recipe: RecipeType,
@@ -41,6 +42,8 @@ type PlanViewProps = {
   onSetMeal?: (slotKey: string, payload: PlanSlotMealPayload) => void;
   onRemove?: (slotKey: string) => void;
   onToggleUsed?: (slotKey: string) => void;
+  familyMembers?: FamilyMemberRow[];
+  onAudienceChange?: (slotKey: string, memberIds: string[]) => void;
 };
 
 export function PlanView({
@@ -52,6 +55,8 @@ export function PlanView({
   onSetMeal,
   onRemove,
   onToggleUsed,
+  familyMembers = [],
+  onAudienceChange,
 }: PlanViewProps) {
   if (plan.length === 0) {
     return null;
@@ -72,6 +77,12 @@ export function PlanView({
         onSetMeal={onSetMeal ? (payload) => onSetMeal(slotKey, payload) : undefined}
         onRemove={onRemove ? () => onRemove(slotKey) : undefined}
         onToggleUsed={onToggleUsed ? () => onToggleUsed(slotKey) : undefined}
+        familyMembers={familyMembers}
+        onAudienceChange={
+          onAudienceChange
+            ? (memberIds) => onAudienceChange(slotKey, memberIds)
+            : undefined
+        }
         recipes={recipes}
         ingredientOptions={ingredientOptions}
       />

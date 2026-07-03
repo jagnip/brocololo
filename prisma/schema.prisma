@@ -65,7 +65,8 @@ model FamilyMember {
 
   user                      User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
   logEntries                LogEntry[]
-  planAudienceMemberships   PlanAudienceMember[]
+  planAudienceMemberships     PlanAudienceMember[]
+  planSlotAudienceMemberships PlanSlotAudienceMember[]
   recipeAudienceMemberships RecipeAudienceMember[]
   recipeMemberPortions      RecipeMemberPortion[]
   recipeIngredientTargets   RecipeIngredientMemberTarget[]
@@ -210,11 +211,24 @@ model PlanSlot {
   recipe            Recipe?                    @relation("recipe_plan_slots", fields: [recipeId], references: [id], onDelete: Cascade)
   alternatives      PlanSlotAlternative[]
   customIngredients PlanSlotCustomIngredient[]
+  audienceMembers   PlanSlotAudienceMember[]
   logEntryRecipes   LogEntryRecipe[]
 
   @@index([planId])
   @@index([recipeId])
   @@map("plan_slots")
+}
+
+model PlanSlotAudienceMember {
+  planSlotId     String @map("plan_slot_id")
+  familyMemberId String @map("family_member_id")
+
+  planSlot     PlanSlot     @relation(fields: [planSlotId], references: [id], onDelete: Cascade)
+  familyMember FamilyMember @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+
+  @@id([planSlotId, familyMemberId])
+  @@index([familyMemberId])
+  @@map("plan_slot_audience_members")
 }
 
 model PlanSlotCustomIngredient {

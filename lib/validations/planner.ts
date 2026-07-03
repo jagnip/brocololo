@@ -33,6 +33,17 @@ const dayTimeLimitsSchema = z.object({
   dinnerTotalMax: timeLimitField,
 });
 
+const mealAudienceIdsSchema = z
+  .array(z.string().min(1))
+  .min(1, "Choose at least one person");
+
+const dayAudienceByMealSchema = z.object({
+  date: z.string(),
+  breakfastFamilyMemberIds: mealAudienceIdsSchema,
+  lunchFamilyMemberIds: mealAudienceIdsSchema,
+  dinnerFamilyMemberIds: mealAudienceIdsSchema,
+});
+
 const rollingRecipeSchema = z.object({
   recipeId: z.string(),
   meals: z.coerce.number().int().min(1),
@@ -40,9 +51,9 @@ const rollingRecipeSchema = z.object({
 
 export const plannerCriteriaSchema = z.object({
   dateRange: dateRangeSchema,
-  audienceFamilyMemberIds: z
-    .array(z.string().min(1))
-    .min(1, "Choose who you are cooking for"),
+  dailyAudienceByMeal: z
+    .array(dayAudienceByMealSchema)
+    .min(1, "Select at least one day"),
   dailyTimeLimits: z.array(dayTimeLimitsSchema).min(1, "Select at least one day"),
   fridgeIngredientIds: z.array(z.string()).default([]),
   rollingRecipes: z.array(rollingRecipeSchema).default([]),
@@ -50,6 +61,7 @@ export const plannerCriteriaSchema = z.object({
 
 export type RollingRecipeType = z.infer<typeof rollingRecipeSchema>;
 export type DayTimeLimitsType = z.infer<typeof dayTimeLimitsSchema>;
+export type DayAudienceByMealType = z.infer<typeof dayAudienceByMealSchema>;
 export type PlannerCriteriaInputType = z.input<typeof plannerCriteriaSchema>;
 export type PlannerCriteriaOutputType = z.infer<typeof plannerCriteriaSchema>;
 
@@ -71,6 +83,9 @@ export const slotSaveDataSchema = z
     recipeId: z.string().min(1).nullable(),
     customMeal: planCustomMealSchema.nullable(),
     alternativeRecipeIds: z.array(z.string().min(1)),
+    cookingFamilyMemberIds: z
+      .array(z.string().min(1))
+      .min(1, "Choose at least one person for this meal"),
     used: z.boolean(),
   })
   .superRefine((slot, ctx) => {

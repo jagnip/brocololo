@@ -3,6 +3,7 @@
 import { getRecipes } from "@/lib/db/recipes";
 import { listFamilyMembers } from "@/lib/db/family-members";
 import { getDaysInRange as getDaysToPlan, getMaxDaysSinceLastUsedCandidate, getMealTimeLimit, markBatchSlots } from "@/lib/planner/helpers";
+import { getSlotAudienceIdsForMeal } from "@/lib/planner/audience-mapping";
 import { PlanInputType, SlotSaveData } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { createPlan, deletePlanById, updatePlan } from "@/lib/db/planner";
@@ -10,7 +11,7 @@ import { MEAL_TYPES, ROUTES } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { filterByMealOccasion, filterByHandsOnTime, filterByTotalTime } from "@/lib/planner/filters";
-import { DayTimeLimitsType, RollingRecipeType } from "@/lib/validations/planner";
+import { DayAudienceByMealType, DayTimeLimitsType, RollingRecipeType } from "@/lib/validations/planner";
 import { pickBestCandidate } from "@/lib/planner/scoring";
 import { generateBaselineLogForPlan } from "@/lib/db/planner";
 import { requireUser } from "@/lib/auth/session";
@@ -21,7 +22,7 @@ const PLAN_GENERATION_FAILED_MESSAGE = MESSAGES.planner.generationFailedMessage;
 export async function generatePlan(
   start: Date,
   end: Date,
-  audienceFamilyMemberIds: string[],
+  dailyAudienceByMeal: DayAudienceByMealType[],
   allDaysTimeLimits: DayTimeLimitsType[],
   fridgeIngredientIds: string[],
   rollingRecipes: RollingRecipeType[],
@@ -33,40 +34,43 @@ export async function generatePlan(
     const { id: userId } = await requireUser();
     const familyMembers = await listFamilyMembers(userId);
     const ownedFamilyMemberIds = new Set(familyMembers.map((member) => member.id));
-    const selectedAudienceIds = [...new Set(audienceFamilyMemberIds)];
-    if (
-      selectedAudienceIds.length === 0 ||
-      selectedAudienceIds.some((id) => !ownedFamilyMemberIds.has(id))
-    ) {
-      return { type: "error", message: "Choose who you are cooking for." };
+
+    for (const dayAudience of dailyAudienceByMeal) {
+      for (const mealType of MEAL_TYPES) {
+        const slotAudienceIds = getSlotAudienceIdsForMeal(dayAudience, mealType);
+        if (
+          slotAudienceIds.length === 0 ||
+          slotAudienceIds.some((id) => !ownedFamilyMemberIds.has(id))
+        ) {
+          return { type: "error", message: "Choose who you are cooking for." };
+        }
+      }
     }
-    // Planner candidates are narrowed by meal occasion per slot.
-    const recipes = (await getRecipes(userId, undefined, undefined, false)).filter(
-      (recipe) => {
-        const recipeAudienceIds = new Set(
-          recipe.audienceMembers.map((member) => member.familyMemberId),
-        );
-        return selectedAudienceIds.every((id) => recipeAudienceIds.has(id));
-      },
-    );
+
+    const recipes = await getRecipes(userId, undefined, undefined, false);
 
     if (recipes.length === 0) {
       return { type: "error", message: PLAN_GENERATION_FAILED_MESSAGE };
     }
 
-    const days = getDaysToPlan(start, end); //get all days between start and end dates
-    const plan: PlanInputType = []; //initialize empty plan
-    const batchFilledSlots = new Map<string, RecipeType>(); // track batch carry-forward: slotKey → forced recipe
+    const days = getDaysToPlan(start, end);
+    const plan: PlanInputType = [];
+    const batchFilledSlots = new Map<string, RecipeType>();
+    const batchSlotAudience = new Map<string, string[]>();
 
-    for (const day of days) { //for the given day 
+    for (const day of days) {
       const dateStr = day.toISOString().slice(0, 10);
       const dayTimeLimits = allDaysTimeLimits.find((d) => d.date === dateStr);
+      const dayAudience = dailyAudienceByMeal.find((d) => d.date === dateStr);
 
-      for (const mealType of MEAL_TYPES) { // for the given meal type in the given day
+      for (const mealType of MEAL_TYPES) {
+        const slotAudienceIds = [
+          ...new Set(getSlotAudienceIdsForMeal(dayAudience, mealType)),
+        ];
         const slotKey = `${day.toISOString()}-${mealType}`;
-        const batchRecipe = batchFilledSlots.get(slotKey); // check if this slot is claimed by a batch carry-forward
+        const batchRecipe = batchFilledSlots.get(slotKey);
+        const batchAudienceIds = batchSlotAudience.get(slotKey) ?? slotAudienceIds;
 
-        // Always run scoring to compute alternatives (even for batch slots)
         let candidates = filterByMealOccasion(recipes, mealType);
         candidates = filterByHandsOnTime(candidates, getMealTimeLimit(dayTimeLimits, mealType, "handsOn"));
         candidates = filterByTotalTime(candidates, getMealTimeLimit(dayTimeLimits, mealType, "total"));
@@ -86,22 +90,44 @@ export async function generatePlan(
         const { winner, alternatives } = pickBestCandidate(candidates, ctx);
 
         if (batchRecipe) {
-          // Batch carry-forward slot: use forced recipe, alternatives from scoring (excluding the batch recipe)
           const alts = [winner, ...alternatives].filter((r) => r.id !== batchRecipe.id).slice(0, 10);
-          plan.push({ date: new Date(day), mealType, recipe: batchRecipe, customMeal: null, alternatives: alts, cookingFamilyMemberIds: selectedAudienceIds, used: false });
+          plan.push({
+            date: new Date(day),
+            mealType,
+            recipe: batchRecipe,
+            customMeal: null,
+            alternatives: alts,
+            cookingFamilyMemberIds: batchAudienceIds,
+            used: false,
+          });
         } else {
-          // Normal slot: use scoring winner
-          plan.push({ date: new Date(day), mealType, recipe: winner, customMeal: null, alternatives, cookingFamilyMemberIds: selectedAudienceIds, used: false });
+          plan.push({
+            date: new Date(day),
+            mealType,
+            recipe: winner,
+            customMeal: null,
+            alternatives,
+            cookingFamilyMemberIds: slotAudienceIds,
+            used: false,
+          });
 
-          // Mark batch carry-forward slots for this recipe
           const rollingEntry = rollingRecipes.find((r) => r.recipeId === winner.id);
           const overrideMeals = rollingEntry ? rollingEntry.meals : undefined;
-          markBatchSlots(winner, mealType, days.indexOf(day), days, batchFilledSlots, selectedAudienceIds.length, overrideMeals);
+          markBatchSlots(
+            winner,
+            mealType,
+            days.indexOf(day),
+            days,
+            batchFilledSlots,
+            batchSlotAudience,
+            slotAudienceIds,
+            slotAudienceIds.length,
+            overrideMeals,
+          );
         }
       }
     }
 
-    // Check for unplaced rolling recipes and generate warnings
     const placedRecipeIds = new Set(plan.filter((s) => s.recipe).map((s) => s.recipe!.id));
     const warnings: string[] = [];
     for (const r of rollingRecipes) {

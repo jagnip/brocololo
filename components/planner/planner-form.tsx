@@ -11,7 +11,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { CheckboxWithLabel } from "@/components/ui/checkbox";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   plannerCriteriaSchema,
@@ -28,6 +27,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { PlanInputType, PlanSlotMealPayload } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
 import type {
+  DayAudienceByMealType,
   DayTimeLimitsType,
   RollingRecipeType,
 } from "@/lib/validations/planner";
@@ -44,7 +44,17 @@ import { MESSAGES } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { PlannerTimeLimitsSection } from "./planner-time-limits-section";
+import {
+  getDailyAudienceForPlanAllDaysToggle,
+  PlannerAudienceSection,
+} from "./planner-audience-section";
 import { PlannerRollingRecipesSection } from "./planner-rolling-recipes-section";
+import {
+  createDefaultAudienceGroups,
+  mapGroupAudienceToDaily,
+  mergeDailyAudienceByDate,
+  type AudienceGroups,
+} from "@/lib/planner/audience-mapping";
 import {
   getRangeGroupAvailability,
   mapGroupLimitsToDailyLimits,
@@ -63,6 +73,7 @@ type PlannerFormProps = {
 };
 
 type TimeLimitsMode = "grouped" | "daily";
+type AudienceMode = "grouped" | "daily";
 
 export {
   getPlannerPlanColumnMode,
@@ -85,6 +96,7 @@ export function PlannerForm({
   occupiedDateKeys,
   familyMembers,
 }: PlannerFormProps) {
+  const defaultFamilyMemberIds = familyMembers.map((member) => member.id);
   const [plan, setPlan] = useState<PlanInputType | null>(null);
   const [lastGenerationError, setLastGenerationError] = useState<string | null>(
     null,
@@ -111,13 +123,20 @@ export function PlannerForm({
     weekday: { ...WEEKDAY_TIME_LIMIT_DEFAULTS },
     weekend: { ...WEEKEND_TIME_LIMIT_DEFAULTS },
   });
+  const [audienceMode, setAudienceMode] = useState<AudienceMode>("grouped");
+  const [audienceDraft, setAudienceDraft] = useState<DayAudienceByMealType[] | null>(
+    null,
+  );
+  const [groupAudience, setGroupAudience] = useState<AudienceGroups>(() =>
+    createDefaultAudienceGroups(defaultFamilyMemberIds),
+  );
 
   const form = useForm<PlannerCriteriaInputType>({
     resolver: zodResolver(plannerCriteriaSchema),
     defaultValues: {
       // Prefill to next 4 days (inclusive) or first free 4-day window.
       dateRange: getDefaultDateRange(occupiedDateKeys),
-      audienceFamilyMemberIds: familyMembers.map((member) => member.id),
+      dailyAudienceByMeal: [],
       dailyTimeLimits: [],
       fridgeIngredientIds: [],
       rollingRecipes: [],
@@ -136,7 +155,7 @@ export function PlannerForm({
       const result = await generatePlan(
         new Date(values.dateRange.start),
         new Date(values.dateRange.end),
-        values.audienceFamilyMemberIds ?? [],
+        values.dailyAudienceByMeal as DayAudienceByMealType[],
         values.dailyTimeLimits as DayTimeLimitsType[],
         values.fridgeIngredientIds ?? [],
         // Coerced numeric fields are validated by Zod; cast input shape for server action typing.
@@ -237,6 +256,17 @@ export function PlannerForm({
     [],
   );
 
+  const handleAudienceChange = useCallback((slotKey: string, memberIds: string[]) => {
+    setPlan((prev) => {
+      if (!prev) return prev;
+      return prev.map((slot) => {
+        const key = `${slot.date.toISOString()}-${slot.mealType}`;
+        if (key !== slotKey) return slot;
+        return { ...slot, cookingFamilyMemberIds: memberIds };
+      });
+    });
+  }, []);
+
   async function handleSavePlan(plan: PlanInputType) {
     setIsSaving(true);
     try {
@@ -262,25 +292,21 @@ export function PlannerForm({
     control: form.control,
     name: "dailyTimeLimits",
   });
+  const {
+    fields: audienceFields,
+    replace: replaceAudience,
+  } = useFieldArray({
+    control: form.control,
+    name: "dailyAudienceByMeal",
+  });
   const watchedDailyTimeLimits =
     (form.watch("dailyTimeLimits") as DayTimeLimitsType[] | undefined) ?? [];
+  const watchedDailyAudience =
+    (form.watch("dailyAudienceByMeal") as DayAudienceByMealType[] | undefined) ??
+    [];
 
   const dateRange = form.watch("dateRange");
-  const selectedAudienceFamilyMemberIds =
-    form.watch("audienceFamilyMemberIds") ?? [];
-  const selectedAudienceIdSet = new Set(selectedAudienceFamilyMemberIds);
-  const eligibleRecipes = recipes.filter((recipe) => {
-    const recipeAudienceIds = new Set(
-      recipe.audienceMembers.map((member) => member.familyMemberId),
-    );
-    return selectedAudienceFamilyMemberIds.every((id) =>
-      recipeAudienceIds.has(id),
-    );
-  });
-  const eligibleRecipeIds = new Set(eligibleRecipes.map((recipe) => recipe.id));
-  const eligiblePreviousPlanUnusedRecipes = previousPlanUnusedRecipes.filter(
-    (recipe) => eligibleRecipeIds.has(recipe.recipeId),
-  );
+  const defaultAudienceMemberCount = defaultFamilyMemberIds.length;
   // Keep a narrowed generated plan reference so callback closures stay non-null-safe.
   const generatedPlan = shouldShowGeneratedPlan(plan, isGenerating)
     ? plan
@@ -320,7 +346,11 @@ export function PlannerForm({
   ];
 
   const generationErrorClearSkipRef = useRef(true);
-  const audienceCriteriaKey = selectedAudienceFamilyMemberIds.join(",");
+  const audienceCriteriaKey = JSON.stringify({
+    mode: audienceMode,
+    group: groupAudience,
+    daily: watchedDailyAudience,
+  });
   const timeLimitsCriteriaKey = JSON.stringify({
     mode: timeLimitsMode,
     group: groupTimeLimits,
@@ -370,6 +400,37 @@ export function PlannerForm({
     replace,
   ]);
 
+  useEffect(() => {
+    if (!dateRange?.start || !dateRange?.end) return;
+    const days = getDaysInRange(
+      new Date(dateRange.start),
+      new Date(dateRange.end),
+    );
+    const previousDaily = form.getValues(
+      "dailyAudienceByMeal",
+    ) as DayAudienceByMealType[];
+
+    if (audienceMode === "grouped") {
+      replaceAudience(mapGroupAudienceToDaily(days, groupAudience));
+      return;
+    }
+
+    const mergedDaily = mergeDailyAudienceByDate(
+      days,
+      previousDaily,
+      groupAudience,
+    );
+    replaceAudience(mergedDaily);
+    setAudienceDraft(mergedDaily);
+  }, [
+    dateRange?.start,
+    dateRange?.end,
+    groupAudience,
+    audienceMode,
+    form,
+    replaceAudience,
+  ]);
+
   const daysInRange =
     dateRange?.start && dateRange?.end
       ? getDaysInRange(new Date(dateRange.start), new Date(dateRange.end))
@@ -409,6 +470,42 @@ export function PlannerForm({
     setDailyDraft(dailyLimits);
     replace(dailyLimits);
     setTimeLimitsMode("daily");
+  }
+
+  function updateGroupAudience(
+    group: keyof AudienceGroups,
+    key:
+      | "breakfastFamilyMemberIds"
+      | "lunchFamilyMemberIds"
+      | "dinnerFamilyMemberIds",
+    memberIds: string[],
+  ) {
+    if (memberIds.length === 0) {
+      return;
+    }
+    setGroupAudience((prev) => ({
+      ...prev,
+      [group]: {
+        ...prev[group],
+        [key]: memberIds,
+      },
+    }));
+  }
+
+  function handleSwitchToGroupedAudience() {
+    setAudienceDraft(form.getValues("dailyAudienceByMeal") as DayAudienceByMealType[]);
+    setAudienceMode("grouped");
+  }
+
+  function handleSwitchToDailyAudience() {
+    const dailyAudience = getDailyAudienceForPlanAllDaysToggle(
+      daysInRange,
+      audienceDraft,
+      groupAudience,
+    );
+    setAudienceDraft(dailyAudience);
+    replaceAudience(dailyAudience);
+    setAudienceMode("daily");
   }
 
   return (
@@ -507,46 +604,18 @@ export function PlannerForm({
                   getDayLabel={formatDayLabel}
                   onInvalidStateChange={setHasInvalidTimeLimitInputs}
                 />
-                <FormField
+                <PlannerAudienceSection
+                  fields={audienceFields}
                   control={form.control}
-                  name="audienceFamilyMemberIds"
-                  render={({ field }) => (
-                    <FormItem className="mt-4 rounded-xl border border-border bg-card p-4">
-                      <FormLabel
-                        tooltip="Only recipes that include everyone selected here can be planned."
-                        tooltipIcon="help"
-                        tooltipAriaLabel="How selected family members affect planning"
-                      >
-                        Who are you cooking for?
-                      </FormLabel>
-                      <FormControl>
-                        <div className="flex flex-wrap gap-2">
-                          {familyMembers.map((member, index) => {
-                            const label =
-                              member.name.trim() ||
-                              (member.isSelf ? "You" : `Family member ${index}`);
-                            return (
-                              <CheckboxWithLabel
-                                key={member.id}
-                                id={`planner-audience-${member.id}`}
-                                checked={selectedAudienceIdSet.has(member.id)}
-                                onCheckedChange={(checked) => {
-                                  const current = field.value ?? [];
-                                  field.onChange(
-                                    checked === true
-                                      ? [...current, member.id]
-                                      : current.filter((id) => id !== member.id),
-                                  );
-                                }}
-                                label={label}
-                              />
-                            );
-                          })}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  familyMembers={familyMembers}
+                  audienceMode={audienceMode}
+                  groupAudience={groupAudience}
+                  hasWeekdays={hasWeekdays}
+                  hasWeekend={hasWeekend}
+                  onSwitchToGrouped={handleSwitchToGroupedAudience}
+                  onSwitchToDaily={handleSwitchToDailyAudience}
+                  onUpdateGroupAudience={updateGroupAudience}
+                  getDayLabel={formatDayLabel}
                 />
                 <div className="mt-4 rounded-xl border border-border bg-card p-4">
                   <FormField
@@ -561,9 +630,9 @@ export function PlannerForm({
                           selected={selected}
                           onChange={field.onChange}
                           ingredients={ingredients}
-                          recipes={eligibleRecipes}
-                          audienceMemberCount={selectedAudienceFamilyMemberIds.length}
-                          previousPlanUnusedRecipes={eligiblePreviousPlanUnusedRecipes}
+                          recipes={recipes}
+                          audienceMemberCount={defaultAudienceMemberCount}
+                          previousPlanUnusedRecipes={previousPlanUnusedRecipes}
                           onInvalidStateChange={setHasInvalidRollingMealsInputs}
                         />
                       );
@@ -607,6 +676,8 @@ export function PlannerForm({
             onShuffle={handleShuffle}
             onSetMeal={handleSetMeal}
             onRemove={handleRemove}
+            familyMembers={familyMembers}
+            onAudienceChange={handleAudienceChange}
           />
         </div>
         {showPlanColumn ? (
@@ -621,6 +692,8 @@ export function PlannerForm({
               onShuffle={handleShuffle}
               onSetMeal={handleSetMeal}
               onRemove={handleRemove}
+              familyMembers={familyMembers}
+              onAudienceChange={handleAudienceChange}
             />
           </div>
         ) : null}

@@ -125,6 +125,16 @@ function buildCustomIngredientCreates(customMeal: PlanCustomMeal | null | undefi
   };
 }
 
+function buildSlotAudienceCreates(cookingFamilyMemberIds: string[] | undefined) {
+  const ids = [...new Set(cookingFamilyMemberIds ?? [])];
+  if (ids.length === 0) {
+    return undefined;
+  }
+  return {
+    create: ids.map((familyMemberId) => ({ familyMemberId })),
+  };
+}
+
 function slotInputToCreateData(s: SlotInputType) {
   const customMeal = s.customMeal;
   const hasCustom = customMeal != null;
@@ -135,6 +145,7 @@ function slotInputToCreateData(s: SlotInputType) {
     recipeId: hasCustom ? null : (s.recipe?.id ?? null),
     customName: hasCustom ? customMeal.name : null,
     used: s.used,
+    audienceMembers: buildSlotAudienceCreates(s.cookingFamilyMemberIds),
     customIngredients: hasCustom
       ? buildCustomIngredientCreates(customMeal)
       : undefined,
@@ -158,6 +169,7 @@ function slotSaveDataToCreateData(s: SlotSaveData) {
     recipeId: hasCustom ? null : s.recipeId,
     customName: hasCustom ? s.customMeal!.name : null,
     used: s.used,
+    audienceMembers: buildSlotAudienceCreates(s.cookingFamilyMemberIds),
     customIngredients: hasCustom
       ? buildCustomIngredientCreates(s.customMeal)
       : undefined,
@@ -264,6 +276,10 @@ export async function getPlanById(userId: string, planId: string) {
       },
       slots: {
         include: {
+          audienceMembers: {
+            select: { familyMemberId: true },
+            orderBy: { familyMemberId: "asc" },
+          },
           recipe: { include: recipeInclude },
           customIngredients: {
             orderBy: { position: "asc" },
@@ -285,9 +301,6 @@ export async function getPlanById(userId: string, planId: string) {
   });
 
   if (!plan) return null;
-  const cookingFamilyMemberIds = plan.audienceMembers.map(
-    (member) => member.familyMemberId,
-  );
 
   return plan.slots.map((slot) => ({
     id: slot.id,
@@ -296,7 +309,9 @@ export async function getPlanById(userId: string, planId: string) {
     recipe: slot.recipe,
     customMeal: mapCustomMealFromSlot(slot),
     alternatives: slot.alternatives.map((a) => a.recipe),
-    cookingFamilyMemberIds,
+    cookingFamilyMemberIds: slot.audienceMembers.map(
+      (member) => member.familyMemberId,
+    ),
     used: slot.used,
   }));
 }
@@ -558,6 +573,10 @@ export async function createBaselineLogTx(
 
   for (const familyMember of familyMembers) {
     for (const slot of slots) {
+      const slotAudienceIds = slot.cookingFamilyMemberIds ?? [];
+      if (!slotAudienceIds.includes(familyMember.id)) {
+        continue;
+      }
       await tx.logEntry.create({
         data: {
           logId: log.id,
@@ -713,6 +732,9 @@ export async function getPlannerPoolItemsForPlan(params: {
               familyMembers,
               memberPortions: slot.recipe!.memberPortions,
               cookingFamilyMemberIds: slot.cookingFamilyMemberIds,
+              recipeAudienceFamilyMemberIds: slot.recipe!.audienceMembers.map(
+                (member) => member.familyMemberId,
+              ),
             });
             if (personAmount == null || ri.unitId == null) return null;
             return {
@@ -926,11 +948,20 @@ export async function updatePlan(
     await tx.planSlotAlternative.deleteMany({ where: { planSlot: { planId } } });
     await tx.planSlot.deleteMany({ where: { planId } });
 
+    const planAudienceIds = [
+      ...new Set(slots.flatMap((slot) => slot.cookingFamilyMemberIds ?? [])),
+    ];
+
+    await tx.planAudienceMember.deleteMany({ where: { planId } });
+
     await tx.plan.update({
       where: { id: planId },
       data: {
         startDate,
         endDate,
+        audienceMembers: {
+          create: planAudienceIds.map((familyMemberId) => ({ familyMemberId })),
+        },
         slots: {
           create: slots.map((s) => slotSaveDataToCreateData(s)),
         },

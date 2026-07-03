@@ -24,12 +24,14 @@ import {
 import { PageHeader } from "@/components/page-header";
 import { usePlanTopbarState } from "@/components/planner/plan-topbar-state-context";
 import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 type PlanEditorProps = {
   planId: string;
   initialPlan: PlanInputType;
   recipes: RecipeType[];
   ingredientOptions: LogIngredientOption[];
+  familyMembers?: FamilyMemberRow[];
   sharedDateRange?: DateRangeValue;
   hideInlineControls?: boolean;
   hidePageHeader?: boolean;
@@ -51,6 +53,7 @@ export function PlanEditor({
   initialPlan,
   recipes,
   ingredientOptions,
+  familyMembers = [],
   sharedDateRange,
   hideInlineControls = false,
   hidePageHeader = false,
@@ -133,6 +136,10 @@ export function PlanEditor({
       recipeId: s.recipe?.id ?? null,
       customMeal: s.customMeal,
       alternativeRecipeIds: s.alternatives.map((a) => a.id),
+      cookingFamilyMemberIds:
+        s.cookingFamilyMemberIds && s.cookingFamilyMemberIds.length > 0
+          ? s.cookingFamilyMemberIds
+          : familyMembers.map((member) => member.id),
       used: s.used,
     }));
 
@@ -171,7 +178,7 @@ export function PlanEditor({
       // because the database persisted only the visible `plan` subset.
       allSlotsRef.current = plan;
     }
-  }, [isDirty, plan, planId, saveStatus]);
+  }, [familyMembers, isDirty, plan, planId, saveStatus]);
 
   useEffect(() => {
     // Debounced autosave reuses the existing save pipeline and conflict handling.
@@ -339,6 +346,17 @@ export function PlanEditor({
         return { ...slot, used: !slot.used };
       }),
     );
+  }, []);
+
+  const handleAudienceChange = useCallback((slotKey: string, memberIds: string[]) => {
+    const applyAudience = (slot: SlotInputType): SlotInputType => {
+      const key = `${slot.date.toISOString()}-${slot.mealType}`;
+      if (key !== slotKey) return slot;
+      return { ...slot, cookingFamilyMemberIds: memberIds };
+    };
+
+    allSlotsRef.current = allSlotsRef.current.map(applyAudience);
+    setPlan((prev) => prev.map(applyAudience));
   }, []);
 
   useEffect(() => {
@@ -547,6 +565,8 @@ export function PlanEditor({
         onSetMeal={markEdited(handleSetMeal)}
         onRemove={markEdited(handleRemove)}
         onToggleUsed={markEdited(handleToggleUsed)}
+        familyMembers={familyMembers}
+        onAudienceChange={markEdited(handleAudienceChange)}
       />
     </>
   );

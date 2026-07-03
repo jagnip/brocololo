@@ -45,5 +45,6 @@ export type SlotSaveData = {
   recipeId: string | null;
   customMeal: PlanCustomMeal | null;
   alternativeRecipeIds: string[];
+  cookingFamilyMemberIds: string[];
   used: boolean;
 };

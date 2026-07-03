@@ -123,6 +123,48 @@ describe("getFamilyMemberIngredientAmountPerMeal", () => {
 
     expect(selfAmount).toBeCloseTo(200);
   });
+
+  it("gives off-recipe diners one shared portion of applies-to-everyone ingredients", () => {
+  // Recipe is for child only; adult joins the meal off-recipe.
+    const familyMembers = [
+      { id: "self", isSelf: true },
+      { id: "child", isSelf: false },
+    ];
+    const amount = getFamilyMemberIngredientAmountPerMeal({
+      amount: 200,
+      appliesToEveryone: true,
+      targetFamilyMemberIds: [],
+      familyMemberId: "self",
+      recipeServings: 1,
+      familyMembers,
+      memberPortions: [],
+      cookingFamilyMemberIds: ["self", "child"],
+      recipeAudienceFamilyMemberIds: ["child"],
+    });
+
+    // Shared row split: adult weight 1 + child weight 1 => 100 each for one meal.
+    expect(amount).toBeCloseTo(100);
+  });
+
+  it("returns null for off-recipe diners on targeted ingredients", () => {
+    const familyMembers = [
+      { id: "self", isSelf: true },
+      { id: "child", isSelf: false },
+    ];
+    const amount = getFamilyMemberIngredientAmountPerMeal({
+      amount: 50,
+      appliesToEveryone: false,
+      targetFamilyMemberIds: ["child"],
+      familyMemberId: "self",
+      recipeServings: 1,
+      familyMembers,
+      memberPortions: [],
+      cookingFamilyMemberIds: ["self", "child"],
+      recipeAudienceFamilyMemberIds: ["child"],
+    });
+
+    expect(amount).toBeNull();
+  });
 });
 
 describe("getFamilyMemberIngredientAmountForScaledBatch", () => {
