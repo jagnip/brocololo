@@ -1,5 +1,21 @@
-import { describe, expect, it } from "vitest";
-import { findLogContainingDate, type LogListEntry } from "./logs";
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import { LogMealType } from "@/src/generated/client";
+import {
+  ensureSnackLogEntriesForMember,
+  findLogContainingDate,
+  type LogListEntry,
+} from "./logs";
+
+vi.mock("./index", () => ({
+  prisma: {
+    logEntry: {
+      findMany: vi.fn(),
+      upsert: vi.fn(),
+    },
+  },
+}));
+
+import { prisma } from "./index";
 
 function mockLog(
   id: string,
@@ -47,5 +63,48 @@ describe("findLogContainingDate", () => {
 
     expect(startBoundary?.id).toBe("active");
     expect(endBoundary?.id).toBe("active");
+  });
+});
+
+describe("ensureSnackLogEntriesForMember", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(prisma.logEntry.upsert).mockResolvedValue({
+      id: "entry-snack",
+      logId: "log-1",
+      date: new Date("2026-03-17T00:00:00.000Z"),
+      mealType: LogMealType.SNACK,
+      familyMemberId: "fm-1",
+    });
+  });
+
+  it("upserts one snack row per distinct day with any member entry", async () => {
+    vi.mocked(prisma.logEntry.findMany).mockResolvedValue([
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+      },
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+      },
+      {
+        date: new Date("2026-03-18T00:00:00.000Z"),
+      },
+    ]);
+
+    await ensureSnackLogEntriesForMember("log-1", "fm-1");
+
+    expect(prisma.logEntry.upsert).toHaveBeenCalledTimes(2);
+    expect(prisma.logEntry.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          logId_date_mealType_familyMemberId: {
+            logId: "log-1",
+            date: new Date("2026-03-17T00:00:00.000Z"),
+            mealType: LogMealType.SNACK,
+            familyMemberId: "fm-1",
+          },
+        },
+      }),
+    );
   });
 });

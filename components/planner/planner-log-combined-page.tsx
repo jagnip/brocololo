@@ -4,8 +4,7 @@ import { getRecipes } from "@/lib/db/recipes";
 import { getLogByPlanId } from "@/lib/db/logs";
 import { getPlannerPoolItemsForPlan } from "@/lib/db/planner";
 import { getIngredients } from "@/lib/db/ingredients";
-import { getFamilyMemberIngredientAmountPerMeal } from "@/lib/log/helpers";
-import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
+import { buildLogMealSelectorOptions } from "@/lib/log/meal-selector-options";
 import { buildLogDays, buildVisiblePlannerPoolCards } from "@/lib/log/view-model";
 import type { DateRangeValue } from "@/components/planner/date-range-picker";
 import { PlannerLogSharedShell } from "@/components/planner/planner-log-shared-shell";
@@ -36,46 +35,6 @@ function toInitialDateRange(planSlots: Awaited<ReturnType<typeof getPlanById>>):
   const start = keys.reduce((min, key) => (key < min ? key : min), keys[0]!);
   const end = keys.reduce((max, key) => (key > max ? key : max), keys[0]!);
   return { start, end };
-}
-
-function toRecipeSelectorRows(params: {
-  recipe: Awaited<ReturnType<typeof getRecipes>>[number];
-  familyMemberId: string;
-  familyMembers: Awaited<ReturnType<typeof ensureSelfFamilyMember>>;
-}) {
-  return params.recipe.ingredients
-    .map((recipeIngredient) => {
-      if (recipeIngredient.amount == null) return null;
-
-      const amountForPerson = getFamilyMemberIngredientAmountPerMeal({
-        amount: recipeIngredient.amount,
-        appliesToEveryone: recipeIngredient.appliesToEveryone,
-        targetFamilyMemberIds: recipeIngredient.memberTargets.map(
-          (target) => target.familyMemberId,
-        ),
-        familyMemberId: params.familyMemberId,
-        recipeServings: params.recipe.servings,
-        familyMembers: params.familyMembers,
-        memberPortions: params.recipe.memberPortions,
-        cookingFamilyMemberIds: params.recipe.audienceMembers.map(
-          (member) => member.familyMemberId,
-        ),
-      });
-      if (amountForPerson == null || amountForPerson <= 0) return null;
-
-      const defaultUnitId = getDefaultUnitIdForIngredient({
-        defaultUnitId: recipeIngredient.ingredient.defaultUnitId,
-        unitConversions: recipeIngredient.ingredient.unitConversions,
-      });
-      const row = {
-        ingredientId: recipeIngredient.ingredient.id,
-        unitId: recipeIngredient.unit?.id ?? defaultUnitId,
-        amount: Math.round(amountForPerson * 1000) / 1000,
-      };
-      if (!row.unitId) return null;
-      return row;
-    })
-    .filter((row): row is { ingredientId: string; unitId: string; amount: number } => row != null);
 }
 
 export async function PlannerLogCombinedPage({
@@ -157,6 +116,7 @@ export async function PlannerLogCombinedPage({
     recipeOptions: Array<{
       id: string;
       name: string;
+      kind: "repository" | "plan-idea";
       initialRows: { ingredientId: string; unitId: string; amount: number }[];
     }>;
     ingredientOptions: LogIngredientOption[];
@@ -186,15 +146,12 @@ export async function PlannerLogCombinedPage({
       entries: log.entries,
     });
 
-    const recipeOptions = allRecipes.map((recipe) => ({
-      id: recipe.id,
-      name: recipe.name,
-      initialRows: toRecipeSelectorRows({
-        recipe,
-        familyMemberId: selectedFamilyMember.id,
-        familyMembers,
-      }),
-    }));
+    const recipeOptions = buildLogMealSelectorOptions({
+      recipes: allRecipes,
+      planSlots: planSlots ?? [],
+      familyMemberId: selectedFamilyMember.id,
+      familyMembers,
+    });
 
     const ingredientOptionsForLog = ingredients.map((ingredient) => ({
       id: ingredient.id,

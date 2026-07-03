@@ -5,6 +5,7 @@ import type {
   LogDayData,
   PlannerPoolGroupedCardData,
 } from "@/lib/log/view-model";
+import type { LogMealSelectorOption } from "@/lib/log/meal-selector-options";
 import {
   LogIngredientsForm,
   type EditableIngredientRow,
@@ -23,8 +24,10 @@ export type SelectedSlotState = {
   entryId: string;
   entryRecipeId: string | null;
   mealLabel: string;
-  selectedRecipeId: string | null;
-  initialSelectedRecipeId: string | null;
+  selectedMealOptionId: string | null;
+  initialSelectedMealOptionId: string | null;
+  /** When re-editing a logged idea meal, keep the linked plan slot for re-reservation. */
+  planSlotId: string | null;
   subtitle: string;
   initialRows: EditableIngredientRow[];
 };
@@ -35,11 +38,7 @@ export type LogActiveDayViewProps = {
   groupedPlannerPool: PlannerPoolGroupedCardData[];
   editorSlot: SelectedSlotState | null;
   ingredientOptions: LogIngredientOption[];
-  recipeOptions: Array<{
-    id: string;
-    name: string;
-    initialRows: EditableIngredientRow[];
-  }>;
+  recipeOptions: LogMealSelectorOption[];
   isSaving: boolean;
   isAddingDay: boolean;
   isRemovingDay: boolean;
@@ -187,9 +186,9 @@ export function LogActiveDayView({
                       ingredientOptions={ingredientOptions}
                       isSaving={isSaving}
                       recipeOptions={recipeOptions}
-                      selectedRecipeId={editorSlot.selectedRecipeId}
+                      selectedRecipeId={editorSlot.selectedMealOptionId}
                       initialSelectedRecipeId={
-                        editorSlot.initialSelectedRecipeId
+                        editorSlot.initialSelectedMealOptionId
                       }
                       onSelectedRecipeIdChange={onSelectedRecipeIdChange}
                       onSave={onSave}
@@ -209,8 +208,8 @@ export function LogActiveDayView({
                 ingredientOptions={ingredientOptions}
                 isSaving={isSaving}
                 recipeOptions={recipeOptions}
-                selectedRecipeId={editorSlot.selectedRecipeId}
-                initialSelectedRecipeId={editorSlot.initialSelectedRecipeId}
+                selectedRecipeId={editorSlot.selectedMealOptionId}
+                initialSelectedRecipeId={editorSlot.initialSelectedMealOptionId}
                 onSelectedRecipeIdChange={onSelectedRecipeIdChange}
                 onSave={onSave}
               />
