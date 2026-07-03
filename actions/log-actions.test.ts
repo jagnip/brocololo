@@ -68,7 +68,7 @@ describe("updateLogRecipeIngredientsAction", () => {
 
     const result = await updateLogRecipeIngredientsAction({
       logId: "log-1",
-      person: "PRIMARY",
+      familyMemberId: "member-1",
       entryId: "entry-1",
       entryRecipeId: "entry-recipe-1",
       ingredients: [{ ingredientId: "ing-1", unitId: "unit-g", amount: 120 }],
@@ -77,7 +77,7 @@ describe("updateLogRecipeIngredientsAction", () => {
     expect(result).toEqual({ type: "success" });
     expect(updateLogRecipeIngredients).toHaveBeenCalledWith("user-test", {
       logId: "log-1",
-      person: "PRIMARY",
+      familyMemberId: "member-1",
       entryId: "entry-1",
       entryRecipeId: "entry-recipe-1",
       ingredients: [{ ingredientId: "ing-1", unitId: "unit-g", amount: 120 }],
@@ -110,16 +110,16 @@ describe("addRecipeToLogAction", () => {
 
     const result = await addRecipeToLogAction({
       recipeId: "recipe-1",
-      person: "PRIMARY",
+      familyMemberId: "member-1",
       date: "2026-03-19",
       mealType: "DINNER",
       ingredients: [{ ingredientId: "ing-1", unitId: "unit-g", amount: 120 }],
-    } as never);
+    });
 
     expect(result).toEqual({ type: "success" });
     expect(replaceMealSlotWithRecipe).toHaveBeenCalledWith("user-test", {
       recipeId: "recipe-1",
-      person: "PRIMARY",
+      familyMemberId: "member-1",
       date: new Date("2026-03-19"),
       mealType: "DINNER",
       ingredients: [{ ingredientId: "ing-1", unitId: "unit-g", amount: 120 }],
@@ -134,11 +134,11 @@ describe("addRecipeToLogAction", () => {
 
     const result = await addRecipeToLogAction({
       recipeId: "recipe-1",
-      person: "PRIMARY",
+      familyMemberId: "member-1",
       date: "2026-03-19",
       mealType: "DINNER",
       ingredients: [{ ingredientId: "ing-1", unitId: "unit-g", amount: 120 }],
-    } as never);
+    });
 
     expect(result).toEqual({
       type: "error",
@@ -252,14 +252,14 @@ describe("clearLogEntryAssignmentAction", () => {
 
     const result = await clearLogEntryAssignmentAction({
       logId: "log-1",
-      person: "PRIMARY",
+      familyMemberId: "member-1",
       entryId: "entry-1",
     });
 
     expect(result).toEqual({ type: "success" });
     expect(clearLogEntryAssignment).toHaveBeenCalledWith("user-test", {
       logId: "log-1",
-      person: "PRIMARY",
+      familyMemberId: "member-1",
       entryId: "entry-1",
     });
   });

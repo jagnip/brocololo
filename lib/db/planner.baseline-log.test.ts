@@ -68,4 +68,34 @@ describe("createBaselineLogTx snack provisioning", () => {
       expect.arrayContaining(["fm-1", "fm-2"]),
     );
   });
+
+  it("creates meal log entries only for people included on each slot", async () => {
+    familyMemberFindManyMock.mockResolvedValue([{ id: "fm-1" }, { id: "fm-2" }]);
+
+    await createBaselineLogTx(tx as never, "user-1", "plan-1", [
+      {
+        ...makeSlot("2026-03-17", PlannerMealType.BREAKFAST),
+        cookingFamilyMemberIds: ["fm-1"],
+      },
+      {
+        ...makeSlot("2026-03-17", PlannerMealType.LUNCH),
+        cookingFamilyMemberIds: ["fm-2"],
+      },
+    ]);
+
+    const mealCreates = logEntryCreateMock.mock.calls.map(([args]) => args.data);
+    expect(mealCreates).toHaveLength(2);
+    expect(mealCreates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          familyMemberId: "fm-1",
+          mealType: PlannerMealType.BREAKFAST,
+        }),
+        expect.objectContaining({
+          familyMemberId: "fm-2",
+          mealType: PlannerMealType.LUNCH,
+        }),
+      ]),
+    );
+  });
 });

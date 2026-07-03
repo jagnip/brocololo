@@ -78,6 +78,11 @@ export type ShoppingListItem = Prisma.ShoppingListItemModel
  */
 export type PlanSlot = Prisma.PlanSlotModel
 /**
+ * Model PlanSlotAudienceMember
+ * 
+ */
+export type PlanSlotAudienceMember = Prisma.PlanSlotAudienceMemberModel
+/**
  * Model PlanSlotCustomIngredient
  * 
  */

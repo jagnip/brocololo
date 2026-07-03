@@ -26,7 +26,23 @@ type FamilyMemberPortionParams = {
   familyMembers: FamilyMemberForPortion[];
   memberPortions: MemberPortion[];
   cookingFamilyMemberIds?: string[];
+  /** Recipe audience; when omitted, all cooking members are treated as on-recipe. */
+  recipeAudienceFamilyMemberIds?: string[];
 };
+
+function getSharedIngredientApplicableWeight(
+  cookingMembers: FamilyMemberForPortion[],
+  recipeAudienceIdSet: Set<string>,
+  memberPortions: MemberPortion[],
+): number {
+  return cookingMembers.reduce((sum, member) => {
+    if (recipeAudienceIdSet.has(member.id)) {
+      return sum + getMemberMultiplier(member, memberPortions);
+    }
+    // Off-recipe diners still get one shared portion each.
+    return sum + 1;
+  }, 0);
+}
 
 function getFamilyMemberPortionWeights(
   params: FamilyMemberPortionParams,
@@ -39,6 +55,7 @@ function getFamilyMemberPortionWeights(
     familyMembers,
     memberPortions,
     cookingFamilyMemberIds,
+    recipeAudienceFamilyMemberIds,
   } = params;
 
   if (amount == null) return null;
@@ -54,22 +71,43 @@ function getFamilyMemberPortionWeights(
   const selectedMember = cookingMembers.find((member) => member.id === familyMemberId);
   if (!selectedMember) return null;
 
-  const applicableMembers = appliesToEveryone
-    ? cookingMembers
-    : cookingMembers.filter((member) =>
-        targetFamilyMemberIds.includes(member.id),
-      );
-  if (!applicableMembers.some((member) => member.id === familyMemberId)) {
-    return null;
+  const recipeAudienceIdSet = new Set(
+    recipeAudienceFamilyMemberIds ?? cookingMembers.map((member) => member.id),
+  );
+  const isOnRecipe = recipeAudienceIdSet.has(familyMemberId);
+
+  if (!appliesToEveryone) {
+    if (!isOnRecipe) {
+      return null;
+    }
+
+    const applicableMembers = cookingMembers.filter((member) =>
+      targetFamilyMemberIds.includes(member.id),
+    );
+    if (!applicableMembers.some((member) => member.id === familyMemberId)) {
+      return null;
+    }
+
+    const applicableWeight = applicableMembers.reduce(
+      (sum, member) => sum + getMemberMultiplier(member, memberPortions),
+      0,
+    );
+    if (!Number.isFinite(applicableWeight) || applicableWeight <= 0) return null;
+
+    const selectedWeight = getMemberMultiplier(selectedMember, memberPortions);
+    return { selectedWeight, applicableWeight };
   }
 
-  const applicableWeight = applicableMembers.reduce(
-    (sum, member) => sum + getMemberMultiplier(member, memberPortions),
-    0,
+  const applicableWeight = getSharedIngredientApplicableWeight(
+    cookingMembers,
+    recipeAudienceIdSet,
+    memberPortions,
   );
   if (!Number.isFinite(applicableWeight) || applicableWeight <= 0) return null;
 
-  const selectedWeight = getMemberMultiplier(selectedMember, memberPortions);
+  const selectedWeight = isOnRecipe
+    ? getMemberMultiplier(selectedMember, memberPortions)
+    : 1;
   return { selectedWeight, applicableWeight };
 }
 
@@ -96,6 +134,7 @@ export function getFamilyMemberIngredientAmountPerMeal(params: {
   familyMembers: FamilyMemberForPortion[];
   memberPortions: MemberPortion[];
   cookingFamilyMemberIds?: string[];
+  recipeAudienceFamilyMemberIds?: string[];
 }): number | null {
   const {
     amount,
@@ -106,6 +145,7 @@ export function getFamilyMemberIngredientAmountPerMeal(params: {
     familyMembers,
     memberPortions,
     cookingFamilyMemberIds,
+    recipeAudienceFamilyMemberIds,
   } = params;
 
   if (!Number.isFinite(recipeServings) || recipeServings <= 0) return null;
@@ -118,6 +158,7 @@ export function getFamilyMemberIngredientAmountPerMeal(params: {
     familyMembers,
     memberPortions,
     cookingFamilyMemberIds,
+    recipeAudienceFamilyMemberIds,
   });
   if (weights == null || amount == null) return null;
 
@@ -127,7 +168,17 @@ export function getFamilyMemberIngredientAmountPerMeal(params: {
   const cookingMembers = familyMembers.filter((member) =>
     cookingMemberIdSet.has(member.id),
   );
+  const recipeAudienceIdSet = new Set(
+    recipeAudienceFamilyMemberIds ?? cookingMembers.map((member) => member.id),
+  );
+  const isOnRecipe = recipeAudienceIdSet.has(familyMemberId);
   const { selectedWeight, applicableWeight } = weights;
+
+  if (!isOnRecipe) {
+    // Off-recipe diners only take a flat share of shared ingredients for this cook.
+    return (amount * selectedWeight) / applicableWeight;
+  }
+
   // Servings are plate-count yield. One cooked meal consumes audienceCount / servings
   // of the recipe, then multipliers divide that meal among applicable members.
   return (

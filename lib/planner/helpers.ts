@@ -90,14 +90,15 @@ export function getPlannerMealCountForAudience(
 }
 
 // Marks future slots as claimed by a batch recipe (servings > selected audience count).
-// Uses a Map so generatePlan knows which recipe was carried forward into each slot.
-// Does NOT push to plan — generatePlan handles that so it can compute alternatives.
+// Carried slots inherit the source slot audience via batchSlotAudience.
 export function markBatchSlots(
   recipe: RecipeType,
   mealType: PlannerMealType,
   dayIndex: number,
   days: Date[],
   batchFilledSlots: Map<string, RecipeType>,
+  batchSlotAudience: Map<string, string[]>,
+  cookingFamilyMemberIds: string[],
   audienceMemberCount: number,
   overrideMeals?: number,
 ): void {
@@ -116,6 +117,7 @@ export function markBatchSlots(
     if (batchFilledSlots.has(futureSlotKey)) continue; // slot taken, skip to next day
 
     batchFilledSlots.set(futureSlotKey, recipe);
+    batchSlotAudience.set(futureSlotKey, [...cookingFamilyMemberIds]);
     placed++;
   }
 }

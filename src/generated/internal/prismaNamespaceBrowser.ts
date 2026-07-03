@@ -63,6 +63,7 @@ export const ModelName = {
   ShoppingListShare: 'ShoppingListShare',
   ShoppingListItem: 'ShoppingListItem',
   PlanSlot: 'PlanSlot',
+  PlanSlotAudienceMember: 'PlanSlotAudienceMember',
   PlanSlotCustomIngredient: 'PlanSlotCustomIngredient',
   PlanSlotAlternative: 'PlanSlotAlternative',
   Recipe: 'Recipe',
@@ -236,6 +237,14 @@ export const PlanSlotScalarFieldEnum = {
 } as const
 
 export type PlanSlotScalarFieldEnum = (typeof PlanSlotScalarFieldEnum)[keyof typeof PlanSlotScalarFieldEnum]
+
+
+export const PlanSlotAudienceMemberScalarFieldEnum = {
+  planSlotId: 'planSlotId',
+  familyMemberId: 'familyMemberId'
+} as const
+
+export type PlanSlotAudienceMemberScalarFieldEnum = (typeof PlanSlotAudienceMemberScalarFieldEnum)[keyof typeof PlanSlotAudienceMemberScalarFieldEnum]
 
 
 export const PlanSlotCustomIngredientScalarFieldEnum = {

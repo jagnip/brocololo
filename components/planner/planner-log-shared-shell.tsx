@@ -362,6 +362,7 @@ export function PlannerLogSharedShell({
             initialPlan={initialPlan}
             recipes={plannerRecipes}
             ingredientOptions={ingredientOptions}
+            familyMembers={familyMembers}
             sharedDateRange={dateRange}
             hideInlineControls
             hidePageHeader

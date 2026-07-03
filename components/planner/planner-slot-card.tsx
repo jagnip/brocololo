@@ -17,6 +17,8 @@ import { PlanSlotMealDialog } from "./plan-slot-meal-dialog";
 import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import { ROUTES } from "@/lib/constants";
+import { SlotAudienceSelect } from "./slot-audience-select";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 /** Warm off-white on primary — matches --rose-50 accent surface. */
 const MEAL_DONE_ICON_CLASS =
@@ -29,6 +31,8 @@ type PlannerSlotCardProps = {
   onSetMeal?: (payload: PlanSlotMealPayload) => void;
   onRemove?: () => void;
   onToggleUsed?: () => void;
+  familyMembers?: FamilyMemberRow[];
+  onAudienceChange?: (memberIds: string[]) => void;
   recipes: RecipeType[];
   ingredientOptions: LogIngredientOption[];
 };
@@ -40,6 +44,8 @@ export function PlannerSlotCard({
   onSetMeal,
   onRemove,
   onToggleUsed,
+  familyMembers = [],
+  onAudienceChange,
   recipes,
   ingredientOptions,
 }: PlannerSlotCardProps) {
@@ -56,6 +62,96 @@ export function PlannerSlotCard({
   const dialogSubtitle = `${mealLabel} · ${formatDayLabel(slot.date)}`;
   const canEdit = Boolean(onSetMeal);
   const isEmpty = !recipe && !customMeal;
+  const selectedAudienceIds =
+    slot.cookingFamilyMemberIds && slot.cookingFamilyMemberIds.length > 0
+      ? slot.cookingFamilyMemberIds
+      : familyMembers.map((member) => member.id);
+  const showAudienceSelect =
+    familyMembers.length > 0 && Boolean(onAudienceChange);
+
+  const renderAudienceSelect = () =>
+    showAudienceSelect ? (
+      <SlotAudienceSelect
+        familyMembers={familyMembers}
+        value={selectedAudienceIds}
+        onChange={(memberIds) => onAudienceChange?.(memberIds)}
+      />
+    ) : null;
+
+  const renderSlotActions = (options: {
+    canShuffle: boolean;
+    showChange: boolean;
+  }) => {
+    const hasActions =
+      options.canShuffle ||
+      options.showChange ||
+      onRemove ||
+      onToggleUsed ||
+      showAudienceSelect;
+    if (!hasActions) {
+      return null;
+    }
+
+    return (
+      <div className="mt-item flex w-full items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-1">
+          {onToggleUsed && (
+            <Button
+              type="button"
+              variant={slot.used ? "default" : "outline"}
+              size="icon"
+              className={slot.used ? MEAL_DONE_ICON_CLASS : undefined}
+              onClick={onToggleUsed}
+            >
+              <Check
+                className="h-4 w-4"
+                strokeWidth={slot.used ? 2.5 : 2}
+              />
+            </Button>
+          )}
+          {options.canShuffle && onShuffle && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={onShuffle}
+            >
+              <Shuffle className="h-4 w-4" />
+            </Button>
+          )}
+          {options.showChange && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={openDialog}
+              aria-label="Change meal"
+            >
+              <ArrowLeftRight className="h-4 w-4" />
+            </Button>
+          )}
+          {onRemove && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={onRemove}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+        {renderAudienceSelect()}
+      </div>
+    );
+  };
+
+  const shouldIgnoreCardClick = (target: HTMLElement) =>
+    Boolean(
+      target.closest("button") ||
+        target.closest("a") ||
+        target.closest("[data-slot='popover-content']"),
+    );
 
   const openDialog = () => {
     if (!canEdit) return;
@@ -114,8 +210,6 @@ export function PlannerSlotCard({
   }
 
   if (customMeal) {
-    const canShuffle = false;
-
     return (
       <>
         <Card
@@ -126,7 +220,7 @@ export function PlannerSlotCard({
           )}
           onClick={(event) => {
             const target = event.target as HTMLElement;
-            if (target.closest("button")) return;
+            if (shouldIgnoreCardClick(target)) return;
             openDialog();
           }}
         >
@@ -143,45 +237,7 @@ export function PlannerSlotCard({
                   {mealLabel}
                 </p>
               </div>
-              {(canShuffle || canEdit || onRemove || onToggleUsed) && (
-                <div className="mt-item flex w-full justify-start gap-1">
-                  {onToggleUsed && (
-                    <Button
-                      type="button"
-                      variant={slot.used ? "default" : "outline"}
-                      size="icon"
-                      className={slot.used ? MEAL_DONE_ICON_CLASS : undefined}
-                      onClick={onToggleUsed}
-                    >
-                      <Check
-                        className="h-4 w-4"
-                        strokeWidth={slot.used ? 2.5 : 2}
-                      />
-                    </Button>
-                  )}
-                  {canEdit && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={openDialog}
-                      aria-label="Change meal"
-                    >
-                      <ArrowLeftRight className="h-4 w-4" />
-                    </Button>
-                  )}
-                  {onRemove && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={onRemove}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              )}
+              {renderSlotActions({ canShuffle: false, showChange: canEdit })}
             </div>
           </CardHeader>
         </Card>
@@ -223,7 +279,7 @@ export function PlannerSlotCard({
         )}
         onClick={(event) => {
           const target = event.target as HTMLElement;
-          if (target.closest("button") || target.closest("a")) return;
+          if (shouldIgnoreCardClick(target)) return;
           openDialog();
         }}
       >
@@ -269,55 +325,10 @@ export function PlannerSlotCard({
                   </Badge>
                 ))}
             </div>
-            {(canShuffle || canEdit || onRemove || onToggleUsed) && (
-              <div className="mt-item flex w-full justify-start gap-1">
-                {onToggleUsed && (
-                  <Button
-                    type="button"
-                    variant={slot.used ? "default" : "outline"}
-                    size="icon"
-                    className={slot.used ? MEAL_DONE_ICON_CLASS : undefined}
-                    onClick={onToggleUsed}
-                  >
-                    <Check
-                      className="h-4 w-4"
-                      strokeWidth={slot.used ? 2.5 : 2}
-                    />
-                  </Button>
-                )}
-                {canShuffle && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={onShuffle}
-                  >
-                    <Shuffle className="h-4 w-4" />
-                  </Button>
-                )}
-                {canEdit && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={openDialog}
-                    aria-label="Change meal"
-                  >
-                    <ArrowLeftRight className="h-4 w-4" />
-                  </Button>
-                )}
-                {onRemove && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={onRemove}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            )}
+            {renderSlotActions({
+              canShuffle: Boolean(canShuffle),
+              showChange: canEdit,
+            })}
           </div>
         </CardHeader>
       </Card>
