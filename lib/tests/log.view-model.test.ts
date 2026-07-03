@@ -168,6 +168,26 @@ describe("buildLogDays", () => {
     });
   });
 
+  it("exposes snack slot entryId when a snack log entry exists", () => {
+    const days = buildLogDays([
+      {
+        id: "entry-snack",
+        date: new Date("2026-03-19T00:00:00.000Z"),
+        mealType: LogMealType.SNACK,
+        recipes: [],
+        ingredients: [],
+      },
+    ]);
+
+    const snackSlot = days[0]?.slots[2];
+    expect(snackSlot).toMatchObject({
+      mealType: LogMealType.SNACK,
+      label: "Snack",
+      entryId: "entry-snack",
+      recipes: [],
+    });
+  });
+
   it("creates custom card from ingredients without entryRecipeId", () => {
     const days = buildLogDays([
       {

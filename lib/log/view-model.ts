@@ -1,5 +1,9 @@
 import { LogMealType, PlannerMealType } from "@/src/generated/enums";
 import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
+import {
+  toPlanIdeaMealOptionId,
+  toRepositoryMealOptionId,
+} from "@/lib/log/meal-selector-options";
 
 function plannerMealTypeToLogMealType(
   mealType: PlannerMealType,
@@ -65,6 +69,8 @@ export type LogRecipeCardData = {
   plannedPoolDate?: Date;
   plannedPoolMealType?: LogMealType;
   sourceRecipeId: string | null;
+  /** Custom name from a linked plan slot (idea meal). */
+  planIdeaCustomName?: string | null;
   mealLabel: LogSlotData["label"];
   cardKind: "recipe" | "custom" | "removed";
   title: string;
@@ -234,6 +240,9 @@ export function buildLogDays(entries: LogEntryRow[]): LogDayData[] {
             ? plannerMealTypeToLogMealType(recipe.planSlot.mealType)
             : undefined,
         sourceRecipeId: recipe.sourceRecipe?.id ?? null,
+        planIdeaCustomName: isPlannedCustom
+          ? recipe.planSlot?.customName ?? null
+          : null,
         mealLabel: LOG_MEAL_LABELS[entry.mealType],
         cardKind: recipe.sourceRecipe
           ? "recipe"
@@ -303,20 +312,16 @@ export function buildLogDays(entries: LogEntryRow[]): LogDayData[] {
     }));
 }
 
-function plannerPoolMatchKey(item: {
+/** Groups pool cards by meal identity (recipe id or idea name), not per plan slot. */
+export function plannerPoolGroupKey(item: {
   sourceRecipeId: string | null;
-}) {
-  return item.sourceRecipeId ?? "none";
-}
+  title: string;
+}): string {
+  if (item.sourceRecipeId) {
+    return toRepositoryMealOptionId(item.sourceRecipeId);
+  }
 
-export function buildVisiblePlannerPoolCards(params: {
-  items: PlannerPoolCardData[];
-  entries: LogEntryRow[];
-}): PlannerPoolCardData[] {
-  const { items } = params;
-  // Source of truth is planner slot `used` state (pool query already returns unused slots only).
-  // Do not subtract by log placements here, otherwise one placement hides two duplicate lines.
-  return items;
+  return toPlanIdeaMealOptionId(item.title);
 }
 
 export function buildGroupedPlannerPoolCards(
@@ -325,19 +330,29 @@ export function buildGroupedPlannerPoolCards(
   const grouped = new Map<string, PlannerPoolGroupedCardData>();
 
   for (const item of items) {
-    const key = item.planSlotId;
+    const key = plannerPoolGroupKey(item);
     const existing = grouped.get(key);
     if (existing) {
       existing.count += 1;
       continue;
     }
 
+    // First item in date/meal sort order is the FIFO representative for drag-and-drop.
     grouped.set(key, {
       ...item,
+      id: key,
       count: 1,
     });
   }
 
-  const groupedValues = Array.from(grouped.values());
-  return groupedValues;
+  return Array.from(grouped.values());
+}
+
+export function buildVisiblePlannerPoolCards(params: {
+  items: PlannerPoolCardData[];
+  entries: LogEntryRow[];
+}): PlannerPoolCardData[] {
+  const { items } = params;
+  // Per-person pool filtering happens in getPlannerPoolItemsForPlan (Manage skips + log linkage).
+  return items;
 }

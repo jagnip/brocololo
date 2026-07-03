@@ -21,13 +21,19 @@ export type UpdateLogRecipeIngredientsInput = z.infer<
   typeof updateLogRecipeIngredientsSchema
 >;
 
-export const upsertLogSlotSchema = z.object({
-  logId: z.string().min(1),
-  familyMemberId: z.string().min(1),
-  entryId: z.string().min(1),
-  recipeId: z.string().min(1).nullable(),
-  ingredients: z.array(logIngredientEditorRowSchema).max(200),
-});
+export const upsertLogSlotSchema = z
+  .object({
+    logId: z.string().min(1),
+    familyMemberId: z.string().min(1),
+    entryId: z.string().min(1),
+    recipeId: z.string().min(1).nullable(),
+    planIdeaCustomName: z.string().min(1).nullable().optional(),
+    planSlotId: z.string().min(1).nullable().optional(),
+    ingredients: z.array(logIngredientEditorRowSchema).max(200),
+  })
+  .refine((data) => !(data.recipeId && data.planIdeaCustomName), {
+    message: "Cannot select both a repository recipe and a plan idea meal",
+  });
 
 export type UpsertLogSlotInput = z.infer<typeof upsertLogSlotSchema>;
 

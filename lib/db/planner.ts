@@ -527,7 +527,7 @@ function toLogMealType(mealType: PlannerMealType): LogMealType {
   return LogMealType.DINNER;
 }
 
-async function createBaselineLogTx(
+export async function createBaselineLogTx(
   tx: Prisma.TransactionClient,
   userId: string,
   planId: string,
@@ -541,12 +541,21 @@ async function createBaselineLogTx(
   const cookingFamilyMemberIds = [
     ...new Set(slots.flatMap((slot) => slot.cookingFamilyMemberIds ?? [])),
   ];
-  // One log entry per plan slot per selected cooking member (no automatic snack slots).
+  // One log entry per plan slot per cooking member, plus one snack row per plan day.
   const familyMembers = await tx.familyMember.findMany({
     where: { userId, id: { in: cookingFamilyMemberIds } },
     select: { id: true },
     orderBy: { sortOrder: "asc" },
   });
+  const uniqueDatesByKey = new Map<string, Date>();
+  for (const slot of slots) {
+    const dateKey = slot.date.toISOString().slice(0, 10);
+    if (!uniqueDatesByKey.has(dateKey)) {
+      uniqueDatesByKey.set(dateKey, slot.date);
+    }
+  }
+  const uniquePlanDates = [...uniqueDatesByKey.values()];
+
   for (const familyMember of familyMembers) {
     for (const slot of slots) {
       await tx.logEntry.create({
@@ -558,9 +567,85 @@ async function createBaselineLogTx(
         },
       });
     }
+    for (const date of uniquePlanDates) {
+      await tx.logEntry.upsert({
+        where: {
+          logId_date_mealType_familyMemberId: {
+            logId: log.id,
+            date,
+            mealType: LogMealType.SNACK,
+            familyMemberId: familyMember.id,
+          },
+        },
+        update: {},
+        create: {
+          logId: log.id,
+          date,
+          mealType: LogMealType.SNACK,
+          familyMemberId: familyMember.id,
+        },
+      });
+    }
   }
 
   return log.id;
+}
+
+/** Plan slot IDs this family member has already logged for the plan. */
+export async function getPlanSlotIdsLinkedToMember(params: {
+  planId: string;
+  familyMemberId: string;
+  tx?: Prisma.TransactionClient;
+}): Promise<Set<string>> {
+  const client = params.tx ?? prisma;
+  const rows = await client.logEntryRecipe.findMany({
+    where: {
+      planSlotId: { not: null },
+      entry: {
+        log: { planId: params.planId },
+        familyMemberId: params.familyMemberId,
+      },
+    },
+    select: { planSlotId: true },
+  });
+  return new Set(
+    rows
+      .map((row) => row.planSlotId)
+      .filter((id): id is string => id != null),
+  );
+}
+
+/** Track-tab guard: slot must not be Manage-skipped and not already logged by this person. */
+export async function assertPlanSlotAvailableForMemberTx(params: {
+  tx: Prisma.TransactionClient;
+  planId: string;
+  planSlotId: string;
+  familyMemberId: string;
+}): Promise<void> {
+  const slot = await params.tx.planSlot.findFirst({
+    where: {
+      id: params.planSlotId,
+      planId: params.planId,
+    },
+    select: { id: true, used: true },
+  });
+  if (!slot || slot.used) {
+    throw new Error("NO_UNUSED_PLAN_SLOT");
+  }
+
+  const alreadyLinked = await params.tx.logEntryRecipe.findFirst({
+    where: {
+      planSlotId: params.planSlotId,
+      entry: {
+        log: { planId: params.planId },
+        familyMemberId: params.familyMemberId,
+      },
+    },
+    select: { id: true },
+  });
+  if (alreadyLinked) {
+    throw new Error("NO_UNUSED_PLAN_SLOT");
+  }
 }
 
 export async function getPlannerPoolItemsForPlan(params: {
@@ -568,20 +653,28 @@ export async function getPlannerPoolItemsForPlan(params: {
   planId: string;
   familyMemberId: string;
 }): Promise<PlannerPoolItem[]> {
-  const [slots, familyMembers] = await Promise.all([
+  const [slots, familyMembers, linkedSlotIds] = await Promise.all([
     getPlanById(params.userId, params.planId),
     prisma.familyMember.findMany({
       where: { userId: params.userId },
       select: { id: true, isSelf: true },
       orderBy: { sortOrder: "asc" },
     }),
+    getPlanSlotIdsLinkedToMember({
+      planId: params.planId,
+      familyMemberId: params.familyMemberId,
+    }),
   ]);
   if (!slots) return [];
 
-  // Pool = unused plan slots only: matches planner "used" checkmarks and reserveNextUnusedPlanSlot.
+  // Pool = Manage-tab skips (global `used`) plus per-person log linkage.
   const items: PlannerPoolItem[] = [];
   for (const slot of slots) {
     if (slot.used) {
+      continue;
+    }
+
+    if (slot.id && linkedSlotIds.has(slot.id)) {
       continue;
     }
 
@@ -666,151 +759,59 @@ export async function getPlannerPoolItemsForPlan(params: {
   });
 }
 
-export async function reservePlanSlotById(params: {
-  planId: string;
-  planSlotId: string;
-}): Promise<boolean> {
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const reserved = await prisma.$transaction(async (tx) => {
-      const updated = await tx.planSlot.updateMany({
-        where: {
-          id: params.planSlotId,
-          planId: params.planId,
-          used: false,
-        },
-        data: { used: true },
-      });
-
-      if (updated.count === 0) {
-        return false;
-      }
-
-      return true;
-    });
-
-    if (reserved) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-export async function reservePlanSlotByIdTx(params: {
-  tx: Prisma.TransactionClient;
-  planId: string;
-  planSlotId: string;
-}): Promise<boolean> {
-  const updated = await params.tx.planSlot.updateMany({
-    where: {
-      id: params.planSlotId,
-      planId: params.planId,
-      used: false,
-    },
-    data: { used: true },
-  });
-
-  return updated.count > 0;
-}
-
-export async function reserveNextUnusedPlanSlot(params: {
-  planId: string;
-  recipeId: string;
-}): Promise<string | null> {
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const reserved = await prisma.$transaction(async (tx) => {
-      const slot = await tx.planSlot.findFirst({
-        where: {
-          planId: params.planId,
-          recipeId: params.recipeId,
-          used: false,
-        },
-        orderBy: [
-          { date: "asc" },
-          { mealType: "asc" },
-          { id: "asc" },
-        ],
-        select: { id: true },
-      });
-
-      if (!slot) {
-        return null;
-      }
-
-      const updated = await tx.planSlot.updateMany({
-        where: {
-          id: slot.id,
-          used: false,
-        },
-        data: { used: true },
-      });
-
-      if (updated.count === 0) {
-        return "__RETRY__";
-      }
-
-      return slot.id;
-    });
-
-    if (reserved === "__RETRY__") {
-      continue;
-    }
-
-    return reserved;
-  }
-
-  return null;
-}
-
-export async function releaseReservedPlanSlot(planSlotId: string) {
-  await prisma.planSlot.updateMany({
-    where: { id: planSlotId },
-    data: { used: false },
-  });
-}
-
+/** FIFO plan slot for recipe-page add-to-log; per-person, does not toggle global `used`. */
 export async function reserveNextUnusedPlanSlotTx(params: {
   tx: Prisma.TransactionClient;
   planId: string;
   recipeId: string;
+  familyMemberId: string;
 }): Promise<string | null> {
+  const linkedSlotIds = await getPlanSlotIdsLinkedToMember({
+    planId: params.planId,
+    familyMemberId: params.familyMemberId,
+    tx: params.tx,
+  });
+
   const slot = await params.tx.planSlot.findFirst({
     where: {
       planId: params.planId,
       recipeId: params.recipeId,
       used: false,
+      ...(linkedSlotIds.size > 0 ? { id: { notIn: [...linkedSlotIds] } } : {}),
     },
     orderBy: [{ date: "asc" }, { mealType: "asc" }, { id: "asc" }],
     select: { id: true },
   });
 
-  if (!slot) {
-    return null;
-  }
-
-  const updated = await params.tx.planSlot.updateMany({
-    where: {
-      id: slot.id,
-      used: false,
-    },
-    data: { used: true },
-  });
-
-  if (updated.count === 0) {
-    return null;
-  }
-
-  return slot.id;
+  return slot?.id ?? null;
 }
 
-export async function releaseReservedPlanSlotTx(params: {
+/** FIFO for plan idea meals (custom name only); per-person, does not toggle global `used`. */
+export async function reserveNextUnusedPlanSlotByCustomNameTx(params: {
   tx: Prisma.TransactionClient;
-  planSlotId: string;
-}) {
-  await params.tx.planSlot.updateMany({
-    where: { id: params.planSlotId },
-    data: { used: false },
+  planId: string;
+  customName: string;
+  familyMemberId: string;
+}): Promise<string | null> {
+  const linkedSlotIds = await getPlanSlotIdsLinkedToMember({
+    planId: params.planId,
+    familyMemberId: params.familyMemberId,
+    tx: params.tx,
   });
+
+  const slot = await params.tx.planSlot.findFirst({
+    where: {
+      planId: params.planId,
+      recipeId: null,
+      customName: params.customName,
+      used: false,
+      ...(linkedSlotIds.size > 0 ? { id: { notIn: [...linkedSlotIds] } } : {}),
+    },
+    orderBy: [{ date: "asc" }, { mealType: "asc" }, { id: "asc" }],
+    select: { id: true },
+  });
+
+  return slot?.id ?? null;
 }
 
 type PlanSyncImpact = {
@@ -942,6 +943,7 @@ export async function updatePlan(
       const mealTypes = [
         LogMealType.BREAKFAST,
         LogMealType.LUNCH,
+        LogMealType.SNACK,
         LogMealType.DINNER,
       ] as const;
       const familyMembers = await tx.familyMember.findMany({

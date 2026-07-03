@@ -170,18 +170,47 @@ describe("upsertLogSlotAction", () => {
 
     const result = await upsertLogSlotAction({
       logId: "log-1",
-      person: "PRIMARY",
+      familyMemberId: "member-1",
       entryId: "entry-1",
       recipeId: null,
+      planIdeaCustomName: null,
+      planSlotId: null,
       ingredients: [{ ingredientId: "ing-1", unitId: "unit-g", amount: 120 }],
     });
 
     expect(result).toEqual({ type: "success" });
     expect(upsertLogSlot).toHaveBeenCalledWith("user-test", {
       logId: "log-1",
-      person: "PRIMARY",
+      familyMemberId: "member-1",
       entryId: "entry-1",
       recipeId: null,
+      planIdeaCustomName: null,
+      planSlotId: null,
+      ingredients: [{ ingredientId: "ing-1", unitId: "unit-g", amount: 120 }],
+    });
+  });
+
+  it("upserts plan idea meal selection", async () => {
+    vi.mocked(upsertLogSlot).mockResolvedValue(undefined);
+
+    const result = await upsertLogSlotAction({
+      logId: "log-1",
+      familyMemberId: "member-1",
+      entryId: "entry-1",
+      recipeId: null,
+      planIdeaCustomName: "Pasta from insta",
+      planSlotId: "slot-1",
+      ingredients: [{ ingredientId: "ing-1", unitId: "unit-g", amount: 120 }],
+    });
+
+    expect(result).toEqual({ type: "success" });
+    expect(upsertLogSlot).toHaveBeenCalledWith("user-test", {
+      logId: "log-1",
+      familyMemberId: "member-1",
+      entryId: "entry-1",
+      recipeId: null,
+      planIdeaCustomName: "Pasta from insta",
+      planSlotId: "slot-1",
       ingredients: [{ ingredientId: "ing-1", unitId: "unit-g", amount: 120 }],
     });
   });

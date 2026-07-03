@@ -35,6 +35,13 @@ import {
 } from "@/actions/log-actions";
 import { isLogRecipeCardSelected } from "@/lib/log/is-log-recipe-card-selected";
 import {
+  mealOptionIdFromRecipeCard,
+  toPlanIdeaMealOptionId,
+  toRepositoryMealOptionId,
+  toUpsertLogSlotMealSelection,
+  type LogMealSelectorOption,
+} from "@/lib/log/meal-selector-options";
+import {
   LogActiveDayView,
   type SelectedSlotState,
 } from "./log-active-day-view";
@@ -43,6 +50,9 @@ import { LogDuplicateEntryDialog } from "./log-duplicate-entry-dialog";
 import { LogDayPersonToolbarControls } from "./log-day-person-toolbar-controls";
 import type { DateRangeValue } from "@/components/planner/date-range-picker";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
+
+const MISSING_LOG_CONTEXT_MESSAGE = "Missing log context for this action";
+const SLOT_NOT_READY_MESSAGE = "This slot isn't set up for this day yet";
 
 type IngredientFormDependencies = {
   categories: Array<{ id: string; name: string }>;
@@ -149,11 +159,7 @@ type LogDayViewProps = {
   person?: string;
   dateRange?: DateRangeValue;
   allowDayManagement?: boolean;
-  recipeOptions?: Array<{
-    id: string;
-    name: string;
-    initialRows: EditableIngredientRow[];
-  }>;
+  recipeOptions?: LogMealSelectorOption[];
   ingredientOptions?: LogIngredientOption[];
   plannedMealsBySlotKey?: Record<
     string,
@@ -162,6 +168,8 @@ type LogDayViewProps = {
   ingredientFormDependencies?: IngredientFormDependencies;
   hideDayPersonInHeader?: boolean;
   onRegisterToolbarControls?: (node: ReactNode | null) => void;
+  /** Mirrors PlanEditor: drives toolbar spinner while log mutations are in flight. */
+  onSaveStatusChange?: (isSaving: boolean) => void;
 };
 
 type RemoveDayWarningState = {
@@ -198,6 +206,7 @@ export function LogDayViewController({
   plannedMealsBySlotKey = {},
   hideDayPersonInHeader = false,
   onRegisterToolbarControls,
+  onSaveStatusChange,
 }: LogDayViewProps) {
   const selectedFamilyMemberId = familyMemberId ?? person ?? familyMembers[0]?.id;
   const router = useRouter();
@@ -255,6 +264,12 @@ export function LogDayViewController({
   );
   // Pool list is local so drag-drop can remove cards optimistically before refresh.
   const groupedPlannerPool = buildGroupedPlannerPoolCards(visiblePlannerPool);
+  const isLogActionPending = isSaving || isAddingDay || isRemovingDay;
+
+  useEffect(() => {
+    onSaveStatusChange?.(isLogActionPending);
+    return () => onSaveStatusChange?.(false);
+  }, [isLogActionPending, onSaveStatusChange]);
 
   useEffect(() => {
     setLocalDays(days);
@@ -345,8 +360,19 @@ export function LogDayViewController({
         entryId: slot.entryId,
         entryRecipeId: firstRecipe?.entryRecipeId ?? null,
         mealLabel: slot.label,
-        selectedRecipeId: firstRecipe?.sourceRecipeId ?? null,
-        initialSelectedRecipeId: firstRecipe?.sourceRecipeId ?? null,
+        selectedMealOptionId: firstRecipe
+          ? mealOptionIdFromRecipeCard({
+              sourceRecipeId: firstRecipe.sourceRecipeId,
+              planIdeaCustomName: firstRecipe.planIdeaCustomName,
+            })
+          : null,
+        initialSelectedMealOptionId: firstRecipe
+          ? mealOptionIdFromRecipeCard({
+              sourceRecipeId: firstRecipe.sourceRecipeId,
+              planIdeaCustomName: firstRecipe.planIdeaCustomName,
+            })
+          : null,
+        planSlotId: firstRecipe?.planSlotId ?? null,
         subtitle: `${formatDayLabel(activeDay.date)}`,
         initialRows:
           firstRecipe?.ingredients?.map((ingredient) => ({
@@ -364,7 +390,7 @@ export function LogDayViewController({
     slot: LogDayData["slots"][number],
   ) => {
     if (!slot.entryId) {
-      toast.error("Cannot edit this slot yet");
+      toast.error(SLOT_NOT_READY_MESSAGE);
       return;
     }
 
@@ -374,12 +400,17 @@ export function LogDayViewController({
       selectedSlot.dayKey === day.dateKey &&
       selectedSlot.mealType === slot.mealType &&
       selectedSlot.entryId === slot.entryId &&
-      selectedSlot.selectedRecipeId === null &&
+      selectedSlot.selectedMealOptionId === null &&
       selectedSlot.entryRecipeId === null
     ) {
       setSelectedSlot(null);
       return;
     }
+
+    const planned = plannedMealsBySlotKey[`${day.dateKey}-${slot.mealType}`];
+    const plannedMealOptionId = planned
+      ? toPlanIdeaMealOptionId(planned.name)
+      : null;
 
     setSelectedSlot({
       dayKey: day.dateKey,
@@ -387,18 +418,16 @@ export function LogDayViewController({
       entryId: slot.entryId,
       entryRecipeId: null,
       mealLabel: slot.label,
-      selectedRecipeId: null,
-      initialSelectedRecipeId: null,
+      selectedMealOptionId: plannedMealOptionId,
+      initialSelectedMealOptionId: plannedMealOptionId,
+      planSlotId: null,
       subtitle: (() => {
-        const planned = plannedMealsBySlotKey[`${day.dateKey}-${slot.mealType}`];
         if (!planned) {
           return `${formatDayLabel(day.date)}`;
         }
         return `${planned.name} · ${formatDayLabel(day.date)}`;
       })(),
-      initialRows:
-        plannedMealsBySlotKey[`${day.dateKey}-${slot.mealType}`]?.ingredients ??
-        [],
+      initialRows: planned?.ingredients ?? [],
     });
   };
 
@@ -420,7 +449,7 @@ export function LogDayViewController({
           dayKey: selectedSlot.dayKey,
           mealType: selectedSlot.mealType,
           entryRecipeId: selectedSlot.entryRecipeId,
-          selectedRecipeId: selectedSlot.selectedRecipeId,
+          selectedMealOptionId: selectedSlot.selectedMealOptionId,
         },
         day.dateKey,
         slot,
@@ -437,8 +466,15 @@ export function LogDayViewController({
       entryId: recipe.entryId,
       entryRecipeId: recipe.entryRecipeId,
       mealLabel: slot.label,
-      selectedRecipeId: recipe.sourceRecipeId,
-      initialSelectedRecipeId: recipe.sourceRecipeId,
+      selectedMealOptionId: mealOptionIdFromRecipeCard({
+        sourceRecipeId: recipe.sourceRecipeId,
+        planIdeaCustomName: recipe.planIdeaCustomName,
+      }),
+      initialSelectedMealOptionId: mealOptionIdFromRecipeCard({
+        sourceRecipeId: recipe.sourceRecipeId,
+        planIdeaCustomName: recipe.planIdeaCustomName,
+      }),
+      planSlotId: recipe.planSlotId ?? null,
       subtitle: `${formatDayLabel(day.date)}`,
       initialRows:
         recipe.ingredients?.map((ingredient) => ({
@@ -449,35 +485,45 @@ export function LogDayViewController({
     });
   };
 
-  const handleSelectedRecipeChange = (nextRecipeId: string | null) => {
+  const handleSelectedRecipeChange = (nextMealOptionId: string | null) => {
     setSelectedSlot((prev) => {
       if (!prev) {
         return prev;
       }
 
-      if (!nextRecipeId) {
+      if (!nextMealOptionId) {
         return {
           ...prev,
-          selectedRecipeId: null,
+          selectedMealOptionId: null,
+          planSlotId: null,
           initialRows: [],
         };
       }
 
       const selectedOption = recipeOptions.find(
-        (recipeOption) => recipeOption.id === nextRecipeId,
+        (recipeOption) => recipeOption.id === nextMealOptionId,
       );
 
       return {
         ...prev,
-        selectedRecipeId: nextRecipeId,
+        selectedMealOptionId: nextMealOptionId,
+        // New idea-meal selection uses FIFO on save; only keep slot when re-editing unchanged.
+        planSlotId:
+          nextMealOptionId === prev.initialSelectedMealOptionId
+            ? prev.planSlotId
+            : null,
         initialRows: selectedOption?.initialRows ?? [],
       };
     });
   };
 
   const handleSlotSave = async (rows: EditableIngredientRow[]) => {
-    if (!logId || !selectedFamilyMemberId || !selectedSlot) {
-      toast.error("Missing log context for this action");
+    if (!logId || !selectedFamilyMemberId) {
+      toast.error(MISSING_LOG_CONTEXT_MESSAGE);
+      return;
+    }
+    if (!selectedSlot) {
+      toast.error("Select a meal slot before saving");
       return;
     }
 
@@ -492,11 +538,18 @@ export function LogDayViewController({
     );
 
     startSavingTransition(async () => {
+      const mealSelection = toUpsertLogSlotMealSelection({
+        selectedMealOptionId: activeSelection.selectedMealOptionId,
+        planSlotId: activeSelection.planSlotId,
+      });
+
       const result = await upsertLogSlotAction({
         logId,
         familyMemberId: selectedFamilyMemberId,
         entryId: activeSelection.entryId,
-        recipeId: activeSelection.selectedRecipeId,
+        recipeId: mealSelection.recipeId,
+        planIdeaCustomName: mealSelection.planIdeaCustomName,
+        planSlotId: mealSelection.planSlotId,
         ingredients: completeRows,
       });
 
@@ -509,10 +562,12 @@ export function LogDayViewController({
       const nextIngredients = toRecipeIngredients(rows, ingredientOptions);
 
       setLocalDays((prev) => {
-        const selectedRecipeOption = recipeOptions.find(
+        const selectedMealOption = recipeOptions.find(
           (recipeOption) =>
-            recipeOption.id === activeSelection.selectedRecipeId,
+            recipeOption.id === activeSelection.selectedMealOptionId,
         );
+        const hasMealSelection = activeSelection.selectedMealOptionId != null;
+        const isRepositoryMeal = selectedMealOption?.kind === "repository";
 
         return prev.map((mappedDay) => ({
           ...mappedDay,
@@ -533,6 +588,7 @@ export function LogDayViewController({
                 entryId: activeSelection.entryId,
                 entryRecipeId: null,
                 sourceRecipeId: null,
+                planIdeaCustomName: null,
                 mealLabel: mappedSlot.label,
                 cardKind: "custom" as const,
                 title: `Custom ${mappedSlot.label.toLowerCase()}`,
@@ -545,36 +601,37 @@ export function LogDayViewController({
                 ingredients: [],
               }),
               id:
-                activeSelection.selectedRecipeId == null
+                !hasMealSelection
                   ? `custom-${activeSelection.entryId}`
                   : (existingRecipe?.id ?? `temp-${activeSelection.entryId}`),
               entryRecipeId:
-                activeSelection.selectedRecipeId == null
+                !hasMealSelection
                   ? null
                   : (existingRecipe?.entryRecipeId ??
                     activeSelection.entryRecipeId),
-              sourceRecipeId: activeSelection.selectedRecipeId,
-              cardKind:
-                activeSelection.selectedRecipeId == null
-                  ? ("custom" as const)
-                  : ("recipe" as const),
-              title:
-                activeSelection.selectedRecipeId == null
-                  ? `Custom ${mappedSlot.label.toLowerCase()}`
-                  : (selectedRecipeOption?.name ??
-                    existingRecipe?.title ??
-                    `Custom ${mappedSlot.label.toLowerCase()}`),
-              slug: null,
-              imageUrl: null,
+              sourceRecipeId: mealSelection.recipeId,
+              planSlotId: mealSelection.planIdeaCustomName
+                ? (activeSelection.planSlotId ??
+                  existingRecipe?.planSlotId ??
+                  null)
+                : (existingRecipe?.planSlotId ?? null),
+              planIdeaCustomName: mealSelection.planIdeaCustomName,
+              cardKind: isRepositoryMeal
+                ? ("recipe" as const)
+                : ("custom" as const),
+              title: hasMealSelection
+                ? (selectedMealOption?.name ??
+                  existingRecipe?.title ??
+                  `Custom ${mappedSlot.label.toLowerCase()}`)
+                : `Custom ${mappedSlot.label.toLowerCase()}`,
+              slug: isRepositoryMeal ? existingRecipe?.slug ?? null : null,
+              imageUrl: isRepositoryMeal ? existingRecipe?.imageUrl ?? null : null,
               ...nextMacros,
               ingredients: nextIngredients,
             };
 
             const nextRecipes = [...mappedSlot.recipes];
-            if (
-              activeSelection.selectedRecipeId == null &&
-              nextIngredients.length === 0
-            ) {
+            if (!hasMealSelection && nextIngredients.length === 0) {
               if (existingIndex >= 0) {
                 nextRecipes.splice(existingIndex, 1);
               }
@@ -599,7 +656,7 @@ export function LogDayViewController({
           : {
               ...prev,
               initialRows: rows,
-              initialSelectedRecipeId: activeSelection.selectedRecipeId,
+              initialSelectedMealOptionId: activeSelection.selectedMealOptionId,
             },
       );
       toast.success("Ingredients updated");
@@ -613,8 +670,12 @@ export function LogDayViewController({
     if (activeData.type !== "planner-pool-item" || overData.type !== "log-slot")
       return;
 
-    if (!logId || !selectedFamilyMemberId || !overData.entryId) {
-      toast.error("Missing log context for this action");
+    if (!logId || !selectedFamilyMemberId) {
+      toast.error(MISSING_LOG_CONTEXT_MESSAGE);
+      return;
+    }
+    if (!overData.entryId) {
+      toast.error(SLOT_NOT_READY_MESSAGE);
       return;
     }
 
@@ -652,6 +713,8 @@ export function LogDayViewController({
       plannedPoolDate: plannerItem.date,
       plannedPoolMealType: plannerItem.mealType,
       sourceRecipeId: plannerItem.sourceRecipeId,
+      planIdeaCustomName:
+        plannerItem.sourceRecipeId == null ? plannerItem.title : null,
       mealLabel: targetSlot.label,
       cardKind:
         plannerItem.sourceRecipeId == null
@@ -695,9 +758,11 @@ export function LogDayViewController({
       })),
     );
 
-    // Remove the dropped card from the planner pool immediately to avoid flash-back.
+    // Remove the consumed slot from the planner pool immediately to avoid flash-back.
     setLocalPlannerPool((prev) =>
-      prev.filter((poolItem) => poolItem.id !== plannerItem.id),
+      prev.filter(
+        (poolItem) => poolItem.planSlotId !== plannerItem.planSlotId,
+      ),
     );
 
     // Open details immediately for the dropped meal.
@@ -708,8 +773,15 @@ export function LogDayViewController({
       entryId: targetSlot.entryId,
       entryRecipeId: null,
       mealLabel: targetSlot.label,
-      selectedRecipeId: plannerItem.sourceRecipeId,
-      initialSelectedRecipeId: plannerItem.sourceRecipeId,
+      selectedMealOptionId:
+        plannerItem.sourceRecipeId != null
+          ? toRepositoryMealOptionId(plannerItem.sourceRecipeId)
+          : toPlanIdeaMealOptionId(plannerItem.title),
+      initialSelectedMealOptionId:
+        plannerItem.sourceRecipeId != null
+          ? toRepositoryMealOptionId(plannerItem.sourceRecipeId)
+          : toPlanIdeaMealOptionId(plannerItem.title),
+      planSlotId: plannerItem.planSlotId,
       subtitle: `${formatDayLabel(targetDay.date)}`,
       initialRows,
     });
@@ -739,8 +811,12 @@ export function LogDayViewController({
   };
 
   const handleRemovePlacedRecipe = (slot: LogDayData["slots"][number]) => {
-    if (!logId || !selectedFamilyMemberId || !slot.entryId) {
-      toast.error("Missing log context for this action");
+    if (!logId || !selectedFamilyMemberId) {
+      toast.error(MISSING_LOG_CONTEXT_MESSAGE);
+      return;
+    }
+    if (!slot.entryId) {
+      toast.error(SLOT_NOT_READY_MESSAGE);
       return;
     }
 
@@ -873,8 +949,11 @@ export function LogDayViewController({
     targetDay: string;
     targetMealType: LogMealType;
   }) => {
-    if (!logId || !selectedFamilyMemberId || !duplicateSource) {
-      toast.error("Missing log context for this action");
+    if (!logId || !selectedFamilyMemberId) {
+      toast.error(MISSING_LOG_CONTEXT_MESSAGE);
+      return;
+    }
+    if (!duplicateSource) {
       return;
     }
 
@@ -888,7 +967,7 @@ export function LogDayViewController({
       (slot) => slot.mealType === payload.targetMealType,
     );
     if (!targetSlot?.entryId) {
-      toast.error("Cannot duplicate into this slot");
+      toast.error(SLOT_NOT_READY_MESSAGE);
       return;
     }
 
@@ -1090,7 +1169,7 @@ export function LogDayViewController({
             editorSlot={editorSlot}
             ingredientOptions={ingredientOptions}
             recipeOptions={recipeOptions}
-            isSaving={isSaving}
+            isSaving={isLogActionPending}
             isAddingDay={isAddingDay}
             isRemovingDay={isRemovingDay}
             logId={logId}

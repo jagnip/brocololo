@@ -1,11 +1,12 @@
 import type { LogRecipeCardData, LogSlotData } from "@/lib/log/view-model";
+import { mealOptionIdFromRecipeCard } from "@/lib/log/meal-selector-options";
 
 /** Mirrors `SelectedSlotState` fields needed to highlight the active log recipe card. */
 export type LogEditorSlotForHighlight = {
   dayKey: string;
   mealType: LogSlotData["mealType"];
   entryRecipeId: string | null;
-  selectedRecipeId: string | null;
+  selectedMealOptionId: string | null;
 };
 
 /**
@@ -26,12 +27,17 @@ export function isLogRecipeCardSelected(
     return false;
   }
 
-  if (editorSlot.selectedRecipeId !== recipe.sourceRecipeId) {
+  const recipeMealOptionId = mealOptionIdFromRecipeCard({
+    sourceRecipeId: recipe.sourceRecipeId,
+    planIdeaCustomName: recipe.planIdeaCustomName,
+  });
+
+  if (editorSlot.selectedMealOptionId !== recipeMealOptionId) {
     return false;
   }
 
-  // Custom vs removed both use null sourceRecipeId — disambiguate with entry recipe row id.
-  if (editorSlot.selectedRecipeId == null && recipe.sourceRecipeId == null) {
+  // Custom vs removed both use null meal option — disambiguate with entry recipe row id.
+  if (editorSlot.selectedMealOptionId == null && recipeMealOptionId == null) {
     return editorSlot.entryRecipeId === recipe.entryRecipeId;
   }
 

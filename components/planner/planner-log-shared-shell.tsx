@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { useTopbar } from "@/components/context/topbar-context";
 import { type DateRangeValue } from "@/components/planner/date-range-picker";
 import { PlanDateRangeDialog } from "@/components/planner/plan-date-range-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,6 +25,7 @@ import {
 import type { PlanInputType } from "@/types/planner";
 import type { RecipeType } from "@/types/recipe";
 import type { LogDayData, PlannerPoolCardData } from "@/lib/log/view-model";
+import type { LogMealSelectorOption } from "@/lib/log/meal-selector-options";
 import type {
   LogIngredientOption,
   EditableIngredientRow,
@@ -57,11 +60,7 @@ type PlannerLogShellProps = {
     logId: string;
     days: LogDayData[];
     plannerPool: PlannerPoolCardData[];
-    recipeOptions: Array<{
-      id: string;
-      name: string;
-      initialRows: EditableIngredientRow[];
-    }>;
+    recipeOptions: LogMealSelectorOption[];
     ingredientOptions: LogIngredientOption[];
   } | null;
   /** When true, generating again replaces the persisted list — we confirm first. */
@@ -104,9 +103,17 @@ export function PlannerLogSharedShell({
   const [isDeleting, setIsDeleting] = useState(false);
   const [trackToolbarControls, setTrackToolbarControls] =
     useState<ReactNode | null>(null);
+  const [isPlanSaving, setIsPlanSaving] = useState(false);
+  const [isLogSaving, setIsLogSaving] = useState(false);
+  const { isLogFilterPending } = useTopbar();
   const { setState: setPlanTopbarState, resetState: resetPlanTopbarState } =
     usePlanTopbarState();
   const displayedTab = isTabPending ? optimisticTab : activeTab;
+  const isTrackTab = displayedTab === "log";
+  const showToolbarSpinner =
+    isTabPending ||
+    isPlanSaving ||
+    (isTrackTab && (isLogFilterPending || isLogSaving));
 
   const setTab = (nextTab: PlannerLogTab) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -117,7 +124,6 @@ export function PlannerLogSharedShell({
   };
 
   const hasLogData = useMemo(() => logData != null, [logData]);
-  const isTrackTab = displayedTab === "log";
 
   const openMealSelectionDialog = useCallback(() => {
     setIsMealSelectionOpen(true);
@@ -305,23 +311,39 @@ export function PlannerLogSharedShell({
       </AlertDialog>
 
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <Tabs
-          value={displayedTab}
-          onValueChange={(value) => {
-            if (value === "plan" || value === "log") {
-              setOptimisticTab(value);
-              startTabTransition(() => {
-                setTab(value);
-              });
-            }
-          }}
-          className="w-fit shrink-0"
-        >
-          <TabsList className="h-10 gap-[2px] shadow-xs">
-            <TabsTrigger value="plan">Manage</TabsTrigger>
-            <TabsTrigger value="log">Track</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex min-w-0 items-center gap-2">
+          <Tabs
+            value={displayedTab}
+            onValueChange={(value) => {
+              if (value === "plan" || value === "log") {
+                setOptimisticTab(value);
+                startTabTransition(() => {
+                  setTab(value);
+                });
+              }
+            }}
+            className="w-fit shrink-0"
+          >
+            <TabsList className="h-10 gap-[2px] shadow-xs">
+              <TabsTrigger value="plan">Manage</TabsTrigger>
+              <TabsTrigger value="log">Track</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          {showToolbarSpinner ? (
+            <Loader2
+              className="h-4 w-4 shrink-0 animate-spin text-muted-foreground"
+              aria-label={
+                isPlanSaving
+                  ? "Saving plan"
+                  : isLogSaving
+                    ? "Saving log"
+                    : isTabPending
+                      ? "Loading tab"
+                      : "Loading log"
+              }
+            />
+          ) : null}
+        </div>
         {isTrackTab && trackToolbarControls ? (
           <div className="flex min-w-0 items-center gap-2">
             {trackToolbarControls}
@@ -344,6 +366,7 @@ export function PlannerLogSharedShell({
             hideInlineControls
             hidePageHeader
             disableDeleteDialog
+            onSaveStatusChange={setIsPlanSaving}
           />
         </TabsContent>
         <TabsContent value="log">
@@ -361,6 +384,7 @@ export function PlannerLogSharedShell({
               allowDayManagement={false}
               hideDayPersonInHeader
               onRegisterToolbarControls={setTrackToolbarControls}
+              onSaveStatusChange={setIsLogSaving}
             />
           ) : (
             <section className="rounded-lg border border-border bg-card p-6">

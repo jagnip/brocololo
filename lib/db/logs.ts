@@ -7,9 +7,9 @@ import {
 import { prisma } from "./index";
 import {
   findDateCollisionsTx,
-  releaseReservedPlanSlotTx,
+  assertPlanSlotAvailableForMemberTx,
+  reserveNextUnusedPlanSlotByCustomNameTx,
   reserveNextUnusedPlanSlotTx,
-  reservePlanSlotByIdTx,
 } from "./planner";
 import type {
   ParsedAddRecipeToLogInput,
@@ -19,27 +19,6 @@ import type {
   UpsertLogSlotInput,
   UpdateLogRecipeIngredientsInput,
 } from "@/lib/validations/log";
-
-/** Release every plan slot reserved by this entry’s recipes (avoids orphaned `used` slots). */
-async function releasePlanSlotsLinkedToEntryRecipes(
-  tx: Prisma.TransactionClient,
-  entryId: string,
-) {
-  const rows = await tx.logEntryRecipe.findMany({
-    where: { entryId },
-    select: { planSlotId: true },
-  });
-  const released = new Set<string>();
-  for (const row of rows) {
-    if (row.planSlotId && !released.has(row.planSlotId)) {
-      released.add(row.planSlotId);
-      await releaseReservedPlanSlotTx({
-        tx,
-        planSlotId: row.planSlotId,
-      });
-    }
-  }
-}
 
 export async function getLogs(userId: string) {
   return prisma.log.findMany({
@@ -90,11 +69,60 @@ export async function deleteLogById(userId: string, logId: string) {
   });
 }
 
+/** Upsert SNACK rows for every day this member already has any log entry (legacy logs pre-snack). */
+export async function ensureSnackLogEntriesForMember(
+  logId: string,
+  familyMemberId: string,
+) {
+  const memberEntries = await prisma.logEntry.findMany({
+    where: { logId, familyMemberId },
+    select: { date: true },
+  });
+  const uniqueDates = [
+    ...new Map(
+      memberEntries.map((entry) => [
+        entry.date.toISOString().slice(0, 10),
+        entry.date,
+      ]),
+    ).values(),
+  ];
+
+  for (const date of uniqueDates) {
+    await prisma.logEntry.upsert({
+      where: {
+        logId_date_mealType_familyMemberId: {
+          logId,
+          date,
+          mealType: LogMealType.SNACK,
+          familyMemberId,
+        },
+      },
+      update: {},
+      create: {
+        logId,
+        date,
+        mealType: LogMealType.SNACK,
+        familyMemberId,
+      },
+    });
+  }
+}
+
 export async function getLogById(
   userId: string,
   logId: string,
   familyMemberId: string,
 ) {
+  const ownedLog = await prisma.log.findFirst({
+    where: { id: logId, plan: { userId } },
+    select: { id: true },
+  });
+  if (!ownedLog) {
+    return null;
+  }
+
+  await ensureSnackLogEntriesForMember(logId, familyMemberId);
+
   return prisma.log.findFirst({
     where: { id: logId, plan: { userId } },
     select: {
@@ -514,7 +542,7 @@ export async function upsertLogSlot(userId: string, input: UpsertLogSlotInput) {
         logId: input.logId,
         familyMemberId: input.familyMemberId,
       },
-      select: { id: true },
+      select: { id: true, mealType: true },
     });
 
     if (!entry) {
@@ -524,8 +552,6 @@ export async function upsertLogSlot(userId: string, input: UpsertLogSlotInput) {
     const log = { planId: ownedLog.planId };
 
     await assertIngredientRowsHaveSupportedUnits(tx, input.ingredients);
-
-    await releasePlanSlotsLinkedToEntryRecipes(tx, input.entryId);
 
     await tx.logIngredient.deleteMany({
       where: {
@@ -540,11 +566,54 @@ export async function upsertLogSlot(userId: string, input: UpsertLogSlotInput) {
     });
 
     let nextEntryRecipeId: string | null = null;
+    const skipPlanSlotReservation = entry.mealType === LogMealType.SNACK;
+
     if (input.recipeId) {
+      const reservedPlanSlotId = skipPlanSlotReservation
+        ? null
+        : await reserveNextUnusedPlanSlotTx({
+            tx,
+            planId: log.planId,
+            recipeId: input.recipeId,
+            familyMemberId: input.familyMemberId,
+          });
+
       const createdRecipe = await tx.logEntryRecipe.create({
         data: {
           entryId: input.entryId,
           sourceRecipeId: input.recipeId,
+          planSlotId: reservedPlanSlotId ?? undefined,
+          position: 0,
+        },
+        select: { id: true },
+      });
+      nextEntryRecipeId = createdRecipe.id;
+    } else if (input.planIdeaCustomName) {
+      let reservedPlanSlotId: string | null = null;
+      if (!skipPlanSlotReservation) {
+        if (input.planSlotId) {
+          await assertPlanSlotAvailableForMemberTx({
+            tx,
+            planId: log.planId,
+            planSlotId: input.planSlotId,
+            familyMemberId: input.familyMemberId,
+          });
+          reservedPlanSlotId = input.planSlotId;
+        } else {
+          reservedPlanSlotId = await reserveNextUnusedPlanSlotByCustomNameTx({
+            tx,
+            planId: log.planId,
+            customName: input.planIdeaCustomName,
+            familyMemberId: input.familyMemberId,
+          });
+        }
+      }
+
+      const createdRecipe = await tx.logEntryRecipe.create({
+        data: {
+          entryId: input.entryId,
+          sourceRecipeId: null,
+          planSlotId: reservedPlanSlotId ?? undefined,
           position: 0,
         },
         select: { id: true },
@@ -596,17 +665,6 @@ export async function placePlannerPoolItemInEntry(
 
     await assertIngredientRowsHaveSupportedUnits(tx, input.ingredients);
 
-    await releasePlanSlotsLinkedToEntryRecipes(tx, input.entryId);
-
-    const reserved = await reservePlanSlotByIdTx({
-      tx,
-      planId: log.planId,
-      planSlotId: input.planSlotId,
-    });
-    if (!reserved) {
-      throw new Error("NO_UNUSED_PLAN_SLOT");
-    }
-
     await tx.logIngredient.deleteMany({
       where: {
         entryId: input.entryId,
@@ -619,7 +677,14 @@ export async function placePlannerPoolItemInEntry(
       },
     });
 
-    // Always link pool placements to a LogEntryRecipe so planSlotId is released on clear.
+    await assertPlanSlotAvailableForMemberTx({
+      tx,
+      planId: log.planId,
+      planSlotId: input.planSlotId,
+      familyMemberId: input.familyMemberId,
+    });
+
+    // Link pool placements via LogEntryRecipe; per-person visibility is derived from planSlotId.
     const entryRecipe = await tx.logEntryRecipe.create({
       data: {
         entryId: input.entryId,
@@ -669,8 +734,6 @@ export async function clearLogEntryAssignment(
     if (!entry) {
       throw new Error("LOG_ENTRY_NOT_FOUND");
     }
-
-    await releasePlanSlotsLinkedToEntryRecipes(tx, input.entryId);
 
     await tx.logIngredient.deleteMany({
       where: {
@@ -728,19 +791,6 @@ export async function duplicateLogEntryToDay(
     const log = { planId: ownedLog.planId };
 
     await assertIngredientRowsHaveSupportedUnits(tx, input.ingredients);
-    await releasePlanSlotsLinkedToEntryRecipes(tx, targetEntry.id);
-
-    let reservedPlanSlotId: string | null = null;
-    if (input.sourceRecipeId) {
-      // Preferred path: consume pool exactly like drag-from-pool when capacity exists.
-      reservedPlanSlotId = await reserveNextUnusedPlanSlotTx({
-        tx,
-        planId: log.planId,
-        recipeId: input.sourceRecipeId,
-      });
-      // If no unused slot exists, still duplicate as a recipe-backed entry without pool impact.
-      // This supports batch-cook/customized copies beyond planned pool count.
-    }
 
     await tx.logIngredient.deleteMany({
       where: {
@@ -753,6 +803,19 @@ export async function duplicateLogEntryToDay(
         entryId: targetEntry.id,
       },
     });
+
+    let reservedPlanSlotId: string | null = null;
+    if (input.sourceRecipeId) {
+      // Preferred path: link an unlogged plan slot for this person when one exists.
+      reservedPlanSlotId = await reserveNextUnusedPlanSlotTx({
+        tx,
+        planId: log.planId,
+        recipeId: input.sourceRecipeId,
+        familyMemberId: input.familyMemberId,
+      });
+      // If no unlinked slot exists, still duplicate as a recipe-backed entry without pool impact.
+      // This supports batch-cook/customized copies beyond planned pool count.
+    }
 
     let targetEntryRecipeId: string | null = null;
     if (input.sourceRecipeId) {
@@ -893,8 +956,6 @@ export async function replaceMealSlotWithRecipe(
       },
     });
 
-    await releasePlanSlotsLinkedToEntryRecipes(tx, entry.id);
-
     await tx.logIngredient.deleteMany({
       where: {
         entryId: entry.id,
@@ -906,7 +967,7 @@ export async function replaceMealSlotWithRecipe(
       },
     });
 
-    // Keep planner/log counts in sync: one recipe-page add consumes one planned instance (FIFO).
+    // Keep planner/log in sync: one recipe-page add links one unlogged plan slot for this person (FIFO).
     const reservedPlanSlotId =
       input.mealType === LogMealType.SNACK
         ? null
@@ -914,6 +975,7 @@ export async function replaceMealSlotWithRecipe(
             tx,
             planId: activeLog.planId,
             recipeId: input.recipeId,
+            familyMemberId: input.familyMemberId,
           });
 
     const createdRecipe = await tx.logEntryRecipe.create({

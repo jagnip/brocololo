@@ -1,10 +1,9 @@
 import { notFound } from "next/navigation";
 import { getLogById } from "@/lib/db/logs";
-import { getPlannerPoolItemsForPlan } from "@/lib/db/planner";
+import { getPlanById, getPlannerPoolItemsForPlan } from "@/lib/db/planner";
 import { getIngredients } from "@/lib/db/ingredients";
 import { getRecipes } from "@/lib/db/recipes";
-import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
-import { getFamilyMemberIngredientAmountPerMeal } from "@/lib/log/helpers";
+import { buildLogMealSelectorOptions } from "@/lib/log/meal-selector-options";
 import {
   buildLogDays,
   buildVisiblePlannerPoolCards,
@@ -18,57 +17,6 @@ type LogDetailPageContainerProps = {
   memberId?: string;
   day?: string;
 };
-
-function toRecipeSelectorRows(params: {
-  recipe: Awaited<ReturnType<typeof getRecipes>>[number];
-  familyMemberId: string;
-  familyMembers: Awaited<ReturnType<typeof ensureSelfFamilyMember>>;
-}) {
-  return params.recipe.ingredients
-    .map((recipeIngredient) => {
-      if (recipeIngredient.amount == null) {
-        return null;
-      }
-
-      const amountForPerson = getFamilyMemberIngredientAmountPerMeal({
-        amount: recipeIngredient.amount,
-        appliesToEveryone: recipeIngredient.appliesToEveryone,
-        targetFamilyMemberIds: recipeIngredient.memberTargets.map(
-          (target) => target.familyMemberId,
-        ),
-        familyMemberId: params.familyMemberId,
-        recipeServings: params.recipe.servings,
-        familyMembers: params.familyMembers,
-        memberPortions: params.recipe.memberPortions,
-        cookingFamilyMemberIds: params.recipe.audienceMembers.map(
-          (member) => member.familyMemberId,
-        ),
-      });
-      if (amountForPerson == null || amountForPerson <= 0) {
-        return null;
-      }
-
-      const defaultUnitId = getDefaultUnitIdForIngredient({
-        defaultUnitId: recipeIngredient.ingredient.defaultUnitId,
-        unitConversions: recipeIngredient.ingredient.unitConversions,
-      });
-
-      const row = {
-        ingredientId: recipeIngredient.ingredient.id,
-        unitId: recipeIngredient.unit?.id ?? defaultUnitId,
-        amount: Math.round(amountForPerson * 1000) / 1000,
-      };
-      if (!row.unitId) {
-        return null;
-      }
-
-      return row;
-    })
-    .filter(
-      (row): row is { ingredientId: string; unitId: string; amount: number } =>
-        row != null,
-    );
-}
 
 export async function LogPage({
   logId,
@@ -92,6 +40,8 @@ export async function LogPage({
     ]);
   if (!log) notFound();
 
+  const planSlots = (await getPlanById(userId, log.plan.id)) ?? [];
+
   const days = buildLogDays(log.entries);
   const poolItemsRaw = await getPlannerPoolItemsForPlan({
     userId,
@@ -114,15 +64,12 @@ export async function LogPage({
     entries: log.entries,
   });
 
-  const recipeOptions = recipes.map((recipe) => ({
-    id: recipe.id,
-    name: recipe.name,
-    initialRows: toRecipeSelectorRows({
-      recipe,
-      familyMemberId: selectedFamilyMember.id,
-      familyMembers,
-    }),
-  }));
+  const recipeOptions = buildLogMealSelectorOptions({
+    recipes,
+    planSlots,
+    familyMemberId: selectedFamilyMember.id,
+    familyMembers,
+  });
 
   const ingredientOptions = ingredients.map((ingredient) => ({
     id: ingredient.id,

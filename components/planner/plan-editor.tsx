@@ -34,6 +34,8 @@ type PlanEditorProps = {
   hideInlineControls?: boolean;
   hidePageHeader?: boolean;
   disableDeleteDialog?: boolean;
+  /** Embedded shell shows save progress next to tabs instead of inline. */
+  onSaveStatusChange?: (isSaving: boolean) => void;
 };
 
 type SaveStatus = "idle" | "saving";
@@ -53,6 +55,7 @@ export function PlanEditor({
   hideInlineControls = false,
   hidePageHeader = false,
   disableDeleteDialog = false,
+  onSaveStatusChange,
 }: PlanEditorProps) {
   const AUTOSAVE_DELAY_MS = 1000;
   const [plan, setPlan] = useState<PlanInputType>(initialPlan);
@@ -372,6 +375,10 @@ export function PlanEditor({
   }, [planId]);
 
   useEffect(() => {
+    onSaveStatusChange?.(saveStatus === "saving");
+  }, [onSaveStatusChange, saveStatus]);
+
+  useEffect(() => {
     if (disableDeleteDialog) {
       return;
     }
@@ -505,30 +512,32 @@ export function PlanEditor({
         </AlertDialogContent>
       </AlertDialog>
 
-      <div>
-        {hidePageHeader ? null : <PageHeader title="Plan details" />}
-        <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-2">
+      {hidePageHeader && hideInlineControls ? null : (
+        <div>
+          {hidePageHeader ? null : <PageHeader title="Plan details" />}
           {hideInlineControls ? null : (
-            <div className="flex min-w-0 flex-nowrap items-center gap-1.5 md:flex-wrap md:gap-2">
-              <div className="min-w-0 flex-1 md:flex-none md:w-80">
-                <WeekPicker
-                  value={dateRange}
-                  onChange={handleDateRangeChange}
-                  compact
-                  className="w-full"
-                />
+            <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-2">
+              <div className="flex min-w-0 flex-nowrap items-center gap-1.5 md:flex-wrap md:gap-2">
+                <div className="min-w-0 flex-1 md:flex-none md:w-80">
+                  <WeekPicker
+                    value={dateRange}
+                    onChange={handleDateRangeChange}
+                    compact
+                    className="w-full"
+                  />
+                </div>
               </div>
+
+              {saveStatus === "saving" ? (
+                <Loader2
+                  className="h-4 w-4 animate-spin text-muted-foreground"
+                  aria-label="Saving plan"
+                />
+              ) : null}
             </div>
           )}
-
-          {saveStatus === "saving" ? (
-            <Loader2
-              className="h-4 w-4 animate-spin text-muted-foreground"
-              aria-label="Saving plan"
-            />
-          ) : null}
         </div>
-      </div>
+      )}
 
       <PlanView
         plan={plan}
