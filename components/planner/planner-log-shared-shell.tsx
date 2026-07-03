@@ -25,6 +25,7 @@ import {
 import type { PlanInputType } from "@/types/planner";
 import type { RecipeType } from "@/types/recipe";
 import type { LogDayData, PlannerPoolCardData } from "@/lib/log/view-model";
+import type { LogMealSelectorOption } from "@/lib/log/meal-selector-options";
 import type {
   LogIngredientOption,
   EditableIngredientRow,
@@ -59,11 +60,7 @@ type PlannerLogShellProps = {
     logId: string;
     days: LogDayData[];
     plannerPool: PlannerPoolCardData[];
-    recipeOptions: Array<{
-      id: string;
-      name: string;
-      initialRows: EditableIngredientRow[];
-    }>;
+    recipeOptions: LogMealSelectorOption[];
     ingredientOptions: LogIngredientOption[];
   } | null;
   /** When true, generating again replaces the persisted list — we confirm first. */
