@@ -17,13 +17,13 @@ import {
   type PlannerCriteriaInputType,
 } from "@/lib/validations/planner";
 import { toast } from "sonner";
-import { getDefaultDateRange, WeekPicker } from "./date-range-picker";
+import { getDefaultDateRange, WeekPicker, type DateRangeValue } from "./date-range-picker";
 import { PlannerPlanColumn } from "./planner-plan-column";
 import {
   getPlannerPlanColumnMode,
   shouldShowGeneratedPlan,
 } from "./planner-plan-column-state";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PlanInputType, PlanSlotMealPayload } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
 import type {
@@ -63,6 +63,23 @@ import {
 } from "@/lib/planner/time-limit-mapping";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { ingredientsToLogIngredientOptions } from "@/lib/ingredients/to-log-ingredient-options";
+import { createEmptyPlanSlotsForDateRange } from "@/lib/planner/plan-date-rebase";
+import { rebasePlanWithMealRescue } from "@/lib/planner/plan-range-rescue";
+import {
+  formatMovedMealsToast,
+  formatRangeChangeDialogDescription,
+  formatRangeChangeDialogTitle,
+} from "@/lib/planner/planner-range-messages";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type PlannerFormProps = {
   ingredients: IngredientType[];
@@ -97,7 +114,14 @@ export function PlannerForm({
   familyMembers,
 }: PlannerFormProps) {
   const defaultFamilyMemberIds = familyMembers.map((member) => member.id);
-  const [plan, setPlan] = useState<PlanInputType | null>(null);
+  const initialPlannerState = useMemo(() => {
+    const dateRange = getDefaultDateRange(occupiedDateKeys);
+    return {
+      dateRange,
+      plan: createEmptyPlanSlotsForDateRange(dateRange.start, dateRange.end),
+    };
+  }, [occupiedDateKeys]);
+  const [plan, setPlan] = useState<PlanInputType>(initialPlannerState.plan);
   const [lastGenerationError, setLastGenerationError] = useState<string | null>(
     null,
   );
@@ -130,12 +154,20 @@ export function PlannerForm({
   const [groupAudience, setGroupAudience] = useState<AudienceGroups>(() =>
     createDefaultAudienceGroups(defaultFamilyMemberIds),
   );
+  const previousDateRangeRef = useRef<DateRangeValue>(initialPlannerState.dateRange);
+  const [pendingRangeRebuild, setPendingRangeRebuild] = useState<{
+    previousRange: DateRangeValue;
+    nextRange: DateRangeValue;
+    nextPlan: PlanInputType;
+    lostMealsCount: number;
+    relocatedCount: number;
+  } | null>(null);
 
   const form = useForm<PlannerCriteriaInputType>({
     resolver: zodResolver(plannerCriteriaSchema),
     defaultValues: {
-      // Prefill to next 4 days (inclusive) or first free 4-day window.
-      dateRange: getDefaultDateRange(occupiedDateKeys),
+      // Prefill to next week (inclusive) or first free 7-day window.
+      dateRange: initialPlannerState.dateRange,
       dailyAudienceByMeal: [],
       dailyTimeLimits: [],
       fridgeIngredientIds: [],
@@ -358,6 +390,10 @@ export function PlannerForm({
   });
   const dateRangeCriteriaKey = `${dateRange?.start ?? ""}|${dateRange?.end ?? ""}`;
 
+  const applyRebuiltPlan = useCallback((nextPlan: PlanInputType) => {
+    setPlan(nextPlan);
+  }, []);
+
   // After a failed Find meals, editing criteria brings back the last plan (no empty placeholder).
   useEffect(() => {
     if (generationErrorClearSkipRef.current) {
@@ -366,6 +402,70 @@ export function PlannerForm({
     }
     setLastGenerationError(null);
   }, [audienceCriteriaKey, dateRangeCriteriaKey, timeLimitsCriteriaKey]);
+
+  useEffect(() => {
+    if (!dateRange?.start || !dateRange?.end) {
+      return;
+    }
+    const previousRange = previousDateRangeRef.current;
+    const nextRange = { start: dateRange.start, end: dateRange.end };
+    if (
+      pendingRangeRebuild &&
+      pendingRangeRebuild.nextRange.start === nextRange.start &&
+      pendingRangeRebuild.nextRange.end === nextRange.end
+    ) {
+      return;
+    }
+    if (!previousRange) {
+      previousDateRangeRef.current = nextRange;
+      return;
+    }
+    if (!plan) {
+      applyRebuiltPlan(
+        createEmptyPlanSlotsForDateRange(nextRange.start, nextRange.end),
+      );
+      previousDateRangeRef.current = nextRange;
+      return;
+    }
+    if (
+      previousRange.start === nextRange.start &&
+      previousRange.end === nextRange.end
+    ) {
+      return;
+    }
+
+    const rescueResult = rebasePlanWithMealRescue({
+      slots: plan,
+      oldStartDateKey: previousRange.start,
+      newStartDateKey: nextRange.start,
+      newEndDateKey: nextRange.end,
+    });
+
+    const movedMealsToast = formatMovedMealsToast(rescueResult.movedMeals.length);
+    if (movedMealsToast) {
+      toast.info(movedMealsToast);
+    }
+
+    if (rescueResult.unallocatableMeals.length > 0) {
+      setPendingRangeRebuild({
+        previousRange,
+        nextRange,
+        nextPlan: rescueResult.plan,
+        lostMealsCount: rescueResult.unallocatableMeals.length,
+        relocatedCount: rescueResult.relocatedCount,
+      });
+      return;
+    }
+
+    applyRebuiltPlan(rescueResult.plan);
+    previousDateRangeRef.current = nextRange;
+  }, [
+    applyRebuiltPlan,
+    dateRange?.end,
+    dateRange?.start,
+    pendingRangeRebuild,
+    plan,
+  ]);
 
   useEffect(() => {
     if (!dateRange?.start || !dateRange?.end) return;
@@ -510,6 +610,54 @@ export function PlannerForm({
 
   return (
     <>
+      <AlertDialog
+        open={pendingRangeRebuild != null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingRangeRebuild(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingRangeRebuild
+                ? formatRangeChangeDialogTitle(pendingRangeRebuild.lostMealsCount)
+                : "Some meals cannot be kept in this range"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingRangeRebuild
+                ? formatRangeChangeDialogDescription({
+                    relocatedCount: pendingRangeRebuild.relocatedCount,
+                    unallocatableCount: pendingRangeRebuild.lostMealsCount,
+                  })
+                : "Some meals cannot be kept in the selected date range."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                if (!pendingRangeRebuild) return;
+                previousDateRangeRef.current = pendingRangeRebuild.previousRange;
+                form.setValue("dateRange", pendingRangeRebuild.previousRange);
+                setPendingRangeRebuild(null);
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingRangeRebuild) return;
+                previousDateRangeRef.current = pendingRangeRebuild.nextRange;
+                applyRebuiltPlan(pendingRangeRebuild.nextPlan);
+                setPendingRangeRebuild(null);
+              }}
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <TopbarConfigController
         config={{
           breadcrumbs: [

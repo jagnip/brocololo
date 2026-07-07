@@ -2,6 +2,8 @@
 
 import {
   formatDayLabel,
+  getOrderedPlanSlots,
+  getPlanSlotKey,
   getMealsForDate,
   groupSlotsByDate,
 } from "@/lib/planner/helpers";
@@ -12,6 +14,9 @@ import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
+import { PlannerBulkActionsFooter } from "./planner-bulk-actions-footer";
+import { useSlotBulkSelection } from "./use-slot-bulk-selection";
+import { toast } from "sonner";
 
 function getFridgeMatchIngredients(
   recipe: RecipeType,
@@ -27,10 +32,6 @@ function getFridgeMatchIngredients(
         ri.ingredient.descriptor,
       ),
     );
-}
-
-function getSlotKey(slot: SlotInputType): string {
-  return `${slot.date.toISOString()}-${slot.mealType}`;
 }
 
 type PlanViewProps = {
@@ -64,12 +65,28 @@ export function PlanView({
 
   const slotsByDate = groupSlotsByDate(plan);
   const sortedDates = Array.from(slotsByDate.keys()).sort();
+  const orderedSlotKeys = getOrderedPlanSlots(plan).map((slot) => getPlanSlotKey(slot));
+  const {
+    selectedCount,
+    isSelected,
+    setSelectionForKey,
+    shiftSelectToKey,
+    clearSelection,
+  } = useSlotBulkSelection({
+    orderedKeys: orderedSlotKeys,
+    onSelectionClearedByRebuild: () => {
+      toast.info("Selection cleared after date range change.");
+    },
+  });
 
   function renderSlot(slot: SlotInputType) {
-    const slotKey = getSlotKey(slot);
+    const slotKey = getPlanSlotKey(slot);
     return (
       <PlannerSlotCard
         slot={slot}
+        isSelected={isSelected(slotKey)}
+        onSelectionChange={(checked) => setSelectionForKey(slotKey, checked)}
+        onShiftSelect={() => shiftSelectToKey(slotKey)}
         fridgeMatchIngredients={
           slot.recipe ? getFridgeMatchIngredients(slot.recipe, fridgeIngredientIds) : []
         }
@@ -120,6 +137,7 @@ export function PlanView({
           </article>
         );
       })}
+      <PlannerBulkActionsFooter selectedCount={selectedCount} onDone={clearSelection} />
     </section>
   );
 }

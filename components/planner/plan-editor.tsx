@@ -10,7 +10,12 @@ import { ROUTES } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import { deletePlanAction, generateLogFromPlan, updateSavedPlan } from "@/actions/planner-actions";
 import { WeekPicker, getDefaultDateRange, type DateRangeValue } from "./date-range-picker";
-import { rebasePlanSlotsByDateRangeDelta } from "@/lib/planner/plan-date-rebase";
+import { rebasePlanWithMealRescue } from "@/lib/planner/plan-range-rescue";
+import {
+  formatMovedMealsToast,
+  formatRangeChangeDialogDescription,
+  formatRangeChangeDialogTitle,
+} from "@/lib/planner/planner-range-messages";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +53,13 @@ type SyncConflictState = {
   saveData: SlotSaveData[];
 };
 
+type PendingDateRangeChange = {
+  nextRange: DateRangeValue;
+  nextPlan: PlanInputType;
+  lostMealsCount: number;
+  relocatedCount: number;
+};
+
 export function PlanEditor({
   planId,
   initialPlan,
@@ -73,6 +85,8 @@ export function PlanEditor({
   const [deleteStatus, setDeleteStatus] = useState<"idle" | "deleting">("idle");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [syncConflict, setSyncConflict] = useState<SyncConflictState | null>(null);
+  const [pendingDateRangeChange, setPendingDateRangeChange] =
+    useState<PendingDateRangeChange | null>(null);
   const blockedAutosaveVersionRef = useRef<number | null>(null);
   const { setState: setPlanTopbarState, resetState: resetPlanTopbarState } =
     usePlanTopbarState();
@@ -88,27 +102,6 @@ export function PlanEditor({
       }),
     );
   }
-
-  const parseUtcDateKey = (dateKey: string): Date => new Date(`${dateKey}T00:00:00.000Z`);
-
-  function shiftPlanSlotsByUtcDayDelta(slots: PlanInputType, deltaDays: number): PlanInputType {
-    // Shifting by UTC day avoids DST and timezone drift.
-    return slots.map((slot) => {
-      const d = new Date(slot.date);
-      d.setUTCDate(d.getUTCDate() + deltaDays);
-      return { ...slot, date: d };
-    });
-  }
-
-  const mergeSlotsByMealKey = (base: PlanInputType, overlay: PlanInputType): PlanInputType => {
-    const mealKey = (slot: SlotInputType) => `${slot.date.toISOString().slice(0, 10)}-${slot.mealType}`;
-
-    const byKey = new Map<string, SlotInputType>();
-    for (const s of base) byKey.set(mealKey(s), s);
-    for (const s of overlay) byKey.set(mealKey(s), s);
-
-    return Array.from(byKey.values());
-  };
 
   const initialDateRange = (() => {
     // Derive picker bounds from the currently persisted plan slots.
@@ -203,35 +196,31 @@ export function PlanEditor({
     (next: DateRangeValue) => {
       if (next.start === dateRange.start && next.end === dateRange.end) return;
 
-      // Treat range changes like edits: shift all buffered slots in-memory,
-      // rebuild the visible subset for the new range, then keep shifted-out-of-range
-      // recipes in `allSlotsRef` until Save.
-      const oldStartDateKey = dateRange.start;
-      const oldStart = parseUtcDateKey(oldStartDateKey);
-      const newStart = parseUtcDateKey(next.start);
-      const deltaDays = Math.round((newStart.getTime() - oldStart.getTime()) / (24 * 60 * 60 * 1000));
-
-      // 1) Shift the whole buffer by the constant day delta derived from start change.
-      if (deltaDays !== 0) {
-        allSlotsRef.current = shiftPlanSlotsByUtcDayDelta(allSlotsRef.current, deltaDays);
-      }
-
-      // 2) Rebuild the visible subset for the chosen range.
-      // We pass oldStartDateKey == newStartDateKey so helper doesn't shift again (delta=0),
-      // and it only fills in missing empty meal slots for the selected days.
-      const visibleRebased = rebasePlanSlotsByDateRangeDelta({
+      const rescueResult = rebasePlanWithMealRescue({
         slots: allSlotsRef.current,
-        oldStartDateKey: next.start,
+        oldStartDateKey: dateRange.start,
         newStartDateKey: next.start,
         newEndDateKey: next.end,
       });
 
-      // 3) Keep any newly-created in-range empty slots in the buffer too,
-      // while preserving out-of-range recipes until the user saves.
-      allSlotsRef.current = mergeSlotsByMealKey(allSlotsRef.current, visibleRebased);
+      const movedMealsToast = formatMovedMealsToast(rescueResult.movedMeals.length);
+      if (movedMealsToast) {
+        toast.info(movedMealsToast);
+      }
+
+      if (rescueResult.unallocatableMeals.length > 0) {
+        setPendingDateRangeChange({
+          nextRange: next,
+          nextPlan: rescueResult.plan,
+          lostMealsCount: rescueResult.unallocatableMeals.length,
+          relocatedCount: rescueResult.relocatedCount,
+        });
+        return;
+      }
 
       setDateRange(next);
-      setPlan(visibleRebased);
+      setPlan(rescueResult.plan);
+      allSlotsRef.current = rescueResult.plan;
 
       editVersionRef.current += 1;
       setIsDirty(true);
@@ -525,6 +514,54 @@ export function PlanEditor({
               }}
             >
               Save and sync
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={pendingDateRangeChange != null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingDateRangeChange(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingDateRangeChange
+                ? formatRangeChangeDialogTitle(pendingDateRangeChange.lostMealsCount)
+                : "Some meals cannot be kept in this range"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingDateRangeChange
+                ? formatRangeChangeDialogDescription({
+                    relocatedCount: pendingDateRangeChange.relocatedCount,
+                    unallocatableCount: pendingDateRangeChange.lostMealsCount,
+                  })
+                : "Some meals cannot be kept in the selected date range."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingDateRangeChange) {
+                  return;
+                }
+                setDateRange(pendingDateRangeChange.nextRange);
+                setPlan(pendingDateRangeChange.nextPlan);
+                allSlotsRef.current = pendingDateRangeChange.nextPlan;
+                editVersionRef.current += 1;
+                setIsDirty(true);
+                if (saveStatus !== "saving") {
+                  setSaveStatus("idle");
+                }
+                setPendingDateRangeChange(null);
+              }}
+            >
+              Continue
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

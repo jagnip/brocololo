@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { PlannerMealType } from "@/src/generated/enums";
-import { getPlannerMealCountForAudience, markBatchSlots } from "@/lib/planner/helpers";
+import {
+  getOrderedPlanSlots,
+  getPlannerMealCountForAudience,
+  markBatchSlots,
+} from "@/lib/planner/helpers";
 import type { RecipeType } from "@/types/recipe";
 
 describe("getPlannerMealCountForAudience", () => {
@@ -46,5 +50,22 @@ describe("markBatchSlots", () => {
     const nextKey = `${days[1]!.toISOString()}-${PlannerMealType.DINNER}`;
     expect(batchFilledSlots.get(nextKey)).toBe(recipe);
     expect(batchSlotAudience.get(nextKey)).toEqual(sourceAudience);
+  });
+});
+
+describe("getOrderedPlanSlots", () => {
+  it("sorts slots by date first and then breakfast/lunch/dinner order", () => {
+    const plan = [
+      { date: new Date("2026-03-18T00:00:00.000Z"), mealType: PlannerMealType.DINNER },
+      { date: new Date("2026-03-17T00:00:00.000Z"), mealType: PlannerMealType.LUNCH },
+      { date: new Date("2026-03-17T00:00:00.000Z"), mealType: PlannerMealType.BREAKFAST },
+    ] as any;
+
+    const ordered = getOrderedPlanSlots(plan);
+    expect(ordered.map((slot) => `${slot.date.toISOString().slice(0, 10)}-${slot.mealType}`)).toEqual([
+      "2026-03-17-BREAKFAST",
+      "2026-03-17-LUNCH",
+      "2026-03-18-DINNER",
+    ]);
   });
 });

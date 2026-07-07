@@ -53,6 +53,28 @@ export function getMealsForDate(
   };
 }
 
+const MEAL_TYPE_ORDER: Record<PlannerMealType, number> = {
+  [PlannerMealType.BREAKFAST]: 0,
+  [PlannerMealType.LUNCH]: 1,
+  [PlannerMealType.DINNER]: 2,
+};
+
+export function getPlanSlotKey(slot: SlotInputType): string {
+  return `${slot.date.toISOString()}-${slot.mealType}`;
+}
+
+export function getOrderedPlanSlots(plan: PlanInputType): SlotInputType[] {
+  // Stable ordering powers deterministic range selection behavior.
+  return [...plan].sort((a, b) => {
+    const dateA = a.date.toISOString().slice(0, 10);
+    const dateB = b.date.toISOString().slice(0, 10);
+    if (dateA !== dateB) {
+      return dateA.localeCompare(dateB);
+    }
+    return MEAL_TYPE_ORDER[a.mealType] - MEAL_TYPE_ORDER[b.mealType];
+  });
+}
+
 export function getMealTimeLimit(
   dayLimits: DayTimeLimitsType | undefined,
   mealType: PlannerMealType,

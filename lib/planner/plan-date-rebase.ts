@@ -77,3 +77,16 @@ export function rebasePlanSlotsByDateRangeDelta(params: {
   return result;
 }
 
+/** Creates breakfast/lunch/dinner empty slots for every day in the selected range. */
+export function createEmptyPlanSlotsForDateRange(
+  startDateKey: string,
+  endDateKey: string,
+): PlanInputType {
+  return rebasePlanSlotsByDateRangeDelta({
+    slots: [],
+    oldStartDateKey: startDateKey,
+    newStartDateKey: startDateKey,
+    newEndDateKey: endDateKey,
+  });
+}
+
