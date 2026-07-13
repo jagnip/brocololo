@@ -444,6 +444,7 @@ export function GroceriesEditLibraryPanel({
                             ingredientId={ingredient.id}
                             ingredientSlug={ingredient.slug}
                             ingredientName={ingredient.name}
+                            ingredientSupermarketUrl={ingredient.supermarketUrl}
                             ingredientDescriptor={ingredient.descriptor}
                             onAddToGroceries={onAddIngredientToGroceries}
                             onEditIngredientRequested={onEditIngredientRequested}

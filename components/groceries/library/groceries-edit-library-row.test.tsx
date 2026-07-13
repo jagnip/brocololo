@@ -8,6 +8,7 @@ describe("GroceriesEditLibraryRow", () => {
     ingredientId: "ing-1",
     ingredientSlug: "banana",
     ingredientName: "Banana",
+    ingredientSupermarketUrl: null,
     ingredientDescriptor: null,
     onAddToGroceries: vi.fn(),
     onEditIngredientRequested: vi.fn(),
@@ -21,12 +22,24 @@ describe("GroceriesEditLibraryRow", () => {
     expect(link).toHaveAttribute("href", "/ingredients/banana/edit");
   });
 
-  it("does not show a supermarket external-link icon", () => {
+  it("does not show a supermarket external-link icon when url is missing", () => {
     render(<GroceriesEditLibraryRow {...baseProps} />);
 
     expect(
       screen.queryByRole("link", { name: "Open Banana in supermarket" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("shows a supermarket external-link icon next to the name when url is set", () => {
+    render(
+      <GroceriesEditLibraryRow
+        {...baseProps}
+        ingredientSupermarketUrl="https://shop.example/banana"
+      />,
+    );
+
+    const link = screen.getByRole("link", { name: "Open Banana in supermarket" });
+    expect(link).toHaveAttribute("href", "https://shop.example/banana");
   });
 
   it("opens overflow menu with edit and remove actions", async () => {
