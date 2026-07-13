@@ -162,14 +162,30 @@ export function PlannerSlotCard({
         target.closest("[data-slot='popover-content']"),
     );
 
-  const renderSelectionCheckbox = (label: string) =>
+  const renderSelectionCheckbox = (
+    label: string,
+    { elevated = false }: { elevated?: boolean } = {},
+  ) =>
     hasSelectionControls ? (
-      <div className="absolute left-2 top-2 z-2 rounded-md border border-border bg-card/95 p-1 shadow-sm backdrop-blur-[1px]">
-        {/* Keep checkbox visible over image-heavy cards with elevated chip-like shell. */}
+      <div
+        className="absolute left-3 top-3 z-2"
+        onClick={(event) => event.stopPropagation()}
+      >
+        {/* Flat on empty slots; shadow only where the checkbox sits over imagery. */}
         <Checkbox
           checked={isSelected}
           onCheckedChange={(checked) => onSelectionChange?.(checked === true)}
           aria-label={label}
+          className={cn(
+            "size-6 rounded-[6px] bg-card",
+            "hover:bg-card",
+            "data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
+            "data-[state=checked]:hover:bg-primary/90",
+            "[&_[data-slot=checkbox-indicator]_svg]:size-4",
+            elevated
+              ? "border-foreground/30 shadow-md data-[state=checked]:shadow-md"
+              : "border-border shadow-none data-[state=checked]:shadow-none",
+          )}
         />
       </div>
     ) : null;
@@ -262,7 +278,9 @@ export function PlannerSlotCard({
             openDialog();
           }}
         >
-          {renderSelectionCheckbox(`Select ${customMeal.name} (${mealLabel})`)}
+          {renderSelectionCheckbox(`Select ${customMeal.name} (${mealLabel})`, {
+            elevated: true,
+          })}
           <div className="relative w-full overflow-hidden aspect-2/1 sm:aspect-3/2">
             <RecipeImagePlaceholder showLabel={false} iconSize="lg" />
           </div>
@@ -328,7 +346,9 @@ export function PlannerSlotCard({
           openDialog();
         }}
       >
-        {renderSelectionCheckbox(`Select ${recipe!.name} (${mealLabel})`)}
+        {renderSelectionCheckbox(`Select ${recipe!.name} (${mealLabel})`, {
+          elevated: true,
+        })}
         <div className="relative w-full overflow-hidden aspect-2/1 sm:aspect-3/2">
           {imageUrl ? (
             <Image
