@@ -35,3 +35,11 @@ export const LogMealType = {
 } as const
 
 export type LogMealType = (typeof LogMealType)[keyof typeof LogMealType]
+
+
+export const RecipeIngredientAdjustmentKind = {
+  MODIFY: 'MODIFY',
+  SKIP: 'SKIP'
+} as const
+
+export type RecipeIngredientAdjustmentKind = (typeof RecipeIngredientAdjustmentKind)[keyof typeof RecipeIngredientAdjustmentKind]

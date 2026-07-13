@@ -102,10 +102,7 @@ export function RecipeAddToLogDialogContainer({
       const scaledAmount = recipeIngredient.amount * servingScalingFactor;
       const amountForPerson = getFamilyMemberIngredientAmountPerMeal({
         amount: scaledAmount,
-        appliesToEveryone: recipeIngredient.appliesToEveryone,
-        targetFamilyMemberIds: recipeIngredient.memberTargets.map(
-          (target) => target.familyMemberId,
-        ),
+        memberAdjustments: recipeIngredient.memberAdjustments,
         familyMemberId: logFamilyMemberId,
         recipeServings: currentServings,
         familyMembers,

@@ -11,18 +11,19 @@ const memberPortions = [
 ];
 
 const cookingFamilyMemberIds = ["family-self", "family-member-1"];
+const audienceMemberIds = cookingFamilyMemberIds;
 
 describe("getInstructionIngredientBadgeAmount", () => {
   it("returns scaled row amount when no person is selected", () => {
     expect(
       getInstructionIngredientBadgeAmount({
         amount: 300,
+        memberAdjustments: [],
+        audienceMemberIds,
         selectedFamilyMemberId: null,
         familyMembers,
         memberPortions,
         cookingFamilyMemberIds,
-        appliesToEveryone: true,
-        targetFamilyMemberIds: [],
         rowScaleFactor: 2,
       }),
     ).toBe(600);
@@ -32,12 +33,12 @@ describe("getInstructionIngredientBadgeAmount", () => {
     expect(
       getInstructionIngredientBadgeAmount({
         amount: 300,
+        memberAdjustments: [],
+        audienceMemberIds,
         selectedFamilyMemberId: "family-self",
         familyMembers,
         memberPortions,
         cookingFamilyMemberIds,
-        appliesToEveryone: true,
-        targetFamilyMemberIds: [],
         rowScaleFactor: 2,
       }),
     ).toBe(200);
@@ -47,12 +48,12 @@ describe("getInstructionIngredientBadgeAmount", () => {
     expect(
       getInstructionIngredientBadgeAmount({
         amount: 300,
+        memberAdjustments: [],
+        audienceMemberIds,
         selectedFamilyMemberId: "family-member-1",
         familyMembers,
         memberPortions,
         cookingFamilyMemberIds,
-        appliesToEveryone: true,
-        targetFamilyMemberIds: [],
         rowScaleFactor: 1,
       }),
     ).toBe(200);
@@ -63,24 +64,24 @@ describe("getInstructionIngredientBadgeAmount", () => {
     expect(
       getInstructionIngredientBadgeAmount({
         amount: 300,
+        memberAdjustments: [],
+        audienceMemberIds,
         selectedFamilyMemberId: "family-self",
         familyMembers,
         memberPortions,
         cookingFamilyMemberIds,
-        appliesToEveryone: true,
-        targetFamilyMemberIds: [],
         rowScaleFactor: 3,
       }),
     ).toBe(300);
     expect(
       getInstructionIngredientBadgeAmount({
         amount: 300,
+        memberAdjustments: [],
+        audienceMemberIds,
         selectedFamilyMemberId: "family-member-1",
         familyMembers,
         memberPortions,
         cookingFamilyMemberIds,
-        appliesToEveryone: true,
-        targetFamilyMemberIds: [],
         rowScaleFactor: 3,
       }),
     ).toBe(600);

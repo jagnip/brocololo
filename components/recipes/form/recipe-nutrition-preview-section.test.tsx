@@ -12,8 +12,8 @@ describe("RecipeNutritionPreviewSection", () => {
     );
 
     expect(screen.getByText("Nutrition preview")).toBeInTheDocument();
-    expect(screen.getByText("Jagoda")).toBeInTheDocument();
-    expect(screen.getByText("Nelson")).toBeInTheDocument();
+    expect(screen.getByText("You")).toBeInTheDocument();
+    expect(screen.getByText("Family member")).toBeInTheDocument();
     expect(screen.getByText("100 kcal")).toBeInTheDocument();
     expect(screen.getByText("200 kcal")).toBeInTheDocument();
     expect(screen.getByText("10g protein")).toBeInTheDocument();

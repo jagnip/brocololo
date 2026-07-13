@@ -107,10 +107,7 @@ function toRecipeSelectorRows(params: {
 
       const amountForPerson = getFamilyMemberIngredientAmountPerMeal({
         amount: recipeIngredient.amount,
-        appliesToEveryone: recipeIngredient.appliesToEveryone,
-        targetFamilyMemberIds: recipeIngredient.memberTargets.map(
-          (target) => target.familyMemberId,
-        ),
+        memberAdjustments: recipeIngredient.memberAdjustments,
         familyMemberId: params.familyMemberId,
         recipeServings: params.recipe.servings,
         familyMembers: params.familyMembers,

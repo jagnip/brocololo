@@ -536,8 +536,7 @@ export function IngredientSelector({
         ingredientId: "",
         amount: null,
         unitId: null,
-        appliesToEveryone: true,
-        targetFamilyMemberIds: [],
+        memberAdjustments: [],
         additionalInfo: null,
         groupTempKey,
         position: lanePosition,
@@ -903,50 +902,6 @@ export function IngredientSelector({
               className={INGREDIENT_ROW_LAYOUT_CLASSES.additionalInfoInput}
               maxLength={50}
             />
-          </div>
-        </div>
-
-        {/* Third row: ingredient target — empty selection means everyone in the recipe audience. */}
-        <div className={INGREDIENT_ROW_LAYOUT_CLASSES.nutritionTargetRow}>
-          <Label
-            id={`nutrition-target-label-${item.tempIngredientKey}`}
-            className="shrink-0 normal-case tracking-normal"
-          >
-            Use only for:
-          </Label>
-          <div
-            className="flex flex-wrap items-center gap-2"
-            role="group"
-            aria-labelledby={`nutrition-target-label-${item.tempIngredientKey}`}
-          >
-            {familyMembers.map((member, index) => {
-              const selectedIds = item.targetFamilyMemberIds ?? [];
-              const selected =
-                !(item.appliesToEveryone ?? true) && selectedIds.includes(member.id);
-              const label =
-                member.name.trim() ||
-                (member.isSelf ? "You" : `Family member ${index}`);
-              return (
-                <Button
-                  key={member.id}
-                  type="button"
-                  size="default"
-                  variant={selected ? "default" : "outline"}
-                  aria-pressed={selected}
-                  onClick={() => {
-                    const nextIds = selected
-                      ? selectedIds.filter((id) => id !== member.id)
-                      : [...selectedIds, member.id];
-                    updateIngredient(item.tempIngredientKey, {
-                      appliesToEveryone: nextIds.length === 0,
-                      targetFamilyMemberIds: nextIds,
-                    });
-                  }}
-                >
-                  {label}
-                </Button>
-              );
-            })}
           </div>
         </div>
       </div>

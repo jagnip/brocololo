@@ -24,8 +24,15 @@ const recipeInclude = {
     orderBy: { position: "asc" as const },
     include: {
       group: true,
-      memberTargets: {
-        select: { familyMemberId: true },
+      memberAdjustments: {
+        select: {
+          familyMemberId: true,
+          kind: true,
+          ingredientId: true,
+          amount: true,
+          unitId: true,
+          additionalInfo: true,
+        },
       },
       ingredient: {
         include: {
@@ -54,8 +61,15 @@ const recipeInclude = {
         include: {
           recipeIngredient: {
             include: {
-              memberTargets: {
-                select: { familyMemberId: true },
+              memberAdjustments: {
+                select: {
+                  familyMemberId: true,
+                  kind: true,
+                  ingredientId: true,
+                  amount: true,
+                  unitId: true,
+                  additionalInfo: true,
+                },
               },
               ingredient: {
                 include: {
@@ -723,10 +737,7 @@ export async function getPlannerPoolItemsForPlan(params: {
           .map((ri) => {
             const personAmount = getFamilyMemberIngredientAmountPerMeal({
               amount: ri.amount,
-              appliesToEveryone: ri.appliesToEveryone,
-              targetFamilyMemberIds: ri.memberTargets.map(
-                (target) => target.familyMemberId,
-              ),
+              memberAdjustments: ri.memberAdjustments,
               familyMemberId: params.familyMemberId,
               recipeServings: slot.recipe!.servings,
               familyMembers,

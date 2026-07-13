@@ -155,10 +155,7 @@ export function InstructionsSection() {
                     // Filter instruction badges by selected person, but keep step text visible.
                     if (
                       !isInstructionIngredientVisibleForPerson(
-                        recipeIngredient.appliesToEveryone,
-                        recipeIngredient.memberTargets.map(
-                          (target) => target.familyMemberId,
-                        ),
+                        recipeIngredient,
                         selectedInstructionFamilyMemberId,
                       )
                     ) {
@@ -173,11 +170,10 @@ export function InstructionsSection() {
                     const badgeAmount = hasAmount
                       ? getInstructionIngredientBadgeAmount({
                           amount: recipeIngredient.amount,
-                          appliesToEveryone: recipeIngredient.appliesToEveryone,
-                          targetFamilyMemberIds:
-                            recipeIngredient.memberTargets.map(
-                              (target) => target.familyMemberId,
-                            ),
+                          memberAdjustments: recipeIngredient.memberAdjustments,
+                          audienceMemberIds: audienceMembers.map(
+                            (member) => member.familyMemberId,
+                          ),
                           selectedFamilyMemberId:
                             selectedInstructionFamilyMemberId,
                           familyMembers,

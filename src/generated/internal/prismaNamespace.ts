@@ -408,6 +408,7 @@ export const ModelName = {
   IngredientUnit: 'IngredientUnit',
   RecipeIngredient: 'RecipeIngredient',
   RecipeIngredientMemberTarget: 'RecipeIngredientMemberTarget',
+  RecipeIngredientMemberAdjustment: 'RecipeIngredientMemberAdjustment',
   RecipeIngredientGroup: 'RecipeIngredientGroup',
   RecipeInstruction: 'RecipeInstruction',
   RecipeInstructionIngredient: 'RecipeInstructionIngredient',
@@ -434,7 +435,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "category" | "user" | "familyMember" | "plan" | "planAudienceMember" | "groceryIngredient" | "shoppingLayoutPreset" | "shoppingLayoutPresetCategory" | "shoppingList" | "shoppingListShare" | "shoppingListItem" | "planSlot" | "planSlotAudienceMember" | "planSlotCustomIngredient" | "planSlotAlternative" | "recipe" | "recipeAudienceMember" | "recipeMemberPortion" | "ingredient" | "ingredientUserCustomization" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientMemberTarget" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage" | "log" | "logEntry" | "logEntryRecipe" | "logIngredient" | "ingredientList" | "ingredientListItem"
+    modelProps: "category" | "user" | "familyMember" | "plan" | "planAudienceMember" | "groceryIngredient" | "shoppingLayoutPreset" | "shoppingLayoutPresetCategory" | "shoppingList" | "shoppingListShare" | "shoppingListItem" | "planSlot" | "planSlotAudienceMember" | "planSlotCustomIngredient" | "planSlotAlternative" | "recipe" | "recipeAudienceMember" | "recipeMemberPortion" | "ingredient" | "ingredientUserCustomization" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientMemberTarget" | "recipeIngredientMemberAdjustment" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage" | "log" | "logEntry" | "logEntryRecipe" | "logIngredient" | "ingredientList" | "ingredientListItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2214,6 +2215,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    RecipeIngredientMemberAdjustment: {
+      payload: Prisma.$RecipeIngredientMemberAdjustmentPayload<ExtArgs>
+      fields: Prisma.RecipeIngredientMemberAdjustmentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RecipeIngredientMemberAdjustmentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeIngredientMemberAdjustmentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RecipeIngredientMemberAdjustmentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeIngredientMemberAdjustmentPayload>
+        }
+        findFirst: {
+          args: Prisma.RecipeIngredientMemberAdjustmentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeIngredientMemberAdjustmentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RecipeIngredientMemberAdjustmentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeIngredientMemberAdjustmentPayload>
+        }
+        findMany: {
+          args: Prisma.RecipeIngredientMemberAdjustmentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeIngredientMemberAdjustmentPayload>[]
+        }
+        create: {
+          args: Prisma.RecipeIngredientMemberAdjustmentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeIngredientMemberAdjustmentPayload>
+        }
+        createMany: {
+          args: Prisma.RecipeIngredientMemberAdjustmentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RecipeIngredientMemberAdjustmentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeIngredientMemberAdjustmentPayload>[]
+        }
+        delete: {
+          args: Prisma.RecipeIngredientMemberAdjustmentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeIngredientMemberAdjustmentPayload>
+        }
+        update: {
+          args: Prisma.RecipeIngredientMemberAdjustmentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeIngredientMemberAdjustmentPayload>
+        }
+        deleteMany: {
+          args: Prisma.RecipeIngredientMemberAdjustmentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RecipeIngredientMemberAdjustmentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RecipeIngredientMemberAdjustmentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeIngredientMemberAdjustmentPayload>[]
+        }
+        upsert: {
+          args: Prisma.RecipeIngredientMemberAdjustmentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RecipeIngredientMemberAdjustmentPayload>
+        }
+        aggregate: {
+          args: Prisma.RecipeIngredientMemberAdjustmentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRecipeIngredientMemberAdjustment>
+        }
+        groupBy: {
+          args: Prisma.RecipeIngredientMemberAdjustmentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RecipeIngredientMemberAdjustmentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RecipeIngredientMemberAdjustmentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RecipeIngredientMemberAdjustmentCountAggregateOutputType> | number
+        }
+      }
+    }
     RecipeIngredientGroup: {
       payload: Prisma.$RecipeIngredientGroupPayload<ExtArgs>
       fields: Prisma.RecipeIngredientGroupFieldRefs
@@ -3338,6 +3413,20 @@ export const RecipeIngredientMemberTargetScalarFieldEnum = {
 export type RecipeIngredientMemberTargetScalarFieldEnum = (typeof RecipeIngredientMemberTargetScalarFieldEnum)[keyof typeof RecipeIngredientMemberTargetScalarFieldEnum]
 
 
+export const RecipeIngredientMemberAdjustmentScalarFieldEnum = {
+  id: 'id',
+  recipeIngredientId: 'recipeIngredientId',
+  familyMemberId: 'familyMemberId',
+  kind: 'kind',
+  ingredientId: 'ingredientId',
+  amount: 'amount',
+  unitId: 'unitId',
+  additionalInfo: 'additionalInfo'
+} as const
+
+export type RecipeIngredientMemberAdjustmentScalarFieldEnum = (typeof RecipeIngredientMemberAdjustmentScalarFieldEnum)[keyof typeof RecipeIngredientMemberAdjustmentScalarFieldEnum]
+
+
 export const RecipeIngredientGroupScalarFieldEnum = {
   id: 'id',
   recipeId: 'recipeId',
@@ -3574,6 +3663,20 @@ export type ListEnumPlannerMealTypeFieldRefInput<$PrismaModel> = FieldRefInputTy
 
 
 /**
+ * Reference to a field of type 'RecipeIngredientAdjustmentKind'
+ */
+export type EnumRecipeIngredientAdjustmentKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RecipeIngredientAdjustmentKind'>
+    
+
+
+/**
+ * Reference to a field of type 'RecipeIngredientAdjustmentKind[]'
+ */
+export type ListEnumRecipeIngredientAdjustmentKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RecipeIngredientAdjustmentKind[]'>
+    
+
+
+/**
  * Reference to a field of type 'LogMealType'
  */
 export type EnumLogMealTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LogMealType'>
@@ -3705,6 +3808,7 @@ export type GlobalOmitConfig = {
   ingredientUnit?: Prisma.IngredientUnitOmit
   recipeIngredient?: Prisma.RecipeIngredientOmit
   recipeIngredientMemberTarget?: Prisma.RecipeIngredientMemberTargetOmit
+  recipeIngredientMemberAdjustment?: Prisma.RecipeIngredientMemberAdjustmentOmit
   recipeIngredientGroup?: Prisma.RecipeIngredientGroupOmit
   recipeInstruction?: Prisma.RecipeInstructionOmit
   recipeInstructionIngredient?: Prisma.RecipeInstructionIngredientOmit

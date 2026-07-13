@@ -6,6 +6,9 @@ vi.mock("./index", () => ({
     category: {
       findMany: vi.fn(),
     },
+    familyMember: {
+      findMany: vi.fn(),
+    },
     recipe: {
       findUniqueOrThrow: vi.fn(),
     },
@@ -32,7 +35,8 @@ function baseCreateRecipeInput() {
     handsOnTime: 10,
     totalTime: 20,
     servings: 2,
-    servingMultiplierForNelson: 1,
+    audienceFamilyMemberIds: ["family-self"],
+    memberPortions: [],
     ingredientGroups: [],
     ingredients: [
       {
@@ -40,7 +44,7 @@ function baseCreateRecipeInput() {
         ingredientId: "ingredient-1",
         amount: 1,
         unitId: "unit-1",
-        nutritionTarget: "BOTH",
+        memberAdjustments: [],
         additionalInfo: null,
         groupTempKey: null,
         position: 0,
@@ -62,6 +66,7 @@ const TEST_USER_ID = "user-test";
 describe("createRecipe category type rules", () => {
   const mockedPrisma = prisma as unknown as {
     category: { findMany: ReturnType<typeof vi.fn> };
+    familyMember: { findMany: ReturnType<typeof vi.fn> };
     recipe: { findUniqueOrThrow: ReturnType<typeof vi.fn> };
     $transaction: ReturnType<typeof vi.fn>;
   };
@@ -69,17 +74,31 @@ describe("createRecipe category type rules", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    mockedPrisma.familyMember.findMany.mockResolvedValue([
+      { id: "family-self", name: "Jagoda", isSelf: true, sortOrder: 0 },
+    ]);
+
     // Keep transaction stubs minimal: only methods touched by this test payload.
     mockedPrisma.$transaction.mockImplementation(async (callback: (tx: unknown) => Promise<string>) =>
       callback({
         recipe: {
           create: vi.fn().mockResolvedValue({ id: "recipe-id" }),
         },
+        recipeAudienceMember: {
+          createMany: vi.fn(),
+        },
+        recipeMemberPortion: {
+          createMany: vi.fn(),
+        },
         recipeIngredientGroup: {
           create: vi.fn(),
         },
         recipeIngredient: {
           create: vi.fn().mockResolvedValue({ id: "recipe-ingredient-id" }),
+        },
+        recipeIngredientMemberAdjustment: {
+          deleteMany: vi.fn(),
+          createMany: vi.fn(),
         },
         recipeInstruction: {
           create: vi.fn().mockResolvedValue({ id: "instruction-id" }),

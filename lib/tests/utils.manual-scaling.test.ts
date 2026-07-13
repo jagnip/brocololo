@@ -163,10 +163,30 @@ describe('Manual ingredient scaling — integration', () => {
    * Chicken: 165 cal/100g, 31g protein, 3.6g fat, 0g carbs
    * Rice: 130 cal/100g, 2.7g protein, 0.3g fat, 28g carbs
    */
+  const nutritionFamilyMembers = [
+    { id: "family-self", isSelf: true },
+    { id: "family-member-1", isSelf: false },
+  ];
+
+  function nutritionFor(
+    recipe: Parameters<typeof calculateNutritionPerServing>[0],
+    member: "jagoda" | "nelson",
+  ) {
+    const familyMemberId =
+      member === "jagoda" ? "family-self" : "family-member-1";
+    return calculateNutritionPerServing(
+      recipe,
+      familyMemberId,
+      nutritionFamilyMembers,
+    );
+  }
+
   function createTestRecipe() {
     return createMockRecipe({
       servings: 4,
-      servingMultiplierForNelson: 1.5,
+      memberPortions: [
+        { recipeId: "recipe-1", familyMemberId: "family-member-1", multiplier: 1.5 },
+      ],
       ingredients: [
         {
           id: 'ri-chicken',
@@ -261,7 +281,7 @@ describe('Manual ingredient scaling — integration', () => {
 
   it('should absorb calorie scaling when ingredient is edited', () => {
     const recipe = createTestRecipe();
-    const baseNutrition = calculateNutritionPerServing(recipe, 'primary');
+    const baseNutrition = nutritionFor(recipe, "jagoda");
     const { servingScalingFactor } = calculateServingScalingFactor(2, 4, 1.5);
 
     // Set calorie target to 200 (base is 210 per meal for Jagoda)
@@ -287,8 +307,8 @@ describe('Manual ingredient scaling — integration', () => {
 
   it('should calculate correct Jagoda and Nelson nutrition with manual scaling', () => {
     const recipe = createTestRecipe();
-    const jagodaBaseNutrition = calculateNutritionPerServing(recipe, 'primary');
-    const nelsonBaseNutrition = calculateNutritionPerServing(recipe, 'secondary');
+    const jagodaBaseNutrition = nutritionFor(recipe, "jagoda");
+    const nelsonBaseNutrition = nutritionFor(recipe, "nelson");
 
     const manualScaleRatio = 1.2;
     const effectiveFactor = 1 * manualScaleRatio; // no calorie target
@@ -307,8 +327,8 @@ describe('Manual ingredient scaling — integration', () => {
 
   it('should calculate correct nutrition when calorie target is active (no manual edit)', () => {
     const recipe = createTestRecipe();
-    const jagodaBaseNutrition = calculateNutritionPerServing(recipe, 'primary');
-    const nelsonBaseNutrition = calculateNutritionPerServing(recipe, 'secondary');
+    const jagodaBaseNutrition = nutritionFor(recipe, "jagoda");
+    const nelsonBaseNutrition = nutritionFor(recipe, "nelson");
 
     const targetCalories = 500;
     const calorieScale = targetCalories / jagodaBaseNutrition.calories;
@@ -324,7 +344,7 @@ describe('Manual ingredient scaling — integration', () => {
 
   it('should reset to base values when manual scale ratio is 1', () => {
     const recipe = createTestRecipe();
-    const baseNutrition = calculateNutritionPerServing(recipe, 'primary');
+    const baseNutrition = nutritionFor(recipe, "jagoda");
 
     const jagodaNutrition = scaleNutrition(baseNutrition, 1);
     expect(jagodaNutrition).toEqual(baseNutrition);

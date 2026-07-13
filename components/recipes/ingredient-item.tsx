@@ -54,6 +54,7 @@ type IngredientItemProps = {
   onApplyScaleToAll: () => void;
   onIngredientChange: (ingredientId: string) => void;
   familyMembers: FamilyMemberRow[];
+  audienceMemberIds: string[];
 };
 
 export function IngredientItem({
@@ -68,12 +69,13 @@ export function IngredientItem({
   onApplyScaleToAll,
   onIngredientChange,
   familyMembers,
+  audienceMemberIds,
 }: IngredientItemProps) {
   const { ingredient } = recipeIngredient;
   // Resolve read-only member badges for targeted ingredients (hidden for solo households).
   const memberBadges = useMemo(
-    () => getIngredientMemberBadges(recipeIngredient, familyMembers),
-    [recipeIngredient, familyMembers],
+    () => getIngredientMemberBadges(recipeIngredient, familyMembers, audienceMemberIds),
+    [audienceMemberIds, recipeIngredient, familyMembers],
   );
   const hasMemberBadges = memberBadges.length > 0;
   const hasAdditionalInfo = Boolean(recipeIngredient.additionalInfo);

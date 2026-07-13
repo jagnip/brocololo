@@ -4,7 +4,40 @@ import {
 } from "../validations/recipe";
 import { prisma } from "./index";
 import { Prisma } from "@/src/generated/client";
-import { CategoryType } from "@/src/generated/enums";
+import { CategoryType, RecipeIngredientAdjustmentKind } from "@/src/generated/enums";
+import type { RecipeIngredientInputType } from "../validations/recipe";
+
+async function syncMemberAdjustments(
+  tx: Prisma.TransactionClient,
+  recipeIngredientId: string,
+  memberAdjustments: RecipeIngredientInputType["memberAdjustments"],
+  audienceFamilyMemberIdSet: Set<string>,
+) {
+  await tx.recipeIngredientMemberAdjustment.deleteMany({
+    where: { recipeIngredientId },
+  });
+
+  const rows = (memberAdjustments ?? [])
+    .filter((adjustment) => audienceFamilyMemberIdSet.has(adjustment.familyMemberId))
+    .map((adjustment) => ({
+      recipeIngredientId,
+      familyMemberId: adjustment.familyMemberId,
+      kind: adjustment.kind as RecipeIngredientAdjustmentKind,
+      ingredientId:
+        adjustment.kind === "MODIFY" ? adjustment.ingredientId ?? null : null,
+      amount: adjustment.kind === "MODIFY" ? adjustment.amount ?? null : null,
+      unitId: adjustment.kind === "MODIFY" ? adjustment.unitId ?? null : null,
+      additionalInfo:
+        adjustment.kind === "MODIFY" ? adjustment.additionalInfo ?? null : null,
+    }));
+
+  if (rows.length > 0) {
+    await tx.recipeIngredientMemberAdjustment.createMany({
+      data: rows,
+      skipDuplicates: true,
+    });
+  }
+}
 import type { RecipeType } from "@/types/recipe";
 
 const recipeInclude = {
@@ -23,8 +56,15 @@ const recipeInclude = {
     orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
     include: {
       group: true,
-      memberTargets: {
-        select: { familyMemberId: true },
+      memberAdjustments: {
+        select: {
+          familyMemberId: true,
+          kind: true,
+          ingredientId: true,
+          amount: true,
+          unitId: true,
+          additionalInfo: true,
+        },
       },
       ingredient: {
         include: {
@@ -54,8 +94,15 @@ const recipeInclude = {
         include: {
           recipeIngredient: {
             include: {
-              memberTargets: {
-                select: { familyMemberId: true },
+              memberAdjustments: {
+                select: {
+                  familyMemberId: true,
+                  kind: true,
+                  ingredientId: true,
+                  amount: true,
+                  unitId: true,
+                  additionalInfo: true,
+                },
               },
               ingredient: {
                 include: {
@@ -258,7 +305,9 @@ export async function createRecipe(
     [
       ...audienceFamilyMemberIds,
       ...memberPortions.map((portion) => portion.familyMemberId),
-      ...ingredients.flatMap((ingredient) => ingredient.targetFamilyMemberIds),
+      ...ingredients.flatMap((ingredient) =>
+        ingredient.memberAdjustments.map((adjustment) => adjustment.familyMemberId),
+      ),
     ],
     ownedFamilyMemberIds,
   );
@@ -338,24 +387,18 @@ export async function createRecipe(
           ingredientId: ing.ingredientId,
           amount: ing.amount,
           unitId: ing.unitId,
-          appliesToEveryone: ing.appliesToEveryone,
+          appliesToEveryone: true,
           additionalInfo: ing.additionalInfo,
         },
         select: { id: true },
       });
 
-      const targetFamilyMemberIds = ing.targetFamilyMemberIds.filter((id) =>
-        audienceFamilyMemberIdSet.has(id),
+      await syncMemberAdjustments(
+        tx,
+        created.id,
+        ing.memberAdjustments,
+        audienceFamilyMemberIdSet,
       );
-      if (!ing.appliesToEveryone && targetFamilyMemberIds.length > 0) {
-        await tx.recipeIngredientMemberTarget.createMany({
-          data: targetFamilyMemberIds.map((familyMemberId) => ({
-            recipeIngredientId: created.id,
-            familyMemberId,
-          })),
-          skipDuplicates: true,
-        });
-      }
 
       ingredientIdByTempKey.set(ing.tempIngredientKey, created.id);
     }
@@ -431,7 +474,9 @@ export async function updateRecipe(
     [
       ...audienceFamilyMemberIds,
       ...memberPortions.map((portion) => portion.familyMemberId),
-      ...ingredients.flatMap((ingredient) => ingredient.targetFamilyMemberIds),
+      ...ingredients.flatMap((ingredient) =>
+        ingredient.memberAdjustments.map((adjustment) => adjustment.familyMemberId),
+      ),
     ],
     ownedFamilyMemberIds,
   );
@@ -503,7 +548,7 @@ export async function updateRecipe(
       });
     }
 
-    await tx.recipeIngredientMemberTarget.deleteMany({
+    await tx.recipeIngredientMemberAdjustment.deleteMany({
       where: { recipeIngredient: { recipeId } },
     });
 
@@ -586,23 +631,17 @@ export async function updateRecipe(
             ingredientId: ing.ingredientId,
             amount: ing.amount,
             unitId: ing.unitId,
-            appliesToEveryone: ing.appliesToEveryone,
+            appliesToEveryone: true,
             additionalInfo: ing.additionalInfo,
           },
         });
         ingredientIdByTempKey.set(ing.tempIngredientKey, ing.id);
-        const targetFamilyMemberIds = ing.targetFamilyMemberIds.filter((id) =>
-          audienceFamilyMemberIdSet.has(id),
+        await syncMemberAdjustments(
+          tx,
+          ing.id,
+          ing.memberAdjustments,
+          audienceFamilyMemberIdSet,
         );
-        if (!ing.appliesToEveryone && targetFamilyMemberIds.length > 0) {
-          await tx.recipeIngredientMemberTarget.createMany({
-            data: targetFamilyMemberIds.map((familyMemberId) => ({
-              recipeIngredientId: ing.id!,
-              familyMemberId,
-            })),
-            skipDuplicates: true,
-          });
-        }
       } else {
         const created = await tx.recipeIngredient.create({
           data: {
@@ -612,23 +651,17 @@ export async function updateRecipe(
             ingredientId: ing.ingredientId,
             amount: ing.amount,
             unitId: ing.unitId,
-            appliesToEveryone: ing.appliesToEveryone,
+            appliesToEveryone: true,
             additionalInfo: ing.additionalInfo,
           },
           select: { id: true },
         });
-        const targetFamilyMemberIds = ing.targetFamilyMemberIds.filter((id) =>
-          audienceFamilyMemberIdSet.has(id),
+        await syncMemberAdjustments(
+          tx,
+          created.id,
+          ing.memberAdjustments,
+          audienceFamilyMemberIdSet,
         );
-        if (!ing.appliesToEveryone && targetFamilyMemberIds.length > 0) {
-          await tx.recipeIngredientMemberTarget.createMany({
-            data: targetFamilyMemberIds.map((familyMemberId) => ({
-              recipeIngredientId: created.id,
-              familyMemberId,
-            })),
-            skipDuplicates: true,
-          });
-        }
         ingredientIdByTempKey.set(ing.tempIngredientKey, created.id);
       }
     }
