@@ -313,8 +313,8 @@ function buildScaledRecipe(
       }
       const rowScale = localScaleById[row.id] ?? 1;
       const calorieFactor = getCalorieScalingFactorForIngredient(
-        row.appliesToEveryone,
-        row.memberTargets.map((target) => target.familyMemberId),
+        row.memberAdjustments,
+        recipe.audienceMembers.map((member) => member.familyMemberId),
         calorieAnchorMemberId,
         calorieScalingFactor,
       );

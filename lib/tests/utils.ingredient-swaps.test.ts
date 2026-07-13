@@ -11,6 +11,19 @@ import {
   createMockUnit,
 } from './test-helpers';
 
+const nutritionFamilyMembers = [
+  { id: "family-self", isSelf: true },
+  { id: "family-member-1", isSelf: false },
+];
+
+function nutritionForJagoda(recipe: Parameters<typeof calculateNutritionPerServing>[0]) {
+  return calculateNutritionPerServing(
+    recipe,
+    "family-self",
+    nutritionFamilyMembers,
+  );
+}
+
 describe('buildEffectiveRecipeForSimulation', () => {
   it('keeps amount and unit when replacement supports the same unit', () => {
     const cupUnit = createMockUnit({ id: 'unit-cup', name: 'cup' });
@@ -263,13 +276,13 @@ describe('swap simulation nutrition integration', () => {
       ],
     });
 
-    const original = calculateNutritionPerServing(recipe, 'primary');
+    const original = nutritionForJagoda(recipe);
     const effective = buildEffectiveRecipeForSimulation(
       recipe,
       { 'ri-protein': 'ing-tofu' },
       [tofu],
     );
-    const swapped = calculateNutritionPerServing(effective, 'primary');
+    const swapped = nutritionForJagoda(effective);
 
     // Default multiplier is 1.5, so primary receives 40% of BOTH-target totals.
     expect(original.calories).toBe(132);

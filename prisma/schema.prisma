@@ -67,12 +67,18 @@ model FamilyMember {
   logEntries                LogEntry[]
   planAudienceMemberships     PlanAudienceMember[]
   planSlotAudienceMemberships PlanSlotAudienceMember[]
-  recipeAudienceMemberships RecipeAudienceMember[]
-  recipeMemberPortions      RecipeMemberPortion[]
-  recipeIngredientTargets   RecipeIngredientMemberTarget[]
+  recipeAudienceMemberships           RecipeAudienceMember[]
+  recipeMemberPortions                RecipeMemberPortion[]
+  recipeIngredientTargets             RecipeIngredientMemberTarget[]
+  recipeIngredientMemberAdjustments   RecipeIngredientMemberAdjustment[]
 
   @@index([userId, sortOrder])
   @@map("family_members")
+}
+
+enum RecipeIngredientAdjustmentKind {
+  MODIFY
+  SKIP
 }
 
 model Plan {
@@ -338,6 +344,7 @@ model Ingredient {
   category                   IngredientCategory            @relation(fields: [categoryId], references: [id])
   defaultUnit                Unit?                         @relation("ingredient_default_unit", fields: [defaultUnitId], references: [id], onDelete: Restrict)
   recipes                    RecipeIngredient[]
+  recipeIngredientMemberAdjustments RecipeIngredientMemberAdjustment[]
   unitConversions            IngredientUnit[]
   logIngredients             LogIngredient[]
   planSlotCustomIngredients  PlanSlotCustomIngredient[]
@@ -378,6 +385,7 @@ model Unit {
   ingredientUnits       IngredientUnit[]
   defaultForIngredients Ingredient[]       @relation("ingredient_default_unit")
   recipeIngredients     RecipeIngredient[]
+  recipeIngredientMemberAdjustments RecipeIngredientMemberAdjustment[]
   logIngredients        LogIngredient[]
   planSlotCustomIngredients PlanSlotCustomIngredient[]
   shoppingListItems     ShoppingListItem[]
@@ -405,15 +413,17 @@ model RecipeIngredient {
   ingredientId      String  @map("ingredient_id")
   unitId            String? @map("unit_id")
   amount            Float?
+  // Legacy — removed after data migration backfills memberAdjustments.
   appliesToEveryone Boolean @default(true) @map("applies_to_everyone")
   additionalInfo    String? @map("additional_info")
 
-  recipe            Recipe                         @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  group             RecipeIngredientGroup?         @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  ingredient        Ingredient                     @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
-  unit              Unit?                          @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  recipe            Recipe                              @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  group             RecipeIngredientGroup?            @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  ingredient        Ingredient                          @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+  unit              Unit?                               @relation(fields: [unitId], references: [id], onDelete: Restrict)
   instructionsLinks RecipeInstructionIngredient[]
   memberTargets     RecipeIngredientMemberTarget[]
+  memberAdjustments RecipeIngredientMemberAdjustment[]
 
   @@index([recipeId])
   @@index([recipeId, groupId])
@@ -422,6 +432,7 @@ model RecipeIngredient {
   @@map("recipe_ingredients")
 }
 
+// Legacy — removed after data migration.
 model RecipeIngredientMemberTarget {
   recipeIngredientId String @map("recipe_ingredient_id")
   familyMemberId     String @map("family_member_id")
@@ -432,6 +443,27 @@ model RecipeIngredientMemberTarget {
   @@id([recipeIngredientId, familyMemberId])
   @@index([familyMemberId])
   @@map("recipe_ingredient_member_targets")
+}
+
+model RecipeIngredientMemberAdjustment {
+  id                 String                         @id @default(cuid())
+  recipeIngredientId String                         @map("recipe_ingredient_id")
+  familyMemberId     String                         @map("family_member_id")
+  kind               RecipeIngredientAdjustmentKind
+
+  ingredientId   String? @map("ingredient_id")
+  amount         Float?
+  unitId         String? @map("unit_id")
+  additionalInfo String? @map("additional_info")
+
+  recipeIngredient RecipeIngredient @relation(fields: [recipeIngredientId], references: [id], onDelete: Cascade)
+  familyMember     FamilyMember     @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+  ingredient       Ingredient?      @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+  unit             Unit?            @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
+  @@unique([recipeIngredientId, familyMemberId])
+  @@index([familyMemberId])
+  @@map("recipe_ingredient_member_adjustments")
 }
 
 model RecipeIngredientGroup {

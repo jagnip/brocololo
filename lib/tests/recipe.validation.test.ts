@@ -23,7 +23,8 @@ const baseRecipeInput = {
   handsOnTime: 15,
   totalTime: 30,
   servings: 2,
-  servingMultiplierForNelson: 1,
+  audienceFamilyMemberIds: ["family-self", "family-member-1"],
+  memberPortions: [{ familyMemberId: "family-member-1", multiplier: 1 }],
   ingredientGroups: [
     {
       tempGroupKey: "grp-1",
@@ -79,13 +80,13 @@ describe("createRecipeSchema", () => {
     expect(parsed.images[1]?.isCover).toBe(false);
   });
 
-  it("normalizes additionalInfo and defaults nutritionTarget", () => {
+  it("normalizes additionalInfo and defaults memberAdjustments", () => {
     const parsed = createRecipeSchema.parse(baseRecipeInput);
 
     expect(parsed.ingredients[0]?.additionalInfo).toBe("chopped");
     expect(parsed.ingredients[1]?.additionalInfo).toBeNull();
-    expect(parsed.ingredients[0]?.nutritionTarget).toBe("BOTH");
-    expect(parsed.ingredients[1]?.nutritionTarget).toBe("BOTH");
+    expect(parsed.ingredients[0]?.memberAdjustments).toEqual([]);
+    expect(parsed.ingredients[1]?.memberAdjustments).toEqual([]);
   });
 
   it("keeps group assignment and 0-based positions", () => {
@@ -217,22 +218,12 @@ describe("createRecipeSchema", () => {
     });
   });
 
-  it("defaults Nelson multiplier to 1 when it is an empty string", () => {
-    const parsed = createRecipeSchema.parse({
-      ...baseRecipeInput,
-      servingMultiplierForNelson: "",
-    });
+  it("defaults memberPortions to empty when omitted", () => {
+    const inputWithoutPortions = { ...baseRecipeInput };
+    delete (inputWithoutPortions as { memberPortions?: unknown }).memberPortions;
 
-    expect(parsed.servingMultiplierForNelson).toBe(1);
-  });
-
-  it("defaults Nelson multiplier to 1 when it is omitted", () => {
-    const inputWithoutMultiplier = { ...baseRecipeInput };
-    delete (inputWithoutMultiplier as { servingMultiplierForNelson?: number })
-      .servingMultiplierForNelson;
-
-    const parsed = createRecipeSchema.parse(inputWithoutMultiplier);
-    expect(parsed.servingMultiplierForNelson).toBe(1);
+    const parsed = createRecipeSchema.parse(inputWithoutPortions);
+    expect(parsed.memberPortions).toEqual([]);
   });
 
   it("accepts numeric strings for recipe numeric fields", () => {
@@ -241,13 +232,13 @@ describe("createRecipeSchema", () => {
       handsOnTime: "15",
       totalTime: "30",
       servings: "2",
-      servingMultiplierForNelson: "1",
+      memberPortions: [{ familyMemberId: "family-member-1", multiplier: "1" }],
     });
 
     expect(parsed.handsOnTime).toBe(15);
     expect(parsed.totalTime).toBe(30);
     expect(parsed.servings).toBe(2);
-    expect(parsed.servingMultiplierForNelson).toBe(1);
+    expect(parsed.memberPortions[0]?.multiplier).toBe(1);
   });
 
   it("rejects servings lower than 2", () => {
@@ -268,42 +259,40 @@ describe("createRecipeSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("accepts fractional Nelson multiplier values greater than or equal to 1", () => {
+  it("accepts fractional member portion multipliers", () => {
     const parsed = createRecipeSchema.parse({
       ...baseRecipeInput,
-      servingMultiplierForNelson: "1.5",
+      memberPortions: [{ familyMemberId: "family-member-1", multiplier: "1.5" }],
     });
 
-    expect(parsed.servingMultiplierForNelson).toBe(1.5);
+    expect(parsed.memberPortions[0]?.multiplier).toBe(1.5);
   });
 
-  it("accepts half-step Nelson multiplier values", () => {
-    // Keep parser behavior aligned with the form's 0.5-step input contract.
+  it("accepts half-step member portion multipliers", () => {
     const parsed = createRecipeSchema.parse({
       ...baseRecipeInput,
-      servingMultiplierForNelson: "2.5",
+      memberPortions: [{ familyMemberId: "family-member-1", multiplier: "2.5" }],
     });
 
-    expect(parsed.servingMultiplierForNelson).toBe(2.5);
+    expect(parsed.memberPortions[0]?.multiplier).toBe(2.5);
   });
 
-  it("accepts Nelson multiplier as numeric string with trailing .0", () => {
+  it("accepts member portion multiplier as numeric string with trailing .0", () => {
     const parsed = createRecipeSchema.parse({
       ...baseRecipeInput,
-      servingMultiplierForNelson: "1.0",
+      memberPortions: [{ familyMemberId: "family-member-1", multiplier: "1.0" }],
     });
 
-    expect(parsed.servingMultiplierForNelson).toBe(1);
+    expect(parsed.memberPortions[0]?.multiplier).toBe(1);
   });
 
-  it("rejects invalid Nelson multiplier values", () => {
-    // Reject values that are out of range, non-numeric, or not in 0.5 increments.
+  it("rejects invalid member portion multipliers", () => {
     const invalidValues = [0, -1, "abc", 1.2] as const;
 
-    invalidValues.forEach((servingMultiplierForNelson) => {
+    invalidValues.forEach((multiplier) => {
       const result = createRecipeSchema.safeParse({
         ...baseRecipeInput,
-        servingMultiplierForNelson,
+        memberPortions: [{ familyMemberId: "family-member-1", multiplier }],
       });
       expect(result.success).toBe(false);
     });

@@ -25,6 +25,25 @@ const bread = createMockIngredient({
   unitConversions: [createMockIngredientUnit("ing-bread", "unit-grams", 1)],
 });
 
+const audience = ["family-self", "family-member-1"];
+const nutritionFamilyMembers = [
+  { id: "family-self", isSelf: true },
+  { id: "family-member-1", isSelf: false },
+];
+
+function nutritionFor(
+  recipe: Parameters<typeof calculateNutritionPerServing>[0],
+  member: "jagoda" | "nelson",
+) {
+  const familyMemberId =
+    member === "jagoda" ? "family-self" : "family-member-1";
+  return calculateNutritionPerServing(
+    recipe,
+    familyMemberId,
+    nutritionFamilyMembers,
+  );
+}
+
 function formRowFrom(
   overrides: Partial<{
     tempIngredientKey: string;
@@ -35,12 +54,20 @@ function formRowFrom(
     position: number;
   }> & { tempIngredientKey: string; ingredientId: string },
 ) {
+  const nutritionTarget = overrides.nutritionTarget ?? "BOTH";
+  const memberAdjustments =
+    nutritionTarget === "PRIMARY_ONLY"
+      ? [{ familyMemberId: "family-member-1", kind: "SKIP" as const }]
+      : nutritionTarget === "SECONDARY_ONLY"
+        ? [{ familyMemberId: "family-self", kind: "SKIP" as const }]
+        : [];
+
   return {
     tempIngredientKey: overrides.tempIngredientKey,
     ingredientId: overrides.ingredientId,
     amount: overrides.amount ?? null,
     unitId: overrides.unitId ?? null,
-    nutritionTarget: overrides.nutritionTarget ?? "BOTH",
+    memberAdjustments,
     additionalInfo: null as string | null,
     groupTempKey: null as string | null,
     position: overrides.position ?? 0,
@@ -51,7 +78,8 @@ describe("buildDraftRecipeForNutrition", () => {
   it("drops placeholder rows without ingredientId and rows missing catalog match", () => {
     const draft = buildDraftRecipeForNutrition(
       2,
-      2,
+      audience,
+      [],
       [
         formRowFrom({
           tempIngredientKey: "empty",
@@ -69,7 +97,7 @@ describe("buildDraftRecipeForNutrition", () => {
       [chicken],
     );
     expect(draft.ingredients).toHaveLength(0);
-    expect(calculateNutritionPerServing(draft, "primary")).toEqual({
+    expect(nutritionFor(draft, "jagoda")).toEqual({
       calories: 0,
       protein: 0,
       fat: 0,
@@ -80,7 +108,8 @@ describe("buildDraftRecipeForNutrition", () => {
   it("skips rows without usable amount, unitId, or unit conversion", () => {
     const draftIncomplete = buildDraftRecipeForNutrition(
       2,
-      1,
+      audience,
+      [{ familyMemberId: "family-member-1", multiplier: 1 }],
       [
         formRowFrom({
           tempIngredientKey: "no-amount",
@@ -103,7 +132,9 @@ describe("buildDraftRecipeForNutrition", () => {
   it("matches calculateNutritionPerServing for parity with persisted recipe fixtures", () => {
     const recipe = createMockRecipe({
       servings: 2,
-      servingMultiplierForNelson: 2,
+      memberPortions: [
+        { recipeId: "recipe-1", familyMemberId: "family-member-1", multiplier: 2 },
+      ],
       ingredients: [
         {
           id: "ri-chicken",
@@ -132,7 +163,8 @@ describe("buildDraftRecipeForNutrition", () => {
 
     const draft = buildDraftRecipeForNutrition(
       2,
-      2,
+      audience,
+      [{ familyMemberId: "family-member-1", multiplier: 2 }],
       [
         formRowFrom({
           tempIngredientKey: "t-chicken",
@@ -151,18 +183,15 @@ describe("buildDraftRecipeForNutrition", () => {
       [chicken, bread],
     );
 
-    expect(calculateNutritionPerServing(draft, "primary")).toEqual(
-      calculateNutritionPerServing(recipe, "primary"),
-    );
-    expect(calculateNutritionPerServing(draft, "secondary")).toEqual(
-      calculateNutritionPerServing(recipe, "secondary"),
-    );
+    expect(nutritionFor(draft, "jagoda")).toEqual(nutritionFor(recipe, "jagoda"));
+    expect(nutritionFor(draft, "nelson")).toEqual(nutritionFor(recipe, "nelson"));
   });
 
   it("uses zeros for nutrition when portions are unset or invalid", () => {
     const draft = buildDraftRecipeForNutrition(
       "",
-      1,
+      audience,
+      [],
       [
         formRowFrom({
           tempIngredientKey: "t1",
@@ -173,13 +202,14 @@ describe("buildDraftRecipeForNutrition", () => {
       ],
       [chicken],
     );
-    expect(calculateNutritionPerServing(draft, "primary").calories).toBe(0);
+    expect(nutritionFor(draft, "jagoda").calories).toBe(0);
   });
 
-  it("defaults invalid Nelson multiplier to 1 while building draft", () => {
+  it("defaults invalid member portion multiplier to 1 while building draft", () => {
     const draft = buildDraftRecipeForNutrition(
       2,
-      "",
+      audience,
+      [{ familyMemberId: "family-member-1", multiplier: "" as unknown as number }],
       [
         formRowFrom({
           tempIngredientKey: "t1",
@@ -190,6 +220,6 @@ describe("buildDraftRecipeForNutrition", () => {
       ],
       [chicken],
     );
-    expect(draft.servingMultiplierForNelson).toBe(1);
+    expect(draft.memberPortions[0]?.multiplier).toBe(1);
   });
 });

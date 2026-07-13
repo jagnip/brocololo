@@ -63,10 +63,15 @@ export function buildDraftRecipeForNutrition(
       ingredientId: catalogIngredient.id,
       unitId,
       amount: row.amount,
-      appliesToEveryone: row.appliesToEveryone ?? true,
+      appliesToEveryone: true,
       additionalInfo: row.additionalInfo ?? null,
-      memberTargets: (row.targetFamilyMemberIds ?? []).map((familyMemberId) => ({
-        familyMemberId,
+      memberAdjustments: (row.memberAdjustments ?? []).map((adjustment) => ({
+        familyMemberId: adjustment.familyMemberId,
+        kind: adjustment.kind,
+        ingredientId: adjustment.ingredientId ?? null,
+        amount: adjustment.amount ?? null,
+        unitId: adjustment.unitId ?? null,
+        additionalInfo: adjustment.additionalInfo ?? null,
       })),
       group: null,
       ingredient: catalogIngredient,

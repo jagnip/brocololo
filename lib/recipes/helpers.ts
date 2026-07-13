@@ -6,6 +6,12 @@ import {
   getFamilyMemberIngredientAmountForScaledBatch,
   getFamilyMemberIngredientAmountPerMeal,
 } from "@/lib/log/helpers";
+import {
+  derivePortionTargetingFromAdjustments,
+  isResolvedLineVisibleForPerson,
+  type BaseIngredientRow,
+  type MemberAdjustmentRow,
+} from "@/lib/recipes/resolve-ingredient-lines";
 
 // Shape of a unitConversion entry after enriching with the unit name
 export type UnitConversionWithName = {
@@ -240,8 +246,14 @@ export function recipeToFormData(recipe: RecipeType): UpdateRecipeFormValues {
     ingredientId: ri.ingredient.id,
     amount: ri.amount,
     unitId: ri.unit?.id ?? null,
-    appliesToEveryone: ri.appliesToEveryone,
-    targetFamilyMemberIds: ri.memberTargets.map((target) => target.familyMemberId),
+    memberAdjustments: ri.memberAdjustments.map((adjustment) => ({
+      familyMemberId: adjustment.familyMemberId,
+      kind: adjustment.kind,
+      ingredientId: adjustment.ingredientId,
+      amount: adjustment.amount,
+      unitId: adjustment.unitId,
+      additionalInfo: adjustment.additionalInfo,
+    })),
     additionalInfo: ri.additionalInfo,
     // Legacy recipes with no groups stay ungrouped in the editor.
     groupTempKey: ri.groupId ?? null,
@@ -403,13 +415,19 @@ export type FamilyMemberForNutrition = {
 export type InstructionPersonFilter = string | null;
 
 export function getCalorieScalingFactorForIngredient(
-  appliesToEveryone: boolean,
-  targetFamilyMemberIds: string[],
+  memberAdjustments: MemberAdjustmentRow[],
+  audienceMemberIds: string[],
   selectedFamilyMemberId: string,
   calorieScalingFactor: number,
 ): number {
-  // Calorie scaling applies to shared rows and rows targeted at the active anchor person.
-  if (appliesToEveryone || targetFamilyMemberIds.includes(selectedFamilyMemberId)) {
+  const targeting = derivePortionTargetingFromAdjustments(
+    memberAdjustments,
+    audienceMemberIds,
+  );
+  if (
+    targeting.appliesToEveryone ||
+    targeting.targetFamilyMemberIds.includes(selectedFamilyMemberId)
+  ) {
     return calorieScalingFactor;
   }
   return 1;
@@ -428,29 +446,16 @@ export function getPrimaryCalorieScalingFactorForTarget(
  * for the selected person filter.
  */
 export function isInstructionIngredientVisibleForPerson(
-  appliesToEveryone: boolean,
-  targetFamilyMemberIds: string[],
+  row: Pick<BaseIngredientRow, "memberAdjustments">,
   selectedFamilyMemberId: InstructionPersonFilter,
 ): boolean {
-  // No filter selected => keep existing "show all badges" behavior.
-  if (selectedFamilyMemberId == null) {
-    return true;
-  }
-  if (appliesToEveryone) {
-    return true;
-  }
-  return targetFamilyMemberIds.includes(selectedFamilyMemberId);
+  return isResolvedLineVisibleForPerson(row, selectedFamilyMemberId);
 }
 
-/**
- * Resolves the numeric amount shown on an instruction ingredient badge.
- * Scales the recipe row to current servings first, then splits across cooks when filtered.
- * Each cook makes their own batch (not a single shared plate).
- */
 export function getInstructionIngredientBadgeAmount(params: {
   amount: number | null;
-  appliesToEveryone: boolean;
-  targetFamilyMemberIds: string[];
+  memberAdjustments: MemberAdjustmentRow[];
+  audienceMemberIds: string[];
   selectedFamilyMemberId: InstructionPersonFilter;
   familyMembers: FamilyMemberForNutrition[];
   memberPortions: Array<{ familyMemberId: string; multiplier: number }>;
@@ -459,8 +464,8 @@ export function getInstructionIngredientBadgeAmount(params: {
 }): number | null {
   const {
     amount,
-    appliesToEveryone,
-    targetFamilyMemberIds,
+    memberAdjustments,
+    audienceMemberIds,
     selectedFamilyMemberId,
     familyMembers,
     memberPortions,
@@ -472,16 +477,34 @@ export function getInstructionIngredientBadgeAmount(params: {
     return null;
   }
 
+  const modifyAdjustment =
+    selectedFamilyMemberId == null
+      ? null
+      : memberAdjustments.find(
+          (adjustment) =>
+            adjustment.familyMemberId === selectedFamilyMemberId &&
+            adjustment.kind === "MODIFY",
+        );
+
+  if (modifyAdjustment?.amount != null) {
+    return modifyAdjustment.amount * rowScaleFactor;
+  }
+
   const scaledAmount = amount * rowScaleFactor;
 
   if (selectedFamilyMemberId == null) {
     return scaledAmount;
   }
 
+  const targeting = derivePortionTargetingFromAdjustments(
+    memberAdjustments,
+    audienceMemberIds,
+  );
+
   return getFamilyMemberIngredientAmountForScaledBatch({
     amount: scaledAmount,
-    appliesToEveryone,
-    targetFamilyMemberIds,
+    appliesToEveryone: targeting.appliesToEveryone,
+    targetFamilyMemberIds: targeting.targetFamilyMemberIds,
     familyMemberId: selectedFamilyMemberId,
     familyMembers,
     memberPortions,
@@ -530,15 +553,15 @@ export function calculateNutritionPerServing(
 
       const amountForMember = getFamilyMemberIngredientAmountPerMeal({
         amount: recipeIngredient.amount,
-        appliesToEveryone: recipeIngredient.appliesToEveryone,
-        targetFamilyMemberIds: recipeIngredient.memberTargets.map(
-          (target) => target.familyMemberId,
-        ),
+        memberAdjustments: recipeIngredient.memberAdjustments,
         familyMemberId,
         recipeServings: recipe.servings,
         familyMembers,
         memberPortions: recipe.memberPortions,
         cookingFamilyMemberIds: recipe.audienceMembers.map(
+          (member) => member.familyMemberId,
+        ),
+        recipeAudienceFamilyMemberIds: recipe.audienceMembers.map(
           (member) => member.familyMemberId,
         ),
       });
@@ -847,26 +870,40 @@ export type IngredientMemberBadge = {
 
 /** Read-only member badges for a recipe-page ingredient row. */
 export function getIngredientMemberBadges(
-  recipeIngredient: Pick<
-    RecipeType["ingredients"][number],
-    "appliesToEveryone" | "memberTargets"
-  >,
+  recipeIngredient: Pick<RecipeType["ingredients"][number], "memberAdjustments">,
   familyMembers: FamilyMemberRow[],
+  audienceMemberIds: string[],
 ): IngredientMemberBadge[] {
   if (!hasHouseholdFamilyFeatures(familyMembers)) {
     return [];
   }
-  if (recipeIngredient.appliesToEveryone) {
+
+  const modifyIds = new Set(
+    recipeIngredient.memberAdjustments
+      .filter((adjustment) => adjustment.kind === "MODIFY")
+      .map((adjustment) => adjustment.familyMemberId),
+  );
+  if (modifyIds.size > 0) {
+    return getSortedFamilyMembers(familyMembers)
+      .filter((member) => modifyIds.has(member.id))
+      .map((member) => ({
+        familyMemberId: member.id,
+        label: getRecipeFamilyMemberLabel(member, familyMembers),
+      }));
+  }
+
+  const skipIds = new Set(
+    recipeIngredient.memberAdjustments
+      .filter((adjustment) => adjustment.kind === "SKIP")
+      .map((adjustment) => adjustment.familyMemberId),
+  );
+  if (skipIds.size === 0) {
     return [];
   }
 
   const targetIds = new Set(
-    recipeIngredient.memberTargets.map((target) => target.familyMemberId),
+    audienceMemberIds.filter((memberId) => !skipIds.has(memberId)),
   );
-  if (targetIds.size === 0) {
-    return [];
-  }
-
   return getSortedFamilyMembers(familyMembers)
     .filter((member) => targetIds.has(member.id))
     .map((member) => ({

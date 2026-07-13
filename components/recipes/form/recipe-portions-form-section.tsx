@@ -136,8 +136,8 @@ export function RecipePortionsFormSection({
       "ingredients",
       (form.getValues("ingredients") ?? []).map((ingredient) => ({
         ...ingredient,
-        targetFamilyMemberIds: (ingredient.targetFamilyMemberIds ?? []).filter(
-          (id) => nextIdSet.has(id),
+        memberAdjustments: (ingredient.memberAdjustments ?? []).filter(
+          (adjustment) => nextIdSet.has(adjustment.familyMemberId),
         ),
       })),
       { shouldValidate: true, shouldDirty: true },

@@ -33,7 +33,7 @@ export type UseRecipeNutritionResult = {
   getIngredientCalorieFactor: (
     recipeIngredient: Pick<
       RecipeType["ingredients"][number],
-      "appliesToEveryone" | "memberTargets"
+      "memberAdjustments"
     >,
   ) => number;
   getIngredientDisplayScalingFactor: (recipeIngredientId: string) => number;
@@ -93,8 +93,8 @@ export function useRecipeNutrition({
         // Compose base-anchored global + per-row local scales for nutrition math.
         const rowScaleRatio = localScaleByIngredientId[ingredientRow.id] ?? 1;
         const calorieFactor = getCalorieScalingFactorForIngredient(
-          ingredientRow.appliesToEveryone,
-          ingredientRow.memberTargets.map((target) => target.familyMemberId),
+          ingredientRow.memberAdjustments,
+          recipe.audienceMembers.map((member) => member.familyMemberId),
           anchorMemberId,
           calorieScalingFactor,
         );
@@ -135,16 +135,16 @@ export function useRecipeNutrition({
     (
       recipeIngredient: Pick<
         RecipeType["ingredients"][number],
-        "appliesToEveryone" | "memberTargets"
+        "memberAdjustments"
       >,
     ) =>
       getCalorieScalingFactorForIngredient(
-        recipeIngredient.appliesToEveryone,
-        recipeIngredient.memberTargets.map((target) => target.familyMemberId),
+        recipeIngredient.memberAdjustments,
+        recipe.audienceMembers.map((member) => member.familyMemberId),
         anchorMemberId,
         calorieScalingFactor,
       ),
-    [anchorMemberId, calorieScalingFactor],
+    [anchorMemberId, calorieScalingFactor, recipe.audienceMembers],
   );
 
   const getIngredientDisplayScalingFactor = useCallback(

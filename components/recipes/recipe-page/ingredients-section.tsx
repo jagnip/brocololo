@@ -33,6 +33,10 @@ export function IngredientsSection() {
     onApplyScaleToAll,
     onIngredientChange,
   } = useRecipePageIngredientsSectionData();
+  const audienceMemberIds = useMemo(
+    () => recipe.audienceMembers.map((member) => member.familyMemberId),
+    [recipe.audienceMembers],
+  );
 
   const portionSplitMembers = useMemo(() => {
     const shares = getSharedPortionShares(
@@ -131,6 +135,7 @@ export function IngredientsSection() {
                 }
                 replacementCandidates={ingredients}
                 familyMembers={familyMembers}
+                audienceMemberIds={audienceMemberIds}
               />
             ))}
           </ul>
@@ -165,6 +170,7 @@ export function IngredientsSection() {
                 }
                 replacementCandidates={ingredients}
                 familyMembers={familyMembers}
+                audienceMemberIds={audienceMemberIds}
               />
             ))}
           </ul>

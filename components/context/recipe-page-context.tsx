@@ -44,7 +44,7 @@ type RecipePageContextValue = {
   getIngredientCalorieFactor: (
     recipeIngredient: Pick<
       RecipeType["ingredients"][number],
-      "appliesToEveryone" | "memberTargets"
+      "memberAdjustments"
     >,
   ) => number;
   hasActiveScaling: boolean;

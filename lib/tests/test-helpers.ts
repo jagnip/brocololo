@@ -121,7 +121,30 @@ export function createMockRecipeIngredient(overrides?: Partial<{
   const defaultIngredient = createMockIngredient();
   const defaultUnit = createMockUnit({ id: 'unit-grams', name: 'grams' });
   const { nutritionTarget, ...restOverrides } = overrides ?? {};
-  const appliesToEveryone = nutritionTarget == null || nutritionTarget === 'BOTH';
+  const memberAdjustments: RecipeType["ingredients"][number]["memberAdjustments"] =
+    nutritionTarget == null || nutritionTarget === "BOTH"
+      ? []
+      : nutritionTarget === "PRIMARY_ONLY"
+        ? [
+            {
+              familyMemberId: "family-member-1",
+              kind: "SKIP",
+              ingredientId: null,
+              amount: null,
+              unitId: null,
+              additionalInfo: null,
+            },
+          ]
+        : [
+            {
+              familyMemberId: "family-self",
+              kind: "SKIP",
+              ingredientId: null,
+              amount: null,
+              unitId: null,
+              additionalInfo: null,
+            },
+          ];
 
   return {
     id: 'ri-1',
@@ -131,18 +154,9 @@ export function createMockRecipeIngredient(overrides?: Partial<{
     ingredientId: defaultIngredient.id,
     unitId: defaultUnit.id,
     amount: 400, // 400g
-    appliesToEveryone,
+    appliesToEveryone: memberAdjustments.length === 0,
     additionalInfo: null,
-    memberTargets: appliesToEveryone
-      ? []
-      : [
-          {
-            familyMemberId:
-              nutritionTarget === 'PRIMARY_ONLY'
-                ? 'family-self'
-                : 'family-member-1',
-          },
-        ],
+    memberAdjustments,
     group: null,
     ingredient: defaultIngredient,
     unit: defaultUnit,
@@ -257,7 +271,7 @@ export function createMockRecipe(overrides?: Partial<RecipeType>): RecipeType {
         amount: 400, // 400g of chicken
         appliesToEveryone: true,
         additionalInfo: null,
-        memberTargets: [],
+        memberAdjustments: [],
         group: null,
         ingredient: defaultIngredient,
         unit: defaultUnit,
@@ -272,7 +286,15 @@ export function createMockRecipe(overrides?: Partial<RecipeType>): RecipeType {
       ...overrides,
       categories: overrides.categories ?? defaultRecipe.categories,
       images: overrides.images ?? defaultRecipe.images,
-      ingredients: overrides.ingredients ?? defaultRecipe.ingredients,
+      ingredients: overrides.ingredients
+        ? overrides.ingredients.map((ingredient) =>
+            createMockRecipeIngredient(
+              ingredient as unknown as Parameters<
+                typeof createMockRecipeIngredient
+              >[0],
+            ),
+          )
+        : defaultRecipe.ingredients,
     };
   }
 
@@ -329,7 +351,7 @@ export function createComplexMockRecipe(): RecipeType {
         amount: 200, // 200g chicken
         appliesToEveryone: true,
         additionalInfo: null,
-        memberTargets: [],
+        memberAdjustments: [],
         group: null,
         ingredient: chickenIngredient,
         unit: gramUnit,
@@ -344,7 +366,7 @@ export function createComplexMockRecipe(): RecipeType {
         amount: 1, // 1 cup rice
         appliesToEveryone: true,
         additionalInfo: null,
-        memberTargets: [],
+        memberAdjustments: [],
         group: null,
         ingredient: riceIngredient,
         unit: cupUnit,

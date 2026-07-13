@@ -10,10 +10,30 @@ import {
   createMockUnit,
 } from "./test-helpers";
 
+const nutritionFamilyMembers = [
+  { id: "family-self", isSelf: true },
+  { id: "family-member-1", isSelf: false },
+];
+
+function nutritionFor(
+  recipe: Parameters<typeof calculateNutritionPerServing>[0],
+  member: "jagoda" | "nelson",
+) {
+  const familyMemberId =
+    member === "jagoda" ? "family-self" : "family-member-1";
+  return calculateNutritionPerServing(
+    recipe,
+    familyMemberId,
+    nutritionFamilyMembers,
+  );
+}
+
 function createChickenSandwichRecipe() {
   return createMockRecipe({
     servings: 2,
-    servingMultiplierForNelson: 2,
+    memberPortions: [
+      { recipeId: "recipe-1", familyMemberId: "family-member-1", multiplier: 2 },
+    ],
     ingredients: [
       {
         id: "ri-chicken",
@@ -59,8 +79,8 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
   it("splits BOTH-target ingredients by primary/secondary factors per meal", () => {
     const recipe = createChickenSandwichRecipe();
 
-    const jagoda = calculateNutritionPerServing(recipe, "primary");
-    const nelson = calculateNutritionPerServing(recipe, "secondary");
+    const jagoda = nutritionFor(recipe, "jagoda");
+    const nelson = nutritionFor(recipe, "nelson");
 
     // Total calories = 300*1.65 + 300*2.65 = 1290.
     // servings=2 => mealCount=1, split 1:2.
@@ -73,7 +93,9 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
   it("allocates PRIMARY_ONLY and SECONDARY_ONLY ingredients correctly", () => {
     const recipe = createMockRecipe({
       servings: 2,
-      servingMultiplierForNelson: 2,
+      memberPortions: [
+        { recipeId: "recipe-1", familyMemberId: "family-member-1", multiplier: 2 },
+      ],
       ingredients: [
         {
           id: "ri-main",
@@ -114,8 +136,8 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
       ],
     });
 
-    const jagoda = calculateNutritionPerServing(recipe, "primary");
-    const nelson = calculateNutritionPerServing(recipe, "secondary");
+    const jagoda = nutritionFor(recipe, "jagoda");
+    const nelson = nutritionFor(recipe, "nelson");
 
     // Primary ignores SECONDARY_ONLY oil.
     expect(jagoda.calories).toBe(67);
@@ -167,13 +189,13 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
       ],
     });
 
-    expect(calculateNutritionPerServing(recipe, "primary")).toEqual({
+    expect(nutritionFor(recipe, "jagoda")).toEqual({
       calories: 0,
       protein: 0,
       fat: 0,
       carbs: 0,
     });
-    expect(calculateNutritionPerServing(recipe, "secondary")).toEqual({
+    expect(nutritionFor(recipe, "nelson")).toEqual({
       calories: 0,
       protein: 0,
       fat: 0,
@@ -183,7 +205,9 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
   it("includes PRIMARY_ONLY rows only for primary", () => {
     const recipe = createMockRecipe({
       servings: 2,
-      servingMultiplierForNelson: 2,
+      memberPortions: [
+        { recipeId: "recipe-1", familyMemberId: "family-member-1", multiplier: 2 },
+      ],
       ingredients: [
         {
           id: "ri-primary",
@@ -206,21 +230,21 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
       ],
     });
 
-    expect(calculateNutritionPerServing(recipe, "primary").calories).toBeCloseTo(200, 1);
-    expect(calculateNutritionPerServing(recipe, "secondary").calories).toBeCloseTo(0, 1);
+    expect(nutritionFor(recipe, "jagoda").calories).toBeCloseTo(200, 1);
+    expect(nutritionFor(recipe, "nelson").calories).toBeCloseTo(0, 1);
   });
 
   it("returns zeroes when servings are invalid", () => {
     const recipe = createChickenSandwichRecipe();
     const invalidRecipe = { ...recipe, servings: 0 };
 
-    expect(calculateNutritionPerServing(invalidRecipe, "primary")).toEqual({
+    expect(nutritionFor(invalidRecipe, "jagoda")).toEqual({
       calories: 0,
       protein: 0,
       fat: 0,
       carbs: 0,
     });
-    expect(calculateNutritionPerServing(invalidRecipe, "secondary")).toEqual({
+    expect(nutritionFor(invalidRecipe, "nelson")).toEqual({
       calories: 0,
       protein: 0,
       fat: 0,
@@ -232,8 +256,8 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
     const recipe = createChickenSandwichRecipe();
     const oddServingsRecipe = { ...recipe, servings: 3 };
 
-    const jagoda = calculateNutritionPerServing(oddServingsRecipe, "primary");
-    const nelson = calculateNutritionPerServing(oddServingsRecipe, "secondary");
+    const jagoda = nutritionFor(oddServingsRecipe, "jagoda");
+    const nelson = nutritionFor(oddServingsRecipe, "nelson");
 
     // Base shared split remains 1:2 even when mealCount is fractional (3/2).
     expect(nelson.calories / jagoda.calories).toBeCloseTo(2, 2);
@@ -242,10 +266,15 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
 
   it("keeps shared nutrition entirely on primary when Nelson multiplier is zero", () => {
     const recipe = createChickenSandwichRecipe();
-    const noNelsonPortionRecipe = { ...recipe, servingMultiplierForNelson: 0 };
+    const noNelsonPortionRecipe = {
+      ...recipe,
+      memberPortions: [
+        { recipeId: "recipe-1", familyMemberId: "family-member-1", multiplier: 0 },
+      ],
+    };
 
-    const jagoda = calculateNutritionPerServing(noNelsonPortionRecipe, "primary");
-    const nelson = calculateNutritionPerServing(noNelsonPortionRecipe, "secondary");
+    const jagoda = nutritionFor(noNelsonPortionRecipe, "jagoda");
+    const nelson = nutritionFor(noNelsonPortionRecipe, "nelson");
 
     expect(jagoda.calories).toBeGreaterThan(0);
     expect(nelson.calories).toBe(0);

@@ -1,3 +1,5 @@
+import { derivePortionTargetingFromAdjustments } from "@/lib/recipes/resolve-ingredient-lines";
+
 type FamilyMemberForPortion = {
   id: string;
   isSelf: boolean;
@@ -6,6 +8,12 @@ type FamilyMemberForPortion = {
 type MemberPortion = {
   familyMemberId: string;
   multiplier: number;
+};
+
+type MemberAdjustmentForPortion = {
+  familyMemberId: string;
+  kind: "MODIFY" | "SKIP";
+  amount?: number | null;
 };
 
 function getMemberMultiplier(
@@ -127,8 +135,9 @@ export function getFamilyMemberIngredientAmountForScaledBatch(
 
 export function getFamilyMemberIngredientAmountPerMeal(params: {
   amount: number | null;
-  appliesToEveryone: boolean;
-  targetFamilyMemberIds: string[];
+  appliesToEveryone?: boolean;
+  targetFamilyMemberIds?: string[];
+  memberAdjustments?: MemberAdjustmentForPortion[];
   familyMemberId: string;
   recipeServings: number;
   familyMembers: FamilyMemberForPortion[];
@@ -138,8 +147,9 @@ export function getFamilyMemberIngredientAmountPerMeal(params: {
 }): number | null {
   const {
     amount,
-    appliesToEveryone,
-    targetFamilyMemberIds,
+    appliesToEveryone = true,
+    targetFamilyMemberIds = [],
+    memberAdjustments = [],
     familyMemberId,
     recipeServings,
     familyMembers,
@@ -150,10 +160,26 @@ export function getFamilyMemberIngredientAmountPerMeal(params: {
 
   if (!Number.isFinite(recipeServings) || recipeServings <= 0) return null;
 
+  const modifyAdjustment = memberAdjustments.find(
+    (adjustment) =>
+      adjustment.familyMemberId === familyMemberId && adjustment.kind === "MODIFY",
+  );
+  if (modifyAdjustment?.amount != null) {
+    return modifyAdjustment.amount;
+  }
+
+  const audienceIds =
+    recipeAudienceFamilyMemberIds ??
+    familyMembers.map((member) => member.id);
+  const targeting =
+    memberAdjustments.length > 0
+      ? derivePortionTargetingFromAdjustments(memberAdjustments, audienceIds)
+      : { appliesToEveryone, targetFamilyMemberIds };
+
   const weights = getFamilyMemberPortionWeights({
     amount,
-    appliesToEveryone,
-    targetFamilyMemberIds,
+    appliesToEveryone: targeting.appliesToEveryone,
+    targetFamilyMemberIds: targeting.targetFamilyMemberIds,
     familyMemberId,
     familyMembers,
     memberPortions,

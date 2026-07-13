@@ -44,7 +44,7 @@ function makeRecipeRow(ingredientId: string, supermarketUrl: string | null) {
     appliesToEveryone: true,
     additionalInfo: null,
     group: null,
-    memberTargets: [],
+    memberAdjustments: [],
     unit: null,
     ingredient: {
       id: ingredientId,

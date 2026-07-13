@@ -160,6 +160,11 @@ export type RecipeIngredient = Prisma.RecipeIngredientModel
  */
 export type RecipeIngredientMemberTarget = Prisma.RecipeIngredientMemberTargetModel
 /**
+ * Model RecipeIngredientMemberAdjustment
+ * 
+ */
+export type RecipeIngredientMemberAdjustment = Prisma.RecipeIngredientMemberAdjustmentModel
+/**
  * Model RecipeIngredientGroup
  * 
  */

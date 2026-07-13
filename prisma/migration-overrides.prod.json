@@ -1,0 +1,99 @@
+{
+  "autumn-chicken-traybake": {
+    "pairs": [
+      {
+        "baseRowId": "cmmqjw0s2000e2im749e0w2qj",
+        "dropRowId": "cmmi446tx0029kfm7k1qir94s",
+        "modify": {
+          "familyMember": "jagoda",
+          "ingredientFromDroppedRow": true,
+          "amountPerPerson": 1
+        }
+      }
+    ]
+  },
+  "avocado-on-toast": {
+    "deleteRowIds": ["cmnm194x4000ioijjq15o7dz6"]
+  },
+  "bolognese": {
+    "pairs": [
+      {
+        "baseRowId": "cmmqjw0s2000e2im749e0w2qj",
+        "dropRowId": "cmmi446tx0029kfm7k1qir94s",
+        "modify": {
+          "familyMember": "jagoda",
+          "ingredientFromDroppedRow": true,
+          "amountPerPersonFromDroppedBatch": true
+        }
+      }
+    ],
+    "rowOverrides": [
+      {
+        "keepRowId": "REPLACE_BEEF_BASE_ROW",
+        "setBatchAmount": 800,
+        "modify": {
+          "familyMember": "jagoda",
+          "ingredientSlug": "chicken-mince",
+          "amountPerPersonFromDroppedBatch": true
+        }
+      }
+    ],
+    "note": "Run generate script to fill row IDs from prod DB before migrate"
+  },
+  "chicken-soup": {
+    "auto": true
+  },
+  "kotlets": {
+    "auto": true
+  },
+  "massada-de-salmao": {
+    "auto": true
+  },
+  "mushroom-soup": {
+    "auto": true
+  },
+  "omelette-banh-mi": {
+    "auto": true
+  },
+  "pork-and-pea-stir-fry-kam-heong": {
+    "auto": true
+  },
+  "russian-salad": {
+    "rowOverrides": [
+      {
+        "keepRowId": "REPLACE_TUNA_OIL_ROW",
+        "modify": {
+          "familyMember": "jagoda",
+          "ingredientSlug": "tuna-in-brine",
+          "amountPerPerson": 85
+        }
+      },
+      {
+        "keepRowId": "REPLACE_MAYO_ROW",
+        "modify": {
+          "familyMember": "jagoda",
+          "ingredientSlug": "greek-yogurt",
+          "amountPerPersonFromDroppedBatch": true
+        }
+      }
+    ]
+  },
+  "tuna-and-corn-baked-potatoes": {
+    "auto": true
+  },
+  "tuna-sandwich-bake": {
+    "rowOverrides": [
+      {
+        "keepRowId": "REPLACE_TUNA_OIL_ROW",
+        "modify": {
+          "familyMember": "jagoda",
+          "ingredientSlug": "tuna-in-brine",
+          "amountPerPerson": 85
+        }
+      }
+    ]
+  },
+  "veg-casserole": {
+    "auto": true
+  }
+}

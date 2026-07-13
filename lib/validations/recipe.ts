@@ -42,6 +42,44 @@ const recipeIngredientGroupSchema = z.object({
   position: z.coerce.number().int().min(0).default(0),
 });
 
+const recipeIngredientMemberAdjustmentSchema = z
+  .object({
+    familyMemberId: z.string().min(1),
+    kind: z.enum(["MODIFY", "SKIP"]),
+    ingredientId: z.string().min(1).nullish(),
+    amount: z.number().positive().min(0.01).nullish(),
+    unitId: z
+      .string()
+      .min(1)
+      .nullish()
+      .transform((val) => val ?? null),
+    additionalInfo: z
+      .string()
+      .max(50, { message: "Keep additional info under 50 characters" })
+      .nullish()
+      .transform((val) => {
+        if (!val) return null;
+        const trimmed = val.trim();
+        return trimmed === "" ? null : trimmed.toLowerCase();
+      }),
+  })
+  .superRefine((adjustment, ctx) => {
+    if (adjustment.kind === "MODIFY" && !adjustment.ingredientId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["ingredientId"],
+        message: "Choose an ingredient for a modification",
+      });
+    }
+    if (adjustment.kind === "SKIP" && adjustment.ingredientId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["ingredientId"],
+        message: "Skip adjustments cannot include an ingredient",
+      });
+    }
+  });
+
 const recipeIngredientSchema = z
   .object({
     id: z.string().min(1).optional(),
@@ -59,8 +97,10 @@ const recipeIngredientSchema = z
       .min(1, { message: "Choose a unit" })
       .nullish()
       .transform((val) => val ?? null),
-    appliesToEveryone: z.boolean().default(true),
-    targetFamilyMemberIds: z.array(z.string().min(1)).default([]),
+    memberAdjustments: z
+      .array(recipeIngredientMemberAdjustmentSchema)
+      .optional()
+      .default([]),
     additionalInfo: z
       .string()
       .max(50, { message: "Keep additional info under 50 characters" })
@@ -85,16 +125,6 @@ const recipeIngredientSchema = z
         code: z.ZodIssueCode.custom,
         path: ["amount"],
         message: "Choose a unit before entering an amount",
-      });
-    }
-    if (
-      !ingredient.appliesToEveryone &&
-      ingredient.targetFamilyMemberIds.length === 0
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["targetFamilyMemberIds"],
-        message: "Choose who this ingredient is for",
       });
     }
   });
@@ -205,12 +235,18 @@ const recipeBaseSchema = z
     });
 
     recipe.ingredients.forEach((ingredient, ingredientIndex) => {
-      ingredient.targetFamilyMemberIds.forEach((familyMemberId) => {
-        if (!audienceIds.has(familyMemberId)) {
+      ingredient.memberAdjustments.forEach((adjustment, adjustmentIndex) => {
+        if (!audienceIds.has(adjustment.familyMemberId)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            path: ["ingredients", ingredientIndex, "targetFamilyMemberIds"],
-            message: "Ingredient targets must be in the recipe audience",
+            path: [
+              "ingredients",
+              ingredientIndex,
+              "memberAdjustments",
+              adjustmentIndex,
+              "familyMemberId",
+            ],
+            message: "Adjustments must be for people in the recipe audience",
           });
         }
       });
