@@ -1,6 +1,7 @@
 "use client";
 
 import { MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { IngredientSupermarketLinkButton } from "@/components/groceries/ingredient-supermarket-link-button";
 import { IngredientNameLink } from "@/components/ingredients/ingredient-name-link";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +18,7 @@ type GroceriesEditLibraryRowProps = {
   ingredientId: string;
   ingredientSlug: string;
   ingredientName: string;
+  ingredientSupermarketUrl: string | null;
   ingredientDescriptor: string | null;
   isAddingToGroceries?: boolean;
   isRemovingFromList?: boolean;
@@ -29,6 +31,7 @@ export function GroceriesEditLibraryRow({
   ingredientId,
   ingredientSlug,
   ingredientName,
+  ingredientSupermarketUrl,
   ingredientDescriptor,
   isAddingToGroceries = false,
   isRemovingFromList = false,
@@ -42,11 +45,17 @@ export function GroceriesEditLibraryRow({
     <div className="flex items-center gap-2 py-1.5">
       {/* Name links to ingredient edit; descriptor stays muted below. */}
       <div className="min-w-0 flex-1">
-        <IngredientNameLink
-          name={ingredientName}
-          slug={ingredientSlug}
-          className="truncate text-sm leading-none text-foreground"
-        />
+        <div className="flex min-w-0 items-center gap-1">
+          <IngredientNameLink
+            name={ingredientName}
+            slug={ingredientSlug}
+            className="truncate text-sm leading-none text-foreground"
+          />
+          <IngredientSupermarketLinkButton
+            href={ingredientSupermarketUrl}
+            ingredientLabel={ingredientName}
+          />
+        </div>
         {descriptor ? (
           <div className="truncate text-xs text-muted-foreground">{descriptor}</div>
         ) : null}

@@ -34,22 +34,22 @@ export function getDefaultDateRange(
   const today = new Date();
   const occupiedSet = new Set(occupiedDateKeys);
 
-  // Keep previous behavior when no occupied dates exist: 4 calendar days (inclusive).
+  // Default to one full week (inclusive) when there are no occupied dates.
   if (occupiedSet.size === 0) {
-    const nextWindowEnd = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
+    const nextWindowEnd = new Date(today.getTime() + 6 * 24 * 60 * 60 * 1000);
     return {
       start: toDateInputValue(today),
       end: toDateInputValue(nextWindowEnd),
     };
   }
 
-  // Otherwise pick the first available contiguous 4-day window (inclusive).
+  // Otherwise pick the first available contiguous 7-day window (inclusive).
   const candidateStart = new Date(today);
   const maxLookaheadDays = 3650; // 10 years safeguard
   for (let i = 0; i < maxLookaheadDays; i++) {
     const start = new Date(candidateStart);
     start.setDate(candidateStart.getDate() + i);
-    const end = new Date(start.getTime() + 3 * 24 * 60 * 60 * 1000);
+    const end = new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000);
 
     let blocked = false;
     for (
@@ -71,7 +71,7 @@ export function getDefaultDateRange(
   }
 
   // Fallback to today window if no free range found.
-  const nextWindowEnd = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const nextWindowEnd = new Date(today.getTime() + 6 * 24 * 60 * 60 * 1000);
   return {
     start: toDateInputValue(today),
     end: toDateInputValue(nextWindowEnd),

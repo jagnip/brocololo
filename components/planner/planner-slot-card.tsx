@@ -15,10 +15,12 @@ import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
 import { RecipeImagePlaceholder } from "@/components/recipes/recipe-image-placeholder";
 import { PlanSlotMealDialog } from "./plan-slot-meal-dialog";
 import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
+import { getAddMealDialogCopy, getReplaceMealDialogCopy } from "@/lib/planner/plan-slot-meal-dialog-copy";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import { ROUTES } from "@/lib/constants";
 import { SlotAudienceSelect } from "./slot-audience-select";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
+import { Checkbox } from "@/components/ui/checkbox";
 
 /** Warm off-white on primary — matches --rose-50 accent surface. */
 const MEAL_DONE_ICON_CLASS =
@@ -26,6 +28,9 @@ const MEAL_DONE_ICON_CLASS =
 
 type PlannerSlotCardProps = {
   slot: SlotInputType;
+  isSelected?: boolean;
+  onSelectionChange?: (checked: boolean) => void;
+  onShiftSelect?: () => void;
   fridgeMatchIngredients?: string[];
   onShuffle?: () => void;
   onSetMeal?: (payload: PlanSlotMealPayload) => void;
@@ -39,6 +44,9 @@ type PlannerSlotCardProps = {
 
 export function PlannerSlotCard({
   slot,
+  isSelected = false,
+  onSelectionChange,
+  onShiftSelect,
   fridgeMatchIngredients,
   onShuffle,
   onSetMeal,
@@ -59,7 +67,9 @@ export function PlannerSlotCard({
         ? "Lunch"
         : "Dinner";
 
-  const dialogSubtitle = `${mealLabel} · ${formatDayLabel(slot.date)}`;
+  const dialogSlotSubtitle = `${mealLabel} · ${formatDayLabel(slot.date)}`;
+  const addMealDialogCopy = getAddMealDialogCopy(dialogSlotSubtitle);
+  const replaceMealDialogCopy = getReplaceMealDialogCopy(1);
   const canEdit = Boolean(onSetMeal);
   const isEmpty = !recipe && !customMeal;
   const selectedAudienceIds =
@@ -68,6 +78,7 @@ export function PlannerSlotCard({
       : familyMembers.map((member) => member.id);
   const showAudienceSelect =
     familyMembers.length > 0 && Boolean(onAudienceChange);
+  const hasSelectionControls = Boolean(onSelectionChange);
 
   const renderAudienceSelect = () =>
     showAudienceSelect ? (
@@ -149,9 +160,38 @@ export function PlannerSlotCard({
   const shouldIgnoreCardClick = (target: HTMLElement) =>
     Boolean(
       target.closest("button") ||
+        target.closest("[data-slot='checkbox']") ||
         target.closest("a") ||
         target.closest("[data-slot='popover-content']"),
     );
+
+  const renderSelectionCheckbox = (
+    label: string,
+    { elevated = false }: { elevated?: boolean } = {},
+  ) =>
+    hasSelectionControls ? (
+      <div
+        className="absolute left-3 top-3 z-2"
+        onClick={(event) => event.stopPropagation()}
+      >
+        {/* Flat on empty slots; shadow only where the checkbox sits over imagery. */}
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={(checked) => onSelectionChange?.(checked === true)}
+          aria-label={label}
+          className={cn(
+            "size-6 rounded-[6px] bg-card",
+            "hover:bg-card",
+            "data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
+            "data-[state=checked]:hover:bg-primary/90",
+            "[&_[data-slot=checkbox-indicator]_svg]:size-4",
+            elevated
+              ? "border-foreground/30 shadow-md data-[state=checked]:shadow-md"
+              : "border-border shadow-none data-[state=checked]:shadow-none",
+          )}
+        />
+      </div>
+    ) : null;
 
   const openDialog = () => {
     if (!canEdit) return;
@@ -167,7 +207,18 @@ export function PlannerSlotCard({
   if (isEmpty) {
     return (
       <>
-        <div className="flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed border-border bg-card p-0 py-0 shadow-none transition-colors">
+        <div
+          className={cn(
+            "relative flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed border-border bg-card p-0 py-0 shadow-none transition-colors",
+            isSelected && "border-2 border-primary",
+          )}
+          onClick={(event) => {
+            if (!event.shiftKey) return;
+            event.preventDefault();
+            onShiftSelect?.();
+          }}
+        >
+          {renderSelectionCheckbox(`Select ${mealLabel} slot`)}
           {canEdit ? (
             <Button
               type="button"
@@ -193,8 +244,9 @@ export function PlannerSlotCard({
           <PlanSlotMealDialog
             open={isDialogOpen}
             onOpenChange={setIsDialogOpen}
-            title="Add meal"
-            subtitle={dialogSubtitle}
+            title={addMealDialogCopy.title}
+            subtitle={addMealDialogCopy.subtitle}
+            saveLabel={addMealDialogCopy.saveLabel}
             recipes={recipes}
             ingredientOptions={ingredientOptions}
             initialRecipeId={null}
@@ -214,16 +266,25 @@ export function PlannerSlotCard({
       <>
         <Card
           className={cn(
-            "card-interactive h-full gap-0 overflow-hidden border-border py-0",
+            "card-interactive relative h-full gap-0 overflow-hidden border-border py-0",
             slot.used && "opacity-50",
             canEdit && "cursor-pointer",
+            isSelected && "border-2 border-primary",
           )}
           onClick={(event) => {
             const target = event.target as HTMLElement;
             if (shouldIgnoreCardClick(target)) return;
+            if (event.shiftKey) {
+              event.preventDefault();
+              onShiftSelect?.();
+              return;
+            }
             openDialog();
           }}
         >
+          {renderSelectionCheckbox(`Select ${customMeal.name} (${mealLabel})`, {
+            elevated: true,
+          })}
           <div className="relative w-full overflow-hidden aspect-2/1 sm:aspect-3/2">
             <RecipeImagePlaceholder showLabel={false} iconSize="lg" />
           </div>
@@ -246,8 +307,9 @@ export function PlannerSlotCard({
           <PlanSlotMealDialog
             open={isDialogOpen}
             onOpenChange={setIsDialogOpen}
-            title="Edit meal"
-            subtitle={dialogSubtitle}
+            title={replaceMealDialogCopy.title}
+            subtitle={replaceMealDialogCopy.subtitle}
+            saveLabel={replaceMealDialogCopy.saveLabel}
             recipes={recipes}
             ingredientOptions={ingredientOptions}
             initialRecipeId={null}
@@ -273,16 +335,25 @@ export function PlannerSlotCard({
     <>
       <Card
         className={cn(
-          "card-interactive h-full gap-0 overflow-hidden border-border py-0",
+          "card-interactive relative h-full gap-0 overflow-hidden border-border py-0",
           slot.used && "opacity-50",
           canEdit && "cursor-pointer",
+          isSelected && "border-2 border-primary",
         )}
         onClick={(event) => {
           const target = event.target as HTMLElement;
           if (shouldIgnoreCardClick(target)) return;
+          if (event.shiftKey) {
+            event.preventDefault();
+            onShiftSelect?.();
+            return;
+          }
           openDialog();
         }}
       >
+        {renderSelectionCheckbox(`Select ${recipe!.name} (${mealLabel})`, {
+          elevated: true,
+        })}
         <div className="relative w-full overflow-hidden aspect-2/1 sm:aspect-3/2">
           {imageUrl ? (
             <Image
@@ -337,8 +408,9 @@ export function PlannerSlotCard({
         <PlanSlotMealDialog
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
-          title="Edit meal"
-          subtitle={dialogSubtitle}
+          title={replaceMealDialogCopy.title}
+          subtitle={replaceMealDialogCopy.subtitle}
+          saveLabel={replaceMealDialogCopy.saveLabel}
           recipes={recipes}
           ingredientOptions={ingredientOptions}
           initialRecipeId={recipe!.id}

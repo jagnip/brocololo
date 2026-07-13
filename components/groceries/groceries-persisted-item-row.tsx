@@ -133,13 +133,32 @@ export function GroceriesPersistedItemRow({
                 <IngredientIcon icon={ing?.icon ?? null} name={row.displayLabel} />
               </div>
               <div className="min-w-0 space-y-1">
+                {/* Supermarket link sits beside the name so shoppers can open the product while ordering. */}
                 <div
                   className={cn(
-                    "font-medium text-foreground",
+                    "flex min-w-0 items-center gap-1",
                     showPurchasedStyle && "text-muted-foreground line-through",
                   )}
                 >
-                  {row.displayLabel}
+                  <span
+                    className={cn(
+                      "min-w-0 truncate font-medium",
+                      showPurchasedStyle ? "text-muted-foreground" : "text-foreground",
+                    )}
+                  >
+                    {row.displayLabel}
+                  </span>
+                  {ing?.supermarketUrl ? (
+                    <span
+                      className="inline-flex shrink-0"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <IngredientSupermarketLinkButton
+                        href={ing.supermarketUrl}
+                        ingredientLabel={row.displayLabel}
+                      />
+                    </span>
+                  ) : null}
                 </div>
                 <div
                   className={cn(
@@ -164,17 +183,6 @@ export function GroceriesPersistedItemRow({
                           {name}
                         </Badge>
                       ))}
-                    </span>
-                  ) : null}
-                  {ing?.supermarketUrl ? (
-                    <span
-                      className="inline-flex shrink-0"
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      <IngredientSupermarketLinkButton
-                        href={ing.supermarketUrl}
-                        ingredientLabel={row.displayLabel}
-                      />
                     </span>
                   ) : null}
                 </div>

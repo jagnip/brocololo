@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { PlanInputType } from "@/types/planner";
 import { PlannerMealType } from "@/src/generated/enums";
-import { rebasePlanSlotsByDateRangeDelta } from "./plan-date-rebase";
+import { rebasePlanSlotsByDateRangeDelta, createEmptyPlanSlotsForDateRange } from "./plan-date-rebase";
 import { MEAL_TYPES } from "@/lib/constants";
 
 function mkRecipe(id: string) {
@@ -81,6 +81,15 @@ describe("plan-date-rebase", () => {
         s.mealType === PlannerMealType.BREAKFAST,
     );
     expect(slot?.recipe?.id).toBe(`2026-04-09-${PlannerMealType.BREAKFAST}`);
+  });
+
+  it("creates empty slots for every meal on every day in range", () => {
+    const plan = createEmptyPlanSlotsForDateRange("2026-07-07", "2026-07-13");
+
+    expect(plan).toHaveLength(7 * 3);
+    expect(plan.every((slot) => slot.recipe == null && slot.customMeal == null)).toBe(
+      true,
+    );
   });
 });
 

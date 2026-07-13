@@ -60,6 +60,12 @@ vi.mock("./date-range-picker", () => ({
       </button>
       <button
         type="button"
+        onClick={() => onChange({ start: "2026-03-17", end: "2026-03-20" })}
+      >
+        Range shrink end
+      </button>
+      <button
+        type="button"
         onClick={() => onChange({ start: "2026-04-10", end: "2026-04-15" })}
       >
         Range extend
@@ -355,7 +361,7 @@ describe("PlanEditor autosave", () => {
     expect(screen.getByRole("button", { name: "Generate log" })).toBeDisabled();
   });
 
-  it("preserves recipes in memory when shrinking then restoring before Save", async () => {
+  it("asks confirmation before dropping out-of-range meals on range shrink", async () => {
     const user = userEvent.setup();
 
     const recipe17 = createRecipe("recipe-17");
@@ -397,17 +403,65 @@ describe("PlanEditor autosave", () => {
     expect(screen.getByLabelText("dinner-by-day").textContent).toContain("2026-03-19:recipe-19");
 
     await user.click(screen.getByRole("button", { name: "Range shrink" }));
-    // Changing `start` from 2026-03-17 -> 2026-03-18 shifts existing slots forward by +1 day.
-    // So the recipe that was on 2026-03-17 should appear on 2026-03-18.
-    expect(screen.getByLabelText("dinner-by-day").textContent).toBe("2026-03-18:recipe-17");
+    expect(
+      screen.getByText(/a meal cannot be kept in this range|some meals cannot be kept in this range/i),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    expect(screen.getByLabelText("dinner-by-day").textContent).toBe(
+      "2026-03-18:recipe-17",
+    );
 
     await user.click(screen.getByRole("button", { name: "Range restore" }));
     const dinnerAfterRestore = screen.getByLabelText("dinner-by-day").textContent ?? "";
+    // Shrink drops out-of-range meals; restoring keeps only surviving shifted meals.
     expect(dinnerAfterRestore).toContain("2026-03-17:recipe-17");
-    expect(dinnerAfterRestore).toContain("2026-03-18:recipe-18");
-    expect(dinnerAfterRestore).toContain("2026-03-19:recipe-19");
+    expect(dinnerAfterRestore).toContain("2026-03-18:empty");
+    expect(dinnerAfterRestore).toContain("2026-03-19:empty");
 
     expect(screen.getByRole("button", { name: "Generate log" })).toBeDisabled();
+  });
+
+  it("shows rescue toast without dialog when orphaned meals can be reallocated", async () => {
+    const user = userEvent.setup();
+    const recipeFri = createRecipe("recipe-fri");
+    const weekPlan: PlanInputType = [];
+
+    for (let day = 17; day <= 23; day += 1) {
+      const dateKey = `2026-03-${String(day).padStart(2, "0")}`;
+      for (const mealType of [
+        PlannerMealType.BREAKFAST,
+        PlannerMealType.LUNCH,
+        PlannerMealType.DINNER,
+      ]) {
+        const isFridayDinner =
+          dateKey === "2026-03-22" && mealType === PlannerMealType.DINNER;
+        weekPlan.push({
+          date: new Date(`${dateKey}T00:00:00.000Z`),
+          mealType,
+          recipe: isFridayDinner ? recipeFri : null,
+          customMeal: null,
+          alternatives: [],
+          used: false,
+        });
+      }
+    }
+
+    renderPlanEditor({
+      planId: "plan-1",
+      initialPlan: weekPlan,
+      recipes: [],
+      ingredientOptions: emptyIngredientOptions,
+    });
+
+    await user.click(screen.getByRole("button", { name: "Range shrink end" }));
+
+    expect(toast.info).toHaveBeenCalledWith("Moved 1 meal to a new day.");
+    expect(
+      screen.queryByText(/some meals cannot be kept in this range/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("dinner-by-day").textContent).toContain(
+      "2026-03-20:recipe-fri",
+    );
   });
 
   it("disables Generate log when the editor is dirty", async () => {
