@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   formatDayLabel,
   getOrderedPlanSlots,
@@ -15,7 +16,9 @@ import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { PlannerBulkActionsFooter } from "./planner-bulk-actions-footer";
+import { PlanSlotMealDialog } from "./plan-slot-meal-dialog";
 import { useSlotBulkSelection } from "./use-slot-bulk-selection";
+import { getReplaceMealDialogCopy } from "@/lib/planner/plan-slot-meal-dialog-copy";
 import { toast } from "sonner";
 
 function getFridgeMatchIngredients(
@@ -67,6 +70,7 @@ export function PlanView({
   const sortedDates = Array.from(slotsByDate.keys()).sort();
   const orderedSlotKeys = getOrderedPlanSlots(plan).map((slot) => getPlanSlotKey(slot));
   const {
+    selectedKeys,
     selectedCount,
     isSelected,
     setSelectionForKey,
@@ -78,6 +82,28 @@ export function PlanView({
       toast.info("Selection cleared after date range change.");
     },
   });
+
+  const [isBulkReplaceDialogOpen, setIsBulkReplaceDialogOpen] = useState(false);
+  const bulkReplaceDialogCopy = getReplaceMealDialogCopy(selectedCount);
+
+  const handleBulkReplaceSave = async (payload: PlanSlotMealPayload) => {
+    if (!onSetMeal) return;
+
+    selectedKeys.forEach((slotKey) => {
+      onSetMeal(slotKey, payload);
+    });
+    setIsBulkReplaceDialogOpen(false);
+    clearSelection();
+  };
+
+  const handleBulkRemoveMeals = () => {
+    if (!onRemove) return;
+
+    selectedKeys.forEach((slotKey) => {
+      onRemove(slotKey);
+    });
+    clearSelection();
+  };
 
   function renderSlot(slot: SlotInputType) {
     const slotKey = getPlanSlotKey(slot);
@@ -137,7 +163,32 @@ export function PlanView({
           </article>
         );
       })}
-      <PlannerBulkActionsFooter selectedCount={selectedCount} onDone={clearSelection} />
+      <PlannerBulkActionsFooter
+        selectedCount={selectedCount}
+        onReplaceMeals={
+          onSetMeal ? () => setIsBulkReplaceDialogOpen(true) : undefined
+        }
+        onRemoveMeals={onRemove ? handleBulkRemoveMeals : undefined}
+        onDone={clearSelection}
+      />
+
+      {onSetMeal ? (
+        <PlanSlotMealDialog
+          open={isBulkReplaceDialogOpen}
+          onOpenChange={setIsBulkReplaceDialogOpen}
+          title={bulkReplaceDialogCopy.title}
+          subtitle={bulkReplaceDialogCopy.subtitle}
+          saveLabel={bulkReplaceDialogCopy.saveLabel}
+          recipes={recipes}
+          ingredientOptions={ingredientOptions}
+          initialRecipeId={null}
+          initialCustomName=""
+          initialRows={[]}
+          isSaving={false}
+          onCancel={() => setIsBulkReplaceDialogOpen(false)}
+          onSave={handleBulkReplaceSave}
+        />
+      ) : null}
     </section>
   );
 }

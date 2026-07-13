@@ -7,6 +7,8 @@ import { useSidebar } from "@/components/ui/sidebar";
 
 type PlannerBulkActionsFooterProps = {
   selectedCount: number;
+  onReplaceMeals?: () => void;
+  onRemoveMeals?: () => void;
   onDone: () => void;
 };
 
@@ -15,7 +17,7 @@ const bulkBarActionClassName =
   "h-9 rounded-md border-white/15 bg-white/10 text-background shadow-none hover:border-white/25 hover:bg-white/15 hover:text-background disabled:pointer-events-none disabled:opacity-50";
 
 const bulkBarDestructiveClassName =
-  "h-9 rounded-md border-transparent bg-destructive text-primary-foreground shadow-none hover:bg-destructive/90 disabled:pointer-events-none disabled:opacity-50";
+  "h-9 rounded-md border-transparent bg-destructive text-primary-foreground shadow-none hover:bg-[color-mix(in_oklch,var(--destructive)_88%,white_12%)] hover:text-primary-foreground disabled:pointer-events-none disabled:opacity-50";
 
 const bulkBarDoneClassName =
   "h-9 rounded-md border border-background/70 bg-transparent text-background shadow-none hover:bg-white/10 hover:text-background";
@@ -61,6 +63,8 @@ function useSidebarInsetBounds(): InsetBounds {
 
 export function PlannerBulkActionsFooter({
   selectedCount,
+  onReplaceMeals,
+  onRemoveMeals,
   onDone,
 }: PlannerBulkActionsFooterProps) {
   const [isMounted, setIsMounted] = useState(false);
@@ -95,51 +99,28 @@ export function PlannerBulkActionsFooter({
 
         <div className="flex shrink-0 items-center gap-2">
           <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled
-              className={bulkBarActionClassName}
-            >
-              Shuffle
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled
-              className={bulkBarActionClassName}
-            >
-              Edit
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled
-              className={bulkBarActionClassName}
-            >
-              Add meal
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled
-              className={bulkBarActionClassName}
-            >
-              Change eaters
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled
-              className={bulkBarDestructiveClassName}
-            >
-              Remove
-            </Button>
+            {onReplaceMeals ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onReplaceMeals}
+                className={bulkBarActionClassName}
+              >
+                Replace meals
+              </Button>
+            ) : null}
+            {onRemoveMeals ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onRemoveMeals}
+                className={bulkBarDestructiveClassName}
+              >
+                Remove meals
+              </Button>
+            ) : null}
           </div>
 
           {/* Explicit 1px line — Separator h-full collapses in this flex row. */}

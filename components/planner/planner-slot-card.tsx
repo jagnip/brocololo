@@ -15,6 +15,7 @@ import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
 import { RecipeImagePlaceholder } from "@/components/recipes/recipe-image-placeholder";
 import { PlanSlotMealDialog } from "./plan-slot-meal-dialog";
 import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
+import { getAddMealDialogCopy, getReplaceMealDialogCopy } from "@/lib/planner/plan-slot-meal-dialog-copy";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import { ROUTES } from "@/lib/constants";
 import { SlotAudienceSelect } from "./slot-audience-select";
@@ -66,7 +67,9 @@ export function PlannerSlotCard({
         ? "Lunch"
         : "Dinner";
 
-  const dialogSubtitle = `${mealLabel} · ${formatDayLabel(slot.date)}`;
+  const dialogSlotSubtitle = `${mealLabel} · ${formatDayLabel(slot.date)}`;
+  const addMealDialogCopy = getAddMealDialogCopy(dialogSlotSubtitle);
+  const replaceMealDialogCopy = getReplaceMealDialogCopy(1);
   const canEdit = Boolean(onSetMeal);
   const isEmpty = !recipe && !customMeal;
   const selectedAudienceIds =
@@ -241,8 +244,9 @@ export function PlannerSlotCard({
           <PlanSlotMealDialog
             open={isDialogOpen}
             onOpenChange={setIsDialogOpen}
-            title="Add meal"
-            subtitle={dialogSubtitle}
+            title={addMealDialogCopy.title}
+            subtitle={addMealDialogCopy.subtitle}
+            saveLabel={addMealDialogCopy.saveLabel}
             recipes={recipes}
             ingredientOptions={ingredientOptions}
             initialRecipeId={null}
@@ -303,8 +307,9 @@ export function PlannerSlotCard({
           <PlanSlotMealDialog
             open={isDialogOpen}
             onOpenChange={setIsDialogOpen}
-            title="Edit meal"
-            subtitle={dialogSubtitle}
+            title={replaceMealDialogCopy.title}
+            subtitle={replaceMealDialogCopy.subtitle}
+            saveLabel={replaceMealDialogCopy.saveLabel}
             recipes={recipes}
             ingredientOptions={ingredientOptions}
             initialRecipeId={null}
@@ -403,8 +408,9 @@ export function PlannerSlotCard({
         <PlanSlotMealDialog
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
-          title="Edit meal"
-          subtitle={dialogSubtitle}
+          title={replaceMealDialogCopy.title}
+          subtitle={replaceMealDialogCopy.subtitle}
+          saveLabel={replaceMealDialogCopy.saveLabel}
           recipes={recipes}
           ingredientOptions={ingredientOptions}
           initialRecipeId={recipe!.id}

@@ -40,6 +40,7 @@ type DialogRow = EditableIngredientRow & { key: string };
 export type PlanSlotMealFormProps = {
   title: string;
   subtitle: string;
+  saveLabel?: string;
   recipes: RecipeType[];
   ingredientOptions: LogIngredientOption[];
   initialRecipeId: string | null;
@@ -136,6 +137,7 @@ function toCustomIngredients(
 export function PlanSlotMealForm({
   title,
   subtitle,
+  saveLabel = "Save meal",
   recipes,
   ingredientOptions,
   initialRecipeId,
@@ -564,7 +566,7 @@ export function PlanSlotMealForm({
           onClick={handleSave}
           disabled={isSaving || !canSave}
         >
-          {isSaving ? "Saving..." : "Save meal"}
+          {isSaving ? "Saving..." : saveLabel}
         </Button>
       </DialogFooter>
     </div>
