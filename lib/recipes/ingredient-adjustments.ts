@@ -35,6 +35,11 @@ export type ConsumableIngredientLine = {
   amount: number;
 };
 
+export type MemberPortionInput = {
+  familyMemberId: string;
+  multiplier: number;
+};
+
 /** Per-person default when no explicit MODIFY amount is set. */
 export function getDefaultPerPersonAmount(
   batchAmount: number | null | undefined,
@@ -50,6 +55,40 @@ export function getDefaultPerPersonAmount(
     return null;
   }
   return Number((batchAmount / servings).toFixed(6));
+}
+
+export function getMemberPortionMultiplier(
+  familyMemberId: string,
+  memberPortions: MemberPortionInput[] | undefined,
+): number {
+  const portion = memberPortions?.find(
+    (entry) => entry.familyMemberId === familyMemberId,
+  );
+  return portion?.multiplier ?? 1;
+}
+
+/** Compact portion badge label — null when multiplier is default (1×). */
+export function formatPortionMultiplierBadgeLabel(multiplier: number): string | null {
+  if (!Number.isFinite(multiplier) || multiplier <= 0 || multiplier === 1) {
+    return null;
+  }
+  const formatted = Number.isInteger(multiplier)
+    ? String(multiplier)
+    : multiplier.toFixed(2).replace(/\.?0+$/, "");
+  return `×${formatted}`;
+}
+
+/** Default share for one person after portion-size multiplier is applied. */
+export function getDefaultPerPersonAmountForMember(
+  batchAmount: number | null | undefined,
+  servings: number,
+  portionMultiplier: number,
+): number | null {
+  const base = getDefaultPerPersonAmount(batchAmount, servings);
+  if (base == null || !Number.isFinite(portionMultiplier) || portionMultiplier <= 0) {
+    return base;
+  }
+  return Number((base * portionMultiplier).toFixed(6));
 }
 
 /** Count badge for collapsed People action button. */
@@ -131,11 +170,145 @@ function formatResolvedAmountLabel(
   return `${amountLabel} ${unitLabel}`;
 }
 
+export type PortionSizeSummaryRow = {
+  familyMemberId: string;
+  personLabel: string;
+  portionBadgeLabel: string | null;
+  /** Per-meal share from the batch row (shared-ingredient split). */
+  shareDetail: string | null;
+};
+
+type IngredientShareResolutionInput = {
+  baseIngredientId: string;
+  batchAmount: number | null | undefined;
+  batchUnitId: string | null | undefined;
+  memberAdjustments: MemberAdjustmentRow[];
+  servings: number;
+  batchScaleFactor?: number;
+  familyMembers: FamilyMemberRow[];
+  audienceMemberIds: string[];
+  memberPortions?: MemberPortionInput[];
+};
+
+/** Same consumable resolution as log pool / planner — keeps People panel in sync. */
+function resolveIngredientShareForMember(
+  input: IngredientShareResolutionInput,
+  familyMemberId: string,
+): ConsumableIngredientLine | null {
+  if (
+    input.batchAmount == null ||
+    input.batchAmount <= 0 ||
+    !input.batchUnitId ||
+    !input.baseIngredientId
+  ) {
+    return null;
+  }
+
+  return resolveConsumableIngredientLine({
+    row: {
+      ingredientId: input.baseIngredientId,
+      amount: input.batchAmount,
+      unitId: input.batchUnitId,
+      additionalInfo: null,
+      memberAdjustments: input.memberAdjustments,
+    },
+    familyMemberId,
+    recipeServings: input.servings,
+    familyMembers: input.familyMembers.map((member) => ({
+      id: member.id,
+      isSelf: member.isSelf,
+    })),
+    memberPortions: input.memberPortions ?? [],
+    cookingFamilyMemberIds: input.audienceMemberIds,
+    recipeAudienceFamilyMemberIds: input.audienceMemberIds,
+    batchScaleFactor: input.batchScaleFactor ?? 1,
+  });
+}
+
+/** Audience members with per-meal share amounts for shared-ingredient splits. */
+export function buildPortionSizeSummaryRows(input: {
+  familyMembers: FamilyMemberRow[];
+  audienceMemberIds: string[];
+  memberPortions?: MemberPortionInput[];
+  baseIngredientId: string;
+  batchAmount: number | null | undefined;
+  batchUnitId: string | null | undefined;
+  memberAdjustments: MemberAdjustmentRow[];
+  servings: number;
+  batchScaleFactor?: number;
+  unitsById: Map<string, UnitCatalogEntry>;
+  /** People with MODIFY/SKIP on this row — listed under adjustments instead. */
+  excludeAdjustedMemberIds?: string[];
+}): PortionSizeSummaryRow[] {
+  const sortedMembers = getSortedFamilyMembers(input.familyMembers);
+  const audienceSet = new Set(input.audienceMemberIds);
+  const excludedIds = new Set(input.excludeAdjustedMemberIds ?? []);
+  const resolutionInput: IngredientShareResolutionInput = {
+    baseIngredientId: input.baseIngredientId,
+    batchAmount: input.batchAmount,
+    batchUnitId: input.batchUnitId,
+    memberAdjustments: input.memberAdjustments,
+    servings: input.servings,
+    batchScaleFactor: input.batchScaleFactor,
+    familyMembers: input.familyMembers,
+    audienceMemberIds: input.audienceMemberIds,
+    memberPortions: input.memberPortions,
+  };
+
+  return sortedMembers
+    .filter((member) => audienceSet.has(member.id) && !excludedIds.has(member.id))
+    .map((member) => {
+      const consumable = resolveIngredientShareForMember(
+        resolutionInput,
+        member.id,
+      );
+      const shareDetail = formatResolvedAmountLabel(
+        consumable?.amount ?? null,
+        consumable?.unitId ?? input.batchUnitId,
+        input.unitsById,
+      );
+
+      return {
+        familyMemberId: member.id,
+        personLabel: getRecipeFamilyMemberLabel(member, input.familyMembers),
+        portionBadgeLabel: formatPortionMultiplierBadgeLabel(
+          getMemberPortionMultiplier(member.id, input.memberPortions),
+        ),
+        shareDetail: shareDetail || null,
+      };
+    });
+}
+
+export function shouldShowPortionShareSummary(input: {
+  audienceMemberIds: string[];
+  batchAmount: number | null | undefined;
+  batchUnitId: string | null | undefined;
+  memberAdjustments: MemberAdjustmentRow[];
+}): boolean {
+  if (
+    input.audienceMemberIds.length <= 1 ||
+    input.batchAmount == null ||
+    input.batchAmount <= 0 ||
+    !input.batchUnitId
+  ) {
+    return false;
+  }
+
+  const adjustedIds = new Set(
+    input.memberAdjustments.map((row) => row.familyMemberId),
+  );
+  return input.audienceMemberIds.some((id) => !adjustedIds.has(id));
+}
+
 export type AdjustmentSummaryLine = {
   familyMemberId: string;
   personLabel: string;
   kind: "MODIFY" | "SKIP";
   detail: string;
+  /** Recipe-level portion size when not 1× (e.g. ×2). */
+  portionBadgeLabel: string | null;
+  /** View-mode badge for the adjustment type. */
+  adjustmentBadgeLabel: "Custom" | "Skipped" | null;
 };
 
 /** Read-only summary lines for view-mode Personal adjustments panel. */
@@ -145,11 +318,26 @@ export function buildAdjustmentSummaryLines(input: {
   ingredientCatalog: Map<string, IngredientCatalogEntry>;
   unitsById: Map<string, UnitCatalogEntry>;
   servings: number;
+  baseIngredientId: string;
   batchAmount: number | null | undefined;
   batchUnitId: string | null | undefined;
+  memberPortions?: MemberPortionInput[];
+  audienceMemberIds: string[];
+  batchScaleFactor?: number;
 }): AdjustmentSummaryLine[] {
   const sortedMembers = getSortedFamilyMembers(input.familyMembers);
   const memberById = new Map(sortedMembers.map((member) => [member.id, member]));
+  const resolutionInput: IngredientShareResolutionInput = {
+    baseIngredientId: input.baseIngredientId,
+    batchAmount: input.batchAmount,
+    batchUnitId: input.batchUnitId,
+    memberAdjustments: input.memberAdjustments,
+    servings: input.servings,
+    batchScaleFactor: input.batchScaleFactor,
+    familyMembers: input.familyMembers,
+    audienceMemberIds: input.audienceMemberIds,
+    memberPortions: input.memberPortions,
+  };
 
   return [...input.memberAdjustments]
     .sort((a, b) => {
@@ -167,23 +355,32 @@ export function buildAdjustmentSummaryLines(input: {
         ? getRecipeFamilyMemberLabel(member, input.familyMembers)
         : "Unknown person";
 
+      const portionBadgeLabel = formatPortionMultiplierBadgeLabel(
+        getMemberPortionMultiplier(adjustment.familyMemberId, input.memberPortions),
+      );
+
       if (adjustment.kind === "SKIP") {
         return {
           familyMemberId: adjustment.familyMemberId,
           personLabel,
           kind: "SKIP",
           detail: "Not in their portion",
+          portionBadgeLabel,
+          adjustmentBadgeLabel: "Skipped",
         };
       }
 
+      const consumable = resolveIngredientShareForMember(
+        resolutionInput,
+        adjustment.familyMemberId,
+      );
       const ingredientLabel = getIngredientCatalogLabel(
-        adjustment.ingredientId,
+        consumable?.ingredientId ?? adjustment.ingredientId,
         input.ingredientCatalog,
       );
       const amountLabel = formatResolvedAmountLabel(
-        adjustment.amount ??
-          getDefaultPerPersonAmount(input.batchAmount, input.servings),
-        adjustment.unitId ?? input.batchUnitId,
+        consumable?.amount ?? adjustment.amount,
+        consumable?.unitId ?? adjustment.unitId ?? input.batchUnitId,
         input.unitsById,
       );
 
@@ -192,8 +389,24 @@ export function buildAdjustmentSummaryLines(input: {
         personLabel,
         kind: "MODIFY",
         detail: `${ingredientLabel}${amountLabel ? ` ${amountLabel}` : ""}`,
+        portionBadgeLabel,
+        adjustmentBadgeLabel: "Custom",
       };
     });
+}
+
+/** Default MODIFY amount for one audience member (batch ÷ servings × portion multiplier). */
+export function getDefaultModifyAmountForMember(input: {
+  batchAmount: number;
+  servings: number;
+  familyMemberId: string;
+  memberPortions?: MemberPortionInput[];
+}): number | null {
+  return getDefaultPerPersonAmountForMember(
+    input.batchAmount,
+    input.servings,
+    getMemberPortionMultiplier(input.familyMemberId, input.memberPortions),
+  );
 }
 
 /** Default MODIFY adjustment fields when adding a new person row. */
@@ -203,12 +416,22 @@ export function buildDefaultModifyAdjustment(input: {
   baseAmount: number;
   baseUnitId: string;
   servings: number;
+  memberPortions?: MemberPortionInput[];
+  /** @deprecated Prefer memberPortions; kept for callers passing multiplier directly. */
+  portionMultiplier?: number;
 }): MemberAdjustmentRow {
+  const multiplier =
+    input.portionMultiplier ??
+    getMemberPortionMultiplier(input.familyMemberId, input.memberPortions);
   return {
     familyMemberId: input.familyMemberId,
     kind: "MODIFY",
     ingredientId: input.baseIngredientId,
-    amount: getDefaultPerPersonAmount(input.baseAmount, input.servings),
+    amount: getDefaultPerPersonAmountForMember(
+      input.baseAmount,
+      input.servings,
+      multiplier,
+    ),
     unitId: input.baseUnitId,
     additionalInfo: null,
   };
@@ -271,6 +494,7 @@ export function resolveConsumableIngredientLine(
     memberPortions: params.memberPortions,
     cookingFamilyMemberIds: params.cookingFamilyMemberIds,
     recipeAudienceFamilyMemberIds: params.recipeAudienceFamilyMemberIds,
+    batchScaleFactor,
   });
 
   if (amount == null || amount <= 0 || !resolved.ingredientId || !resolved.unitId) {
@@ -293,9 +517,12 @@ function resolveConsumableAmount(input: {
   memberPortions: Array<{ familyMemberId: string; multiplier: number }>;
   cookingFamilyMemberIds?: string[];
   recipeAudienceFamilyMemberIds?: string[];
+  batchScaleFactor?: number;
 }): number | null {
+  const batchScaleFactor = input.batchScaleFactor ?? 1;
   if (input.resolved.kind === "modify" && input.resolved.amount != null) {
-    return input.resolved.amount;
+    // Explicit MODIFY amounts scale with the row (matches instruction badge math).
+    return input.resolved.amount * batchScaleFactor;
   }
 
   // Default line: use existing portion math on the (possibly scaled) batch row.

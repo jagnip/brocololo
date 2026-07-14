@@ -68,6 +68,7 @@ type IngredientItemProps = {
   onIngredientChange: (ingredientId: string) => void;
   familyMembers: FamilyMemberRow[];
   audienceMemberIds: string[];
+  memberPortions?: Array<{ familyMemberId: string; multiplier: number }>;
 };
 
 export function IngredientItem({
@@ -84,6 +85,8 @@ export function IngredientItem({
   onApplyScaleToAll,
   onIngredientChange,
   familyMembers,
+  audienceMemberIds,
+  memberPortions = [],
 }: IngredientItemProps) {
   const { ingredient } = recipeIngredient;
   const adjustmentCount = getMemberAdjustmentCount(
@@ -420,12 +423,14 @@ export function IngredientItem({
         <IngredientMemberAdjustmentsSummary
           memberAdjustments={recipeIngredient.memberAdjustments}
           familyMembers={familyMembers}
+          audienceMemberIds={audienceMemberIds}
+          baseIngredientId={recipeIngredient.ingredientId}
           ingredientCatalog={catalogEntries}
           unitsById={unitsById}
           servings={recipeServings}
+          memberPortions={memberPortions}
           batchAmount={recipeIngredient.amount}
           batchUnitId={recipeIngredient.unit?.id ?? null}
-          batchUnitName={recipeIngredient.unit?.name ?? null}
         />
       ) : null}
 

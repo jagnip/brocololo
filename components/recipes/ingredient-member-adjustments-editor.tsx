@@ -11,6 +11,7 @@ import {
   renderIngredientSearchTriggerLabel,
 } from "@/components/ingredients/ingredient-searchable-select-labels";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -32,12 +33,16 @@ import {
   buildDefaultModifyAdjustment,
   buildDefaultSkipAdjustment,
   canAddMemberAdjustments,
-  formatDefaultPerPersonHint,
+  formatPortionMultiplierBadgeLabel,
+  getDefaultModifyAmountForMember,
+  getMemberPortionMultiplier,
 } from "@/lib/recipes/ingredient-adjustments";
+import type { MemberPortionInput } from "@/lib/recipes/ingredient-adjustments";
 import { getRecipeFamilyMemberLabel, getUnitDisplayName } from "@/lib/recipes/helpers";
 import type { MemberAdjustmentRow } from "@/lib/recipes/resolve-ingredient-lines";
 import type { IngredientType } from "@/types/ingredient";
 import { useCallback, useMemo } from "react";
+import { AdjustmentMemberChip } from "@/components/recipes/adjustment-member-chip";
 
 type IngredientMemberAdjustmentsEditorProps = {
   memberAdjustments: MemberAdjustmentRow[];
@@ -45,10 +50,10 @@ type IngredientMemberAdjustmentsEditorProps = {
   familyMembers: FamilyMemberRow[];
   audienceMemberIds: string[];
   servings: number;
+  memberPortions?: MemberPortionInput[];
   baseIngredientId: string;
   baseAmount: number | null;
   baseUnitId: string | null;
-  baseUnitName: string | null;
   ingredients: IngredientType[];
 };
 
@@ -58,10 +63,10 @@ export function IngredientMemberAdjustmentsEditor({
   familyMembers,
   audienceMemberIds,
   servings,
+  memberPortions = [],
   baseIngredientId,
   baseAmount,
   baseUnitId,
-  baseUnitName,
   ingredients,
 }: IngredientMemberAdjustmentsEditorProps) {
   const isSoloHousehold = familyMembers.length <= 1;
@@ -84,15 +89,18 @@ export function IngredientMemberAdjustmentsEditor({
     [memberAdjustments],
   );
 
-  const nextAvailableMember = audienceMembers.find(
-    (member) => !usedMemberIds.has(member.id),
+  const availableMembers = useMemo(
+    () => audienceMembers.filter((member) => !usedMemberIds.has(member.id)),
+    [audienceMembers, usedMemberIds],
   );
 
-  const perPersonHint = formatDefaultPerPersonHint({
-    batchAmount: baseAmount,
-    unitName: baseUnitName,
-    servings,
-  });
+  const getPortionBadgeForMember = useCallback(
+    (familyMemberId: string) =>
+      formatPortionMultiplierBadgeLabel(
+        getMemberPortionMultiplier(familyMemberId, memberPortions),
+      ),
+    [memberPortions],
+  );
 
   const getUnitsForIngredient = (ingredientId: string | null | undefined) => {
     if (!ingredientId) return [];
@@ -152,18 +160,19 @@ export function IngredientMemberAdjustmentsEditor({
     );
   };
 
-  const addAdjustment = () => {
-    if (!nextAvailableMember || !canAdjust || !baseAmount || !baseUnitId) {
+  const addAdjustmentForMember = (familyMemberId: string) => {
+    if (!canAdjust || !baseAmount || !baseUnitId || usedMemberIds.has(familyMemberId)) {
       return;
     }
     onChange([
       ...memberAdjustments,
       buildDefaultModifyAdjustment({
-        familyMemberId: nextAvailableMember.id,
+        familyMemberId,
         baseIngredientId,
         baseAmount,
         baseUnitId,
         servings,
+        memberPortions,
       }),
     ]);
   };
@@ -190,10 +199,6 @@ export function IngredientMemberAdjustmentsEditor({
         </p>
       ) : null}
 
-      {canAdjust && perPersonHint ? (
-        <p className="font-mono text-xs text-muted-foreground">{perPersonHint}</p>
-      ) : null}
-
       {memberAdjustments.map((adjustment) => {
         const units = getUnitsForIngredient(
           adjustment.kind === "MODIFY"
@@ -207,41 +212,68 @@ export function IngredientMemberAdjustmentsEditor({
             className="space-y-2 rounded-md border border-border bg-card p-2"
           >
             <div className="flex flex-wrap items-center gap-2">
-              <Select
-                value={adjustment.familyMemberId}
-                onValueChange={(nextMemberId) => {
-                  if (!nextMemberId || nextMemberId === adjustment.familyMemberId) {
-                    return;
-                  }
-                  if (usedMemberIds.has(nextMemberId)) {
-                    return;
-                  }
-                  updateAdjustment(adjustment.familyMemberId, {
-                    familyMemberId: nextMemberId,
-                  });
-                }}
-              >
-                <SelectTrigger className="min-w-[8rem] flex-1">
-                  <SelectValue placeholder="Person" />
-                </SelectTrigger>
-                <SelectContent>
-                  {audienceMembers.map((member, index) => {
-                    const label = getRecipeFamilyMemberLabel(member, familyMembers);
-                    const disabled =
-                      usedMemberIds.has(member.id) &&
-                      member.id !== adjustment.familyMemberId;
-                    return (
-                      <SelectItem
-                        key={member.id}
-                        value={member.id}
-                        disabled={disabled}
-                      >
-                        {label}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
+              <div className="flex min-w-[8rem] flex-1 items-center gap-1.5">
+                <Select
+                  value={adjustment.familyMemberId}
+                  onValueChange={(nextMemberId) => {
+                    if (!nextMemberId || nextMemberId === adjustment.familyMemberId) {
+                      return;
+                    }
+                    if (usedMemberIds.has(nextMemberId)) {
+                      return;
+                    }
+                    const patch: Partial<MemberAdjustmentRow> = {
+                      familyMemberId: nextMemberId,
+                    };
+                    // Re-default MODIFY amount when the person changes so it matches portion sizes.
+                    if (
+                      adjustment.kind === "MODIFY" &&
+                      baseAmount != null &&
+                      baseUnitId
+                    ) {
+                      patch.amount = getDefaultModifyAmountForMember({
+                        batchAmount: baseAmount,
+                        servings,
+                        familyMemberId: nextMemberId,
+                        memberPortions,
+                      });
+                    }
+                    updateAdjustment(adjustment.familyMemberId, patch);
+                  }}
+                >
+                  <SelectTrigger className="min-w-0 flex-1">
+                    <SelectValue placeholder="Person" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {audienceMembers.map((member) => {
+                      const label = getRecipeFamilyMemberLabel(member, familyMembers);
+                      const disabled =
+                        usedMemberIds.has(member.id) &&
+                        member.id !== adjustment.familyMemberId;
+                      const portionBadge = getPortionBadgeForMember(member.id);
+                      return (
+                        <SelectItem
+                          key={member.id}
+                          value={member.id}
+                          disabled={disabled}
+                        >
+                          <span className="inline-flex items-center gap-1.5">
+                            {label}
+                            {portionBadge ? (
+                              <span className="text-muted-foreground">{portionBadge}</span>
+                            ) : null}
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                {getPortionBadgeForMember(adjustment.familyMemberId) ? (
+                  <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-[10px] font-medium">
+                    {getPortionBadgeForMember(adjustment.familyMemberId)}
+                  </Badge>
+                ) : null}
+              </div>
 
               <SegmentedFilterGroup
                 aria-label="Adjustment type"
@@ -262,6 +294,7 @@ export function IngredientMemberAdjustmentsEditor({
                         baseAmount,
                         baseUnitId,
                         servings,
+                        memberPortions,
                       }),
                     );
                   }}
@@ -374,15 +407,21 @@ export function IngredientMemberAdjustmentsEditor({
         );
       })}
 
-      {canAdjust && nextAvailableMember ? (
-        <Button
-          type="button"
-          variant="link"
-          className="h-auto p-0 text-destructive"
-          onClick={addAdjustment}
-        >
-          + Add adjustment
-        </Button>
+      {canAdjust && availableMembers.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+          <span className="type-body text-destructive">+ Add adjustment</span>
+          {availableMembers.map((member) => {
+            const label = getRecipeFamilyMemberLabel(member, familyMembers);
+            return (
+              <AdjustmentMemberChip
+                key={member.id}
+                label={label}
+                portionBadgeLabel={getPortionBadgeForMember(member.id)}
+                onClick={() => addAdjustmentForMember(member.id)}
+              />
+            );
+          })}
+        </div>
       ) : null}
     </div>
   );

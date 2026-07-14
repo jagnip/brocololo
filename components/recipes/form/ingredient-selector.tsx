@@ -51,6 +51,7 @@ type IngredientSelectorProps = {
   householdFamilyMembers?: FamilyMemberRow[];
   audienceMemberIds: string[];
   servings: number;
+  memberPortions?: Array<{ familyMemberId: string; multiplier: number }>;
   groups: RecipeIngredientGroupInputType[];
   value: RecipeIngredientInputType[];
   onGroupsChange: (value: RecipeIngredientGroupInputType[]) => void;
@@ -331,6 +332,7 @@ export function IngredientSelector({
   householdFamilyMembers,
   audienceMemberIds,
   servings,
+  memberPortions = [],
   groups,
   value,
   onGroupsChange,
@@ -963,10 +965,10 @@ export function IngredientSelector({
             familyMembers={resolvedHouseholdMembers}
             audienceMemberIds={audienceMemberIds}
             servings={servings}
+            memberPortions={memberPortions}
             baseIngredientId={item.ingredientId}
             baseAmount={item.amount}
             baseUnitId={item.unitId}
-            baseUnitName={baseUnit?.name ?? null}
             ingredients={ingredients}
           />
         ) : null}

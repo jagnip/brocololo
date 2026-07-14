@@ -138,6 +138,7 @@ export function IngredientsSection() {
                 recipeServings={recipe.servings}
                 familyMembers={familyMembers}
                 audienceMemberIds={audienceMemberIds}
+                memberPortions={recipe.memberPortions}
               />
             ))}
           </ul>
@@ -175,6 +176,7 @@ export function IngredientsSection() {
                 recipeServings={recipe.servings}
                 familyMembers={familyMembers}
                 audienceMemberIds={audienceMemberIds}
+                memberPortions={recipe.memberPortions}
               />
             ))}
           </ul>

@@ -754,6 +754,7 @@ export default function RecipeForm({
                       householdFamilyMembers={familyMembers}
                       audienceMemberIds={previewAudienceFamilyMemberIds}
                       servings={previewServings ?? 1}
+                      memberPortions={previewMemberPortions ?? []}
                       groups={ingredientGroups}
                       value={field.value}
                       onChange={field.onChange}

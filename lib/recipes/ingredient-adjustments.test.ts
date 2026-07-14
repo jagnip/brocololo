@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   buildAdjustmentSummaryLines,
   buildDefaultModifyAdjustment,
+  buildPortionSizeSummaryRows,
   formatDefaultPerPersonHint,
+  formatPortionMultiplierBadgeLabel,
   getDefaultPerPersonAmount,
+  shouldShowPortionShareSummary,
+  getDefaultPerPersonAmountForMember,
   getMemberAdjustmentCount,
   resolveConsumableIngredientLine,
   resolveRecipeIngredientRowsForMember,
@@ -26,11 +30,118 @@ const familyMembers: FamilyMemberRow[] = [
 describe("ingredient-adjustments helpers", () => {
   it("computes default per-person amount from batch and servings", () => {
     expect(getDefaultPerPersonAmount(50, 4)).toBe(12.5);
+    expect(getDefaultPerPersonAmountForMember(50, 4, 2)).toBe(25);
     expect(formatDefaultPerPersonHint({
       batchAmount: 50,
       unitName: "g",
       servings: 4,
     })).toBe("50g ÷ 4 = 12.5g default per person");
+  });
+
+  it("formats portion multiplier badges", () => {
+    expect(formatPortionMultiplierBadgeLabel(1)).toBeNull();
+    expect(formatPortionMultiplierBadgeLabel(2)).toBe("×2");
+    expect(formatPortionMultiplierBadgeLabel(1.5)).toBe("×1.5");
+  });
+
+  it("builds portion size summary rows with per-meal share amounts", () => {
+    const unitsById = new Map([
+      ["unit-g", { id: "unit-g", name: "g", namePlural: null }],
+    ]);
+    const rows = buildPortionSizeSummaryRows({
+      familyMembers,
+      audienceMemberIds: ["fm-jagoda", "fm-nelson"],
+      memberPortions: [{ familyMemberId: "fm-nelson", multiplier: 2 }],
+      baseIngredientId: "ing-tuna",
+      batchAmount: 85,
+      batchUnitId: "unit-g",
+      memberAdjustments: [],
+      servings: 2,
+      unitsById,
+    });
+
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({
+      personLabel: "Jagoda",
+      portionBadgeLabel: null,
+      shareDetail: "28.33 g",
+    });
+    expect(rows[1]).toMatchObject({
+      personLabel: "Nelson",
+      portionBadgeLabel: "×2",
+      shareDetail: "56.67 g",
+    });
+
+    const nelsonOnly = buildPortionSizeSummaryRows({
+      familyMembers,
+      audienceMemberIds: ["fm-jagoda", "fm-nelson"],
+      memberPortions: [{ familyMemberId: "fm-nelson", multiplier: 2 }],
+      baseIngredientId: "ing-tuna",
+      batchAmount: 85,
+      batchUnitId: "unit-g",
+      memberAdjustments: [
+        {
+          familyMemberId: "fm-jagoda",
+          kind: "MODIFY",
+          ingredientId: "ing-brine",
+          amount: 42.5,
+          unitId: "unit-g",
+        },
+      ],
+      servings: 2,
+      unitsById,
+      excludeAdjustedMemberIds: ["fm-jagoda"],
+    });
+    expect(nelsonOnly).toHaveLength(1);
+    expect(nelsonOnly[0]?.personLabel).toBe("Nelson");
+    expect(nelsonOnly[0]?.shareDetail).toBe("56.67 g");
+
+    const poolRows = resolveRecipeIngredientRowsForMember({
+      recipeIngredients: [
+        {
+          id: "ri-tuna",
+          ingredientId: "ing-tuna",
+          amount: 85,
+          unit: { id: "unit-g" },
+          additionalInfo: null,
+          memberAdjustments: [
+            {
+              familyMemberId: "fm-jagoda",
+              kind: "MODIFY",
+              ingredientId: "ing-brine",
+              amount: 42.5,
+              unitId: "unit-g",
+            },
+          ],
+        },
+      ],
+      familyMemberId: "fm-nelson",
+      recipeServings: 2,
+      familyMembers,
+      memberPortions: [{ familyMemberId: "fm-nelson", multiplier: 2 }],
+      audienceMemberIds: ["fm-jagoda", "fm-nelson"],
+    });
+    expect(poolRows[0]?.amount).toBeCloseTo(56.667, 2);
+    expect(nelsonOnly[0]?.shareDetail).toBe("56.67 g");
+
+    expect(
+      shouldShowPortionShareSummary({
+        audienceMemberIds: ["fm-jagoda", "fm-nelson"],
+        batchAmount: 85,
+        batchUnitId: "unit-g",
+        memberAdjustments: [
+          { familyMemberId: "fm-jagoda", kind: "MODIFY", ingredientId: "ing-1" },
+        ],
+      }),
+    ).toBe(true);
+    expect(
+      shouldShowPortionShareSummary({
+        audienceMemberIds: ["fm-jagoda"],
+        batchAmount: 85,
+        batchUnitId: "unit-g",
+        memberAdjustments: [],
+      }),
+    ).toBe(false);
   });
 
   it("builds MODIFY adjustment defaults from base row", () => {
@@ -48,6 +159,18 @@ describe("ingredient-adjustments helpers", () => {
       amount: 12.5,
       unitId: "unit-g",
     });
+  });
+
+  it("prefills MODIFY amount with portion multiplier", () => {
+    const adjustment = buildDefaultModifyAdjustment({
+      familyMemberId: "fm-nelson",
+      baseIngredientId: "ing-butter",
+      baseAmount: 50,
+      baseUnitId: "unit-g",
+      servings: 4,
+      memberPortions: [{ familyMemberId: "fm-nelson", multiplier: 2 }],
+    });
+    expect(adjustment.amount).toBe(25);
   });
 
   it("resolves SKIP as null consumable line", () => {
@@ -123,8 +246,10 @@ describe("ingredient-adjustments helpers", () => {
       ]),
       unitsById: new Map([["unit-g", { id: "unit-g", name: "g", namePlural: null }]]),
       servings: 4,
+      baseIngredientId: "ing-butter",
       batchAmount: 50,
       batchUnitId: "unit-g",
+      audienceMemberIds: ["fm-jagoda", "fm-nelson"],
     });
 
     expect(lines).toHaveLength(2);
@@ -132,12 +257,44 @@ describe("ingredient-adjustments helpers", () => {
       personLabel: "Jagoda",
       kind: "MODIFY",
       detail: expect.stringContaining("Olive oil"),
+      adjustmentBadgeLabel: "Custom",
+      portionBadgeLabel: null,
     });
     expect(lines[1]).toMatchObject({
       personLabel: "Nelson",
       kind: "SKIP",
       detail: "Not in their portion",
+      adjustmentBadgeLabel: "Skipped",
     });
+  });
+
+  it("includes portion badge on summary lines when multiplier is not 1", () => {
+    const lines = buildAdjustmentSummaryLines({
+      memberAdjustments: [
+        {
+          familyMemberId: "fm-nelson",
+          kind: "MODIFY",
+          ingredientId: "ing-bread",
+          amount: 5,
+          unitId: "unit-slice",
+        },
+      ],
+      familyMembers,
+      ingredientCatalog: new Map([
+        ["ing-bread", { id: "ing-bread", name: "Bread", brand: null, descriptor: null }],
+      ]),
+      unitsById: new Map([
+        ["unit-slice", { id: "unit-slice", name: "slice", namePlural: "slices" }],
+      ]),
+      servings: 2,
+      baseIngredientId: "ing-bread",
+      batchAmount: 3,
+      batchUnitId: "unit-slice",
+      memberPortions: [{ familyMemberId: "fm-nelson", multiplier: 2 }],
+      audienceMemberIds: ["fm-jagoda", "fm-nelson"],
+    });
+
+    expect(lines[0]?.portionBadgeLabel).toBe("×2");
   });
 
   it("counts member adjustments for collapsed badge", () => {
