@@ -16,7 +16,11 @@ import type { RecipeType } from "@/types/recipe";
 /** Max ingredient lines shown on a plan slot card before truncation. */
 export const SLOT_INGREDIENT_SUMMARY_MAX_LINES = 4;
 
-export type FamilyMemberRef = { id: string; isSelf: boolean };
+export type FamilyMemberRef = {
+  id: string;
+  isSelf: boolean;
+  portionMultiplier?: number;
+};
 
 export type RecipeSlotIngredientInput = {
   id: string;
@@ -59,19 +63,17 @@ export type IngredientUnitCatalogEntry = {
   namePlural?: string | null;
 };
 
-/** Resolve cooking audience for a slot (matches groceries + plan-editor save fallback). */
+/** Resolve cooking audience for a slot — empty means nobody eats (zero groceries). */
 export function getSlotCookingFamilyMemberIds(params: {
   cookingFamilyMemberIds?: string[];
   familyMembers: FamilyMemberRef[];
+  /** @deprecated Recipe audience removed — ignored when slot audience is empty. */
   recipeAudienceMemberIds?: string[];
 }): string[] {
   if (params.cookingFamilyMemberIds && params.cookingFamilyMemberIds.length > 0) {
     return params.cookingFamilyMemberIds;
   }
-  if (params.recipeAudienceMemberIds && params.recipeAudienceMemberIds.length > 0) {
-    return params.recipeAudienceMemberIds;
-  }
-  return params.familyMembers.map((member) => member.id);
+  return [];
 }
 
 /** Sum consumable lines by ingredient + unit (planner + groceries aggregation). */
@@ -108,19 +110,16 @@ export function resolveRecipeSlotAggregatedIngredients(params: {
   cookingFamilyMemberIds?: string[];
   familyMembers: FamilyMemberRef[];
 }): AggregatedIngredientLine[] {
-  const audienceMemberIds = (params.recipe.audienceMembers ?? []).map(
-    (member) => member.familyMemberId,
-  );
+  const memberPortions = params.familyMembers.map((member) => ({
+    familyMemberId: member.id,
+    multiplier: member.portionMultiplier ?? 1,
+  }));
+  const audienceMemberIds = params.familyMembers.map((member) => member.id);
   const cookingIds = getSlotCookingFamilyMemberIds({
     cookingFamilyMemberIds: params.cookingFamilyMemberIds,
     familyMembers: params.familyMembers,
-    recipeAudienceMemberIds: audienceMemberIds,
   });
-  const eaters =
-    cookingIds.length > 0
-      ? cookingIds
-      : params.familyMembers.map((member) => member.id);
-  const memberPortions = params.recipe.memberPortions ?? [];
+  const eaters = cookingIds;
 
   const consumables = eaters.flatMap((familyMemberId) =>
     resolveRecipeIngredientRowsForMember({
@@ -380,20 +379,16 @@ export function resolveRecipeSlotScaledConsumables(
   }
 
   const familyMembers = slot.familyMembers ?? [];
+  const memberPortions = familyMembers.map((member) => ({
+    familyMemberId: member.id,
+    multiplier: member.portionMultiplier ?? 1,
+  }));
+  const audienceMemberIds = familyMembers.map((member) => member.id);
   const cookingIds = getSlotCookingFamilyMemberIds({
     cookingFamilyMemberIds: slot.cookingFamilyMemberIds,
     familyMembers,
-    recipeAudienceMemberIds: (slot.recipe.audienceMembers ?? []).map(
-      (member) => member.familyMemberId,
-    ),
   });
-  const audienceMemberIds = (slot.recipe.audienceMembers ?? []).map(
-    (member) => member.familyMemberId,
-  );
-  const eaters =
-    cookingIds.length > 0
-      ? cookingIds
-      : familyMembers.map((member) => member.id);
+  const eaters = cookingIds;
 
   return eaters.flatMap((familyMemberId) =>
     resolveRecipeIngredientRowsForMember({
@@ -408,7 +403,7 @@ export function resolveRecipeSlotScaledConsumables(
       familyMemberId,
       recipeServings: slot.recipe!.servings,
       familyMembers,
-      memberPortions: slot.recipe!.memberPortions ?? [],
+      memberPortions,
       audienceMemberIds,
       cookingFamilyMemberIds: cookingIds,
     }),

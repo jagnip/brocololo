@@ -6,6 +6,7 @@ export type FamilyMemberRow = {
   name: string;
   isSelf: boolean;
   sortOrder: number;
+  portionMultiplier: number;
 };
 
 const familyMemberSelect = {
@@ -13,6 +14,7 @@ const familyMemberSelect = {
   name: true,
   isSelf: true,
   sortOrder: true,
+  portionMultiplier: true,
 } as const;
 
 // Phase 2: map isSelf member → LogPerson.PRIMARY; first non-self by sortOrder → SECONDARY
@@ -88,6 +90,26 @@ export async function updateFamilyMemberName(input: {
   return prisma.familyMember.update({
     where: { id: input.id },
     data: { name: input.name },
+    select: familyMemberSelect,
+  });
+}
+
+export async function updateFamilyMemberPortionMultiplier(input: {
+  userId: string;
+  id: string;
+  portionMultiplier: number;
+}): Promise<FamilyMemberRow> {
+  const owned = await prisma.familyMember.findFirst({
+    where: { id: input.id, userId: input.userId },
+    select: { id: true },
+  });
+  if (!owned) {
+    throw new Error("FAMILY_MEMBER_NOT_FOUND");
+  }
+
+  return prisma.familyMember.update({
+    where: { id: input.id },
+    data: { portionMultiplier: input.portionMultiplier },
     select: familyMemberSelect,
   });
 }

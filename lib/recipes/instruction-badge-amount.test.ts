@@ -12,6 +12,7 @@ const memberPortions = [
 
 const cookingFamilyMemberIds = ["family-self", "family-member-1"];
 const audienceMemberIds = cookingFamilyMemberIds;
+const baseServings = 2;
 
 describe("getInstructionIngredientBadgeAmount", () => {
   it("returns scaled row amount when no person is selected", () => {
@@ -24,12 +25,13 @@ describe("getInstructionIngredientBadgeAmount", () => {
         familyMembers,
         memberPortions,
         cookingFamilyMemberIds,
+        recipeServings: baseServings * 2,
         rowScaleFactor: 2,
       }),
     ).toBe(600);
   });
 
-  it("splits scaled shared rows for the selected person", () => {
+  it("returns per-meal share for the selected person on a scaled batch", () => {
     expect(
       getInstructionIngredientBadgeAmount({
         amount: 300,
@@ -39,12 +41,13 @@ describe("getInstructionIngredientBadgeAmount", () => {
         familyMembers,
         memberPortions,
         cookingFamilyMemberIds,
+        recipeServings: baseServings * 2,
         rowScaleFactor: 2,
       }),
-    ).toBe(200);
+    ).toBe(150);
   });
 
-  it("splits unscaled shared rows when calorie scale is not applied", () => {
+  it("applies portion multiplier when calorie scale is not applied", () => {
     expect(
       getInstructionIngredientBadgeAmount({
         amount: 300,
@@ -54,12 +57,13 @@ describe("getInstructionIngredientBadgeAmount", () => {
         familyMembers,
         memberPortions,
         cookingFamilyMemberIds,
+        recipeServings: baseServings,
         rowScaleFactor: 1,
       }),
-    ).toBe(200);
+    ).toBe(300);
   });
 
-  it("uses the full scaled batch at high servings, not one plate", () => {
+  it("uses display servings so scaled batches still resolve per meal", () => {
     // 300g row at 2 base servings, scaled to 6 servings => 900g total batch.
     expect(
       getInstructionIngredientBadgeAmount({
@@ -70,9 +74,10 @@ describe("getInstructionIngredientBadgeAmount", () => {
         familyMembers,
         memberPortions,
         cookingFamilyMemberIds,
+        recipeServings: baseServings * 3,
         rowScaleFactor: 3,
       }),
-    ).toBe(300);
+    ).toBe(150);
     expect(
       getInstructionIngredientBadgeAmount({
         amount: 300,
@@ -82,8 +87,9 @@ describe("getInstructionIngredientBadgeAmount", () => {
         familyMembers,
         memberPortions,
         cookingFamilyMemberIds,
+        recipeServings: baseServings * 3,
         rowScaleFactor: 3,
       }),
-    ).toBe(600);
+    ).toBe(300);
   });
 });

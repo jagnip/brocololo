@@ -210,26 +210,7 @@ export default function RecipeForm({
       formSchema,
     ) as unknown as Resolver<CreateRecipeFormValues>,
     defaultValues: recipe
-      ? {
-          ...recipeToFormData(recipe),
-          memberPortions: familyMembers
-            .filter(
-              (member) =>
-                recipe.audienceMembers.some(
-                  (audienceMember) =>
-                    audienceMember.familyMemberId === member.id,
-                ),
-            )
-            .map((member) => {
-              const saved = recipe.memberPortions.find(
-                (portion) => portion.familyMemberId === member.id,
-              );
-              return {
-                familyMemberId: member.id,
-                multiplier: saved?.multiplier ?? 1,
-              };
-            }),
-        }
+      ? recipeToFormData(recipe)
       : {
           name: "",
           mealOccasionCategoryIds: [],
@@ -237,48 +218,27 @@ export default function RecipeForm({
           typeCategoryId: null,
           images: [],
           servings: Math.max(familyMembers.length, 1),
-          audienceFamilyMemberIds: familyMembers.map((member) => member.id),
-          // Keep targeted numeric fields empty so placeholders guide first input.
-          // Start in no-group mode; grouping is optional.
           ingredientGroups: [],
-          // Start with a clean slate; ingredients are optional.
           ingredients: [],
-          // Start with a clean slate; instructions are optional.
           instructions: [],
           notes: "",
           excludeFromPlanner: false,
-          memberPortions: familyMembers
-            .map((member) => ({
-              familyMemberId: member.id,
-              multiplier: 1,
-            })),
         },
   });
 
   // Live nutrition preview — subscribed fields only (see `buildDraftRecipeForNutrition`).
   const previewServings = useWatch({ control: form.control, name: "servings" });
-  const previewAudienceFamilyMemberIds =
-    useWatch({ control: form.control, name: "audienceFamilyMemberIds" }) ?? [];
-  const previewMemberPortions = useWatch({
-    control: form.control,
-    name: "memberPortions",
-  });
   const previewIngredients =
     useWatch({ control: form.control, name: "ingredients" }) ?? [];
 
   const nutritionPreview = useMemo(() => {
     const draft = buildDraftRecipeForNutrition(
       previewServings,
-      previewAudienceFamilyMemberIds,
-      previewMemberPortions,
       previewIngredients,
       localIngredients,
+      familyMembers,
     );
-    const audienceIdSet = new Set(previewAudienceFamilyMemberIds);
-    const audienceMembers = familyMembers.filter((member) =>
-      audienceIdSet.has(member.id),
-    );
-    return audienceMembers.map((member, index) => ({
+    return familyMembers.map((member, index) => ({
       familyMemberId: member.id,
       label:
         member.name.trim() ||
@@ -293,8 +253,6 @@ export default function RecipeForm({
   }, [
     familyMembers,
     previewServings,
-    previewAudienceFamilyMemberIds,
-    previewMemberPortions,
     previewIngredients,
     localIngredients,
   ]);
@@ -308,9 +266,6 @@ export default function RecipeForm({
     const nextValue = rawValue === "" ? null : Number(rawValue);
     onChange(nextValue);
   };
-  // Restrict UI choices to the agreed segmented-button multipliers.
-  const memberMultiplierOptions = [1, 1.5, 2, 2.5, 3] as const;
-
   useEffect(() => {
     // Sync local options if server-provided categories change.
     setLocalCategories(categories);
@@ -732,8 +687,6 @@ export default function RecipeForm({
         <RecipePortionsFormSection
           form={form}
           recipe={recipe}
-          familyMembers={familyMembers}
-          multiplierOptions={memberMultiplierOptions}
           onNumericServingsChange={handleNumericFieldChange}
         />
 
@@ -748,13 +701,11 @@ export default function RecipeForm({
                   <FormControl>
                     <IngredientSelector
                       ingredients={localIngredients}
-                      familyMembers={familyMembers.filter((member) =>
-                        previewAudienceFamilyMemberIds.includes(member.id),
-                      )}
+                      familyMembers={familyMembers}
                       householdFamilyMembers={familyMembers}
-                      audienceMemberIds={previewAudienceFamilyMemberIds}
+                      audienceMemberIds={familyMembers.map((member) => member.id)}
                       servings={previewServings ?? 1}
-                      memberPortions={previewMemberPortions ?? []}
+                      memberPortions={[]}
                       groups={ingredientGroups}
                       value={field.value}
                       onChange={field.onChange}

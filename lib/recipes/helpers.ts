@@ -162,8 +162,8 @@ export function getIngredientDisplay(
   originalUnitName: string | null,
   selectedUnitId: string | null,
   unitConversions: UnitConversionWithName[],
-  servingScalingFactor: number,
-  calorieScalingFactor: number,
+  servingScalingFactor = 1,
+  calorieScalingFactor = 1,
 ): IngredientDisplayResult {
   if (amount == null || !originalUnitId || !originalUnitName) {
     return {
@@ -285,13 +285,6 @@ export function recipeToFormData(recipe: RecipeType): UpdateRecipeFormValues {
     handsOnTime: recipe.handsOnTime,
     totalTime: recipe.totalTime,
     servings: recipe.servings,
-    audienceFamilyMemberIds: recipe.audienceMembers.map(
-      (member) => member.familyMemberId,
-    ),
-    memberPortions: recipe.memberPortions.map((portion) => ({
-      familyMemberId: portion.familyMemberId,
-      multiplier: portion.multiplier,
-    })),
     ingredientGroups,
     ingredients: ingredientRows,
     instructions: recipe.instructions.map((instruction) => ({
@@ -411,6 +404,7 @@ export type FamilyMemberForNutrition = {
   name?: string;
   isSelf: boolean;
   sortOrder?: number;
+  portionMultiplier?: number;
 };
 
 export type InstructionPersonFilter = string | null;
@@ -461,7 +455,8 @@ export function getInstructionIngredientBadgeAmount(params: {
   familyMembers: FamilyMemberForNutrition[];
   memberPortions: Array<{ familyMemberId: string; multiplier: number }>;
   cookingFamilyMemberIds: string[];
-  rowScaleFactor: number;
+  recipeServings: number;
+  rowScaleFactor?: number;
 }): number | null {
   const {
     amount,
@@ -470,8 +465,8 @@ export function getInstructionIngredientBadgeAmount(params: {
     selectedFamilyMemberId,
     familyMembers,
     memberPortions,
-    cookingFamilyMemberIds,
-    rowScaleFactor,
+    recipeServings,
+    rowScaleFactor = 1,
   } = params;
 
   if (amount == null) {
@@ -507,9 +502,9 @@ export function getInstructionIngredientBadgeAmount(params: {
     appliesToEveryone: targeting.appliesToEveryone,
     targetFamilyMemberIds: targeting.targetFamilyMemberIds,
     familyMemberId: selectedFamilyMemberId,
+    recipeServings,
     familyMembers,
     memberPortions,
-    cookingFamilyMemberIds,
   });
 }
 
@@ -538,9 +533,7 @@ export function calculateNutritionPerServing(
     catalogById.set(entry.id, entry);
   }
 
-  const audienceIds = recipe.audienceMembers.map(
-    (member) => member.familyMemberId,
-  );
+  const audienceIds = familyMembers.map((member) => member.id);
 
   const total = recipe.ingredients.reduce(
     (acc, recipeIngredient) => {

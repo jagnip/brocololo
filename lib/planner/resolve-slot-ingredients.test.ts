@@ -107,16 +107,14 @@ describe("resolveRecipeSlotAggregatedIngredients", () => {
     expect(both).toEqual(jagodaOnly);
   });
 
-  it("falls back to all family members when cooking audience is empty", () => {
+  it("returns empty when cooking audience is empty", () => {
     const lines = resolveRecipeSlotAggregatedIngredients({
       recipe: buildRecipe(),
       cookingFamilyMemberIds: [],
       familyMembers,
     });
 
-    expect(lines).toEqual([
-      { ingredientId: "ing-olive-oil", unitId: "unit-g", amount: 10 },
-    ]);
+    expect(lines).toEqual([]);
   });
 });
 
@@ -134,7 +132,7 @@ describe("aggregateConsumableIngredientLines", () => {
 });
 
 describe("getSlotCookingFamilyMemberIds", () => {
-  it("prefers explicit cooking audience over recipe audience", () => {
+  it("returns explicit cooking audience when set", () => {
     expect(
       getSlotCookingFamilyMemberIds({
         cookingFamilyMemberIds: ["fm-jagoda"],
@@ -142,6 +140,16 @@ describe("getSlotCookingFamilyMemberIds", () => {
         recipeAudienceMemberIds: ["fm-jagoda", "fm-nelson"],
       }),
     ).toEqual(["fm-jagoda"]);
+  });
+
+  it("returns empty when no slot audience is set", () => {
+    expect(
+      getSlotCookingFamilyMemberIds({
+        cookingFamilyMemberIds: [],
+        familyMembers,
+        recipeAudienceMemberIds: ["fm-jagoda", "fm-nelson"],
+      }),
+    ).toEqual([]);
   });
 });
 

@@ -28,10 +28,12 @@ export type AggregateFamilyMember = {
 
 export type FamilyMemberAvgAggregateOutputType = {
   sortOrder: number | null
+  portionMultiplier: number | null
 }
 
 export type FamilyMemberSumAggregateOutputType = {
   sortOrder: number | null
+  portionMultiplier: number | null
 }
 
 export type FamilyMemberMinAggregateOutputType = {
@@ -40,6 +42,7 @@ export type FamilyMemberMinAggregateOutputType = {
   name: string | null
   isSelf: boolean | null
   sortOrder: number | null
+  portionMultiplier: number | null
 }
 
 export type FamilyMemberMaxAggregateOutputType = {
@@ -48,6 +51,7 @@ export type FamilyMemberMaxAggregateOutputType = {
   name: string | null
   isSelf: boolean | null
   sortOrder: number | null
+  portionMultiplier: number | null
 }
 
 export type FamilyMemberCountAggregateOutputType = {
@@ -56,16 +60,19 @@ export type FamilyMemberCountAggregateOutputType = {
   name: number
   isSelf: number
   sortOrder: number
+  portionMultiplier: number
   _all: number
 }
 
 
 export type FamilyMemberAvgAggregateInputType = {
   sortOrder?: true
+  portionMultiplier?: true
 }
 
 export type FamilyMemberSumAggregateInputType = {
   sortOrder?: true
+  portionMultiplier?: true
 }
 
 export type FamilyMemberMinAggregateInputType = {
@@ -74,6 +81,7 @@ export type FamilyMemberMinAggregateInputType = {
   name?: true
   isSelf?: true
   sortOrder?: true
+  portionMultiplier?: true
 }
 
 export type FamilyMemberMaxAggregateInputType = {
@@ -82,6 +90,7 @@ export type FamilyMemberMaxAggregateInputType = {
   name?: true
   isSelf?: true
   sortOrder?: true
+  portionMultiplier?: true
 }
 
 export type FamilyMemberCountAggregateInputType = {
@@ -90,6 +99,7 @@ export type FamilyMemberCountAggregateInputType = {
   name?: true
   isSelf?: true
   sortOrder?: true
+  portionMultiplier?: true
   _all?: true
 }
 
@@ -185,6 +195,7 @@ export type FamilyMemberGroupByOutputType = {
   name: string
   isSelf: boolean
   sortOrder: number
+  portionMultiplier: number
   _count: FamilyMemberCountAggregateOutputType | null
   _avg: FamilyMemberAvgAggregateOutputType | null
   _sum: FamilyMemberSumAggregateOutputType | null
@@ -216,6 +227,7 @@ export type FamilyMemberWhereInput = {
   name?: Prisma.StringFilter<"FamilyMember"> | string
   isSelf?: Prisma.BoolFilter<"FamilyMember"> | boolean
   sortOrder?: Prisma.IntFilter<"FamilyMember"> | number
+  portionMultiplier?: Prisma.FloatFilter<"FamilyMember"> | number
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   logEntries?: Prisma.LogEntryListRelationFilter
   planAudienceMemberships?: Prisma.PlanAudienceMemberListRelationFilter
@@ -232,6 +244,7 @@ export type FamilyMemberOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   isSelf?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
+  portionMultiplier?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   logEntries?: Prisma.LogEntryOrderByRelationAggregateInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberOrderByRelationAggregateInput
@@ -251,6 +264,7 @@ export type FamilyMemberWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"FamilyMember"> | string
   isSelf?: Prisma.BoolFilter<"FamilyMember"> | boolean
   sortOrder?: Prisma.IntFilter<"FamilyMember"> | number
+  portionMultiplier?: Prisma.FloatFilter<"FamilyMember"> | number
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   logEntries?: Prisma.LogEntryListRelationFilter
   planAudienceMemberships?: Prisma.PlanAudienceMemberListRelationFilter
@@ -267,6 +281,7 @@ export type FamilyMemberOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   isSelf?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
+  portionMultiplier?: Prisma.SortOrder
   _count?: Prisma.FamilyMemberCountOrderByAggregateInput
   _avg?: Prisma.FamilyMemberAvgOrderByAggregateInput
   _max?: Prisma.FamilyMemberMaxOrderByAggregateInput
@@ -283,6 +298,7 @@ export type FamilyMemberScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"FamilyMember"> | string
   isSelf?: Prisma.BoolWithAggregatesFilter<"FamilyMember"> | boolean
   sortOrder?: Prisma.IntWithAggregatesFilter<"FamilyMember"> | number
+  portionMultiplier?: Prisma.FloatWithAggregatesFilter<"FamilyMember"> | number
 }
 
 export type FamilyMemberCreateInput = {
@@ -290,6 +306,7 @@ export type FamilyMemberCreateInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   user: Prisma.UserCreateNestedOneWithoutFamilyMembersInput
   logEntries?: Prisma.LogEntryCreateNestedManyWithoutFamilyMemberInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberCreateNestedManyWithoutFamilyMemberInput
@@ -306,6 +323,7 @@ export type FamilyMemberUncheckedCreateInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   logEntries?: Prisma.LogEntryUncheckedCreateNestedManyWithoutFamilyMemberInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
@@ -320,6 +338,7 @@ export type FamilyMemberUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutFamilyMembersNestedInput
   logEntries?: Prisma.LogEntryUpdateManyWithoutFamilyMemberNestedInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
@@ -336,6 +355,7 @@ export type FamilyMemberUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   logEntries?: Prisma.LogEntryUncheckedUpdateManyWithoutFamilyMemberNestedInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
@@ -351,6 +371,7 @@ export type FamilyMemberCreateManyInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
 }
 
 export type FamilyMemberUpdateManyMutationInput = {
@@ -358,6 +379,7 @@ export type FamilyMemberUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
 }
 
 export type FamilyMemberUncheckedUpdateManyInput = {
@@ -366,6 +388,7 @@ export type FamilyMemberUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
 }
 
 export type FamilyMemberListRelationFilter = {
@@ -384,10 +407,12 @@ export type FamilyMemberCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   isSelf?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
+  portionMultiplier?: Prisma.SortOrder
 }
 
 export type FamilyMemberAvgOrderByAggregateInput = {
   sortOrder?: Prisma.SortOrder
+  portionMultiplier?: Prisma.SortOrder
 }
 
 export type FamilyMemberMaxOrderByAggregateInput = {
@@ -396,6 +421,7 @@ export type FamilyMemberMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   isSelf?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
+  portionMultiplier?: Prisma.SortOrder
 }
 
 export type FamilyMemberMinOrderByAggregateInput = {
@@ -404,10 +430,12 @@ export type FamilyMemberMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   isSelf?: Prisma.SortOrder
   sortOrder?: Prisma.SortOrder
+  portionMultiplier?: Prisma.SortOrder
 }
 
 export type FamilyMemberSumOrderByAggregateInput = {
   sortOrder?: Prisma.SortOrder
+  portionMultiplier?: Prisma.SortOrder
 }
 
 export type FamilyMemberScalarRelationFilter = {
@@ -462,6 +490,14 @@ export type BoolFieldUpdateOperationsInput = {
 }
 
 export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
+export type FloatFieldUpdateOperationsInput = {
   set?: number
   increment?: number
   decrement?: number
@@ -572,6 +608,7 @@ export type FamilyMemberCreateWithoutUserInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   logEntries?: Prisma.LogEntryCreateNestedManyWithoutFamilyMemberInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberCreateNestedManyWithoutFamilyMemberInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberCreateNestedManyWithoutFamilyMemberInput
@@ -586,6 +623,7 @@ export type FamilyMemberUncheckedCreateWithoutUserInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   logEntries?: Prisma.LogEntryUncheckedCreateNestedManyWithoutFamilyMemberInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
@@ -630,6 +668,7 @@ export type FamilyMemberScalarWhereInput = {
   name?: Prisma.StringFilter<"FamilyMember"> | string
   isSelf?: Prisma.BoolFilter<"FamilyMember"> | boolean
   sortOrder?: Prisma.IntFilter<"FamilyMember"> | number
+  portionMultiplier?: Prisma.FloatFilter<"FamilyMember"> | number
 }
 
 export type FamilyMemberCreateWithoutPlanAudienceMembershipsInput = {
@@ -637,6 +676,7 @@ export type FamilyMemberCreateWithoutPlanAudienceMembershipsInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   user: Prisma.UserCreateNestedOneWithoutFamilyMembersInput
   logEntries?: Prisma.LogEntryCreateNestedManyWithoutFamilyMemberInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberCreateNestedManyWithoutFamilyMemberInput
@@ -652,6 +692,7 @@ export type FamilyMemberUncheckedCreateWithoutPlanAudienceMembershipsInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   logEntries?: Prisma.LogEntryUncheckedCreateNestedManyWithoutFamilyMemberInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
   recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
@@ -681,6 +722,7 @@ export type FamilyMemberUpdateWithoutPlanAudienceMembershipsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutFamilyMembersNestedInput
   logEntries?: Prisma.LogEntryUpdateManyWithoutFamilyMemberNestedInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
@@ -696,6 +738,7 @@ export type FamilyMemberUncheckedUpdateWithoutPlanAudienceMembershipsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   logEntries?: Prisma.LogEntryUncheckedUpdateManyWithoutFamilyMemberNestedInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
   recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
@@ -709,6 +752,7 @@ export type FamilyMemberCreateWithoutPlanSlotAudienceMembershipsInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   user: Prisma.UserCreateNestedOneWithoutFamilyMembersInput
   logEntries?: Prisma.LogEntryCreateNestedManyWithoutFamilyMemberInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberCreateNestedManyWithoutFamilyMemberInput
@@ -724,6 +768,7 @@ export type FamilyMemberUncheckedCreateWithoutPlanSlotAudienceMembershipsInput =
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   logEntries?: Prisma.LogEntryUncheckedCreateNestedManyWithoutFamilyMemberInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
   recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
@@ -753,6 +798,7 @@ export type FamilyMemberUpdateWithoutPlanSlotAudienceMembershipsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutFamilyMembersNestedInput
   logEntries?: Prisma.LogEntryUpdateManyWithoutFamilyMemberNestedInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
@@ -768,6 +814,7 @@ export type FamilyMemberUncheckedUpdateWithoutPlanSlotAudienceMembershipsInput =
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   logEntries?: Prisma.LogEntryUncheckedUpdateManyWithoutFamilyMemberNestedInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
   recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
@@ -781,6 +828,7 @@ export type FamilyMemberCreateWithoutRecipeAudienceMembershipsInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   user: Prisma.UserCreateNestedOneWithoutFamilyMembersInput
   logEntries?: Prisma.LogEntryCreateNestedManyWithoutFamilyMemberInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberCreateNestedManyWithoutFamilyMemberInput
@@ -796,6 +844,7 @@ export type FamilyMemberUncheckedCreateWithoutRecipeAudienceMembershipsInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   logEntries?: Prisma.LogEntryUncheckedCreateNestedManyWithoutFamilyMemberInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
@@ -825,6 +874,7 @@ export type FamilyMemberUpdateWithoutRecipeAudienceMembershipsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutFamilyMembersNestedInput
   logEntries?: Prisma.LogEntryUpdateManyWithoutFamilyMemberNestedInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
@@ -840,6 +890,7 @@ export type FamilyMemberUncheckedUpdateWithoutRecipeAudienceMembershipsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   logEntries?: Prisma.LogEntryUncheckedUpdateManyWithoutFamilyMemberNestedInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
@@ -853,6 +904,7 @@ export type FamilyMemberCreateWithoutRecipeMemberPortionsInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   user: Prisma.UserCreateNestedOneWithoutFamilyMembersInput
   logEntries?: Prisma.LogEntryCreateNestedManyWithoutFamilyMemberInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberCreateNestedManyWithoutFamilyMemberInput
@@ -868,6 +920,7 @@ export type FamilyMemberUncheckedCreateWithoutRecipeMemberPortionsInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   logEntries?: Prisma.LogEntryUncheckedCreateNestedManyWithoutFamilyMemberInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
@@ -897,6 +950,7 @@ export type FamilyMemberUpdateWithoutRecipeMemberPortionsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutFamilyMembersNestedInput
   logEntries?: Prisma.LogEntryUpdateManyWithoutFamilyMemberNestedInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
@@ -912,6 +966,7 @@ export type FamilyMemberUncheckedUpdateWithoutRecipeMemberPortionsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   logEntries?: Prisma.LogEntryUncheckedUpdateManyWithoutFamilyMemberNestedInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
@@ -925,6 +980,7 @@ export type FamilyMemberCreateWithoutRecipeIngredientTargetsInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   user: Prisma.UserCreateNestedOneWithoutFamilyMembersInput
   logEntries?: Prisma.LogEntryCreateNestedManyWithoutFamilyMemberInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberCreateNestedManyWithoutFamilyMemberInput
@@ -940,6 +996,7 @@ export type FamilyMemberUncheckedCreateWithoutRecipeIngredientTargetsInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   logEntries?: Prisma.LogEntryUncheckedCreateNestedManyWithoutFamilyMemberInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
@@ -969,6 +1026,7 @@ export type FamilyMemberUpdateWithoutRecipeIngredientTargetsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutFamilyMembersNestedInput
   logEntries?: Prisma.LogEntryUpdateManyWithoutFamilyMemberNestedInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
@@ -984,6 +1042,7 @@ export type FamilyMemberUncheckedUpdateWithoutRecipeIngredientTargetsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   logEntries?: Prisma.LogEntryUncheckedUpdateManyWithoutFamilyMemberNestedInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
@@ -997,6 +1056,7 @@ export type FamilyMemberCreateWithoutRecipeIngredientMemberAdjustmentsInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   user: Prisma.UserCreateNestedOneWithoutFamilyMembersInput
   logEntries?: Prisma.LogEntryCreateNestedManyWithoutFamilyMemberInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberCreateNestedManyWithoutFamilyMemberInput
@@ -1012,6 +1072,7 @@ export type FamilyMemberUncheckedCreateWithoutRecipeIngredientMemberAdjustmentsI
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   logEntries?: Prisma.LogEntryUncheckedCreateNestedManyWithoutFamilyMemberInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
@@ -1041,6 +1102,7 @@ export type FamilyMemberUpdateWithoutRecipeIngredientMemberAdjustmentsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutFamilyMembersNestedInput
   logEntries?: Prisma.LogEntryUpdateManyWithoutFamilyMemberNestedInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
@@ -1056,6 +1118,7 @@ export type FamilyMemberUncheckedUpdateWithoutRecipeIngredientMemberAdjustmentsI
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   logEntries?: Prisma.LogEntryUncheckedUpdateManyWithoutFamilyMemberNestedInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
@@ -1069,6 +1132,7 @@ export type FamilyMemberCreateWithoutLogEntriesInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   user: Prisma.UserCreateNestedOneWithoutFamilyMembersInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberCreateNestedManyWithoutFamilyMemberInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberCreateNestedManyWithoutFamilyMemberInput
@@ -1084,6 +1148,7 @@ export type FamilyMemberUncheckedCreateWithoutLogEntriesInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
   planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
   recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutFamilyMemberInput
@@ -1113,6 +1178,7 @@ export type FamilyMemberUpdateWithoutLogEntriesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutFamilyMembersNestedInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
@@ -1128,6 +1194,7 @@ export type FamilyMemberUncheckedUpdateWithoutLogEntriesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
   recipeAudienceMemberships?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
@@ -1141,6 +1208,7 @@ export type FamilyMemberCreateManyUserInput = {
   name: string
   isSelf?: boolean
   sortOrder: number
+  portionMultiplier?: number
 }
 
 export type FamilyMemberUpdateWithoutUserInput = {
@@ -1148,6 +1216,7 @@ export type FamilyMemberUpdateWithoutUserInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   logEntries?: Prisma.LogEntryUpdateManyWithoutFamilyMemberNestedInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUpdateManyWithoutFamilyMemberNestedInput
@@ -1162,6 +1231,7 @@ export type FamilyMemberUncheckedUpdateWithoutUserInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
   logEntries?: Prisma.LogEntryUncheckedUpdateManyWithoutFamilyMemberNestedInput
   planAudienceMemberships?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
   planSlotAudienceMemberships?: Prisma.PlanSlotAudienceMemberUncheckedUpdateManyWithoutFamilyMemberNestedInput
@@ -1176,6 +1246,7 @@ export type FamilyMemberUncheckedUpdateManyWithoutUserInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isSelf?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  portionMultiplier?: Prisma.FloatFieldUpdateOperationsInput | number
 }
 
 
@@ -1269,6 +1340,7 @@ export type FamilyMemberSelect<ExtArgs extends runtime.Types.Extensions.Internal
   name?: boolean
   isSelf?: boolean
   sortOrder?: boolean
+  portionMultiplier?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   logEntries?: boolean | Prisma.FamilyMember$logEntriesArgs<ExtArgs>
   planAudienceMemberships?: boolean | Prisma.FamilyMember$planAudienceMembershipsArgs<ExtArgs>
@@ -1286,6 +1358,7 @@ export type FamilyMemberSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   name?: boolean
   isSelf?: boolean
   sortOrder?: boolean
+  portionMultiplier?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["familyMember"]>
 
@@ -1295,6 +1368,7 @@ export type FamilyMemberSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   name?: boolean
   isSelf?: boolean
   sortOrder?: boolean
+  portionMultiplier?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["familyMember"]>
 
@@ -1304,9 +1378,10 @@ export type FamilyMemberSelectScalar = {
   name?: boolean
   isSelf?: boolean
   sortOrder?: boolean
+  portionMultiplier?: boolean
 }
 
-export type FamilyMemberOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "isSelf" | "sortOrder", ExtArgs["result"]["familyMember"]>
+export type FamilyMemberOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "isSelf" | "sortOrder" | "portionMultiplier", ExtArgs["result"]["familyMember"]>
 export type FamilyMemberInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   logEntries?: boolean | Prisma.FamilyMember$logEntriesArgs<ExtArgs>
@@ -1343,6 +1418,10 @@ export type $FamilyMemberPayload<ExtArgs extends runtime.Types.Extensions.Intern
     name: string
     isSelf: boolean
     sortOrder: number
+    /**
+     * * Household default portion multiplier (1× = one base per-meal share).
+     */
+    portionMultiplier: number
   }, ExtArgs["result"]["familyMember"]>
   composites: {}
 }
@@ -1779,6 +1858,7 @@ export interface FamilyMemberFieldRefs {
   readonly name: Prisma.FieldRef<"FamilyMember", 'String'>
   readonly isSelf: Prisma.FieldRef<"FamilyMember", 'Boolean'>
   readonly sortOrder: Prisma.FieldRef<"FamilyMember", 'Int'>
+  readonly portionMultiplier: Prisma.FieldRef<"FamilyMember", 'Float'>
 }
     
 

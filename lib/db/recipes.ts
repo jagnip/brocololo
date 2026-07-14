@@ -11,14 +11,14 @@ async function syncMemberAdjustments(
   tx: Prisma.TransactionClient,
   recipeIngredientId: string,
   memberAdjustments: RecipeIngredientInputType["memberAdjustments"],
-  audienceFamilyMemberIdSet: Set<string>,
+  ownedFamilyMemberIdSet: Set<string>,
 ) {
   await tx.recipeIngredientMemberAdjustment.deleteMany({
     where: { recipeIngredientId },
   });
 
   const rows = (memberAdjustments ?? [])
-    .filter((adjustment) => audienceFamilyMemberIdSet.has(adjustment.familyMemberId))
+    .filter((adjustment) => ownedFamilyMemberIdSet.has(adjustment.familyMemberId))
     .map((adjustment) => ({
       recipeIngredientId,
       familyMemberId: adjustment.familyMemberId,
@@ -290,8 +290,6 @@ export async function createRecipe(
     ingredients,
     instructions,
     images,
-    audienceFamilyMemberIds,
-    memberPortions,
     ...recipeData
   } = data;
   const categories = await validateAndBuildCategoryIds({
@@ -302,16 +300,11 @@ export async function createRecipe(
   const ownedFamilyMembers = await getOwnedFamilyMembers(userId);
   const ownedFamilyMemberIds = new Set(ownedFamilyMembers.map((member) => member.id));
   assertKnownFamilyMemberIds(
-    [
-      ...audienceFamilyMemberIds,
-      ...memberPortions.map((portion) => portion.familyMemberId),
-      ...ingredients.flatMap((ingredient) =>
-        ingredient.memberAdjustments.map((adjustment) => adjustment.familyMemberId),
-      ),
-    ],
-    ownedFamilyMemberIds,
+    ingredients.flatMap((ingredient) =>
+      ingredient.memberAdjustments.map((adjustment) => adjustment.familyMemberId),
+    ),
+        ownedFamilyMemberIds,
   );
-  const audienceFamilyMemberIdSet = new Set(audienceFamilyMemberIds);
   // Keep positions deterministic and unique even if client submits duplicates.
   const normalizedGroups = [...ingredientGroups]
     .sort((a, b) => a.position - b.position)
@@ -334,32 +327,9 @@ export async function createRecipe(
             isCover: img.isCover,
           })),
         },
-        audienceMembers: {
-          create: audienceFamilyMemberIds.map((familyMemberId) => ({
-            familyMemberId,
-          })),
-        },
       },
       select: { id: true },
     });
-
-    const portionRows = memberPortions
-      .filter(
-        (portion) =>
-          ownedFamilyMemberIds.has(portion.familyMemberId) &&
-          audienceFamilyMemberIdSet.has(portion.familyMemberId),
-      )
-      .map((portion) => ({
-        recipeId: recipe.id,
-        familyMemberId: portion.familyMemberId,
-        multiplier: portion.multiplier,
-      }));
-    if (portionRows.length > 0) {
-      await tx.recipeMemberPortion.createMany({
-        data: portionRows,
-        skipDuplicates: true,
-      });
-    }
 
     const groupIdByTempKey = new Map<string, string>();
     for (const group of normalizedGroups) {
@@ -397,7 +367,7 @@ export async function createRecipe(
         tx,
         created.id,
         ing.memberAdjustments,
-        audienceFamilyMemberIdSet,
+        ownedFamilyMemberIds,
       );
 
       ingredientIdByTempKey.set(ing.tempIngredientKey, created.id);
@@ -459,8 +429,6 @@ export async function updateRecipe(
     ingredients,
     instructions,
     images,
-    audienceFamilyMemberIds,
-    memberPortions,
     ...recipeData
   } = data;
   const categories = await validateAndBuildCategoryIds({
@@ -471,16 +439,11 @@ export async function updateRecipe(
   const ownedFamilyMembers = await getOwnedFamilyMembers(userId);
   const ownedFamilyMemberIds = new Set(ownedFamilyMembers.map((member) => member.id));
   assertKnownFamilyMemberIds(
-    [
-      ...audienceFamilyMemberIds,
-      ...memberPortions.map((portion) => portion.familyMemberId),
-      ...ingredients.flatMap((ingredient) =>
-        ingredient.memberAdjustments.map((adjustment) => adjustment.familyMemberId),
-      ),
-    ],
-    ownedFamilyMemberIds,
+    ingredients.flatMap((ingredient) =>
+      ingredient.memberAdjustments.map((adjustment) => adjustment.familyMemberId),
+    ),
+        ownedFamilyMemberIds,
   );
-  const audienceFamilyMemberIdSet = new Set(audienceFamilyMemberIds);
   // Keep positions deterministic and unique even if client submits duplicates.
   const normalizedGroups = [...ingredientGroups]
     .sort((a, b) => a.position - b.position)
@@ -521,32 +484,6 @@ export async function updateRecipe(
     await tx.recipeAudienceMember.deleteMany({
       where: { recipeId },
     });
-    if (audienceFamilyMemberIds.length > 0) {
-      await tx.recipeAudienceMember.createMany({
-        data: audienceFamilyMemberIds.map((familyMemberId) => ({
-          recipeId,
-          familyMemberId,
-        })),
-        skipDuplicates: true,
-      });
-    }
-    const portionRows = memberPortions
-      .filter(
-        (portion) =>
-          ownedFamilyMemberIds.has(portion.familyMemberId) &&
-          audienceFamilyMemberIdSet.has(portion.familyMemberId),
-      )
-      .map((portion) => ({
-        recipeId,
-        familyMemberId: portion.familyMemberId,
-        multiplier: portion.multiplier,
-      }));
-    if (portionRows.length > 0) {
-      await tx.recipeMemberPortion.createMany({
-        data: portionRows,
-        skipDuplicates: true,
-      });
-    }
 
     await tx.recipeIngredientMemberAdjustment.deleteMany({
       where: { recipeIngredient: { recipeId } },
@@ -640,7 +577,7 @@ export async function updateRecipe(
           tx,
           ing.id,
           ing.memberAdjustments,
-          audienceFamilyMemberIdSet,
+          ownedFamilyMemberIds,
         );
       } else {
         const created = await tx.recipeIngredient.create({
@@ -660,7 +597,7 @@ export async function updateRecipe(
           tx,
           created.id,
           ing.memberAdjustments,
-          audienceFamilyMemberIdSet,
+          ownedFamilyMemberIds,
         );
         ingredientIdByTempKey.set(ing.tempIngredientKey, created.id);
       }

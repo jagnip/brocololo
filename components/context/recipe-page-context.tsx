@@ -86,13 +86,7 @@ export function RecipePageProvider({
     setSelectedInstructionFamilyMemberId,
   ] = useState<string | null>(null);
   const scaling = useRecipeScalingState({ recipe });
-  const recipeAudienceFamilyMembers = useMemo(() => {
-    const audienceIds = new Set(
-      recipe.audienceMembers.map((member) => member.familyMemberId),
-    );
-    return familyMembers.filter((member) => audienceIds.has(member.id));
-  }, [familyMembers, recipe.audienceMembers]);
-
+  // Full household — per-person portion multipliers live in Settings, not recipe audience.
   const effectiveRecipe = useMemo(
     () =>
       buildEffectiveRecipeForSimulation(
@@ -111,7 +105,7 @@ export function RecipePageProvider({
     calorieTarget: scaling.calorieTarget,
     globalScaleRatio: scaling.globalScaleRatio,
     localScaleByIngredientId: scaling.localScaleByIngredientId,
-    familyMembers: recipeAudienceFamilyMembers,
+    familyMembers,
   });
 
   const { ungroupedIngredients, visibleGroupedIngredients } = useIngredientGrouping({
@@ -134,7 +128,7 @@ export function RecipePageProvider({
     () => ({
       recipe,
       ingredients,
-      familyMembers: recipeAudienceFamilyMembers,
+      familyMembers,
       selectedInstructionFamilyMemberId,
       setSelectedInstructionFamilyMemberId,
       currentServings: scaling.currentServings,
@@ -156,7 +150,6 @@ export function RecipePageProvider({
       onUnitChange: scaling.handleUnitChange,
       onAmountEdit: scaling.handleIngredientEdit,
       onApplyScaleToAll: scaling.handleApplyScaleToAll,
-      // Keep ingredient swap logic centralized so sections don't know about origin maps.
       onIngredientChange: (recipeIngredientId, ingredientId) =>
         scaling.handleIngredientChange(
           recipeIngredientId,
@@ -169,7 +162,7 @@ export function RecipePageProvider({
     }),
     [
       ingredients,
-      recipeAudienceFamilyMembers,
+      familyMembers,
       nutrition.effectiveRecipeIngredientById,
       nutrition.getIngredientCalorieFactor,
       nutrition.getIngredientDisplayScalingFactor,
@@ -230,7 +223,6 @@ export function useRecipePageInstructionsSectionData() {
   const {
     recipe,
     familyMembers,
-    currentServings,
     effectiveRecipeIngredientById,
     selectedInstructionFamilyMemberId,
     setSelectedInstructionFamilyMemberId,
@@ -242,9 +234,9 @@ export function useRecipePageInstructionsSectionData() {
   return {
     instructions: recipe.instructions,
     familyMembers,
-    currentServings,
-    audienceMembers: recipe.audienceMembers,
-    memberPortions: recipe.memberPortions,
+    recipeServings: recipe.servings,
+    audienceMemberIds: familyMembers.map((member) => member.id),
+    memberPortions: [] as RecipeType["memberPortions"],
     effectiveRecipeIngredientById,
     selectedInstructionFamilyMemberId,
     setSelectedInstructionFamilyMemberId,
@@ -311,8 +303,8 @@ export function useRecipePageAddToLogData() {
     recipeName: recipe.name,
     recipeIngredients: recipeForScaledNutrition.ingredients,
     familyMembers,
-    audienceMembers: recipe.audienceMembers,
-    memberPortions: recipe.memberPortions,
+    audienceMemberIds: familyMembers.map((member) => member.id),
+    memberPortions: [] as RecipeType["memberPortions"],
     currentServings,
     servingScalingFactor,
     availableLogDateKeys,

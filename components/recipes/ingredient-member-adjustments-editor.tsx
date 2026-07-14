@@ -97,7 +97,7 @@ export function IngredientMemberAdjustmentsEditor({
   const getPortionBadgeForMember = useCallback(
     (familyMemberId: string) =>
       formatPortionMultiplierBadgeLabel(
-        getMemberPortionMultiplier(familyMemberId, memberPortions),
+        getMemberPortionMultiplier(familyMemberId, memberPortions, familyMembers),
       ),
     [memberPortions],
   );

@@ -64,12 +64,12 @@ describe("ingredient-adjustments helpers", () => {
     expect(rows[0]).toMatchObject({
       personLabel: "Jagoda",
       portionBadgeLabel: null,
-      shareDetail: "28.33 g",
+      shareDetail: "42.5 g",
     });
     expect(rows[1]).toMatchObject({
       personLabel: "Nelson",
       portionBadgeLabel: "×2",
-      shareDetail: "56.67 g",
+      shareDetail: "85 g",
     });
 
     const nelsonOnly = buildPortionSizeSummaryRows({
@@ -94,7 +94,7 @@ describe("ingredient-adjustments helpers", () => {
     });
     expect(nelsonOnly).toHaveLength(1);
     expect(nelsonOnly[0]?.personLabel).toBe("Nelson");
-    expect(nelsonOnly[0]?.shareDetail).toBe("56.67 g");
+    expect(nelsonOnly[0]?.shareDetail).toBe("85 g");
 
     const poolRows = resolveRecipeIngredientRowsForMember({
       recipeIngredients: [
@@ -121,8 +121,8 @@ describe("ingredient-adjustments helpers", () => {
       memberPortions: [{ familyMemberId: "fm-nelson", multiplier: 2 }],
       audienceMemberIds: ["fm-jagoda", "fm-nelson"],
     });
-    expect(poolRows[0]?.amount).toBeCloseTo(56.667, 2);
-    expect(nelsonOnly[0]?.shareDetail).toBe("56.67 g");
+    expect(poolRows[0]?.amount).toBeCloseTo(85, 2);
+    expect(nelsonOnly[0]?.shareDetail).toBe("85 g");
 
     expect(
       shouldShowPortionShareSummary({

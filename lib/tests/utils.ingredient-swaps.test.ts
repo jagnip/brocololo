@@ -284,9 +284,9 @@ describe('swap simulation nutrition integration', () => {
     );
     const swapped = nutritionForJagoda(effective);
 
-    // Default multiplier is 1.5, so primary receives 40% of BOTH-target totals.
-    expect(original.calories).toBe(132);
-    expect(swapped.calories).toBe(61);
-    expect(swapped.protein).toBe(6.4);
+    // Per-meal share: 200g batch ÷ 2 servings = 100g chicken for Jagoda.
+    expect(original.calories).toBe(165);
+    expect(swapped.calories).toBe(76);
+    expect(swapped.protein).toBe(8);
   });
 });

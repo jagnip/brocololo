@@ -23,8 +23,6 @@ const baseRecipeInput = {
   handsOnTime: 15,
   totalTime: 30,
   servings: 2,
-  audienceFamilyMemberIds: ["family-self", "family-member-1"],
-  memberPortions: [{ familyMemberId: "family-member-1", multiplier: 1 }],
   ingredientGroups: [
     {
       tempGroupKey: "grp-1",
@@ -218,84 +216,35 @@ describe("createRecipeSchema", () => {
     });
   });
 
-  it("defaults memberPortions to empty when omitted", () => {
-    const inputWithoutPortions = { ...baseRecipeInput };
-    delete (inputWithoutPortions as { memberPortions?: unknown }).memberPortions;
-
-    const parsed = createRecipeSchema.parse(inputWithoutPortions);
-    expect(parsed.memberPortions).toEqual([]);
-  });
-
   it("accepts numeric strings for recipe numeric fields", () => {
     const parsed = createRecipeSchema.parse({
       ...baseRecipeInput,
       handsOnTime: "15",
       totalTime: "30",
       servings: "2",
-      memberPortions: [{ familyMemberId: "family-member-1", multiplier: "1" }],
     });
 
     expect(parsed.handsOnTime).toBe(15);
     expect(parsed.totalTime).toBe(30);
     expect(parsed.servings).toBe(2);
-    expect(parsed.memberPortions[0]?.multiplier).toBe(1);
   });
 
-  it("rejects servings lower than 2", () => {
+  it("accepts servings of 1", () => {
     const result = createRecipeSchema.safeParse({
       ...baseRecipeInput,
       servings: 1,
     });
 
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
-  it("rejects odd servings", () => {
+  it("accepts odd servings", () => {
     const result = createRecipeSchema.safeParse({
       ...baseRecipeInput,
       servings: 3,
     });
 
-    expect(result.success).toBe(false);
-  });
-
-  it("accepts fractional member portion multipliers", () => {
-    const parsed = createRecipeSchema.parse({
-      ...baseRecipeInput,
-      memberPortions: [{ familyMemberId: "family-member-1", multiplier: "1.5" }],
-    });
-
-    expect(parsed.memberPortions[0]?.multiplier).toBe(1.5);
-  });
-
-  it("accepts half-step member portion multipliers", () => {
-    const parsed = createRecipeSchema.parse({
-      ...baseRecipeInput,
-      memberPortions: [{ familyMemberId: "family-member-1", multiplier: "2.5" }],
-    });
-
-    expect(parsed.memberPortions[0]?.multiplier).toBe(2.5);
-  });
-
-  it("accepts member portion multiplier as numeric string with trailing .0", () => {
-    const parsed = createRecipeSchema.parse({
-      ...baseRecipeInput,
-      memberPortions: [{ familyMemberId: "family-member-1", multiplier: "1.0" }],
-    });
-
-    expect(parsed.memberPortions[0]?.multiplier).toBe(1);
-  });
-
-  it("rejects invalid member portion multipliers", () => {
-    const invalidValues = [0, -1, "abc", 1.2] as const;
-
-    invalidValues.forEach((multiplier) => {
-      const result = createRecipeSchema.safeParse({
-        ...baseRecipeInput,
-        memberPortions: [{ familyMemberId: "family-member-1", multiplier }],
-      });
-      expect(result.success).toBe(false);
-    });
+    expect(result.success).toBe(true);
   });
 });
 

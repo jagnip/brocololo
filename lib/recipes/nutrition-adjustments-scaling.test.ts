@@ -18,14 +18,11 @@ import {
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 const familyMembers: FamilyMemberRow[] = [
-  { id: "fm-jagoda", name: "Jagoda", isSelf: true, sortOrder: 0 },
-  { id: "fm-nelson", name: "Nelson", isSelf: false, sortOrder: 1 },
+  { id: "fm-jagoda", name: "Jagoda", isSelf: true, sortOrder: 0, portionMultiplier: 1 },
+  { id: "fm-nelson", name: "Nelson", isSelf: false, sortOrder: 1, portionMultiplier: 2 },
 ];
 
-const nutritionFamilyMembers = familyMembers.map((member) => ({
-  id: member.id,
-  isSelf: member.isSelf,
-}));
+const nutritionFamilyMembers = familyMembers;
 
 function nutritionFor(
   recipe: RecipeForNutritionCalculation,
@@ -185,13 +182,10 @@ describe("nutrition with member adjustments", () => {
     const jagoda = nutritionFor(recipe, "fm-jagoda");
     const nelson = nutritionFor(recipe, "fm-nelson");
 
-    // Shared batch: 40g butter + 200g pasta for 2 servings.
-    // Jagoda gets butter (20g) + pasta (100g).
-    expect(jagoda.calories).toBeGreaterThan(nelson.calories);
-
-    // Nelson skips butter; only pasta share (100g @ 350 kcal/100g = 350 kcal).
-    expect(nelson.calories).toBe(350);
-    expect(nelson.fat).toBe(2);
+    // Nelson skips butter; pasta share (200g batch ÷ 2 servings × 2×) = 200g.
+    expect(nelson.calories).toBe(700);
+    expect(nelson.fat).toBe(4);
+    expect(jagoda.calories).toBeLessThan(nelson.calories);
   });
 
   it("applies portion multipliers on default lines without explicit MODIFY", () => {
@@ -227,9 +221,9 @@ describe("nutrition with member adjustments", () => {
     const jagoda = nutritionFor(recipe, "fm-jagoda");
     const nelson = nutritionFor(recipe, "fm-nelson");
 
-    // 300g batch, 2 servings, weights 1:2 => Jagoda 100g, Nelson 200g.
-    expect(jagoda.calories).toBe(130);
-    expect(nelson.calories).toBe(260);
+    // 300g batch, 2 servings, Nelson 2× household multiplier => Jagoda 150g, Nelson 300g.
+    expect(jagoda.calories).toBe(195);
+    expect(nelson.calories).toBe(390);
   });
 });
 

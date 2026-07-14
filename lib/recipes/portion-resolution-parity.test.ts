@@ -8,13 +8,12 @@ import {
 } from "@/lib/recipes/ingredient-adjustments";
 
 /**
- * Cross-path parity tests for shared-ingredient portion math.
+ * Cross-path parity tests for per-person portion math.
  *
  * Model (see lib/log/helpers.ts):
  * - `amount` = total batch on the recipe row
- * - `servings` = how many household meals the batch covers (plate-count yield)
- * - One meal consumes: batch × audienceCount ÷ servings (before multiplier split)
- * - Each person: (batch × audienceCount × multiplier) ÷ (servings × sumOfMultipliers)
+ * - `servings` = how many meals the batch covers
+ * - Each person: (batch ÷ servings) × portionMultiplier — independent, not a weighted split
  */
 
 const familyMembers: FamilyMemberRow[] = [
@@ -134,14 +133,12 @@ function expectParity(fixture: PortionFixture) {
 
   expect(paths.fromCore.jagoda).toBeCloseTo(fixture.expected.jagoda, 4);
   expect(paths.fromCore.nelson).toBeCloseTo(fixture.expected.nelson, 4);
-  // resolveConsumableIngredientLine rounds to 3 decimal places
   expect(paths.fromConsumable.jagoda).toBeCloseTo(fixture.expected.jagoda, 3);
   expect(paths.fromConsumable.nelson).toBeCloseTo(fixture.expected.nelson, 3);
   expect(paths.fromLogPool[0]?.amount).toBeCloseTo(fixture.expected.nelson, 3);
 
   const jagodaRow = paths.fromPeoplePanel.find((r) => r.familyMemberId === "fm-jagoda");
   const nelsonRow = paths.fromPeoplePanel.find((r) => r.familyMemberId === "fm-nelson");
-  // shareDetail is formatted for display (2 dp)
   expect(parseAmountFromShareDetail(jagodaRow?.shareDetail)).toBeCloseTo(
     fixture.expected.jagoda,
     2,
@@ -151,67 +148,54 @@ function expectParity(fixture: PortionFixture) {
     2,
   );
 
-  // Per-meal household total = batch × audience ÷ servings
-  const perMealTotal =
-    (fixture.batchAmount * audienceMemberIds.length) / fixture.servings;
-  expect(
-    (paths.fromCore.jagoda ?? 0) + (paths.fromCore.nelson ?? 0),
-  ).toBeCloseTo(perMealTotal, 4);
-
-  // Nelson always gets twice Jagoda's share when multipliers are 1 and 2
+  // Nelson always gets twice Jagoda's share when multipliers are 1 and 2.
   expect(paths.fromCore.nelson).toBeCloseTo((paths.fromCore.jagoda ?? 0) * 2, 4);
 }
 
 describe("portion resolution parity (core, consumable, log pool, people panel)", () => {
-  it("bread: 3 slices batch, 2 servings → Jagoda 1, Nelson 2 per meal", () => {
-    // This is the case where 1× + 2× yields whole-number slices.
+  it("bread: 3 slices batch, 2 servings → Jagoda 1.5, Nelson 3 per meal", () => {
     expectParity({
       label: "3 slices / 2 servings",
       batchAmount: 3,
       servings: 2,
-      expected: { jagoda: 1, nelson: 2 },
+      expected: { jagoda: 1.5, nelson: 3 },
     });
   });
 
-  it("bread: 2 slices batch, 2 servings → Jagoda 0.67, Nelson 1.33 per meal", () => {
-    // Same ratio (1:2) but only 2 slices consumed per meal total, not 3.
+  it("bread: 2 slices batch, 2 servings → Jagoda 1, Nelson 2 per meal", () => {
     expectParity({
       label: "2 slices / 2 servings",
       batchAmount: 2,
       servings: 2,
-      expected: { jagoda: 2 / 3, nelson: 4 / 3 },
-    });
-  });
-
-  it("bread: 3 slices batch, 1 serving → Jagoda 2, Nelson 4 per meal (whole batch × audience)", () => {
-    // servings=1 with 2-person audience: one meal uses batch × audienceCount = 6 slice-units total
-    expectParity({
-      label: "3 slices / 1 serving",
-      batchAmount: 3,
-      servings: 1,
-      expected: { jagoda: 2, nelson: 4 },
-    });
-  });
-
-  it("bread: 6 slices batch, 4 servings → Jagoda 1, Nelson 2 per meal", () => {
-    // 6 × 2 ÷ 4 = 3 slices per meal household total
-    expectParity({
-      label: "6 slices / 4 servings",
-      batchAmount: 6,
-      servings: 4,
       expected: { jagoda: 1, nelson: 2 },
     });
   });
 
-  it("tuna: 85g batch, 2 servings matches log pool (56.67g for Nelson ×2)", () => {
-    const fixture: PortionFixture = {
+  it("bread: 3 slices batch, 1 serving → Jagoda 3, Nelson 6 per meal", () => {
+    expectParity({
+      label: "3 slices / 1 serving",
+      batchAmount: 3,
+      servings: 1,
+      expected: { jagoda: 3, nelson: 6 },
+    });
+  });
+
+  it("bread: 6 slices batch, 4 servings → Jagoda 1.5, Nelson 3 per meal", () => {
+    expectParity({
+      label: "6 slices / 4 servings",
+      batchAmount: 6,
+      servings: 4,
+      expected: { jagoda: 1.5, nelson: 3 },
+    });
+  });
+
+  it("tuna: 85g batch, 2 servings → Jagoda 42.5g, Nelson 85g", () => {
+    expectParity({
       label: "85g tuna / 2 servings",
       batchAmount: 85,
       servings: 2,
-      // Per meal household total = 85g; split 1:2 → 28.33g + 56.67g
-      expected: { jagoda: 85 / 3, nelson: (85 * 2) / 3 },
-    };
-    expectParity(fixture);
+      expected: { jagoda: 42.5, nelson: 85 },
+    });
   });
 });
 
@@ -269,7 +253,7 @@ describe("portion resolution with Jagoda MODIFY (Nelson uses default split)", ()
       excludeAdjustedMemberIds: ["fm-jagoda"],
     });
 
-    expect(nelsonFromCore).toBeCloseTo((85 * 2 * 2) / (2 * 3), 4);
+    expect(nelsonFromCore).toBeCloseTo(85, 4);
     expect(nelsonFromPool[0]?.amount).toBeCloseTo(nelsonFromCore ?? 0, 3);
     expect(parseAmountFromShareDetail(nelsonFromPanel[0]?.shareDetail)).toBeCloseTo(
       nelsonFromCore ?? 0,

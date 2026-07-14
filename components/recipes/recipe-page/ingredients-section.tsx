@@ -1,17 +1,11 @@
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Minus, Plus, RotateCcw } from "lucide-react";
 import type { IngredientType } from "@/types/ingredient";
-import type { RecipeType } from "@/types/recipe";
 import { IngredientItem } from "@/components/recipes/ingredient-item";
 import { isScaleModified } from "@/lib/recipes/helpers";
-import { getSharedPortionShares } from "@/lib/recipes/shared-portion-shares";
 import { useRecipePageIngredientsSectionData } from "@/components/context/recipe-page-context";
-import { PortionSplitCard } from "@/components/recipes/recipe-page/portion-split-card";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
-
-const SHARED_INGREDIENTS_SCOPE_LABEL = "Shared ingredients";
 
 export function IngredientsSection() {
   const {
@@ -34,31 +28,9 @@ export function IngredientsSection() {
     onIngredientChange,
   } = useRecipePageIngredientsSectionData();
   const audienceMemberIds = useMemo(
-    () => recipe.audienceMembers.map((member) => member.familyMemberId),
-    [recipe.audienceMembers],
+    () => familyMembers.map((member) => member.id),
+    [familyMembers],
   );
-
-  const portionSplitMembers = useMemo(() => {
-    const shares = getSharedPortionShares(
-      familyMembers,
-      recipe.memberPortions,
-    );
-    return shares.map((entry, index) => {
-      const member = familyMembers.find(
-        (familyMember) => familyMember.id === entry.familyMemberId,
-      );
-      const label =
-        member?.name.trim() ||
-        (member?.isSelf ? "You" : `Family member ${index + 1}`);
-      return {
-        label,
-        share: entry.share,
-        multiplier: entry.multiplier,
-      };
-    });
-  }, [familyMembers, recipe.memberPortions]);
-
-  const showPortionSplitChart = portionSplitMembers.length > 1;
 
   if (!recipe.ingredients || recipe.ingredients.length === 0) {
     return null;
@@ -76,7 +48,7 @@ export function IngredientsSection() {
               onClick={onReset}
               aria-label="Reset ingredient amounts"
             >
-              <RotateCcw  />
+              <RotateCcw />
             </Button>
           )}
         </div>
@@ -103,15 +75,8 @@ export function IngredientsSection() {
           </Button>
         </div>
       </div>
-      {showPortionSplitChart ? (
-        <PortionSplitCard
-          members={portionSplitMembers}
-          scopeLabel={SHARED_INGREDIENTS_SCOPE_LABEL}
-        />
-      ) : null}
       {ungroupedIngredients.length > 0 ? (
         <div className="mb-item">
-          {/* Keep uncategorized ingredients first and unlabeled. */}
           <ul className="space-y-item type-body">
             {ungroupedIngredients.map((recipeIngredient) => (
               <IngredientItem
@@ -138,7 +103,7 @@ export function IngredientsSection() {
                 recipeServings={recipe.servings}
                 familyMembers={familyMembers}
                 audienceMemberIds={audienceMemberIds}
-                memberPortions={recipe.memberPortions}
+                memberPortions={[]}
               />
             ))}
           </ul>
@@ -176,7 +141,7 @@ export function IngredientsSection() {
                 recipeServings={recipe.servings}
                 familyMembers={familyMembers}
                 audienceMemberIds={audienceMemberIds}
-                memberPortions={recipe.memberPortions}
+                memberPortions={[]}
               />
             ))}
           </ul>

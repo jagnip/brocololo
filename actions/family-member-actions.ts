@@ -3,17 +3,20 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
 import { FAMILY_MEMBERS_MAX_PER_USER, ROUTES } from "@/lib/constants";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 import {
   createFamilyMember,
   deleteFamilyMember,
   getFamilyMemberRecipeImpact,
   listFamilyMembers,
   updateFamilyMemberName,
+  updateFamilyMemberPortionMultiplier,
 } from "@/lib/db/family-members";
 import {
   createFamilyMemberSchema,
   deleteFamilyMemberSchema,
   updateFamilyMemberNameSchema,
+  updateFamilyMemberPortionMultiplierSchema,
 } from "@/lib/validations/family-member";
 
 function revalidateSettings() {
@@ -23,7 +26,7 @@ function revalidateSettings() {
 export async function updateFamilyMemberNameAction(
   input: unknown,
 ): Promise<
-  | { type: "success"; member: { id: string; name: string; isSelf: boolean; sortOrder: number } }
+  | { type: "success"; member: FamilyMemberRow }
   | { type: "error"; message: string }
 > {
   const parsed = updateFamilyMemberNameSchema.safeParse(input);
@@ -49,10 +52,43 @@ export async function updateFamilyMemberNameAction(
   }
 }
 
+export async function updateFamilyMemberPortionMultiplierAction(
+  input: unknown,
+): Promise<
+  | { type: "success"; member: FamilyMemberRow }
+  | { type: "error"; message: string }
+> {
+  const parsed = updateFamilyMemberPortionMultiplierSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      type: "error",
+      message:
+        parsed.error.issues[0]?.message ??
+        "Could not update portion size. Try again.",
+    };
+  }
+
+  try {
+    const { id: userId } = await requireUser();
+    const member = await updateFamilyMemberPortionMultiplier({
+      userId,
+      id: parsed.data.id,
+      portionMultiplier: parsed.data.portionMultiplier,
+    });
+    revalidateSettings();
+    return { type: "success", member };
+  } catch {
+    return {
+      type: "error",
+      message: "Could not update portion size. Try again.",
+    };
+  }
+}
+
 export async function createFamilyMemberAction(
   input: unknown,
 ): Promise<
-  | { type: "success"; member: { id: string; name: string; isSelf: boolean; sortOrder: number } }
+  | { type: "success"; member: FamilyMemberRow }
   | { type: "error"; message: string }
 > {
   const parsed = createFamilyMemberSchema.safeParse(input);

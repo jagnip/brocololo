@@ -37,7 +37,7 @@ type RecipeAddToLogDialogProps = {
   onOpenChange: (open: boolean) => void;
   recipeIngredients: RecipeType["ingredients"];
   familyMembers: FamilyMemberRow[];
-  audienceMembers: RecipeType["audienceMembers"];
+  audienceMemberIds: string[];
   memberPortions: RecipeType["memberPortions"];
   currentServings: number;
   servingScalingFactor: number;
@@ -60,7 +60,7 @@ export function RecipeAddToLogDialogContainer({
   onOpenChange,
   recipeIngredients,
   familyMembers,
-  audienceMembers,
+  audienceMemberIds,
   memberPortions,
   currentServings,
   servingScalingFactor,
@@ -93,9 +93,6 @@ export function RecipeAddToLogDialogContainer({
   }, [defaultFamilyMemberId, normalizedAvailableLogDateKeys, open]);
 
   const initialRows = useMemo(() => {
-    const audienceMemberIds = audienceMembers.map(
-      (member) => member.familyMemberId,
-    );
     return resolveRecipeIngredientRowsForMember({
       recipeIngredients,
       familyMemberId: logFamilyMemberId,
@@ -106,9 +103,9 @@ export function RecipeAddToLogDialogContainer({
       batchScaleFactor: servingScalingFactor,
     });
   }, [
+    audienceMemberIds,
     currentServings,
     familyMembers,
-    audienceMembers,
     logFamilyMemberId,
     memberPortions,
     recipeIngredients,

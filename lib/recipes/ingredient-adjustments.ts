@@ -1,5 +1,8 @@
 import type { FamilyMemberRow } from "@/lib/db/family-members";
-import { getFamilyMemberIngredientAmountPerMeal } from "@/lib/log/helpers";
+import {
+  getFamilyMemberIngredientAmountPerMeal,
+  getPersonPortionMultiplier,
+} from "@/lib/log/helpers";
 import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import {
   formatIngredientAmount,
@@ -60,11 +63,17 @@ export function getDefaultPerPersonAmount(
 export function getMemberPortionMultiplier(
   familyMemberId: string,
   memberPortions: MemberPortionInput[] | undefined,
+  familyMembers?: Array<{ id: string; isSelf?: boolean; portionMultiplier?: number }>,
 ): number {
-  const portion = memberPortions?.find(
-    (entry) => entry.familyMemberId === familyMemberId,
+  return getPersonPortionMultiplier(
+    familyMemberId,
+    (familyMembers ?? []).map((m) => ({
+      id: m.id,
+      isSelf: m.isSelf ?? false,
+      portionMultiplier: m.portionMultiplier,
+    })),
+    memberPortions ?? [],
   );
-  return portion?.multiplier ?? 1;
 }
 
 /** Compact portion badge label — null when multiplier is default (1×). */
@@ -217,6 +226,7 @@ function resolveIngredientShareForMember(
     familyMembers: input.familyMembers.map((member) => ({
       id: member.id,
       isSelf: member.isSelf,
+      portionMultiplier: member.portionMultiplier,
     })),
     memberPortions: input.memberPortions ?? [],
     cookingFamilyMemberIds: input.audienceMemberIds,

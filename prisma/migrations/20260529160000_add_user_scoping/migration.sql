@@ -52,7 +52,7 @@ DROP INDEX "recipes_slug_key";
 -- CreateIndex
 CREATE INDEX "plans_user_id_idx" ON "plans"("user_id");
 CREATE INDEX "recipes_user_id_idx" ON "recipes"("user_id");
-CREATE INDEX "recipes_slug_idx" ON "recipes"("slug");
+CREATE INDEX IF NOT EXISTS "recipes_slug_idx" ON "recipes"("slug");
 CREATE INDEX "ingredient_lists_user_id_idx" ON "ingredient_lists"("user_id");
 CREATE INDEX "ingredients_user_id_idx" ON "ingredients"("user_id");
 

@@ -19,7 +19,8 @@ export function InstructionsSection() {
   const {
     instructions,
     familyMembers,
-    audienceMembers,
+    recipeServings,
+    audienceMemberIds,
     memberPortions,
     effectiveRecipeIngredientById,
     selectedInstructionFamilyMemberId,
@@ -28,9 +29,7 @@ export function InstructionsSection() {
     getIngredientDisplayScalingFactor,
     getIngredientCalorieFactor,
   } = useRecipePageInstructionsSectionData();
-  const cookingFamilyMemberIds = audienceMembers.map(
-    (member) => member.familyMemberId,
-  );
+  const cookingFamilyMemberIds = audienceMemberIds;
   const showPersonFilter = familyMembers.length > 1;
   const [selectedInstructionId, setSelectedInstructionId] = useState<string | null>(null);
 
@@ -171,14 +170,13 @@ export function InstructionsSection() {
                       ? getInstructionIngredientBadgeAmount({
                           amount: recipeIngredient.amount,
                           memberAdjustments: recipeIngredient.memberAdjustments,
-                          audienceMemberIds: audienceMembers.map(
-                            (member) => member.familyMemberId,
-                          ),
+                          audienceMemberIds,
                           selectedFamilyMemberId:
                             selectedInstructionFamilyMemberId,
                           familyMembers,
                           memberPortions,
                           cookingFamilyMemberIds,
+                          recipeServings,
                           rowScaleFactor:
                             getIngredientDisplayScalingFactor(
                               recipeIngredient.id,
