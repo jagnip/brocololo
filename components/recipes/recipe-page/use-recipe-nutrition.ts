@@ -8,11 +8,13 @@ import {
   getCalorieScalingFactorForIngredient,
 } from "@/lib/recipes/helpers";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
+import type { IngredientType } from "@/types/ingredient";
 import type { CalorieTarget } from "@/components/recipes/recipe-page/use-recipe-scaling-state";
 
 type UseRecipeNutritionParams = {
   recipe: RecipeType;
   effectiveRecipe: RecipeType;
+  ingredientCatalog: IngredientType[];
   currentServings: number;
   calorieTarget: CalorieTarget | null;
   globalScaleRatio: number;
@@ -42,6 +44,7 @@ export type UseRecipeNutritionResult = {
 export function useRecipeNutrition({
   recipe,
   effectiveRecipe,
+  ingredientCatalog,
   currentServings,
   calorieTarget,
   globalScaleRatio,
@@ -77,6 +80,7 @@ export function useRecipeNutrition({
     effectiveRecipe,
     anchorMemberId,
     recipeAudienceMembers,
+    ingredientCatalog,
   );
   const calorieScalingFactor =
     calorieTarget && anchorBaseNutrition.calories > 0
@@ -123,6 +127,7 @@ export function useRecipeNutrition({
       recipeForScaledNutrition,
       member.id,
       recipeAudienceMembers,
+      ingredientCatalog,
     ),
   }));
 

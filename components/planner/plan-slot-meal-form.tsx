@@ -34,6 +34,10 @@ import type {
 import type { PlanCustomMealIngredient, PlanSlotMealPayload } from "@/types/planner";
 import type { RecipeType } from "@/types/recipe";
 import { cn } from "@/lib/utils";
+import {
+  getPlannerRecipeDialogIngredientRows,
+  type FamilyMemberRef,
+} from "@/lib/planner/resolve-slot-ingredients";
 
 type DialogRow = EditableIngredientRow & { key: string };
 
@@ -46,6 +50,8 @@ export type PlanSlotMealFormProps = {
   initialRecipeId: string | null;
   initialCustomName: string;
   initialRows: EditableIngredientRow[];
+  cookingFamilyMemberIds?: string[];
+  familyMembers?: FamilyMemberRef[];
   isSaving: boolean;
   onCancel: () => void;
   onSave: (payload: PlanSlotMealPayload) => Promise<void>;
@@ -143,6 +149,8 @@ export function PlanSlotMealForm({
   initialRecipeId,
   initialCustomName,
   initialRows,
+  cookingFamilyMemberIds = [],
+  familyMembers = [],
   isSaving,
   onCancel,
   onSave,
@@ -257,15 +265,19 @@ export function PlanSlotMealForm({
     }
 
     setCustomName("");
+    // Person-aware prefill: aggregated amounts for the slot's cooking audience.
+    const resolvedRows = getPlannerRecipeDialogIngredientRows({
+      recipe,
+      cookingFamilyMemberIds,
+      familyMembers,
+    });
     setRows(
-      recipe.ingredients
-        .filter((ri) => ri.amount != null && ri.unitId != null)
-        .map((ri) => ({
-          key: toRowKey(),
-          ingredientId: ri.ingredientId,
-          unitId: ri.unitId,
-          amount: ri.amount,
-        })),
+      resolvedRows.map((row) => ({
+        key: toRowKey(),
+        ingredientId: row.ingredientId,
+        unitId: row.unitId,
+        amount: row.amount,
+      })),
     );
   };
 

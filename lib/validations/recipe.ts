@@ -235,6 +235,7 @@ const recipeBaseSchema = z
     });
 
     recipe.ingredients.forEach((ingredient, ingredientIndex) => {
+      const seenMemberIds = new Set<string>();
       ingredient.memberAdjustments.forEach((adjustment, adjustmentIndex) => {
         if (!audienceIds.has(adjustment.familyMemberId)) {
           ctx.addIssue({
@@ -249,6 +250,20 @@ const recipeBaseSchema = z
             message: "Adjustments must be for people in the recipe audience",
           });
         }
+        if (seenMemberIds.has(adjustment.familyMemberId)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [
+              "ingredients",
+              ingredientIndex,
+              "memberAdjustments",
+              adjustmentIndex,
+              "familyMemberId",
+            ],
+            message: "Each person can only have one adjustment per ingredient",
+          });
+        }
+        seenMemberIds.add(adjustment.familyMemberId);
       });
     });
   });

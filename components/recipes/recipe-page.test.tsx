@@ -781,28 +781,56 @@ describe("RecipePage shared portion split chart", () => {
   });
 });
 
-describe("RecipePage ingredient member badges", () => {
-  it("shows member name badges for targeted ingredients", () => {
+describe("RecipePage ingredient adjustment panels", () => {
+  it("shows People action with count badge for adjusted ingredients", async () => {
+    const user = userEvent.setup();
     const { recipe, ingredients } = createRecipeFixture();
     renderRecipePage(recipe, ingredients);
 
     const nelsonRow = getIngredientRow("Side Sauce Nelson");
-    expect(within(nelsonRow).getByRole("group", { name: "For Nelson" })).toBeInTheDocument();
-    expect(within(nelsonRow).queryByText("Selected")).not.toBeInTheDocument();
+    expect(
+      within(nelsonRow).getByRole("button", {
+        name: /Personal adjustments for Side Sauce Nelson/i,
+      }),
+    ).toBeInTheDocument();
 
     const jagodaRow = getIngredientRow("Side Veg Jagoda");
-    expect(within(jagodaRow).getByRole("group", { name: "For Jagoda" })).toBeInTheDocument();
+    expect(
+      within(jagodaRow).getByRole("button", {
+        name: /Personal adjustments for Side Veg Jagoda/i,
+      }),
+    ).toBeInTheDocument();
   });
 
-  it("does not show member badges for applies-to-everyone ingredients", () => {
+  it("does not show adjustment count on shared ingredients without adjustments", () => {
     const { recipe, ingredients } = createRecipeFixture();
     renderRecipePage(recipe, ingredients);
 
     const sharedRow = getIngredientRow("Shared Protein");
-    expect(within(sharedRow).queryByRole("group", { name: /^For / })).not.toBeInTheDocument();
+    const peopleButton = within(sharedRow).getByRole("button", {
+      name: /Personal adjustments for Shared Protein/i,
+    });
+    expect(peopleButton.textContent).not.toMatch(/1/);
   });
 
-  it("hides member badges when household has only self", () => {
+  it("expands personal adjustments summary when People is clicked", async () => {
+    const user = userEvent.setup();
+    const { recipe, ingredients } = createRecipeFixture();
+    renderRecipePage(recipe, ingredients);
+
+    const nelsonRow = getIngredientRow("Side Sauce Nelson");
+    await user.click(
+      within(nelsonRow).getByRole("button", {
+        name: /Personal adjustments for Side Sauce Nelson/i,
+      }),
+    );
+
+    expect(within(nelsonRow).getByText("Personal adjustments")).toBeInTheDocument();
+    expect(within(nelsonRow).getByText(/Nelson/)).toBeInTheDocument();
+    expect(within(nelsonRow).getByText(/Not in their portion/i)).toBeInTheDocument();
+  });
+
+  it("still shows People button for solo household", () => {
     const { recipe, ingredients } = createRecipeFixture();
     const soloFamily: FamilyMemberRow[] = [
       { id: "family-self", name: "Jagoda", isSelf: true, sortOrder: 0 },
@@ -810,11 +838,15 @@ describe("RecipePage ingredient member badges", () => {
     renderRecipePage(recipe, ingredients, soloFamily);
 
     const nelsonRow = getIngredientRow("Side Sauce Nelson");
-    expect(within(nelsonRow).queryByRole("group", { name: /^For / })).not.toBeInTheDocument();
-    expect(within(nelsonRow).queryByText("Nelson")).not.toBeInTheDocument();
+    expect(
+      within(nelsonRow).getByRole("button", {
+        name: /Personal adjustments for Side Sauce Nelson/i,
+      }),
+    ).toBeInTheDocument();
   });
 
-  it("places additional info on row 2 and member badges on row 3 when both exist", () => {
+  it("shows note behind Note toggle instead of inline text", async () => {
+    const user = userEvent.setup();
     const { recipe, ingredients } = createRecipeFixture();
     const recipeWithInfo = {
       ...recipe,
@@ -827,12 +859,13 @@ describe("RecipePage ingredient member badges", () => {
     renderRecipePage(recipeWithInfo, ingredients);
 
     const nelsonRow = getIngredientRow("Side Sauce Nelson");
-    const rowSections = nelsonRow.querySelectorAll(":scope > div");
-    const row2 = rowSections[1] as HTMLElement;
-    const row3 = rowSections[2] as HTMLElement;
+    expect(within(nelsonRow).queryByText("warmed")).not.toBeInTheDocument();
 
-    expect(within(row2).getByText("warmed")).toBeInTheDocument();
-    expect(within(row2).queryByRole("group", { name: "For Nelson" })).not.toBeInTheDocument();
-    expect(within(row3).getByRole("group", { name: "For Nelson" })).toBeInTheDocument();
+    await user.click(
+      within(nelsonRow).getByRole("button", {
+        name: /Note for Side Sauce Nelson/i,
+      }),
+    );
+    expect(within(nelsonRow).getByText("warmed")).toBeInTheDocument();
   });
 });

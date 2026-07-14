@@ -283,7 +283,12 @@ export default function RecipeForm({
       label:
         member.name.trim() ||
         (member.isSelf ? "You" : `Family member ${index}`),
-      nutrition: calculateNutritionPerServing(draft, member.id, familyMembers),
+      nutrition: calculateNutritionPerServing(
+        draft,
+        member.id,
+        familyMembers,
+        localIngredients,
+      ),
     }));
   }, [
     familyMembers,
@@ -746,6 +751,9 @@ export default function RecipeForm({
                       familyMembers={familyMembers.filter((member) =>
                         previewAudienceFamilyMemberIds.includes(member.id),
                       )}
+                      householdFamilyMembers={familyMembers}
+                      audienceMemberIds={previewAudienceFamilyMemberIds}
+                      servings={previewServings ?? 1}
                       groups={ingredientGroups}
                       value={field.value}
                       onChange={field.onChange}

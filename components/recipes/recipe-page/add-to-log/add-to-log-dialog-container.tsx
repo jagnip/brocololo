@@ -20,8 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getFamilyMemberIngredientAmountPerMeal } from "@/lib/log/helpers";
-import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
+import { resolveRecipeIngredientRowsForMember } from "@/lib/recipes/ingredient-adjustments";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 type IngredientFormDependencies = {
@@ -94,39 +93,17 @@ export function RecipeAddToLogDialogContainer({
   }, [defaultFamilyMemberId, normalizedAvailableLogDateKeys, open]);
 
   const initialRows = useMemo(() => {
-    return recipeIngredients.flatMap((recipeIngredient) => {
-      if (recipeIngredient.amount == null) {
-        return [];
-      }
-
-      const scaledAmount = recipeIngredient.amount * servingScalingFactor;
-      const amountForPerson = getFamilyMemberIngredientAmountPerMeal({
-        amount: scaledAmount,
-        memberAdjustments: recipeIngredient.memberAdjustments,
-        familyMemberId: logFamilyMemberId,
-        recipeServings: currentServings,
-        familyMembers,
-        memberPortions,
-        cookingFamilyMemberIds: audienceMembers.map(
-          (member) => member.familyMemberId,
-        ),
-      });
-      if (amountForPerson == null || amountForPerson <= 0) {
-        return [];
-      }
-
-      const defaultUnitId = getDefaultUnitIdForIngredient({
-        defaultUnitId: recipeIngredient.ingredient.defaultUnitId,
-        unitConversions: recipeIngredient.ingredient.unitConversions,
-      });
-
-      return [
-        {
-          ingredientId: recipeIngredient.ingredient.id,
-          unitId: recipeIngredient.unit?.id ?? defaultUnitId,
-          amount: Math.round(amountForPerson * 1000) / 1000,
-        },
-      ];
+    const audienceMemberIds = audienceMembers.map(
+      (member) => member.familyMemberId,
+    );
+    return resolveRecipeIngredientRowsForMember({
+      recipeIngredients,
+      familyMemberId: logFamilyMemberId,
+      recipeServings: currentServings,
+      familyMembers,
+      memberPortions,
+      audienceMemberIds,
+      batchScaleFactor: servingScalingFactor,
     });
   }, [
     currentServings,

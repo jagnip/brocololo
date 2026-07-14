@@ -1,45 +1,47 @@
 import { filterSlotsForGroceryGeneration } from "@/lib/groceries/generation-options";
 import type { GroceryGenerationExclusions } from "@/lib/groceries/generation-options";
+import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import {
-  calculateServingScalingFactor,
   getUnitDisplayName,
   isPieceUnit,
 } from "@/lib/recipes/helpers";
-import { getIngredientDisplayName } from "@/lib/ingredients/format";
+import type { MemberAdjustmentRow } from "@/lib/recipes/resolve-ingredient-lines";
+import { resolveRecipeSlotScaledConsumables } from "@/lib/planner/resolve-slot-ingredients";
 import { ShoppingListGeneratedLine } from "@/types/groceries";
+
+type GroceryIngredientMeta = {
+  id: string;
+  name: string;
+  brand?: string | null;
+  descriptor?: string | null;
+  icon: string | null;
+  supermarketUrl: string | null;
+  unitConversions: Array<{ unitId: string; gramsPerUnit: number }>;
+  category: { id: string; name: string; sortOrder: number };
+};
 
 export type PlanSlotData = {
   recipeId?: string | null;
+  cookingFamilyMemberIds?: string[];
+  familyMembers?: Array<{ id: string; isSelf: boolean }>;
   recipe: {
     name: string;
     servings: number;
+    audienceMembers?: Array<{ familyMemberId: string }>;
+    memberPortions?: Array<{ familyMemberId: string; multiplier: number }>;
     ingredients: Array<{
-      ingredient: {
-        id: string;
-        name: string;
-        brand?: string | null;
-        descriptor?: string | null;
-        icon: string | null;
-        supermarketUrl: string | null;
-        unitConversions: Array<{ unitId: string; gramsPerUnit: number }>;
-        category: { id: string; name: string; sortOrder: number };
-      };
-      unit: { id: string; name: string } | null;
+      id: string;
+      ingredientId: string;
       amount: number | null;
+      additionalInfo: string | null;
+      memberAdjustments?: MemberAdjustmentRow[];
+      ingredient: GroceryIngredientMeta;
+      unit: { id: string; name: string } | null;
     }>;
   } | null;
   customName?: string | null;
   customIngredients?: Array<{
-    ingredient: {
-      id: string;
-      name: string;
-      brand?: string | null;
-      descriptor?: string | null;
-      icon: string | null;
-      supermarketUrl: string | null;
-      unitConversions: Array<{ unitId: string; gramsPerUnit: number }>;
-      category: { id: string; name: string; sortOrder: number };
-    };
+    ingredient: GroceryIngredientMeta;
     unit: { id: string; name: string } | null;
     amount: number | null;
   }>;
@@ -59,6 +61,63 @@ type ScaledIngredient = {
   categoryName: string;
   categorySortOrder: number;
 };
+
+function buildIngredientCatalogForSlot(
+  recipe: NonNullable<PlanSlotData["recipe"]>,
+): Map<string, GroceryIngredientMeta> {
+  const catalog = new Map<string, GroceryIngredientMeta>();
+  for (const row of recipe.ingredients) {
+    catalog.set(row.ingredient.id, row.ingredient);
+    for (const adjustment of row.memberAdjustments ?? []) {
+      const substitute = (
+        adjustment as MemberAdjustmentRow & {
+          ingredient?: GroceryIngredientMeta | null;
+        }
+      ).ingredient;
+      if (substitute) {
+        catalog.set(substitute.id, substitute);
+      }
+    }
+  }
+  return catalog;
+}
+
+function toScaledIngredient(input: {
+  ingredientId: string;
+  unitId: string;
+  amount: number;
+  recipeName: string;
+  catalog: Map<string, GroceryIngredientMeta>;
+  unitsById: Map<string, { id: string; name: string }>;
+}): ScaledIngredient | null {
+  const ingredient = input.catalog.get(input.ingredientId);
+  if (!ingredient) {
+    return null;
+  }
+  const unit = input.unitsById.get(input.unitId);
+  const conversion = ingredient.unitConversions.find(
+    (entry) => entry.unitId === input.unitId,
+  );
+
+  return {
+    ingredientId: ingredient.id,
+    ingredientCategoryId: ingredient.category.id,
+    ingredientName: getIngredientDisplayName(
+      ingredient.name,
+      ingredient.brand ?? null,
+      ingredient.descriptor ?? null,
+    ),
+    ingredientIcon: ingredient.icon,
+    supermarketUrl: ingredient.supermarketUrl,
+    unitId: input.unitId,
+    unitName: unit?.name ?? null,
+    amount: input.amount,
+    recipeName: input.recipeName,
+    gramsPerUnit: conversion?.gramsPerUnit ?? null,
+    categoryName: ingredient.category.name,
+    categorySortOrder: ingredient.category.sortOrder,
+  };
+}
 
 function mapCustomIngredients(slot: PlanSlotData): ScaledIngredient[] {
   if (!slot.customName || !slot.customIngredients?.length) {
@@ -89,7 +148,6 @@ function mapCustomIngredients(slot: PlanSlotData): ScaledIngredient[] {
         supermarketUrl: row.ingredient.supermarketUrl,
         unitId: unit.id,
         unitName: unit.name,
-        // Custom planned meals use amounts as entered (no serving scaling).
         amount: row.amount,
         recipeName: slot.customName!,
         gramsPerUnit: conversion?.gramsPerUnit ?? null,
@@ -101,7 +159,7 @@ function mapCustomIngredients(slot: PlanSlotData): ScaledIngredient[] {
 }
 
 /**
- * Phase A: Scale each ingredient amount for 2 people,
+ * Phase A: resolve per-eater ingredient lines (MODIFY/SKIP aware),
  * producing a flat list with IDs for aggregation.
  */
 function scaleIngredients(slots: PlanSlotData[]): ScaledIngredient[] {
@@ -109,40 +167,37 @@ function scaleIngredients(slots: PlanSlotData[]): ScaledIngredient[] {
     const recipeItems = (() => {
       if (!slot.recipe) return [];
 
-      const { servingScalingFactor } = calculateServingScalingFactor(
-        2,
-        slot.recipe.servings,
-      );
+      const catalog = buildIngredientCatalogForSlot(slot.recipe);
 
-      return slot.recipe.ingredients.map((ri) => {
-        const unit = ri.unit;
-        const conversion =
-          unit == null
-            ? null
-            : ri.ingredient.unitConversions.find((uc) => uc.unitId === unit.id);
+      const unitsById = new Map<string, { id: string; name: string }>();
+      for (const row of slot.recipe.ingredients) {
+        if (row.unit) {
+          unitsById.set(row.unit.id, row.unit);
+        }
+        for (const adjustment of row.memberAdjustments ?? []) {
+          const adjustmentUnit = (
+            adjustment as MemberAdjustmentRow & {
+              unit?: { id: string; name: string } | null;
+            }
+          ).unit;
+          if (adjustmentUnit) {
+            unitsById.set(adjustmentUnit.id, adjustmentUnit);
+          }
+        }
+      }
 
-        return {
-          ingredientId: ri.ingredient.id,
-          ingredientCategoryId: ri.ingredient.category.id,
-          ingredientName: getIngredientDisplayName(
-            ri.ingredient.name,
-            ri.ingredient.brand ?? null,
-            ri.ingredient.descriptor ?? null,
-          ),
-          ingredientIcon: ri.ingredient.icon,
-          supermarketUrl: ri.ingredient.supermarketUrl,
-          unitId: unit?.id ?? null,
-          unitName: unit?.name ?? null,
-          // Unitless items are always non-quantified in grocery output.
-          amount:
-            ri.amount !== null && unit != null
-              ? ri.amount * servingScalingFactor
-              : null,
+      const consumables = resolveRecipeSlotScaledConsumables(slot);
+
+      return consumables.flatMap((consumable) => {
+        const scaled = toScaledIngredient({
+          ingredientId: consumable.ingredientId,
+          unitId: consumable.unitId,
+          amount: consumable.amount,
           recipeName: slot.recipe!.name,
-          gramsPerUnit: conversion?.gramsPerUnit ?? null,
-          categoryName: ri.ingredient.category.name,
-          categorySortOrder: ri.ingredient.category.sortOrder,
-        };
+          catalog,
+          unitsById,
+        });
+        return scaled ? [scaled] : [];
       });
     })();
 
@@ -172,7 +227,6 @@ function aggregateIngredients(
     const nullItems = group.filter((i) => i.amount === null);
     const quantifiedItems = group.filter((i) => i.amount !== null);
 
-    // Null-amount items: one line per ingredient, collect recipe names
     if (nullItems.length > 0) {
       const first = nullItems[0]!;
       result.push({
@@ -192,7 +246,6 @@ function aggregateIngredients(
 
     if (quantifiedItems.length === 0) continue;
 
-    // Group quantified items by unitId
     const byUnit = new Map<string, ScaledIngredient[]>();
     for (const item of quantifiedItems) {
       if (!item.unitId) {
@@ -204,7 +257,6 @@ function aggregateIngredients(
     }
 
     if (byUnit.size === 1) {
-      // Single unit: sum amounts directly
       const unitGroup = quantifiedItems;
       const first = unitGroup[0]!;
       result.push({
@@ -221,7 +273,6 @@ function aggregateIngredients(
         unitId: first.unitId,
       });
     } else {
-      // Multiple units: try converting all to grams
       const allConvertible = quantifiedItems.every((i) => i.gramsPerUnit !== null);
 
       if (allConvertible) {
@@ -244,7 +295,6 @@ function aggregateIngredients(
           unitId: null,
         });
       } else {
-        // Can't convert all: output each unit group separately
         for (const [, unitGroup] of byUnit) {
           const first = unitGroup[0]!;
           result.push({

@@ -1,8 +1,7 @@
 import type { getPlanById } from "@/lib/db/planner";
 import type { getRecipes } from "@/lib/db/recipes";
 import type { ensureSelfFamilyMember } from "@/lib/db/family-members";
-import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
-import { getFamilyMemberIngredientAmountPerMeal } from "@/lib/log/helpers";
+import { resolveRecipeIngredientRowsForMember } from "@/lib/recipes/ingredient-adjustments";
 
 export const REPOSITORY_MEAL_OPTION_PREFIX = "recipe:";
 export const PLAN_IDEA_MEAL_OPTION_PREFIX = "idea:";
@@ -99,47 +98,24 @@ function toRecipeSelectorRows(params: {
   familyMemberId: string;
   familyMembers: Awaited<ReturnType<typeof ensureSelfFamilyMember>>;
 }) {
-  return params.recipe.ingredients
-    .map((recipeIngredient) => {
-      if (recipeIngredient.amount == null) {
-        return null;
-      }
-
-      const amountForPerson = getFamilyMemberIngredientAmountPerMeal({
-        amount: recipeIngredient.amount,
-        memberAdjustments: recipeIngredient.memberAdjustments,
-        familyMemberId: params.familyMemberId,
-        recipeServings: params.recipe.servings,
-        familyMembers: params.familyMembers,
-        memberPortions: params.recipe.memberPortions,
-        cookingFamilyMemberIds: params.recipe.audienceMembers.map(
-          (member) => member.familyMemberId,
-        ),
-      });
-      if (amountForPerson == null || amountForPerson <= 0) {
-        return null;
-      }
-
-      const defaultUnitId = getDefaultUnitIdForIngredient({
-        defaultUnitId: recipeIngredient.ingredient.defaultUnitId,
-        unitConversions: recipeIngredient.ingredient.unitConversions,
-      });
-
-      const row = {
-        ingredientId: recipeIngredient.ingredient.id,
-        unitId: recipeIngredient.unit?.id ?? defaultUnitId,
-        amount: Math.round(amountForPerson * 1000) / 1000,
-      };
-      if (!row.unitId) {
-        return null;
-      }
-
-      return row;
-    })
-    .filter(
-      (row): row is { ingredientId: string; unitId: string; amount: number } =>
-        row != null,
-    );
+  const audienceMemberIds = params.recipe.audienceMembers.map(
+    (member) => member.familyMemberId,
+  );
+  return resolveRecipeIngredientRowsForMember({
+    recipeIngredients: params.recipe.ingredients.map((recipeIngredient) => ({
+      id: recipeIngredient.id,
+      ingredientId: recipeIngredient.ingredientId,
+      amount: recipeIngredient.amount,
+      unit: recipeIngredient.unit,
+      additionalInfo: recipeIngredient.additionalInfo,
+      memberAdjustments: recipeIngredient.memberAdjustments,
+    })),
+    familyMemberId: params.familyMemberId,
+    recipeServings: params.recipe.servings,
+    familyMembers: params.familyMembers,
+    memberPortions: params.recipe.memberPortions,
+    audienceMemberIds,
+  });
 }
 
 function toPlanIdeaSelectorRows(

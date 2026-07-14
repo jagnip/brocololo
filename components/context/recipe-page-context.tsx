@@ -106,6 +106,7 @@ export function RecipePageProvider({
   const nutrition = useRecipeNutrition({
     recipe,
     effectiveRecipe,
+    ingredientCatalog: ingredients,
     currentServings: scaling.currentServings,
     calorieTarget: scaling.calorieTarget,
     globalScaleRatio: scaling.globalScaleRatio,

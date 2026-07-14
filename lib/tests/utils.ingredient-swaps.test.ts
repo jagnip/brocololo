@@ -286,7 +286,7 @@ describe('swap simulation nutrition integration', () => {
 
     // Default multiplier is 1.5, so primary receives 40% of BOTH-target totals.
     expect(original.calories).toBe(132);
-    expect(swapped.calories).toBe(60.8);
+    expect(swapped.calories).toBe(61);
     expect(swapped.protein).toBe(6.4);
   });
 });

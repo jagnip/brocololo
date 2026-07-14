@@ -134,6 +134,8 @@ export function IngredientsSection() {
                   onIngredientChange(recipeIngredient.id, ingredientId)
                 }
                 replacementCandidates={ingredients}
+                ingredientCatalog={ingredients}
+                recipeServings={recipe.servings}
                 familyMembers={familyMembers}
                 audienceMemberIds={audienceMemberIds}
               />
@@ -169,6 +171,8 @@ export function IngredientsSection() {
                   onIngredientChange(recipeIngredient.id, ingredientId)
                 }
                 replacementCandidates={ingredients}
+                ingredientCatalog={ingredients}
+                recipeServings={recipe.servings}
                 familyMembers={familyMembers}
                 audienceMemberIds={audienceMemberIds}
               />

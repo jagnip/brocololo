@@ -6,7 +6,6 @@ import {
   formatIngredientAmount,
   getUnitDisplayName,
   getIngredientDisplay,
-  getIngredientMemberBadges,
   getIngredientNutritionPer100g,
   isGramUnit,
   scaleIngredientNutritionForGrams,
@@ -29,22 +28,36 @@ import {
 import {
   ArrowLeftRight,
   Info,
+  NotebookPen,
   ShoppingBasket,
+  Users,
 } from "lucide-react";
 import { IngredientIcon } from "../ingredient-icon";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
 import { IngredientNutritionalInfo } from "./ingredient-nutritional-info";
 import {
   SearchableSelect,
   type SearchableSelectOption,
 } from "../ui/searchable-select";
+import { IngredientRowActionButton } from "./ingredient-row-action-button";
+import {
+  IngredientMemberAdjustmentsSummary,
+  buildUnitsCatalogMap,
+} from "./ingredient-member-adjustments-summary";
+import { IngredientNotePanel } from "./ingredient-note-panel";
+import {
+  getMemberAdjustmentCount,
+  hasIngredientNote,
+} from "@/lib/recipes/ingredient-adjustments";
 
 type IngredientItemProps = {
   recipeIngredient: RecipeType["ingredients"][number];
   replacementCandidates: IngredientType[];
+  /** Full catalog for MODIFY substitute name resolution in summaries. */
+  ingredientCatalog: IngredientType[];
+  recipeServings: number;
   selectedUnitId: string | null;
   onUnitChange: (unitId: string | null) => void;
   servingScalingFactor: number;
@@ -60,6 +73,8 @@ type IngredientItemProps = {
 export function IngredientItem({
   recipeIngredient,
   replacementCandidates,
+  ingredientCatalog,
+  recipeServings,
   selectedUnitId,
   onUnitChange,
   servingScalingFactor,
@@ -69,37 +84,28 @@ export function IngredientItem({
   onApplyScaleToAll,
   onIngredientChange,
   familyMembers,
-  audienceMemberIds,
 }: IngredientItemProps) {
   const { ingredient } = recipeIngredient;
-  // Resolve read-only member badges for targeted ingredients (hidden for solo households).
-  const memberBadges = useMemo(
-    () => getIngredientMemberBadges(recipeIngredient, familyMembers, audienceMemberIds),
-    [audienceMemberIds, recipeIngredient, familyMembers],
+  const adjustmentCount = getMemberAdjustmentCount(
+    recipeIngredient.memberAdjustments,
   );
-  const hasMemberBadges = memberBadges.length > 0;
-  const hasAdditionalInfo = Boolean(recipeIngredient.additionalInfo);
-  // Row 2 right: additional info and/or badges alone; both → info on row 2, badges on row 3.
-  const showBadgesOnRow2 = hasMemberBadges && !hasAdditionalInfo;
-  const showBadgesOnRow3 = hasMemberBadges && hasAdditionalInfo;
-  const showRow2Right = hasAdditionalInfo || showBadgesOnRow2;
-  const memberBadgeAriaLabel = hasMemberBadges
-    ? `For ${memberBadges.map((badge) => badge.label).join(", ")}`
-    : undefined;
+  const hasNote = hasIngredientNote(recipeIngredient.additionalInfo);
 
-  const memberBadgeGroup = hasMemberBadges ? (
-    <div
-      role="group"
-      aria-label={memberBadgeAriaLabel}
-      className="flex flex-wrap items-center justify-end gap-1"
-    >
-      {memberBadges.map((badge) => (
-        <Badge key={badge.familyMemberId} variant="outline">
-          {badge.label}
-        </Badge>
-      ))}
-    </div>
-  ) : null;
+  const unitsById = useMemo(
+    () => buildUnitsCatalogMap(ingredientCatalog),
+    [ingredientCatalog],
+  );
+
+  const catalogEntries = useMemo(
+    () =>
+      ingredientCatalog.map((entry) => ({
+        id: entry.id,
+        name: entry.name,
+        brand: entry.brand,
+        descriptor: entry.descriptor,
+      })),
+    [ingredientCatalog],
+  );
 
   const {
     displayAmount,
@@ -118,7 +124,6 @@ export function IngredientItem({
     servingScalingFactor,
     calorieScalingFactor,
   );
-  // Keep selector labels and control accessibility matching the richer ingredient display.
   const ingredientDisplayName = getIngredientSelectorDisplay({
     name: ingredient.name,
     brand: ingredient.brand,
@@ -126,7 +131,6 @@ export function IngredientItem({
   }).label;
 
   const getUnitOptionLabel = (unitId: string) => {
-    // Recompute per target unit so option labels pluralize against converted amounts.
     const optionDisplay = getIngredientDisplay(
       recipeIngredient.amount,
       recipeIngredient.unit?.id ?? null,
@@ -144,7 +148,6 @@ export function IngredientItem({
   };
 
   const nutrition = getIngredientNutritionPer100g(ingredient);
-  // Build macro snapshots for selected unit and currently selected amount.
   const showPerOneSelectedUnitColumn =
     selectedUnitGramsPerUnit != null && !isGramUnit(displayUnitName);
   const oneSelectedUnitNutrition = !showPerOneSelectedUnitColumn
@@ -183,13 +186,14 @@ export function IngredientItem({
       : null;
 
   const [isEditing, setIsEditing] = useState(false);
+  const [showPeoplePanel, setShowPeoplePanel] = useState(false);
+  const [showNotePanel, setShowNotePanel] = useState(false);
   const [showNutritionDetails, setShowNutritionDetails] = useState(false);
   const [editValue, setEditValue] = useState("");
   const initialEditValueRef = useRef("");
   const committedRef = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Select all text when entering edit mode
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.select();
@@ -198,7 +202,6 @@ export function IngredientItem({
 
   const handleFocus = () => {
     committedRef.current = false;
-    // Mirror non-edit display format so the input doesn't jump from 50 -> 50.0.
     const displayed =
       rawAmount == null ? "" : formatIngredientAmount(rawAmount, 2);
     setIsEditing(true);
@@ -207,7 +210,6 @@ export function IngredientItem({
   };
 
   const handleCommit = () => {
-    // Prevent double-commit when Enter triggers blur
     if (committedRef.current) return;
     committedRef.current = true;
     setIsEditing(false);
@@ -287,11 +289,9 @@ export function IngredientItem({
   return (
     <li className="flex flex-col gap-item rounded-md border border-border bg-card p-nest transition-colors hover:bg-muted/40 hover:ring-1 hover:ring-ring">
       <div className="flex items-center gap-item md:flex-col md:items-stretch lg:flex-row lg:items-center">
-        {/* <IngredientIcon icon={ingredient.icon} name={ingredient.name} /> */}
         {canRenderAmountAndUnit && (
           <div className="order-1 md:order-2 lg:order-1 flex items-center gap-item md:w-full lg:w-auto">
             {isEditable ? (
-              /* Amount */
               <div className="w-16 h-8 flex items-center justify-center">
                 <Input
                   ref={inputRef}
@@ -304,7 +304,6 @@ export function IngredientItem({
                   onChange={(e) => setEditValue(e.target.value)}
                   onBlur={handleCommit}
                   onKeyDown={handleKeyDown}
-                  // Keep width compact; rely on DS defaults for spacing/typography.
                   className="w-16 min-w-16 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   aria-label={`Amount of ${ingredientDisplayName}`}
                 />
@@ -318,13 +317,10 @@ export function IngredientItem({
               value={selectedUnitId ?? undefined}
               disabled={false}
               onValueChange={(value) => onUnitChange(value || null)}
-              // Recipe page unit selectors should not be clearable.
               allowInlineClear={false}
             >
-              {/* Unit */}
               <SelectTrigger
                 size="default"
-                // Keep tablet fluid; slightly widen desktop unit control.
                 className="inline-flex items-center w-24 min-w-24 md:w-full md:min-w-0 lg:w-26 lg:min-w-26"
               >
                 <SelectValue />
@@ -353,75 +349,93 @@ export function IngredientItem({
           searchPlaceholder="Search ingredient..."
           emptyLabel="No ingredient found."
           allowClear={false}
-          // Keep layout-only overrides; spacing/typography come from the component defaults.
           className="order-2 md:order-1 lg:order-2 flex-1 min-w-0 md:w-full md:flex-none lg:flex-1 font-normal"
           renderIcon={(option) => (
             <IngredientIcon icon={option.icon ?? null} name={option.label} />
           )}
         />
       </div>
-      <div className="flex items-center justify-between gap-item">
-        <div className="flex shrink-0 items-center gap-item">
+
+      <div className="flex flex-wrap items-center gap-item">
+        <IngredientRowActionButton
+          active={showPeoplePanel}
+          badgeCount={adjustmentCount}
+          aria-label={`Personal adjustments for ${ingredientDisplayName}`}
+          aria-expanded={showPeoplePanel}
+          onClick={() => setShowPeoplePanel((prev) => !prev)}
+        >
+          <Users className="h-4 w-4" />
+        </IngredientRowActionButton>
+        <IngredientRowActionButton
+          active={showNotePanel}
+          showDotBadge={hasNote}
+          aria-label={`Note for ${ingredientDisplayName}`}
+          aria-expanded={showNotePanel}
+          onClick={() => setShowNotePanel((prev) => !prev)}
+        >
+          <NotebookPen className="h-4 w-4" />
+        </IngredientRowActionButton>
+        <IngredientRowActionButton
+          active={showNutritionDetails}
+          aria-label={`Nutrition details for ${ingredientDisplayName}`}
+          aria-expanded={showNutritionDetails}
+          onClick={() => setShowNutritionDetails((prev) => !prev)}
+        >
+          <Info className="h-4 w-4" />
+        </IngredientRowActionButton>
+
+        {ingredient.supermarketUrl ? (
+          <Button
+            asChild
+            type="button"
+            variant="outline"
+            size="icon-sm"
+          >
+            <a
+              href={ingredient.supermarketUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Open supermarket link for ${ingredientDisplayName}`}
+              title="Open supermarket link"
+            >
+              <ShoppingBasket className="h-4 w-4" />
+            </a>
+          </Button>
+        ) : null}
+        {showApplyScaleAction ? (
           <Button
             type="button"
             variant="outline"
-            // Use icon size variant so global icon-color rules apply.
             size="icon-sm"
-            aria-label={`Nutrition details for ${ingredientDisplayName}`}
-            aria-expanded={showNutritionDetails}
-            onClick={() => setShowNutritionDetails((prev) => !prev)}
+            onClick={onApplyScaleToAll}
+            aria-label={`Scale all ingredients based on ${ingredientDisplayName}`}
+            title="Apply this amount change to all ingredients"
           >
-            <Info className="h-4 w-4" />
+            <ArrowLeftRight className="h-4 w-4" />
           </Button>
-          {ingredient.supermarketUrl && (
-            <Button
-              asChild
-              type="button"
-              variant="outline"
-              // Use icon size variant so global icon-color rules apply.
-              size="icon-sm"
-            >
-              <a
-                href={ingredient.supermarketUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`Open supermarket link for ${ingredientDisplayName}`}
-                title="Open supermarket link"
-              >
-                <ShoppingBasket className="h-4 w-4" />
-              </a>
-            </Button>
-          )}
-          {showApplyScaleAction && (
-            <Button
-              type="button"
-              variant="outline"
-              // Use icon size variant so global icon-color rules apply.
-              size="icon-sm"
-              // One-click action: apply this row's ratio to every ingredient row.
-              onClick={onApplyScaleToAll}
-              aria-label={`Scale all ingredients based on ${ingredientDisplayName}`}
-              title="Apply this amount change to all ingredients"
-            >
-              <ArrowLeftRight className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-
-        {showRow2Right ? (
-          <div className="ml-auto flex min-w-0 max-w-full items-center justify-end gap-item">
-            {hasAdditionalInfo ? (
-              <span className="text-muted-foreground type-body">
-                {recipeIngredient.additionalInfo}
-              </span>
-            ) : null}
-            {showBadgesOnRow2 ? memberBadgeGroup : null}
-          </div>
         ) : null}
       </div>
-      {showBadgesOnRow3 ? (
-        <div className="flex justify-end">{memberBadgeGroup}</div>
+
+      {showPeoplePanel ? (
+        <IngredientMemberAdjustmentsSummary
+          memberAdjustments={recipeIngredient.memberAdjustments}
+          familyMembers={familyMembers}
+          ingredientCatalog={catalogEntries}
+          unitsById={unitsById}
+          servings={recipeServings}
+          batchAmount={recipeIngredient.amount}
+          batchUnitId={recipeIngredient.unit?.id ?? null}
+          batchUnitName={recipeIngredient.unit?.name ?? null}
+        />
       ) : null}
+
+      {showNotePanel ? (
+        <IngredientNotePanel
+          mode="view"
+          value={recipeIngredient.additionalInfo}
+        />
+      ) : null}
+
       <IngredientNutritionalInfo
         isOpen={showNutritionDetails}
         nutrition={nutrition}

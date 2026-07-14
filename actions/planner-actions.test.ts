@@ -2,6 +2,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createPlan, updatePlan } from "@/lib/db/planner";
 import { savePlan, updateSavedPlan } from "./planner-actions";
 
+vi.mock("@/lib/auth/session", () => ({
+  requireUser: vi.fn().mockResolvedValue({ id: "user-1" }),
+}));
+
+vi.mock("next/navigation", () => ({
+  redirect: vi.fn(() => {
+    throw new Error("NEXT_REDIRECT");
+  }),
+}));
+
 vi.mock("@/lib/db/planner", () => ({
   createPlan: vi.fn(),
   updatePlan: vi.fn(),
@@ -78,6 +88,10 @@ import { revalidatePath } from "next/cache";
 import { deletePlanAction, updateSavedPlan } from "./planner-actions";
 import { ROUTES } from "@/lib/constants";
 
+vi.mock("@/lib/auth/session", () => ({
+  requireUser: vi.fn().mockResolvedValue({ id: "user-1" }),
+}));
+
 vi.mock("@/lib/db/planner", () => ({
   updatePlan: vi.fn(),
   generateBaselineLogForPlan: vi.fn(),
@@ -145,7 +159,7 @@ describe("deletePlanAction", () => {
     vi.mocked(deletePlanById).mockResolvedValue(undefined);
     const result = await deletePlanAction("plan-1");
     expect(result).toEqual({ type: "success" });
-    expect(deletePlanById).toHaveBeenCalledWith("plan-1");
+    expect(deletePlanById).toHaveBeenCalledWith("user-1", "plan-1");
     expect(revalidatePath).toHaveBeenCalledWith(ROUTES.planCurrent);
     expect(revalidatePath).toHaveBeenCalledWith(ROUTES.log);
     expect(revalidatePath).toHaveBeenCalledWith("/");

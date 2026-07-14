@@ -188,22 +188,35 @@ type DuplicateRecipeState = {
   }>;
 };
 
+const DEFAULT_LOG_FAMILY_MEMBERS: FamilyMemberRow[] = [
+  { id: "family-self", name: "You", isSelf: true, sortOrder: 0 },
+  {
+    id: "family-member-1",
+    name: "Family member",
+    isSelf: false,
+    sortOrder: 1,
+  },
+];
+
+const EMPTY_PLANNER_POOL: PlannerPoolCardData[] = [];
+const EMPTY_RECIPE_OPTIONS: LogMealSelectorOption[] = [];
+const EMPTY_INGREDIENT_OPTIONS: LogIngredientOption[] = [];
+const EMPTY_PLANNED_MEALS_BY_SLOT_KEY: LogDayViewProps["plannedMealsBySlotKey"] =
+  {};
+
 export function LogDayViewController({
   days,
-  familyMembers = [
-    { id: "family-self", name: "You", isSelf: true, sortOrder: 0 },
-    { id: "family-member-1", name: "Family member", isSelf: false, sortOrder: 1 },
-  ],
-  plannerPool = [],
+  familyMembers = DEFAULT_LOG_FAMILY_MEMBERS,
+  plannerPool = EMPTY_PLANNER_POOL,
   initialSelectedDayKey,
   logId,
   familyMemberId,
   person,
   dateRange,
   allowDayManagement = true,
-  recipeOptions = [],
-  ingredientOptions = [],
-  plannedMealsBySlotKey = {},
+  recipeOptions = EMPTY_RECIPE_OPTIONS,
+  ingredientOptions = EMPTY_INGREDIENT_OPTIONS,
+  plannedMealsBySlotKey = EMPTY_PLANNED_MEALS_BY_SLOT_KEY,
   hideDayPersonInHeader = false,
   onRegisterToolbarControls,
   onSaveStatusChange,
