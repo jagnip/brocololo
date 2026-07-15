@@ -10,13 +10,11 @@ import {
   getFamilyMemberRecipeImpact,
   listFamilyMembers,
   updateFamilyMemberName,
-  updateFamilyMemberPortionMultiplier,
 } from "@/lib/db/family-members";
 import {
   createFamilyMemberSchema,
   deleteFamilyMemberSchema,
   updateFamilyMemberNameSchema,
-  updateFamilyMemberPortionMultiplierSchema,
 } from "@/lib/validations/family-member";
 
 function revalidateSettings() {
@@ -49,39 +47,6 @@ export async function updateFamilyMemberNameAction(
     return { type: "success", member };
   } catch {
     return { type: "error", message: "Could not update name. Try again." };
-  }
-}
-
-export async function updateFamilyMemberPortionMultiplierAction(
-  input: unknown,
-): Promise<
-  | { type: "success"; member: FamilyMemberRow }
-  | { type: "error"; message: string }
-> {
-  const parsed = updateFamilyMemberPortionMultiplierSchema.safeParse(input);
-  if (!parsed.success) {
-    return {
-      type: "error",
-      message:
-        parsed.error.issues[0]?.message ??
-        "Could not update portion size. Try again.",
-    };
-  }
-
-  try {
-    const { id: userId } = await requireUser();
-    const member = await updateFamilyMemberPortionMultiplier({
-      userId,
-      id: parsed.data.id,
-      portionMultiplier: parsed.data.portionMultiplier,
-    });
-    revalidateSettings();
-    return { type: "success", member };
-  } catch {
-    return {
-      type: "error",
-      message: "Could not update portion size. Try again.",
-    };
   }
 }
 

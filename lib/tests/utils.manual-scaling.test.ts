@@ -316,13 +316,13 @@ describe('Manual ingredient scaling — integration', () => {
     const jagodaNutrition = scaleNutrition(jagodaBaseNutrition, effectiveFactor);
     const nelsonNutrition = scaleNutrition(nelsonBaseNutrition, effectiveFactor);
 
-    // Household multipliers: per-meal share × portion (Nelson 1.5×).
+    // Equal per-meal shares for each person.
     expect(jagodaBaseNutrition.calories).toBe(263);
-    expect(nelsonBaseNutrition.calories).toBe(394);
+    expect(nelsonBaseNutrition.calories).toBe(263);
 
     expect(jagodaNutrition.calories).toBe(316);
 
-    expect(nelsonNutrition.calories).toBe(473);
+    expect(nelsonNutrition.calories).toBe(316);
   });
 
   it('should calculate correct nutrition when calorie target is active (no manual edit)', () => {
@@ -338,7 +338,7 @@ describe('Manual ingredient scaling — integration', () => {
     const nelsonNutrition = scaleNutrition(nelsonBaseNutrition, effectiveFactor);
 
     expect(jagodaNutrition.calories).toBe(500);
-    expect(nelsonNutrition.calories).toBe(749);
+    expect(nelsonNutrition.calories).toBe(500);
   });
 
   it('should reset to base values when manual scale ratio is 1', () => {

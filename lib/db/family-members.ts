@@ -94,26 +94,6 @@ export async function updateFamilyMemberName(input: {
   });
 }
 
-export async function updateFamilyMemberPortionMultiplier(input: {
-  userId: string;
-  id: string;
-  portionMultiplier: number;
-}): Promise<FamilyMemberRow> {
-  const owned = await prisma.familyMember.findFirst({
-    where: { id: input.id, userId: input.userId },
-    select: { id: true },
-  });
-  if (!owned) {
-    throw new Error("FAMILY_MEMBER_NOT_FOUND");
-  }
-
-  return prisma.familyMember.update({
-    where: { id: input.id },
-    data: { portionMultiplier: input.portionMultiplier },
-    select: familyMemberSelect,
-  });
-}
-
 export async function createFamilyMember(input: {
   userId: string;
   name: string;

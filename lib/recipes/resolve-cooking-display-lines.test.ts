@@ -47,7 +47,7 @@ describe("resolveCookingAggregatedLines", () => {
     expect(lines[0]).toMatchObject({
       ingredientId: "ing-bread",
       unitId: "unit-slice",
-      resolvedAmount: 3,
+      resolvedAmount: 2,
       sourceRecipeIngredientIds: ["ri-bread"],
     });
   });
@@ -78,7 +78,7 @@ describe("resolveCookingAggregatedLines", () => {
       memberPortions: buildMemberPortionsFromFamily(familyMembers),
     });
 
-    expect(lines[0]?.resolvedAmount).toBe(6);
+    expect(lines[0]?.resolvedAmount).toBe(4);
   });
 
   it("splits MODIFY substitutions into separate aggregated lines", () => {
@@ -129,7 +129,7 @@ describe("resolveCookingAggregatedLines", () => {
     });
     expect(lines[1]).toMatchObject({
       ingredientId: "ing-tuna-oil",
-      resolvedAmount: 200,
+      resolvedAmount: 100,
     });
   });
 
@@ -159,7 +159,7 @@ describe("resolveCookingAggregatedLines", () => {
 
     expect(lines).toHaveLength(1);
     expect(lines[0]?.ingredientId).toBe("ing-side");
-    expect(lines[0]?.resolvedAmount).toBe(100);
+    expect(lines[0]?.resolvedAmount).toBe(50);
   });
 
   it("merges duplicate ingredient rows within a section", () => {

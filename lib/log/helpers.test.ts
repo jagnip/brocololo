@@ -6,7 +6,7 @@ import {
 } from "@/lib/log/helpers";
 
 describe("getPersonIngredientAmountPerMeal", () => {
-  it("applies independent multipliers per person (not a weighted split)", () => {
+  it("uses equal per-meal shares for each person (batch ÷ servings)", () => {
     const primary = getPersonIngredientAmountPerMeal({
       amount: 300,
       nutritionTarget: "BOTH",
@@ -22,9 +22,8 @@ describe("getPersonIngredientAmountPerMeal", () => {
       servingMultiplierForNelson: 1.5,
     });
 
-    // (300 ÷ 4) × multiplier — independent per person.
     expect(primary).toBeCloseTo(75);
-    expect(secondary).toBeCloseTo(112.5);
+    expect(secondary).toBeCloseTo(75);
   });
 
   it("returns null for invalid servings", () => {
@@ -51,7 +50,7 @@ describe("getFamilyMemberIngredientAmountPerMeal", () => {
     { familyMemberId: "child", multiplier: 1 },
   ];
 
-  it("uses (batch ÷ servings) × multiplier for each person", () => {
+  it("uses batch ÷ servings for each person", () => {
     const amounts = ["self", "partner", "child"].map((familyMemberId) =>
       getFamilyMemberIngredientAmountPerMeal({
         amount: 350,
@@ -65,7 +64,7 @@ describe("getFamilyMemberIngredientAmountPerMeal", () => {
     );
 
     expect(amounts[0]).toBeCloseTo(350 / 3);
-    expect(amounts[1]).toBeCloseTo((350 / 3) * 1.5);
+    expect(amounts[1]).toBeCloseTo(350 / 3);
     expect(amounts[2]).toBeCloseTo(350 / 3);
   });
 
@@ -97,7 +96,7 @@ describe("getFamilyMemberIngredientAmountPerMeal", () => {
     expect(amount).toBeCloseTo(50);
   });
 
-  it("allows the account holder to have a custom multiplier", () => {
+  it("uses the same per-meal share for the account holder", () => {
     const selfAmount = getFamilyMemberIngredientAmountPerMeal({
       amount: 300,
       appliesToEveryone: true,
@@ -114,7 +113,7 @@ describe("getFamilyMemberIngredientAmountPerMeal", () => {
       ],
     });
 
-    expect(selfAmount).toBeCloseTo(300);
+    expect(selfAmount).toBeCloseTo(150);
   });
 
   it("returns null for members outside targeted ingredients", () => {
@@ -164,6 +163,6 @@ describe("getFamilyMemberIngredientAmountForScaledBatch", () => {
         familyMembers,
         memberPortions,
       }),
-    ).toBe(900);
+    ).toBe(450);
   });
 });

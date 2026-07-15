@@ -47,7 +47,7 @@ describe("getInstructionIngredientBadgeAmount", () => {
     ).toBe(150);
   });
 
-  it("applies portion multiplier when calorie scale is not applied", () => {
+  it("uses equal per-meal share when calorie scale is not applied", () => {
     expect(
       getInstructionIngredientBadgeAmount({
         amount: 300,
@@ -60,7 +60,7 @@ describe("getInstructionIngredientBadgeAmount", () => {
         recipeServings: baseServings,
         rowScaleFactor: 1,
       }),
-    ).toBe(300);
+    ).toBe(150);
   });
 
   it("uses display servings so scaled batches still resolve per meal", () => {
@@ -90,6 +90,6 @@ describe("getInstructionIngredientBadgeAmount", () => {
         recipeServings: baseServings * 3,
         rowScaleFactor: 3,
       }),
-    ).toBe(300);
+    ).toBe(150);
   });
 });

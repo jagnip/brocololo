@@ -26,7 +26,7 @@ type RecipePortionsFormSectionProps = {
   ) => void;
 };
 
-/** Portions (servings) only — household multipliers live in Settings. */
+/** Portions (servings) only — per-person appetite multipliers are not used. */
 export function RecipePortionsFormSection({
   form,
   recipe,
@@ -36,7 +36,7 @@ export function RecipePortionsFormSection({
   const ingredients = useWatch({ control: form.control, name: "ingredients" }) ?? [];
 
   const servingsHint =
-    "How many meals this batch covers. Per-person amounts use household portion sizes from Settings.";
+    "How many meals this batch covers.";
 
   const [amountsBaselineServings, setAmountsBaselineServings] = useState<
     number | undefined

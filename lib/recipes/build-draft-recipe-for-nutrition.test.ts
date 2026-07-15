@@ -67,7 +67,7 @@ describe("buildDraftRecipeForNutrition", () => {
     expect(draft.ingredients).toHaveLength(0);
   });
 
-  it("builds per-person nutrition from household portion multipliers", () => {
+  it("builds equal per-person nutrition from batch servings", () => {
     const draft = buildDraftRecipeForNutrition(
       2,
       [
@@ -96,6 +96,6 @@ describe("buildDraftRecipeForNutrition", () => {
     );
 
     expect(jagoda.calories).toBe(165);
-    expect(nelson.calories).toBe(330);
+    expect(nelson.calories).toBe(165);
   });
 });

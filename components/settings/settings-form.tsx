@@ -9,7 +9,6 @@ import {
   deleteFamilyMemberAction,
   getFamilyMemberRecipeImpactAction,
   updateFamilyMemberNameAction,
-  updateFamilyMemberPortionMultiplierAction,
 } from "@/actions/family-member-actions";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { TopbarConfigController } from "@/components/topbar-config";
@@ -31,9 +30,6 @@ import type { FamilyMemberRow } from "@/lib/db/family-members";
 type SettingsFormProps = {
   initialMembers: FamilyMemberRow[];
 };
-
-/** Same multiplier choices as the legacy recipe form. */
-const PORTION_MULTIPLIER_OPTIONS = [1, 1.5, 2, 2.5, 3] as const;
 
 /** Display label for non-self members (delete dialog, aria-labels). */
 function getFamilyMemberDisplayName(
@@ -117,36 +113,6 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
     [draftNames, refreshFromServer],
   );
 
-  const savePortionMultiplier = useCallback(
-    async (member: FamilyMemberRow, portionMultiplier: number) => {
-      if (portionMultiplier === member.portionMultiplier) {
-        return;
-      }
-
-      setPendingMemberId(member.id);
-      const result = await updateFamilyMemberPortionMultiplierAction({
-        id: member.id,
-        portionMultiplier,
-      });
-      setPendingMemberId(null);
-
-      if (result.type === "error") {
-        toast.error(result.message);
-        return;
-      }
-
-      setMembers((prev) =>
-        prev.map((row) =>
-          row.id === member.id
-            ? { ...row, portionMultiplier: result.member.portionMultiplier }
-            : row,
-        ),
-      );
-      refreshFromServer();
-    },
-    [refreshFromServer],
-  );
-
   const handleAddMember = () => {
     startAddTransition(async () => {
       const result = await createFamilyMemberAction({ name: "" });
@@ -189,34 +155,6 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
       refreshFromServer();
     });
   };
-
-  const renderPortionMultiplier = (member: FamilyMemberRow, label: string) => (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-item">
-      <Label className="shrink-0 sm:w-40">{label}</Label>
-      <div
-        className="flex min-w-0 flex-1 flex-wrap gap-2"
-        role="radiogroup"
-        aria-label={`${label} portion multiplier`}
-      >
-        {PORTION_MULTIPLIER_OPTIONS.map((multiplier) => {
-          const checked = member.portionMultiplier === multiplier;
-          return (
-            <Button
-              key={multiplier}
-              type="button"
-              role="radio"
-              aria-checked={checked}
-              variant={checked ? "default" : "outline"}
-              disabled={pendingMemberId === member.id}
-              onClick={() => void savePortionMultiplier(member, multiplier)}
-            >
-              {multiplier}×
-            </Button>
-          );
-        })}
-      </div>
-    </div>
-  );
 
   const renderNameInput = (
     member: FamilyMemberRow,
@@ -267,7 +205,6 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
             <div className="section-container">
               <div className="flex flex-col gap-3">
                 {renderNameInput(selfMember, "Your name", "Enter your name")}
-                {renderPortionMultiplier(selfMember, "Your usual portion")}
               </div>
             </div>
           </section>
@@ -279,11 +216,6 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
           </div>
           <div className="section-container">
             <div className="flex flex-col gap-3">
-              <p className="text-sm text-muted-foreground">
-                Set household portion sizes here. Recipes use these defaults when
-                calculating per-person amounts and nutrition.
-              </p>
-
               {otherMembers.map((member) => (
                 <div
                   key={member.id}
@@ -307,10 +239,6 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
                       </Button>
                     </div>
                   </div>
-                  {renderPortionMultiplier(
-                    member,
-                    `${getFamilyMemberDisplayName(member, sortedMembers)} portion`,
-                  )}
                 </div>
               ))}
 
@@ -354,7 +282,7 @@ export function SettingsForm({ initialMembers }: SettingsFormProps) {
             <AlertDialogDescription>
               {deleteTarget
                 ? deleteHasRecipeImpact
-                  ? `${getFamilyMemberDisplayName(deleteTarget, sortedMembers)} will be removed from your household list, recipes, serving multipliers, and ingredient customisations.`
+                  ? `${getFamilyMemberDisplayName(deleteTarget, sortedMembers)} will be removed from your household list, recipes, and ingredient customisations.`
                   : `${getFamilyMemberDisplayName(deleteTarget, sortedMembers)} will be removed from your household list.`
                 : null}
             </AlertDialogDescription>

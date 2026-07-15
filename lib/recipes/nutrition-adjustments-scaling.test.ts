@@ -182,13 +182,13 @@ describe("nutrition with member adjustments", () => {
     const jagoda = nutritionFor(recipe, "fm-jagoda");
     const nelson = nutritionFor(recipe, "fm-nelson");
 
-    // Nelson skips butter; pasta share (200g batch ÷ 2 servings × 2×) = 200g.
-    expect(nelson.calories).toBe(700);
-    expect(nelson.fat).toBe(4);
-    expect(jagoda.calories).toBeLessThan(nelson.calories);
+    // Nelson skips butter; pasta share (200g batch ÷ 2 servings) = 100g.
+    expect(nelson.calories).toBe(350);
+    expect(nelson.fat).toBe(2);
+    expect(jagoda.calories).toBeGreaterThan(nelson.calories);
   });
 
-  it("applies portion multipliers on default lines without explicit MODIFY", () => {
+  it("uses equal default per-meal shares without explicit MODIFY", () => {
     const gramsUnit = createMockUnit({ id: "unit-g", name: "g" });
     const rice = createMockIngredient({
       id: "ing-rice",
@@ -221,9 +221,9 @@ describe("nutrition with member adjustments", () => {
     const jagoda = nutritionFor(recipe, "fm-jagoda");
     const nelson = nutritionFor(recipe, "fm-nelson");
 
-    // 300g batch, 2 servings, Nelson 2× household multiplier => Jagoda 150g, Nelson 300g.
+    // 300g batch, 2 servings => 150g per person.
     expect(jagoda.calories).toBe(195);
-    expect(nelson.calories).toBe(390);
+    expect(nelson.calories).toBe(195);
   });
 });
 

@@ -68,8 +68,8 @@ describe("ingredient-adjustments helpers", () => {
     });
     expect(rows[1]).toMatchObject({
       personLabel: "Nelson",
-      portionBadgeLabel: "×2",
-      shareDetail: "85 g",
+      portionBadgeLabel: null,
+      shareDetail: "42.5 g",
     });
 
     const nelsonOnly = buildPortionSizeSummaryRows({
@@ -94,7 +94,7 @@ describe("ingredient-adjustments helpers", () => {
     });
     expect(nelsonOnly).toHaveLength(1);
     expect(nelsonOnly[0]?.personLabel).toBe("Nelson");
-    expect(nelsonOnly[0]?.shareDetail).toBe("85 g");
+    expect(nelsonOnly[0]?.shareDetail).toBe("42.5 g");
 
     const poolRows = resolveRecipeIngredientRowsForMember({
       recipeIngredients: [
@@ -121,8 +121,8 @@ describe("ingredient-adjustments helpers", () => {
       memberPortions: [{ familyMemberId: "fm-nelson", multiplier: 2 }],
       audienceMemberIds: ["fm-jagoda", "fm-nelson"],
     });
-    expect(poolRows[0]?.amount).toBeCloseTo(85, 2);
-    expect(nelsonOnly[0]?.shareDetail).toBe("85 g");
+    expect(poolRows[0]?.amount).toBeCloseTo(42.5, 2);
+    expect(nelsonOnly[0]?.shareDetail).toBe("42.5 g");
 
     expect(
       shouldShowPortionShareSummary({
@@ -161,7 +161,7 @@ describe("ingredient-adjustments helpers", () => {
     });
   });
 
-  it("prefills MODIFY amount with portion multiplier", () => {
+  it("prefills MODIFY amount from batch ÷ servings", () => {
     const adjustment = buildDefaultModifyAdjustment({
       familyMemberId: "fm-nelson",
       baseIngredientId: "ing-butter",
@@ -170,7 +170,7 @@ describe("ingredient-adjustments helpers", () => {
       servings: 4,
       memberPortions: [{ familyMemberId: "fm-nelson", multiplier: 2 }],
     });
-    expect(adjustment.amount).toBe(25);
+    expect(adjustment.amount).toBe(12.5);
   });
 
   it("resolves SKIP as null consumable line", () => {
@@ -268,7 +268,7 @@ describe("ingredient-adjustments helpers", () => {
     });
   });
 
-  it("includes portion badge on summary lines when multiplier is not 1", () => {
+  it("omits portion badge when multipliers are not used", () => {
     const lines = buildAdjustmentSummaryLines({
       memberAdjustments: [
         {
@@ -294,7 +294,7 @@ describe("ingredient-adjustments helpers", () => {
       audienceMemberIds: ["fm-jagoda", "fm-nelson"],
     });
 
-    expect(lines[0]?.portionBadgeLabel).toBe("×2");
+    expect(lines[0]?.portionBadgeLabel).toBeNull();
   });
 
   it("counts member adjustments for collapsed badge", () => {

@@ -18,23 +18,12 @@ type MemberAdjustmentForPortion = {
   amount?: number | null;
 };
 
-/** Resolve multiplier — household default wins; legacy recipe rows are fallback only. */
+/** Portion multipliers removed — everyone uses 1× base share (batch ÷ servings). */
 export function getPersonPortionMultiplier(
-  familyMemberId: string,
-  familyMembers: FamilyMemberForPortion[],
-  memberPortions: MemberPortion[],
+  _familyMemberId: string,
+  _familyMembers: FamilyMemberForPortion[],
+  _memberPortions: MemberPortion[],
 ): number {
-  const fromMember = familyMembers.find((member) => member.id === familyMemberId)
-    ?.portionMultiplier;
-  if (fromMember != null && Number.isFinite(fromMember) && fromMember > 0) {
-    return fromMember;
-  }
-  const fromLegacy = memberPortions.find(
-    (portion) => portion.familyMemberId === familyMemberId,
-  )?.multiplier;
-  if (fromLegacy != null && Number.isFinite(fromLegacy) && fromLegacy > 0) {
-    return fromLegacy;
-  }
   return 1;
 }
 

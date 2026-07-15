@@ -148,53 +148,53 @@ function expectParity(fixture: PortionFixture) {
     2,
   );
 
-  // Nelson always gets twice Jagoda's share when multipliers are 1 and 2.
-  expect(paths.fromCore.nelson).toBeCloseTo((paths.fromCore.jagoda ?? 0) * 2, 4);
+  // Equal per-meal shares for everyone.
+  expect(paths.fromCore.nelson).toBeCloseTo(paths.fromCore.jagoda ?? 0, 4);
 }
 
 describe("portion resolution parity (core, consumable, log pool, people panel)", () => {
-  it("bread: 3 slices batch, 2 servings → Jagoda 1.5, Nelson 3 per meal", () => {
+  it("bread: 3 slices batch, 2 servings → 1.5 per meal each", () => {
     expectParity({
       label: "3 slices / 2 servings",
       batchAmount: 3,
       servings: 2,
-      expected: { jagoda: 1.5, nelson: 3 },
+      expected: { jagoda: 1.5, nelson: 1.5 },
     });
   });
 
-  it("bread: 2 slices batch, 2 servings → Jagoda 1, Nelson 2 per meal", () => {
+  it("bread: 2 slices batch, 2 servings → 1 per meal each", () => {
     expectParity({
       label: "2 slices / 2 servings",
       batchAmount: 2,
       servings: 2,
-      expected: { jagoda: 1, nelson: 2 },
+      expected: { jagoda: 1, nelson: 1 },
     });
   });
 
-  it("bread: 3 slices batch, 1 serving → Jagoda 3, Nelson 6 per meal", () => {
+  it("bread: 3 slices batch, 1 serving → 3 per meal each", () => {
     expectParity({
       label: "3 slices / 1 serving",
       batchAmount: 3,
       servings: 1,
-      expected: { jagoda: 3, nelson: 6 },
+      expected: { jagoda: 3, nelson: 3 },
     });
   });
 
-  it("bread: 6 slices batch, 4 servings → Jagoda 1.5, Nelson 3 per meal", () => {
+  it("bread: 6 slices batch, 4 servings → 1.5 per meal each", () => {
     expectParity({
       label: "6 slices / 4 servings",
       batchAmount: 6,
       servings: 4,
-      expected: { jagoda: 1.5, nelson: 3 },
+      expected: { jagoda: 1.5, nelson: 1.5 },
     });
   });
 
-  it("tuna: 85g batch, 2 servings → Jagoda 42.5g, Nelson 85g", () => {
+  it("tuna: 85g batch, 2 servings → 42.5g per meal each", () => {
     expectParity({
       label: "85g tuna / 2 servings",
       batchAmount: 85,
       servings: 2,
-      expected: { jagoda: 42.5, nelson: 85 },
+      expected: { jagoda: 42.5, nelson: 42.5 },
     });
   });
 });
@@ -253,7 +253,7 @@ describe("portion resolution with Jagoda MODIFY (Nelson uses default split)", ()
       excludeAdjustedMemberIds: ["fm-jagoda"],
     });
 
-    expect(nelsonFromCore).toBeCloseTo(85, 4);
+    expect(nelsonFromCore).toBeCloseTo(42.5, 4);
     expect(nelsonFromPool[0]?.amount).toBeCloseTo(nelsonFromCore ?? 0, 3);
     expect(parseAmountFromShareDetail(nelsonFromPanel[0]?.shareDetail)).toBeCloseTo(
       nelsonFromCore ?? 0,
