@@ -18,12 +18,22 @@ type MemberAdjustmentForPortion = {
   amount?: number | null;
 };
 
-/** Portion multipliers removed — everyone uses 1× base share (batch ÷ servings). */
+/** Per-recipe portion multiplier; missing or invalid rows default to 1×. */
 export function getPersonPortionMultiplier(
-  _familyMemberId: string,
+  familyMemberId: string,
   _familyMembers: FamilyMemberForPortion[],
-  _memberPortions: MemberPortion[],
+  memberPortions: MemberPortion[],
 ): number {
+  const portion = memberPortions.find(
+    (entry) => entry.familyMemberId === familyMemberId,
+  );
+  if (
+    portion != null &&
+    Number.isFinite(portion.multiplier) &&
+    portion.multiplier > 0
+  ) {
+    return portion.multiplier;
+  }
   return 1;
 }
 
@@ -167,6 +177,11 @@ export function getPersonIngredientAmountPerMeal(params: {
     familyMemberId: params.person,
     recipeServings: params.recipeServings,
     familyMembers,
-    memberPortions: [],
+    memberPortions: [
+      {
+        familyMemberId: "secondary",
+        multiplier: params.servingMultiplierForNelson,
+      },
+    ],
   });
 }

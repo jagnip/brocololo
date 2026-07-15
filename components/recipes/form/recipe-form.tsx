@@ -32,6 +32,7 @@ import {
   calculateNutritionPerServing,
   formatIngredientAmount,
   formatIngredientLabel,
+  buildMemberPortionsFormValues,
   getUnitDisplayName,
   recipeToFormData,
   toSentenceCaseIngredientName,
@@ -59,6 +60,20 @@ import MultipleSelector from "@/components/ui/multiselect";
 import { RecipeNutritionPreviewSection } from "./recipe-nutrition-preview-section";
 import { RecipePortionsFormSection } from "./recipe-portions-form-section";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
+import type { MemberPortionInput } from "@/lib/recipes/ingredient-adjustments";
+
+/** RHF + z.input leave `multiplier` as unknown until submit — coerce for preview math. */
+function coerceMemberPortionsForPreview(
+  rows: CreateRecipeFormValues["memberPortions"] | undefined,
+): MemberPortionInput[] {
+  return (rows ?? []).map((row) => ({
+    familyMemberId: row.familyMemberId,
+    multiplier:
+      typeof row.multiplier === "number" && Number.isFinite(row.multiplier)
+        ? row.multiplier
+        : 1,
+  }));
+}
 
 type RecipeFormProps = {
   categories: CategoryType[];
@@ -210,7 +225,10 @@ export default function RecipeForm({
       formSchema,
     ) as unknown as Resolver<CreateRecipeFormValues>,
     defaultValues: recipe
-      ? recipeToFormData(recipe)
+      ? recipeToFormData(
+          recipe,
+          familyMembers.map((member) => member.id),
+        )
       : {
           name: "",
           mealOccasionCategoryIds: [],
@@ -218,6 +236,10 @@ export default function RecipeForm({
           typeCategoryId: null,
           images: [],
           servings: Math.max(familyMembers.length, 1),
+          memberPortions: buildMemberPortionsFormValues(
+            familyMembers.map((member) => member.id),
+            [],
+          ),
           ingredientGroups: [],
           ingredients: [],
           instructions: [],
@@ -230,6 +252,12 @@ export default function RecipeForm({
   const previewServings = useWatch({ control: form.control, name: "servings" });
   const previewIngredients =
     useWatch({ control: form.control, name: "ingredients" }) ?? [];
+  const previewMemberPortionsRaw =
+    useWatch({ control: form.control, name: "memberPortions" }) ?? [];
+  const previewMemberPortions = useMemo(
+    () => coerceMemberPortionsForPreview(previewMemberPortionsRaw),
+    [previewMemberPortionsRaw],
+  );
 
   const nutritionPreview = useMemo(() => {
     const draft = buildDraftRecipeForNutrition(
@@ -237,6 +265,7 @@ export default function RecipeForm({
       previewIngredients,
       localIngredients,
       familyMembers,
+      previewMemberPortions,
     );
     return familyMembers.map((member, index) => ({
       familyMemberId: member.id,
@@ -254,6 +283,7 @@ export default function RecipeForm({
     familyMembers,
     previewServings,
     previewIngredients,
+    previewMemberPortions,
     localIngredients,
   ]);
 
@@ -687,6 +717,7 @@ export default function RecipeForm({
         <RecipePortionsFormSection
           form={form}
           recipe={recipe}
+          familyMembers={familyMembers}
           onNumericServingsChange={handleNumericFieldChange}
         />
 
@@ -710,7 +741,7 @@ export default function RecipeForm({
                           ? previewServings
                           : 1
                       }
-                      memberPortions={[]}
+                      memberPortions={previewMemberPortions}
                       groups={ingredientGroups}
                       value={field.value}
                       onChange={field.onChange}

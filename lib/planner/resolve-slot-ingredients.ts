@@ -109,10 +109,15 @@ export function resolveRecipeSlotAggregatedIngredients(params: {
   cookingFamilyMemberIds?: string[];
   familyMembers: FamilyMemberRef[];
 }): AggregatedIngredientLine[] {
-  const memberPortions = params.familyMembers.map((member) => ({
-    familyMemberId: member.id,
-    multiplier: 1,
-  }));
+  const memberPortions = params.familyMembers.map((member) => {
+    const stored = params.recipe.memberPortions?.find(
+      (portion) => portion.familyMemberId === member.id,
+    );
+    return {
+      familyMemberId: member.id,
+      multiplier: stored?.multiplier ?? 1,
+    };
+  });
   const audienceMemberIds = params.familyMembers.map((member) => member.id);
   const cookingIds = getSlotCookingFamilyMemberIds({
     cookingFamilyMemberIds: params.cookingFamilyMemberIds,
@@ -378,10 +383,15 @@ export function resolveRecipeSlotScaledConsumables(
   }
 
   const familyMembers = slot.familyMembers ?? [];
-  const memberPortions = familyMembers.map((member) => ({
-    familyMemberId: member.id,
-    multiplier: 1,
-  }));
+  const memberPortions = familyMembers.map((member) => {
+    const stored = slot.recipe!.memberPortions?.find(
+      (portion) => portion.familyMemberId === member.id,
+    );
+    return {
+      familyMemberId: member.id,
+      multiplier: stored?.multiplier ?? 1,
+    };
+  });
   const audienceMemberIds = familyMembers.map((member) => member.id);
   const cookingIds = getSlotCookingFamilyMemberIds({
     cookingFamilyMemberIds: slot.cookingFamilyMemberIds,

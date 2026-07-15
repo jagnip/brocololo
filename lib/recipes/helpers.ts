@@ -234,7 +234,28 @@ export function getIngredientDisplay(
 }
 
 //To transform recipefrom to edit recipe form 
-export function recipeToFormData(recipe: RecipeType): UpdateRecipeFormValues {
+/** Build form portion rows for every household member; missing DB rows default to 1×. */
+export function buildMemberPortionsFormValues(
+  familyMemberIds: string[],
+  storedPortions: Array<{ familyMemberId: string; multiplier: number }>,
+): Array<{ familyMemberId: string; multiplier: number }> {
+  const multiplierByMemberId = new Map(
+    storedPortions.map((portion) => [
+      portion.familyMemberId,
+      portion.multiplier,
+    ]),
+  );
+
+  return familyMemberIds.map((familyMemberId) => ({
+    familyMemberId,
+    multiplier: multiplierByMemberId.get(familyMemberId) ?? 1,
+  }));
+}
+
+export function recipeToFormData(
+  recipe: RecipeType,
+  familyMemberIds?: string[],
+): UpdateRecipeFormValues {
   const ingredientGroups = recipe.ingredientGroups.map((group) => ({
     id: group.id,
     tempGroupKey: group.id,
@@ -285,6 +306,11 @@ export function recipeToFormData(recipe: RecipeType): UpdateRecipeFormValues {
     handsOnTime: recipe.handsOnTime,
     totalTime: recipe.totalTime,
     servings: recipe.servings,
+    memberPortions: buildMemberPortionsFormValues(
+      familyMemberIds ??
+        recipe.audienceMembers.map((member) => member.familyMemberId),
+      recipe.memberPortions,
+    ),
     ingredientGroups,
     ingredients: ingredientRows,
     instructions: recipe.instructions.map((instruction) => ({

@@ -43,6 +43,24 @@ export type MemberPortionInput = {
   multiplier: number;
 };
 
+/** Fill missing members with 1× so resolution always has a row per person. */
+export function normalizeMemberPortions(
+  familyMembers: Array<{ id: string }>,
+  memberPortions: MemberPortionInput[] | undefined,
+): MemberPortionInput[] {
+  const multiplierByMemberId = new Map(
+    (memberPortions ?? []).map((portion) => [
+      portion.familyMemberId,
+      portion.multiplier,
+    ]),
+  );
+
+  return familyMembers.map((member) => ({
+    familyMemberId: member.id,
+    multiplier: multiplierByMemberId.get(member.id) ?? 1,
+  }));
+}
+
 /** Per-person default when no explicit MODIFY amount is set. */
 export function getDefaultPerPersonAmount(
   batchAmount: number | null | undefined,

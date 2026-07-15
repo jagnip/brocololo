@@ -188,7 +188,7 @@ describe("nutrition with member adjustments", () => {
     expect(jagoda.calories).toBeGreaterThan(nelson.calories);
   });
 
-  it("uses equal default per-meal shares without explicit MODIFY", () => {
+  it("uses independent default per-meal shares without explicit MODIFY", () => {
     const gramsUnit = createMockUnit({ id: "unit-g", name: "g" });
     const rice = createMockIngredient({
       id: "ing-rice",
@@ -221,9 +221,9 @@ describe("nutrition with member adjustments", () => {
     const jagoda = nutritionFor(recipe, "fm-jagoda");
     const nelson = nutritionFor(recipe, "fm-nelson");
 
-    // 300g batch, 2 servings => 150g per person.
+    // 300g batch, 2 servings => Jagoda 150g, Nelson 300g (2×).
     expect(jagoda.calories).toBe(195);
-    expect(nelson.calories).toBe(195);
+    expect(nelson.calories).toBe(390);
   });
 });
 

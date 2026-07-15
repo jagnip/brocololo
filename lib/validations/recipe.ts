@@ -137,6 +137,24 @@ const recipeImageSchema = z.object({
   isCover: z.boolean().default(false),
 });
 
+const PORTION_MULTIPLIER_VALUES = [0.5, 1, 1.5, 2] as const;
+
+const recipeMemberPortionSchema = z.object({
+  familyMemberId: z.string().min(1),
+  multiplier: preprocessRequiredNumberInput(
+    "Choose a portion multiplier",
+    z
+      .number()
+      .refine(
+        (value) =>
+          PORTION_MULTIPLIER_VALUES.includes(
+            value as (typeof PORTION_MULTIPLIER_VALUES)[number],
+          ),
+        { message: "Choose 0.5, 1, 1.5, or 2" },
+      ),
+  ),
+});
+
 const recipeBaseSchema = z
   .object({
     name: z.string().min(1, { message: "Enter a recipe name" }),
@@ -175,6 +193,7 @@ const recipeBaseSchema = z
         .int({ message: "Enter a number of portions above 0" })
         .min(1, { message: "Enter a number of portions above 0" }),
     ),
+    memberPortions: z.array(recipeMemberPortionSchema).default([]),
     ingredientGroups: z.array(recipeIngredientGroupSchema).default([]),
     // Keep arrays required but allow empty collections for draft-like recipes.
     ingredients: z.array(recipeIngredientSchema),
@@ -220,3 +239,5 @@ export type UpdateRecipePayload = z.infer<typeof updateRecipeSchema>;
 
 export type RecipeIngredientGroupInputType = z.input<typeof recipeIngredientGroupSchema>;
 export type RecipeIngredientInputType = z.input<typeof recipeIngredientSchema>;
+
+export const PORTION_MULTIPLIER_OPTIONS = PORTION_MULTIPLIER_VALUES;
