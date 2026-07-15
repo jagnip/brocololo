@@ -4,10 +4,14 @@ import { RotateCcw } from "lucide-react";
 import type { IngredientType } from "@/types/ingredient";
 import { IngredientItem } from "@/components/recipes/ingredient-item";
 import { isScaleModified } from "@/lib/recipes/helpers";
+import { getSharedPortionShares } from "@/lib/recipes/shared-portion-shares";
 import { useRecipePageIngredientsSectionData } from "@/components/context/recipe-page-context";
+import { PortionSplitCard } from "@/components/recipes/recipe-page/portion-split-card";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import type { CookingAggregatedLine } from "@/lib/recipes/resolve-cooking-display-lines";
 import type { RecipeType } from "@/types/recipe";
+
+const SHARED_INGREDIENTS_SCOPE_LABEL = "Portion sizes";
 
 function resolveUnitForAggregatedLine(
   line: CookingAggregatedLine,
@@ -142,6 +146,8 @@ export function IngredientsSection() {
   const {
     recipe,
     ingredients,
+    familyMembers,
+    memberPortions,
     effectiveRecipeIngredientById,
     hasActiveScaling,
     localScaleByIngredientId,
@@ -156,6 +162,27 @@ export function IngredientsSection() {
     onApplyScaleToAll,
     onIngredientChange,
   } = useRecipePageIngredientsSectionData();
+
+  const portionSplitMembers = useMemo(() => {
+    const shares = getSharedPortionShares(familyMembers, memberPortions);
+    return shares.map((entry, index) => {
+      const member = familyMembers.find(
+        (familyMember) => familyMember.id === entry.familyMemberId,
+      );
+      const label =
+        member?.name.trim() ||
+        (member?.isSelf ? "You" : `Family member ${index + 1}`);
+      return {
+        label,
+        share: entry.share,
+        multiplier: entry.multiplier,
+      };
+    });
+  }, [familyMembers, memberPortions]);
+
+  const showPortionSplitChart = portionSplitMembers.some(
+    (member) => member.multiplier !== 1,
+  );
 
   const sharedRenderParams = useMemo(
     () => ({
@@ -205,6 +232,12 @@ export function IngredientsSection() {
           )}
         </div>
       </div>
+      {showPortionSplitChart ? (
+        <PortionSplitCard
+          members={portionSplitMembers}
+          scopeLabel={SHARED_INGREDIENTS_SCOPE_LABEL}
+        />
+      ) : null}
       {ungroupedIngredients.length > 0 && hasUngroupedLines ? (
         <div className="mb-item">
           <ul className="space-y-item type-body">

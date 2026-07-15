@@ -4,6 +4,8 @@ import type { IngredientType } from "@/types/ingredient";
 import type { CreateRecipeFormValues } from "@/lib/validations/recipe";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 
+import type { MemberPortionInput } from "@/lib/recipes/ingredient-adjustments";
+
 type FormIngredientRow = CreateRecipeFormValues["ingredients"][number];
 
 /** Coerce live form portions for preview; invalid yields NaN so calculateNutritionPerServing returns zeros. */
@@ -27,13 +29,13 @@ function coerceIngredientRowPosition(value: unknown): number {
 /**
  * Maps editor form slice + ingredient catalog into the shape used by calculateNutritionPerServing.
  * Skips placeholder rows without ingredientId (same idea as submit sanitization).
- * Household portion multipliers come from `familyMembers`, not the recipe form.
  */
 export function buildDraftRecipeForNutrition(
   servings: unknown,
   rows: FormIngredientRow[] | undefined,
   catalog: IngredientType[],
   familyMembers: FamilyMemberRow[],
+  memberPortions: MemberPortionInput[] = [],
 ): RecipeForNutritionCalculation {
   const byId = new Map(catalog.map((ingredient) => [ingredient.id, ingredient]));
 
@@ -89,7 +91,11 @@ export function buildDraftRecipeForNutrition(
       recipeId: "draft",
       familyMemberId: member.id,
     })),
-    memberPortions: [],
+    memberPortions: memberPortions.map((portion) => ({
+      recipeId: "draft",
+      familyMemberId: portion.familyMemberId,
+      multiplier: portion.multiplier,
+    })),
     ingredients,
   };
 }

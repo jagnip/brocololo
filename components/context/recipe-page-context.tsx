@@ -22,7 +22,10 @@ import { useRecipeNutrition } from "@/components/recipes/recipe-page/use-recipe-
 import { useIngredientGrouping } from "@/components/recipes/recipe-page/use-ingredient-grouping";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import {
-  buildMemberPortionsFromFamily,
+  normalizeMemberPortions,
+  type MemberPortionInput,
+} from "@/lib/recipes/ingredient-adjustments";
+import {
   resolveCookingAggregatedLines,
   type CookingAggregatedLine,
 } from "@/lib/recipes/resolve-cooking-display-lines";
@@ -44,7 +47,7 @@ type RecipePageContextValue = {
   cookingFamilyMemberIds: string[];
   onCookingFamilyMemberIdsChange: (nextIds: string[]) => void;
   audienceMemberIds: string[];
-  memberPortions: ReturnType<typeof buildMemberPortionsFromFamily>;
+  memberPortions: MemberPortionInput[];
   selectedInstructionFamilyMemberId: string | null;
   setSelectedInstructionFamilyMemberId: Dispatch<SetStateAction<string | null>>;
   calorieTarget: CalorieTarget | null;
@@ -114,8 +117,15 @@ export function RecipePageProvider({
     [familyMembers],
   );
   const memberPortions = useMemo(
-    () => buildMemberPortionsFromFamily(familyMembers),
-    [familyMembers],
+    () =>
+      normalizeMemberPortions(
+        familyMembers,
+        recipe.memberPortions.map((portion) => ({
+          familyMemberId: portion.familyMemberId,
+          multiplier: portion.multiplier,
+        })),
+      ),
+    [familyMembers, recipe.memberPortions],
   );
 
   useEffect(() => {
@@ -416,6 +426,9 @@ export function useRecipePageIngredientsSectionData() {
   const {
     recipe,
     ingredients,
+    familyMembers,
+    memberPortions,
+    audienceMemberIds,
     effectiveRecipeIngredientById,
     hasActiveScaling,
     localScaleByIngredientId,
@@ -434,6 +447,9 @@ export function useRecipePageIngredientsSectionData() {
   return {
     recipe,
     ingredients,
+    familyMembers,
+    memberPortions,
+    audienceMemberIds,
     effectiveRecipeIngredientById,
     hasActiveScaling,
     localScaleByIngredientId,

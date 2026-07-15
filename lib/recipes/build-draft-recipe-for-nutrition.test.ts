@@ -67,7 +67,11 @@ describe("buildDraftRecipeForNutrition", () => {
     expect(draft.ingredients).toHaveLength(0);
   });
 
-  it("builds equal per-person nutrition from batch servings", () => {
+  it("builds per-person nutrition from form portion multipliers", () => {
+    const memberPortions = [
+      { familyMemberId: "family-self", multiplier: 1 },
+      { familyMemberId: "family-member-1", multiplier: 2 },
+    ];
     const draft = buildDraftRecipeForNutrition(
       2,
       [
@@ -80,6 +84,7 @@ describe("buildDraftRecipeForNutrition", () => {
       ],
       [chicken],
       familyMembers,
+      memberPortions,
     );
 
     const jagoda = calculateNutritionPerServing(
@@ -96,6 +101,6 @@ describe("buildDraftRecipeForNutrition", () => {
     );
 
     expect(jagoda.calories).toBe(165);
-    expect(nelson.calories).toBe(165);
+    expect(nelson.calories).toBe(330);
   });
 });

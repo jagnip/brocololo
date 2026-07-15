@@ -82,11 +82,11 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
     const jagoda = nutritionFor(recipe, "jagoda");
     const nelson = nutritionFor(recipe, "nelson");
 
-    // Equal per-meal shares: (batch ÷ servings) per person.
+    // Independent per-meal shares: Jagoda 1×, Nelson 2× on (batch ÷ servings).
     expect(jagoda.calories).toBeCloseTo(645, 1);
-    expect(nelson.calories).toBeCloseTo(645, 1);
+    expect(nelson.calories).toBeCloseTo(1290, 1);
     expect(jagoda.protein).toBeCloseTo(60, 1);
-    expect(nelson.protein).toBeCloseTo(60, 1);
+    expect(nelson.protein).toBeCloseTo(120, 1);
   });
 
   it("allocates PRIMARY_ONLY and SECONDARY_ONLY ingredients correctly", () => {
@@ -140,8 +140,8 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
 
     // Primary ignores SECONDARY_ONLY oil.
     expect(jagoda.calories).toBe(100);
-    // Secondary includes SECONDARY_ONLY oil.
-    expect(nelson.calories).toBe(550);
+    // Secondary includes SECONDARY_ONLY oil at 2× portion multiplier.
+    expect(nelson.calories).toBe(1100);
   });
 
   it("ignores null amount and missing conversion safely", () => {
@@ -258,25 +258,19 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
     const jagoda = nutritionFor(oddServingsRecipe, "jagoda");
     const nelson = nutritionFor(oddServingsRecipe, "nelson");
 
-    // Shared rows use equal per-meal shares for each person.
-    expect(nelson.calories / jagoda.calories).toBeCloseTo(1, 2);
-    expect(nelson.protein / jagoda.protein).toBeCloseTo(1, 2);
+    // Shared rows scale with each person's portion multiplier.
+    expect(nelson.calories / jagoda.calories).toBeCloseTo(2, 2);
+    expect(nelson.protein / jagoda.protein).toBeCloseTo(2, 2);
   });
 
-  it("treats stored portion multiplier as ignored (everyone 1×)", () => {
+  it("scales nutrition with stored portion multipliers", () => {
     const recipe = createChickenSandwichRecipe();
-    const noNelsonPortionRecipe = {
-      ...recipe,
-      memberPortions: [
-        { recipeId: "recipe-1", familyMemberId: "family-member-1", multiplier: 0 },
-      ],
-    };
 
-    const jagoda = nutritionFor(noNelsonPortionRecipe, "jagoda");
-    const nelson = nutritionFor(noNelsonPortionRecipe, "nelson");
+    const jagoda = nutritionFor(recipe, "jagoda");
+    const nelson = nutritionFor(recipe, "nelson");
 
     expect(jagoda.calories).toBeGreaterThan(0);
-    expect(nelson.calories).toBe(jagoda.calories);
+    expect(nelson.calories / jagoda.calories).toBeCloseTo(2, 1);
   });
 });
 

@@ -6,7 +6,7 @@ import {
 } from "@/lib/log/helpers";
 
 describe("getPersonIngredientAmountPerMeal", () => {
-  it("uses equal per-meal shares for each person (batch ÷ servings)", () => {
+  it("uses independent per-meal shares with legacy Nelson multiplier", () => {
     const primary = getPersonIngredientAmountPerMeal({
       amount: 300,
       nutritionTarget: "BOTH",
@@ -23,7 +23,7 @@ describe("getPersonIngredientAmountPerMeal", () => {
     });
 
     expect(primary).toBeCloseTo(75);
-    expect(secondary).toBeCloseTo(75);
+    expect(secondary).toBeCloseTo(112.5);
   });
 
   it("returns null for invalid servings", () => {
@@ -50,7 +50,7 @@ describe("getFamilyMemberIngredientAmountPerMeal", () => {
     { familyMemberId: "child", multiplier: 1 },
   ];
 
-  it("uses batch ÷ servings for each person", () => {
+  it("uses batch ÷ servings × portion multiplier for each person", () => {
     const amounts = ["self", "partner", "child"].map((familyMemberId) =>
       getFamilyMemberIngredientAmountPerMeal({
         amount: 350,
@@ -64,7 +64,7 @@ describe("getFamilyMemberIngredientAmountPerMeal", () => {
     );
 
     expect(amounts[0]).toBeCloseTo(350 / 3);
-    expect(amounts[1]).toBeCloseTo(350 / 3);
+    expect(amounts[1]).toBeCloseTo((350 / 3) * 1.5);
     expect(amounts[2]).toBeCloseTo(350 / 3);
   });
 
@@ -96,7 +96,7 @@ describe("getFamilyMemberIngredientAmountPerMeal", () => {
     expect(amount).toBeCloseTo(50);
   });
 
-  it("uses the same per-meal share for the account holder", () => {
+  it("applies portion multiplier for the account holder", () => {
     const selfAmount = getFamilyMemberIngredientAmountPerMeal({
       amount: 300,
       appliesToEveryone: true,
@@ -113,7 +113,7 @@ describe("getFamilyMemberIngredientAmountPerMeal", () => {
       ],
     });
 
-    expect(selfAmount).toBeCloseTo(150);
+    expect(selfAmount).toBeCloseTo(300);
   });
 
   it("returns null for members outside targeted ingredients", () => {
@@ -135,7 +135,7 @@ describe("getFamilyMemberIngredientAmountPerMeal", () => {
 });
 
 describe("getFamilyMemberIngredientAmountForScaledBatch", () => {
-  it("uses the same per-meal formula on a display-scaled batch", () => {
+  it("uses independent per-meal formula on a display-scaled batch", () => {
     const familyMembers = [
       { id: "self", isSelf: true },
       { id: "partner", isSelf: false },
@@ -163,6 +163,6 @@ describe("getFamilyMemberIngredientAmountForScaledBatch", () => {
         familyMembers,
         memberPortions,
       }),
-    ).toBe(450);
+    ).toBe(900);
   });
 });
