@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { SlotInputType } from "@/types/planner";
 import type { PlanSlotMealPayload } from "@/types/planner";
 import type { RecipeType } from "@/types/recipe";
@@ -17,6 +17,10 @@ import { PlanSlotMealDialog } from "./plan-slot-meal-dialog";
 import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
 import { getAddMealDialogCopy, getReplaceMealDialogCopy } from "@/lib/planner/plan-slot-meal-dialog-copy";
 import { formatDayLabel } from "@/lib/planner/helpers";
+import {
+  getPlannerRecipeDialogIngredientRows,
+  getPlannerSlotIngredientSummary,
+} from "@/lib/planner/resolve-slot-ingredients";
 import { ROUTES } from "@/lib/constants";
 import { SlotAudienceSelect } from "./slot-audience-select";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
@@ -25,6 +29,31 @@ import { Checkbox } from "@/components/ui/checkbox";
 /** Warm off-white on primary — matches --rose-50 accent surface. */
 const MEAL_DONE_ICON_CLASS =
   "text-[var(--rose-50)] hover:text-[var(--rose-50)] [&_svg]:text-[var(--rose-50)]";
+
+function SlotIngredientSummary({
+  visibleLines,
+  remainingCount,
+}: {
+  visibleLines: string[];
+  remainingCount: number;
+}) {
+  if (visibleLines.length === 0) {
+    return null;
+  }
+
+  return (
+    <ul className="mt-item space-y-0.5 text-xs text-muted-foreground">
+      {visibleLines.map((line) => (
+        <li key={line} className="truncate" title={line}>
+          {line}
+        </li>
+      ))}
+      {remainingCount > 0 ? (
+        <li className="text-muted-foreground/80">and {remainingCount} more</li>
+      ) : null}
+    </ul>
+  );
+}
 
 type PlannerSlotCardProps = {
   slot: SlotInputType;
@@ -79,6 +108,40 @@ export function PlannerSlotCard({
   const showAudienceSelect =
     familyMembers.length > 0 && Boolean(onAudienceChange);
   const hasSelectionControls = Boolean(onSelectionChange);
+
+  const ingredientSummary = useMemo(
+    () =>
+      getPlannerSlotIngredientSummary({
+        recipe: recipe ?? null,
+        customMealIngredients: customMeal?.ingredients,
+        cookingFamilyMemberIds: selectedAudienceIds,
+        familyMembers,
+        ingredientOptions,
+      }),
+    [
+      customMeal?.ingredients,
+      familyMembers,
+      ingredientOptions,
+      recipe,
+      selectedAudienceIds,
+    ],
+  );
+
+  const recipeDialogInitialRows = useMemo(() => {
+    if (!recipe) {
+      return [];
+    }
+    return getPlannerRecipeDialogIngredientRows({
+      recipe,
+      cookingFamilyMemberIds: selectedAudienceIds,
+      familyMembers,
+    });
+  }, [familyMembers, recipe, selectedAudienceIds]);
+
+  const mealDialogAudienceProps = {
+    cookingFamilyMemberIds: selectedAudienceIds,
+    familyMembers,
+  };
 
   const renderAudienceSelect = () =>
     showAudienceSelect ? (
@@ -252,6 +315,7 @@ export function PlannerSlotCard({
             initialRecipeId={null}
             initialCustomName=""
             initialRows={[]}
+            {...mealDialogAudienceProps}
             isSaving={false}
             onCancel={() => setIsDialogOpen(false)}
             onSave={handleSaveMeal}
@@ -298,6 +362,10 @@ export function PlannerSlotCard({
                   {mealLabel}
                 </p>
               </div>
+              <SlotIngredientSummary
+                visibleLines={ingredientSummary.visibleLines}
+                remainingCount={ingredientSummary.remainingCount}
+              />
               {renderSlotActions({ canShuffle: false, showChange: canEdit })}
             </div>
           </CardHeader>
@@ -319,6 +387,7 @@ export function PlannerSlotCard({
               unitId: row.unitId,
               amount: row.amount,
             }))}
+            {...mealDialogAudienceProps}
             isSaving={false}
             onCancel={() => setIsDialogOpen(false)}
             onSave={handleSaveMeal}
@@ -396,6 +465,10 @@ export function PlannerSlotCard({
                   </Badge>
                 ))}
             </div>
+            <SlotIngredientSummary
+              visibleLines={ingredientSummary.visibleLines}
+              remainingCount={ingredientSummary.remainingCount}
+            />
             {renderSlotActions({
               canShuffle: Boolean(canShuffle),
               showChange: canEdit,
@@ -415,7 +488,8 @@ export function PlannerSlotCard({
           ingredientOptions={ingredientOptions}
           initialRecipeId={recipe!.id}
           initialCustomName=""
-          initialRows={[]}
+          initialRows={recipeDialogInitialRows}
+          {...mealDialogAudienceProps}
           isSaving={false}
           onCancel={() => setIsDialogOpen(false)}
           onSave={handleSaveMeal}

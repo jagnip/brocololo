@@ -52,6 +52,7 @@ describe("instruction person filter badge amounts", () => {
         familyMembers,
         memberPortions,
         cookingFamilyMemberIds,
+        recipeServings: 4,
         rowScaleFactor: 2,
       }),
     ).toBe(600);
@@ -67,12 +68,13 @@ describe("instruction person filter badge amounts", () => {
         familyMembers,
         memberPortions,
         cookingFamilyMemberIds,
+        recipeServings: 1,
         rowScaleFactor: 1,
       }),
     ).toBe(100);
   });
 
-  it("splits shared rows by portion multipliers", () => {
+  it("returns per-meal share for shared rows", () => {
     expect(
       getInstructionIngredientBadgeAmount({
         amount: 300,
@@ -82,9 +84,10 @@ describe("instruction person filter badge amounts", () => {
         familyMembers,
         memberPortions,
         cookingFamilyMemberIds,
+        recipeServings: 2,
         rowScaleFactor: 1,
       }),
-    ).toBe(100);
+    ).toBe(150);
     expect(
       getInstructionIngredientBadgeAmount({
         amount: 300,
@@ -94,8 +97,9 @@ describe("instruction person filter badge amounts", () => {
         familyMembers,
         memberPortions,
         cookingFamilyMemberIds,
+        recipeServings: 2,
         rowScaleFactor: 1,
       }),
-    ).toBe(200);
+    ).toBe(300);
   });
 });

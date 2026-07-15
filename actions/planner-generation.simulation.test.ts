@@ -4,6 +4,10 @@ import { getRecipes } from "@/lib/db/recipes";
 import { listFamilyMembers } from "@/lib/db/family-members";
 import { TIME_LIMIT_DEFAULTS } from "@/lib/constants";
 import { getDaysInRange } from "@/lib/planner/helpers";
+import {
+  createDefaultAudienceGroups,
+  mapGroupAudienceToDaily,
+} from "@/lib/planner/audience-mapping";
 import type { DayTimeLimitsType } from "@/lib/validations/planner";
 import { createMockCategory, createMockRecipe } from "@/lib/tests/test-helpers";
 
@@ -28,6 +32,12 @@ vi.mock("next/cache", () => ({
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
 }));
+
+function buildDailyAudienceForSimulation(start: Date, end: Date) {
+  const days = getDaysInRange(start, end);
+  const groups = createDefaultAudienceGroups(simulationAudienceFamilyMemberIds);
+  return mapGroupAudienceToDaily(days, groups);
+}
 
 function buildDailyTimeLimitsFromDefaults(start: Date, end: Date): DayTimeLimitsType[] {
   // Mirror planner-form behavior: every day has explicit limits prefilled from defaults.
@@ -168,11 +178,12 @@ describe("planner generation simulation with default time limits", () => {
     const start = new Date("2026-04-20T00:00:00.000Z");
     const end = new Date("2026-04-26T00:00:00.000Z");
     const dailyTimeLimits = buildDailyTimeLimitsFromDefaults(start, end);
+    const dailyAudienceByMeal = buildDailyAudienceForSimulation(start, end);
 
     const first = await generatePlan(
       start,
       end,
-      simulationAudienceFamilyMemberIds,
+      dailyAudienceByMeal,
       dailyTimeLimits,
       [],
       [],
@@ -180,7 +191,7 @@ describe("planner generation simulation with default time limits", () => {
     const second = await generatePlan(
       start,
       end,
-      simulationAudienceFamilyMemberIds,
+      dailyAudienceByMeal,
       dailyTimeLimits,
       [],
       [],
@@ -202,11 +213,12 @@ describe("planner generation simulation with default time limits", () => {
     const start = new Date("2026-04-20T00:00:00.000Z");
     const end = new Date("2026-04-26T00:00:00.000Z");
     const dailyTimeLimits = buildDailyTimeLimitsFromDefaults(start, end);
+    const dailyAudienceByMeal = buildDailyAudienceForSimulation(start, end);
 
     const result = await generatePlan(
       start,
       end,
-      simulationAudienceFamilyMemberIds,
+      dailyAudienceByMeal,
       dailyTimeLimits,
       [],
       [],
@@ -247,10 +259,11 @@ describe("planner generation simulation with default time limits", () => {
 
       for (const window of windows) {
         const dailyTimeLimits = buildDailyTimeLimitsFromDefaults(window.start, window.end);
+        const dailyAudienceByMeal = buildDailyAudienceForSimulation(window.start, window.end);
         const result = await generatePlan(
           window.start,
           window.end,
-          simulationAudienceFamilyMemberIds,
+          dailyAudienceByMeal,
           dailyTimeLimits,
           [],
           [],

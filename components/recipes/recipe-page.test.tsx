@@ -71,8 +71,8 @@ const ingredientFormDependencies = {
 };
 
 const mockFamilyMembers: FamilyMemberRow[] = [
-  { id: "family-self", name: "Jagoda", isSelf: true, sortOrder: 0 },
-  { id: "family-member-1", name: "Nelson", isSelf: false, sortOrder: 1 },
+  { id: "family-self", name: "Jagoda", isSelf: true, sortOrder: 0, portionMultiplier: 1 },
+  { id: "family-member-1", name: "Nelson", isSelf: false, sortOrder: 1, portionMultiplier: 2 },
 ];
 
 /** Renders topbar actions registered by RecipePage for jsdom tests. */
@@ -150,6 +150,15 @@ function getIngredientRow(ingredientName: string): HTMLElement {
     throw new Error(`Ingredient row not found for ${ingredientName}`);
   }
   return row;
+}
+
+async function setIngredientAmount(
+  ingredientName: string,
+  value: string,
+): Promise<void> {
+  const input = screen.getByLabelText(`Amount of ${ingredientName}`);
+  await userEvent.clear(input);
+  await userEvent.type(input, `${value}{enter}`);
 }
 
 function createRecipeFixture(): { recipe: RecipeType; ingredients: IngredientType[] } {
@@ -268,11 +277,12 @@ function expectInstructionSectionToContain(...fragments: string[]): void {
 }
 
 function expectInstructionBadgesVisibleForNoFilter(): void {
-  // Default mode shows full amounts for all linked instruction ingredients.
+  // Default cook session: 1 meal, all household — per-person badge amounts.
   expectInstructionSectionToContain(
-    "shared protein · 300 grams",
-    "side veg jagoda · 100 grams",
-    "side sauce nelson · 100 grams",
+    "shared protein · 150 grams · jagoda",
+    "shared protein · 150 grams · nelson",
+    "side veg jagoda · 50 grams · jagoda",
+    "side sauce nelson · 50 grams · nelson",
   );
 }
 
@@ -314,7 +324,7 @@ function buildScaledRecipe(
       const rowScale = localScaleById[row.id] ?? 1;
       const calorieFactor = getCalorieScalingFactorForIngredient(
         row.memberAdjustments,
-        recipe.audienceMembers.map((member) => member.familyMemberId),
+        mockFamilyMembers.map((member) => member.id),
         calorieAnchorMemberId,
         calorieScalingFactor,
       );
@@ -376,12 +386,6 @@ function expectNutritionToMatchScaledRecipe(
       expectedOther.calories.toString(),
     );
   }
-}
-
-async function setIngredientAmount(ingredientName: string, value: string): Promise<void> {
-  const input = screen.getByLabelText(`Amount of ${ingredientName}`);
-  await userEvent.clear(input);
-  await userEvent.type(input, `${value}{enter}`);
 }
 
 describe("RecipePage nutrition integration", () => {
@@ -482,11 +486,11 @@ describe("RecipePage nutrition integration", () => {
 
     await waitFor(() => expectNutritionToMatchScaledRecipe(recipe));
 
-    await setIngredientAmount("Side Veg Jagoda", "200");
+    await setIngredientAmount("Side Veg Jagoda", "100");
 
     // Only edited row is changed before explicit apply-all.
     expect(screen.getByLabelText("Amount of Shared Protein")).toHaveValue(300);
-    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(100);
+    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(50);
     expect(
       screen.getByLabelText("Scale all ingredients based on Side Veg Jagoda"),
     ).toBeInTheDocument();
@@ -501,15 +505,15 @@ describe("RecipePage nutrition integration", () => {
     const { recipe, ingredients } = createRecipeFixture();
     renderRecipePage(recipe, ingredients);
 
-    await setIngredientAmount("Side Veg Jagoda", "200");
+    await setIngredientAmount("Side Veg Jagoda", "100");
     await userEvent.click(
       screen.getByLabelText("Scale all ingredients based on Side Veg Jagoda"),
     );
 
-    // Global scale now applies to every numeric row.
+    // Global scale now applies to every numeric row (2× from 50 -> 100 baseline).
     expect(screen.getByLabelText("Amount of Shared Protein")).toHaveValue(600);
-    expect(screen.getByLabelText("Amount of Side Veg Jagoda")).toHaveValue(200);
-    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(200);
+    expect(screen.getByLabelText("Amount of Side Veg Jagoda")).toHaveValue(100);
+    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(100);
     expect(
       screen.queryByLabelText("Scale all ingredients based on Side Veg Jagoda"),
     ).not.toBeInTheDocument();
@@ -522,18 +526,15 @@ describe("RecipePage nutrition integration", () => {
     const { recipe, ingredients } = createRecipeFixture();
     renderRecipePage(recipe, ingredients);
 
-    // Row A local scale: 1.5x
-    await setIngredientAmount("Shared Protein", "450");
-    // Row B local scale: 0.8x
-    await setIngredientAmount("Side Veg Jagoda", "80");
+    await setIngredientAmount("Side Veg Jagoda", "40");
     await userEvent.click(
       screen.getByLabelText("Scale all ingredients based on Side Veg Jagoda"),
     );
 
-    // Apply-all uses row B scale globally; row A prior local edit is discarded.
+    // Apply-all uses row B scale globally; prior local edits on other rows are discarded.
     expect(screen.getByLabelText("Amount of Shared Protein")).toHaveValue(240);
-    expect(screen.getByLabelText("Amount of Side Veg Jagoda")).toHaveValue(80);
-    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(80);
+    expect(screen.getByLabelText("Amount of Side Veg Jagoda")).toHaveValue(40);
+    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(40);
 
     const scaledRecipe = buildScaledRecipe(recipe, { globalScale: 0.8 });
     expectNutritionToMatchScaledRecipe(scaledRecipe);
@@ -543,18 +544,24 @@ describe("RecipePage nutrition integration", () => {
     const { recipe, ingredients } = createRecipeFixture();
     renderRecipePage(recipe, ingredients);
 
-    const caloriesInput = caloriesInputFor("Jagoda");
-    await userEvent.type(caloriesInput, "300");
+    const jagodaBaseline = calculateNutritionPerServing(
+      recipe,
+      "family-self",
+      mockFamilyMembers,
+    );
+    const targetCalories = 300;
+    const calorieScalingFactor = targetCalories / jagodaBaseline.calories;
 
-    // Base Jagoda calories are 150 in this fixture, so target 300 => 2x.
-    const calorieScalingFactor = 2;
+    const caloriesInput = caloriesInputFor("Jagoda");
+    await userEvent.type(caloriesInput, targetCalories.toString());
+
     const scaledRecipe = buildScaledRecipe(recipe, { calorieScalingFactor });
     expectNutritionToMatchScaledRecipe(scaledRecipe, {
       targetCalories: 300,
     });
 
     // SECONDARY_ONLY amount should stay unchanged in UI while target is active.
-    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(100);
+    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(50);
   });
 
   it("scales shared and Nelson-targeted rows when Nelson calorie target is set", async () => {
@@ -583,17 +590,28 @@ describe("RecipePage nutrition integration", () => {
     });
 
     // PRIMARY_ONLY row stays unchanged while Nelson is the anchor.
-    expect(screen.getByLabelText("Amount of Side Veg Jagoda")).toHaveValue(100);
-    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(200);
+    expect(screen.getByLabelText("Amount of Side Veg Jagoda")).toHaveValue(50);
+    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(100);
+    expect(screen.getByLabelText("Amount of Shared Protein")).toHaveValue(600);
   });
 
   it("switches calorie anchor from Jagoda to Nelson when Nelson target is edited", async () => {
     const { recipe, ingredients } = createRecipeFixture();
     renderRecipePage(recipe, ingredients);
 
-    await userEvent.type(caloriesInputFor("Jagoda"), "300");
-    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(100);
-    expect(screen.getByLabelText("Amount of Shared Protein")).toHaveValue(600);
+    const jagodaBaseline = calculateNutritionPerServing(
+      recipe,
+      "family-self",
+      mockFamilyMembers,
+    );
+    const jagodaTarget = 300;
+    const jagodaCalorieScale = jagodaTarget / jagodaBaseline.calories;
+
+    await userEvent.type(caloriesInputFor("Jagoda"), jagodaTarget.toString());
+    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(50);
+    expect(screen.getByLabelText("Amount of Shared Protein")).toHaveValue(
+      Number((300 * jagodaCalorieScale).toFixed(2)),
+    );
 
     const nelsonBaseline = calculateNutritionPerServing(
       recipe,
@@ -605,8 +623,8 @@ describe("RecipePage nutrition integration", () => {
     await userEvent.type(caloriesInputFor("Nelson"), nelsonTarget.toString());
 
     // Anchor moved to Nelson: Jagoda-only row fixed, Nelson-only + shared scaled 2x.
-    expect(screen.getByLabelText("Amount of Side Veg Jagoda")).toHaveValue(100);
-    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(200);
+    expect(screen.getByLabelText("Amount of Side Veg Jagoda")).toHaveValue(50);
+    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(100);
     expect(screen.getByLabelText("Amount of Shared Protein")).toHaveValue(600);
     expect(caloriesInputFor("Jagoda")).not.toHaveValue(300);
     expect(caloriesInputFor("Nelson")).toHaveValue(nelsonTarget);
@@ -616,7 +634,7 @@ describe("RecipePage nutrition integration", () => {
     const { recipe, ingredients } = createRecipeFixture();
     renderRecipePage(recipe, ingredients);
 
-    await setIngredientAmount("Shared Protein", "450");
+    await setIngredientAmount("Shared Protein", "675");
     await userEvent.click(
       screen.getByLabelText("Scale all ingredients based on Shared Protein"),
     );
@@ -624,8 +642,8 @@ describe("RecipePage nutrition integration", () => {
     await userEvent.click(screen.getByLabelText("Reset ingredient amounts"));
 
     expect(screen.getByLabelText("Amount of Shared Protein")).toHaveValue(300);
-    expect(screen.getByLabelText("Amount of Side Veg Jagoda")).toHaveValue(100);
-    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(100);
+    expect(screen.getByLabelText("Amount of Side Veg Jagoda")).toHaveValue(50);
+    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(50);
     expectNutritionToMatchScaledRecipe(recipe);
   });
 
@@ -644,10 +662,10 @@ describe("RecipePage nutrition integration", () => {
     await userEvent.click(screen.getByRole("radio", { name: "Jagoda" }));
     const instructionSectionText = getNormalizedInstructionsSectionText();
 
-    // Jagoda sees PRIMARY_ONLY + Jagoda share of BOTH (1/3 of 300 = 100).
+    // Jagoda: (300g ÷ 2 servings) × 1× shared + PRIMARY_ONLY side veg.
     expectInstructionSectionToContain(
-      "shared protein · 100 grams",
-      "side veg jagoda · 100 grams",
+      "shared protein · 150 grams",
+      "side veg jagoda · 50 grams",
     );
     expect(instructionSectionText.toLowerCase()).not.toContain("side sauce nelson");
     expectInstructionStepTextToRemainVisible();
@@ -660,10 +678,10 @@ describe("RecipePage nutrition integration", () => {
     await userEvent.click(screen.getByRole("radio", { name: "Nelson" }));
     const instructionSectionText = getNormalizedInstructionsSectionText();
 
-    // Nelson sees SECONDARY_ONLY + Nelson share of BOTH (2/3 of 300 = 200).
+    // Nelson: (300g ÷ 2 servings) × 1× shared + SECONDARY_ONLY side sauce.
     expectInstructionSectionToContain(
-      "shared protein · 200 grams",
-      "side sauce nelson · 100 grams",
+      "shared protein · 150 grams",
+      "side sauce nelson · 50 grams",
     );
     expect(instructionSectionText.toLowerCase()).not.toContain("side veg jagoda");
     expectInstructionStepTextToRemainVisible();
@@ -697,9 +715,9 @@ describe("RecipePage nutrition integration", () => {
     await userEvent.click(screen.getByRole("radio", { name: "Nelson" }));
     const instructionSectionText = getNormalizedInstructionsSectionText();
 
-    // Nelson share of scaled BOTH amount: 600 * 2/3 = 400.
+    // Nelson share after 4× global scale from the Jagoda row edit (50 -> 200).
     expectInstructionSectionToContain(
-      "shared protein · 400 grams",
+      "shared protein · 600 grams",
       "side sauce nelson · 200 grams",
     );
     expect(instructionSectionText.toLowerCase()).not.toContain("side veg jagoda");
@@ -751,70 +769,31 @@ describe("RecipePage nutrition integration", () => {
   });
 });
 
-describe("RecipePage shared portion split chart", () => {
-  it("shows shared-ingredient split for multi-person audience", () => {
+describe("RecipePage aggregated ingredient rows", () => {
+  it("shows one aggregated line per resolved ingredient", () => {
     const { recipe, ingredients } = createRecipeFixture();
     renderRecipePage(recipe, ingredients);
 
-    expect(screen.getByText("Shared ingredients")).toBeInTheDocument();
-    expect(screen.getByText("· 33%")).toBeInTheDocument();
-    expect(screen.getByText("· 67%")).toBeInTheDocument();
-    expect(screen.queryByText(/×2/)).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("img", {
-        name: /Shared ingredients: Jagoda · 33%, Nelson · 67%/i,
-      }),
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Amount of Shared Protein")).toHaveValue(300);
+    expect(screen.getByLabelText("Amount of Side Veg Jagoda")).toHaveValue(50);
+    expect(screen.getByLabelText("Amount of Side Sauce Nelson")).toHaveValue(50);
+    expect(screen.queryByText("Nelson", { selector: '[data-slot="badge"]' })).not.toBeInTheDocument();
   });
 
-  it("hides portion split chart when recipe audience is one person", () => {
-    const { recipe, ingredients } = createRecipeFixture();
-    const soloAudienceRecipe = {
-      ...recipe,
-      audienceMembers: [{ familyMemberId: "family-self" }],
-      memberPortions: [],
-    };
-    renderRecipePage(soloAudienceRecipe, ingredients);
-
-    expect(screen.queryByText("Shared ingredients")).not.toBeInTheDocument();
-    expect(screen.queryByRole("img", { name: /Shared ingredients/i })).not.toBeInTheDocument();
-  });
-});
-
-describe("RecipePage ingredient member badges", () => {
-  it("shows member name badges for targeted ingredients", () => {
-    const { recipe, ingredients } = createRecipeFixture();
-    renderRecipePage(recipe, ingredients);
-
-    const nelsonRow = getIngredientRow("Side Sauce Nelson");
-    expect(within(nelsonRow).getByRole("group", { name: "For Nelson" })).toBeInTheDocument();
-    expect(within(nelsonRow).queryByText("Selected")).not.toBeInTheDocument();
-
-    const jagodaRow = getIngredientRow("Side Veg Jagoda");
-    expect(within(jagodaRow).getByRole("group", { name: "For Jagoda" })).toBeInTheDocument();
-  });
-
-  it("does not show member badges for applies-to-everyone ingredients", () => {
+  it("does not show People panel on aggregated view rows", () => {
     const { recipe, ingredients } = createRecipeFixture();
     renderRecipePage(recipe, ingredients);
 
     const sharedRow = getIngredientRow("Shared Protein");
-    expect(within(sharedRow).queryByRole("group", { name: /^For / })).not.toBeInTheDocument();
+    expect(
+      within(sharedRow).queryByRole("button", {
+        name: /Personal adjustments for Shared Protein/i,
+      }),
+    ).not.toBeInTheDocument();
   });
 
-  it("hides member badges when household has only self", () => {
-    const { recipe, ingredients } = createRecipeFixture();
-    const soloFamily: FamilyMemberRow[] = [
-      { id: "family-self", name: "Jagoda", isSelf: true, sortOrder: 0 },
-    ];
-    renderRecipePage(recipe, ingredients, soloFamily);
-
-    const nelsonRow = getIngredientRow("Side Sauce Nelson");
-    expect(within(nelsonRow).queryByRole("group", { name: /^For / })).not.toBeInTheDocument();
-    expect(within(nelsonRow).queryByText("Nelson")).not.toBeInTheDocument();
-  });
-
-  it("places additional info on row 2 and member badges on row 3 when both exist", () => {
+  it("shows note behind Note toggle instead of inline text", async () => {
+    const user = userEvent.setup();
     const { recipe, ingredients } = createRecipeFixture();
     const recipeWithInfo = {
       ...recipe,
@@ -827,12 +806,13 @@ describe("RecipePage ingredient member badges", () => {
     renderRecipePage(recipeWithInfo, ingredients);
 
     const nelsonRow = getIngredientRow("Side Sauce Nelson");
-    const rowSections = nelsonRow.querySelectorAll(":scope > div");
-    const row2 = rowSections[1] as HTMLElement;
-    const row3 = rowSections[2] as HTMLElement;
+    expect(within(nelsonRow).queryByText("warmed")).not.toBeInTheDocument();
 
-    expect(within(row2).getByText("warmed")).toBeInTheDocument();
-    expect(within(row2).queryByRole("group", { name: "For Nelson" })).not.toBeInTheDocument();
-    expect(within(row3).getByRole("group", { name: "For Nelson" })).toBeInTheDocument();
+    await user.click(
+      within(nelsonRow).getByRole("button", {
+        name: /Note for Side Sauce Nelson/i,
+      }),
+    );
+    expect(within(nelsonRow).getByText("warmed")).toBeInTheDocument();
   });
 });

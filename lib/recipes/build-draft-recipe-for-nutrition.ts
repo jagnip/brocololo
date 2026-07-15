@@ -2,6 +2,7 @@ import type { RecipeForNutritionCalculation } from "@/lib/recipes/helpers";
 import type { RecipeType } from "@/types/recipe";
 import type { IngredientType } from "@/types/ingredient";
 import type { CreateRecipeFormValues } from "@/lib/validations/recipe";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 type FormIngredientRow = CreateRecipeFormValues["ingredients"][number];
 
@@ -26,13 +27,13 @@ function coerceIngredientRowPosition(value: unknown): number {
 /**
  * Maps editor form slice + ingredient catalog into the shape used by calculateNutritionPerServing.
  * Skips placeholder rows without ingredientId (same idea as submit sanitization).
+ * Household portion multipliers come from `familyMembers`, not the recipe form.
  */
 export function buildDraftRecipeForNutrition(
   servings: unknown,
-  audienceFamilyMemberIds: CreateRecipeFormValues["audienceFamilyMemberIds"] | undefined,
-  memberPortions: CreateRecipeFormValues["memberPortions"] | undefined,
   rows: FormIngredientRow[] | undefined,
   catalog: IngredientType[],
+  familyMembers: FamilyMemberRow[],
 ): RecipeForNutritionCalculation {
   const byId = new Map(catalog.map((ingredient) => [ingredient.id, ingredient]));
 
@@ -54,7 +55,6 @@ export function buildDraftRecipeForNutrition(
     );
     if (!conversion) continue;
 
-    // Draft rows only supply fields touched by nutrition math — cast to persisted recipe-ingredient shape.
     ingredients.push({
       id: row.tempIngredientKey,
       recipeId: "draft",
@@ -85,15 +85,11 @@ export function buildDraftRecipeForNutrition(
 
   return {
     servings: coercePreviewServings(servings),
-    audienceMembers: (audienceFamilyMemberIds ?? []).map((familyMemberId) => ({
+    audienceMembers: familyMembers.map((member) => ({
       recipeId: "draft",
-      familyMemberId,
+      familyMemberId: member.id,
     })),
-    memberPortions: (memberPortions ?? []).map((portion) => ({
-      recipeId: "draft",
-      familyMemberId: portion.familyMemberId,
-      multiplier: Number(portion.multiplier) || 1,
-    })),
+    memberPortions: [],
     ingredients,
   };
 }

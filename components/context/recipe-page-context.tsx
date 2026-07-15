@@ -2,7 +2,9 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type Dispatch,
@@ -19,6 +21,11 @@ import {
 import { useRecipeNutrition } from "@/components/recipes/recipe-page/use-recipe-nutrition";
 import { useIngredientGrouping } from "@/components/recipes/recipe-page/use-ingredient-grouping";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
+import {
+  buildMemberPortionsFromFamily,
+  resolveCookingAggregatedLines,
+  type CookingAggregatedLine,
+} from "@/lib/recipes/resolve-cooking-display-lines";
 
 type RecipePageProviderProps = {
   recipe: RecipeType;
@@ -32,9 +39,14 @@ type RecipePageContextValue = {
   recipe: RecipeType;
   ingredients: IngredientType[];
   familyMembers: FamilyMemberRow[];
+  mealCount: number;
+  onMealCountChange: (nextCount: number) => void;
+  cookingFamilyMemberIds: string[];
+  onCookingFamilyMemberIdsChange: (nextIds: string[]) => void;
+  audienceMemberIds: string[];
+  memberPortions: ReturnType<typeof buildMemberPortionsFromFamily>;
   selectedInstructionFamilyMemberId: string | null;
   setSelectedInstructionFamilyMemberId: Dispatch<SetStateAction<string | null>>;
-  currentServings: number;
   calorieTarget: CalorieTarget | null;
   nutritionRows: ReturnType<typeof useRecipeNutrition>["nutritionRows"];
   onCaloriesChange: (familyMemberId: string, value: string) => void;
@@ -56,19 +68,25 @@ type RecipePageContextValue = {
       ingredients: RecipeType["ingredients"];
     }
   >;
+  cookingAggregatedUngrouped: CookingAggregatedLine[];
+  cookingAggregatedByGroupId: Map<string, CookingAggregatedLine[]>;
   onReset: () => void;
   onNutritionReset: () => void;
-  onServingsChange: (nextServings: number) => void;
   onUnitChange: (recipeIngredientId: string, unitId: string | null) => void;
   onAmountEdit: (
     recipeIngredientId: string,
     ratio: number,
     activeCalorieScalingFactor: number,
   ) => void;
+  onAggregatedAmountEdit: (
+    sourceRecipeIngredientIds: string[],
+    ratio: number,
+    activeCalorieScalingFactor: number,
+  ) => void;
   onApplyScaleToAll: (recipeIngredientId: string) => void;
   onIngredientChange: (recipeIngredientId: string, ingredientId: string) => void;
   recipeForScaledNutrition: RecipeType;
-  servingScalingFactor: number;
+  mealBatchScaleFactor: number;
   availableLogDateKeys: string[];
 };
 
@@ -85,13 +103,34 @@ export function RecipePageProvider({
     selectedInstructionFamilyMemberId,
     setSelectedInstructionFamilyMemberId,
   ] = useState<string | null>(null);
+  const [cookingFamilyMemberIds, setCookingFamilyMemberIds] = useState<string[]>(
+    () => familyMembers.map((member) => member.id),
+  );
+
   const scaling = useRecipeScalingState({ recipe });
-  const recipeAudienceFamilyMembers = useMemo(() => {
-    const audienceIds = new Set(
-      recipe.audienceMembers.map((member) => member.familyMemberId),
-    );
-    return familyMembers.filter((member) => audienceIds.has(member.id));
-  }, [familyMembers, recipe.audienceMembers]);
+
+  const audienceMemberIds = useMemo(
+    () => familyMembers.map((member) => member.id),
+    [familyMembers],
+  );
+  const memberPortions = useMemo(
+    () => buildMemberPortionsFromFamily(familyMembers),
+    [familyMembers],
+  );
+
+  useEffect(() => {
+    setCookingFamilyMemberIds(familyMembers.map((member) => member.id));
+    setSelectedInstructionFamilyMemberId(null);
+  }, [familyMembers, recipe.id]);
+
+  useEffect(() => {
+    if (
+      selectedInstructionFamilyMemberId != null &&
+      !cookingFamilyMemberIds.includes(selectedInstructionFamilyMemberId)
+    ) {
+      setSelectedInstructionFamilyMemberId(null);
+    }
+  }, [cookingFamilyMemberIds, selectedInstructionFamilyMemberId]);
 
   const effectiveRecipe = useMemo(
     () =>
@@ -106,17 +145,76 @@ export function RecipePageProvider({
   const nutrition = useRecipeNutrition({
     recipe,
     effectiveRecipe,
-    currentServings: scaling.currentServings,
+    ingredientCatalog: ingredients,
+    cookingFamilyMemberIds,
     calorieTarget: scaling.calorieTarget,
     globalScaleRatio: scaling.globalScaleRatio,
     localScaleByIngredientId: scaling.localScaleByIngredientId,
-    familyMembers: recipeAudienceFamilyMembers,
+    familyMembers,
   });
 
   const { ungroupedIngredients, visibleGroupedIngredients } = useIngredientGrouping({
     ingredientGroups: recipe.ingredientGroups,
     ingredients: effectiveRecipe.ingredients,
   });
+
+  const getRowDisplayScale = useCallback(
+    (recipeIngredientId: string) => {
+      const row = nutrition.effectiveRecipeIngredientById.get(recipeIngredientId);
+      if (!row) {
+        return 1;
+      }
+      return (
+        nutrition.getIngredientDisplayScalingFactor(recipeIngredientId) *
+        nutrition.getIngredientCalorieFactor(row)
+      );
+    },
+    [nutrition],
+  );
+
+  const aggregatedResolveBase = useMemo(
+    () => ({
+      recipeServings: recipe.servings,
+      familyMembers,
+      cookingFamilyMemberIds,
+      mealCount: scaling.mealCount,
+      audienceMemberIds,
+      memberPortions,
+      getRowDisplayScale,
+    }),
+    [
+      audienceMemberIds,
+      cookingFamilyMemberIds,
+      familyMembers,
+      getRowDisplayScale,
+      memberPortions,
+      recipe.servings,
+      scaling.mealCount,
+    ],
+  );
+
+  const cookingAggregatedUngrouped = useMemo(
+    () =>
+      resolveCookingAggregatedLines({
+        recipeIngredients: ungroupedIngredients,
+        ...aggregatedResolveBase,
+      }),
+    [aggregatedResolveBase, ungroupedIngredients],
+  );
+
+  const cookingAggregatedByGroupId = useMemo(() => {
+    const byGroup = new Map<string, CookingAggregatedLine[]>();
+    for (const group of visibleGroupedIngredients) {
+      byGroup.set(
+        group.id,
+        resolveCookingAggregatedLines({
+          recipeIngredients: group.ingredients,
+          ...aggregatedResolveBase,
+        }),
+      );
+    }
+    return byGroup;
+  }, [aggregatedResolveBase, visibleGroupedIngredients]);
 
   const originalRecipeIngredientById = useMemo(
     () =>
@@ -129,14 +227,43 @@ export function RecipePageProvider({
     [recipe.ingredients],
   );
 
+  const handleMealCountChange = useCallback(
+    (nextCount: number) => {
+      scaling.handleMealCountChange(nextCount);
+    },
+    [scaling],
+  );
+
+  const handleAggregatedAmountEdit = useCallback(
+    (
+      sourceRecipeIngredientIds: string[],
+      ratio: number,
+      activeCalorieScalingFactor: number,
+    ) => {
+      for (const recipeIngredientId of sourceRecipeIngredientIds) {
+        scaling.handleIngredientEdit(
+          recipeIngredientId,
+          ratio,
+          activeCalorieScalingFactor,
+        );
+      }
+    },
+    [scaling],
+  );
+
   const value = useMemo<RecipePageContextValue>(
     () => ({
       recipe,
       ingredients,
-      familyMembers: recipeAudienceFamilyMembers,
+      familyMembers,
+      mealCount: scaling.mealCount,
+      onMealCountChange: handleMealCountChange,
+      cookingFamilyMemberIds,
+      onCookingFamilyMemberIdsChange: setCookingFamilyMemberIds,
+      audienceMemberIds,
+      memberPortions,
       selectedInstructionFamilyMemberId,
       setSelectedInstructionFamilyMemberId,
-      currentServings: scaling.currentServings,
       calorieTarget: scaling.calorieTarget,
       nutritionRows: nutrition.nutritionRows,
       onCaloriesChange: scaling.handleCaloriesChange,
@@ -149,13 +276,14 @@ export function RecipePageProvider({
       localScaleByIngredientId: scaling.localScaleByIngredientId,
       ungroupedIngredients,
       visibleGroupedIngredients,
+      cookingAggregatedUngrouped,
+      cookingAggregatedByGroupId,
       onReset: scaling.handleReset,
       onNutritionReset: scaling.handleNutritionReset,
-      onServingsChange: scaling.handleServingsChange,
       onUnitChange: scaling.handleUnitChange,
       onAmountEdit: scaling.handleIngredientEdit,
+      onAggregatedAmountEdit: handleAggregatedAmountEdit,
       onApplyScaleToAll: scaling.handleApplyScaleToAll,
-      // Keep ingredient swap logic centralized so sections don't know about origin maps.
       onIngredientChange: (recipeIngredientId, ingredientId) =>
         scaling.handleIngredientChange(
           recipeIngredientId,
@@ -163,24 +291,30 @@ export function RecipePageProvider({
           originalRecipeIngredientById,
         ),
       recipeForScaledNutrition: nutrition.recipeForScaledNutrition,
-      servingScalingFactor: nutrition.servingScalingFactor,
+      mealBatchScaleFactor: scaling.mealCount,
       availableLogDateKeys,
     }),
     [
+      audienceMemberIds,
+      availableLogDateKeys,
+      cookingAggregatedByGroupId,
+      cookingAggregatedUngrouped,
+      cookingFamilyMemberIds,
+      familyMembers,
+      handleAggregatedAmountEdit,
+      handleMealCountChange,
       ingredients,
-      recipeAudienceFamilyMembers,
+      memberPortions,
       nutrition.effectiveRecipeIngredientById,
       nutrition.getIngredientCalorieFactor,
       nutrition.getIngredientDisplayScalingFactor,
       nutrition.nutritionRows,
       nutrition.recipeForScaledNutrition,
-      nutrition.servingScalingFactor,
       originalRecipeIngredientById,
       recipe,
       scaling,
       selectedInstructionFamilyMemberId,
       ungroupedIngredients,
-      availableLogDateKeys,
       visibleGroupedIngredients,
     ],
   );
@@ -206,9 +340,25 @@ export function useRecipePageBaseData() {
   return { recipe, ingredients, familyMembers };
 }
 
+export function useRecipePageCookingForData() {
+  const {
+    mealCount,
+    onMealCountChange,
+    familyMembers,
+    cookingFamilyMemberIds,
+    onCookingFamilyMemberIdsChange,
+  } = useRecipePageContext();
+  return {
+    mealCount,
+    onMealCountChange,
+    familyMembers,
+    cookingFamilyMemberIds,
+    onCookingFamilyMemberIdsChange,
+  };
+}
+
 export function useRecipePageNutritionSectionData() {
   const {
-    currentServings,
     calorieTarget,
     nutritionRows,
     onCaloriesChange,
@@ -216,7 +366,6 @@ export function useRecipePageNutritionSectionData() {
     onNutritionReset,
   } = useRecipePageContext();
   return {
-    currentServings,
     calorieTarget,
     nutritionRows,
     onCaloriesChange,
@@ -229,7 +378,10 @@ export function useRecipePageInstructionsSectionData() {
   const {
     recipe,
     familyMembers,
-    currentServings,
+    cookingFamilyMemberIds,
+    audienceMemberIds,
+    memberPortions,
+    mealCount,
     effectiveRecipeIngredientById,
     selectedInstructionFamilyMemberId,
     setSelectedInstructionFamilyMemberId,
@@ -238,12 +390,19 @@ export function useRecipePageInstructionsSectionData() {
     getIngredientCalorieFactor,
   } = useRecipePageContext();
 
+  const cookingMembers = useMemo(() => {
+    const cookingIdSet = new Set(cookingFamilyMemberIds);
+    return familyMembers.filter((member) => cookingIdSet.has(member.id));
+  }, [cookingFamilyMemberIds, familyMembers]);
+
   return {
     instructions: recipe.instructions,
-    familyMembers,
-    currentServings,
-    audienceMembers: recipe.audienceMembers,
-    memberPortions: recipe.memberPortions,
+    familyMembers: cookingMembers,
+    recipeServings: recipe.servings,
+    audienceMemberIds,
+    memberPortions,
+    mealCount,
+    cookingFamilyMemberIds,
     effectiveRecipeIngredientById,
     selectedInstructionFamilyMemberId,
     setSelectedInstructionFamilyMemberId,
@@ -257,19 +416,17 @@ export function useRecipePageIngredientsSectionData() {
   const {
     recipe,
     ingredients,
-    familyMembers,
-    currentServings,
+    effectiveRecipeIngredientById,
     hasActiveScaling,
     localScaleByIngredientId,
     selectedUnits,
     ungroupedIngredients,
     visibleGroupedIngredients,
+    cookingAggregatedUngrouped,
+    cookingAggregatedByGroupId,
     onReset,
-    onServingsChange,
     onUnitChange,
-    getIngredientDisplayScalingFactor,
-    getIngredientCalorieFactor,
-    onAmountEdit,
+    onAggregatedAmountEdit,
     onApplyScaleToAll,
     onIngredientChange,
   } = useRecipePageContext();
@@ -277,19 +434,17 @@ export function useRecipePageIngredientsSectionData() {
   return {
     recipe,
     ingredients,
-    familyMembers,
-    currentServings,
+    effectiveRecipeIngredientById,
     hasActiveScaling,
     localScaleByIngredientId,
     selectedUnits,
     ungroupedIngredients,
     visibleGroupedIngredients,
+    cookingAggregatedUngrouped,
+    cookingAggregatedByGroupId,
     onReset,
-    onServingsChange,
     onUnitChange,
-    getIngredientDisplayScalingFactor,
-    getIngredientCalorieFactor,
-    onAmountEdit,
+    onAggregatedAmountEdit,
     onApplyScaleToAll,
     onIngredientChange,
   };
@@ -299,9 +454,11 @@ export function useRecipePageAddToLogData() {
   const {
     recipe,
     familyMembers,
-    currentServings,
+    mealCount,
     recipeForScaledNutrition,
-    servingScalingFactor,
+    cookingFamilyMemberIds,
+    audienceMemberIds,
+    memberPortions,
     availableLogDateKeys,
   } = useRecipePageContext();
 
@@ -310,10 +467,11 @@ export function useRecipePageAddToLogData() {
     recipeName: recipe.name,
     recipeIngredients: recipeForScaledNutrition.ingredients,
     familyMembers,
-    audienceMembers: recipe.audienceMembers,
-    memberPortions: recipe.memberPortions,
-    currentServings,
-    servingScalingFactor,
+    audienceMemberIds,
+    memberPortions,
+    cookingFamilyMemberIds,
+    recipeServings: recipe.servings,
+    mealCount,
     availableLogDateKeys,
   };
 }

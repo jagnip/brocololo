@@ -20,8 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getFamilyMemberIngredientAmountPerMeal } from "@/lib/log/helpers";
-import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
+import { resolveRecipeIngredientRowsForMember, type MemberPortionInput } from "@/lib/recipes/ingredient-adjustments";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 type IngredientFormDependencies = {
@@ -38,10 +37,11 @@ type RecipeAddToLogDialogProps = {
   onOpenChange: (open: boolean) => void;
   recipeIngredients: RecipeType["ingredients"];
   familyMembers: FamilyMemberRow[];
-  audienceMembers: RecipeType["audienceMembers"];
-  memberPortions: RecipeType["memberPortions"];
-  currentServings: number;
-  servingScalingFactor: number;
+  audienceMemberIds: string[];
+  memberPortions: MemberPortionInput[];
+  cookingFamilyMemberIds: string[];
+  recipeServings: number;
+  mealCount: number;
   availableLogDateKeys?: string[];
   ingredientOptions: LogIngredientOption[];
   ingredientFormDependencies: IngredientFormDependencies;
@@ -61,10 +61,11 @@ export function RecipeAddToLogDialogContainer({
   onOpenChange,
   recipeIngredients,
   familyMembers,
-  audienceMembers,
+  audienceMemberIds,
   memberPortions,
-  currentServings,
-  servingScalingFactor,
+  cookingFamilyMemberIds,
+  recipeServings,
+  mealCount,
   availableLogDateKeys,
   ingredientOptions,
   ingredientFormDependencies,
@@ -94,48 +95,25 @@ export function RecipeAddToLogDialogContainer({
   }, [defaultFamilyMemberId, normalizedAvailableLogDateKeys, open]);
 
   const initialRows = useMemo(() => {
-    return recipeIngredients.flatMap((recipeIngredient) => {
-      if (recipeIngredient.amount == null) {
-        return [];
-      }
-
-      const scaledAmount = recipeIngredient.amount * servingScalingFactor;
-      const amountForPerson = getFamilyMemberIngredientAmountPerMeal({
-        amount: scaledAmount,
-        memberAdjustments: recipeIngredient.memberAdjustments,
-        familyMemberId: logFamilyMemberId,
-        recipeServings: currentServings,
-        familyMembers,
-        memberPortions,
-        cookingFamilyMemberIds: audienceMembers.map(
-          (member) => member.familyMemberId,
-        ),
-      });
-      if (amountForPerson == null || amountForPerson <= 0) {
-        return [];
-      }
-
-      const defaultUnitId = getDefaultUnitIdForIngredient({
-        defaultUnitId: recipeIngredient.ingredient.defaultUnitId,
-        unitConversions: recipeIngredient.ingredient.unitConversions,
-      });
-
-      return [
-        {
-          ingredientId: recipeIngredient.ingredient.id,
-          unitId: recipeIngredient.unit?.id ?? defaultUnitId,
-          amount: Math.round(amountForPerson * 1000) / 1000,
-        },
-      ];
+    return resolveRecipeIngredientRowsForMember({
+      recipeIngredients,
+      familyMemberId: logFamilyMemberId,
+      recipeServings,
+      familyMembers,
+      memberPortions,
+      audienceMemberIds,
+      cookingFamilyMemberIds,
+      batchScaleFactor: mealCount,
     });
   }, [
-    currentServings,
+    audienceMemberIds,
+    cookingFamilyMemberIds,
     familyMembers,
-    audienceMembers,
     logFamilyMemberId,
+    mealCount,
     memberPortions,
     recipeIngredients,
-    servingScalingFactor,
+    recipeServings,
   ]);
 
   const selectedMealLabel =

@@ -6,18 +6,67 @@ import {
   type PlanSlotData,
 } from "../groceries/helpers";
 
+const defaultFamilyMembers = [
+  { id: "fm-1", isSelf: true },
+  { id: "fm-2", isSelf: false },
+];
+
+function normalizeRecipeIngredients(
+  ingredients: Array<{
+    ingredient: {
+      id: string;
+      name: string;
+      icon: string | null;
+      supermarketUrl: string | null;
+      unitConversions: Array<{ unitId: string; gramsPerUnit: number }>;
+      category: { id: string; name: string; sortOrder: number };
+    };
+    unit: { id: string; name: string } | null;
+    amount: number | null;
+  }>,
+): NonNullable<PlanSlotData["recipe"]>["ingredients"] {
+  return ingredients.map((row, index) => ({
+    id: `ri-${index}`,
+    ingredientId: row.ingredient.id,
+    amount: row.amount,
+    additionalInfo: null,
+    memberAdjustments: [],
+    ...row,
+  }));
+}
+
 function slotFromRecipe(
   recipe: NonNullable<PlanSlotData["recipe"]> | null,
 ): PlanSlotData {
-  return { recipe };
+  if (!recipe) {
+    return { recipe: null };
+  }
+
+  const normalizedRecipe: NonNullable<PlanSlotData["recipe"]> = {
+    ...recipe,
+    audienceMembers: recipe.audienceMembers ?? [
+      { familyMemberId: "fm-1" },
+      { familyMemberId: "fm-2" },
+    ],
+    memberPortions: recipe.memberPortions ?? [],
+    ingredients: recipe.ingredients.every((row) => "ingredientId" in row)
+      ? (recipe.ingredients as NonNullable<PlanSlotData["recipe"]>["ingredients"])
+      : normalizeRecipeIngredients(
+          recipe.ingredients as Parameters<typeof normalizeRecipeIngredients>[0],
+        ),
+  };
+
+  return {
+    recipe: normalizedRecipe,
+    cookingFamilyMemberIds: ["fm-1", "fm-2"],
+    familyMembers: defaultFamilyMembers,
+  };
 }
 
 function baseRecipe(overrides?: Partial<NonNullable<PlanSlotData["recipe"]>>) {
-  return {
-    name: "Recipe A",
-    servings: 2,
-    servingMultiplierForNelson: 1,
-    ingredients: [
+  const rawIngredients =
+    overrides?.ingredients ??
+    ([
       {
         ingredient: {
           id: "ing-1",
@@ -30,8 +79,20 @@ function baseRecipe(overrides?: Partial<NonNullable<PlanSlotData["recipe"]>>) {
         unit: { id: "unit-g", name: "g" },
         amount: 400,
       },
+    ] as Parameters<typeof normalizeRecipeIngredients>[0]);
+
+  const { ingredients: _ignored, ...restOverrides } = overrides ?? {};
+
+  return {
+    name: "Recipe A",
+    servings: 2,
+    audienceMembers: [
+      { familyMemberId: "fm-1" },
+      { familyMemberId: "fm-2" },
     ],
-    ...overrides,
+    memberPortions: [],
+    ingredients: normalizeRecipeIngredients(rawIngredients),
+    ...restOverrides,
   } satisfies NonNullable<PlanSlotData["recipe"]>;
 }
 

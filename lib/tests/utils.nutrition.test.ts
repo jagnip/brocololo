@@ -82,12 +82,11 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
     const jagoda = nutritionFor(recipe, "jagoda");
     const nelson = nutritionFor(recipe, "nelson");
 
-    // Total calories = 300*1.65 + 300*2.65 = 1290.
-    // servings=2 => mealCount=1, split 1:2.
-    expect(jagoda.calories).toBeCloseTo(430, 1);
-    expect(nelson.calories).toBeCloseTo(860, 1);
-    expect(jagoda.protein).toBeCloseTo(40, 1);
-    expect(nelson.protein).toBeCloseTo(80, 1);
+    // Equal per-meal shares: (batch ÷ servings) per person.
+    expect(jagoda.calories).toBeCloseTo(645, 1);
+    expect(nelson.calories).toBeCloseTo(645, 1);
+    expect(jagoda.protein).toBeCloseTo(60, 1);
+    expect(nelson.protein).toBeCloseTo(60, 1);
   });
 
   it("allocates PRIMARY_ONLY and SECONDARY_ONLY ingredients correctly", () => {
@@ -140,9 +139,9 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
     const nelson = nutritionFor(recipe, "nelson");
 
     // Primary ignores SECONDARY_ONLY oil.
-    expect(jagoda.calories).toBe(67);
+    expect(jagoda.calories).toBe(100);
     // Secondary includes SECONDARY_ONLY oil.
-    expect(nelson.calories).toBe(1033);
+    expect(nelson.calories).toBe(550);
   });
 
   it("ignores null amount and missing conversion safely", () => {
@@ -230,7 +229,7 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
       ],
     });
 
-    expect(nutritionFor(recipe, "jagoda").calories).toBeCloseTo(200, 1);
+    expect(nutritionFor(recipe, "jagoda").calories).toBeCloseTo(100, 1);
     expect(nutritionFor(recipe, "nelson").calories).toBeCloseTo(0, 1);
   });
 
@@ -259,12 +258,12 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
     const jagoda = nutritionFor(oddServingsRecipe, "jagoda");
     const nelson = nutritionFor(oddServingsRecipe, "nelson");
 
-    // Base shared split remains 1:2 even when mealCount is fractional (3/2).
-    expect(nelson.calories / jagoda.calories).toBeCloseTo(2, 2);
-    expect(nelson.protein / jagoda.protein).toBeCloseTo(2, 2);
+    // Shared rows use equal per-meal shares for each person.
+    expect(nelson.calories / jagoda.calories).toBeCloseTo(1, 2);
+    expect(nelson.protein / jagoda.protein).toBeCloseTo(1, 2);
   });
 
-  it("keeps shared nutrition entirely on primary when Nelson multiplier is zero", () => {
+  it("treats stored portion multiplier as ignored (everyone 1×)", () => {
     const recipe = createChickenSandwichRecipe();
     const noNelsonPortionRecipe = {
       ...recipe,
@@ -277,7 +276,7 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
     const nelson = nutritionFor(noNelsonPortionRecipe, "nelson");
 
     expect(jagoda.calories).toBeGreaterThan(0);
-    expect(nelson.calories).toBe(0);
+    expect(nelson.calories).toBe(jagoda.calories);
   });
 });
 

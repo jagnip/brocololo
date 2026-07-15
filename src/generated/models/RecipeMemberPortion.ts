@@ -409,14 +409,6 @@ export type RecipeMemberPortionUncheckedUpdateManyWithoutRecipeNestedInput = {
   deleteMany?: Prisma.RecipeMemberPortionScalarWhereInput | Prisma.RecipeMemberPortionScalarWhereInput[]
 }
 
-export type FloatFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type RecipeMemberPortionCreateWithoutFamilyMemberInput = {
   multiplier?: number
   recipe: Prisma.RecipeCreateNestedOneWithoutMemberPortionsInput

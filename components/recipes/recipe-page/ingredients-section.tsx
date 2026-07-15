@@ -1,68 +1,192 @@
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Minus, Plus, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import type { IngredientType } from "@/types/ingredient";
-import type { RecipeType } from "@/types/recipe";
 import { IngredientItem } from "@/components/recipes/ingredient-item";
 import { isScaleModified } from "@/lib/recipes/helpers";
-import { getSharedPortionShares } from "@/lib/recipes/shared-portion-shares";
 import { useRecipePageIngredientsSectionData } from "@/components/context/recipe-page-context";
-import { PortionSplitCard } from "@/components/recipes/recipe-page/portion-split-card";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
+import type { CookingAggregatedLine } from "@/lib/recipes/resolve-cooking-display-lines";
+import type { RecipeType } from "@/types/recipe";
 
-const SHARED_INGREDIENTS_SCOPE_LABEL = "Shared ingredients";
+function resolveUnitForAggregatedLine(
+  line: CookingAggregatedLine,
+  primaryRecipeIngredient: RecipeType["ingredients"][number] | undefined,
+  ingredients: IngredientType[],
+): { id: string; name: string; namePlural: string | null } | null {
+  if (primaryRecipeIngredient?.unit?.id === line.unitId) {
+    return {
+      id: primaryRecipeIngredient.unit.id,
+      name: primaryRecipeIngredient.unit.name,
+      namePlural: primaryRecipeIngredient.unit.namePlural ?? null,
+    };
+  }
+
+  const catalogIngredient = ingredients.find(
+    (entry) => entry.id === line.ingredientId,
+  );
+  const conversion = catalogIngredient?.unitConversions.find(
+    (entry) => entry.unitId === line.unitId,
+  );
+  if (conversion?.unit) {
+    return {
+      id: conversion.unit.id,
+      name: conversion.unit.name,
+      namePlural: conversion.unit.namePlural ?? null,
+    };
+  }
+
+  return primaryRecipeIngredient?.unit ?? null;
+}
+
+function renderAggregatedLines(params: {
+  lines: CookingAggregatedLine[];
+  ingredients: IngredientType[];
+  effectiveRecipeIngredientById: Map<string, RecipeType["ingredients"][number]>;
+  selectedUnits: Record<string, string | null>;
+  localScaleByIngredientId: Record<string, number>;
+  recipeServings: number;
+  onUnitChange: (recipeIngredientId: string, unitId: string | null) => void;
+  onAggregatedAmountEdit: (
+    sourceRecipeIngredientIds: string[],
+    ratio: number,
+    activeCalorieScalingFactor: number,
+  ) => void;
+  onApplyScaleToAll: (recipeIngredientId: string) => void;
+  onIngredientChange: (recipeIngredientId: string, ingredientId: string) => void;
+}) {
+  const {
+    lines,
+    ingredients,
+    effectiveRecipeIngredientById,
+    selectedUnits,
+    localScaleByIngredientId,
+    recipeServings,
+    onUnitChange,
+    onAggregatedAmountEdit,
+    onApplyScaleToAll,
+    onIngredientChange,
+  } = params;
+
+  return lines.map((line) => {
+    const primaryRecipeIngredient = effectiveRecipeIngredientById.get(
+      line.primaryRecipeIngredientId,
+    );
+    if (!primaryRecipeIngredient) {
+      return null;
+    }
+
+    const resolvedIngredient =
+      ingredients.find((entry) => entry.id === line.ingredientId) ??
+      primaryRecipeIngredient.ingredient;
+    const displayUnit = resolveUnitForAggregatedLine(
+      line,
+      primaryRecipeIngredient,
+      ingredients,
+    );
+    const displayRecipeIngredient: RecipeType["ingredients"][number] = {
+      ...primaryRecipeIngredient,
+      ingredient: resolvedIngredient,
+      ingredientId: resolvedIngredient.id,
+      additionalInfo: line.primaryAdditionalInfo,
+      unit: displayUnit,
+      unitId: displayUnit?.id ?? line.unitId,
+    };
+
+    const showApplyScaleAction = line.sourceRecipeIngredientIds.some((id) =>
+      isScaleModified(localScaleByIngredientId[id] ?? 1),
+    );
+    const allowIngredientSwap = line.sourceRecipeIngredientIds.length === 1;
+
+    return (
+      <IngredientItem
+        key={line.key}
+        recipeIngredient={displayRecipeIngredient}
+        resolvedBaseAmount={line.resolvedAmount}
+        hidePeoplePanel
+        disableIngredientSwap={!allowIngredientSwap}
+        selectedUnitId={
+          selectedUnits[line.primaryRecipeIngredientId] || line.unitId
+        }
+        onUnitChange={(unitId) =>
+          onUnitChange(line.primaryRecipeIngredientId, unitId)
+        }
+        servingScalingFactor={1}
+        calorieScalingFactor={1}
+        onAmountEdit={(ratio, activeCalorieScalingFactor) =>
+          onAggregatedAmountEdit(
+            line.sourceRecipeIngredientIds,
+            ratio,
+            activeCalorieScalingFactor,
+          )
+        }
+        showApplyScaleAction={showApplyScaleAction}
+        onApplyScaleToAll={() =>
+          onApplyScaleToAll(line.primaryRecipeIngredientId)
+        }
+        onIngredientChange={(ingredientId) =>
+          onIngredientChange(line.primaryRecipeIngredientId, ingredientId)
+        }
+        replacementCandidates={ingredients}
+        ingredientCatalog={ingredients}
+        recipeServings={recipeServings}
+        familyMembers={[]}
+        audienceMemberIds={[]}
+        memberPortions={[]}
+      />
+    );
+  });
+}
 
 export function IngredientsSection() {
   const {
     recipe,
     ingredients,
-    familyMembers,
-    currentServings,
+    effectiveRecipeIngredientById,
     hasActiveScaling,
     localScaleByIngredientId,
     selectedUnits,
     ungroupedIngredients,
     visibleGroupedIngredients,
+    cookingAggregatedUngrouped,
+    cookingAggregatedByGroupId,
     onReset,
-    onServingsChange,
     onUnitChange,
-    getIngredientDisplayScalingFactor,
-    getIngredientCalorieFactor,
-    onAmountEdit,
+    onAggregatedAmountEdit,
     onApplyScaleToAll,
     onIngredientChange,
   } = useRecipePageIngredientsSectionData();
-  const audienceMemberIds = useMemo(
-    () => recipe.audienceMembers.map((member) => member.familyMemberId),
-    [recipe.audienceMembers],
+
+  const sharedRenderParams = useMemo(
+    () => ({
+      ingredients,
+      effectiveRecipeIngredientById,
+      selectedUnits,
+      localScaleByIngredientId,
+      recipeServings: recipe.servings,
+      onUnitChange,
+      onAggregatedAmountEdit,
+      onApplyScaleToAll,
+      onIngredientChange,
+    }),
+    [
+      effectiveRecipeIngredientById,
+      ingredients,
+      localScaleByIngredientId,
+      onAggregatedAmountEdit,
+      onApplyScaleToAll,
+      onIngredientChange,
+      onUnitChange,
+      recipe.servings,
+      selectedUnits,
+    ],
   );
-
-  const portionSplitMembers = useMemo(() => {
-    const shares = getSharedPortionShares(
-      familyMembers,
-      recipe.memberPortions,
-    );
-    return shares.map((entry, index) => {
-      const member = familyMembers.find(
-        (familyMember) => familyMember.id === entry.familyMemberId,
-      );
-      const label =
-        member?.name.trim() ||
-        (member?.isSelf ? "You" : `Family member ${index + 1}`);
-      return {
-        label,
-        share: entry.share,
-        multiplier: entry.multiplier,
-      };
-    });
-  }, [familyMembers, recipe.memberPortions]);
-
-  const showPortionSplitChart = portionSplitMembers.length > 1;
 
   if (!recipe.ingredients || recipe.ingredients.length === 0) {
     return null;
   }
+
+  const hasUngroupedLines = cookingAggregatedUngrouped.length > 0;
 
   return (
     <div>
@@ -76,106 +200,42 @@ export function IngredientsSection() {
               onClick={onReset}
               aria-label="Reset ingredient amounts"
             >
-              <RotateCcw  />
+              <RotateCcw />
             </Button>
           )}
         </div>
-        <div className="flex items-center gap-item">
-          <Button
-            variant="outline"
-            size="icon-sm"
-            onClick={() => onServingsChange(currentServings - 1)}
-            disabled={currentServings <= 1}
-            aria-label="Decrease servings"
-          >
-            <Minus />
-          </Button>
-          <span className="type-body min-w-12 text-center">
-            {currentServings} {currentServings === 1 ? "serving" : "servings"}
-          </span>
-          <Button
-            variant="outline"
-            size="icon-sm"
-            onClick={() => onServingsChange(currentServings + 1)}
-            aria-label="Increase servings"
-          >
-            <Plus />
-          </Button>
-        </div>
       </div>
-      {showPortionSplitChart ? (
-        <PortionSplitCard
-          members={portionSplitMembers}
-          scopeLabel={SHARED_INGREDIENTS_SCOPE_LABEL}
-        />
-      ) : null}
-      {ungroupedIngredients.length > 0 ? (
+      {ungroupedIngredients.length > 0 && hasUngroupedLines ? (
         <div className="mb-item">
-          {/* Keep uncategorized ingredients first and unlabeled. */}
           <ul className="space-y-item type-body">
-            {ungroupedIngredients.map((recipeIngredient) => (
-              <IngredientItem
-                key={recipeIngredient.id}
-                recipeIngredient={recipeIngredient}
-                selectedUnitId={
-                  selectedUnits[recipeIngredient.id] || recipeIngredient.unit?.id || null
-                }
-                onUnitChange={(unitId) => onUnitChange(recipeIngredient.id, unitId)}
-                servingScalingFactor={getIngredientDisplayScalingFactor(recipeIngredient.id)}
-                calorieScalingFactor={getIngredientCalorieFactor(recipeIngredient)}
-                onAmountEdit={(ratio, activeCalorieScalingFactor) =>
-                  onAmountEdit(recipeIngredient.id, ratio, activeCalorieScalingFactor)
-                }
-                showApplyScaleAction={isScaleModified(
-                  localScaleByIngredientId[recipeIngredient.id] ?? 1,
-                )}
-                onApplyScaleToAll={() => onApplyScaleToAll(recipeIngredient.id)}
-                onIngredientChange={(ingredientId) =>
-                  onIngredientChange(recipeIngredient.id, ingredientId)
-                }
-                replacementCandidates={ingredients}
-                familyMembers={familyMembers}
-                audienceMemberIds={audienceMemberIds}
-              />
-            ))}
+            {renderAggregatedLines({
+              lines: cookingAggregatedUngrouped,
+              ...sharedRenderParams,
+            })}
           </ul>
         </div>
       ) : null}
 
-      {visibleGroupedIngredients.map((group) => (
-        <div key={group.id} className="mb-item">
-          <h4 className="mb-tight type-overline text-muted-foreground">
-            {group.name}
-          </h4>
-          <ul className="space-y-item type-body">
-            {group.ingredients.map((recipeIngredient) => (
-              <IngredientItem
-                key={recipeIngredient.id}
-                recipeIngredient={recipeIngredient}
-                selectedUnitId={
-                  selectedUnits[recipeIngredient.id] || recipeIngredient.unit?.id || null
-                }
-                onUnitChange={(unitId) => onUnitChange(recipeIngredient.id, unitId)}
-                servingScalingFactor={getIngredientDisplayScalingFactor(recipeIngredient.id)}
-                calorieScalingFactor={getIngredientCalorieFactor(recipeIngredient)}
-                onAmountEdit={(ratio, activeCalorieScalingFactor) =>
-                  onAmountEdit(recipeIngredient.id, ratio, activeCalorieScalingFactor)
-                }
-                showApplyScaleAction={isScaleModified(
-                  localScaleByIngredientId[recipeIngredient.id] ?? 1,
-                )}
-                onApplyScaleToAll={() => onApplyScaleToAll(recipeIngredient.id)}
-                onIngredientChange={(ingredientId) =>
-                  onIngredientChange(recipeIngredient.id, ingredientId)
-                }
-                replacementCandidates={ingredients}
-                familyMembers={familyMembers}
-                audienceMemberIds={audienceMemberIds}
-              />
-            ))}
-          </ul>
-        </div>
-      ))}
+      {visibleGroupedIngredients.map((group) => {
+        const groupLines = cookingAggregatedByGroupId.get(group.id) ?? [];
+        if (groupLines.length === 0) {
+          return null;
+        }
+
+        return (
+          <div key={group.id} className="mb-item">
+            <h4 className="mb-tight type-overline text-muted-foreground">
+              {group.name}
+            </h4>
+            <ul className="space-y-item type-body">
+              {renderAggregatedLines({
+                lines: groupLines,
+                ...sharedRenderParams,
+              })}
+            </ul>
+          </div>
+        );
+      })}
     </div>
   );
 }

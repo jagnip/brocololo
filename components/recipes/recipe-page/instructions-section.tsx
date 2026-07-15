@@ -19,8 +19,11 @@ export function InstructionsSection() {
   const {
     instructions,
     familyMembers,
-    audienceMembers,
+    recipeServings,
+    audienceMemberIds,
     memberPortions,
+    mealCount,
+    cookingFamilyMemberIds,
     effectiveRecipeIngredientById,
     selectedInstructionFamilyMemberId,
     setSelectedInstructionFamilyMemberId,
@@ -28,14 +31,15 @@ export function InstructionsSection() {
     getIngredientDisplayScalingFactor,
     getIngredientCalorieFactor,
   } = useRecipePageInstructionsSectionData();
-  const cookingFamilyMemberIds = audienceMembers.map(
-    (member) => member.familyMemberId,
-  );
   const showPersonFilter = familyMembers.length > 1;
   const [selectedInstructionId, setSelectedInstructionId] = useState<string | null>(null);
 
+  const badgeMemberIds =
+    selectedInstructionFamilyMemberId != null
+      ? [selectedInstructionFamilyMemberId]
+      : cookingFamilyMemberIds;
+
   const renderTextWithMarkdownLinks = (text: string, keyPrefix: string) =>
-    // Keep markdown-link rendering local to this section now that data comes from context.
     parseMarkdownLinks(text).map((segment, index) => {
       if (segment.type === "link") {
         return (
@@ -59,11 +63,9 @@ export function InstructionsSection() {
   }
 
   return (
-    // Shared section container utility keeps card shell styling consistent.
     <div className="section-container">
       <div className="mb-item flex flex-wrap items-center justify-between gap-item">
         <Subheader>Instructions</Subheader>
-        {/* Hide person filter when the recipe audience is a single cook. */}
         {showPersonFilter ? (
           <SegmentedFilterGroup
             aria-label="Instruction person filter"
@@ -99,148 +101,161 @@ export function InstructionsSection() {
           const isSelected = selectedInstructionId === instruction.id;
 
           return (
-          <li
-            key={instruction.id}
-            role="button"
-            tabIndex={0}
-            aria-pressed={isSelected}
-            onClick={(event) => {
-              // Keep markdown links functional without toggling the selected step.
-              if ((event.target as HTMLElement).closest("a")) {
-                return;
-              }
-              setSelectedInstructionId(instruction.id);
-            }}
-            onKeyDown={(event) => {
-              if (event.key !== "Enter" && event.key !== " ") {
-                return;
-              }
-              event.preventDefault();
-              setSelectedInstructionId(instruction.id);
-            }}
-            className={`group flex cursor-pointer items-start gap-item rounded-lg border p-nest transition-colors ${
-              isSelected
-                ? "border-ring bg-accent/50"
-                : "border-border bg-card hover:bg-muted/40"
-            }`}
-          >
-            {/* Step number — rose accent on hover/selection. */}
-            <div
-              className={`flex size-5 shrink-0 items-center justify-center self-start rounded-full transition-colors ${
+            <li
+              key={instruction.id}
+              role="button"
+              tabIndex={0}
+              aria-pressed={isSelected}
+              onClick={(event) => {
+                if ((event.target as HTMLElement).closest("a")) {
+                  return;
+                }
+                setSelectedInstructionId(instruction.id);
+              }}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") {
+                  return;
+                }
+                event.preventDefault();
+                setSelectedInstructionId(instruction.id);
+              }}
+              className={`group flex cursor-pointer items-start gap-item rounded-lg border p-nest transition-colors ${
                 isSelected
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-accent text-primary group-hover:bg-primary group-hover:text-primary-foreground"
+                  ? "border-ring bg-accent/50"
+                  : "border-border bg-card hover:bg-muted/40"
               }`}
             >
-              <div className="type-micro font-bold">
-                {index + 1}
+              <div
+                className={`flex size-5 shrink-0 items-center justify-center self-start rounded-full transition-colors ${
+                  isSelected
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-accent text-primary group-hover:bg-primary group-hover:text-primary-foreground"
+                }`}
+              >
+                <div className="type-micro font-bold">{index + 1}</div>
               </div>
-            </div>
 
-            <div className="flex min-w-0 flex-col gap-item">
-              <div className="type-body text-foreground">
-                {renderTextWithMarkdownLinks(
-                  instruction.text,
-                  `instruction-${instruction.id}`,
+              <div className="flex min-w-0 flex-col gap-item">
+                <div className="type-body text-foreground">
+                  {renderTextWithMarkdownLinks(
+                    instruction.text,
+                    `instruction-${instruction.id}`,
+                  )}
+                </div>
+
+                {instruction.ingredients.length > 0 && (
+                  <div className="flex flex-wrap gap-item">
+                    {instruction.ingredients.flatMap((link) => {
+                      const recipeIngredient =
+                        effectiveRecipeIngredientById.get(
+                          link.recipeIngredient.id,
+                        ) ?? link.recipeIngredient;
+
+                      return badgeMemberIds.flatMap((memberId) => {
+                        if (
+                          !isInstructionIngredientVisibleForPerson(
+                            recipeIngredient,
+                            memberId,
+                          )
+                        ) {
+                          return [];
+                        }
+
+                        const selectedUnitId =
+                          selectedUnits[recipeIngredient.id] ||
+                          recipeIngredient.unit?.id ||
+                          null;
+                        const hasAmount = recipeIngredient.amount != null;
+                        const manualScale =
+                          getIngredientDisplayScalingFactor(
+                            recipeIngredient.id,
+                          ) * getIngredientCalorieFactor(recipeIngredient);
+                        const badgeAmount = hasAmount
+                          ? getInstructionIngredientBadgeAmount({
+                              amount: recipeIngredient.amount,
+                              memberAdjustments:
+                                recipeIngredient.memberAdjustments,
+                              audienceMemberIds,
+                              selectedFamilyMemberId: memberId,
+                              familyMembers,
+                              memberPortions,
+                              cookingFamilyMemberIds,
+                              recipeServings,
+                              rowScaleFactor: manualScale * mealCount,
+                            })
+                          : null;
+
+                        if (hasAmount && badgeAmount == null) {
+                          return [];
+                        }
+
+                        const display = hasAmount
+                          ? getIngredientDisplay(
+                              badgeAmount,
+                              recipeIngredient.unit?.id ?? null,
+                              recipeIngredient.unit?.name ?? null,
+                              selectedUnitId,
+                              recipeIngredient.ingredient.unitConversions,
+                              1,
+                              1,
+                            )
+                          : {
+                              displayAmount: null,
+                              rawAmount: null,
+                              displayUnitName: "",
+                              displayUnitNamePlural: null,
+                            };
+                        const badgeParts = getInstructionIngredientBadgeParts({
+                          rawAmount: display.rawAmount,
+                          displayAmount: display.displayAmount,
+                          displayUnitName: display.displayUnitName,
+                          displayUnitNamePlural: display.displayUnitNamePlural,
+                          ingredientName: recipeIngredient.ingredient.name,
+                          additionalInfo: recipeIngredient.additionalInfo,
+                        });
+
+                        const member = familyMembers.find(
+                          (entry) => entry.id === memberId,
+                        );
+                        const memberLabel =
+                          member?.name.trim() ||
+                          (member?.isSelf ? "You" : "Person");
+
+                        return (
+                          <Badge
+                            key={`${instruction.id}-${recipeIngredient.id}-${memberId}`}
+                            variant="secondary"
+                            className={
+                              isSelected
+                                ? "bg-background border-foreground/20"
+                                : undefined
+                            }
+                          >
+                            <span>{badgeParts.ingredientName}</span>
+                            {getInstructionIngredientBadgeTailSegments(
+                              badgeParts,
+                            ).map((segment, segmentIndex) => (
+                              <span
+                                key={`${segment}-${segmentIndex}`}
+                                className="opacity-75"
+                              >
+                                {` · ${segment}`}
+                              </span>
+                            ))}
+                            {selectedInstructionFamilyMemberId == null &&
+                            familyMembers.length > 1 ? (
+                              <span className="opacity-75">{` · ${memberLabel}`}</span>
+                            ) : null}
+                          </Badge>
+                        );
+                      });
+                    })}
+                  </div>
                 )}
               </div>
-
-              {instruction.ingredients.length > 0 && (
-                <div className="flex flex-wrap gap-item">
-                  {instruction.ingredients.map((link) => {
-                    const recipeIngredient =
-                      effectiveRecipeIngredientById.get(
-                        link.recipeIngredient.id,
-                      ) ?? link.recipeIngredient;
-                    // Filter instruction badges by selected person, but keep step text visible.
-                    if (
-                      !isInstructionIngredientVisibleForPerson(
-                        recipeIngredient,
-                        selectedInstructionFamilyMemberId,
-                      )
-                    ) {
-                      return null;
-                    }
-                    const selectedUnitId =
-                      selectedUnits[recipeIngredient.id] ||
-                      recipeIngredient.unit?.id ||
-                      null;
-                    // Amount-less rows (e.g. "to taste") still get a name-only badge.
-                    const hasAmount = recipeIngredient.amount != null;
-                    const badgeAmount = hasAmount
-                      ? getInstructionIngredientBadgeAmount({
-                          amount: recipeIngredient.amount,
-                          memberAdjustments: recipeIngredient.memberAdjustments,
-                          audienceMemberIds: audienceMembers.map(
-                            (member) => member.familyMemberId,
-                          ),
-                          selectedFamilyMemberId:
-                            selectedInstructionFamilyMemberId,
-                          familyMembers,
-                          memberPortions,
-                          cookingFamilyMemberIds,
-                          rowScaleFactor:
-                            getIngredientDisplayScalingFactor(
-                              recipeIngredient.id,
-                            ) * getIngredientCalorieFactor(recipeIngredient),
-                        })
-                      : null;
-                    // Hide only when we expected a numeric badge but could not resolve one.
-                    if (hasAmount && badgeAmount == null) {
-                      return null;
-                    }
-                    const display = hasAmount
-                      ? getIngredientDisplay(
-                          badgeAmount,
-                          recipeIngredient.unit?.id ?? null,
-                          recipeIngredient.unit?.name ?? null,
-                          selectedUnitId,
-                          recipeIngredient.ingredient.unitConversions,
-                          1,
-                          1,
-                        )
-                      : {
-                          displayAmount: null,
-                          rawAmount: null,
-                          displayUnitName: "",
-                          displayUnitNamePlural: null,
-                        };
-                    const badgeParts = getInstructionIngredientBadgeParts({
-                      rawAmount: display.rawAmount,
-                      displayAmount: display.displayAmount,
-                      displayUnitName: display.displayUnitName,
-                      displayUnitNamePlural: display.displayUnitNamePlural,
-                      // Recipe pages should keep instruction badges to the ingredient name only.
-                      ingredientName: recipeIngredient.ingredient.name,
-                      additionalInfo: recipeIngredient.additionalInfo,
-                    });
-
-                    return (
-                      <Badge
-                        key={`${instruction.id}-${recipeIngredient.id}`}
-                        variant="secondary"
-                        // Make badges more prominent inside the selected step.
-                        className={isSelected ? "bg-background border-foreground/20" : undefined}
-                      >
-                        <span>{badgeParts.ingredientName}</span>
-                        {getInstructionIngredientBadgeTailSegments(badgeParts).map(
-                          (segment, index) => (
-                            <span
-                              key={`${segment}-${index}`}
-                              className="opacity-75"
-                            >
-                              {` · ${segment}`}
-                            </span>
-                          ),
-                        )}
-                      </Badge>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </li>
-        )})}
+            </li>
+          );
+        })}
       </ol>
     </div>
   );

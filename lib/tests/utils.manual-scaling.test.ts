@@ -164,8 +164,8 @@ describe('Manual ingredient scaling — integration', () => {
    * Rice: 130 cal/100g, 2.7g protein, 0.3g fat, 28g carbs
    */
   const nutritionFamilyMembers = [
-    { id: "family-self", isSelf: true },
-    { id: "family-member-1", isSelf: false },
+    { id: "family-self", isSelf: true, portionMultiplier: 1 },
+    { id: "family-member-1", isSelf: false, portionMultiplier: 1.5 },
   ];
 
   function nutritionFor(
@@ -316,13 +316,13 @@ describe('Manual ingredient scaling — integration', () => {
     const jagodaNutrition = scaleNutrition(jagodaBaseNutrition, effectiveFactor);
     const nelsonNutrition = scaleNutrition(nelsonBaseNutrition, effectiveFactor);
 
-    // Canonical totals: 1050 kcal, servings=4 => mealCount=2, split 1:1.5.
-    expect(jagodaBaseNutrition.calories).toBe(210);
-    expect(nelsonBaseNutrition.calories).toBe(315);
+    // Equal per-meal shares for each person.
+    expect(jagodaBaseNutrition.calories).toBe(263);
+    expect(nelsonBaseNutrition.calories).toBe(263);
 
-    expect(jagodaNutrition.calories).toBe(252);
+    expect(jagodaNutrition.calories).toBe(316);
 
-    expect(nelsonNutrition.calories).toBe(378);
+    expect(nelsonNutrition.calories).toBe(316);
   });
 
   it('should calculate correct nutrition when calorie target is active (no manual edit)', () => {
@@ -338,8 +338,7 @@ describe('Manual ingredient scaling — integration', () => {
     const nelsonNutrition = scaleNutrition(nelsonBaseNutrition, effectiveFactor);
 
     expect(jagodaNutrition.calories).toBe(500);
-    // Nelson tracks the same calorie/manual scaling factor from his own base.
-    expect(nelsonNutrition.calories).toBe(750);
+    expect(nelsonNutrition.calories).toBe(500);
   });
 
   it('should reset to base values when manual scale ratio is 1', () => {

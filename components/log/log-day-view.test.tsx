@@ -1,9 +1,29 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LogMealType } from "@/src/generated/enums";
 import { LogDayView } from "./log-day-view";
 import type { LogDayData } from "@/lib/log/view-model";
+
+vi.mock("@/components/context/topbar-context", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/components/context/topbar-context")>();
+  return {
+    ...actual,
+    useTopbar: () => ({
+      config: null,
+      setConfig: vi.fn(),
+      clearConfig: vi.fn(),
+      isLogFilterPending: false,
+      setLogFilterPending: vi.fn(),
+    }),
+  };
+});
+
+function renderLogDayView(ui: React.ReactElement) {
+  return render(ui);
+}
 
 const pushMock = vi.fn();
 const refreshMock = vi.fn();
@@ -14,8 +34,11 @@ vi.mock("next/navigation", () => ({
     refresh: refreshMock,
   }),
   usePathname: () => "/log/log-1",
-  useSearchParams: () => new URLSearchParams(""),
+  useSearchParams: () => stableSearchParams,
 }));
+
+// Stable reference — a fresh URLSearchParams each render breaks Radix Select in LogPersonSelect.
+const stableSearchParams = new URLSearchParams("");
 
 const appendNextLogDayActionMock = vi.fn();
 const removeLogDayActionMock = vi.fn();
@@ -60,12 +83,25 @@ if (!("releasePointerCapture" in Element.prototype)) {
   (Element.prototype as any).releasePointerCapture = () => {};
 }
 
+const testFamilyMembers = [
+  { id: "family-self", name: "You", isSelf: true, sortOrder: 0 },
+] as const;
+
 const ingredientFormDependencies = {
   categories: [{ id: "cat-dairy", name: "Dairy" }],
   units: [{ id: "unit-g", name: "g", namePlural: null }],
   gramsUnitId: "unit-g",
   iconOptions: [],
 };
+
+function TestLogDayView(props: ComponentProps<typeof LogDayView>) {
+  return (
+    <LogDayView
+      familyMembers={[...testFamilyMembers]}
+      {...props}
+    />
+  );
+}
 
 describe("LogDayView", () => {
   beforeEach(() => {
@@ -114,8 +150,8 @@ describe("LogDayView", () => {
       },
     ];
 
-    render(
-      <LogDayView
+    renderLogDayView(
+      <TestLogDayView
         days={days}
         plannerPool={[
           {
@@ -241,7 +277,7 @@ describe("LogDayView", () => {
       },
     ];
 
-    render(<LogDayView days={days} />);
+    renderLogDayView(<TestLogDayView days={days} />);
 
     // Compact slot cards show recipe title + macros, not a separate meal-label line.
     expect(screen.getByText("Oatmeal")).toBeInTheDocument();
@@ -323,7 +359,7 @@ describe("LogDayView", () => {
       },
     ];
 
-    render(<LogDayView days={days} />);
+    renderLogDayView(<TestLogDayView days={days} />);
 
     expect(screen.getByText("Oatmeal")).toBeInTheDocument();
     expect(screen.queryByText("Scrambled Eggs")).not.toBeInTheDocument();
@@ -399,7 +435,7 @@ describe("LogDayView", () => {
       },
     ];
 
-    render(<LogDayView days={days} initialSelectedDayKey="2026-03-18" />);
+    renderLogDayView(<TestLogDayView days={days} initialSelectedDayKey="2026-03-18" />);
 
     expect(screen.getByText("Scrambled Eggs")).toBeInTheDocument();
     expect(screen.queryByText("Oatmeal")).not.toBeInTheDocument();
@@ -462,8 +498,8 @@ describe("LogDayView", () => {
       },
     ];
 
-    render(
-      <LogDayView
+    renderLogDayView(
+      <TestLogDayView
         days={days}
         logId="log-1"
         person="PRIMARY"
@@ -535,7 +571,7 @@ describe("LogDayView", () => {
       },
     ];
 
-    render(<LogDayView days={days} logId="log-1" person="PRIMARY" />);
+    renderLogDayView(<TestLogDayView days={days} logId="log-1" person="PRIMARY" />);
 
     await user.click(screen.getByRole("button", { name: /add day/i }));
 
@@ -544,7 +580,7 @@ describe("LogDayView", () => {
         logId: "log-1",
       });
       expect(pushMock).toHaveBeenCalledWith(
-        "/log/log-1?person=PRIMARY&day=2026-03-18",
+        "/log/log-1?memberId=PRIMARY&day=2026-03-18",
       );
       expect(refreshMock).toHaveBeenCalled();
     });
@@ -572,12 +608,12 @@ describe("LogDayView", () => {
       },
     ];
 
-    render(<LogDayView days={days} logId="log-1" person="PRIMARY" />);
+    renderLogDayView(<TestLogDayView days={days} logId="log-1" person="PRIMARY" />);
     await user.click(screen.getByRole("button", { name: /add day/i }));
 
     await waitFor(() => {
       expect(appendNextLogDayActionMock).toHaveBeenCalledWith({ logId: "log-1" });
-      expect(pushMock).not.toHaveBeenCalledWith("/log/log-1?person=PRIMARY&day=2026-03-18");
+      expect(pushMock).not.toHaveBeenCalledWith("/log/log-1?memberId=PRIMARY&day=2026-03-18");
     });
   });
 
@@ -646,38 +682,33 @@ describe("LogDayView", () => {
       },
     ];
 
-    render(<LogDayView days={days} logId="log-1" person="PRIMARY" />);
+    renderLogDayView(<TestLogDayView days={days} logId="log-1" person="PRIMARY" />);
 
     const removeButtons = screen.getAllByRole("button", {
       name: /remove day/i,
     });
     await user.click(removeButtons[0]!);
+    await user.click(screen.getByRole("button", { name: /^delete day$/i }));
 
     await waitFor(() => {
       expect(removeLogDayActionMock).toHaveBeenCalledWith({
         logId: "log-1",
         dateKey: "2026-03-17",
+        force: true,
       });
       expect(pushMock).toHaveBeenCalledWith(
-        "/log/log-1?person=PRIMARY&day=2026-03-19",
+        "/log/log-1?memberId=PRIMARY&day=2026-03-19",
       );
       expect(refreshMock).toHaveBeenCalled();
     });
   });
 
-  it("shows warning dialog for impacted day and removes only after confirmation", async () => {
+  it("shows confirmation dialog before removing a day", async () => {
     const user = userEvent.setup();
-    removeLogDayActionMock
-      .mockResolvedValueOnce({
-        type: "impact_warning",
-        impactedDates: ["2026-03-17"],
-        impactedLogMealsCount: 2,
-        impactedPlanMealsCount: 1,
-      })
-      .mockResolvedValueOnce({
-        type: "success",
-        nextDayKey: "2026-03-18",
-      });
+    removeLogDayActionMock.mockResolvedValueOnce({
+      type: "success",
+      nextDayKey: "2026-03-18",
+    });
 
     const days: LogDayData[] = [
       {
@@ -702,14 +733,16 @@ describe("LogDayView", () => {
       },
     ];
 
-    render(<LogDayView days={days} logId="log-1" person="PRIMARY" />);
+    renderLogDayView(<TestLogDayView days={days} logId="log-1" person="PRIMARY" />);
     await user.click(screen.getAllByRole("button", { name: /remove day/i })[0]!);
 
     expect(screen.getByText(/delete day and synced plan meals/i)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /delete day/i }));
+    expect(removeLogDayActionMock).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: /^delete day$/i }));
 
     await waitFor(() => {
-      expect(removeLogDayActionMock).toHaveBeenNthCalledWith(2, {
+      expect(removeLogDayActionMock).toHaveBeenCalledWith({
         logId: "log-1",
         dateKey: "2026-03-17",
         force: true,
@@ -747,7 +780,7 @@ describe("LogDayView", () => {
       },
     ];
 
-    render(<LogDayView days={days} />);
+    renderLogDayView(<TestLogDayView days={days} />);
 
     expect(
       screen.getByRole("button", { name: /add snack entry/i }),
@@ -789,8 +822,8 @@ describe("LogDayView", () => {
       },
     ];
 
-    render(
-      <LogDayView
+    renderLogDayView(
+      <TestLogDayView
         days={days}
         logId="log-1"
         person="PRIMARY"
@@ -848,8 +881,8 @@ describe("LogDayView", () => {
       },
     ];
 
-    render(
-      <LogDayView
+    renderLogDayView(
+      <TestLogDayView
         days={days}
         logId="log-1"
         person="PRIMARY"
@@ -902,8 +935,8 @@ describe("LogDayView", () => {
       },
     ];
 
-    render(
-      <LogDayView
+    renderLogDayView(
+      <TestLogDayView
         days={days}
         logId="log-1"
         person="PRIMARY"
@@ -985,8 +1018,8 @@ describe("LogDayView", () => {
       },
     ];
 
-    render(
-      <LogDayView
+    renderLogDayView(
+      <TestLogDayView
         days={days}
         logId="log-1"
         person="PRIMARY"

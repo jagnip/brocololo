@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
-import { GripVertical, Pencil, Trash2 } from "lucide-react";
+import { GripVertical, Pencil, Trash2, Users, NotebookPen } from "lucide-react";
 import { IngredientType } from "@/types/ingredient";
 import {
   RecipeIngredientGroupInputType,
@@ -36,10 +36,22 @@ import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
+import { IngredientMemberAdjustmentsEditor } from "@/components/recipes/ingredient-member-adjustments-editor";
+import { IngredientNotePanel } from "@/components/recipes/ingredient-note-panel";
+import { IngredientRowActionButton } from "@/components/recipes/ingredient-row-action-button";
+import {
+  getMemberAdjustmentCount,
+  hasIngredientNote,
+} from "@/lib/recipes/ingredient-adjustments";
 
 type IngredientSelectorProps = {
   ingredients: IngredientType[];
   familyMembers: FamilyMemberRow[];
+  /** Full household list — used for solo-household hint (defaults to familyMembers). */
+  householdFamilyMembers?: FamilyMemberRow[];
+  audienceMemberIds: string[];
+  servings: number;
+  memberPortions?: Array<{ familyMemberId: string; multiplier: number }>;
   groups: RecipeIngredientGroupInputType[];
   value: RecipeIngredientInputType[];
   onGroupsChange: (value: RecipeIngredientGroupInputType[]) => void;
@@ -317,6 +329,10 @@ export function removeIngredientGroup(input: {
 export function IngredientSelector({
   ingredients,
   familyMembers,
+  householdFamilyMembers,
+  audienceMemberIds,
+  servings,
+  memberPortions = [],
   groups,
   value,
   onGroupsChange,
@@ -324,6 +340,10 @@ export function IngredientSelector({
   onCreateIngredientRequested,
   onEditIngredientRequested,
 }: IngredientSelectorProps) {
+  const resolvedHouseholdMembers = householdFamilyMembers ?? familyMembers;
+  const [expandedPanelsByRowKey, setExpandedPanelsByRowKey] = React.useState<
+    Record<string, { people: boolean; note: boolean }>
+  >({});
   const AUTO_SCROLL_EDGE_THRESHOLD_PX = 96;
   const AUTO_SCROLL_MAX_STEP_PX = 18;
   const [draggingIngredientKey, setDraggingIngredientKey] = React.useState<
@@ -707,6 +727,25 @@ export function IngredientSelector({
       (row) => row.tempIngredientKey === item.tempIngredientKey,
     );
     const isAmountDisabled = !item.unitId;
+    const rowKey = item.tempIngredientKey;
+    const panelState = expandedPanelsByRowKey[rowKey] ?? {
+      people: false,
+      note: false,
+    };
+    const baseUnit = units.find((uc) => uc.unitId === item.unitId)?.unit;
+    const adjustmentCount = getMemberAdjustmentCount(item.memberAdjustments);
+    const hasNote = hasIngredientNote(item.additionalInfo);
+
+    const togglePanel = (panel: "people" | "note") => {
+      setExpandedPanelsByRowKey((previous) => ({
+        ...previous,
+        [rowKey]: {
+          ...panelState,
+          [panel]: !panelState[panel],
+        },
+      }));
+    };
+
     return (
       <div
         key={item.tempIngredientKey || rowIndex}
@@ -889,21 +928,62 @@ export function IngredientSelector({
               </div>
             </div>
 
-            {/* Phone: third row. Tablet: same row as amount+unit. Desktop: line under primary controls. */}
-            <Input
-              type="text"
-              placeholder="Additional info"
-              value={item.additionalInfo || ""}
-              onChange={(e) => {
-                updateIngredient(item.tempIngredientKey, {
-                  additionalInfo: e.target.value,
-                });
-              }}
-              className={INGREDIENT_ROW_LAYOUT_CLASSES.additionalInfoInput}
-              maxLength={50}
-            />
+            {/* Removed always-visible additional info — now behind Note toggle below. */}
           </div>
         </div>
+
+        {/* Row actions: People + Note toggles */}
+        <div className="flex flex-wrap items-center gap-2">
+          <IngredientRowActionButton
+            active={panelState.people}
+            badgeCount={adjustmentCount}
+            aria-label="Personal adjustments"
+            aria-expanded={panelState.people}
+            onClick={() => togglePanel("people")}
+          >
+            <Users className="h-4 w-4" />
+          </IngredientRowActionButton>
+          <IngredientRowActionButton
+            active={panelState.note}
+            showDotBadge={hasNote}
+            aria-label="Ingredient note"
+            aria-expanded={panelState.note}
+            onClick={() => togglePanel("note")}
+          >
+            <NotebookPen className="h-4 w-4" />
+          </IngredientRowActionButton>
+        </div>
+
+        {panelState.people ? (
+          <IngredientMemberAdjustmentsEditor
+            memberAdjustments={item.memberAdjustments ?? []}
+            onChange={(nextAdjustments) =>
+              updateIngredient(item.tempIngredientKey, {
+                memberAdjustments: nextAdjustments,
+              })
+            }
+            familyMembers={resolvedHouseholdMembers}
+            audienceMemberIds={audienceMemberIds}
+            servings={servings}
+            memberPortions={memberPortions}
+            baseIngredientId={item.ingredientId}
+            baseAmount={item.amount ?? null}
+            baseUnitId={item.unitId ?? null}
+            ingredients={ingredients}
+          />
+        ) : null}
+
+        {panelState.note ? (
+          <IngredientNotePanel
+            mode="edit"
+            value={item.additionalInfo}
+            onChange={(next) =>
+              updateIngredient(item.tempIngredientKey, {
+                additionalInfo: next,
+              })
+            }
+          />
+        ) : null}
       </div>
     );
   };

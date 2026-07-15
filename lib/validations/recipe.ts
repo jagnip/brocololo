@@ -23,12 +23,6 @@ const preprocessRequiredNumberInput = (
     .transform((val) => val as number)
     .pipe(schema));
 
-// Guard against floating-point artifacts while enforcing 0.5 increments.
-const isHalfStepValue = (value: number): boolean => {
-  const doubled = value * 2;
-  return Math.abs(doubled - Math.round(doubled)) < 1e-9;
-};
-
 const recipeIngredientGroupSchema = z.object({
   id: z.string().min(1).optional(),
   tempGroupKey: z.string().min(1, { message: "Group key is required" }),
@@ -129,21 +123,6 @@ const recipeIngredientSchema = z
     }
   });
 
-const recipeMemberPortionSchema = z.object({
-  familyMemberId: z.string().min(1),
-  multiplier: preprocessRequiredNumberInput(
-    "Choose a multiplier",
-    z
-      .number()
-      .min(1)
-      .refine((value) => isHalfStepValue(value), {
-        message: "Choose a multiplier in 0.5 steps",
-      }),
-  ),
-});
-
-const recipeAudienceMemberIdSchema = z.string().min(1);
-
 const recipeInstructionSchema = z.object({
   id: z.string().min(1).optional(),
   text: z
@@ -196,10 +175,6 @@ const recipeBaseSchema = z
         .int({ message: "Enter a number of portions above 0" })
         .min(1, { message: "Enter a number of portions above 0" }),
     ),
-    audienceFamilyMemberIds: z
-      .array(recipeAudienceMemberIdSchema)
-      .min(1, { message: "Choose at least one person" }),
-    memberPortions: z.array(recipeMemberPortionSchema).default([]),
     ingredientGroups: z.array(recipeIngredientGroupSchema).default([]),
     // Keep arrays required but allow empty collections for draft-like recipes.
     ingredients: z.array(recipeIngredientSchema),
@@ -213,30 +188,10 @@ const recipeBaseSchema = z
     excludeFromPlanner: z.boolean().default(false),
   })
   .superRefine((recipe, ctx) => {
-    const audienceIds = new Set(recipe.audienceFamilyMemberIds);
-    const audienceCount = audienceIds.size;
-
-    if (audienceCount > 0 && recipe.servings % audienceCount !== 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["servings"],
-        message: `Use ${audienceCount}, ${audienceCount * 2}, ${audienceCount * 3}, etc. portions for this audience`,
-      });
-    }
-
-    recipe.memberPortions.forEach((portion, index) => {
-      if (!audienceIds.has(portion.familyMemberId)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["memberPortions", index, "familyMemberId"],
-          message: "Serving multipliers must be for people in the recipe audience",
-        });
-      }
-    });
-
     recipe.ingredients.forEach((ingredient, ingredientIndex) => {
+      const seenMemberIds = new Set<string>();
       ingredient.memberAdjustments.forEach((adjustment, adjustmentIndex) => {
-        if (!audienceIds.has(adjustment.familyMemberId)) {
+        if (seenMemberIds.has(adjustment.familyMemberId)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: [
@@ -246,9 +201,10 @@ const recipeBaseSchema = z
               adjustmentIndex,
               "familyMemberId",
             ],
-            message: "Adjustments must be for people in the recipe audience",
+            message: "Each person can only have one adjustment per ingredient",
           });
         }
+        seenMemberIds.add(adjustment.familyMemberId);
       });
     });
   });

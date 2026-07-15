@@ -184,6 +184,8 @@ export function PlanView({
           initialRecipeId={null}
           initialCustomName=""
           initialRows={[]}
+          familyMembers={familyMembers}
+          cookingFamilyMemberIds={familyMembers.map((member) => member.id)}
           isSaving={false}
           onCancel={() => setIsBulkReplaceDialogOpen(false)}
           onSave={handleBulkReplaceSave}

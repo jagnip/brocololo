@@ -12,6 +12,7 @@ import {
   type BaseIngredientRow,
   type MemberAdjustmentRow,
 } from "@/lib/recipes/resolve-ingredient-lines";
+import { resolveConsumableIngredientLine } from "@/lib/recipes/ingredient-adjustments";
 
 // Shape of a unitConversion entry after enriching with the unit name
 export type UnitConversionWithName = {
@@ -161,8 +162,8 @@ export function getIngredientDisplay(
   originalUnitName: string | null,
   selectedUnitId: string | null,
   unitConversions: UnitConversionWithName[],
-  servingScalingFactor: number,
-  calorieScalingFactor: number,
+  servingScalingFactor = 1,
+  calorieScalingFactor = 1,
 ): IngredientDisplayResult {
   if (amount == null || !originalUnitId || !originalUnitName) {
     return {
@@ -284,13 +285,6 @@ export function recipeToFormData(recipe: RecipeType): UpdateRecipeFormValues {
     handsOnTime: recipe.handsOnTime,
     totalTime: recipe.totalTime,
     servings: recipe.servings,
-    audienceFamilyMemberIds: recipe.audienceMembers.map(
-      (member) => member.familyMemberId,
-    ),
-    memberPortions: recipe.memberPortions.map((portion) => ({
-      familyMemberId: portion.familyMemberId,
-      multiplier: portion.multiplier,
-    })),
     ingredientGroups,
     ingredients: ingredientRows,
     instructions: recipe.instructions.map((instruction) => ({
@@ -410,6 +404,7 @@ export type FamilyMemberForNutrition = {
   name?: string;
   isSelf: boolean;
   sortOrder?: number;
+  portionMultiplier?: number;
 };
 
 export type InstructionPersonFilter = string | null;
@@ -460,7 +455,8 @@ export function getInstructionIngredientBadgeAmount(params: {
   familyMembers: FamilyMemberForNutrition[];
   memberPortions: Array<{ familyMemberId: string; multiplier: number }>;
   cookingFamilyMemberIds: string[];
-  rowScaleFactor: number;
+  recipeServings: number;
+  rowScaleFactor?: number;
 }): number | null {
   const {
     amount,
@@ -469,8 +465,8 @@ export function getInstructionIngredientBadgeAmount(params: {
     selectedFamilyMemberId,
     familyMembers,
     memberPortions,
-    cookingFamilyMemberIds,
-    rowScaleFactor,
+    recipeServings,
+    rowScaleFactor = 1,
   } = params;
 
   if (amount == null) {
@@ -506,9 +502,9 @@ export function getInstructionIngredientBadgeAmount(params: {
     appliesToEveryone: targeting.appliesToEveryone,
     targetFamilyMemberIds: targeting.targetFamilyMemberIds,
     familyMemberId: selectedFamilyMemberId,
+    recipeServings,
     familyMembers,
     memberPortions,
-    cookingFamilyMemberIds,
   });
 }
 
@@ -524,60 +520,70 @@ export function calculateNutritionPerServing(
   recipe: RecipeForNutritionCalculation,
   familyMemberId: string,
   familyMembers: FamilyMemberForNutrition[],
+  ingredientCatalog?: RecipeType["ingredients"][number]["ingredient"][],
 ): NutritionPerPortion {
+  const catalogById = new Map<
+    string,
+    RecipeType["ingredients"][number]["ingredient"]
+  >();
+  for (const row of recipe.ingredients) {
+    catalogById.set(row.ingredient.id, row.ingredient);
+  }
+  for (const entry of ingredientCatalog ?? []) {
+    catalogById.set(entry.id, entry);
+  }
+
+  const audienceIds = familyMembers.map((member) => member.id);
+
   const total = recipe.ingredients.reduce(
     (acc, recipeIngredient) => {
       if (recipeIngredient.amount == null || recipeIngredient.unit == null) {
         return acc;
       }
-      
-      const ingredient = recipeIngredient.ingredient;
-      const unit = recipeIngredient.unit;
-  
-      const conversion = ingredient.unitConversions.find(
-        (uc) => uc.unitId === unit.id
-      );
 
-      if (!conversion) {
-        return acc;
-      }
-
-      const grams = recipeIngredient.amount * conversion.gramsPerUnit;
-      const nutrientMultiplier = grams / 100;
-      const ingredientNutrition = {
-        calories: ingredient.calories * nutrientMultiplier,
-        protein: ingredient.proteins * nutrientMultiplier,
-        fat: ingredient.fats * nutrientMultiplier,
-        carbs: ingredient.carbs * nutrientMultiplier,
-      };
-
-      const amountForMember = getFamilyMemberIngredientAmountPerMeal({
-        amount: recipeIngredient.amount,
-        memberAdjustments: recipeIngredient.memberAdjustments,
+      const consumable = resolveConsumableIngredientLine({
+        row: {
+          id: recipeIngredient.id,
+          ingredientId: recipeIngredient.ingredient.id,
+          amount: recipeIngredient.amount,
+          unitId: recipeIngredient.unit.id,
+          additionalInfo: recipeIngredient.additionalInfo,
+          memberAdjustments: recipeIngredient.memberAdjustments,
+        },
         familyMemberId,
         recipeServings: recipe.servings,
         familyMembers,
         memberPortions: recipe.memberPortions,
-        cookingFamilyMemberIds: recipe.audienceMembers.map(
-          (member) => member.familyMemberId,
-        ),
-        recipeAudienceFamilyMemberIds: recipe.audienceMembers.map(
-          (member) => member.familyMemberId,
-        ),
+        cookingFamilyMemberIds: audienceIds,
+        recipeAudienceFamilyMemberIds: audienceIds,
       });
-      if (amountForMember == null || amountForMember <= 0) {
+      if (!consumable) {
         return acc;
       }
 
-      const memberFactor = amountForMember / recipeIngredient.amount;
+      const ingredient = catalogById.get(consumable.ingredientId);
+      if (!ingredient) {
+        return acc;
+      }
+
+      const conversion = ingredient.unitConversions.find(
+        (unitConversion) => unitConversion.unitId === consumable.unitId,
+      );
+      if (!conversion) {
+        return acc;
+      }
+
+      const grams = consumable.amount * conversion.gramsPerUnit;
+      const nutrientMultiplier = grams / 100;
+
       return {
-        calories: acc.calories + ingredientNutrition.calories * memberFactor,
-        protein: acc.protein + ingredientNutrition.protein * memberFactor,
-        fat: acc.fat + ingredientNutrition.fat * memberFactor,
-        carbs: acc.carbs + ingredientNutrition.carbs * memberFactor,
+        calories: acc.calories + ingredient.calories * nutrientMultiplier,
+        protein: acc.protein + ingredient.proteins * nutrientMultiplier,
+        fat: acc.fat + ingredient.fats * nutrientMultiplier,
+        carbs: acc.carbs + ingredient.carbs * nutrientMultiplier,
       };
     },
-    { calories: 0, protein: 0, fat: 0, carbs: 0 }
+    { calories: 0, protein: 0, fat: 0, carbs: 0 },
   );
 
   return {

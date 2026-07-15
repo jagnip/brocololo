@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/session";
 import { FAMILY_MEMBERS_MAX_PER_USER, ROUTES } from "@/lib/constants";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 import {
   createFamilyMember,
   deleteFamilyMember,
@@ -23,7 +24,7 @@ function revalidateSettings() {
 export async function updateFamilyMemberNameAction(
   input: unknown,
 ): Promise<
-  | { type: "success"; member: { id: string; name: string; isSelf: boolean; sortOrder: number } }
+  | { type: "success"; member: FamilyMemberRow }
   | { type: "error"; message: string }
 > {
   const parsed = updateFamilyMemberNameSchema.safeParse(input);
@@ -52,7 +53,7 @@ export async function updateFamilyMemberNameAction(
 export async function createFamilyMemberAction(
   input: unknown,
 ): Promise<
-  | { type: "success"; member: { id: string; name: string; isSelf: boolean; sortOrder: number } }
+  | { type: "success"; member: FamilyMemberRow }
   | { type: "error"; message: string }
 > {
   const parsed = createFamilyMemberSchema.safeParse(input);

@@ -6,6 +6,7 @@ export type FamilyMemberRow = {
   name: string;
   isSelf: boolean;
   sortOrder: number;
+  portionMultiplier: number;
 };
 
 const familyMemberSelect = {
@@ -13,6 +14,7 @@ const familyMemberSelect = {
   name: true,
   isSelf: true,
   sortOrder: true,
+  portionMultiplier: true,
 } as const;
 
 // Phase 2: map isSelf member → LogPerson.PRIMARY; first non-self by sortOrder → SECONDARY

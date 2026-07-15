@@ -10,12 +10,14 @@ import { TopbarConfigController } from "@/components/topbar-config";
 import { NutritionSection } from "@/components/recipes/recipe-page/nutrition-section";
 import { InstructionsSection } from "@/components/recipes/recipe-page/instructions-section";
 import { IngredientsSection } from "@/components/recipes/recipe-page/ingredients-section";
+import { CookingForStripe } from "@/components/recipes/recipe-page/cooking-for-stripe";
 import { NotesSection } from "@/components/recipes/recipe-page/notes-section";
 import { RecipeAddToLogDialogContainer } from "@/components/recipes/recipe-page/add-to-log/add-to-log-dialog-container";
 import { RecipeDeleteDialog } from "@/components/recipes/recipe-delete-dialog";
 import {
   useRecipePageAddToLogData,
   useRecipePageBaseData,
+  useRecipePageCookingForData,
 } from "@/components/context/recipe-page-context";
 
 type RecipePageProps = {
@@ -33,12 +35,13 @@ export default function RecipePage({
   const [isAddToLogOpen, setIsAddToLogOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const { recipe, ingredients, familyMembers } = useRecipePageBaseData();
+  const cookingForData = useRecipePageCookingForData();
   const addToLogData = useRecipePageAddToLogData();
 
   useEffect(() => {
     setIsAddToLogOpen(false);
     setIsDeleteOpen(false);
-  }, [recipe.id, recipe.servings]);
+  }, [recipe.id]);
 
   const ingredientOptionsForLogDialog = useMemo<LogIngredientOption[]>(
     () =>
@@ -115,6 +118,10 @@ export default function RecipePage({
             <ImageGallery images={recipe.images || []} />
           </div>
 
+          <div className="order-4 md:order-0 md:mb-block">
+            <CookingForStripe {...cookingForData} />
+          </div>
+
           <div className="order-5 md:order-0 md:mb-block">
             <InstructionsSection />
           </div>
@@ -151,10 +158,11 @@ export default function RecipePage({
           onOpenChange={setIsAddToLogOpen}
           recipeIngredients={addToLogData.recipeIngredients}
           familyMembers={familyMembers}
-          audienceMembers={addToLogData.audienceMembers}
+          audienceMemberIds={addToLogData.audienceMemberIds}
           memberPortions={addToLogData.memberPortions}
-          currentServings={addToLogData.currentServings}
-          servingScalingFactor={addToLogData.servingScalingFactor}
+          cookingFamilyMemberIds={addToLogData.cookingFamilyMemberIds}
+          recipeServings={addToLogData.recipeServings}
+          mealCount={addToLogData.mealCount}
           availableLogDateKeys={addToLogData.availableLogDateKeys}
           ingredientOptions={ingredientOptionsForLogDialog}
           ingredientFormDependencies={ingredientFormDependencies}

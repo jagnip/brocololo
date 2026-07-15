@@ -4,7 +4,7 @@ import {
   SlotInputType,
   SlotSaveData,
 } from "@/types/planner";
-import { getFamilyMemberIngredientAmountPerMeal } from "@/lib/log/helpers";
+import { resolveRecipeIngredientRowsForMember } from "@/lib/recipes/ingredient-adjustments";
 import {
   LogMealType,
   PlannerMealType,
@@ -323,7 +323,7 @@ export async function getPlanById(userId: string, planId: string) {
     recipe: slot.recipe,
     customMeal: mapCustomMealFromSlot(slot),
     alternatives: slot.alternatives.map((a) => a.recipe),
-    cookingFamilyMemberIds: slot.audienceMembers.map(
+    cookingFamilyMemberIds: (slot.audienceMembers ?? []).map(
       (member) => member.familyMemberId,
     ),
     used: slot.used,
@@ -413,63 +413,116 @@ export async function findDateCollisionsTx(params: {
 }
 
 export async function getPlanForGroceries(userId: string, planId: string) {
-  const plan = await prisma.plan.findFirst({
-    where: { id: planId, userId },
-    include: {
-      slots: {
-        include: {
-          recipe: {
-            select: {
-              name: true,
-              servings: true,
-              ingredients: {
-                include: {
-                  ingredient: {
-                    select: {
-                      id: true,
-                      name: true,
-                      brand: true,
-                      descriptor: true,
-                      icon: true,
-                      supermarketUrl: true,
-                      unitConversions: true,
-                      category: { select: { id: true, name: true, sortOrder: true } },
+  const [plan, familyMembers] = await Promise.all([
+    prisma.plan.findFirst({
+      where: { id: planId, userId },
+      include: {
+        slots: {
+          include: {
+            audienceMembers: {
+              select: { familyMemberId: true },
+            },
+            recipe: {
+              select: {
+                name: true,
+                servings: true,
+                audienceMembers: {
+                  select: { familyMemberId: true },
+                },
+                memberPortions: {
+                  select: { familyMemberId: true, multiplier: true },
+                },
+                ingredients: {
+                  select: {
+                    id: true,
+                    ingredientId: true,
+                    amount: true,
+                    additionalInfo: true,
+                    memberAdjustments: {
+                      select: {
+                        familyMemberId: true,
+                        kind: true,
+                        ingredientId: true,
+                        amount: true,
+                        unitId: true,
+                        additionalInfo: true,
+                        ingredient: {
+                          select: {
+                            id: true,
+                            name: true,
+                            brand: true,
+                            descriptor: true,
+                            icon: true,
+                            supermarketUrl: true,
+                            unitConversions: true,
+                            category: {
+                              select: { id: true, name: true, sortOrder: true },
+                            },
+                          },
+                        },
+                        unit: { select: { id: true, name: true } },
+                      },
                     },
+                    ingredient: {
+                      select: {
+                        id: true,
+                        name: true,
+                        brand: true,
+                        descriptor: true,
+                        icon: true,
+                        supermarketUrl: true,
+                        unitConversions: true,
+                        category: {
+                          select: { id: true, name: true, sortOrder: true },
+                        },
+                      },
+                    },
+                    unit: { select: { id: true, name: true } },
                   },
-                  unit: { select: { id: true, name: true } },
                 },
               },
             },
-          },
-          customIngredients: {
-            orderBy: { position: "asc" },
-            include: {
-              ingredient: {
-                select: {
-                  id: true,
-                  name: true,
-                  brand: true,
-                  descriptor: true,
-                  icon: true,
-                  supermarketUrl: true,
-                  unitConversions: true,
-                  category: { select: { id: true, name: true, sortOrder: true } },
+            customIngredients: {
+              orderBy: { position: "asc" },
+              include: {
+                ingredient: {
+                  select: {
+                    id: true,
+                    name: true,
+                    brand: true,
+                    descriptor: true,
+                    icon: true,
+                    supermarketUrl: true,
+                    unitConversions: true,
+                    category: {
+                      select: { id: true, name: true, sortOrder: true },
+                    },
+                  },
                 },
+                unit: { select: { id: true, name: true } },
               },
-              unit: { select: { id: true, name: true } },
             },
           },
         },
       },
-    },
-  });
+    }),
+    prisma.familyMember.findMany({
+      where: { userId },
+      select: { id: true, isSelf: true },
+      orderBy: { sortOrder: "asc" },
+    }),
+  ]);
 
   if (!plan) return null;
 
   return {
+    familyMembers,
     slots: plan.slots.map((s) => ({
       recipeId: s.recipeId,
       date: s.date.toISOString(),
+      cookingFamilyMemberIds: s.audienceMembers.map(
+        (member) => member.familyMemberId,
+      ),
       recipe: s.recipe,
       customName: s.customName,
       customIngredients: s.customIngredients,
@@ -733,28 +786,24 @@ export async function getPlannerPoolItemsForPlan(params: {
         title: slot.recipe.name,
         sourceRecipeId: slot.recipe.id,
         imageUrl: getRecipeDisplayImageUrl(slot.recipe.images),
-        ingredients: slot.recipe.ingredients
-          .map((ri) => {
-            const personAmount = getFamilyMemberIngredientAmountPerMeal({
-              amount: ri.amount,
-              memberAdjustments: ri.memberAdjustments,
-              familyMemberId: params.familyMemberId,
-              recipeServings: slot.recipe!.servings,
-              familyMembers,
-              memberPortions: slot.recipe!.memberPortions,
-              cookingFamilyMemberIds: slot.cookingFamilyMemberIds,
-              recipeAudienceFamilyMemberIds: slot.recipe!.audienceMembers.map(
-                (member) => member.familyMemberId,
-              ),
-            });
-            if (personAmount == null || ri.unitId == null) return null;
-            return {
-              ingredientId: ri.ingredientId,
-              unitId: ri.unitId,
-              amount: Math.round(personAmount * 1000) / 1000,
-            };
-          })
-          .filter((row): row is PlannerPoolIngredientRow => row != null),
+        ingredients: resolveRecipeIngredientRowsForMember({
+          recipeIngredients: slot.recipe.ingredients.map((ri) => ({
+            id: ri.id,
+            ingredientId: ri.ingredientId,
+            amount: ri.amount,
+            unit: ri.unit ? { id: ri.unit.id } : ri.unitId ? { id: ri.unitId } : null,
+            additionalInfo: ri.additionalInfo,
+            memberAdjustments: ri.memberAdjustments,
+          })),
+          familyMemberId: params.familyMemberId,
+          recipeServings: slot.recipe.servings,
+          familyMembers,
+          memberPortions: slot.recipe.memberPortions ?? [],
+          audienceMemberIds: (slot.recipe.audienceMembers ?? []).map(
+            (member) => member.familyMemberId,
+          ),
+          cookingFamilyMemberIds: slot.cookingFamilyMemberIds,
+        }),
       });
       continue;
     }

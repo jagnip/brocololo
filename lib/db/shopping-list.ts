@@ -230,10 +230,12 @@ async function ensureGroceryIngredientsForIngredientIds(
 }
 
 function slotsToPlanSlotData(
-  slots: NonNullable<Awaited<ReturnType<typeof getPlanForGroceries>>>["slots"],
+  plan: NonNullable<Awaited<ReturnType<typeof getPlanForGroceries>>>,
 ): PlanSlotData[] {
-  return slots.map((s) => ({
+  return plan.slots.map((s) => ({
     recipeId: s.recipeId,
+    cookingFamilyMemberIds: s.cookingFamilyMemberIds,
+    familyMembers: plan.familyMembers,
     recipe: s.recipe as PlanSlotData["recipe"],
     customName: s.customName,
     customIngredients: s.customIngredients,
@@ -270,7 +272,7 @@ export async function generateShoppingListForPlan(
   if (!gramUnitId) return { ok: false, error: "no_gram_unit" };
 
   const rows = transformPlanToShoppingListRows(
-    slotsToPlanSlotData(plan.slots),
+    slotsToPlanSlotData(plan),
     exclusions,
   );
   if (rows.length === 0) {

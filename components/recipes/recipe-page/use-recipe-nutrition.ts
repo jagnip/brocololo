@@ -4,16 +4,17 @@ import { useCallback, useMemo } from "react";
 import { RecipeType } from "@/types/recipe";
 import {
   calculateNutritionPerServing,
-  calculateServingScalingFactor,
   getCalorieScalingFactorForIngredient,
 } from "@/lib/recipes/helpers";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
+import type { IngredientType } from "@/types/ingredient";
 import type { CalorieTarget } from "@/components/recipes/recipe-page/use-recipe-scaling-state";
 
 type UseRecipeNutritionParams = {
   recipe: RecipeType;
   effectiveRecipe: RecipeType;
-  currentServings: number;
+  ingredientCatalog: IngredientType[];
+  cookingFamilyMemberIds: string[];
   calorieTarget: CalorieTarget | null;
   globalScaleRatio: number;
   localScaleByIngredientId: Record<string, number>;
@@ -28,7 +29,8 @@ export type UseRecipeNutritionResult = {
     label: string;
     nutrition: ReturnType<typeof calculateNutritionPerServing>;
   }>;
-  servingScalingFactor: number;
+  /** Manual scale factor applied on top of resolved per-person amounts (excludes mealCount). */
+  mealBatchScaleFactor: number;
   calorieScalingFactor: number;
   getIngredientCalorieFactor: (
     recipeIngredient: Pick<
@@ -42,21 +44,23 @@ export type UseRecipeNutritionResult = {
 export function useRecipeNutrition({
   recipe,
   effectiveRecipe,
-  currentServings,
+  ingredientCatalog,
+  cookingFamilyMemberIds,
   calorieTarget,
   globalScaleRatio,
   localScaleByIngredientId,
   familyMembers,
 }: UseRecipeNutritionParams): UseRecipeNutritionResult {
-  const recipeAudienceIdSet = useMemo(
-    () =>
-      new Set(recipe.audienceMembers.map((member) => member.familyMemberId)),
-    [recipe.audienceMembers],
+  const audienceMemberIds = useMemo(
+    () => familyMembers.map((member) => member.id),
+    [familyMembers],
   );
-  const recipeAudienceMembers = useMemo(
-    () => familyMembers.filter((member) => recipeAudienceIdSet.has(member.id)),
-    [familyMembers, recipeAudienceIdSet],
-  );
+
+  const cookingAudienceMembers = useMemo(() => {
+    const cookingIdSet = new Set(cookingFamilyMemberIds);
+    return familyMembers.filter((member) => cookingIdSet.has(member.id));
+  }, [cookingFamilyMemberIds, familyMembers]);
+
   const effectiveRecipeIngredientById = useMemo(
     () =>
       new Map(
@@ -69,14 +73,15 @@ export function useRecipeNutrition({
   );
 
   const selfMember =
-    recipeAudienceMembers.find((member) => member.isSelf) ??
-    recipeAudienceMembers[0];
+    cookingAudienceMembers.find((member) => member.isSelf) ??
+    cookingAudienceMembers[0];
   const selfFamilyMemberId = selfMember?.id ?? "";
   const anchorMemberId = calorieTarget?.familyMemberId ?? selfFamilyMemberId;
   const anchorBaseNutrition = calculateNutritionPerServing(
     effectiveRecipe,
     anchorMemberId,
-    recipeAudienceMembers,
+    cookingAudienceMembers,
+    ingredientCatalog,
   );
   const calorieScalingFactor =
     calorieTarget && anchorBaseNutrition.calories > 0
@@ -90,11 +95,11 @@ export function useRecipeNutrition({
         if (ingredientRow.amount == null) {
           return ingredientRow;
         }
-        // Compose base-anchored global + per-row local scales for nutrition math.
+        // Compose global + per-row local scales for log prefill and nutrition math.
         const rowScaleRatio = localScaleByIngredientId[ingredientRow.id] ?? 1;
         const calorieFactor = getCalorieScalingFactorForIngredient(
           ingredientRow.memberAdjustments,
-          recipe.audienceMembers.map((member) => member.familyMemberId),
+          audienceMemberIds,
           anchorMemberId,
           calorieScalingFactor,
         );
@@ -107,6 +112,7 @@ export function useRecipeNutrition({
     }),
     [
       anchorMemberId,
+      audienceMemberIds,
       calorieScalingFactor,
       effectiveRecipe,
       globalScaleRatio,
@@ -114,7 +120,7 @@ export function useRecipeNutrition({
     ],
   );
 
-  const nutritionRows = recipeAudienceMembers.map((member, index) => ({
+  const nutritionRows = cookingAudienceMembers.map((member, index) => ({
     familyMemberId: member.id,
     label:
       member.name.trim() ||
@@ -122,14 +128,10 @@ export function useRecipeNutrition({
     nutrition: calculateNutritionPerServing(
       recipeForScaledNutrition,
       member.id,
-      recipeAudienceMembers,
+      cookingAudienceMembers,
+      ingredientCatalog,
     ),
   }));
-
-  const { servingScalingFactor } = calculateServingScalingFactor(
-    currentServings,
-    recipe.servings,
-  );
 
   const getIngredientCalorieFactor = useCallback(
     (
@@ -140,26 +142,24 @@ export function useRecipeNutrition({
     ) =>
       getCalorieScalingFactorForIngredient(
         recipeIngredient.memberAdjustments,
-        recipe.audienceMembers.map((member) => member.familyMemberId),
+        audienceMemberIds,
         anchorMemberId,
         calorieScalingFactor,
       ),
-    [anchorMemberId, calorieScalingFactor, recipe.audienceMembers],
+    [anchorMemberId, audienceMemberIds, calorieScalingFactor],
   );
 
   const getIngredientDisplayScalingFactor = useCallback(
     (recipeIngredientId: string) =>
-      servingScalingFactor *
-      globalScaleRatio *
-      (localScaleByIngredientId[recipeIngredientId] ?? 1),
-    [globalScaleRatio, localScaleByIngredientId, servingScalingFactor],
+      globalScaleRatio * (localScaleByIngredientId[recipeIngredientId] ?? 1),
+    [globalScaleRatio, localScaleByIngredientId],
   );
 
   return {
     recipeForScaledNutrition,
     effectiveRecipeIngredientById,
     nutritionRows,
-    servingScalingFactor,
+    mealBatchScaleFactor: 1,
     calorieScalingFactor,
     getIngredientCalorieFactor,
     getIngredientDisplayScalingFactor,

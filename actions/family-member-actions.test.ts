@@ -35,6 +35,7 @@ const selfMember = {
   name: "",
   isSelf: true,
   sortOrder: 0,
+  portionMultiplier: 1,
 };
 
 describe("updateFamilyMemberNameAction", () => {
@@ -86,6 +87,7 @@ describe("updateFamilyMemberNameAction", () => {
       name: "",
       isSelf: false,
       sortOrder: 1,
+      portionMultiplier: 1,
     });
 
     const result = await updateFamilyMemberNameAction({
@@ -114,6 +116,7 @@ describe("createFamilyMemberAction", () => {
       name: "",
       isSelf: false,
       sortOrder: 1,
+      portionMultiplier: 1,
     });
 
     const result = await createFamilyMemberAction({ name: "   " });
