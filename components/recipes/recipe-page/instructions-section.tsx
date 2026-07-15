@@ -1,8 +1,4 @@
 import { Badge } from "@/components/ui/badge";
-import {
-  SegmentedFilterButton,
-  SegmentedFilterGroup,
-} from "@/components/ui/segmented-filter-button";
 import { parseMarkdownLinks } from "@/lib/recipes/text-formatting";
 import { useState } from "react";
 import {
@@ -25,19 +21,13 @@ export function InstructionsSection() {
     mealCount,
     cookingFamilyMemberIds,
     effectiveRecipeIngredientById,
-    selectedInstructionFamilyMemberId,
-    setSelectedInstructionFamilyMemberId,
     selectedUnits,
     getIngredientDisplayScalingFactor,
     getIngredientCalorieFactor,
   } = useRecipePageInstructionsSectionData();
-  const showPersonFilter = familyMembers.length > 1;
   const [selectedInstructionId, setSelectedInstructionId] = useState<string | null>(null);
 
-  const badgeMemberIds =
-    selectedInstructionFamilyMemberId != null
-      ? [selectedInstructionFamilyMemberId]
-      : cookingFamilyMemberIds;
+  const badgeMemberIds = cookingFamilyMemberIds;
 
   const renderTextWithMarkdownLinks = (text: string, keyPrefix: string) =>
     parseMarkdownLinks(text).map((segment, index) => {
@@ -64,37 +54,8 @@ export function InstructionsSection() {
 
   return (
     <div className="section-container">
-      <div className="mb-item flex flex-wrap items-center justify-between gap-item">
+      <div className="mb-item">
         <Subheader>Instructions</Subheader>
-        {showPersonFilter ? (
-          <SegmentedFilterGroup
-            aria-label="Instruction person filter"
-            className="max-md:basis-full"
-          >
-            {familyMembers.map((member, index) => {
-              const isSelected =
-                selectedInstructionFamilyMemberId === member.id;
-              const label =
-                member.name.trim() ||
-                (member.isSelf ? "You" : `Family member ${index}`);
-              return (
-                <SegmentedFilterButton
-                  key={member.id}
-                  selected={isSelected}
-                  role="radio"
-                  aria-checked={isSelected}
-                  onClick={() =>
-                    setSelectedInstructionFamilyMemberId((prev) =>
-                      prev === member.id ? null : member.id,
-                    )
-                  }
-                >
-                  {label}
-                </SegmentedFilterButton>
-              );
-            })}
-          </SegmentedFilterGroup>
-        ) : null}
       </div>
       <ol className="flex flex-col gap-item">
         {instructions.map((instruction, index) => {
@@ -242,8 +203,7 @@ export function InstructionsSection() {
                                 {` · ${segment}`}
                               </span>
                             ))}
-                            {selectedInstructionFamilyMemberId == null &&
-                            familyMembers.length > 1 ? (
+                            {cookingFamilyMemberIds.length > 1 ? (
                               <span className="opacity-75">{` · ${memberLabel}`}</span>
                             ) : null}
                           </Badge>

@@ -19,7 +19,8 @@ export function ImageGallery({ images }: ImageGalleryProps) {
 
   return (
     <div className="space-y-block">
-      <div className="relative aspect-video w-full overflow-hidden rounded-xl">
+      {/* Taller on mobile for touch; wider on desktop to save vertical space. */}
+      <div className="relative aspect-video w-full overflow-hidden rounded-xl md:aspect-3/1">
         {/* Show a first-class fallback so the detail layout stays aligned without uploads. */}
         {coverImageUrl ? (
           <Image

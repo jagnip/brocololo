@@ -109,44 +109,46 @@ export default function RecipePage({
       <TopbarConfigController config={topbarConfig} />
 
       <div className="grid grid-cols-1 gap-block md:grid-cols-5 md:gap-block">
-        <div className="order-1 md:order-0 md:col-span-5 flex flex-col ">
-          <PageHeader title={recipe.name} className="pb-2"/>
+        {/* Full-width header: title → badges → photo → cooking for */}
+        <div className="order-1 md:order-0 md:col-span-5 flex flex-col">
+          <PageHeader title={recipe.name} />
         </div>
 
-        <div className="contents md:col-span-3 md:block">
-          <div className="order-2 md:order-0 md:mb-block">
-            <ImageGallery images={recipe.images || []} />
-          </div>
+        <div className="order-2 md:order-0 md:col-span-5 flex gap-item flex-wrap">
+          <Badge variant="outline">Hands-on: {recipe.handsOnTime} min</Badge>
+          <Badge variant="outline">Total: {recipe.totalTime} min</Badge>
+          {recipe.excludeFromPlanner ? (
+            <Badge variant="outline">Excluded from planner</Badge>
+          ) : null}
+        </div>
 
-          <div className="order-4 md:order-0 md:mb-block">
-            <CookingForStripe {...cookingForData} />
-          </div>
+        <div className="order-3 md:order-0 md:col-span-5">
+          <ImageGallery images={recipe.images || []} />
+        </div>
 
-          <div className="order-5 md:order-0 md:mb-block">
+        <div className="order-4 md:order-0 md:col-span-5">
+          <CookingForStripe {...cookingForData} />
+        </div>
+
+        {/* Left column: instructions, notes */}
+        <div className="contents md:col-span-3 md:block md:space-y-block">
+          <div className="order-7 md:order-0 md:mb-block">
             <InstructionsSection />
           </div>
 
-          <div className="order-6 md:order-0">
+          <div className="order-8 md:order-0">
             <NotesSection />
           </div>
         </div>
 
+        {/* Right column: ingredients, then nutrition */}
         <div className="contents md:col-span-2 md:block md:space-y-block">
-          <div className="order-3 md:order-0 flex flex-col gap-block">
-            <div className="flex gap-item flex-wrap">
-              <Badge variant="outline">
-                Hands-on: {recipe.handsOnTime} min
-              </Badge>
-              <Badge variant="outline">Total: {recipe.totalTime} min</Badge>
-              {recipe.excludeFromPlanner ? (
-                <Badge variant="outline">Excluded from planner</Badge>
-              ) : null}
-            </div>
-            <NutritionSection />
+          <div className="order-5 md:order-0">
+            <IngredientsSection />
           </div>
 
-          <div className="order-4 md:order-0">
-            <IngredientsSection />
+          <div className="order-6 md:order-0">
+            <NutritionSection />
           </div>
         </div>
       </div>
