@@ -69,6 +69,12 @@ type IngredientItemProps = {
   familyMembers: FamilyMemberRow[];
   audienceMemberIds: string[];
   memberPortions?: Array<{ familyMemberId: string; multiplier: number }>;
+  /** Pre-scaled aggregated cook-session amount (manual scale already applied). */
+  resolvedBaseAmount?: number | null;
+  /** Hide People panel on aggregated view page rows. */
+  hidePeoplePanel?: boolean;
+  /** Disable swap when an aggregated line spans multiple recipe rows. */
+  disableIngredientSwap?: boolean;
 };
 
 export function IngredientItem({
@@ -87,6 +93,9 @@ export function IngredientItem({
   familyMembers,
   audienceMemberIds,
   memberPortions = [],
+  resolvedBaseAmount = null,
+  hidePeoplePanel = false,
+  disableIngredientSwap = false,
 }: IngredientItemProps) {
   const { ingredient } = recipeIngredient;
   const adjustmentCount = getMemberAdjustmentCount(
@@ -119,7 +128,7 @@ export function IngredientItem({
     displayUnitNamePlural,
     availableUnits,
   } = getIngredientDisplay(
-    recipeIngredient.amount,
+    resolvedBaseAmount ?? recipeIngredient.amount,
     recipeIngredient.unit?.id ?? null,
     recipeIngredient.unit?.name ?? null,
     selectedUnitId,
@@ -132,10 +141,11 @@ export function IngredientItem({
     brand: ingredient.brand,
     descriptor: ingredient.descriptor,
   }).label;
+  const amountAriaLabel = `Amount of ${ingredientDisplayName}`;
 
   const getUnitOptionLabel = (unitId: string) => {
     const optionDisplay = getIngredientDisplay(
-      recipeIngredient.amount,
+      resolvedBaseAmount ?? recipeIngredient.amount,
       recipeIngredient.unit?.id ?? null,
       recipeIngredient.unit?.name ?? null,
       unitId,
@@ -308,7 +318,7 @@ export function IngredientItem({
                   onBlur={handleCommit}
                   onKeyDown={handleKeyDown}
                   className="w-16 min-w-16 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  aria-label={`Amount of ${ingredientDisplayName}`}
+                  aria-label={amountAriaLabel}
                 />
               </div>
             ) : (
@@ -338,37 +348,46 @@ export function IngredientItem({
             </Select>{" "}
           </div>
         )}
-        <SearchableSelect
-          options={ingredientOptions}
-          renderLabel={renderIngredientDropdownLabel}
-          renderTriggerLabel={renderIngredientTriggerLabel}
-          value={ingredient.id}
-          onValueChange={(next) => {
-            if (!next) return;
-            onIngredientChange(next);
-          }}
-          size="default"
-          placeholder="Select ingredient..."
-          searchPlaceholder="Search ingredient..."
-          emptyLabel="No ingredient found."
-          allowClear={false}
-          className="order-2 md:order-1 lg:order-2 flex-1 min-w-0 md:w-full md:flex-none lg:flex-1 font-normal"
-          renderIcon={(option) => (
-            <IngredientIcon icon={option.icon ?? null} name={option.label} />
-          )}
-        />
+        {disableIngredientSwap ? (
+          <div className="order-2 md:order-1 lg:order-2 flex flex-1 min-w-0 items-center gap-item md:w-full lg:flex-1">
+            <IngredientIcon icon={ingredient.icon ?? null} name={ingredientDisplayName} />
+            <span className="type-body truncate">{ingredientDisplayName}</span>
+          </div>
+        ) : (
+          <SearchableSelect
+            options={ingredientOptions}
+            renderLabel={renderIngredientDropdownLabel}
+            renderTriggerLabel={renderIngredientTriggerLabel}
+            value={ingredient.id}
+            onValueChange={(next) => {
+              if (!next) return;
+              onIngredientChange(next);
+            }}
+            size="default"
+            placeholder="Select ingredient..."
+            searchPlaceholder="Search ingredient..."
+            emptyLabel="No ingredient found."
+            allowClear={false}
+            className="order-2 md:order-1 lg:order-2 flex-1 min-w-0 md:w-full md:flex-none lg:flex-1 font-normal"
+            renderIcon={(option) => (
+              <IngredientIcon icon={option.icon ?? null} name={option.label} />
+            )}
+          />
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-item">
-        <IngredientRowActionButton
-          active={showPeoplePanel}
-          badgeCount={adjustmentCount}
-          aria-label={`Personal adjustments for ${ingredientDisplayName}`}
-          aria-expanded={showPeoplePanel}
-          onClick={() => setShowPeoplePanel((prev) => !prev)}
-        >
-          <Users className="h-4 w-4" />
-        </IngredientRowActionButton>
+        {!hidePeoplePanel ? (
+          <IngredientRowActionButton
+            active={showPeoplePanel}
+            badgeCount={adjustmentCount}
+            aria-label={`Personal adjustments for ${ingredientDisplayName}`}
+            aria-expanded={showPeoplePanel}
+            onClick={() => setShowPeoplePanel((prev) => !prev)}
+          >
+            <Users className="h-4 w-4" />
+          </IngredientRowActionButton>
+        ) : null}
         <IngredientRowActionButton
           active={showNotePanel}
           showDotBadge={hasNote}
@@ -419,7 +438,7 @@ export function IngredientItem({
         ) : null}
       </div>
 
-      {showPeoplePanel ? (
+      {showPeoplePanel && !hidePeoplePanel ? (
         <IngredientMemberAdjustmentsSummary
           memberAdjustments={recipeIngredient.memberAdjustments}
           familyMembers={familyMembers}

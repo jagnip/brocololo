@@ -39,8 +39,9 @@ type RecipeAddToLogDialogProps = {
   familyMembers: FamilyMemberRow[];
   audienceMemberIds: string[];
   memberPortions: RecipeType["memberPortions"];
-  currentServings: number;
-  servingScalingFactor: number;
+  cookingFamilyMemberIds: string[];
+  recipeServings: number;
+  mealCount: number;
   availableLogDateKeys?: string[];
   ingredientOptions: LogIngredientOption[];
   ingredientFormDependencies: IngredientFormDependencies;
@@ -62,8 +63,9 @@ export function RecipeAddToLogDialogContainer({
   familyMembers,
   audienceMemberIds,
   memberPortions,
-  currentServings,
-  servingScalingFactor,
+  cookingFamilyMemberIds,
+  recipeServings,
+  mealCount,
   availableLogDateKeys,
   ingredientOptions,
   ingredientFormDependencies,
@@ -96,20 +98,22 @@ export function RecipeAddToLogDialogContainer({
     return resolveRecipeIngredientRowsForMember({
       recipeIngredients,
       familyMemberId: logFamilyMemberId,
-      recipeServings: currentServings,
+      recipeServings,
       familyMembers,
       memberPortions,
       audienceMemberIds,
-      batchScaleFactor: servingScalingFactor,
+      cookingFamilyMemberIds,
+      batchScaleFactor: mealCount,
     });
   }, [
     audienceMemberIds,
-    currentServings,
+    cookingFamilyMemberIds,
     familyMembers,
     logFamilyMemberId,
+    mealCount,
     memberPortions,
     recipeIngredients,
-    servingScalingFactor,
+    recipeServings,
   ]);
 
   const selectedMealLabel =

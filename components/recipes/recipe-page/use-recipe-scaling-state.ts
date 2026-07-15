@@ -19,7 +19,7 @@ type UseRecipeScalingStateParams = {
 };
 
 export type UseRecipeScalingStateResult = {
-  currentServings: number;
+  mealCount: number;
   calorieTarget: CalorieTarget | null;
   globalScaleRatio: number;
   localScaleByIngredientId: Record<string, number>;
@@ -28,7 +28,7 @@ export type UseRecipeScalingStateResult = {
   hasActiveScaling: boolean;
   hasActiveNutritionScaling: boolean;
   handleCaloriesChange: (familyMemberId: string, caloriesString: string) => void;
-  handleServingsChange: (newServings: number) => void;
+  handleMealCountChange: (newMealCount: number) => void;
   handleIngredientEdit: (
     recipeIngredientId: string,
     ratio: number,
@@ -48,7 +48,8 @@ export type UseRecipeScalingStateResult = {
 export function useRecipeScalingState({
   recipe,
 }: UseRecipeScalingStateParams): UseRecipeScalingStateResult {
-  const [currentServings, setCurrentServings] = useState(recipe.servings);
+  // Default: one meal occasion for the selected household members.
+  const [mealCount, setMealCount] = useState(1);
   const [calorieTarget, setCalorieTarget] = useState<CalorieTarget | null>(null);
   const [globalScaleRatio, setGlobalScaleRatio] = useState(1);
   const [localScaleByIngredientId, setLocalScaleByIngredientId] = useState<
@@ -62,13 +63,13 @@ export function useRecipeScalingState({
 
   // Reset scaling state when navigating to a different recipe.
   useEffect(() => {
-    setCurrentServings(recipe.servings);
+    setMealCount(1);
     setCalorieTarget(null);
     setGlobalScaleRatio(1);
     setLocalScaleByIngredientId({});
     setSwapsByRecipeIngredientId({});
     setSelectedUnits({});
-  }, [recipe.id, recipe.servings]);
+  }, [recipe.id]);
 
   const handleCaloriesChange = useCallback(
     (familyMemberId: string, caloriesString: string) => {
@@ -87,9 +88,9 @@ export function useRecipeScalingState({
     [],
   );
 
-  const handleServingsChange = useCallback((newServings: number) => {
-    setCurrentServings(newServings);
-    // Serving changes restart from base amounts to avoid compounded state.
+  const handleMealCountChange = useCallback((newMealCount: number) => {
+    setMealCount(Math.max(1, newMealCount));
+    // Meal count changes restart manual scales to avoid compounded state.
     setGlobalScaleRatio(1);
     setLocalScaleByIngredientId({});
   }, []);
@@ -200,7 +201,7 @@ export function useRecipeScalingState({
   const hasActiveNutritionScaling = calorieTarget !== null;
 
   return {
-    currentServings,
+    mealCount,
     calorieTarget,
     globalScaleRatio,
     localScaleByIngredientId,
@@ -209,7 +210,7 @@ export function useRecipeScalingState({
     hasActiveScaling,
     hasActiveNutritionScaling,
     handleCaloriesChange,
-    handleServingsChange,
+    handleMealCountChange,
     handleIngredientEdit,
     handleApplyScaleToAll,
     handleReset,
