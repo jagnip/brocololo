@@ -19,7 +19,6 @@ export const SLOT_INGREDIENT_SUMMARY_MAX_LINES = 4;
 export type FamilyMemberRef = {
   id: string;
   isSelf: boolean;
-  portionMultiplier?: number;
 };
 
 export type RecipeSlotIngredientInput = {
@@ -112,7 +111,7 @@ export function resolveRecipeSlotAggregatedIngredients(params: {
 }): AggregatedIngredientLine[] {
   const memberPortions = params.familyMembers.map((member) => ({
     familyMemberId: member.id,
-    multiplier: member.portionMultiplier ?? 1,
+    multiplier: 1,
   }));
   const audienceMemberIds = params.familyMembers.map((member) => member.id);
   const cookingIds = getSlotCookingFamilyMemberIds({
@@ -381,7 +380,7 @@ export function resolveRecipeSlotScaledConsumables(
   const familyMembers = slot.familyMembers ?? [];
   const memberPortions = familyMembers.map((member) => ({
     familyMemberId: member.id,
-    multiplier: member.portionMultiplier ?? 1,
+    multiplier: 1,
   }));
   const audienceMemberIds = familyMembers.map((member) => member.id);
   const cookingIds = getSlotCookingFamilyMemberIds({

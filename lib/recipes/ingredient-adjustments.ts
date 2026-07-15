@@ -215,6 +215,7 @@ function resolveIngredientShareForMember(
 
   return resolveConsumableIngredientLine({
     row: {
+      id: "portion-summary-share",
       ingredientId: input.baseIngredientId,
       amount: input.batchAmount,
       unitId: input.batchUnitId,

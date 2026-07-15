@@ -189,20 +189,23 @@ type DuplicateRecipeState = {
 };
 
 const DEFAULT_LOG_FAMILY_MEMBERS: FamilyMemberRow[] = [
-  { id: "family-self", name: "You", isSelf: true, sortOrder: 0 },
+  { id: "family-self", name: "You", isSelf: true, sortOrder: 0, portionMultiplier: 1 },
   {
     id: "family-member-1",
     name: "Family member",
     isSelf: false,
     sortOrder: 1,
+    portionMultiplier: 1,
   },
 ];
 
 const EMPTY_PLANNER_POOL: PlannerPoolCardData[] = [];
 const EMPTY_RECIPE_OPTIONS: LogMealSelectorOption[] = [];
 const EMPTY_INGREDIENT_OPTIONS: LogIngredientOption[] = [];
-const EMPTY_PLANNED_MEALS_BY_SLOT_KEY: LogDayViewProps["plannedMealsBySlotKey"] =
-  {};
+const EMPTY_PLANNED_MEALS_BY_SLOT_KEY: Record<
+  string,
+  { name: string; ingredients: EditableIngredientRow[] }
+> = {};
 
 export function LogDayViewController({
   days,

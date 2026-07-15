@@ -119,7 +119,7 @@ export function createMockRecipeIngredient(overrides?: Partial<{
   unit: ReturnType<typeof createMockUnit> | null;
 }>): RecipeType["ingredients"][number] {
   const defaultIngredient = createMockIngredient();
-  const { nutritionTarget, ingredient, ...restOverrides } = overrides ?? {};
+  const { nutritionTarget, ingredient, ingredientId, ...restOverrides } = overrides ?? {};
   const resolvedIngredient = ingredient ?? defaultIngredient;
   const memberAdjustments: RecipeType["ingredients"][number]["memberAdjustments"] =
     nutritionTarget == null || nutritionTarget === "BOTH"
@@ -153,18 +153,15 @@ export function createMockRecipeIngredient(overrides?: Partial<{
     recipeId: 'recipe-1',
     groupId: null,
     position: 0,
-    ingredientId: resolvedIngredient.id,
     unitId: defaultUnit.id,
     amount: 400, // 400g
     appliesToEveryone: memberAdjustments.length === 0,
     additionalInfo: null,
     memberAdjustments,
     group: null,
-    ingredient: resolvedIngredient,
     unit: defaultUnit,
     ...restOverrides,
-    // Keep ingredientId aligned when tests override ingredient only.
-    ingredientId: restOverrides.ingredientId ?? resolvedIngredient.id,
+    ingredientId: ingredientId ?? resolvedIngredient.id,
     ingredient: resolvedIngredient,
   };
 }

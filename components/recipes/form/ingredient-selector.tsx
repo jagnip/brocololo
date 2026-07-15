@@ -967,8 +967,8 @@ export function IngredientSelector({
             servings={servings}
             memberPortions={memberPortions}
             baseIngredientId={item.ingredientId}
-            baseAmount={item.amount}
-            baseUnitId={item.unitId}
+            baseAmount={item.amount ?? null}
+            baseUnitId={item.unitId ?? null}
             ingredients={ingredients}
           />
         ) : null}

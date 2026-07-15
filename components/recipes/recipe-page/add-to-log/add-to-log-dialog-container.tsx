@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { resolveRecipeIngredientRowsForMember } from "@/lib/recipes/ingredient-adjustments";
+import { resolveRecipeIngredientRowsForMember, type MemberPortionInput } from "@/lib/recipes/ingredient-adjustments";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 type IngredientFormDependencies = {
@@ -38,7 +38,7 @@ type RecipeAddToLogDialogProps = {
   recipeIngredients: RecipeType["ingredients"];
   familyMembers: FamilyMemberRow[];
   audienceMemberIds: string[];
-  memberPortions: RecipeType["memberPortions"];
+  memberPortions: MemberPortionInput[];
   cookingFamilyMemberIds: string[];
   recipeServings: number;
   mealCount: number;

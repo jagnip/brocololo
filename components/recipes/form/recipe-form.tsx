@@ -704,7 +704,12 @@ export default function RecipeForm({
                       familyMembers={familyMembers}
                       householdFamilyMembers={familyMembers}
                       audienceMemberIds={familyMembers.map((member) => member.id)}
-                      servings={previewServings ?? 1}
+                      servings={
+                        typeof previewServings === "number" &&
+                        Number.isFinite(previewServings)
+                          ? previewServings
+                          : 1
+                      }
                       memberPortions={[]}
                       groups={ingredientGroups}
                       value={field.value}
