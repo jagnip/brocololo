@@ -327,17 +327,17 @@ export function IngredientItem({
     ) : null;
 
   return (
-    <li className="flex flex-col gap-item rounded-md border border-border bg-card p-nest">
+    <li className="@container/ingredient-row flex flex-col gap-item rounded-md border border-border bg-card p-nest">
       <div
         className={cn(
           "gap-item",
           canRenderAmountAndUnit
-            ? "flex items-center max-md:flex-row md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:grid-rows-[auto_auto] lg:flex lg:flex-row lg:items-center"
-            : "flex items-center gap-item md:flex-col md:items-stretch lg:flex-row lg:items-center",
+            ? "flex items-center max-md:flex-row md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:grid-rows-[auto_auto] @lg/ingredient-row:flex @lg/ingredient-row:flex-row @lg/ingredient-row:flex-wrap @lg/ingredient-row:items-center"
+            : "flex items-center gap-item md:flex-col md:items-stretch @lg/ingredient-row:flex-row",
         )}
       >
         {canRenderAmountAndUnit ? (
-          <div className="flex items-center gap-item max-md:order-1 md:contents lg:order-1 lg:flex">
+          <div className="flex items-center gap-item max-md:order-1 md:contents @lg/ingredient-row:order-1 @lg/ingredient-row:flex">
             {isEditable ? (
               <div className="w-16 h-8 flex items-center justify-center md:row-start-2 md:col-start-1">
                 <Input
@@ -369,7 +369,7 @@ export function IngredientItem({
               >
                 <SelectTrigger
                   size="default"
-                  className="inline-flex w-full min-w-0 items-center lg:w-26 lg:min-w-26"
+                  className="inline-flex w-full min-w-0 items-center @lg/ingredient-row:w-26 @lg/ingredient-row:min-w-26"
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -388,8 +388,8 @@ export function IngredientItem({
           className={cn(
             "flex min-w-0 flex-wrap items-center gap-item",
             canRenderAmountAndUnit
-              ? "max-md:order-2 max-md:flex-1 md:col-span-3 md:row-start-1 lg:order-2 lg:flex-1 lg:col-span-auto"
-              : "order-2 flex-1 md:order-1 md:w-full lg:order-2 lg:flex-1",
+              ? "max-md:order-2 max-md:flex-1 md:col-span-3 md:row-start-1 @lg/ingredient-row:order-2 @lg/ingredient-row:min-w-48 @lg/ingredient-row:flex-[1_1_12rem] @lg/ingredient-row:col-span-auto"
+              : "order-2 flex-1 md:order-1 md:w-full @lg/ingredient-row:order-2 @lg/ingredient-row:flex-1",
           )}
         >
           {disableIngredientSwap ? (
@@ -415,7 +415,7 @@ export function IngredientItem({
               searchPlaceholder="Search ingredient..."
               emptyLabel="No ingredient found."
               allowClear={false}
-              className="flex-1 min-w-0 md:w-full md:flex-none lg:flex-1 font-normal"
+              className="min-w-0 w-full flex-1 @lg/ingredient-row:min-w-48 font-normal"
               renderIcon={(option) => (
                 <IngredientIcon icon={option.icon ?? null} name={option.label} />
               )}
@@ -425,7 +425,7 @@ export function IngredientItem({
         </div>
         {canRenderAmountAndUnit
           ? renderNoteButton(
-              "max-md:order-3 md:row-start-2 md:col-start-3 lg:order-3 lg:col-auto",
+              "max-md:order-3 md:row-start-2 md:col-start-3 @lg/ingredient-row:order-3 @lg/ingredient-row:col-auto",
             )
           : null}
       </div>
