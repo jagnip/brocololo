@@ -28,7 +28,6 @@ import {
 } from "../ui/select";
 import {
   ArrowLeftRight,
-  Info,
   NotebookPen,
   ShoppingBasket,
   Users,
@@ -425,15 +424,6 @@ export function IngredientItem({
             <NotebookPen className="h-4 w-4" />
           </IngredientRowActionButton>
         ) : null}
-        <IngredientRowActionButton
-          active={showNutritionDetails}
-          aria-label={`Nutrition details for ${ingredientDisplayName}`}
-          aria-expanded={showNutritionDetails}
-          onClick={() => setShowNutritionDetails((prev) => !prev)}
-        >
-          <Info className="h-4 w-4" />
-        </IngredientRowActionButton>
-
         {ingredient.supermarketUrl && !hideSupermarketLink ? (
           <Button
             asChild
