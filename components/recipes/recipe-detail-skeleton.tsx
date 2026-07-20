@@ -16,10 +16,20 @@ export function RecipeDetailSkeleton() {
           <Skeleton className="h-6 w-36 rounded-full" />
         </div>
 
-        <div className="order-3 md:order-0 md:col-span-5 overflow-hidden rounded-xl aspect-video md:aspect-3/1">
-          <Skeleton className="size-full" />
+        {/* Photos left, nutrition right — photo skeleton stretches with nutrition. */}
+        <div className="order-3 md:order-0 md:col-span-3 md:h-full">
+          <div className="aspect-video h-full min-h-72 overflow-hidden rounded-xl md:aspect-auto">
+            <Skeleton className="size-full" />
+          </div>
         </div>
 
+        <div className="order-5 md:order-0 md:col-span-2 md:h-full space-y-item">
+          <Skeleton className="h-6 w-44" />
+          <Skeleton className="h-16 w-full rounded-lg" />
+          <Skeleton className="h-16 w-full rounded-lg" />
+        </div>
+
+        {/* Full-width cooking for */}
         <div className="order-4 md:order-0 md:col-span-5 space-y-item">
           <Skeleton className="h-7 w-36" />
           <Skeleton className="h-14 w-full rounded-lg" />
@@ -42,9 +52,9 @@ export function RecipeDetailSkeleton() {
           </div>
         </div>
 
-        {/* Right column: ingredients, nutrition */}
+        {/* Right column: ingredients */}
         <div className="contents md:col-span-2 md:block md:space-y-block">
-          <div className="order-5 md:order-0 space-y-item">
+          <div className="order-6 md:order-0 space-y-item">
             <div className="flex items-center justify-between">
               <Skeleton className="h-6 w-24" />
               <Skeleton className="h-8 w-8 rounded-md" />
@@ -55,12 +65,6 @@ export function RecipeDetailSkeleton() {
               <Skeleton className="h-16 w-full rounded-md" />
               <Skeleton className="h-16 w-full rounded-md" />
             </div>
-          </div>
-
-          <div className="order-6 md:order-0 space-y-item">
-            <Skeleton className="h-6 w-44" />
-            <Skeleton className="h-16 w-full rounded-lg" />
-            <Skeleton className="h-16 w-full rounded-lg" />
           </div>
         </div>
       </div>

@@ -7,6 +7,7 @@ import {
   formatIngredientAmount,
   formatInstructionIngredientBadge,
   getIngredientDisplay,
+  getUnitDisplayName,
   scaleIngredientNutritionForGrams,
 } from "../recipes/helpers";
 
@@ -266,6 +267,52 @@ describe("updateRecipeSchema", () => {
     });
 
     expect(result.success).toBe(true);
+  });
+});
+
+describe("getUnitDisplayName", () => {
+  it("uses singular only for exactly one", () => {
+    expect(
+      getUnitDisplayName({
+        amount: 1,
+        unitName: "slice",
+        unitNamePlural: "slices",
+      }),
+    ).toBe("slice");
+  });
+
+  it("uses plural for fractions and amounts greater than one", () => {
+    expect(
+      getUnitDisplayName({
+        amount: 0.5,
+        unitName: "handful",
+        unitNamePlural: "handfuls",
+      }),
+    ).toBe("handfuls");
+    expect(
+      getUnitDisplayName({
+        amount: 1.5,
+        unitName: "slice",
+        unitNamePlural: "slices",
+      }),
+    ).toBe("slices");
+    expect(
+      getUnitDisplayName({
+        amount: 4,
+        unitName: "piece",
+        unitNamePlural: "pieces",
+      }),
+    ).toBe("pieces");
+  });
+
+  it("falls back to singular when plural is missing", () => {
+    expect(
+      getUnitDisplayName({
+        amount: 2,
+        unitName: "g",
+        unitNamePlural: null,
+      }),
+    ).toBe("g");
   });
 });
 

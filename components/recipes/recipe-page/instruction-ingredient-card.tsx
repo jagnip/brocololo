@@ -5,6 +5,7 @@ import type { FamilyMemberRow } from "@/lib/db/family-members";
 import {
   getIngredientDisplay,
   getInstructionIngredientBadgeParts,
+  getUnitDisplayName,
   type InstructionIngredientBadgeInput,
   type UnitConversionWithName,
 } from "@/lib/recipes/helpers";
@@ -54,9 +55,12 @@ function formatCompactAmount(
     return null;
   }
 
-  const unitSuffix = display.displayUnitName
-    ? ` ${display.displayUnitName}`
-    : "";
+  const unitLabel = getUnitDisplayName({
+    amount: display.rawAmount,
+    unitName: display.displayUnitName,
+    unitNamePlural: display.displayUnitNamePlural,
+  });
+  const unitSuffix = unitLabel ? ` ${unitLabel}` : "";
   return `${display.displayAmount}${unitSuffix}`;
 }
 

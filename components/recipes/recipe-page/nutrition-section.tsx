@@ -2,7 +2,7 @@ import { useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRecipePageNutritionSectionData } from "@/components/context/recipe-page-context";
-import { EditableCaloriesBadge } from "@/components/recipes/editable-calories-badge";
+import { EditableCaloriesField } from "@/components/recipes/editable-calories-field";
 import {
   NutritionPersonCard,
   NutritionPersonSummaryRow,
@@ -34,10 +34,11 @@ export function NutritionSection() {
 
   return (
     <div>
-      <div className="mb-item flex min-h-8 items-center gap-item">
+      <div className="mb-item flex items-center gap-item">
         <Subheader>Nutrition (per serving)</Subheader>
         <Button
-          variant="ghost"
+          // Match ingredients reset and other outlined icon buttons.
+          variant="outline"
           size="icon-sm"
           onClick={handleNutritionReset}
           aria-label="Reset nutrition to default"
@@ -62,7 +63,7 @@ export function NutritionSection() {
               <NutritionPersonSummaryRow
                 personLabel={row.label}
                 caloriesArea={
-                  <EditableCaloriesBadge
+                  <EditableCaloriesField
                     ariaLabel={caloriesAriaLabel(row.label)}
                     value={
                       isAnchor && calorieTarget ? calorieTarget.calories : null

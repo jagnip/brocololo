@@ -4,23 +4,47 @@ import Image from "next/image";
 import { RecipeImageType } from "@/types/images";
 import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
 import { RecipeImagePlaceholder } from "./recipe-image-placeholder";
+import { cn } from "@/lib/utils";
 
 type ImageGalleryProps = {
   images: RecipeImageType[];
+  /**
+   * On md+, stretch the cover to the parent row height (e.g. beside nutrition)
+   * so the crop adapts instead of leaving empty space under a fixed aspect ratio.
+   */
+  fillHeight?: boolean;
 };
 
-export function ImageGallery({ images }: ImageGalleryProps) {
+export function ImageGallery({
+  images,
+  fillHeight = false,
+}: ImageGalleryProps) {
   const coverImageUrl = getRecipeDisplayImageUrl(images);
   const otherImages = images.filter((img) => img.url !== coverImageUrl);
+  const hasThumbnails = otherImages.length > 0;
 
   const handleImageClick = (url: string) => {
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
   return (
-    <div className="space-y-block">
-      {/* Taller on mobile for touch; wider on desktop to save vertical space. */}
-      <div className="relative aspect-video w-full overflow-hidden rounded-xl md:aspect-3/1">
+    <div
+      className={cn(
+        "gap-block",
+        // Fill the stretched grid cell so cover height tracks the nutrition column.
+        fillHeight ? "flex h-full flex-col" : "space-y-block",
+      )}
+    >
+      <div
+        className={cn(
+          "relative w-full overflow-hidden rounded-xl",
+          // Mobile keeps a predictable touch-friendly frame.
+          "aspect-video",
+          // Desktop: grow with the row; min height avoids a tiny crop when nutrition is short.
+          fillHeight && "md:aspect-auto md:min-h-72 md:flex-1",
+          !fillHeight && "md:aspect-3/1",
+        )}
+      >
         {/* Show a first-class fallback so the detail layout stays aligned without uploads. */}
         {coverImageUrl ? (
           <Image
@@ -36,13 +60,13 @@ export function ImageGallery({ images }: ImageGalleryProps) {
       </div>
 
       {/* Additional images grid */}
-      {otherImages.length > 0 && (
-        <div>
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-item">
+      {hasThumbnails ? (
+        <div className={cn(fillHeight && "shrink-0")}>
+          <div className="grid grid-cols-3 gap-item md:grid-cols-4">
             {otherImages.map((image, index) => (
               <div
                 key={index}
-                className="relative aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                className="relative aspect-square cursor-pointer overflow-hidden rounded-lg transition-opacity hover:opacity-80"
                 onClick={() => handleImageClick(image.url)}
               >
                 <Image
@@ -55,7 +79,7 @@ export function ImageGallery({ images }: ImageGalleryProps) {
             ))}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

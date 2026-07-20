@@ -64,7 +64,7 @@ export function NutritionPersonSummaryRow({
       >
         {personLabel}
       </span>
-      {/* One flex-wrap lane: kcal (or input) and each macro badge wrap to the next row one chip at a time. */}
+      {/* Left-aligned: kcal control, then macro badges as readouts. */}
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-tight">
         {caloriesArea}
         <Badge variant="outline">{protein}g protein</Badge>
