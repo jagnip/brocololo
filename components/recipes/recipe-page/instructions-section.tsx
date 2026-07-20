@@ -268,7 +268,7 @@ export function InstructionsSection() {
                       const recipeIngredient =
                         effectiveRecipeIngredientById.get(
                           link.recipeIngredient.id,
-                        ) ?? link.recipeIngredient;
+                        ) ?? { ...link.recipeIngredient, group: null };
                       const selectedUnitId =
                         selectedUnits[recipeIngredient.id] ||
                         recipeIngredient.unit?.id ||

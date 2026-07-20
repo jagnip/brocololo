@@ -331,7 +331,7 @@ export type InstructionIngredientBadgeParts = {
   additionalInfo: string | null;
 };
 
-type InstructionIngredientBadgeInput = {
+export type InstructionIngredientBadgeInput = {
   rawAmount: number | null;
   displayAmount: string | null;
   displayUnitName: string;
