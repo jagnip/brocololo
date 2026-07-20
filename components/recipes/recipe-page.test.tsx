@@ -279,9 +279,9 @@ function expectInstructionSectionToContain(...fragments: string[]): void {
 function expectInstructionBadgesVisibleForNoFilter(): void {
   // Default cook session: aggregated totals for selected household members.
   expectInstructionSectionToContain(
-    "shared protein · 450 grams",
-    "side veg jagoda · 50 grams",
-    "side sauce nelson · 100 grams",
+    "shared protein 450 grams",
+    "side veg jagoda 50 grams",
+    "side sauce nelson 100 grams",
   );
 }
 
@@ -666,9 +666,9 @@ describe("RecipePage nutrition integration", () => {
 
     // Aggregated instruction badges after global scale (no person names).
     expectInstructionSectionToContain(
-      "shared protein · 1800 grams",
-      "side veg jagoda · 200 grams",
-      "side sauce nelson · 400 grams",
+      "shared protein 1800 grams",
+      "side veg jagoda 200 grams",
+      "side sauce nelson 400 grams",
     );
     expectInstructionStepTextToRemainVisible();
   });

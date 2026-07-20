@@ -1,15 +1,166 @@
-import { Badge } from "@/components/ui/badge";
+"use client";
+
 import { parseMarkdownLinks } from "@/lib/recipes/text-formatting";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   getIngredientDisplay,
   getInstructionIngredientBadgeAmount,
-  getInstructionIngredientBadgeParts,
-  getInstructionIngredientBadgeTailSegments,
   isInstructionIngredientVisibleForPerson,
+  type UnitConversionWithName,
 } from "@/lib/recipes/helpers";
 import { useRecipePageInstructionsSectionData } from "@/components/context/recipe-page-context";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
+import {
+  InstructionIngredientCard,
+  type InstructionIngredientMemberShare,
+} from "@/components/recipes/recipe-page/instruction-ingredient-card";
+import type { RecipeType } from "@/types/recipe";
+
+type RecipeIngredient = RecipeType["ingredients"][number];
+
+function InstructionStepIngredientCard(props: {
+  recipeIngredient: RecipeIngredient;
+  cookingFamilyMemberIds: string[];
+  familyMembers: ReturnType<
+    typeof useRecipePageInstructionsSectionData
+  >["familyMembers"];
+  audienceMemberIds: string[];
+  memberPortions: ReturnType<
+    typeof useRecipePageInstructionsSectionData
+  >["memberPortions"];
+  recipeServings: number;
+  selectedUnitId: string | null;
+  rowScaleFactor: number;
+  showMemberBreakdown: boolean;
+}) {
+  const {
+    recipeIngredient,
+    cookingFamilyMemberIds,
+    familyMembers,
+    audienceMemberIds,
+    memberPortions,
+    recipeServings,
+    selectedUnitId,
+    rowScaleFactor,
+    showMemberBreakdown,
+  } = props;
+
+  const unitConversions =
+    recipeIngredient.ingredient.unitConversions as UnitConversionWithName[];
+  const hasAmount = recipeIngredient.amount != null;
+
+  const memberShares = useMemo(() => {
+    const shares: InstructionIngredientMemberShare[] = [];
+
+    for (const memberId of cookingFamilyMemberIds) {
+      if (
+        !isInstructionIngredientVisibleForPerson(recipeIngredient, memberId)
+      ) {
+        continue;
+      }
+
+      if (!hasAmount) {
+        continue;
+      }
+
+      const badgeAmount = getInstructionIngredientBadgeAmount({
+        amount: recipeIngredient.amount,
+        memberAdjustments: recipeIngredient.memberAdjustments,
+        audienceMemberIds,
+        selectedFamilyMemberId: memberId,
+        familyMembers,
+        memberPortions,
+        cookingFamilyMemberIds,
+        recipeServings,
+        rowScaleFactor,
+      });
+
+      if (badgeAmount == null) {
+        continue;
+      }
+
+      shares.push({ familyMemberId: memberId, amount: badgeAmount });
+    }
+
+    return shares;
+  }, [
+    audienceMemberIds,
+    cookingFamilyMemberIds,
+    familyMembers,
+    hasAmount,
+    memberPortions,
+    recipeIngredient,
+    recipeServings,
+    rowScaleFactor,
+  ]);
+
+  const isVisibleToAnyone = cookingFamilyMemberIds.some((memberId) =>
+    isInstructionIngredientVisibleForPerson(recipeIngredient, memberId),
+  );
+
+  if (!isVisibleToAnyone) {
+    return null;
+  }
+
+  if (!hasAmount) {
+    return (
+      <InstructionIngredientCard
+        badgeInput={{
+          rawAmount: null,
+          displayAmount: null,
+          displayUnitName: "",
+          displayUnitNamePlural: null,
+          ingredientName: recipeIngredient.ingredient.name,
+          additionalInfo: recipeIngredient.additionalInfo,
+        }}
+        familyMembers={familyMembers}
+        selectedUnitId={selectedUnitId}
+        baseUnitId={recipeIngredient.unit?.id ?? null}
+        baseUnitName={recipeIngredient.unit?.name ?? null}
+        unitConversions={unitConversions}
+      />
+    );
+  }
+
+  const aggregatedRawAmount = memberShares.reduce(
+    (total, share) => total + share.amount,
+    0,
+  );
+
+  if (aggregatedRawAmount <= 0) {
+    return null;
+  }
+
+  const display = getIngredientDisplay(
+    aggregatedRawAmount,
+    recipeIngredient.unit?.id ?? null,
+    recipeIngredient.unit?.name ?? null,
+    selectedUnitId,
+    unitConversions,
+    1,
+    1,
+  );
+
+  return (
+    <InstructionIngredientCard
+      badgeInput={{
+        rawAmount: display.rawAmount,
+        displayAmount: display.displayAmount,
+        displayUnitName: display.displayUnitName,
+        displayUnitNamePlural: display.displayUnitNamePlural,
+        ingredientName: recipeIngredient.ingredient.name,
+        additionalInfo: recipeIngredient.additionalInfo,
+      }}
+      memberShares={memberShares}
+      familyMembers={familyMembers}
+      selectedUnitId={selectedUnitId}
+      baseUnitId={recipeIngredient.unit?.id ?? null}
+      baseUnitName={recipeIngredient.unit?.name ?? null}
+      unitConversions={unitConversions}
+      showMemberBreakdown={showMemberBreakdown}
+    />
+  );
+}
 
 export function InstructionsSection() {
   const {
@@ -27,7 +178,7 @@ export function InstructionsSection() {
   } = useRecipePageInstructionsSectionData();
   const [selectedInstructionId, setSelectedInstructionId] = useState<string | null>(null);
 
-  const badgeMemberIds = cookingFamilyMemberIds;
+  const showMemberBreakdown = cookingFamilyMemberIds.length > 1;
 
   const renderTextWithMarkdownLinks = (text: string, keyPrefix: string) =>
     parseMarkdownLinks(text).map((segment, index) => {
@@ -104,147 +255,39 @@ export function InstructionsSection() {
                   )}
                 </div>
 
-                {instruction.ingredients.length > 0 && (
-                  <div className="flex flex-wrap gap-item">
+                {instruction.ingredients.length > 0 ? (
+                  <div className="flex flex-wrap gap-x-item gap-y-tight">
                     {instruction.ingredients.map((link) => {
                       const recipeIngredient =
                         effectiveRecipeIngredientById.get(
                           link.recipeIngredient.id,
                         ) ?? link.recipeIngredient;
-
                       const selectedUnitId =
                         selectedUnits[recipeIngredient.id] ||
                         recipeIngredient.unit?.id ||
                         null;
-                      const hasAmount = recipeIngredient.amount != null;
                       const manualScale =
                         getIngredientDisplayScalingFactor(
                           recipeIngredient.id,
                         ) * getIngredientCalorieFactor(recipeIngredient);
-                      const rowScaleFactor = manualScale * mealCount;
-
-                      const visibleMemberIds = badgeMemberIds.filter(
-                        (memberId) =>
-                          isInstructionIngredientVisibleForPerson(
-                            recipeIngredient,
-                            memberId,
-                          ),
-                      );
-
-                      if (visibleMemberIds.length === 0) {
-                        return null;
-                      }
-
-                      if (!hasAmount) {
-                        const badgeParts = getInstructionIngredientBadgeParts({
-                          rawAmount: null,
-                          displayAmount: null,
-                          displayUnitName: "",
-                          displayUnitNamePlural: null,
-                          ingredientName: recipeIngredient.ingredient.name,
-                          additionalInfo: recipeIngredient.additionalInfo,
-                        });
-
-                        return (
-                          <Badge
-                            key={`${instruction.id}-${recipeIngredient.id}`}
-                            variant="secondary"
-                            className={
-                              isSelected
-                                ? "bg-background border-foreground/20"
-                                : undefined
-                            }
-                          >
-                            <span>{badgeParts.ingredientName}</span>
-                            {getInstructionIngredientBadgeTailSegments(
-                              badgeParts,
-                            ).map((segment, segmentIndex) => (
-                              <span
-                                key={`${segment}-${segmentIndex}`}
-                                className="opacity-75"
-                              >
-                                {` · ${segment}`}
-                              </span>
-                            ))}
-                          </Badge>
-                        );
-                      }
-
-                      let aggregatedRawAmount = 0;
-                      let hasResolvedAmount = false;
-
-                      for (const memberId of visibleMemberIds) {
-                        const badgeAmount = getInstructionIngredientBadgeAmount(
-                          {
-                            amount: recipeIngredient.amount,
-                            memberAdjustments:
-                              recipeIngredient.memberAdjustments,
-                            audienceMemberIds,
-                            selectedFamilyMemberId: memberId,
-                            familyMembers,
-                            memberPortions,
-                            cookingFamilyMemberIds,
-                            recipeServings,
-                            rowScaleFactor,
-                          },
-                        );
-
-                        if (badgeAmount == null) {
-                          continue;
-                        }
-
-                        hasResolvedAmount = true;
-                        aggregatedRawAmount += badgeAmount;
-                      }
-
-                      if (!hasResolvedAmount) {
-                        return null;
-                      }
-
-                      const display = getIngredientDisplay(
-                        aggregatedRawAmount,
-                        recipeIngredient.unit?.id ?? null,
-                        recipeIngredient.unit?.name ?? null,
-                        selectedUnitId,
-                        recipeIngredient.ingredient.unitConversions,
-                        1,
-                        1,
-                      );
-                      const badgeParts = getInstructionIngredientBadgeParts({
-                        rawAmount: display.rawAmount,
-                        displayAmount: display.displayAmount,
-                        displayUnitName: display.displayUnitName,
-                        displayUnitNamePlural: display.displayUnitNamePlural,
-                        ingredientName: recipeIngredient.ingredient.name,
-                        additionalInfo: recipeIngredient.additionalInfo,
-                      });
 
                       return (
-                        <Badge
+                        <InstructionStepIngredientCard
                           key={`${instruction.id}-${recipeIngredient.id}`}
-                          variant="secondary"
-                          className={
-                            isSelected
-                              ? "bg-background border-foreground/20"
-                              : undefined
-                          }
-                        >
-                          <span>{badgeParts.ingredientName}</span>
-                          {getInstructionIngredientBadgeTailSegments(
-                            badgeParts,
-                          ).map((segment, segmentIndex) => (
-                            <span
-                              key={`${segment}-${segmentIndex}`}
-                              className="opacity-75"
-                            >
-                              {` · ${segment}`}
-                            </span>
-                          ))}
-                        </Badge>
+                          recipeIngredient={recipeIngredient}
+                          cookingFamilyMemberIds={cookingFamilyMemberIds}
+                          familyMembers={familyMembers}
+                          audienceMemberIds={audienceMemberIds}
+                          memberPortions={memberPortions}
+                          recipeServings={recipeServings}
+                          selectedUnitId={selectedUnitId}
+                          rowScaleFactor={manualScale * mealCount}
+                          showMemberBreakdown={showMemberBreakdown}
+                        />
                       );
                     })}
                   </div>
-                )}
+                ) : null}
               </div>
             </li>
           );
