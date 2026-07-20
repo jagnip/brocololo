@@ -177,9 +177,10 @@ export function IngredientsSection() {
   }, [cookingFamilyMemberIds, familyMembers]);
 
   const portionSplitMembers = useMemo(() => {
-    const shares = getSharedPortionShares(familyMembers, memberPortions);
+    // Reflect only the active cook session — same people as "Cooking for".
+    const shares = getSharedPortionShares(cookingFamilyMembers, memberPortions);
     return shares.map((entry, index) => {
-      const member = familyMembers.find(
+      const member = cookingFamilyMembers.find(
         (familyMember) => familyMember.id === entry.familyMemberId,
       );
       const label =
@@ -191,11 +192,10 @@ export function IngredientsSection() {
         multiplier: entry.multiplier,
       };
     });
-  }, [familyMembers, memberPortions]);
+  }, [cookingFamilyMembers, memberPortions]);
 
-  // Always show the chart for multi-person recipes so the split UI stays consistent,
-  // even when everyone currently has the default 1x portion size.
-  const showPortionSplitChart = portionSplitMembers.length > 1;
+  // Always show when 2+ people are selected in Cooking for.
+  const showPortionSplitChart = cookingFamilyMembers.length > 1;
 
   const sharedRenderParams = useMemo(
     () => ({
