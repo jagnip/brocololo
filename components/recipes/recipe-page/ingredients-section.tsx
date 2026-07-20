@@ -193,9 +193,9 @@ export function IngredientsSection() {
     });
   }, [familyMembers, memberPortions]);
 
-  const showPortionSplitChart = portionSplitMembers.some(
-    (member) => member.multiplier !== 1,
-  );
+  // Always show the chart for multi-person recipes so the split UI stays consistent,
+  // even when everyone currently has the default 1x portion size.
+  const showPortionSplitChart = portionSplitMembers.length > 1;
 
   const sharedRenderParams = useMemo(
     () => ({
