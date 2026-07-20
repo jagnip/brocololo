@@ -1,14 +1,14 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-type EditableCaloriesBadgeProps = {
+type EditableCaloriesFieldProps = {
   /** Active calorie target for this person; empty input when null. */
   value: number | null;
   /** Shown when unfocused and no target (typically live calculated kcal). */
   placeholder: string;
-  /** Accessible name — required when multiple badges exist on the page. */
+  /** Accessible name — required when multiple fields exist on the page. */
   ariaLabel: string;
   onChange: (value: string) => void;
   onFocus?: () => void;
@@ -17,9 +17,10 @@ type EditableCaloriesBadgeProps = {
 };
 
 /**
- * Recipe-page calorie target chip: outline badge with inline number and " kcal" suffix.
+ * Recipe-page calorie target control: compact Input + "kcal" suffix.
+ * Visually distinct from macro badges so it reads as a portion-scale input.
  */
-export function EditableCaloriesBadge({
+export function EditableCaloriesField({
   value,
   placeholder,
   ariaLabel,
@@ -27,20 +28,22 @@ export function EditableCaloriesBadge({
   onFocus,
   onBlur,
   className,
-}: EditableCaloriesBadgeProps) {
+}: EditableCaloriesFieldProps) {
+  const hasTarget = value != null;
+
   return (
-    // Outline + hover/focus-within cue that this chip is editable.
-    <Badge
-      variant="outline"
+    // Keep input + unit as one wrap unit in the nutrition flex row.
+    <div
       className={cn(
-        // justify-start + tight gap so "300" and kcal sit close (badge default centers with gap-1).
-        "cursor-text justify-start gap-1 hover:bg-accent/50 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50",
+        "inline-flex shrink-0 items-center gap-1",
         className,
       )}
     >
-      {/* 3ch default fits typical kcal; grows slightly for 4+ digits while typing. */}
-      <input
+      <Input
         type="number"
+        size="sm"
+        // Narrow enough for typical kcal; grows slightly for 4+ digits.
+        htmlSize={4}
         value={value?.toString() ?? ""}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
@@ -48,12 +51,16 @@ export function EditableCaloriesBadge({
         onBlur={onBlur}
         aria-label={ariaLabel}
         className={cn(
-          "h-auto w-[3ch] min-w-[3ch] max-w-[5ch] border-0 bg-transparent p-0 text-xs font-medium leading-none tabular-nums text-inherit outline-none",
+          "h-8 w-[4.5ch] min-w-[4.5ch] max-w-[6ch] px-1.5 text-center tabular-nums",
           "[appearance:textfield] placeholder:text-foreground placeholder:opacity-100",
           "[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+          // Stronger border when a target is active (scaling mode).
+          hasTarget && "border-ring",
         )}
       />
-      <span aria-hidden="true">kcal</span>
-    </Badge>
+      <span className="type-body text-muted-foreground" aria-hidden="true">
+        kcal
+      </span>
+    </div>
   );
 }

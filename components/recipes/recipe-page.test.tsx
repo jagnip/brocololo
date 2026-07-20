@@ -366,8 +366,9 @@ function expectNutritionToMatchScaledRecipe(
 
   const anchorInput = caloriesInputFor(anchorLabel);
   const otherInput = caloriesInputFor(otherLabel);
-  expect(anchorInput.closest('[data-slot="badge"]')).toBeInTheDocument();
-  expect(otherInput.closest('[data-slot="badge"]')).toBeInTheDocument();
+  // Kcal is an Input control (not a badge) so it reads as the portion-scale field.
+  expect(anchorInput).toHaveAttribute("data-slot", "input");
+  expect(otherInput).toHaveAttribute("data-slot", "input");
 
   if (options?.targetCalories != null) {
     expect(anchorInput).toHaveValue(options.targetCalories);
