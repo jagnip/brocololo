@@ -414,15 +414,17 @@ export function IngredientItem({
             <Users className="h-4 w-4" />
           </IngredientRowActionButton>
         ) : null}
-        <IngredientRowActionButton
-          active={showNotePanel}
-          showDotBadge={hasNote}
-          aria-label={`Note for ${ingredientDisplayName}`}
-          aria-expanded={showNotePanel}
-          onClick={() => setShowNotePanel((prev) => !prev)}
-        >
-          <NotebookPen className="h-4 w-4" />
-        </IngredientRowActionButton>
+        {hasNote ? (
+          <IngredientRowActionButton
+            active={showNotePanel}
+            showDotBadge={hasNote}
+            aria-label={`Note for ${ingredientDisplayName}`}
+            aria-expanded={showNotePanel}
+            onClick={() => setShowNotePanel((prev) => !prev)}
+          >
+            <NotebookPen className="h-4 w-4" />
+          </IngredientRowActionButton>
+        ) : null}
         <IngredientRowActionButton
           active={showNutritionDetails}
           aria-label={`Nutrition details for ${ingredientDisplayName}`}
