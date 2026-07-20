@@ -32,6 +32,7 @@ function InstructionStepIngredientCard(props: {
   selectedUnitId: string | null;
   rowScaleFactor: number;
   showMemberBreakdown: boolean;
+  badgeClassName?: string;
 }) {
   const {
     recipeIngredient,
@@ -43,6 +44,7 @@ function InstructionStepIngredientCard(props: {
     selectedUnitId,
     rowScaleFactor,
     showMemberBreakdown,
+    badgeClassName,
   } = props;
 
   const unitConversions =
@@ -118,6 +120,7 @@ function InstructionStepIngredientCard(props: {
         baseUnitId={recipeIngredient.unit?.id ?? null}
         baseUnitName={recipeIngredient.unit?.name ?? null}
         unitConversions={unitConversions}
+        className={badgeClassName}
       />
     );
   }
@@ -158,6 +161,7 @@ function InstructionStepIngredientCard(props: {
       baseUnitName={recipeIngredient.unit?.name ?? null}
       unitConversions={unitConversions}
       showMemberBreakdown={showMemberBreakdown}
+      className={badgeClassName}
     />
   );
 }
@@ -211,6 +215,9 @@ export function InstructionsSection() {
       <ol className="flex flex-col gap-item">
         {instructions.map((instruction, index) => {
           const isSelected = selectedInstructionId === instruction.id;
+          const badgeClassName = isSelected
+            ? "border-foreground/20 bg-background"
+            : "group-hover:border-foreground/20 group-hover:bg-background";
 
           return (
             <li
@@ -283,6 +290,7 @@ export function InstructionsSection() {
                           selectedUnitId={selectedUnitId}
                           rowScaleFactor={manualScale * mealCount}
                           showMemberBreakdown={showMemberBreakdown}
+                          badgeClassName={badgeClassName}
                         />
                       );
                     })}

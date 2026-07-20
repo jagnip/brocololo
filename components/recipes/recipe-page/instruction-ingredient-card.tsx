@@ -111,7 +111,14 @@ export function InstructionIngredientCard({
   // Single-person / no breakdown — same secondary chip as ingredient member badges.
   if (!shouldShowMemberBreakdown) {
     return (
-      <Badge variant="secondary" className={cn("h-auto gap-x-tight", className)}>
+      <Badge
+        variant="secondary"
+        className={cn(
+          // Keep the same chip behavior as the previous instruction badges.
+          "h-auto gap-x-tight border transition-[background-color,border-color,color,box-shadow]",
+          className,
+        )}
+      >
         <InstructionIngredientHeader badgeParts={badgeParts} />
       </Badge>
     );
@@ -120,9 +127,11 @@ export function InstructionIngredientCard({
   // Multi-person — grouped secondary chip; header tier 2, people tier 3.
   return (
     <div
+      data-slot="badge"
       className={cn(
         badgeVariants({ variant: "secondary" }),
-        "inline-flex min-w-0 flex-col items-start gap-tight rounded-md px-nest py-tight",
+        // Match legacy badge interaction language when the instruction row is hovered/selected.
+        "inline-flex min-w-0 flex-col items-start gap-tight rounded-md border px-nest py-tight transition-[background-color,border-color,color,box-shadow]",
         className,
       )}
     >
