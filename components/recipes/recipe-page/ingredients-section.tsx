@@ -10,6 +10,7 @@ import { PortionSplitCard } from "@/components/recipes/recipe-page/portion-split
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import type { CookingAggregatedLine } from "@/lib/recipes/resolve-cooking-display-lines";
 import type { RecipeType } from "@/types/recipe";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 const SHARED_INGREDIENTS_SCOPE_LABEL = "Portion sizes";
 
@@ -50,6 +51,7 @@ function renderAggregatedLines(params: {
   selectedUnits: Record<string, string | null>;
   localScaleByIngredientId: Record<string, number>;
   recipeServings: number;
+  cookingFamilyMembers: FamilyMemberRow[];
   onUnitChange: (recipeIngredientId: string, unitId: string | null) => void;
   onAggregatedAmountEdit: (
     sourceRecipeIngredientIds: string[],
@@ -66,6 +68,7 @@ function renderAggregatedLines(params: {
     selectedUnits,
     localScaleByIngredientId,
     recipeServings,
+    cookingFamilyMembers,
     onUnitChange,
     onAggregatedAmountEdit,
     onApplyScaleToAll,
@@ -109,6 +112,8 @@ function renderAggregatedLines(params: {
         resolvedBaseAmount={line.resolvedAmount}
         hidePeoplePanel
         hideSupermarketLink
+        cookingMemberAmounts={line.memberAmounts}
+        cookingFamilyMembers={cookingFamilyMembers}
         disableIngredientSwap={!allowIngredientSwap}
         selectedUnitId={
           selectedUnits[line.primaryRecipeIngredientId] || line.unitId
@@ -149,6 +154,8 @@ export function IngredientsSection() {
     ingredients,
     familyMembers,
     memberPortions,
+    cookingFamilyMemberIds,
+    mealCount,
     effectiveRecipeIngredientById,
     hasActiveScaling,
     localScaleByIngredientId,
@@ -163,6 +170,11 @@ export function IngredientsSection() {
     onApplyScaleToAll,
     onIngredientChange,
   } = useRecipePageIngredientsSectionData();
+
+  const cookingFamilyMembers = useMemo(() => {
+    const cookingIdSet = new Set(cookingFamilyMemberIds);
+    return familyMembers.filter((member) => cookingIdSet.has(member.id));
+  }, [cookingFamilyMemberIds, familyMembers]);
 
   const portionSplitMembers = useMemo(() => {
     const shares = getSharedPortionShares(familyMembers, memberPortions);
@@ -192,6 +204,7 @@ export function IngredientsSection() {
       selectedUnits,
       localScaleByIngredientId,
       recipeServings: recipe.servings,
+      cookingFamilyMembers,
       onUnitChange,
       onAggregatedAmountEdit,
       onApplyScaleToAll,
@@ -201,6 +214,7 @@ export function IngredientsSection() {
       effectiveRecipeIngredientById,
       ingredients,
       localScaleByIngredientId,
+      cookingFamilyMembers,
       onAggregatedAmountEdit,
       onApplyScaleToAll,
       onIngredientChange,
@@ -219,18 +233,25 @@ export function IngredientsSection() {
   return (
     <div>
       <div className="mb-item flex items-center justify-between">
-        <div className="flex items-center gap-item">
-          <Subheader>Ingredients</Subheader>
-          {hasActiveScaling && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={onReset}
-              aria-label="Reset ingredient amounts"
-            >
-              <RotateCcw />
-            </Button>
-          )}
+        <div className="flex min-w-0 flex-col gap-tight">
+          <div className="flex items-center gap-item">
+            <Subheader>Ingredients</Subheader>
+            {hasActiveScaling && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={onReset}
+                aria-label="Reset ingredient amounts"
+              >
+                <RotateCcw />
+              </Button>
+            )}
+          </div>
+          {mealCount > 1 ? (
+            <p className="type-caption text-muted-foreground">
+              Totals for {mealCount} meals
+            </p>
+          ) : null}
         </div>
       </div>
       {showPortionSplitChart ? (

@@ -9,6 +9,7 @@ import {
   getIngredientNutritionPer100g,
   isGramUnit,
   scaleIngredientNutritionForGrams,
+  type UnitConversionWithName,
 } from "@/lib/recipes/helpers";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { getIngredientSelectorDisplay } from "@/lib/ingredients/format";
@@ -51,6 +52,8 @@ import {
   getMemberAdjustmentCount,
   hasIngredientNote,
 } from "@/lib/recipes/ingredient-adjustments";
+import type { CookingAggregatedMemberAmount } from "@/lib/recipes/resolve-cooking-display-lines";
+import { IngredientMemberAmountBadges } from "@/components/recipes/recipe-page/ingredient-member-amount-badges";
 
 type IngredientItemProps = {
   recipeIngredient: RecipeType["ingredients"][number];
@@ -75,6 +78,9 @@ type IngredientItemProps = {
   hidePeoplePanel?: boolean;
   /** Hide supermarket shortcut on recipe view rows. */
   hideSupermarketLink?: boolean;
+  /** Per-person cook-session amounts for aggregated view rows. */
+  cookingMemberAmounts?: CookingAggregatedMemberAmount[];
+  cookingFamilyMembers?: FamilyMemberRow[];
   /** Disable swap when an aggregated line spans multiple recipe rows. */
   disableIngredientSwap?: boolean;
 };
@@ -98,6 +104,8 @@ export function IngredientItem({
   resolvedBaseAmount = null,
   hidePeoplePanel = false,
   hideSupermarketLink = false,
+  cookingMemberAmounts,
+  cookingFamilyMembers = [],
   disableIngredientSwap = false,
 }: IngredientItemProps) {
   const { ingredient } = recipeIngredient;
@@ -302,6 +310,10 @@ export function IngredientItem({
     [ingredientByIdForSelect],
   );
 
+  const showCookingMemberBreakdown =
+    cookingFamilyMembers.length > 1 &&
+    (cookingMemberAmounts?.some((entry) => entry.amount > 0) ?? false);
+
   return (
     <li className="flex flex-col gap-item rounded-md border border-border bg-card p-nest transition-colors hover:bg-muted/40 hover:ring-1 hover:ring-ring">
       <div className="flex items-center gap-item md:flex-col md:items-stretch lg:flex-row lg:items-center">
@@ -378,6 +390,17 @@ export function IngredientItem({
           />
         )}
       </div>
+
+      {showCookingMemberBreakdown && cookingMemberAmounts ? (
+        <IngredientMemberAmountBadges
+          memberAmounts={cookingMemberAmounts}
+          familyMembers={cookingFamilyMembers}
+          selectedUnitId={selectedUnitId}
+          baseUnitId={recipeIngredient.unit?.id ?? null}
+          baseUnitName={recipeIngredient.unit?.name ?? null}
+          unitConversions={ingredient.unitConversions as UnitConversionWithName[]}
+        />
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-item">
         {!hidePeoplePanel ? (

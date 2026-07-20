@@ -5,6 +5,12 @@ import {
 } from "@/lib/recipes/ingredient-adjustments";
 import type { MemberAdjustmentRow } from "@/lib/recipes/resolve-ingredient-lines";
 
+/** Per-person share of an aggregated cook-session ingredient line. */
+export type CookingAggregatedMemberAmount = {
+  familyMemberId: string;
+  amount: number;
+};
+
 /** Aggregated resolved consumable line for the recipe view cook session. */
 export type CookingAggregatedLine = {
   key: string;
@@ -12,6 +18,8 @@ export type CookingAggregatedLine = {
   unitId: string;
   /** Total amount for selected eaters × meals (includes row-level manual scale when provided). */
   resolvedAmount: number;
+  /** Amount attributed to each selected eater for this line. */
+  memberAmounts: CookingAggregatedMemberAmount[];
   sourceRecipeIngredientIds: string[];
   /** First contributing recipe row — used for notes and primary unit metadata. */
   primaryRecipeIngredientId: string;
@@ -38,6 +46,21 @@ export function buildMemberPortionsFromFamily(
 
 function aggregateKey(ingredientId: string, unitId: string): string {
   return `${ingredientId}:${unitId}`;
+}
+
+function addMemberAmount(
+  line: CookingAggregatedLine,
+  familyMemberId: string,
+  amount: number,
+): void {
+  const existing = line.memberAmounts.find(
+    (entry) => entry.familyMemberId === familyMemberId,
+  );
+  if (existing) {
+    existing.amount = Math.round((existing.amount + amount) * 1000) / 1000;
+    return;
+  }
+  line.memberAmounts.push({ familyMemberId, amount });
 }
 
 /**
@@ -107,6 +130,7 @@ export function resolveCookingAggregatedLines(params: {
       if (existing) {
         existing.resolvedAmount =
           Math.round((existing.resolvedAmount + scaledAmount) * 1000) / 1000;
+        addMemberAmount(existing, member.id, scaledAmount);
         if (!existing.sourceRecipeIngredientIds.includes(recipeIngredient.id)) {
           existing.sourceRecipeIngredientIds.push(recipeIngredient.id);
         }
@@ -119,6 +143,7 @@ export function resolveCookingAggregatedLines(params: {
         ingredientId: consumable.ingredientId,
         unitId: consumable.unitId,
         resolvedAmount: scaledAmount,
+        memberAmounts: [{ familyMemberId: member.id, amount: scaledAmount }],
         sourceRecipeIngredientIds: [recipeIngredient.id],
         primaryRecipeIngredientId: recipeIngredient.id,
         primaryAdditionalInfo: recipeIngredient.additionalInfo,
