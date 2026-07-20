@@ -945,7 +945,6 @@ export function IngredientSelector({
           </IngredientRowActionButton>
           <IngredientRowActionButton
             active={panelState.note}
-            showDotBadge={hasNote}
             aria-label="Ingredient note"
             aria-expanded={panelState.note}
             onClick={() => togglePanel("note")}

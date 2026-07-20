@@ -7,9 +7,7 @@ import {
   useEffect,
   useMemo,
   useState,
-  type Dispatch,
   type ReactNode,
-  type SetStateAction,
 } from "react";
 import type { IngredientType } from "@/types/ingredient";
 import type { RecipeType } from "@/types/recipe";
@@ -48,8 +46,6 @@ type RecipePageContextValue = {
   onCookingFamilyMemberIdsChange: (nextIds: string[]) => void;
   audienceMemberIds: string[];
   memberPortions: MemberPortionInput[];
-  selectedInstructionFamilyMemberId: string | null;
-  setSelectedInstructionFamilyMemberId: Dispatch<SetStateAction<string | null>>;
   calorieTarget: CalorieTarget | null;
   nutritionRows: ReturnType<typeof useRecipeNutrition>["nutritionRows"];
   onCaloriesChange: (familyMemberId: string, value: string) => void;
@@ -102,10 +98,6 @@ export function RecipePageProvider({
   availableLogDateKeys,
   children,
 }: RecipePageProviderProps) {
-  const [
-    selectedInstructionFamilyMemberId,
-    setSelectedInstructionFamilyMemberId,
-  ] = useState<string | null>(null);
   const [cookingFamilyMemberIds, setCookingFamilyMemberIds] = useState<string[]>(
     () => familyMembers.map((member) => member.id),
   );
@@ -130,17 +122,7 @@ export function RecipePageProvider({
 
   useEffect(() => {
     setCookingFamilyMemberIds(familyMembers.map((member) => member.id));
-    setSelectedInstructionFamilyMemberId(null);
   }, [familyMembers, recipe.id]);
-
-  useEffect(() => {
-    if (
-      selectedInstructionFamilyMemberId != null &&
-      !cookingFamilyMemberIds.includes(selectedInstructionFamilyMemberId)
-    ) {
-      setSelectedInstructionFamilyMemberId(null);
-    }
-  }, [cookingFamilyMemberIds, selectedInstructionFamilyMemberId]);
 
   const effectiveRecipe = useMemo(
     () =>
@@ -272,8 +254,6 @@ export function RecipePageProvider({
       onCookingFamilyMemberIdsChange: setCookingFamilyMemberIds,
       audienceMemberIds,
       memberPortions,
-      selectedInstructionFamilyMemberId,
-      setSelectedInstructionFamilyMemberId,
       calorieTarget: scaling.calorieTarget,
       nutritionRows: nutrition.nutritionRows,
       onCaloriesChange: scaling.handleCaloriesChange,
@@ -323,7 +303,6 @@ export function RecipePageProvider({
       originalRecipeIngredientById,
       recipe,
       scaling,
-      selectedInstructionFamilyMemberId,
       ungroupedIngredients,
       visibleGroupedIngredients,
     ],
@@ -393,8 +372,6 @@ export function useRecipePageInstructionsSectionData() {
     memberPortions,
     mealCount,
     effectiveRecipeIngredientById,
-    selectedInstructionFamilyMemberId,
-    setSelectedInstructionFamilyMemberId,
     selectedUnits,
     getIngredientDisplayScalingFactor,
     getIngredientCalorieFactor,
@@ -414,8 +391,6 @@ export function useRecipePageInstructionsSectionData() {
     mealCount,
     cookingFamilyMemberIds,
     effectiveRecipeIngredientById,
-    selectedInstructionFamilyMemberId,
-    setSelectedInstructionFamilyMemberId,
     selectedUnits,
     getIngredientDisplayScalingFactor,
     getIngredientCalorieFactor,
@@ -428,7 +403,8 @@ export function useRecipePageIngredientsSectionData() {
     ingredients,
     familyMembers,
     memberPortions,
-    audienceMemberIds,
+    cookingFamilyMemberIds,
+    mealCount,
     effectiveRecipeIngredientById,
     hasActiveScaling,
     localScaleByIngredientId,
@@ -449,7 +425,8 @@ export function useRecipePageIngredientsSectionData() {
     ingredients,
     familyMembers,
     memberPortions,
-    audienceMemberIds,
+    cookingFamilyMemberIds,
+    mealCount,
     effectiveRecipeIngredientById,
     hasActiveScaling,
     localScaleByIngredientId,

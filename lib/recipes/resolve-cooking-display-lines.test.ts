@@ -48,6 +48,10 @@ describe("resolveCookingAggregatedLines", () => {
       ingredientId: "ing-bread",
       unitId: "unit-slice",
       resolvedAmount: 3,
+      memberAmounts: [
+        { familyMemberId: "family-self", amount: 1 },
+        { familyMemberId: "family-member-1", amount: 2 },
+      ],
       sourceRecipeIngredientIds: ["ri-bread"],
     });
   });
@@ -79,6 +83,10 @@ describe("resolveCookingAggregatedLines", () => {
     });
 
     expect(lines[0]?.resolvedAmount).toBe(6);
+    expect(lines[0]?.memberAmounts).toEqual([
+      { familyMemberId: "family-self", amount: 2 },
+      { familyMemberId: "family-member-1", amount: 4 },
+    ]);
   });
 
   it("splits MODIFY substitutions into separate aggregated lines", () => {
@@ -198,6 +206,9 @@ describe("resolveCookingAggregatedLines", () => {
 
     expect(lines).toHaveLength(1);
     expect(lines[0]?.resolvedAmount).toBe(3);
+    expect(lines[0]?.memberAmounts).toEqual([
+      { familyMemberId: "family-self", amount: 3 },
+    ]);
     expect(lines[0]?.sourceRecipeIngredientIds).toEqual(["ri-bread-a", "ri-bread-b"]);
   });
 });

@@ -331,7 +331,7 @@ export type InstructionIngredientBadgeParts = {
   additionalInfo: string | null;
 };
 
-type InstructionIngredientBadgeInput = {
+export type InstructionIngredientBadgeInput = {
   rawAmount: number | null;
   displayAmount: string | null;
   displayUnitName: string;
@@ -388,17 +388,17 @@ export function getInstructionIngredientBadgeParts(
   };
 }
 
-/** Muted badge tails: user additional info first, then amount/unit. */
+/** Muted badge tails: amount/unit first, then user additional info. */
 export function getInstructionIngredientBadgeTailSegments(
   parts: InstructionIngredientBadgeParts,
 ): string[] {
   const segments: string[] = [];
 
-  if (parts.additionalInfo) {
-    segments.push(parts.additionalInfo);
-  }
   if (parts.amountUnit) {
     segments.push(parts.amountUnit);
+  }
+  if (parts.additionalInfo) {
+    segments.push(parts.additionalInfo);
   }
 
   return segments;

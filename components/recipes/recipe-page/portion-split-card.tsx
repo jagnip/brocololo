@@ -19,7 +19,7 @@ type PortionSplitCardProps = {
 };
 
 /** NomNom categorical chart hues — see `--portion-chart-*` in globals.css */
-const PORTION_CHART_COLOR_VARS = [
+export const PORTION_CHART_COLOR_VARS = [
   "var(--portion-chart-1)",
   "var(--portion-chart-2)",
   "var(--portion-chart-3)",

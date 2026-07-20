@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 /** Selected shell for segmented toggles; unselected uses Button `outline` unchanged. */
 export const segmentedFilterSelectedClassName =
-  "border-ring bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground";
+  "border-ring bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground data-[size=icon]:border-ring data-[size=icon]:bg-accent data-[size=icon]:text-accent-foreground data-[size=icon-sm]:border-ring data-[size=icon-sm]:bg-accent data-[size=icon-sm]:text-accent-foreground data-[size=icon-lg]:border-ring data-[size=icon-lg]:bg-accent data-[size=icon-lg]:text-accent-foreground";
 
 /** Checkbox chips and segmented buttons share selected styling only. */
 export function getSegmentedFilterSurfaceClassName(selected: boolean) {

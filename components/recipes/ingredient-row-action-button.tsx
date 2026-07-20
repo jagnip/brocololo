@@ -14,22 +14,18 @@ type IngredientRowActionButtonProps = Omit<
   active?: boolean;
   /** Numeric badge (e.g. adjustment count). */
   badgeCount?: number;
-  /** Dot badge when true and no count badge. */
-  showDotBadge?: boolean;
   children: ReactNode;
 };
 
-/** Icon action for ingredient rows — optional count/dot badge and active ring. */
+/** Icon action for ingredient rows — optional count badge and active ring. */
 export function IngredientRowActionButton({
   active = false,
   badgeCount,
-  showDotBadge = false,
   className,
   children,
   ...props
 }: IngredientRowActionButtonProps) {
   const showCountBadge = badgeCount != null && badgeCount > 0;
-  const showDot = showDotBadge && !showCountBadge;
 
   return (
     <Button
@@ -52,12 +48,6 @@ export function IngredientRowActionButton({
         >
           {badgeCount}
         </span>
-      ) : null}
-      {showDot ? (
-        <span
-          aria-hidden
-          className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-destructive"
-        />
       ) : null}
     </Button>
   );
