@@ -76,7 +76,8 @@ export function getUnitDisplayName(input: {
   if (singular.length === 0) {
     return "";
   }
-  if (input.amount == null || input.amount <= 1) {
+  // English cooking units: singular only for exactly 1 (0.5 / 1.5 use plural).
+  if (input.amount == null || input.amount === 1) {
     return singular;
   }
   // Fallback to singular keeps abbreviations/custom units safe by default.

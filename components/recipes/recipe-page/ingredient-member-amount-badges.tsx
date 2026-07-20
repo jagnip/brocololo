@@ -2,7 +2,11 @@
 
 import { Badge } from "@/components/ui/badge";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
-import { getIngredientDisplay, type UnitConversionWithName } from "@/lib/recipes/helpers";
+import {
+  getIngredientDisplay,
+  getUnitDisplayName,
+  type UnitConversionWithName,
+} from "@/lib/recipes/helpers";
 import type { CookingAggregatedMemberAmount } from "@/lib/recipes/resolve-cooking-display-lines";
 import { PORTION_CHART_COLOR_VARS } from "@/components/recipes/recipe-page/portion-split-card";
 
@@ -66,9 +70,14 @@ export function IngredientMemberAmountBadges({
           1,
           1,
         );
+        const unitLabel = getUnitDisplayName({
+          amount: display.rawAmount,
+          unitName: display.displayUnitName,
+          unitNamePlural: display.displayUnitNamePlural,
+        });
         const amountLabel =
           display.displayAmount != null
-            ? `${display.displayAmount}${display.displayUnitName ? ` ${display.displayUnitName}` : ""}`
+            ? `${display.displayAmount}${unitLabel ? ` ${unitLabel}` : ""}`
             : null;
         const color =
           PORTION_CHART_COLOR_VARS[
