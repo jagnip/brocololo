@@ -108,6 +108,7 @@ function renderAggregatedLines(params: {
         recipeIngredient={displayRecipeIngredient}
         resolvedBaseAmount={line.resolvedAmount}
         hidePeoplePanel
+        hideSupermarketLink
         disableIngredientSwap={!allowIngredientSwap}
         selectedUnitId={
           selectedUnits[line.primaryRecipeIngredientId] || line.unitId

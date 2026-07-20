@@ -73,6 +73,8 @@ type IngredientItemProps = {
   resolvedBaseAmount?: number | null;
   /** Hide People panel on aggregated view page rows. */
   hidePeoplePanel?: boolean;
+  /** Hide supermarket shortcut on recipe view rows. */
+  hideSupermarketLink?: boolean;
   /** Disable swap when an aggregated line spans multiple recipe rows. */
   disableIngredientSwap?: boolean;
 };
@@ -95,6 +97,7 @@ export function IngredientItem({
   memberPortions = [],
   resolvedBaseAmount = null,
   hidePeoplePanel = false,
+  hideSupermarketLink = false,
   disableIngredientSwap = false,
 }: IngredientItemProps) {
   const { ingredient } = recipeIngredient;
@@ -406,7 +409,7 @@ export function IngredientItem({
           <Info className="h-4 w-4" />
         </IngredientRowActionButton>
 
-        {ingredient.supermarketUrl ? (
+        {ingredient.supermarketUrl && !hideSupermarketLink ? (
           <Button
             asChild
             type="button"

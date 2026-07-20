@@ -277,12 +277,11 @@ function expectInstructionSectionToContain(...fragments: string[]): void {
 }
 
 function expectInstructionBadgesVisibleForNoFilter(): void {
-  // Default cook session: 1 meal, all household — per-person badge amounts.
+  // Default cook session: aggregated totals for selected household members.
   expectInstructionSectionToContain(
-    "shared protein · 150 grams · jagoda",
-    "shared protein · 300 grams · nelson",
-    "side veg jagoda · 50 grams · jagoda",
-    "side sauce nelson · 100 grams · nelson",
+    "shared protein · 450 grams",
+    "side veg jagoda · 50 grams",
+    "side sauce nelson · 100 grams",
   );
 }
 
@@ -664,14 +663,12 @@ describe("RecipePage nutrition integration", () => {
     await userEvent.click(
       screen.getByLabelText("Scale all ingredients based on Side Veg Jagoda"),
     );
-    const instructionSectionText = getNormalizedInstructionsSectionText();
 
-    // All cooking members stay visible after global scale.
+    // Aggregated instruction badges after global scale (no person names).
     expectInstructionSectionToContain(
-      "shared protein · 600 grams · jagoda",
-      "shared protein · 1200 grams · nelson",
-      "side veg jagoda · 200 grams · jagoda",
-      "side sauce nelson · 400 grams · nelson",
+      "shared protein · 1800 grams",
+      "side veg jagoda · 200 grams",
+      "side sauce nelson · 400 grams",
     );
     expectInstructionStepTextToRemainVisible();
   });

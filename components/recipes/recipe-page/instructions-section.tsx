@@ -106,85 +106,48 @@ export function InstructionsSection() {
 
                 {instruction.ingredients.length > 0 && (
                   <div className="flex flex-wrap gap-item">
-                    {instruction.ingredients.flatMap((link) => {
+                    {instruction.ingredients.map((link) => {
                       const recipeIngredient =
                         effectiveRecipeIngredientById.get(
                           link.recipeIngredient.id,
                         ) ?? link.recipeIngredient;
 
-                      return badgeMemberIds.flatMap((memberId) => {
-                        if (
-                          !isInstructionIngredientVisibleForPerson(
+                      const selectedUnitId =
+                        selectedUnits[recipeIngredient.id] ||
+                        recipeIngredient.unit?.id ||
+                        null;
+                      const hasAmount = recipeIngredient.amount != null;
+                      const manualScale =
+                        getIngredientDisplayScalingFactor(
+                          recipeIngredient.id,
+                        ) * getIngredientCalorieFactor(recipeIngredient);
+                      const rowScaleFactor = manualScale * mealCount;
+
+                      const visibleMemberIds = badgeMemberIds.filter(
+                        (memberId) =>
+                          isInstructionIngredientVisibleForPerson(
                             recipeIngredient,
                             memberId,
-                          )
-                        ) {
-                          return [];
-                        }
+                          ),
+                      );
 
-                        const selectedUnitId =
-                          selectedUnits[recipeIngredient.id] ||
-                          recipeIngredient.unit?.id ||
-                          null;
-                        const hasAmount = recipeIngredient.amount != null;
-                        const manualScale =
-                          getIngredientDisplayScalingFactor(
-                            recipeIngredient.id,
-                          ) * getIngredientCalorieFactor(recipeIngredient);
-                        const badgeAmount = hasAmount
-                          ? getInstructionIngredientBadgeAmount({
-                              amount: recipeIngredient.amount,
-                              memberAdjustments:
-                                recipeIngredient.memberAdjustments,
-                              audienceMemberIds,
-                              selectedFamilyMemberId: memberId,
-                              familyMembers,
-                              memberPortions,
-                              cookingFamilyMemberIds,
-                              recipeServings,
-                              rowScaleFactor: manualScale * mealCount,
-                            })
-                          : null;
+                      if (visibleMemberIds.length === 0) {
+                        return null;
+                      }
 
-                        if (hasAmount && badgeAmount == null) {
-                          return [];
-                        }
-
-                        const display = hasAmount
-                          ? getIngredientDisplay(
-                              badgeAmount,
-                              recipeIngredient.unit?.id ?? null,
-                              recipeIngredient.unit?.name ?? null,
-                              selectedUnitId,
-                              recipeIngredient.ingredient.unitConversions,
-                              1,
-                              1,
-                            )
-                          : {
-                              displayAmount: null,
-                              rawAmount: null,
-                              displayUnitName: "",
-                              displayUnitNamePlural: null,
-                            };
+                      if (!hasAmount) {
                         const badgeParts = getInstructionIngredientBadgeParts({
-                          rawAmount: display.rawAmount,
-                          displayAmount: display.displayAmount,
-                          displayUnitName: display.displayUnitName,
-                          displayUnitNamePlural: display.displayUnitNamePlural,
+                          rawAmount: null,
+                          displayAmount: null,
+                          displayUnitName: "",
+                          displayUnitNamePlural: null,
                           ingredientName: recipeIngredient.ingredient.name,
                           additionalInfo: recipeIngredient.additionalInfo,
                         });
 
-                        const member = familyMembers.find(
-                          (entry) => entry.id === memberId,
-                        );
-                        const memberLabel =
-                          member?.name.trim() ||
-                          (member?.isSelf ? "You" : "Person");
-
                         return (
                           <Badge
-                            key={`${instruction.id}-${recipeIngredient.id}-${memberId}`}
+                            key={`${instruction.id}-${recipeIngredient.id}`}
                             variant="secondary"
                             className={
                               isSelected
@@ -203,12 +166,82 @@ export function InstructionsSection() {
                                 {` · ${segment}`}
                               </span>
                             ))}
-                            {cookingFamilyMemberIds.length > 1 ? (
-                              <span className="opacity-75">{` · ${memberLabel}`}</span>
-                            ) : null}
                           </Badge>
                         );
+                      }
+
+                      let aggregatedRawAmount = 0;
+                      let hasResolvedAmount = false;
+
+                      for (const memberId of visibleMemberIds) {
+                        const badgeAmount = getInstructionIngredientBadgeAmount(
+                          {
+                            amount: recipeIngredient.amount,
+                            memberAdjustments:
+                              recipeIngredient.memberAdjustments,
+                            audienceMemberIds,
+                            selectedFamilyMemberId: memberId,
+                            familyMembers,
+                            memberPortions,
+                            cookingFamilyMemberIds,
+                            recipeServings,
+                            rowScaleFactor,
+                          },
+                        );
+
+                        if (badgeAmount == null) {
+                          continue;
+                        }
+
+                        hasResolvedAmount = true;
+                        aggregatedRawAmount += badgeAmount;
+                      }
+
+                      if (!hasResolvedAmount) {
+                        return null;
+                      }
+
+                      const display = getIngredientDisplay(
+                        aggregatedRawAmount,
+                        recipeIngredient.unit?.id ?? null,
+                        recipeIngredient.unit?.name ?? null,
+                        selectedUnitId,
+                        recipeIngredient.ingredient.unitConversions,
+                        1,
+                        1,
+                      );
+                      const badgeParts = getInstructionIngredientBadgeParts({
+                        rawAmount: display.rawAmount,
+                        displayAmount: display.displayAmount,
+                        displayUnitName: display.displayUnitName,
+                        displayUnitNamePlural: display.displayUnitNamePlural,
+                        ingredientName: recipeIngredient.ingredient.name,
+                        additionalInfo: recipeIngredient.additionalInfo,
                       });
+
+                      return (
+                        <Badge
+                          key={`${instruction.id}-${recipeIngredient.id}`}
+                          variant="secondary"
+                          className={
+                            isSelected
+                              ? "bg-background border-foreground/20"
+                              : undefined
+                          }
+                        >
+                          <span>{badgeParts.ingredientName}</span>
+                          {getInstructionIngredientBadgeTailSegments(
+                            badgeParts,
+                          ).map((segment, segmentIndex) => (
+                            <span
+                              key={`${segment}-${segmentIndex}`}
+                              className="opacity-75"
+                            >
+                              {` · ${segment}`}
+                            </span>
+                          ))}
+                        </Badge>
+                      );
                     })}
                   </div>
                 )}

@@ -66,6 +66,19 @@ export default function RecipePage({
     [ingredients],
   );
 
+  const recipeCategoryBadges = useMemo(() => {
+    const mealOccasions = recipe.categories.filter(
+      (category) => category.type === "MEAL_OCCASION",
+    );
+    const proteins = recipe.categories.filter(
+      (category) => category.type === "PROTEIN",
+    );
+    const recipeTypes = recipe.categories.filter(
+      (category) => category.type === "RECIPE_TYPE",
+    );
+    return { mealOccasions, proteins, recipeTypes };
+  }, [recipe.categories]);
+
   const topbarConfig = useMemo(
     () => ({
       breadcrumbs: [
@@ -117,8 +130,23 @@ export default function RecipePage({
         <div className="order-2 md:order-0 md:col-span-5 flex gap-item flex-wrap">
           <Badge variant="outline">Hands-on: {recipe.handsOnTime} min</Badge>
           <Badge variant="outline">Total: {recipe.totalTime} min</Badge>
+          {recipeCategoryBadges.mealOccasions.map((category) => (
+            <Badge key={category.id} variant="secondary">
+              {category.name}
+            </Badge>
+          ))}
+          {recipeCategoryBadges.proteins.map((category) => (
+            <Badge key={category.id} variant="secondary">
+              {category.name}
+            </Badge>
+          ))}
+          {recipeCategoryBadges.recipeTypes.map((category) => (
+            <Badge key={category.id} variant="secondary">
+              {category.name}
+            </Badge>
+          ))}
           {recipe.excludeFromPlanner ? (
-            <Badge variant="outline">Excluded from planner</Badge>
+            <Badge variant="secondary">Excluded from planner</Badge>
           ) : null}
         </div>
 
