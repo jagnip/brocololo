@@ -69,11 +69,11 @@ function InstructionIngredientHeader({
   return (
     <span className="type-caption font-semibold">
       <span>{badgeParts.ingredientName}</span>
-      {badgeParts.additionalInfo ? (
-        <span className="font-medium opacity-75">{` · ${badgeParts.additionalInfo}`}</span>
-      ) : null}
       {badgeParts.amountUnit ? (
         <span className="pl-0.5 font-medium opacity-75">{` ${badgeParts.amountUnit}`}</span>
+      ) : null}
+      {badgeParts.additionalInfo ? (
+        <span className="font-medium opacity-75">{` · ${badgeParts.additionalInfo}`}</span>
       ) : null}
     </span>
   );

@@ -238,7 +238,8 @@ export function IngredientsSection() {
             <Subheader>Ingredients</Subheader>
             {hasActiveScaling && (
               <Button
-                variant="ghost"
+                // Match other outlined icon buttons (note, scale, supermarket).
+                variant="outline"
                 size="icon-sm"
                 onClick={onReset}
                 aria-label="Reset ingredient amounts"

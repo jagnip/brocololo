@@ -304,7 +304,7 @@ describe("formatInstructionIngredientBadge", () => {
       additionalInfo: "well baked",
     });
 
-    expect(label).toBe("Bread · well baked · 1 slice");
+    expect(label).toBe("Bread · 1 slice · well baked");
   });
 
   it("omits trailing .0 for whole numbers", () => {
@@ -344,7 +344,7 @@ describe("formatInstructionIngredientBadge", () => {
     expect(label).toBe("Egg (L) · 6");
   });
 
-  it("shows user additional info before amount", () => {
+  it("shows user additional info after amount", () => {
     const label = formatInstructionIngredientBadge({
       rawAmount: 0.4,
       displayAmount: "0.4",
@@ -353,7 +353,7 @@ describe("formatInstructionIngredientBadge", () => {
       additionalInfo: "finely ground",
     });
 
-    expect(label).toBe("Chili powder · finely ground · 0.4 tsp");
+    expect(label).toBe("Chili powder · 0.4 tsp · finely ground");
   });
 });
 

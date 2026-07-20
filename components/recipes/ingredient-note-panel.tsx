@@ -22,12 +22,13 @@ export function IngredientNotePanel({
   return (
     <div
       className={cn(
-        "rounded-md border border-border bg-muted/30 p-2",
+        // Keep the note visually grouped, but lighter than a full card treatment.
+        "rounded-md bg-muted/20 p-nest",
         className,
       )}
     >
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Note for this recipe
+      <p className="mb-tight text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Note
       </p>
       {mode === "edit" ? (
         <Input
