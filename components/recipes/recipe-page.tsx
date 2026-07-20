@@ -122,7 +122,7 @@ export default function RecipePage({
       <TopbarConfigController config={topbarConfig} />
 
       <div className="grid grid-cols-1 gap-block md:grid-cols-5 md:gap-block">
-        {/* Full-width header: title → badges → photo → cooking for */}
+        {/* Full-width header: title → badges */}
         <div className="order-1 md:order-0 md:col-span-5 flex flex-col">
           <PageHeader title={recipe.name} />
         </div>
@@ -150,10 +150,16 @@ export default function RecipePage({
           ) : null}
         </div>
 
-        <div className="order-3 md:order-0 md:col-span-5">
-          <ImageGallery images={recipe.images || []} />
+        {/* Photos left, nutrition right — photo stretches to match nutrition height. */}
+        <div className="order-3 md:order-0 md:col-span-3 md:h-full">
+          <ImageGallery images={recipe.images || []} fillHeight />
         </div>
 
+        <div className="order-5 md:order-0 md:col-span-2 md:h-full">
+          <NutritionSection />
+        </div>
+
+        {/* Full-width cooking for under the photos/nutrition row. */}
         <div className="order-4 md:order-0 md:col-span-5">
           <CookingForStripe {...cookingForData} />
         </div>
@@ -169,14 +175,10 @@ export default function RecipePage({
           </div>
         </div>
 
-        {/* Right column: ingredients, then nutrition */}
+        {/* Right column: ingredients */}
         <div className="contents md:col-span-2 md:block md:space-y-block">
-          <div className="order-5 md:order-0">
-            <IngredientsSection />
-          </div>
-
           <div className="order-6 md:order-0">
-            <NutritionSection />
+            <IngredientsSection />
           </div>
         </div>
       </div>

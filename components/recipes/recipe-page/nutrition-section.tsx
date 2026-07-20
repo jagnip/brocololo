@@ -34,8 +34,9 @@ export function NutritionSection() {
 
   return (
     <div>
-      <div className="mb-item flex min-h-8 items-center gap-item">
-        <Subheader>Nutrition (per serving)</Subheader>
+      <div className="mb-item flex items-start gap-item">
+        {/* Match photo top edge — no min-height centering / half-leading above the glyphs. */}
+        <Subheader className="leading-none">Nutrition (per serving)</Subheader>
         <Button
           variant="ghost"
           size="icon-sm"
