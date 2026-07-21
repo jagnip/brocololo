@@ -17,7 +17,8 @@ export function IngredientNotePanel({
   onChange,
   className,
 }: IngredientNotePanelProps) {
-  const normalized = value?.trim() ?? "";
+  const editValue = value ?? "";
+  const viewValue = value?.trim() ?? "";
 
   return (
     <div
@@ -34,13 +35,13 @@ export function IngredientNotePanel({
         <Input
           type="text"
           placeholder="e.g. room temperature"
-          value={normalized}
+          value={editValue}
           onChange={(event) => onChange?.(event.target.value)}
           maxLength={50}
           className="min-w-0 max-w-full"
         />
-      ) : normalized ? (
-        <p className="type-body text-foreground">{normalized}</p>
+      ) : viewValue ? (
+        <p className="type-body text-foreground">{viewValue}</p>
       ) : (
         <p className="type-body text-muted-foreground">No note added.</p>
       )}

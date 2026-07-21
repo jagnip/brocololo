@@ -28,6 +28,8 @@ type IngredientMemberAdjustmentsEditorProps = {
   baseAmount: number | null;
   baseUnitId: string | null;
   ingredients: IngredientType[];
+  /** Resolve form validation message for a person's adjustment amount. */
+  getAmountError?: (familyMemberId: string) => string | undefined;
 };
 
 export function IngredientMemberAdjustmentsEditor({
@@ -41,6 +43,7 @@ export function IngredientMemberAdjustmentsEditor({
   baseAmount,
   baseUnitId,
   ingredients,
+  getAmountError,
 }: IngredientMemberAdjustmentsEditorProps) {
   const isSoloHousehold = familyMembers.length <= 1;
   const canAdjust = canAddMemberAdjustments({
@@ -144,6 +147,7 @@ export function IngredientMemberAdjustmentsEditor({
               baseAmount={baseAmount}
               baseUnitId={baseUnitId}
               ingredients={ingredients}
+              amountError={getAmountError?.(adjustment.familyMemberId)}
               onChange={(patch) =>
                 updateAdjustment(adjustment.familyMemberId, patch)
               }

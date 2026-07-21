@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useFormContext, useFormState } from "react-hook-form";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { GripVertical, Pencil, Trash2, Users, NotebookPen } from "lucide-react";
@@ -9,6 +10,7 @@ import {
   RecipeIngredientGroupInputType,
   RecipeIngredientInputType,
 } from "@/lib/validations/recipe";
+import type { CreateRecipeFormValues } from "@/lib/validations/recipe";
 import {
   Select,
   SelectItem,
@@ -340,6 +342,8 @@ export function IngredientSelector({
   onCreateIngredientRequested,
   onEditIngredientRequested,
 }: IngredientSelectorProps) {
+  const { control } = useFormContext<CreateRecipeFormValues>();
+  const { errors } = useFormState({ control });
   const resolvedHouseholdMembers = householdFamilyMembers ?? familyMembers;
   const [expandedPanelsByRowKey, setExpandedPanelsByRowKey] = React.useState<
     Record<string, { people: boolean; note: boolean }>
@@ -969,6 +973,18 @@ export function IngredientSelector({
             baseAmount={item.amount ?? null}
             baseUnitId={item.unitId ?? null}
             ingredients={ingredients}
+            getAmountError={(familyMemberId) => {
+              if (rowIndex < 0) return undefined;
+              const adjustmentIndex = (item.memberAdjustments ?? []).findIndex(
+                (row) => row.familyMemberId === familyMemberId,
+              );
+              if (adjustmentIndex < 0) return undefined;
+              const fieldError =
+                errors.ingredients?.[rowIndex]?.memberAdjustments?.[
+                  adjustmentIndex
+                ]?.amount;
+              return fieldError?.message;
+            }}
           />
         ) : null}
 

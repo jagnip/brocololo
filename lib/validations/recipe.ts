@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const ADJUSTMENT_AMOUNT_REQUIRED_MESSAGE = "It can't be empty";
+
 const preprocessRequiredNumberInput = (
   message: string,
   schema: z.ZodNumber,
@@ -63,6 +65,13 @@ const recipeIngredientMemberAdjustmentSchema = z
         code: z.ZodIssueCode.custom,
         path: ["ingredientId"],
         message: "Choose an ingredient for a modification",
+      });
+    }
+    if (adjustment.kind === "MODIFY" && adjustment.amount == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["amount"],
+        message: ADJUSTMENT_AMOUNT_REQUIRED_MESSAGE,
       });
     }
     if (adjustment.kind === "SKIP" && adjustment.ingredientId) {

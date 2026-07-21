@@ -41,6 +41,7 @@ import {
 } from "@/lib/recipes/helpers";
 import type { MemberAdjustmentRow } from "@/lib/recipes/resolve-ingredient-lines";
 import type { IngredientType } from "@/types/ingredient";
+import { ADJUSTMENT_AMOUNT_REQUIRED_MESSAGE } from "@/lib/validations/recipe";
 import { cn } from "@/lib/utils";
 
 type AdjustmentPerPortionRowProps = {
@@ -52,6 +53,8 @@ type AdjustmentPerPortionRowProps = {
   baseAmount: number;
   baseUnitId: string;
   ingredients: IngredientType[];
+  /** Form-level validation (e.g. on save). */
+  amountError?: string;
   onChange: (patch: Partial<MemberAdjustmentRow>) => void;
   onRemove: () => void;
 };
@@ -122,6 +125,7 @@ export function AdjustmentPerPortionRow({
   baseAmount,
   baseUnitId,
   ingredients,
+  amountError,
   onChange,
   onRemove,
 }: AdjustmentPerPortionRowProps) {
@@ -165,8 +169,8 @@ export function AdjustmentPerPortionRow({
     isSkipped ? "0" : formatAmountInputValue(adjustment.amount),
   );
   const isAmountFocusedRef = useRef(false);
-  // Value at focus — empty blur restores this instead of committing 0.
   const savedAmountRef = useRef<number | null>(adjustment.amount ?? null);
+  const [localAmountError, setLocalAmountError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAmountFocusedRef.current) return;
@@ -174,6 +178,14 @@ export function AdjustmentPerPortionRow({
       isSkipped ? "0" : formatAmountInputValue(adjustment.amount),
     );
   }, [adjustment.amount, adjustment.kind, adjustment.familyMemberId, isSkipped]);
+
+  useEffect(() => {
+    if (isSkipped) {
+      setLocalAmountError(null);
+    }
+  }, [isSkipped]);
+
+  const displayAmountError = amountError ?? localAmountError;
 
   const restoreSavedAmount = () => {
     const restored = savedAmountRef.current;
@@ -184,7 +196,9 @@ export function AdjustmentPerPortionRow({
   const commitAmountText = (raw: string) => {
     const trimmed = raw.trim();
     if (trimmed === "") {
-      restoreSavedAmount();
+      setLocalAmountError(ADJUSTMENT_AMOUNT_REQUIRED_MESSAGE);
+      setAmountText("");
+      onChange({ kind: "MODIFY", amount: null });
       return;
     }
     const numValue = parseFloat(trimmed);
@@ -192,6 +206,7 @@ export function AdjustmentPerPortionRow({
       restoreSavedAmount();
       return;
     }
+    setLocalAmountError(null);
     setAmountText(numValue.toString());
     onChange({ kind: "MODIFY", amount: numValue });
   };
@@ -276,9 +291,9 @@ export function AdjustmentPerPortionRow({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-item rounded-md border border-border bg-card p-nest">
+    <div className="flex flex-wrap items-start gap-item rounded-md border border-border bg-card p-nest">
       {/* Fixed person label — row is added per person via “Add for”. */}
-      <span className="min-w-18 shrink-0 type-body font-medium text-foreground">
+      <span className="min-w-18 shrink-0 type-body font-medium leading-9 text-foreground">
         {personLabel}
       </span>
 
@@ -305,7 +320,7 @@ export function AdjustmentPerPortionRow({
       {autoHint ? (
         <div
           className={cn(
-            "flex shrink-0 flex-wrap items-center gap-1 type-body tabular-nums",
+            "flex h-9 shrink-0 flex-wrap items-center gap-1 type-body tabular-nums",
             strikeAutoHint && "text-muted-foreground line-through",
           )}
           aria-hidden
@@ -318,31 +333,50 @@ export function AdjustmentPerPortionRow({
         </div>
       ) : null}
 
-      <Input
-        type="text"
-        inputMode="decimal"
-        disabled={isSkipped}
-        value={amountText}
-        onFocus={() => {
-          isAmountFocusedRef.current = true;
-          savedAmountRef.current = adjustment.amount ?? null;
-        }}
-        onBlur={() => {
-          isAmountFocusedRef.current = false;
-          commitAmountText(amountText);
-        }}
-        onChange={(event) => {
-          if (isSkipped) return;
-          const raw = event.target.value;
-          setAmountText(raw);
-          if (raw.trim() === "") return;
-          const numValue = parseFloat(raw);
-          if (Number.isNaN(numValue)) return;
-          onChange({ kind: "MODIFY", amount: numValue });
-        }}
-        className="h-9 w-24 min-w-0 shrink-0 tabular-nums"
-        aria-label={`Amount for ${personLabel}`}
-      />
+      {/* Error sits under the amount field only — controls stay on one row. */}
+      <div className="flex w-24 shrink-0 flex-col gap-1">
+        <Input
+          type="text"
+          inputMode="decimal"
+          disabled={isSkipped}
+          value={amountText}
+          aria-invalid={!!displayAmountError}
+          onFocus={() => {
+            isAmountFocusedRef.current = true;
+            savedAmountRef.current = adjustment.amount ?? null;
+          }}
+          onBlur={() => {
+            isAmountFocusedRef.current = false;
+            commitAmountText(amountText);
+          }}
+          onChange={(event) => {
+            if (isSkipped) return;
+            const raw = event.target.value;
+            setAmountText(raw);
+            if (raw.trim() === "") {
+              onChange({ kind: "MODIFY", amount: null });
+              return;
+            }
+            const numValue = parseFloat(raw);
+            if (Number.isNaN(numValue)) return;
+            setLocalAmountError(null);
+            onChange({ kind: "MODIFY", amount: numValue });
+          }}
+          className="h-9 w-full min-w-0 tabular-nums"
+          aria-label={`Amount for ${personLabel}`}
+          aria-describedby={
+            displayAmountError ? `amount-error-${adjustment.familyMemberId}` : undefined
+          }
+        />
+        {displayAmountError ? (
+          <p
+            id={`amount-error-${adjustment.familyMemberId}`}
+            className="text-destructive text-sm"
+          >
+            {displayAmountError}
+          </p>
+        ) : null}
+      </div>
 
       <Select
         value={unitId}
