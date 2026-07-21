@@ -178,9 +178,10 @@ export function IngredientMemberAdjustmentsEditor({
   };
 
   return (
-    <div className="rounded-md border border-border bg-muted/30 p-2 space-y-2">
+    // Soft inset panel — same surface as IngredientNotePanel (secondary badge card).
+    <div className="rounded-md bg-secondary p-nest space-y-2">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Personal adjustments
+        Adjustments per portion
       </p>
 
       {isSoloHousehold ? (
@@ -408,8 +409,15 @@ export function IngredientMemberAdjustmentsEditor({
       })}
 
       {canAdjust && availableMembers.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-          <span className="type-body text-destructive">+ Add adjustment</span>
+        // Same pattern as Cooking for: muted instruction + outline person buttons.
+        <div
+          className="flex flex-wrap items-center gap-item"
+          role="group"
+          aria-label="Add personal adjustment"
+        >
+          <span className="type-body shrink-0 text-muted-foreground">
+            Add for
+          </span>
           {availableMembers.map((member) => {
             const label = getRecipeFamilyMemberLabel(member, familyMembers);
             return (

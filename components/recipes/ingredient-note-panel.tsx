@@ -22,8 +22,8 @@ export function IngredientNotePanel({
   return (
     <div
       className={cn(
-        // Keep the note visually grouped, but lighter than a full card treatment.
-        "rounded-md bg-muted/20 p-nest",
+        // Match secondary badge surface (person amount chips) for a clear inset on bg-card.
+        "rounded-md bg-secondary p-nest",
         className,
       )}
     >

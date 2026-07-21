@@ -431,7 +431,7 @@ export function IngredientItem({
       </div>
 
       {(showCookingMemberBreakdown && cookingMemberAmounts) || showNotePanel ? (
-        <div className="flex flex-col gap-tight">
+        <div className="flex flex-col gap-nest">
           {showCookingMemberBreakdown && cookingMemberAmounts ? (
             <IngredientMemberAmountBadges
               memberAmounts={cookingMemberAmounts}
@@ -459,7 +459,7 @@ export function IngredientItem({
             <IngredientRowActionButton
               active={showPeoplePanel}
               badgeCount={adjustmentCount}
-              aria-label={`Personal adjustments for ${ingredientDisplayName}`}
+              aria-label={`Adjustments per portion for ${ingredientDisplayName}`}
               aria-expanded={showPeoplePanel}
               onClick={() => setShowPeoplePanel((prev) => !prev)}
             >
@@ -471,7 +471,7 @@ export function IngredientItem({
               asChild
               type="button"
               variant="outline"
-              size="icon-sm"
+              size="icon"
             >
               <a
                 href={ingredient.supermarketUrl}
@@ -488,7 +488,7 @@ export function IngredientItem({
             <Button
               type="button"
               variant="outline"
-              size="icon-sm"
+              size="icon"
               onClick={onApplyScaleToAll}
               aria-label={`Scale all ingredients based on ${ingredientDisplayName}`}
               title="Apply this amount change to all ingredients"

@@ -937,7 +937,7 @@ export function IngredientSelector({
           <IngredientRowActionButton
             active={panelState.people}
             badgeCount={adjustmentCount}
-            aria-label="Personal adjustments"
+            aria-label="Adjustments per portion"
             aria-expanded={panelState.people}
             onClick={() => togglePanel("people")}
           >

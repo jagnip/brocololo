@@ -737,7 +737,7 @@ describe("RecipePage aggregated ingredient rows", () => {
     const sharedRow = getIngredientRow("Shared Protein");
     expect(
       within(sharedRow).queryByRole("button", {
-        name: /Personal adjustments for Shared Protein/i,
+        name: /Adjustments per portion for Shared Protein/i,
       }),
     ).not.toBeInTheDocument();
   });

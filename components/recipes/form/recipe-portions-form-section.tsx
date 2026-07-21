@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { SegmentedFilterButton } from "@/components/ui/segmented-filter-button";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { scaleFormIngredientRowsForNewServings } from "@/lib/recipes/scale-form-ingredient-rows-for-servings";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
@@ -222,12 +223,13 @@ export function RecipePortionsFormSection({
                             {PORTION_MULTIPLIER_OPTIONS.map((multiplier) => {
                               const checked = selectedMultiplier === multiplier;
                               return (
-                                <Button
+                                // Selected = accent shell (like Cooking for), not full primary.
+                                <SegmentedFilterButton
                                   key={multiplier}
                                   type="button"
                                   role="radio"
                                   aria-checked={checked}
-                                  variant={checked ? "default" : "outline"}
+                                  selected={checked}
                                   onClick={() => {
                                     const withoutMember = currentPortions.filter(
                                       (portion) =>
@@ -243,7 +245,7 @@ export function RecipePortionsFormSection({
                                   }}
                                 >
                                   {multiplier}
-                                </Button>
+                                </SegmentedFilterButton>
                               );
                             })}
                           </div>
