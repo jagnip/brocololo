@@ -4,7 +4,8 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { SearchableSelect, type SearchableSelectOption } from "@/components/ui/searchable-select";
+import { type SearchableSelectOption } from "@/components/ui/searchable-select";
+import { SearchableSelectWithAction } from "@/components/ui/searchable-select-with-action";
 import {
   Select,
   SelectContent,
@@ -71,60 +72,18 @@ type GroceriesEditRowProps = {
   onIngredientSelectorOpenHandled?: () => void;
 };
 
-// Plus (free-text → create dialog) or Pencil (DB row → edit dialog) beside Trash.
+/** Trash only — create/edit lives on the fused ingredient select action. */
 function GroceriesEditRowActions({
   row,
-  onCreateIngredientRequested,
-  onEditIngredientRequested,
   onRowRemove,
 }: {
   row: GroceriesEditableRow;
-  onCreateIngredientRequested: (rowId: string, initialName: string) => void;
-  onEditIngredientRequested: (
-    ingredientId: string,
-    context?: GroceriesEditIngredientRequestContext,
-  ) => void;
   onRowRemove: (rowId: string) => void;
 }) {
-  const actionState = getGroceriesRowIngredientActionState(row);
-  const canManageIngredient = canManageGroceriesRowIngredient(row);
   const removeLabel = row.displayLabel.trim() || "item";
-  const isLinkedIngredient = actionState === "edit";
 
   return (
     <div className="flex items-center justify-end gap-1">
-      {isLinkedIngredient ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          aria-label={`Edit ${row.displayLabel}`}
-          onClick={() => {
-            if (!row.ingredientId) return;
-            onEditIngredientRequested(row.ingredientId, {
-              targetRowId: row.id,
-              source: "row",
-            });
-          }}
-        >
-          <Pencil className="h-4 w-4" aria-hidden />
-        </Button>
-      ) : (
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          disabled={!canManageIngredient}
-          aria-label={
-            canManageIngredient
-              ? `Create ingredient from ${row.displayLabel}`
-              : "Create ingredient"
-          }
-          onClick={() => onCreateIngredientRequested(row.id, row.displayLabel.trim())}
-        >
-          <Plus className="h-4 w-4" aria-hidden />
-        </Button>
-      )}
       <Button
         type="button"
         variant="outline"
@@ -133,7 +92,7 @@ function GroceriesEditRowActions({
         aria-label={`Remove ${removeLabel}`}
         onClick={() => onRowRemove(row.id)}
       >
-        <Trash2 className="h-4 w-4" aria-hidden />
+        <Trash2 className="h-4 w-4" />
       </Button>
     </div>
   );
@@ -299,6 +258,9 @@ function GroceriesEditRowComponent({
     [registerRowRef, row.id],
   );
 
+  const ingredientActionState = getGroceriesRowIngredientActionState(row);
+  const canManageIngredient = canManageGroceriesRowIngredient(row);
+
   const ingredientSelectProps = {
     className: "min-w-0 w-full font-normal",
     options: resolvedIngredientOptions,
@@ -313,10 +275,36 @@ function GroceriesEditRowComponent({
     searchPlaceholder: "Ingredient",
     emptyLabel: "No ingredient found.",
     onOpenChange: setIngredientSelectorOpen,
+    // Linked → edit dialog; free-text → create dialog; empty → disabled pencil.
+    actionAriaLabel:
+      ingredientActionState === "edit"
+        ? `Edit ${row.displayLabel}`
+        : canManageIngredient
+          ? `Create ingredient from ${row.displayLabel}`
+          : "Edit ingredient",
+    actionIcon:
+      ingredientActionState === "create" ? (
+        <Plus className="h-4 w-4" aria-hidden />
+      ) : (
+        <Pencil className="h-4 w-4" aria-hidden />
+      ),
+    actionDisabled: !canManageIngredient,
+    onActionClick: () => {
+      if (ingredientActionState === "edit" && row.ingredientId) {
+        onEditIngredientRequested(row.ingredientId, {
+          targetRowId: row.id,
+          source: "row",
+        });
+        return;
+      }
+      if (ingredientActionState === "create") {
+        onCreateIngredientRequested(row.id, row.displayLabel.trim());
+      }
+    },
   };
 
   const renderIngredientSelect = (layoutActive: boolean) => (
-    <SearchableSelect
+    <SearchableSelectWithAction
       {...ingredientSelectProps}
       open={ingredientSelectorOpen && layoutActive}
     />
@@ -443,12 +431,7 @@ function GroceriesEditRowComponent({
   );
 
   const rowActions = (
-    <GroceriesEditRowActions
-      row={row}
-      onCreateIngredientRequested={onCreateIngredientRequested}
-      onEditIngredientRequested={onEditIngredientRequested}
-      onRowRemove={onRowRemove}
-    />
+    <GroceriesEditRowActions row={row} onRowRemove={onRowRemove} />
   );
 
   return (

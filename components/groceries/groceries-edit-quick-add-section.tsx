@@ -18,6 +18,7 @@ import {
   SearchableSelect,
   type SearchableSelectOption,
 } from "@/components/ui/searchable-select";
+import { SearchableSelectWithAction } from "@/components/ui/searchable-select-with-action";
 import type {
   GroceriesEditCategoryOption,
   GroceriesEditIngredientOption,
@@ -304,10 +305,32 @@ export function GroceriesEditQuickAddSection({
     placeholder: "Ingredient",
     searchPlaceholder: "Ingredient",
     emptyLabel: "No ingredient found.",
+    actionAriaLabel: selectedIngredient
+      ? `Edit ${selectedIngredient.name}`
+      : isFreeText
+        ? `Create ingredient from ${draft.displayLabel}`
+        : "Edit ingredient",
+    actionIcon: isFreeText ? (
+      <Plus className="h-4 w-4" aria-hidden />
+    ) : (
+      <Pencil className="h-4 w-4" aria-hidden />
+    ),
+    actionDisabled: fieldsDisabled,
+    onActionClick: () => {
+      if (selectedIngredient) {
+        onEditIngredientRequested(selectedIngredient.id, { source: "quick-add" });
+        return;
+      }
+      if (!isFreeText) return;
+      onCreateIngredientRequested(
+        draft.displayLabel.trim(),
+        draft.ingredientCategoryId,
+      );
+    },
   };
 
   const renderIngredientSelect = () => (
-    <SearchableSelect {...ingredientSelectProps} />
+    <SearchableSelectWithAction {...ingredientSelectProps} />
   );
 
   const renderCategorySelect = () => (
@@ -419,42 +442,6 @@ export function GroceriesEditQuickAddSection({
     />
   );
 
-  const actionButton = selectedIngredient ? (
-    <Button
-      type="button"
-      variant="outline"
-      size="icon"
-      disabled={fieldsDisabled}
-      aria-label={`Edit ${selectedIngredient.name}`}
-      onClick={() => {
-        onEditIngredientRequested(selectedIngredient.id, { source: "quick-add" });
-      }}
-    >
-      <Pencil className="h-4 w-4" aria-hidden />
-    </Button>
-  ) : (
-    <Button
-      type="button"
-      variant="outline"
-      size="icon"
-      disabled={!isFreeText}
-      aria-label={
-        isFreeText
-          ? `Create ingredient from ${draft.displayLabel}`
-          : "Create ingredient"
-      }
-      onClick={() => {
-        if (!isFreeText) return;
-        onCreateIngredientRequested(
-          draft.displayLabel.trim(),
-          draft.ingredientCategoryId,
-        );
-      }}
-    >
-      <Plus className="h-4 w-4" aria-hidden />
-    </Button>
-  );
-
   const addItemButton = (
     <Button
       type="button"
@@ -480,7 +467,7 @@ export function GroceriesEditQuickAddSection({
             {addItemButton}
           </div>
 
-          {/* Mobile: ingredient · category | amount · unit | notes · action. */}
+          {/* Mobile: ingredient · category | amount · unit | notes. */}
           <div className="space-y-2 md:hidden">
             <div className="grid items-start gap-2 grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <div data-quick-add-ingredient-select className="min-w-0 w-full">
@@ -494,14 +481,13 @@ export function GroceriesEditQuickAddSection({
               {renderUnitSelect(!isMd)}
             </div>
 
-            <div className="grid items-start gap-2 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+            <div className="grid items-start gap-2 grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               {additionalInfoInput}
               {substitutionNoteInput}
-              {actionButton}
             </div>
           </div>
 
-          {/* md–2xl: row 1 = ingredient · amount · unit · category; row 2 = notes · action. */}
+          {/* md–2xl: row 1 = ingredient · amount · unit · category; row 2 = notes. */}
           <div className="hidden md:block 2xl:hidden md:space-y-2">
             <div className="grid items-start gap-2 md:grid-cols-[minmax(0,1.3fr)_auto_8rem_minmax(0,1fr)]">
               <div data-quick-add-ingredient-select className="min-w-0 w-full">
@@ -512,15 +498,14 @@ export function GroceriesEditQuickAddSection({
               {renderCategorySelect()}
             </div>
 
-            <div className="grid items-start gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+            <div className="grid items-start gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               {additionalInfoInput}
               {substitutionNoteInput}
-              {actionButton}
             </div>
           </div>
 
           {/* 2XL: single row — ingredient gets the most space; amount/unit stay compact. */}
-          <div className="hidden 2xl:grid 2xl:items-start 2xl:gap-2 2xl:grid-cols-[minmax(0,1.5fr)_auto_7.5rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
+          <div className="hidden 2xl:grid 2xl:items-start 2xl:gap-2 2xl:grid-cols-[minmax(0,1.5fr)_auto_7.5rem_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
             <div data-quick-add-ingredient-select className="min-w-0 w-full">
               {renderIngredientSelect()}
             </div>
@@ -529,7 +514,6 @@ export function GroceriesEditQuickAddSection({
             {renderCategorySelect()}
             {additionalInfoInput}
             {substitutionNoteInput}
-            {actionButton}
           </div>
         </div>
       </NutritionPersonCard>

@@ -19,9 +19,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  SearchableSelect,
-  SearchableSelectOption,
+  type SearchableSelectOption,
 } from "@/components/ui/searchable-select";
+import { SearchableSelectWithAction } from "@/components/ui/searchable-select-with-action";
 import {
   buildIngredientSearchSourceMap,
   ingredientsToSearchableSelectOptions,
@@ -99,7 +99,6 @@ export const INGREDIENT_ROW_LAYOUT_CLASSES = {
   // Phone: own row, full width. Tablet: same row as amount+unit (flex-1). Desktop: full-width line under primary row (lg:flex-none overrides md:flex-1).
   additionalInfoInput:
     "min-w-0 w-full max-w-full md:w-auto md:min-w-0 md:flex-1 md:basis-0 lg:order-5 lg:basis-full lg:w-full lg:flex-none",
-  utilityButton: "shrink-0",
   secondaryRemoveButton: "shrink-0",
 } as const;
 
@@ -791,7 +790,8 @@ export function IngredientSelector({
               <div
                 className={INGREDIENT_ROW_LAYOUT_CLASSES.ingredientContainer}
               >
-                <SearchableSelect
+                {/* Select + edit fused into one control; trash stays a separate outline action. */}
+                <SearchableSelectWithAction
                   className="min-w-0 max-w-full"
                   options={ingredientOptions}
                   renderLabel={renderRecipeFormIngredientLabel}
@@ -833,27 +833,18 @@ export function IngredientSelector({
                       size={16}
                     />
                   )}
+                  actionAriaLabel="Edit ingredient"
+                  actionIcon={<Pencil className="h-4 w-4" />}
+                  actionDisabled={!item.ingredientId}
+                  onActionClick={() => {
+                    if (!item.ingredientId) return;
+                    onEditIngredientRequested?.(item.ingredientId);
+                  }}
                 />
               </div>
               <div
                 className={INGREDIENT_ROW_LAYOUT_CLASSES.ingredientRowActions}
               >
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  disabled={!item.ingredientId}
-                  className={INGREDIENT_ROW_LAYOUT_CLASSES.utilityButton}
-                  aria-label="Edit ingredient"
-                  onClick={() => {
-                    if (!item.ingredientId) {
-                      return;
-                    }
-                    onEditIngredientRequested?.(item.ingredientId);
-                  }}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
                 <Button
                   type="button"
                   variant="outline"
