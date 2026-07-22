@@ -69,36 +69,22 @@ type IngredientSelectorProps = {
 export const INGREDIENT_ROW_LAYOUT_CLASSES = {
   // min-w-0: grid/flex parents default to min-width:auto; without this, nested inputs can widen past the viewport (e.g. iPhone SE).
   rowContainer: "min-w-0 max-w-full space-y-2 rounded-md border p-2",
-  // Phone: col (row1 drag+ingredient; row2–3 qty). Tablet md–lg: row2 = amount|unit|additional one line. Desktop lg+: flattened primary row + additional line.
+  // Phone: 3 stacked bands. sm+: one wrapping row (buttons drop before crushing the select).
   primaryLine:
-    "flex w-full min-w-0 max-w-full flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center lg:gap-2",
-  primaryLineMobileIngredientRow:
-    "flex w-full min-w-0 items-start gap-2 lg:contents",
-  // Phone: col [amount+unit sub-row][additional]. Tablet: single row (inner amountUnitRow uses md:contents). lg:contents for desktop order.
-  primaryLineMobileQtyRow:
-    "flex w-full min-w-0 flex-col gap-2 md:flex-row md:flex-nowrap md:items-center md:gap-2 lg:contents",
-  // Phone: amount|unit only. md+: contents so amount, unit, additional sit in one row (tablet) or flatten to primaryLine (lg).
-  amountUnitRow:
-    "flex w-full min-w-0 flex-row items-stretch gap-2 md:contents",
-  unitSelectWrapper:
-    "flex min-h-0 min-w-0 w-full flex-1 md:w-32 md:flex-none md:shrink-0 lg:order-3",
-  ingredientWithActionsRow:
-    "flex w-full min-w-0 flex-1 items-center gap-2 lg:order-4 lg:min-w-0 lg:flex-1",
-  ingredientRowActions: "flex shrink-0 items-center gap-2",
-  // Nutrition-only row under additional info / actions.
-  nutritionTargetRow:
-    "flex min-w-0 max-w-full flex-wrap items-center gap-x-3 gap-y-2 lg:flex-nowrap",
+    "flex w-full min-w-0 max-w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center",
+  // Row 1 on phone: drag + ingredient select.
+  ingredientRow: "flex min-w-0 w-full items-center gap-2 sm:min-w-56 sm:flex-1",
+  ingredientContainer: "min-w-0 flex-1",
+  // Row 2 on phone: amount + unit. sm+: sit inline after the select.
+  amountUnitRow: "flex w-full items-center gap-2 sm:w-auto sm:shrink-0",
+  // Row 3 on phone: action buttons. sm+: shrink-0 so they wrap as a group when space is tight.
+  buttonsRow: "flex shrink-0 items-center gap-2",
   // Bigger handle improves drag start reliability on mouse/touch.
-  dragHandle: "h-8 w-8 shrink-0 touch-none cursor-grab active:cursor-grabbing",
-  // Phone: flex-1 beside unit. md+: fixed narrow field (tablet one-row + desktop) — flex-none stops amount from growing in the lg row.
+  dragHandle: "size-9 shrink-0 touch-none cursor-grab active:cursor-grabbing",
+  // Phone: share the amount/unit row; sm+: fixed compact widths.
   amountInput:
-    "min-w-0 w-full max-w-full flex-1 basis-0 md:w-24 md:flex-none md:shrink-0 md:basis-auto lg:order-2",
-  unitTrigger:
-    "min-w-0 w-full max-w-full md:w-32 md:shrink-0 lg:shrink-0",
-  ingredientContainer: "min-w-0 w-full flex-1",
-  // Phone: own row, full width. Tablet: same row as amount+unit (flex-1). Desktop: full-width line under primary row (lg:flex-none overrides md:flex-1).
-  additionalInfoInput:
-    "min-w-0 w-full max-w-full md:w-auto md:min-w-0 md:flex-1 md:basis-0 lg:order-5 lg:basis-full lg:w-full lg:flex-none",
+    "min-w-0 flex-1 tabular-nums sm:w-24 sm:flex-none",
+  unitTrigger: "min-w-0 flex-1 sm:w-28 sm:flex-none",
   secondaryRemoveButton: "shrink-0",
 } as const;
 
@@ -756,19 +742,14 @@ export function IngredientSelector({
           draggingIngredientKey === item.tempIngredientKey ? "opacity-60" : ""
         }`}
       >
-        {/* Primary: phone = 3 bands; tablet md–lg = row1 drag+ingredient, row2 amount|unit|additional; lg+ = flat row + additional line. */}
+        {/* Phone: ingredient / amount+unit / buttons. sm+: one wrapping row. */}
         <div className={INGREDIENT_ROW_LAYOUT_CLASSES.primaryLine}>
-          <div
-            className={INGREDIENT_ROW_LAYOUT_CLASSES.primaryLineMobileIngredientRow}
-          >
+          <div className={INGREDIENT_ROW_LAYOUT_CLASSES.ingredientRow}>
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className={cn(
-                INGREDIENT_ROW_LAYOUT_CLASSES.dragHandle,
-                "lg:order-1",
-              )}
+              className={INGREDIENT_ROW_LAYOUT_CLASSES.dragHandle}
               aria-label="Drag ingredient"
               draggable
               onDragStart={(event) => {
@@ -784,168 +765,144 @@ export function IngredientSelector({
               <GripVertical className="h-4 w-4" />
             </Button>
 
-            <div
-              className={INGREDIENT_ROW_LAYOUT_CLASSES.ingredientWithActionsRow}
-            >
-              <div
-                className={INGREDIENT_ROW_LAYOUT_CLASSES.ingredientContainer}
-              >
-                {/* Select + edit fused into one control; trash stays a separate outline action. */}
-                <SearchableSelectWithAction
-                  className="min-w-0 max-w-full"
-                  options={ingredientOptions}
-                  renderLabel={renderRecipeFormIngredientLabel}
-                  renderTriggerLabel={renderRecipeFormIngredientTriggerLabel}
-                  value={item.ingredientId || null}
-                  onValueChange={(next) => {
-                    if (!next) {
-                      // Clearing ingredient should fully reset ingredient/unit/amount state.
-                      updateIngredient(
-                        item.tempIngredientKey,
-                        buildClearIngredientPatch(),
-                      );
-                      return;
-                    }
-                    const unitId = getDefaultUnitIdForIngredient(next);
-                    updateIngredient(item.tempIngredientKey, {
-                      ingredientId: next,
-                      unitId,
-                    });
-                  }}
-                  onCreateOption={(typedName) => {
-                    if (rowIndex < 0) {
-                      return;
-                    }
-                    onCreateIngredientRequested?.({
-                      rowIndex,
-                      initialName: typedName,
-                    });
-                  }}
-                  placeholder="Select ingredient..."
-                  searchPlaceholder="Search ingredients..."
-                  emptyLabel="No ingredient found."
-                  allowClear
-                  clearLabel="Clear ingredient"
-                  renderIcon={(option) => (
-                    <IngredientIcon
-                      icon={option.icon ?? null}
-                      name={option.label}
-                      size={16}
-                    />
-                  )}
-                  actionAriaLabel="Edit ingredient"
-                  actionIcon={<Pencil className="h-4 w-4" />}
-                  actionDisabled={!item.ingredientId}
-                  onActionClick={() => {
-                    if (!item.ingredientId) return;
-                    onEditIngredientRequested?.(item.ingredientId);
-                  }}
-                />
-              </div>
-              <div
-                className={INGREDIENT_ROW_LAYOUT_CLASSES.ingredientRowActions}
-              >
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className={
-                    INGREDIENT_ROW_LAYOUT_CLASSES.secondaryRemoveButton
+            <div className={INGREDIENT_ROW_LAYOUT_CLASSES.ingredientContainer}>
+              {/* Select + edit fused into one control; trash stays with the other row actions. */}
+              <SearchableSelectWithAction
+                className="min-w-0 max-w-full"
+                options={ingredientOptions}
+                renderLabel={renderRecipeFormIngredientLabel}
+                renderTriggerLabel={renderRecipeFormIngredientTriggerLabel}
+                value={item.ingredientId || null}
+                onValueChange={(next) => {
+                  if (!next) {
+                    // Clearing ingredient should fully reset ingredient/unit/amount state.
+                    updateIngredient(
+                      item.tempIngredientKey,
+                      buildClearIngredientPatch(),
+                    );
+                    return;
                   }
-                  aria-label="Remove ingredient"
-                  onClick={() => removeIngredient(item.tempIngredientKey)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className={INGREDIENT_ROW_LAYOUT_CLASSES.primaryLineMobileQtyRow}
-          >
-            <div
-              className={INGREDIENT_ROW_LAYOUT_CLASSES.amountUnitRow}
-            >
-              <Input
-                type="number"
-                placeholder="Amount"
-                value={item.amount == null ? "" : item.amount.toString()}
-                onChange={(e) => {
-                  const numValue =
-                    e.target.value === "" ? null : parseFloat(e.target.value);
-                  updateIngredient(item.tempIngredientKey, { amount: numValue });
+                  const unitId = getDefaultUnitIdForIngredient(next);
+                  updateIngredient(item.tempIngredientKey, {
+                    ingredientId: next,
+                    unitId,
+                  });
                 }}
-                className={INGREDIENT_ROW_LAYOUT_CLASSES.amountInput}
-                min={0}
-                // Allow arbitrary decimal precision (e.g. 0.75) in ingredient amounts.
-                step="any"
-                disabled={isAmountDisabled}
+                onCreateOption={(typedName) => {
+                  if (rowIndex < 0) {
+                    return;
+                  }
+                  onCreateIngredientRequested?.({
+                    rowIndex,
+                    initialName: typedName,
+                  });
+                }}
+                placeholder="Select ingredient..."
+                searchPlaceholder="Search ingredients..."
+                emptyLabel="No ingredient found."
+                allowClear
+                clearLabel="Clear ingredient"
+                renderIcon={(option) => (
+                  <IngredientIcon
+                    icon={option.icon ?? null}
+                    name={option.label}
+                    size={16}
+                  />
+                )}
+                actionAriaLabel="Edit ingredient"
+                actionIcon={<Pencil className="h-4 w-4" />}
+                actionDisabled={!item.ingredientId}
+                onActionClick={() => {
+                  if (!item.ingredientId) return;
+                  onEditIngredientRequested?.(item.ingredientId);
+                }}
               />
-
-              <div
-                className={INGREDIENT_ROW_LAYOUT_CLASSES.unitSelectWrapper}
-              >
-                <Select
-                  key={`${item.ingredientId}-${rowIndex}`}
-                  // Keep Select controlled with empty-string sentinel to avoid stale Radix trigger text.
-                  value={item.unitId ?? ""}
-                  onValueChange={(unitId) => {
-                    if (!unitId) {
-                      // Clearing unit must also clear amount for nullable-unit flow.
-                      updateIngredient(item.tempIngredientKey, {
-                        unitId: null,
-                        amount: null,
-                      });
-                      return;
-                    }
-                    updateIngredient(item.tempIngredientKey, { unitId });
-                  }}
-                  disabled={!item.ingredientId}
-                >
-                  <SelectTrigger
-                    className={INGREDIENT_ROW_LAYOUT_CLASSES.unitTrigger}
-                  >
-                    <SelectValue placeholder="Unit" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {units.map((uc) => (
-                      <SelectItem key={uc.unitId} value={uc.unitId}>
-                        {getUnitDisplayName({
-                          amount: item.amount,
-                          unitName: uc.unit.name,
-                          unitNamePlural: uc.unit.namePlural ?? null,
-                        })}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
-
-            {/* Removed always-visible additional info — now behind Note toggle below. */}
           </div>
-        </div>
 
-        {/* Row actions: People + Note toggles */}
-        <div className="flex flex-wrap items-center gap-2">
-          <IngredientRowActionButton
-            active={panelState.people}
-            badgeCount={adjustmentCount}
-            aria-label="Adjustments per portion"
-            aria-expanded={panelState.people}
-            onClick={() => togglePanel("people")}
-          >
-            <Users className="h-4 w-4" />
-          </IngredientRowActionButton>
-          <IngredientRowActionButton
-            active={panelState.note}
-            aria-label="Ingredient note"
-            aria-expanded={panelState.note}
-            onClick={() => togglePanel("note")}
-          >
-            <NotebookPen className="h-4 w-4" />
-          </IngredientRowActionButton>
+          <div className={INGREDIENT_ROW_LAYOUT_CLASSES.amountUnitRow}>
+            <Input
+              type="number"
+              placeholder="Amount"
+              value={item.amount == null ? "" : item.amount.toString()}
+              onChange={(e) => {
+                const numValue =
+                  e.target.value === "" ? null : parseFloat(e.target.value);
+                updateIngredient(item.tempIngredientKey, { amount: numValue });
+              }}
+              className={INGREDIENT_ROW_LAYOUT_CLASSES.amountInput}
+              min={0}
+              // Allow arbitrary decimal precision (e.g. 0.75) in ingredient amounts.
+              step="any"
+              disabled={isAmountDisabled}
+            />
+
+            <Select
+              key={`${item.ingredientId}-${rowIndex}`}
+              // Keep Select controlled with empty-string sentinel to avoid stale Radix trigger text.
+              value={item.unitId ?? ""}
+              onValueChange={(unitId) => {
+                if (!unitId) {
+                  // Clearing unit must also clear amount for nullable-unit flow.
+                  updateIngredient(item.tempIngredientKey, {
+                    unitId: null,
+                    amount: null,
+                  });
+                  return;
+                }
+                updateIngredient(item.tempIngredientKey, { unitId });
+              }}
+              disabled={!item.ingredientId}
+            >
+              <SelectTrigger
+                className={INGREDIENT_ROW_LAYOUT_CLASSES.unitTrigger}
+              >
+                <SelectValue placeholder="Unit" />
+              </SelectTrigger>
+              <SelectContent>
+                {units.map((uc) => (
+                  <SelectItem key={uc.unitId} value={uc.unitId}>
+                    {getUnitDisplayName({
+                      amount: item.amount,
+                      unitName: uc.unit.name,
+                      unitNamePlural: uc.unit.namePlural ?? null,
+                    })}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* People · Note · Trash */}
+          <div className={INGREDIENT_ROW_LAYOUT_CLASSES.buttonsRow}>
+            <IngredientRowActionButton
+              active={panelState.people}
+              badgeCount={adjustmentCount}
+              aria-label="Adjustments per portion"
+              aria-expanded={panelState.people}
+              onClick={() => togglePanel("people")}
+            >
+              <Users className="h-4 w-4" />
+            </IngredientRowActionButton>
+            <IngredientRowActionButton
+              active={panelState.note}
+              aria-label="Ingredient note"
+              aria-expanded={panelState.note}
+              onClick={() => togglePanel("note")}
+            >
+              <NotebookPen className="h-4 w-4" />
+            </IngredientRowActionButton>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className={INGREDIENT_ROW_LAYOUT_CLASSES.secondaryRemoveButton}
+              aria-label="Remove ingredient"
+              onClick={() => removeIngredient(item.tempIngredientKey)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {panelState.people ? (
