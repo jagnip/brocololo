@@ -933,6 +933,7 @@ export function IngredientSelector({
                 ]?.amount;
               return fieldError?.message;
             }}
+            onEditIngredientRequested={onEditIngredientRequested}
           />
         ) : null}
 

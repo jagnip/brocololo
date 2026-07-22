@@ -30,6 +30,8 @@ type IngredientMemberAdjustmentsEditorProps = {
   ingredients: IngredientType[];
   /** Resolve form validation message for a person's adjustment amount. */
   getAmountError?: (familyMemberId: string) => string | undefined;
+  /** Opens the catalog ingredient edit dialog from an adjustment row. */
+  onEditIngredientRequested?: (ingredientId: string) => void;
 };
 
 export function IngredientMemberAdjustmentsEditor({
@@ -44,6 +46,7 @@ export function IngredientMemberAdjustmentsEditor({
   baseUnitId,
   ingredients,
   getAmountError,
+  onEditIngredientRequested,
 }: IngredientMemberAdjustmentsEditorProps) {
   const isSoloHousehold = familyMembers.length <= 1;
   const canAdjust = canAddMemberAdjustments({
@@ -148,6 +151,7 @@ export function IngredientMemberAdjustmentsEditor({
               baseUnitId={baseUnitId}
               ingredients={ingredients}
               amountError={getAmountError?.(adjustment.familyMemberId)}
+              onEditIngredient={onEditIngredientRequested}
               onChange={(patch) =>
                 updateAdjustment(adjustment.familyMemberId, patch)
               }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { IngredientIcon } from "@/components/ingredient-icon";
@@ -20,10 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  SearchableSelect,
-  type SearchableSelectOption,
-} from "@/components/ui/searchable-select";
+import { type SearchableSelectOption } from "@/components/ui/searchable-select";
+import { SearchableSelectWithAction } from "@/components/ui/searchable-select-with-action";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import {
   buildDefaultModifyAdjustment,
@@ -55,6 +53,8 @@ type AdjustmentPerPortionRowProps = {
   ingredients: IngredientType[];
   /** Form-level validation (e.g. on save). */
   amountError?: string;
+  /** Opens the catalog ingredient edit dialog (same as main ingredient row). */
+  onEditIngredient?: (ingredientId: string) => void;
   onChange: (patch: Partial<MemberAdjustmentRow>) => void;
   onRemove: () => void;
 };
@@ -126,6 +126,7 @@ export function AdjustmentPerPortionRow({
   baseUnitId,
   ingredients,
   amountError,
+  onEditIngredient,
   onChange,
   onRemove,
 }: AdjustmentPerPortionRowProps) {
@@ -291,139 +292,159 @@ export function AdjustmentPerPortionRow({
   };
 
   return (
-    <div className="flex flex-wrap items-start gap-item rounded-md border border-border bg-card p-nest">
-      {/* Fixed person label — row is added per person via “Add for”. */}
-      <span className="min-w-18 shrink-0 type-body font-medium leading-9 text-foreground">
-        {personLabel}
-      </span>
+    <div
+      className={cn(
+        // Phone: select / values / buttons. sm+: wrap by space — buttons first, then values with buttons.
+        "flex flex-col gap-item rounded-md border border-border bg-card p-nest",
+        "sm:flex-row sm:flex-wrap sm:items-start",
+      )}
+    >
+      {/* Name + select — protected floor so the fused control stays readable. */}
+      <div className="flex min-w-0 w-full items-start gap-3 sm:min-w-72 sm:flex-1">
+        <span className="shrink-0 type-body font-medium leading-9 text-foreground">
+          {personLabel}
+        </span>
 
-      <SearchableSelect
-        options={ingredientOptions}
-        renderLabel={renderIngredientDropdownLabel}
-        renderTriggerLabel={renderIngredientTriggerLabel}
-        value={activeIngredientId}
-        onValueChange={(next) => {
-          if (!next || isSkipped) return;
-          onChange({ ingredientId: next });
-        }}
-        placeholder="Select ingredient..."
-        searchPlaceholder="Search ingredients..."
-        emptyLabel="No ingredient found."
-        allowClear={false}
-        disabled={isSkipped}
-        className="min-w-0 flex-1 basis-48"
-        renderIcon={(option) => (
-          <IngredientIcon icon={option.icon ?? null} name={option.label} size={16} />
-        )}
-      />
-
-      {autoHint ? (
-        <div
-          className={cn(
-            "flex h-9 shrink-0 flex-wrap items-center gap-1 type-body tabular-nums",
-            strikeAutoHint && "text-muted-foreground line-through",
-          )}
-          aria-hidden
-        >
-          <span>{autoHint.total}</span>
-          {autoHint.breakdown ? (
-            <span className="text-muted-foreground">{autoHint.breakdown}</span>
-          ) : null}
-          <span className="text-muted-foreground">→</span>
-        </div>
-      ) : null}
-
-      {/* Error sits under the amount field only — controls stay on one row. */}
-      <div className="flex w-24 shrink-0 flex-col gap-1">
-        <Input
-          type="text"
-          inputMode="decimal"
+        <SearchableSelectWithAction
+          options={ingredientOptions}
+          renderLabel={renderIngredientDropdownLabel}
+          renderTriggerLabel={renderIngredientTriggerLabel}
+          value={activeIngredientId}
+          onValueChange={(next) => {
+            if (!next || isSkipped) return;
+            onChange({ ingredientId: next });
+          }}
+          placeholder="Select ingredient..."
+          searchPlaceholder="Search ingredients..."
+          emptyLabel="No ingredient found."
+          allowClear={false}
           disabled={isSkipped}
-          value={amountText}
-          aria-invalid={!!displayAmountError}
-          onFocus={() => {
-            isAmountFocusedRef.current = true;
-            savedAmountRef.current = adjustment.amount ?? null;
+          className="min-w-0 flex-1"
+          renderIcon={(option) => (
+            <IngredientIcon icon={option.icon ?? null} name={option.label} size={16} />
+          )}
+          actionAriaLabel="Edit ingredient"
+          actionIcon={<Pencil className="h-4 w-4" />}
+          actionDisabled={isSkipped || !activeIngredientId || !onEditIngredient}
+          onActionClick={() => {
+            if (!activeIngredientId || isSkipped) return;
+            onEditIngredient?.(activeIngredientId);
           }}
-          onBlur={() => {
-            isAmountFocusedRef.current = false;
-            commitAmountText(amountText);
-          }}
-          onChange={(event) => {
-            if (isSkipped) return;
-            const raw = event.target.value;
-            setAmountText(raw);
-            if (raw.trim() === "") {
-              onChange({ kind: "MODIFY", amount: null });
-              return;
-            }
-            const numValue = parseFloat(raw);
-            if (Number.isNaN(numValue)) return;
-            setLocalAmountError(null);
-            onChange({ kind: "MODIFY", amount: numValue });
-          }}
-          className="h-9 w-full min-w-0 tabular-nums"
-          aria-label={`Amount for ${personLabel}`}
-          aria-describedby={
-            displayAmountError ? `amount-error-${adjustment.familyMemberId}` : undefined
-          }
         />
-        {displayAmountError ? (
-          <p
-            id={`amount-error-${adjustment.familyMemberId}`}
-            className="text-destructive text-sm"
-          >
-            {displayAmountError}
-          </p>
-        ) : null}
       </div>
 
-      <Select
-        value={unitId}
-        disabled={isSkipped}
-        onValueChange={(nextUnitId) => {
-          if (isSkipped) return;
-          onChange({ unitId: nextUnitId || null });
-        }}
-      >
-        <SelectTrigger className="h-9 w-28 shrink-0">
-          <SelectValue placeholder="Unit" />
-        </SelectTrigger>
-        <SelectContent>
-          {units.map((uc) => (
-            <SelectItem key={uc.unitId} value={uc.unitId}>
-              {getUnitDisplayName({
-                amount: resolvedAmountForDisplay,
-                unitName: uc.unit.name,
-                unitNamePlural: uc.unit.namePlural ?? null,
-              })}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {/* Auto hint + amount + unit — wrap as one group onto the buttons row when space is tighter. */}
+      <div className="flex w-full shrink-0 flex-wrap items-start gap-item sm:w-auto">
+        {autoHint ? (
+          <div
+            className={cn(
+              "flex h-9 shrink-0 flex-wrap items-center gap-1 type-body tabular-nums",
+              strikeAutoHint && "text-muted-foreground line-through",
+            )}
+            aria-hidden
+          >
+            <span>{autoHint.total}</span>
+            {autoHint.breakdown ? (
+              <span className="text-muted-foreground">{autoHint.breakdown}</span>
+            ) : null}
+            <span className="text-muted-foreground">→</span>
+          </div>
+        ) : null}
 
-      {/* Outline actions — same family as ingredient row controls. */}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className={cn("h-9 shrink-0", getSegmentedFilterSurfaceClassName(isSkipped))}
-        onClick={handleSkip}
-        aria-pressed={isSkipped}
-      >
-        Skip
-      </Button>
+        {/* Error sits under the amount field only. */}
+        <div className="flex w-24 shrink-0 flex-col gap-1">
+          <Input
+            type="text"
+            inputMode="decimal"
+            disabled={isSkipped}
+            value={amountText}
+            aria-invalid={!!displayAmountError}
+            onFocus={() => {
+              isAmountFocusedRef.current = true;
+              savedAmountRef.current = adjustment.amount ?? null;
+            }}
+            onBlur={() => {
+              isAmountFocusedRef.current = false;
+              commitAmountText(amountText);
+            }}
+            onChange={(event) => {
+              if (isSkipped) return;
+              const raw = event.target.value;
+              setAmountText(raw);
+              if (raw.trim() === "") {
+                onChange({ kind: "MODIFY", amount: null });
+                return;
+              }
+              const numValue = parseFloat(raw);
+              if (Number.isNaN(numValue)) return;
+              setLocalAmountError(null);
+              onChange({ kind: "MODIFY", amount: numValue });
+            }}
+            className="h-9 w-full min-w-0 tabular-nums"
+            aria-label={`Amount for ${personLabel}`}
+            aria-describedby={
+              displayAmountError ? `amount-error-${adjustment.familyMemberId}` : undefined
+            }
+          />
+          {displayAmountError ? (
+            <p
+              id={`amount-error-${adjustment.familyMemberId}`}
+              className="text-destructive text-sm"
+            >
+              {displayAmountError}
+            </p>
+          ) : null}
+        </div>
 
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        className="size-9 shrink-0"
-        aria-label={`Remove adjustment for ${personLabel}`}
-        onClick={onRemove}
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+        <Select
+          value={unitId}
+          disabled={isSkipped}
+          onValueChange={(nextUnitId) => {
+            if (isSkipped) return;
+            onChange({ unitId: nextUnitId || null });
+          }}
+        >
+          <SelectTrigger className="h-9 w-28 shrink-0">
+            <SelectValue placeholder="Unit" />
+          </SelectTrigger>
+          <SelectContent>
+            {units.map((uc) => (
+              <SelectItem key={uc.unitId} value={uc.unitId}>
+                {getUnitDisplayName({
+                  amount: resolvedAmountForDisplay,
+                  unitName: uc.unit.name,
+                  unitNamePlural: uc.unit.namePlural ?? null,
+                })}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Skip + delete — wrap together first when the select needs room. */}
+      <div className="flex shrink-0 items-center gap-item">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className={cn("h-9 shrink-0", getSegmentedFilterSurfaceClassName(isSkipped))}
+          onClick={handleSkip}
+          aria-pressed={isSkipped}
+        >
+          Skip
+        </Button>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="size-9 shrink-0"
+          aria-label={`Remove adjustment for ${personLabel}`}
+          onClick={onRemove}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 }
