@@ -7,6 +7,7 @@ import type { CreateRecipeFormValues } from "@/lib/validations/recipe";
 import { PORTION_SIZE_PRESETS } from "@/lib/validations/recipe";
 import {
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -126,7 +127,8 @@ export function IngredientPortionsHeader({
                     min={1}
                     step={1}
                     aria-label="Number of portions"
-                    className="h-8 w-14 text-center tabular-nums"
+                    // Hide the native number spinner (WebKit + Firefox) — the −/+ buttons replace it.
+                    className="h-8 w-14 text-center tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     value={(field.value as number | undefined) ?? ""}
                     onChange={(event) => {
                       // Keep cleared values as null so RHF validation can re-trigger.
@@ -147,7 +149,9 @@ export function IngredientPortionsHeader({
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
-              <span>portions</span>
+              <span>
+                <span className="font-bold">default</span> portions
+              </span>
             </div>
             <FormMessage />
           </FormItem>
@@ -162,11 +166,16 @@ export function IngredientPortionsHeader({
           <FormItem>
             <FormLabel
               className="text-muted-foreground"
-              tooltip="How much each person eats from this recipe. Affects per-person amounts and nutrition — not the batch ingredient totals."
-              tooltipAriaLabel="Show portion size guidance"
+              tooltip="Relative to 1 default portion. Example: ×2 = twice that amount for this person."
+              tooltipAriaLabel="Show portion adjustment guidance"
             >
-              Portion size per person
+              Scale default portion
             </FormLabel>
+            {/* Description for tablet/mobile only — desktop uses the label tooltip. */}
+            <FormDescription className="lg:hidden">
+              Relative to 1 default portion. Example: ×2 = twice that amount for
+              this person.
+            </FormDescription>
             <div className="flex min-w-0 flex-wrap gap-2">
               {familyMembers.map((member, index) => {
                 const currentPortions = normalizeMemberPortionRows(field.value);
@@ -189,13 +198,14 @@ export function IngredientPortionsHeader({
                       <Button
                         type="button"
                         variant="outline"
-                        size="sm"
+                        size="default"
                         aria-label={`${label} portion size`}
-                        className="max-w-full gap-1.5"
+                        // Match Select selected-value color (outline default is secondary-foreground).
+                        className="max-w-full gap-1.5 text-foreground"
                       >
                         <span className="truncate">
-                          {label}{" "}
-                          <span className="tabular-nums text-muted-foreground">
+                          {label}
+                          <span className="ml-1.5 tabular-nums text-muted-foreground">
                             {formatMultiplierDisplay(displayMultiplier)}
                           </span>
                         </span>

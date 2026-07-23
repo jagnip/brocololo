@@ -119,7 +119,7 @@ export function IngredientMemberAdjustmentsSummary({
     // Soft inset panel — same surface as IngredientNotePanel (secondary badge card).
     <div className="rounded-md bg-secondary p-nest space-y-2">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Adjustments per portion
+        Personal substitutions
       </p>
 
       {showPortionSizes ? (
