@@ -92,7 +92,8 @@ function formatAutoAmountHint(input: {
     amount: autoTotal,
     unitName: input.unitName,
   });
-  const total = `${formatIngredientAmount(autoTotal)}${unitLabel}`;
+  // Space between amount and unit so labels read "1 piece", not "1piece".
+  const total = `${formatIngredientAmount(autoTotal)} ${unitLabel}`;
 
   const multiplier = getMemberPortionMultiplier(
     input.familyMemberId,
@@ -108,7 +109,7 @@ function formatAutoAmountHint(input: {
     amount: basePerPerson,
     unitName: input.unitName,
   });
-  const breakdown = `(${formatIngredientAmount(basePerPerson)}${baseUnitLabel} ${multiplierLabel})`;
+  const breakdown = `(${formatIngredientAmount(basePerPerson)} ${baseUnitLabel} ${multiplierLabel})`;
   return { total, breakdown };
 }
 
