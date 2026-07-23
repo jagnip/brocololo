@@ -247,6 +247,33 @@ describe("createRecipeSchema", () => {
 
     expect(result.success).toBe(true);
   });
+
+  it("rejects MODIFY member adjustments with empty amount", () => {
+    const result = createRecipeSchema.safeParse({
+      ...baseRecipeInput,
+      ingredients: [
+        {
+          ...baseRecipeInput.ingredients[0],
+          memberAdjustments: [
+            {
+              familyMemberId: "fm-1",
+              kind: "MODIFY",
+              ingredientId: "ing-1",
+              amount: null,
+              unitId: "unit-1",
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some((issue) => issue.message === "It can't be empty")).toBe(
+        true,
+      );
+    }
+  });
 });
 
 describe("updateRecipeSchema", () => {

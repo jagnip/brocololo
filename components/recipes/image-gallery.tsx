@@ -62,7 +62,14 @@ export function ImageGallery({
       {/* Additional images grid */}
       {hasThumbnails ? (
         <div className={cn(fillHeight && "shrink-0")}>
-          <div className="grid grid-cols-3 gap-item md:grid-cols-4">
+          <div
+            className={cn(
+              "grid grid-cols-3 gap-item md:grid-cols-4",
+              // Large screens: keep secondary images at a thumbnail scale instead of
+              // letting them grow with the full photo column width.
+              "lg:max-w-[22rem]",
+            )}
+          >
             {otherImages.map((image, index) => (
               <div
                 key={index}

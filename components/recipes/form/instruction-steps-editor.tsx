@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { SegmentedFilterButton } from "@/components/ui/segmented-filter-button";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2 } from "lucide-react";
 
@@ -75,17 +76,17 @@ export function InstructionStepsEditor({
               );
 
               return (
-                <Button
+                <SegmentedFilterButton
                   key={option.tempIngredientKey}
                   type="button"
                   size="default"
-                  variant={selected ? "default" : "outline"}
+                  selected={selected}
                   onClick={() =>
                     toggleIngredientLink(index, option.tempIngredientKey)
                   }
                 >
                   {option.label}
-                </Button>
+                </SegmentedFilterButton>
               );
             })}
           </div>

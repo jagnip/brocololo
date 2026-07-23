@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useFormContext, useFormState } from "react-hook-form";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { GripVertical, Pencil, Trash2, Users, NotebookPen } from "lucide-react";
@@ -9,6 +10,7 @@ import {
   RecipeIngredientGroupInputType,
   RecipeIngredientInputType,
 } from "@/lib/validations/recipe";
+import type { CreateRecipeFormValues } from "@/lib/validations/recipe";
 import {
   Select,
   SelectItem,
@@ -17,9 +19,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  SearchableSelect,
-  SearchableSelectOption,
+  type SearchableSelectOption,
 } from "@/components/ui/searchable-select";
+import { SearchableSelectWithAction } from "@/components/ui/searchable-select-with-action";
 import {
   buildIngredientSearchSourceMap,
   ingredientsToSearchableSelectOptions,
@@ -27,19 +29,18 @@ import {
   renderIngredientSearchTriggerLabel,
 } from "@/components/ingredients/ingredient-searchable-select-labels";
 import { IngredientIcon } from "@/components/ingredient-icon";
-import { getUnitDisplayName } from "@/lib/recipes/helpers";
+import { getUnitDisplayName, formatIngredientAmount } from "@/lib/recipes/helpers";
 import {
   getDefaultUnitIdForIngredient as resolveDefaultUnitIdForIngredient,
   getFallbackUnitIdFromConversions,
 } from "@/lib/ingredients/default-unit";
-import { Subheader } from "@/components/recipes/recipe-page/subheader";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { IngredientMemberAdjustmentsEditor } from "@/components/recipes/ingredient-member-adjustments-editor";
 import { IngredientNotePanel } from "@/components/recipes/ingredient-note-panel";
 import { IngredientRowActionButton } from "@/components/recipes/ingredient-row-action-button";
 import {
+  getDefaultPerPersonAmount,
   getMemberAdjustmentCount,
   hasIngredientNote,
 } from "@/lib/recipes/ingredient-adjustments";
@@ -64,40 +65,55 @@ type IngredientSelectorProps = {
 };
 
 // Keep row layout tokens centralized so primary/secondary line UX stays consistent.
+//
+// LAYOUT MODEL — everything keys off the CARD width via the @container, never the
+// viewport. Mixing viewport (sm:/xl:) with container queries is what let the amount
+// hint + buttons overflow the card. Three states, driven purely by container width:
+//   • narrow  (< @lg): 3 rows — select / amount+unit / buttons (buttons alone -> LEFT)
+//   • medium  (@lg..@3xl): 2 rows — select / [amount+unit ... buttons] (shared -> RIGHT)
+//   • wide    (>= @3xl): 1 row — select+edit (fixed width) + amount + unit + hint
+//     grouped left, gap before buttons (ml-auto inside the flex-1 amount cluster).
 export const INGREDIENT_ROW_LAYOUT_CLASSES = {
-  // min-w-0: grid/flex parents default to min-width:auto; without this, nested inputs can widen past the viewport (e.g. iPhone SE).
-  rowContainer: "min-w-0 max-w-full space-y-2 rounded-md border p-2",
-  // Phone: col (row1 drag+ingredient; row2–3 qty). Tablet md–lg: row2 = amount|unit|additional one line. Desktop lg+: flattened primary row + additional line.
-  primaryLine:
-    "flex w-full min-w-0 max-w-full flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-center lg:gap-2",
-  primaryLineMobileIngredientRow:
-    "flex w-full min-w-0 items-start gap-2 lg:contents",
-  // Phone: col [amount+unit sub-row][additional]. Tablet: single row (inner amountUnitRow uses md:contents). lg:contents for desktop order.
-  primaryLineMobileQtyRow:
-    "flex w-full min-w-0 flex-col gap-2 md:flex-row md:flex-nowrap md:items-center md:gap-2 lg:contents",
-  // Phone: amount|unit only. md+: contents so amount, unit, additional sit in one row (tablet) or flatten to primaryLine (lg).
-  amountUnitRow:
-    "flex w-full min-w-0 flex-row items-stretch gap-2 md:contents",
-  unitSelectWrapper:
-    "flex min-h-0 min-w-0 w-full flex-1 md:w-32 md:flex-none md:shrink-0 lg:order-3",
-  ingredientWithActionsRow:
-    "flex w-full min-w-0 flex-1 items-center gap-2 lg:order-4 lg:min-w-0 lg:flex-1",
-  ingredientRowActions: "flex shrink-0 items-center gap-2",
-  // Nutrition-only row under additional info / actions.
-  nutritionTargetRow:
-    "flex min-w-0 max-w-full flex-wrap items-center gap-x-3 gap-y-2 lg:flex-nowrap",
+  // min-w-0: flex/grid parents default to min-width:auto; without it nested inputs can
+  // widen past the card (e.g. iPhone SE). Named container drives every row breakpoint below.
+  rowContainer:
+    "@container/ingredient-form-row min-w-0 max-w-full space-y-2 rounded-md border p-2",
+  // Wrapper kept for spacing/structure; it now holds a single fields line.
+  primaryLine: "flex w-full min-w-0 max-w-full flex-col gap-2",
+  // Narrow/medium: stack the select above the amount cluster.
+  // Wide (@3xl): one line — select+edit flows into amount; gap stays before buttons.
+  fieldsLine:
+    "flex w-full min-w-0 flex-col gap-2 @3xl/ingredient-form-row:flex-row @3xl/ingredient-form-row:flex-wrap @3xl/ingredient-form-row:items-center",
+  // Select + drag handle. Wide: shrink-0 so amount can't crush/overlap the fused edit button.
+  ingredientRow:
+    "flex min-w-0 w-full items-center gap-2 @3xl/ingredient-form-row:w-auto @3xl/ingredient-form-row:flex-none @3xl/ingredient-form-row:shrink-0",
+  // Wide: definite width for the fused select+edit (30rem = 1.5× the old max-w-80).
+  // w-auto + w-full on SearchableSelectWithAction was circular and collapsed past the edit button.
+  ingredientContainer:
+    "min-w-0 flex-1 @3xl/ingredient-form-row:w-[30rem] @3xl/ingredient-form-row:max-w-[30rem] @3xl/ingredient-form-row:flex-none",
+  // amount+unit(+hint) and the buttons together.
+  //   < @lg: column  -> buttons drop UNDER amount as their own (third) row.
+  //   @lg+ : row     -> buttons share the amount line (ml-auto -> gap before buttons).
+  //   @3xl : flex-1 + min-width:auto -> keeps its content width so flex-wrap drops the
+  //          whole cluster to the next line INSTEAD of letting buttons overlap the hint.
+  amountAndActionsRow:
+    "flex w-full min-w-0 flex-col gap-2 @lg/ingredient-form-row:flex-row @lg/ingredient-form-row:items-center @3xl/ingredient-form-row:flex-1 @3xl/ingredient-form-row:[min-width:auto]",
+  // amount + unit + per-portion hint.
+  // @3xl: min-width:auto so its real width counts toward the cluster's wrap decision
+  // (base min-w-0 would zero it out and let the hint slide under the buttons).
+  amountUnitGroup:
+    "flex w-full min-w-0 items-center gap-2 @lg/ingredient-form-row:w-auto @3xl/ingredient-form-row:[min-width:auto]",
+  // Buttons — single copy. Alone on their own row (< @lg) they stay LEFT.
+  // ml-auto only applies @lg+ (row mode) so they hug the RIGHT when sharing the amount line.
+  buttonsRow:
+    "flex shrink-0 items-center gap-2 @lg/ingredient-form-row:ml-auto",
   // Bigger handle improves drag start reliability on mouse/touch.
-  dragHandle: "h-8 w-8 shrink-0 touch-none cursor-grab active:cursor-grabbing",
-  // Phone: flex-1 beside unit. md+: fixed narrow field (tablet one-row + desktop) — flex-none stops amount from growing in the lg row.
+  dragHandle: "size-9 shrink-0 touch-none cursor-grab active:cursor-grabbing",
+  // < @lg: share the amount/unit row (flex-1). @lg+: fixed compact widths.
   amountInput:
-    "min-w-0 w-full max-w-full flex-1 basis-0 md:w-24 md:flex-none md:shrink-0 md:basis-auto lg:order-2",
+    "min-w-0 flex-1 tabular-nums @lg/ingredient-form-row:w-24 @lg/ingredient-form-row:flex-none",
   unitTrigger:
-    "min-w-0 w-full max-w-full md:w-32 md:shrink-0 lg:shrink-0",
-  ingredientContainer: "min-w-0 w-full flex-1",
-  // Phone: own row, full width. Tablet: same row as amount+unit (flex-1). Desktop: full-width line under primary row (lg:flex-none overrides md:flex-1).
-  additionalInfoInput:
-    "min-w-0 w-full max-w-full md:w-auto md:min-w-0 md:flex-1 md:basis-0 lg:order-5 lg:basis-full lg:w-full lg:flex-none",
-  utilityButton: "shrink-0",
+    "min-w-0 flex-1 @lg/ingredient-form-row:w-28 @lg/ingredient-form-row:flex-none",
   secondaryRemoveButton: "shrink-0",
 } as const;
 
@@ -340,6 +356,8 @@ export function IngredientSelector({
   onCreateIngredientRequested,
   onEditIngredientRequested,
 }: IngredientSelectorProps) {
+  const { control } = useFormContext<CreateRecipeFormValues>();
+  const { errors } = useFormState({ control });
   const resolvedHouseholdMembers = householdFamilyMembers ?? familyMembers;
   const [expandedPanelsByRowKey, setExpandedPanelsByRowKey] = React.useState<
     Record<string, { people: boolean; note: boolean }>
@@ -735,6 +753,18 @@ export function IngredientSelector({
     const baseUnit = units.find((uc) => uc.unitId === item.unitId)?.unit;
     const adjustmentCount = getMemberAdjustmentCount(item.memberAdjustments);
     const hasNote = hasIngredientNote(item.additionalInfo);
+    // Batch ÷ servings — same math as adjustment auto defaults.
+    const perPortionAmount = getDefaultPerPersonAmount(item.amount, servings);
+    const perPortionUnitLabel =
+      perPortionAmount != null && baseUnit
+        ? getUnitDisplayName({
+            amount: perPortionAmount,
+            unitName: baseUnit.name,
+            unitNamePlural: baseUnit.namePlural ?? null,
+          })
+        : "";
+    const showPerPortionHelper =
+      perPortionAmount != null && Boolean(perPortionUnitLabel);
 
     const togglePanel = (panel: "people" | "note") => {
       setExpandedPanelsByRowKey((previous) => ({
@@ -746,6 +776,39 @@ export function IngredientSelector({
       }));
     };
 
+    // Row action buttons (people / note / remove) — single render, positioned by CSS.
+    const renderActionButtons = () => (
+      <>
+        <IngredientRowActionButton
+          active={panelState.people}
+          badgeCount={adjustmentCount}
+          aria-label="Adjustments per portion"
+          aria-expanded={panelState.people}
+          onClick={() => togglePanel("people")}
+        >
+          <Users className="h-4 w-4" />
+        </IngredientRowActionButton>
+        <IngredientRowActionButton
+          active={panelState.note}
+          aria-label="Ingredient note"
+          aria-expanded={panelState.note}
+          onClick={() => togglePanel("note")}
+        >
+          <NotebookPen className="h-4 w-4" />
+        </IngredientRowActionButton>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className={INGREDIENT_ROW_LAYOUT_CLASSES.secondaryRemoveButton}
+          aria-label="Remove ingredient"
+          onClick={() => removeIngredient(item.tempIngredientKey)}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </>
+    );
+
     return (
       <div
         key={item.tempIngredientKey || rowIndex}
@@ -753,41 +816,33 @@ export function IngredientSelector({
           draggingIngredientKey === item.tempIngredientKey ? "opacity-60" : ""
         }`}
       >
-        {/* Primary: phone = 3 bands; tablet md–lg = row1 drag+ingredient, row2 amount|unit|additional; lg+ = flat row + additional line. */}
+        {/* Medium: buttons with amount (right). Large: fields row, then buttons row (left). */}
         <div className={INGREDIENT_ROW_LAYOUT_CLASSES.primaryLine}>
-          <div
-            className={INGREDIENT_ROW_LAYOUT_CLASSES.primaryLineMobileIngredientRow}
-          >
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className={cn(
-                INGREDIENT_ROW_LAYOUT_CLASSES.dragHandle,
-                "lg:order-1",
-              )}
-              aria-label="Drag ingredient"
-              draggable
-              onDragStart={(event) => {
-                event.stopPropagation();
-                setDraggingIngredientKey(item.tempIngredientKey);
-              }}
-              onDragEnd={() => {
-                setActiveIngredientDropSlot(null);
-                setDraggingIngredientKey(null);
-                stopAutoScroll();
-              }}
-            >
-              <GripVertical className="h-4 w-4" />
-            </Button>
-
-            <div
-              className={INGREDIENT_ROW_LAYOUT_CLASSES.ingredientWithActionsRow}
-            >
-              <div
-                className={INGREDIENT_ROW_LAYOUT_CLASSES.ingredientContainer}
+          <div className={INGREDIENT_ROW_LAYOUT_CLASSES.fieldsLine}>
+            <div className={INGREDIENT_ROW_LAYOUT_CLASSES.ingredientRow}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={INGREDIENT_ROW_LAYOUT_CLASSES.dragHandle}
+                aria-label="Drag ingredient"
+                draggable
+                onDragStart={(event) => {
+                  event.stopPropagation();
+                  setDraggingIngredientKey(item.tempIngredientKey);
+                }}
+                onDragEnd={() => {
+                  setActiveIngredientDropSlot(null);
+                  setDraggingIngredientKey(null);
+                  stopAutoScroll();
+                }}
               >
-                <SearchableSelect
+                <GripVertical className="h-4 w-4" />
+              </Button>
+
+              <div className={INGREDIENT_ROW_LAYOUT_CLASSES.ingredientContainer}>
+                {/* Select + edit fused into one control; trash stays with the other row actions. */}
+                <SearchableSelectWithAction
                   className="min-w-0 max-w-full"
                   options={ingredientOptions}
                   renderLabel={renderRecipeFormIngredientLabel}
@@ -829,68 +884,37 @@ export function IngredientSelector({
                       size={16}
                     />
                   )}
-                />
-              </div>
-              <div
-                className={INGREDIENT_ROW_LAYOUT_CLASSES.ingredientRowActions}
-              >
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  disabled={!item.ingredientId}
-                  className={INGREDIENT_ROW_LAYOUT_CLASSES.utilityButton}
-                  aria-label="Edit ingredient"
-                  onClick={() => {
-                    if (!item.ingredientId) {
-                      return;
-                    }
+                  actionAriaLabel="Edit ingredient"
+                  actionIcon={<Pencil className="h-4 w-4" />}
+                  actionDisabled={!item.ingredientId}
+                  onActionClick={() => {
+                    if (!item.ingredientId) return;
                     onEditIngredientRequested?.(item.ingredientId);
                   }}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className={
-                    INGREDIENT_ROW_LAYOUT_CLASSES.secondaryRemoveButton
-                  }
-                  aria-label="Remove ingredient"
-                  onClick={() => removeIngredient(item.tempIngredientKey)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                />
               </div>
             </div>
-          </div>
 
-          <div
-            className={INGREDIENT_ROW_LAYOUT_CLASSES.primaryLineMobileQtyRow}
-          >
-            <div
-              className={INGREDIENT_ROW_LAYOUT_CLASSES.amountUnitRow}
-            >
-              <Input
-                type="number"
-                placeholder="Amount"
-                value={item.amount == null ? "" : item.amount.toString()}
-                onChange={(e) => {
-                  const numValue =
-                    e.target.value === "" ? null : parseFloat(e.target.value);
-                  updateIngredient(item.tempIngredientKey, { amount: numValue });
-                }}
-                className={INGREDIENT_ROW_LAYOUT_CLASSES.amountInput}
-                min={0}
-                // Allow arbitrary decimal precision (e.g. 0.75) in ingredient amounts.
-                step="any"
-                disabled={isAmountDisabled}
-              />
+            <div className={INGREDIENT_ROW_LAYOUT_CLASSES.amountAndActionsRow}>
+              <div className={INGREDIENT_ROW_LAYOUT_CLASSES.amountUnitGroup}>
+                <Input
+                  type="number"
+                  placeholder="Amount"
+                  value={item.amount == null ? "" : item.amount.toString()}
+                  onChange={(e) => {
+                    const numValue =
+                      e.target.value === "" ? null : parseFloat(e.target.value);
+                    updateIngredient(item.tempIngredientKey, {
+                      amount: numValue,
+                    });
+                  }}
+                  className={INGREDIENT_ROW_LAYOUT_CLASSES.amountInput}
+                  min={0}
+                  // Allow arbitrary decimal precision (e.g. 0.75) in ingredient amounts.
+                  step="any"
+                  disabled={isAmountDisabled}
+                />
 
-              <div
-                className={INGREDIENT_ROW_LAYOUT_CLASSES.unitSelectWrapper}
-              >
                 <Select
                   key={`${item.ingredientId}-${rowIndex}`}
                   // Keep Select controlled with empty-string sentinel to avoid stale Radix trigger text.
@@ -925,32 +949,42 @@ export function IngredientSelector({
                     ))}
                   </SelectContent>
                 </Select>
+
+                {/* Always reserve width so filling amount/unit doesn’t shift the row. */}
+                <span
+                  className="flex h-9 shrink-0 items-center gap-1 whitespace-nowrap type-body tabular-nums text-muted-foreground"
+                  aria-hidden={!showPerPortionHelper}
+                  aria-label={
+                    showPerPortionHelper
+                      ? // Space between amount and unit (e.g. "1 piece", not "1piece").
+                        `${formatIngredientAmount(perPortionAmount!)} ${perPortionUnitLabel} per portion`
+                      : undefined
+                  }
+                >
+                  {showPerPortionHelper ? (
+                    <>
+                      <span aria-hidden>=</span>
+                      <span className="font-medium text-foreground">
+                        {formatIngredientAmount(perPortionAmount!)}{" "}
+                        {perPortionUnitLabel}
+                      </span>
+                      <span>/ portion</span>
+                    </>
+                  ) : (
+                    <span className="invisible select-none">
+                      = 00 g / portion
+                    </span>
+                  )}
+                </span>
+              </div>
+
+              {/* Buttons: own row under amount when narrow (LEFT); same line as
+                  amount and pushed RIGHT (ml-auto) once there's room (@lg+). */}
+              <div className={INGREDIENT_ROW_LAYOUT_CLASSES.buttonsRow}>
+                {renderActionButtons()}
               </div>
             </div>
-
-            {/* Removed always-visible additional info — now behind Note toggle below. */}
           </div>
-        </div>
-
-        {/* Row actions: People + Note toggles */}
-        <div className="flex flex-wrap items-center gap-2">
-          <IngredientRowActionButton
-            active={panelState.people}
-            badgeCount={adjustmentCount}
-            aria-label="Personal adjustments"
-            aria-expanded={panelState.people}
-            onClick={() => togglePanel("people")}
-          >
-            <Users className="h-4 w-4" />
-          </IngredientRowActionButton>
-          <IngredientRowActionButton
-            active={panelState.note}
-            aria-label="Ingredient note"
-            aria-expanded={panelState.note}
-            onClick={() => togglePanel("note")}
-          >
-            <NotebookPen className="h-4 w-4" />
-          </IngredientRowActionButton>
         </div>
 
         {panelState.people ? (
@@ -969,6 +1003,19 @@ export function IngredientSelector({
             baseAmount={item.amount ?? null}
             baseUnitId={item.unitId ?? null}
             ingredients={ingredients}
+            getAmountError={(familyMemberId) => {
+              if (rowIndex < 0) return undefined;
+              const adjustmentIndex = (item.memberAdjustments ?? []).findIndex(
+                (row) => row.familyMemberId === familyMemberId,
+              );
+              if (adjustmentIndex < 0) return undefined;
+              const fieldError =
+                errors.ingredients?.[rowIndex]?.memberAdjustments?.[
+                  adjustmentIndex
+                ]?.amount;
+              return fieldError?.message;
+            }}
+            onEditIngredientRequested={onEditIngredientRequested}
           />
         ) : null}
 
@@ -1187,10 +1234,7 @@ export function IngredientSelector({
 
   return (
     <div className="min-w-0 w-full max-w-full">
-      <div className="mb-3">
-        <Subheader>Ingredients</Subheader>
-      </div>
-
+      {/* Subheader lives in the parent form section so portions header can sit between title and lanes. */}
       <div className="flex min-w-0 flex-col gap-2">
         {visibleLanes.map((lane, index) => (
           <div

@@ -31,7 +31,8 @@ export function IngredientRowActionButton({
     <Button
       type="button"
       variant="outline"
-      size="icon-sm"
+      // Match amount/unit control height (h-9), not icon-sm (h-8).
+      size="icon"
       className={cn(
         "relative",
         getSegmentedFilterSurfaceClassName(active),
@@ -44,7 +45,8 @@ export function IngredientRowActionButton({
       {showCountBadge ? (
         <span
           aria-hidden
-          className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-0.5 text-[10px] font-semibold leading-none text-destructive-foreground"
+          // Primary when adjustments exist — matches brand accent, not error/destructive.
+          className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-0.5 text-[10px] font-semibold leading-none text-primary-foreground"
         >
           {badgeCount}
         </span>

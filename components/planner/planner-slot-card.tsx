@@ -25,10 +25,11 @@ import { ROUTES } from "@/lib/constants";
 import { SlotAudienceSelect } from "./slot-audience-select";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { Checkbox } from "@/components/ui/checkbox";
+import { getSegmentedFilterSurfaceClassName } from "@/components/ui/segmented-filter-button";
 
-/** Warm off-white on primary — matches --rose-50 accent surface. */
+/** Soft selected icon color on accent shell (not white-on-primary). */
 const MEAL_DONE_ICON_CLASS =
-  "text-[var(--rose-50)] hover:text-[var(--rose-50)] [&_svg]:text-[var(--rose-50)]";
+  "text-accent-foreground hover:text-accent-foreground [&_svg]:text-accent-foreground";
 
 function SlotIngredientSummary({
   visibleLines,
@@ -172,9 +173,12 @@ export function PlannerSlotCard({
           {onToggleUsed && (
             <Button
               type="button"
-              variant={slot.used ? "default" : "outline"}
+              variant="outline"
               size="icon"
-              className={slot.used ? MEAL_DONE_ICON_CLASS : undefined}
+              className={cn(
+                getSegmentedFilterSurfaceClassName(slot.used),
+                slot.used && MEAL_DONE_ICON_CLASS,
+              )}
               onClick={onToggleUsed}
             >
               <Check
@@ -245,8 +249,7 @@ export function PlannerSlotCard({
           className={cn(
             "size-6 rounded-[6px] bg-card",
             "hover:bg-card",
-            "data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
-            "data-[state=checked]:hover:bg-primary/90",
+            // Keep default soft checked tokens (accent) — no full-primary override.
             "[&_[data-slot=checkbox-indicator]_svg]:size-4",
             elevated
               ? "border-foreground/30 shadow-md data-[state=checked]:shadow-md"

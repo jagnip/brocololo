@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type AdjustmentMemberChipProps = {
@@ -14,7 +15,11 @@ type AdjustmentMemberChipProps = {
   className?: string;
 };
 
-/** Person name with optional portion / adjustment badges for personal adjustments UI. */
+/**
+ * Person name with optional portion / adjustment badges.
+ * Interactive: outline Button (same family as Cooking for / Modify–Skip).
+ * Read-only: plain text + badges for summary views.
+ */
 export function AdjustmentMemberChip({
   label,
   portionBadgeLabel,
@@ -24,9 +29,9 @@ export function AdjustmentMemberChip({
 }: AdjustmentMemberChipProps) {
   const isInteractive = onClick != null;
 
-  const content = (
+  // Shared trailing badges for portion / adjustment type.
+  const trailingBadges = (
     <>
-      <span>{label}</span>
       {portionBadgeLabel ? (
         <Badge variant="outline" className="px-1.5 py-0 text-[10px] font-medium">
           {portionBadgeLabel}
@@ -42,35 +47,24 @@ export function AdjustmentMemberChip({
 
   if (isInteractive) {
     return (
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="sm"
         onClick={onClick}
-        className={cn(
-          "inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 type-caption text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          className,
-        )}
         aria-label={`Add adjustment for ${label}`}
+        className={cn(className)}
       >
-        {content}
-      </button>
+        {label}
+        {trailingBadges}
+      </Button>
     );
   }
 
   return (
-    <span
-      className={cn("inline-flex items-center gap-1", className)}
-    >
+    <span className={cn("inline-flex items-center gap-1", className)}>
       <span className="font-medium text-foreground">{label}</span>
-      {portionBadgeLabel ? (
-        <Badge variant="outline" className="px-1.5 py-0 text-[10px] font-medium">
-          {portionBadgeLabel}
-        </Badge>
-      ) : null}
-      {adjustmentBadgeLabel ? (
-        <Badge variant="secondary" className="px-1.5 py-0 text-[10px] font-medium">
-          {adjustmentBadgeLabel}
-        </Badge>
-      ) : null}
+      {trailingBadges}
     </span>
   );
 }

@@ -58,7 +58,7 @@ import { ROUTES } from "@/lib/constants";
 import { Subheader } from "../recipe-page/subheader";
 import MultipleSelector from "@/components/ui/multiselect";
 import { RecipeNutritionPreviewSection } from "./recipe-nutrition-preview-section";
-import { RecipePortionsFormSection } from "./recipe-portions-form-section";
+import { IngredientPortionsHeader } from "./ingredient-portions-header";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import type { MemberPortionInput } from "@/lib/recipes/ingredient-adjustments";
 
@@ -714,15 +714,16 @@ export default function RecipeForm({
           </div>
         </section>
 
-        <RecipePortionsFormSection
-          form={form}
-          recipe={recipe}
-          familyMembers={familyMembers}
-          onNumericServingsChange={handleNumericFieldChange}
-        />
-
+        {/* Portions live inside Ingredients so batch size + per-person sizes sit with the amounts they explain. */}
         <section>
+          <div className="mb-3">
+            <Subheader>Ingredients</Subheader>
+          </div>
           <div className="section-container min-w-0">
+            <IngredientPortionsHeader
+              form={form}
+              familyMembers={familyMembers}
+            />
             <FormField
               control={form.control}
               name="ingredients"
