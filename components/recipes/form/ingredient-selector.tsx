@@ -73,7 +73,8 @@ type IngredientSelectorProps = {
 // hint + buttons overflow the card. Three states, driven purely by container width:
 //   • narrow  (< @lg): 3 rows — select / amount+unit / buttons (buttons alone -> LEFT)
 //   • medium  (@lg..@3xl): 2 rows — select / [amount+unit ... buttons] (shared -> RIGHT)
-//   • wide    (>= @3xl): 1 row — select ... amount+unit buttons (shared -> RIGHT)
+//   • wide    (>= @3xl): 1 row — select+edit (fixed width) + amount + unit + hint
+//     grouped left, gap before buttons (ml-auto inside the flex-1 amount cluster).
 export const INGREDIENT_ROW_LAYOUT_CLASSES = {
   // min-w-0: flex/grid parents default to min-width:auto; without it nested inputs can
   // widen past the card (e.g. iPhone SE). Named container drives every row breakpoint below.
@@ -82,23 +83,28 @@ export const INGREDIENT_ROW_LAYOUT_CLASSES = {
   // Wrapper kept for spacing/structure; it now holds a single fields line.
   primaryLine: "flex w-full min-w-0 max-w-full flex-col gap-2",
   // Narrow/medium: stack the select above the amount cluster.
-  // Wide (@3xl): select sits beside the amount cluster on one line.
+  // Wide (@3xl): one line — select+edit flows into amount; gap stays before buttons.
   fieldsLine:
     "flex w-full min-w-0 flex-col gap-2 @3xl/ingredient-form-row:flex-row @3xl/ingredient-form-row:flex-wrap @3xl/ingredient-form-row:items-center",
-  // Select + drag handle. On the wide one-line layout it grows to eat leftover space,
-  // which pushes the amount cluster (and buttons) to the right edge.
+  // Select + drag handle. Wide: shrink-0 so amount can't crush/overlap the fused edit button.
   ingredientRow:
-    "flex min-w-0 w-full items-center gap-2 @3xl/ingredient-form-row:w-auto @3xl/ingredient-form-row:min-w-56 @3xl/ingredient-form-row:flex-1",
-  ingredientContainer: "min-w-0 flex-1",
+    "flex min-w-0 w-full items-center gap-2 @3xl/ingredient-form-row:w-auto @3xl/ingredient-form-row:flex-none @3xl/ingredient-form-row:shrink-0",
+  // Wide: definite width for the fused select+edit (30rem = 1.5× the old max-w-80).
+  // w-auto + w-full on SearchableSelectWithAction was circular and collapsed past the edit button.
+  ingredientContainer:
+    "min-w-0 flex-1 @3xl/ingredient-form-row:w-[30rem] @3xl/ingredient-form-row:max-w-[30rem] @3xl/ingredient-form-row:flex-none",
   // amount+unit(+hint) and the buttons together.
   //   < @lg: column  -> buttons drop UNDER amount as their own (third) row.
-  //   @lg+ : row     -> buttons share the amount line.
-  //   @3xl : shrink to content so the select's flex-grow can push it to the right edge.
+  //   @lg+ : row     -> buttons share the amount line (ml-auto -> gap before buttons).
+  //   @3xl : flex-1 + min-width:auto -> keeps its content width so flex-wrap drops the
+  //          whole cluster to the next line INSTEAD of letting buttons overlap the hint.
   amountAndActionsRow:
-    "flex w-full min-w-0 flex-col gap-2 @lg/ingredient-form-row:flex-row @lg/ingredient-form-row:items-center @3xl/ingredient-form-row:w-auto @3xl/ingredient-form-row:flex-none",
+    "flex w-full min-w-0 flex-col gap-2 @lg/ingredient-form-row:flex-row @lg/ingredient-form-row:items-center @3xl/ingredient-form-row:flex-1 @3xl/ingredient-form-row:[min-width:auto]",
   // amount + unit + per-portion hint.
+  // @3xl: min-width:auto so its real width counts toward the cluster's wrap decision
+  // (base min-w-0 would zero it out and let the hint slide under the buttons).
   amountUnitGroup:
-    "flex w-full min-w-0 items-center gap-2 @lg/ingredient-form-row:w-auto",
+    "flex w-full min-w-0 items-center gap-2 @lg/ingredient-form-row:w-auto @3xl/ingredient-form-row:[min-width:auto]",
   // Buttons — single copy. Alone on their own row (< @lg) they stay LEFT.
   // ml-auto only applies @lg+ (row mode) so they hug the RIGHT when sharing the amount line.
   buttonsRow:
