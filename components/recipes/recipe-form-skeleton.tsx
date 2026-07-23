@@ -45,32 +45,23 @@ export function RecipeFormSkeleton() {
         </div>
       </section>
 
-      {/* Portions section: number input and segmented multipliers. */}
+      {/* Ingredients section: portions header (stepper + member pills) then rows. */}
       <section className="space-y-3">
-        <Skeleton className="h-6 w-20" />
-        <div className="section-container space-y-3">
-          <div className="grid grid-cols-1 gap-item md:grid-cols-3">
-            <Skeleton className="h-10 w-full" />
-            <div className="hidden md:block" aria-hidden />
-            <div className="hidden md:block" aria-hidden />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-36" />
-            <div className="flex flex-wrap gap-2">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <Skeleton key={index} className="h-9 w-12 rounded-md" />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Ingredient editor area with repeated row placeholders. */}
-      <section>
+        <Skeleton className="h-6 w-28" />
         <div className="section-container space-y-item">
-          <div className="flex items-center justify-between gap-item">
-            <Skeleton className="h-6 w-28" />
-            <Skeleton className="h-9 w-36" />
+          {/* Inline portions stepper placeholder. */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Skeleton className="h-4 w-48" />
+            <Skeleton className="size-8 rounded-md" />
+            <Skeleton className="h-8 w-14 rounded-md" />
+            <Skeleton className="size-8 rounded-md" />
+            <Skeleton className="h-4 w-16" />
+          </div>
+          {/* Per-person portion size pill placeholders. */}
+          <div className="flex flex-wrap gap-2">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <Skeleton key={index} className="h-8 w-28 rounded-md" />
+            ))}
           </div>
           {Array.from({ length: 3 }).map((_, index) => (
             <Skeleton key={index} className="h-16 w-full rounded-lg" />

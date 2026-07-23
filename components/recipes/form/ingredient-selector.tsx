@@ -34,8 +34,6 @@ import {
   getDefaultUnitIdForIngredient as resolveDefaultUnitIdForIngredient,
   getFallbackUnitIdFromConversions,
 } from "@/lib/ingredients/default-unit";
-import { Subheader } from "@/components/recipes/recipe-page/subheader";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { IngredientMemberAdjustmentsEditor } from "@/components/recipes/ingredient-member-adjustments-editor";
@@ -1236,10 +1234,7 @@ export function IngredientSelector({
 
   return (
     <div className="min-w-0 w-full max-w-full">
-      <div className="mb-3">
-        <Subheader>Ingredients</Subheader>
-      </div>
-
+      {/* Subheader lives in the parent form section so portions header can sit between title and lanes. */}
       <div className="flex min-w-0 flex-col gap-2">
         {visibleLanes.map((lane, index) => (
           <div

@@ -148,6 +148,14 @@ const recipeImageSchema = z.object({
 
 const PORTION_MULTIPLIER_VALUES = [0.5, 1, 1.5, 2] as const;
 
+/** Labeled portion-size presets for the ingredients header selectors. */
+export const PORTION_SIZE_PRESETS = [
+  { multiplier: 0.5, label: "Half" },
+  { multiplier: 1, label: "Default" },
+  { multiplier: 1.5, label: "Large" },
+  { multiplier: 2, label: "Double" },
+] as const;
+
 const recipeMemberPortionSchema = z.object({
   familyMemberId: z.string().min(1),
   multiplier: preprocessRequiredNumberInput(
