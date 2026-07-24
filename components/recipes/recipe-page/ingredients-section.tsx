@@ -4,15 +4,13 @@ import { RotateCcw } from "lucide-react";
 import type { IngredientType } from "@/types/ingredient";
 import { IngredientItem } from "@/components/recipes/ingredient-item";
 import { isScaleModified } from "@/lib/recipes/helpers";
-import { getSharedPortionShares } from "@/lib/recipes/shared-portion-shares";
 import { useRecipePageIngredientsSectionData } from "@/components/context/recipe-page-context";
 import { PortionSplitCard } from "@/components/recipes/recipe-page/portion-split-card";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
+import { getFamilyMemberLabel } from "@/components/planner/family-member-multi-select";
 import type { CookingAggregatedLine } from "@/lib/recipes/resolve-cooking-display-lines";
 import type { RecipeType } from "@/types/recipe";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
-
-const SHARED_INGREDIENTS_SCOPE_LABEL = "Portion sizes";
 
 function resolveUnitForAggregatedLine(
   line: CookingAggregatedLine,
@@ -155,7 +153,6 @@ export function IngredientsSection() {
     familyMembers,
     memberPortions,
     cookingFamilyMemberIds,
-    mealCount,
     effectiveRecipeIngredientById,
     hasActiveScaling,
     localScaleByIngredientId,
@@ -176,26 +173,27 @@ export function IngredientsSection() {
     return familyMembers.filter((member) => cookingIdSet.has(member.id));
   }, [cookingFamilyMemberIds, familyMembers]);
 
-  const portionSplitMembers = useMemo(() => {
-    // Reflect only the active cook session — same people as "Cooking for".
-    const shares = getSharedPortionShares(cookingFamilyMembers, memberPortions);
-    return shares.map((entry, index) => {
-      const member = cookingFamilyMembers.find(
-        (familyMember) => familyMember.id === entry.familyMemberId,
-      );
-      const label =
-        member?.name.trim() ||
-        (member?.isSelf ? "You" : `Family member ${index + 1}`);
-      return {
-        label,
-        share: entry.share,
-        multiplier: entry.multiplier,
-      };
-    });
-  }, [cookingFamilyMembers, memberPortions]);
-
-  // Always show when 2+ people are selected in Cooking for.
-  const showPortionSplitChart = cookingFamilyMembers.length > 1;
+  // Chart pool = Cooking selection; pie is always per-1-meal multipliers (no batch).
+  const portionSplitAudience = useMemo(() => {
+    const multiplierById = new Map(
+      memberPortions.map((portion) => [
+        portion.familyMemberId,
+        portion.multiplier,
+      ]),
+    );
+    const householdIndexById = new Map(
+      familyMembers.map((member, index) => [member.id, index]),
+    );
+    return cookingFamilyMembers.map((member) => ({
+      id: member.id,
+      label: getFamilyMemberLabel(
+        member,
+        householdIndexById.get(member.id) ?? 0,
+      ),
+      sortOrder: member.sortOrder,
+      multiplier: multiplierById.get(member.id) ?? 1,
+    }));
+  }, [cookingFamilyMembers, familyMembers, memberPortions]);
 
   const sharedRenderParams = useMemo(
     () => ({
@@ -233,33 +231,23 @@ export function IngredientsSection() {
   return (
     <div>
       <div className="mb-item flex items-center justify-between">
-        <div className="flex min-w-0 flex-col gap-tight">
-          <div className="flex items-center gap-item">
-            <Subheader>Ingredients</Subheader>
-            {hasActiveScaling && (
-              <Button
-                // Match other outlined icon buttons (note, scale, supermarket).
-                variant="outline"
-                size="icon-sm"
-                onClick={onReset}
-                aria-label="Reset ingredient amounts"
-              >
-                <RotateCcw />
-              </Button>
-            )}
-          </div>
-          {mealCount > 1 ? (
-            <p className="type-caption text-muted-foreground">
-              Totals for {mealCount} meals
-            </p>
-          ) : null}
+        <div className="flex items-center gap-item">
+          <Subheader>Ingredients</Subheader>
+          {hasActiveScaling && (
+            <Button
+              // Match other outlined icon buttons (note, scale, supermarket).
+              variant="outline"
+              size="icon-sm"
+              onClick={onReset}
+              aria-label="Reset ingredient amounts"
+            >
+              <RotateCcw />
+            </Button>
+          )}
         </div>
       </div>
-      {showPortionSplitChart ? (
-        <PortionSplitCard
-          members={portionSplitMembers}
-          scopeLabel={SHARED_INGREDIENTS_SCOPE_LABEL}
-        />
+      {portionSplitAudience.length > 1 ? (
+        <PortionSplitCard members={portionSplitAudience} />
       ) : null}
       {ungroupedIngredients.length > 0 && hasUngroupedLines ? (
         <div className="mb-item">

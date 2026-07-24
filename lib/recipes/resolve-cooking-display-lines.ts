@@ -4,6 +4,7 @@ import {
   type MemberPortionInput,
 } from "@/lib/recipes/ingredient-adjustments";
 import type { MemberAdjustmentRow } from "@/lib/recipes/resolve-ingredient-lines";
+import { derivePersonMealCounts } from "@/lib/recipes/cook-session-portions";
 
 /** Per-person share of an aggregated cook-session ingredient line. */
 export type CookingAggregatedMemberAmount = {
@@ -63,9 +64,33 @@ function addMemberAmount(
   line.memberAmounts.push({ familyMemberId, amount });
 }
 
+function resolvePersonMealCounts(params: {
+  cookingFamilyMemberIds: string[];
+  mealCount: number;
+  personMealCounts?: Map<string, number>;
+  perMealAudience?: string[][];
+}): Map<string, number> {
+  if (params.personMealCounts) {
+    return params.personMealCounts;
+  }
+  if (params.perMealAudience) {
+    return derivePersonMealCounts(params.perMealAudience);
+  }
+  // Legacy: uniform mealCount × one audience.
+  const counts = new Map<string, number>();
+  for (const id of params.cookingFamilyMemberIds) {
+    counts.set(id, params.mealCount);
+  }
+  return counts;
+}
+
 /**
  * Resolve and aggregate consumable lines for one ingredient section (ungrouped or group).
  * Merges by resolved ingredientId + unitId; order follows first recipe-row appearance.
+ *
+ * When `personMealCounts` / `perMealAudience` is provided, each person is scaled by their
+ * own meal count. `extraPortions` adds anonymous 1× base shares (batch÷servings) with no
+ * personal multipliers / SKIP / MODIFY — not attributed in memberAmounts.
  */
 export function resolveCookingAggregatedLines(params: {
   recipeIngredients: RecipeIngredientForCookingDisplay[];
@@ -75,6 +100,12 @@ export function resolveCookingAggregatedLines(params: {
   mealCount: number;
   audienceMemberIds: string[];
   memberPortions?: MemberPortionInput[];
+  /** Per-person meal counts from advanced cooking (overrides uniform mealCount). */
+  personMealCounts?: Map<string, number>;
+  /** Alternative to personMealCounts — derived when provided. */
+  perMealAudience?: string[][];
+  /** Anonymous default portions (batch÷servings each); no person adjustments. */
+  extraPortions?: number;
   /** Manual display scale per recipe row (global × local × calorie factor). */
   getRowDisplayScale?: (recipeIngredientId: string) => number;
 }): CookingAggregatedLine[] {
@@ -86,11 +117,29 @@ export function resolveCookingAggregatedLines(params: {
     mealCount,
     audienceMemberIds,
     getRowDisplayScale,
+    extraPortions = 0,
   } = params;
 
   const memberPortions =
     params.memberPortions ?? buildMemberPortionsFromFamily(familyMembers);
-  const cookingIdSet = new Set(cookingFamilyMemberIds);
+  const personMealCounts = resolvePersonMealCounts({
+    cookingFamilyMemberIds,
+    mealCount,
+    personMealCounts: params.personMealCounts,
+    perMealAudience: params.perMealAudience,
+  });
+
+  // Prefer people who actually have meals; fall back to cookingFamilyMemberIds order.
+  const cookingIdSet = new Set(
+    [...personMealCounts.entries()]
+      .filter(([, count]) => count > 0)
+      .map(([id]) => id),
+  );
+  if (cookingIdSet.size === 0) {
+    for (const id of cookingFamilyMemberIds) {
+      cookingIdSet.add(id);
+    }
+  }
   const sortedCookingMembers = familyMembers.filter((member) =>
     cookingIdSet.has(member.id),
   );
@@ -104,8 +153,15 @@ export function resolveCookingAggregatedLines(params: {
     }
 
     const rowScale = getRowDisplayScale?.(recipeIngredient.id) ?? 1;
+    const batchAmount = recipeIngredient.amount;
+    const unitId = recipeIngredient.unit.id;
 
     for (const member of sortedCookingMembers) {
+      const memberMealCount = personMealCounts.get(member.id) ?? 0;
+      if (memberMealCount <= 0) {
+        continue;
+      }
+
       const consumables = resolveRecipeIngredientRowsForMember({
         recipeIngredients: [recipeIngredient],
         familyMemberId: member.id,
@@ -113,8 +169,8 @@ export function resolveCookingAggregatedLines(params: {
         familyMembers,
         memberPortions,
         audienceMemberIds,
-        cookingFamilyMemberIds,
-        batchScaleFactor: mealCount,
+        cookingFamilyMemberIds: [...cookingIdSet],
+        batchScaleFactor: memberMealCount,
       });
 
       const consumable = consumables[0];
@@ -148,6 +204,37 @@ export function resolveCookingAggregatedLines(params: {
         primaryRecipeIngredientId: recipeIngredient.id,
         primaryAdditionalInfo: recipeIngredient.additionalInfo,
       });
+    }
+
+    // Anonymous extra portions: default base share only (no multipliers / SKIP / MODIFY).
+    if (extraPortions > 0 && recipeServings > 0) {
+      const extraAmount =
+        Math.round(
+          (batchAmount / recipeServings) * extraPortions * rowScale * 1000,
+        ) / 1000;
+      if (extraAmount > 0) {
+        const key = aggregateKey(recipeIngredient.ingredientId, unitId);
+        const existing = byKey.get(key);
+        if (existing) {
+          existing.resolvedAmount =
+            Math.round((existing.resolvedAmount + extraAmount) * 1000) / 1000;
+          if (!existing.sourceRecipeIngredientIds.includes(recipeIngredient.id)) {
+            existing.sourceRecipeIngredientIds.push(recipeIngredient.id);
+          }
+        } else {
+          orderKeys.push(key);
+          byKey.set(key, {
+            key,
+            ingredientId: recipeIngredient.ingredientId,
+            unitId,
+            resolvedAmount: extraAmount,
+            memberAmounts: [],
+            sourceRecipeIngredientIds: [recipeIngredient.id],
+            primaryRecipeIngredientId: recipeIngredient.id,
+            primaryAdditionalInfo: recipeIngredient.additionalInfo,
+          });
+        }
+      }
     }
   }
 

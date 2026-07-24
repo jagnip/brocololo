@@ -1,8 +1,7 @@
 "use client";
 
 import type { UseFormReturn } from "react-hook-form";
-import { useWatch } from "react-hook-form";
-import { Check, ChevronsUpDown, Minus, Plus } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import type { CreateRecipeFormValues } from "@/lib/validations/recipe";
 import { PORTION_SIZE_PRESETS } from "@/lib/validations/recipe";
 import {
@@ -13,7 +12,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -21,6 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { QuantityStepper } from "@/components/ui/quantity-stepper";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { syncModifyAmountsToPortionMultipliers } from "@/lib/recipes/sync-modify-amounts-for-portions";
 import type { MemberPortionInput } from "@/lib/recipes/ingredient-adjustments";
@@ -56,25 +55,6 @@ export function IngredientPortionsHeader({
   form,
   familyMembers,
 }: IngredientPortionsHeaderProps) {
-  const servings = useWatch({ control: form.control, name: "servings" });
-
-  const numericServings =
-    typeof servings === "number" && Number.isFinite(servings) ? servings : null;
-
-  function setServings(next: number) {
-    form.setValue("servings", next, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
-  }
-
-  function stepServings(delta: number) {
-    const current =
-      typeof servings === "number" && Number.isFinite(servings) ? servings : 1;
-    // Clamp at 1 — a recipe always covers at least one portion.
-    setServings(Math.max(1, current + delta));
-  }
-
   function applyMemberPortionsChange(nextPortions: MemberPortionInput[]) {
     form.setValue("memberPortions", nextPortions, {
       shouldValidate: true,
@@ -101,7 +81,7 @@ export function IngredientPortionsHeader({
 
   return (
     <div className="mb-3 flex flex-col gap-3">
-      {/* Batch size: sentence with inline [-] N [+] stepper. */}
+      {/* Batch size: sentence with shared QuantityStepper (preserves RHF null-on-clear). */}
       <FormField
         control={form.control}
         name="servings"
@@ -109,46 +89,23 @@ export function IngredientPortionsHeader({
           <FormItem>
             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 type-body text-muted-foreground">
               <span>Ingredient amounts below are for</span>
-              <div className="inline-flex items-center gap-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon-sm"
-                  aria-label="Decrease portions"
-                  disabled={numericServings != null && numericServings <= 1}
-                  onClick={() => stepServings(-1)}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="number"
-                    min={1}
-                    step={1}
-                    aria-label="Number of portions"
-                    // Hide the native number spinner (WebKit + Firefox) — the −/+ buttons replace it.
-                    className="h-8 w-14 text-center tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    value={(field.value as number | undefined) ?? ""}
-                    onChange={(event) => {
-                      // Keep cleared values as null so RHF validation can re-trigger.
-                      const rawValue = event.target.value;
-                      const nextValue =
-                        rawValue === "" ? null : Number(rawValue);
-                      field.onChange(nextValue);
-                    }}
-                  />
-                </FormControl>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon-sm"
-                  aria-label="Increase portions"
-                  onClick={() => stepServings(1)}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
+              <FormControl>
+                <QuantityStepper
+                  value={
+                    typeof field.value === "number" &&
+                    Number.isFinite(field.value)
+                      ? field.value
+                      : null
+                  }
+                  onValueChange={(next) => {
+                    field.onChange(next);
+                  }}
+                  min={1}
+                  ariaLabel="Number of portions"
+                  decreaseLabel="Decrease portions"
+                  increaseLabel="Increase portions"
+                />
+              </FormControl>
               <span>
                 <span className="font-bold">default</span> portions
               </span>

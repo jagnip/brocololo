@@ -92,4 +92,35 @@ describe("getInstructionIngredientBadgeAmount", () => {
       }),
     ).toBe(300);
   });
+
+  it("scales per person by their own meal count (J 6 / N 3)", () => {
+    // Batch 300g at 2 servings → 150g per default portion.
+    // J ×1 × 6 meals = 900; N ×2 × 3 meals = 900.
+    expect(
+      getInstructionIngredientBadgeAmount({
+        amount: 300,
+        memberAdjustments: [],
+        audienceMemberIds,
+        selectedFamilyMemberId: "family-self",
+        familyMembers,
+        memberPortions,
+        cookingFamilyMemberIds,
+        recipeServings: baseServings,
+        rowScaleFactor: 6,
+      }),
+    ).toBe(900);
+    expect(
+      getInstructionIngredientBadgeAmount({
+        amount: 300,
+        memberAdjustments: [],
+        audienceMemberIds,
+        selectedFamilyMemberId: "family-member-1",
+        familyMembers,
+        memberPortions,
+        cookingFamilyMemberIds,
+        recipeServings: baseServings,
+        rowScaleFactor: 3,
+      }),
+    ).toBe(900);
+  });
 });

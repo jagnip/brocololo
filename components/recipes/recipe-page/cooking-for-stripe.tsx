@@ -1,108 +1,101 @@
 "use client";
 
-import { Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SegmentedFilterButton } from "@/components/ui/segmented-filter-button";
-import type { FamilyMemberRow } from "@/lib/db/family-members";
-import { getFamilyMemberLabel } from "@/components/planner/family-member-multi-select";
+import { QuantityStepper } from "@/components/ui/quantity-stepper";
+import { MealCombinationRow } from "@/components/recipes/recipe-page/meal-combination-row";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
+import type { CookingCombination } from "@/lib/recipes/cook-session-portions";
 import { cn } from "@/lib/utils";
-
-function toggleMemberIds(current: string[], memberId: string): string[] {
-  const isSelected = current.includes(memberId);
-  if (!isSelected) {
-    return [...current, memberId];
-  }
-  const next = current.filter((id) => id !== memberId);
-  // Each cook session must include at least one person.
-  return next.length === 0 ? current : next;
-}
+import { Plus } from "lucide-react";
 
 type CookingForStripeProps = {
-  mealCount: number;
-  onMealCountChange: (nextCount: number) => void;
   familyMembers: FamilyMemberRow[];
-  cookingFamilyMemberIds: string[];
-  onCookingFamilyMemberIdsChange: (nextIds: string[]) => void;
+  combinations: CookingCombination[];
+  onAddCombination: () => void;
+  onRemoveCombination: (index: number) => void;
+  onCombinationCountChange: (index: number, nextCount: number) => void;
+  onCombinationMembersChange: (index: number, nextIds: string[]) => void;
+  extraPortions: number;
+  onExtraPortionsChange: (next: number) => void;
   className?: string;
 };
 
-/** Session control: how many meal occasions and which household members are eating. */
+/**
+ * Cooking session: combination rows + extras.
+ * Add next to the section title; each row is N meals for a people set.
+ *
+ * Terminology: a meal is one occasion; a portion is one person's share.
+ */
 export function CookingForStripe({
-  mealCount,
-  onMealCountChange,
   familyMembers,
-  cookingFamilyMemberIds,
-  onCookingFamilyMemberIdsChange,
+  combinations,
+  onAddCombination,
+  onRemoveCombination,
+  onCombinationCountChange,
+  onCombinationMembersChange,
+  extraPortions,
+  onExtraPortionsChange,
   className,
 }: CookingForStripeProps) {
-  const selectedIdSet = new Set(cookingFamilyMemberIds);
+  const canDeleteRows = combinations.length > 1;
 
   return (
     <div className={cn("section-container", className)}>
-      <div className="mb-item">
-        <Subheader>Cooking for</Subheader>
+      <div className="mb-item flex items-center gap-item">
+        <Subheader>Cooking</Subheader>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon-sm"
+          className="shrink-0"
+          aria-label="Add meal combination"
+          onClick={onAddCombination}
+        >
+          <Plus aria-hidden />
+        </Button>
       </div>
 
-      {/* Match instruction / nutrition card shells on the recipe detail page. */}
-      <div className="rounded-lg border border-border bg-card p-nest">
-        <div
-          className="flex flex-wrap items-center gap-x-3 gap-y-2"
-          role="group"
-          aria-label="Cooking session"
-        >
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              onClick={() => onMealCountChange(mealCount - 1)}
-              disabled={mealCount <= 1}
-              aria-label="Decrease meals"
-            >
-              <Minus />
-            </Button>
-            <span
-              className="type-body min-w-6 text-center tabular-nums"
-              aria-live="polite"
-            >
-              {mealCount}
+      <div className="flex flex-col gap-item">
+        {combinations.map((combination, index) => (
+          <MealCombinationRow
+            key={index}
+            rowIndex={index}
+            count={combination.count}
+            selectedMemberIds={combination.memberIds}
+            familyMembers={familyMembers}
+            canDelete={canDeleteRows}
+            onCountChange={(nextCount) =>
+              onCombinationCountChange(index, nextCount)
+            }
+            onSelectedMemberIdsChange={(nextIds) =>
+              onCombinationMembersChange(index, nextIds)
+            }
+            onDelete={() => onRemoveCombination(index)}
+          />
+        ))}
+
+        {/* Same row shell + chip-height content area as meal combinations. */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[10px] border border-border bg-card p-nest">
+          <div
+            className="flex min-h-9 min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2"
+            role="group"
+            aria-label="Extra portions"
+          >
+            <QuantityStepper
+              value={extraPortions}
+              onValueChange={(next) => onExtraPortionsChange(next ?? 0)}
+              min={0}
+              max={99}
+              editable={false}
+              ariaLabel="Extra portions"
+              decreaseLabel="Decrease extra portions"
+              increaseLabel="Increase extra portions"
+              className="shrink-0"
+            />
+            <span className="type-body text-muted-foreground shrink-0">
+              extra portions
             </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              onClick={() => onMealCountChange(mealCount + 1)}
-              aria-label="Increase meals"
-            >
-              <Plus />
-            </Button>
-          </div>
-
-          <span className="type-body text-muted-foreground shrink-0">
-            {mealCount === 1 ? "meal for" : "meals for"}
-          </span>
-
-          <div className="flex flex-wrap items-center gap-item">
-            {familyMembers.map((member, index) => {
-              const label = getFamilyMemberLabel(member, index);
-              const isSelected = selectedIdSet.has(member.id);
-              return (
-                <SegmentedFilterButton
-                  key={member.id}
-                  selected={isSelected}
-                  aria-pressed={isSelected}
-                  aria-label={`${isSelected ? "Remove" : "Add"} ${label} from this cook session`}
-                  onClick={() =>
-                    onCookingFamilyMemberIdsChange(
-                      toggleMemberIds(cookingFamilyMemberIds, member.id),
-                    )
-                  }
-                >
-                  {label}
-                </SegmentedFilterButton>
-              );
-            })}
           </div>
         </div>
       </div>
