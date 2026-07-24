@@ -4,15 +4,13 @@ import { RotateCcw } from "lucide-react";
 import type { IngredientType } from "@/types/ingredient";
 import { IngredientItem } from "@/components/recipes/ingredient-item";
 import { isScaleModified } from "@/lib/recipes/helpers";
-import { getBatchPortionShares } from "@/lib/recipes/shared-portion-shares";
 import { useRecipePageIngredientsSectionData } from "@/components/context/recipe-page-context";
 import { PortionSplitCard } from "@/components/recipes/recipe-page/portion-split-card";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
+import { getFamilyMemberLabel } from "@/components/planner/family-member-multi-select";
 import type { CookingAggregatedLine } from "@/lib/recipes/resolve-cooking-display-lines";
 import type { RecipeType } from "@/types/recipe";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
-
-const PORTION_SPLIT_SCOPE_LABEL = "Portion split";
 
 function resolveUnitForAggregatedLine(
   line: CookingAggregatedLine,
@@ -155,8 +153,6 @@ export function IngredientsSection() {
     familyMembers,
     memberPortions,
     cookingFamilyMemberIds,
-    mealCount,
-    personMealCounts,
     effectiveRecipeIngredientById,
     hasActiveScaling,
     localScaleByIngredientId,
@@ -177,39 +173,27 @@ export function IngredientsSection() {
     return familyMembers.filter((member) => cookingIdSet.has(member.id));
   }, [cookingFamilyMemberIds, familyMembers]);
 
-  const portionSplitMembers = useMemo(() => {
-    // Chart shares still use meals × multiplier; labels show meal count + size separately.
-    const shares = getBatchPortionShares(
-      cookingFamilyMembers,
-      memberPortions,
-      personMealCounts,
+  // Chart pool = Cooking selection; pie is always per-1-meal multipliers (no batch).
+  const portionSplitAudience = useMemo(() => {
+    const multiplierById = new Map(
+      memberPortions.map((portion) => [
+        portion.familyMemberId,
+        portion.multiplier,
+      ]),
     );
-    const isBatch = mealCount > 1;
-
-    return shares.map((entry, index) => {
-      const member = cookingFamilyMembers.find(
-        (familyMember) => familyMember.id === entry.familyMemberId,
-      );
-      const label =
-        member?.name.trim() ||
-        (member?.isSelf ? "You" : `Family member ${index + 1}`);
-      return {
-        label,
-        share: entry.share,
-        multiplier: entry.multiplier,
-        // Batch: meal occasions only (not × multiplier). Single meal: omit → show ×N.
-        mealCount: isBatch
-          ? (personMealCounts.get(entry.familyMemberId) ?? 0)
-          : undefined,
-      };
-    });
-  }, [cookingFamilyMembers, mealCount, memberPortions, personMealCounts]);
-
-  const showPortionSplitChart = portionSplitMembers.length > 1;
-  const portionScopeLabel =
-    mealCount > 1
-      ? `${PORTION_SPLIT_SCOPE_LABEL} · ${mealCount} meals`
-      : PORTION_SPLIT_SCOPE_LABEL;
+    const householdIndexById = new Map(
+      familyMembers.map((member, index) => [member.id, index]),
+    );
+    return cookingFamilyMembers.map((member) => ({
+      id: member.id,
+      label: getFamilyMemberLabel(
+        member,
+        householdIndexById.get(member.id) ?? 0,
+      ),
+      sortOrder: member.sortOrder,
+      multiplier: multiplierById.get(member.id) ?? 1,
+    }));
+  }, [cookingFamilyMembers, familyMembers, memberPortions]);
 
   const sharedRenderParams = useMemo(
     () => ({
@@ -262,11 +246,8 @@ export function IngredientsSection() {
           )}
         </div>
       </div>
-      {showPortionSplitChart ? (
-        <PortionSplitCard
-          members={portionSplitMembers}
-          scopeLabel={portionScopeLabel}
-        />
+      {portionSplitAudience.length > 1 ? (
+        <PortionSplitCard members={portionSplitAudience} />
       ) : null}
       {ungroupedIngredients.length > 0 && hasUngroupedLines ? (
         <div className="mb-item">
