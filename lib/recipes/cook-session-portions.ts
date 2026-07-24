@@ -2,9 +2,51 @@ import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { getFamilyMemberLabel } from "@/components/planner/family-member-multi-select";
 import type { MemberPortionInput } from "@/lib/recipes/ingredient-adjustments";
 
+/** One cook-session combination: N meals shared by the same people. */
+export type CookingCombination = {
+  count: number;
+  memberIds: string[];
+};
+
 /** Stable key for comparing audiences regardless of toggle order. */
 export function audienceKey(memberIds: string[]): string {
   return [...new Set(memberIds)].sort().join(",");
+}
+
+/** Default session: one meal for everyone listed. */
+export function createDefaultCombinations(
+  memberIds: string[],
+): CookingCombination[] {
+  const ids = memberIds.length > 0 ? [...memberIds] : [];
+  return [{ count: 1, memberIds: ids }];
+}
+
+/** Expand combination rows into one audience entry per meal occasion. */
+export function expandCombinationsToPerMealAudience(
+  combinations: CookingCombination[],
+): string[][] {
+  const meals: string[][] = [];
+  for (const combination of combinations) {
+    const count = Math.max(1, combination.count);
+    const ids =
+      combination.memberIds.length > 0 ? [...combination.memberIds] : [];
+    for (let index = 0; index < count; index += 1) {
+      meals.push([...ids]);
+    }
+  }
+  // Math helpers expect at least one meal slot when a session exists.
+  return meals.length > 0 ? meals : [[]];
+}
+
+/** Total meal occasions across all combination rows. */
+export function totalMealCountFromCombinations(
+  combinations: CookingCombination[],
+): number {
+  const total = combinations.reduce(
+    (sum, combination) => sum + Math.max(1, combination.count),
+    0,
+  );
+  return Math.max(1, total);
 }
 
 /**
@@ -79,24 +121,18 @@ export function deriveBatchPortionWeights(
     .filter((entry) => entry.weight > 0);
 }
 
-/** True when draft differs from uniform basic (any meal ≠ basic selection, or extras > 0). */
+/** True when the session uses multiple combinations or extras (not a single uniform row). */
 export function isAdvancedDraftDifferentFromBasic(params: {
-  perMealAudience: string[][];
-  cookingFamilyMemberIds: string[];
+  combinations: CookingCombination[];
   extraPortions: number;
 }): boolean {
-  if (params.extraPortions > 0) {
-    return true;
-  }
-  const basicKey = audienceKey(params.cookingFamilyMemberIds);
-  return params.perMealAudience.some(
-    (mealIds) => audienceKey(mealIds) !== basicKey,
-  );
+  return params.combinations.length > 1 || params.extraPortions > 0;
 }
 
 /**
- * Display lines like "Jagoda · 6 meals" in household order.
- * Only includes people with mealCount > 0.
+ * Display lines like "Jagoda · 6 portions" in household order.
+ * A portion is one person's share; a meal is one occasion.
+ * Only includes people with count > 0.
  */
 export function formatPersonMealSummary(
   personMealCounts: Map<string, number>,
@@ -109,69 +145,25 @@ export function formatPersonMealSummary(
       continue;
     }
     const label = getFamilyMemberLabel(member, index);
-    const mealWord = count === 1 ? "meal" : "meals";
-    parts.push(`${label} · ${count} ${mealWord}`);
+    const portionWord = count === 1 ? "portion" : "portions";
+    parts.push(`${label} · ${count} ${portionWord}`);
   }
   return parts.join(" · ");
 }
 
-/** Seed N identical meals from the basic cooking audience. */
-export function seedPerMealAudience(
-  mealCount: number,
-  cookingFamilyMemberIds: string[],
-): string[][] {
-  const seed = [...cookingFamilyMemberIds];
-  return Array.from({ length: Math.max(1, mealCount) }, () => [...seed]);
-}
-
-/** Resize meal list: append seeded meals or drop trailing. */
-export function resizePerMealAudience(
-  current: string[][],
-  nextMealCount: number,
-  seedMemberIds: string[],
-): string[][] {
-  const count = Math.max(1, nextMealCount);
-  if (current.length === count) {
-    return current;
-  }
-  if (current.length < count) {
-    const appended = Array.from({ length: count - current.length }, () => [
-      ...seedMemberIds,
-    ]);
-    return [...current, ...appended];
-  }
-  return current.slice(0, count);
-}
-
-/** Add a member to every meal (for applied-mode people chip add). */
-export function addMemberToAllMeals(
-  perMealAudience: string[][],
+/** Toggle a person on a combination; never leave the row empty. */
+export function toggleCombinationMember(
+  memberIds: string[],
   memberId: string,
-): string[][] {
-  return perMealAudience.map((mealIds) =>
-    mealIds.includes(memberId) ? mealIds : [...mealIds, memberId],
-  );
+): string[] {
+  if (memberIds.includes(memberId)) {
+    const next = memberIds.filter((id) => id !== memberId);
+    return next.length === 0 ? memberIds : next;
+  }
+  return [...memberIds, memberId];
 }
 
-/**
- * Remove a member from every meal.
- * Meals that would become empty keep their previous ids (caller should guard).
- */
-export function removeMemberFromAllMeals(
-  perMealAudience: string[][],
-  memberId: string,
-): string[][] {
-  return perMealAudience.map((mealIds) => {
-    if (!mealIds.includes(memberId)) {
-      return mealIds;
-    }
-    const next = mealIds.filter((id) => id !== memberId);
-    // Guard: never leave a meal with zero people.
-    return next.length === 0 ? mealIds : next;
-  });
-}
-
-/** Deep-clone meal audience arrays for draft/applied copies. */
-export function clonePerMealAudience(perMealAudience: string[][]): string[][] {
-  return perMealAudience.map((mealIds) => [...mealIds]);
+/** Clamp combination meal count to a positive range. */
+export function clampCombinationCount(count: number): number {
+  return Math.max(1, Math.min(99, Math.floor(count)));
 }

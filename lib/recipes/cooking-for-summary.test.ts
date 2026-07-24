@@ -50,7 +50,7 @@ describe("cooking-for-summary", () => {
     expect(isAdvancedAudienceActive([[J, N], [N, J]], [J, N])).toBe(false);
   });
 
-  it("formats applied person meal summary", () => {
+  it("formats applied person portion summary", () => {
     expect(
       formatPersonMealSummary(
         new Map([
@@ -59,6 +59,6 @@ describe("cooking-for-summary", () => {
         ]),
         familyMembers,
       ),
-    ).toBe("Jagoda · 6 meals · Nelson · 3 meals");
+    ).toBe("Jagoda · 6 portions · Nelson · 3 portions");
   });
 });

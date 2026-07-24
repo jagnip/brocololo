@@ -4,7 +4,7 @@ import { RotateCcw } from "lucide-react";
 import type { IngredientType } from "@/types/ingredient";
 import { IngredientItem } from "@/components/recipes/ingredient-item";
 import { isScaleModified } from "@/lib/recipes/helpers";
-import { getBatchPortionShares, getSharedPortionShares } from "@/lib/recipes/shared-portion-shares";
+import { getBatchPortionShares } from "@/lib/recipes/shared-portion-shares";
 import { useRecipePageIngredientsSectionData } from "@/components/context/recipe-page-context";
 import { PortionSplitCard } from "@/components/recipes/recipe-page/portion-split-card";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
@@ -12,8 +12,7 @@ import type { CookingAggregatedLine } from "@/lib/recipes/resolve-cooking-displa
 import type { RecipeType } from "@/types/recipe";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 
-const BASIC_PORTION_SCOPE_LABEL = "Portion sizes";
-const BATCH_SPLIT_SCOPE_LABEL = "Batch split";
+const PORTION_SPLIT_SCOPE_LABEL = "Portion split";
 
 function resolveUnitForAggregatedLine(
   line: CookingAggregatedLine,
@@ -158,7 +157,6 @@ export function IngredientsSection() {
     cookingFamilyMemberIds,
     mealCount,
     personMealCounts,
-    advancedMode,
     effectiveRecipeIngredientById,
     hasActiveScaling,
     localScaleByIngredientId,
@@ -179,17 +177,14 @@ export function IngredientsSection() {
     return familyMembers.filter((member) => cookingIdSet.has(member.id));
   }, [cookingFamilyMemberIds, familyMembers]);
 
-  const isAppliedAdvanced = advancedMode === "applied";
-
   const portionSplitMembers = useMemo(() => {
-    // Applied advanced: batch split by meals × multiplier. Otherwise: one-meal pie.
-    const shares = isAppliedAdvanced
-      ? getBatchPortionShares(
-          cookingFamilyMembers,
-          memberPortions,
-          personMealCounts,
-        )
-      : getSharedPortionShares(cookingFamilyMembers, memberPortions);
+    // Chart shares still use meals × multiplier; labels show meal count + size separately.
+    const shares = getBatchPortionShares(
+      cookingFamilyMembers,
+      memberPortions,
+      personMealCounts,
+    );
+    const isBatch = mealCount > 1;
 
     return shares.map((entry, index) => {
       const member = cookingFamilyMembers.find(
@@ -202,20 +197,19 @@ export function IngredientsSection() {
         label,
         share: entry.share,
         multiplier: entry.multiplier,
-        weight: entry.weight,
+        // Batch: meal occasions only (not × multiplier). Single meal: omit → show ×N.
+        mealCount: isBatch
+          ? (personMealCounts.get(entry.familyMemberId) ?? 0)
+          : undefined,
       };
     });
-  }, [
-    cookingFamilyMembers,
-    isAppliedAdvanced,
-    memberPortions,
-    personMealCounts,
-  ]);
+  }, [cookingFamilyMembers, mealCount, memberPortions, personMealCounts]);
 
   const showPortionSplitChart = portionSplitMembers.length > 1;
-  const portionScopeLabel = isAppliedAdvanced
-    ? BATCH_SPLIT_SCOPE_LABEL
-    : BASIC_PORTION_SCOPE_LABEL;
+  const portionScopeLabel =
+    mealCount > 1
+      ? `${PORTION_SPLIT_SCOPE_LABEL} · ${mealCount} meals`
+      : PORTION_SPLIT_SCOPE_LABEL;
 
   const sharedRenderParams = useMemo(
     () => ({
@@ -253,26 +247,19 @@ export function IngredientsSection() {
   return (
     <div>
       <div className="mb-item flex items-center justify-between">
-        <div className="flex min-w-0 flex-col gap-tight">
-          <div className="flex items-center gap-item">
-            <Subheader>Ingredients</Subheader>
-            {hasActiveScaling && (
-              <Button
-                // Match other outlined icon buttons (note, scale, supermarket).
-                variant="outline"
-                size="icon-sm"
-                onClick={onReset}
-                aria-label="Reset ingredient amounts"
-              >
-                <RotateCcw />
-              </Button>
-            )}
-          </div>
-          {mealCount > 1 ? (
-            <p className="type-caption text-muted-foreground">
-              Totals for {mealCount} meals
-            </p>
-          ) : null}
+        <div className="flex items-center gap-item">
+          <Subheader>Ingredients</Subheader>
+          {hasActiveScaling && (
+            <Button
+              // Match other outlined icon buttons (note, scale, supermarket).
+              variant="outline"
+              size="icon-sm"
+              onClick={onReset}
+              aria-label="Reset ingredient amounts"
+            >
+              <RotateCcw />
+            </Button>
+          )}
         </div>
       </div>
       {showPortionSplitChart ? (

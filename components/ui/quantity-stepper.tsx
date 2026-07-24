@@ -80,7 +80,7 @@ export const QuantityStepper = React.forwardRef<
       <Button
         type="button"
         variant="outline"
-        size="icon-sm"
+        size="icon"
         aria-label={decreaseLabel}
         disabled={disabled || atMin}
         onClick={() => stepBy(-step)}
@@ -100,8 +100,8 @@ export const QuantityStepper = React.forwardRef<
           aria-describedby={ariaDescribedBy}
           aria-invalid={ariaInvalid}
           disabled={disabled}
-          // Hide native spinners — the −/+ buttons replace them.
-          className="h-8 w-14 text-center tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          // Match default control height (h-9) used by outline buttons / person chips.
+          className="h-9 w-14 text-center tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           value={numericValue ?? ""}
           onChange={(event) => {
             const raw = event.target.value;
@@ -130,7 +130,7 @@ export const QuantityStepper = React.forwardRef<
       <Button
         type="button"
         variant="outline"
-        size="icon-sm"
+        size="icon"
         aria-label={increaseLabel}
         disabled={disabled || atMax}
         onClick={() => stepBy(step)}

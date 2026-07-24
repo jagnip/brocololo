@@ -10,13 +10,17 @@ export type PortionSplitMember = {
   label: string;
   share: number;
   multiplier: number;
-  /** Absolute batch weight (meals × multiplier) when showing batch split. */
-  weight?: number;
+  /**
+   * Meal occasions this person eats (batch label only).
+   * When set, detail is "3 ×2 portions" — count is not meals×multiplier.
+   * When omitted (single meal), detail is the size multiplier only ("×2").
+   */
+  mealCount?: number;
 };
 
 type PortionSplitCardProps = {
   members: PortionSplitMember[];
-  /** Clarifies that the split applies to shared (“everyone”) ingredients only. */
+  /** Chart title — always "Portion split" (optionally with meal count). */
   scopeLabel: string;
 };
 
@@ -62,6 +66,22 @@ function buildAriaLabel(
   return `${scopeLabel}: ${parts}`;
 }
 
+/** Batch: "3 ×2 portions" or "3 portions". Single meal: "×2" / "×1". */
+function formatMemberDetail(member: PortionSplitMember): string {
+  const multiplierLabel =
+    formatPortionMultiplierBadgeLabel(member.multiplier) ?? null;
+
+  if (member.mealCount != null) {
+    const portionWord = member.mealCount === 1 ? "portion" : "portions";
+    if (multiplierLabel) {
+      return `${member.mealCount} ${multiplierLabel} ${portionWord}`;
+    }
+    return `${member.mealCount} ${portionWord}`;
+  }
+
+  return multiplierLabel ?? "×1";
+}
+
 export function PortionSplitCard({ members, scopeLabel }: PortionSplitCardProps) {
   const sharesForDisplay: SharedPortionShare[] = members.map((member, index) => ({
     familyMemberId: String(index),
@@ -88,31 +108,28 @@ export function PortionSplitCard({ members, scopeLabel }: PortionSplitCardProps)
             className="mt-tight flex flex-wrap items-center gap-x-item gap-y-tight"
             aria-hidden="true"
           >
-            {members.map((member, index) => {
-              const detailLabel =
-                member.weight != null
-                  ? `${member.weight} portion${member.weight === 1 ? "" : "s"}`
-                  : (formatPortionMultiplierBadgeLabel(member.multiplier) ??
-                    "×1");
-              return (
+            {members.map((member, index) => (
+              <span
+                key={`${member.label}-${index}`}
+                className="type-caption inline-flex items-center gap-x-tight whitespace-nowrap text-foreground"
+              >
                 <span
-                  key={`${member.label}-${index}`}
-                  className="type-caption inline-flex items-center gap-x-tight whitespace-nowrap text-foreground"
-                >
-                  <span
-                    className="inline-block size-2 shrink-0 rounded-full"
-                    style={{
-                      backgroundColor:
-                        PORTION_CHART_COLOR_VARS[
-                          index % PORTION_CHART_COLOR_VARS.length
-                        ],
-                    }}
-                  />
-                  <span>{member.label}</span>
-                  <span className="text-muted-foreground">· {detailLabel}</span>
+                  className="inline-block size-2 shrink-0 rounded-full"
+                  style={{
+                    backgroundColor:
+                      PORTION_CHART_COLOR_VARS[
+                        index % PORTION_CHART_COLOR_VARS.length
+                      ],
+                  }}
+                />
+                <span>
+                  {member.label}{" "}
+                  <span className="text-muted-foreground">
+                    {formatMemberDetail(member)}
+                  </span>
                 </span>
-              );
-            })}
+              </span>
+            ))}
           </div>
         </div>
       </div>

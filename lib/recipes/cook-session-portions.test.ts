@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import {
-  addMemberToAllMeals,
-  audienceKey,
+  clampCombinationCount,
+  createDefaultCombinations,
   deriveBatchPortionWeights,
   deriveCookingUnionIds,
   derivePersonMealCounts,
+  expandCombinationsToPerMealAudience,
   formatPersonMealSummary,
   isAdvancedDraftDifferentFromBasic,
-  removeMemberFromAllMeals,
-  resizePerMealAudience,
-  seedPerMealAudience,
+  toggleCombinationMember,
+  totalMealCountFromCombinations,
 } from "@/lib/recipes/cook-session-portions";
 
 const J = "family-self";
@@ -20,6 +20,52 @@ const familyMembers: FamilyMemberRow[] = [
   { id: J, name: "Jagoda", isSelf: true, sortOrder: 0, portionMultiplier: 1 },
   { id: N, name: "Nelson", isSelf: false, sortOrder: 1, portionMultiplier: 2 },
 ];
+
+describe("expandCombinationsToPerMealAudience", () => {
+  it("expands 2×[J] + 1×[J,N] into three meal audiences", () => {
+    expect(
+      expandCombinationsToPerMealAudience([
+        { count: 2, memberIds: [J] },
+        { count: 1, memberIds: [J, N] },
+      ]),
+    ).toEqual([[J], [J], [J, N]]);
+  });
+});
+
+describe("totalMealCountFromCombinations", () => {
+  it("sums combination counts", () => {
+    expect(
+      totalMealCountFromCombinations([
+        { count: 2, memberIds: [J] },
+        { count: 1, memberIds: [J, N] },
+      ]),
+    ).toBe(3);
+  });
+});
+
+describe("createDefaultCombinations", () => {
+  it("seeds one meal for the given people", () => {
+    expect(createDefaultCombinations([J, N])).toEqual([
+      { count: 1, memberIds: [J, N] },
+    ]);
+  });
+});
+
+describe("toggleCombinationMember", () => {
+  it("adds and removes, but never leaves empty", () => {
+    expect(toggleCombinationMember([J], N)).toEqual([J, N]);
+    expect(toggleCombinationMember([J, N], N)).toEqual([J]);
+    expect(toggleCombinationMember([J], J)).toEqual([J]);
+  });
+});
+
+describe("clampCombinationCount", () => {
+  it("keeps counts in 1..99", () => {
+    expect(clampCombinationCount(0)).toBe(1);
+    expect(clampCombinationCount(3)).toBe(3);
+    expect(clampCombinationCount(200)).toBe(99);
+  });
+});
 
 describe("derivePersonMealCounts", () => {
   it("counts 3 J+N + 3 J meals", () => {
@@ -102,86 +148,42 @@ describe("deriveBatchPortionWeights", () => {
 });
 
 describe("isAdvancedDraftDifferentFromBasic", () => {
-  it("is false when all meals match basic and extras are 0", () => {
+  it("is false for a single combination with no extras", () => {
     expect(
       isAdvancedDraftDifferentFromBasic({
-        perMealAudience: [
-          [J, N],
-          [N, J],
-        ],
-        cookingFamilyMemberIds: [J, N],
+        combinations: [{ count: 3, memberIds: [J, N] }],
         extraPortions: 0,
       }),
     ).toBe(false);
   });
 
-  it("is true when extras > 0", () => {
+  it("is true for multiple combinations or extras", () => {
     expect(
       isAdvancedDraftDifferentFromBasic({
-        perMealAudience: [[J, N]],
-        cookingFamilyMemberIds: [J, N],
-        extraPortions: 2,
+        combinations: [
+          { count: 2, memberIds: [J] },
+          { count: 1, memberIds: [J, N] },
+        ],
+        extraPortions: 0,
       }),
     ).toBe(true);
-  });
-
-  it("is true when a meal audience differs", () => {
     expect(
       isAdvancedDraftDifferentFromBasic({
-        perMealAudience: [[J, N], [J]],
-        cookingFamilyMemberIds: [J, N],
-        extraPortions: 0,
+        combinations: [{ count: 1, memberIds: [J, N] }],
+        extraPortions: 2,
       }),
     ).toBe(true);
   });
 });
 
 describe("formatPersonMealSummary", () => {
-  it("formats Jagoda · 6 meals · Nelson · 3 meals", () => {
+  it("formats Jagoda · 6 portions · Nelson · 3 portions", () => {
     const counts = new Map([
       [J, 6],
       [N, 3],
     ]);
     expect(formatPersonMealSummary(counts, familyMembers)).toBe(
-      "Jagoda · 6 meals · Nelson · 3 meals",
+      "Jagoda · 6 portions · Nelson · 3 portions",
     );
-  });
-});
-
-describe("meal audience mutations", () => {
-  it("seeds N meals from basic selection", () => {
-    expect(seedPerMealAudience(3, [J, N])).toEqual([
-      [J, N],
-      [J, N],
-      [J, N],
-    ]);
-  });
-
-  it("appends meals with selected people and drops trailing", () => {
-    const current = [[J], [J]];
-    expect(resizePerMealAudience(current, 4, [J, N])).toEqual([
-      [J],
-      [J],
-      [J, N],
-      [J, N],
-    ]);
-    expect(resizePerMealAudience(current, 1, [J, N])).toEqual([[J]]);
-  });
-
-  it("adds a member to every meal", () => {
-    expect(addMemberToAllMeals([[J], [J, N]], N)).toEqual([
-      [J, N],
-      [J, N],
-    ]);
-  });
-
-  it("removes a member but never leaves a meal empty", () => {
-    expect(removeMemberFromAllMeals([[J, N], [N]], N)).toEqual([[J], [N]]);
-  });
-});
-
-describe("audienceKey", () => {
-  it("ignores order and duplicates", () => {
-    expect(audienceKey([N, J, J])).toBe(audienceKey([J, N]));
   });
 });
