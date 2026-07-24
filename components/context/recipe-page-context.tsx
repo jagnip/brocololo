@@ -27,6 +27,19 @@ import {
   resolveCookingAggregatedLines,
   type CookingAggregatedLine,
 } from "@/lib/recipes/resolve-cooking-display-lines";
+import {
+  addMemberToAllMeals,
+  clonePerMealAudience,
+  deriveCookingUnionIds,
+  derivePersonMealCounts,
+  formatPersonMealSummary,
+  isAdvancedDraftDifferentFromBasic,
+  removeMemberFromAllMeals,
+  resizePerMealAudience,
+  seedPerMealAudience,
+} from "@/lib/recipes/cook-session-portions";
+
+export type AdvancedCookingMode = "basic" | "editing" | "applied";
 
 type RecipePageProviderProps = {
   recipe: RecipeType;
@@ -44,6 +57,18 @@ type RecipePageContextValue = {
   onMealCountChange: (nextCount: number) => void;
   cookingFamilyMemberIds: string[];
   onCookingFamilyMemberIdsChange: (nextIds: string[]) => void;
+  advancedMode: AdvancedCookingMode;
+  draftPerMealAudience: string[][];
+  onDraftPerMealAudienceChange: (mealIndex: number, nextIds: string[]) => void;
+  draftExtraPortions: number;
+  onDraftExtraPortionsChange: (next: number) => void;
+  appliedExtraPortions: number;
+  appliedPersonMealSummary: string;
+  personMealCounts: Map<string, number>;
+  onOpenAdvancedSettings: () => void;
+  onDoneAdvanced: () => void;
+  onResetAdvanced: () => void;
+  onEditAdvanced: () => void;
   audienceMemberIds: string[];
   memberPortions: MemberPortionInput[];
   calorieTarget: CalorieTarget | null;
@@ -102,6 +127,18 @@ export function RecipePageProvider({
     () => familyMembers.map((member) => member.id),
   );
 
+  // Advanced cooking: draft while editing; applied drives math when committed.
+  const [advancedMode, setAdvancedMode] =
+    useState<AdvancedCookingMode>("basic");
+  const [draftPerMealAudience, setDraftPerMealAudience] = useState<string[][]>(
+    () => [familyMembers.map((member) => member.id)],
+  );
+  const [draftExtraPortions, setDraftExtraPortions] = useState(0);
+  const [appliedPerMealAudience, setAppliedPerMealAudience] = useState<
+    string[][] | null
+  >(null);
+  const [appliedExtraPortions, setAppliedExtraPortions] = useState(0);
+
   const scaling = useRecipeScalingState({ recipe });
 
   const audienceMemberIds = useMemo(
@@ -120,9 +157,27 @@ export function RecipePageProvider({
     [familyMembers, recipe.memberPortions],
   );
 
+  // Reset all cooking session state when recipe or household changes.
   useEffect(() => {
-    setCookingFamilyMemberIds(familyMembers.map((member) => member.id));
+    const allIds = familyMembers.map((member) => member.id);
+    setCookingFamilyMemberIds(allIds);
+    setDraftPerMealAudience([allIds]);
+    setDraftExtraPortions(0);
+    setAppliedPerMealAudience(null);
+    setAppliedExtraPortions(0);
+    setAdvancedMode("basic");
   }, [familyMembers, recipe.id]);
+
+  // Keep draft meal list length in sync with mealCount while editing or basic.
+  // In applied mode, meal-count changes resize applied (and draft) via handlers below.
+  useEffect(() => {
+    if (advancedMode === "applied") {
+      return;
+    }
+    setDraftPerMealAudience((prev) =>
+      resizePerMealAudience(prev, scaling.mealCount, cookingFamilyMemberIds),
+    );
+  }, [advancedMode, cookingFamilyMemberIds, scaling.mealCount]);
 
   const effectiveRecipe = useMemo(
     () =>
@@ -134,25 +189,50 @@ export function RecipePageProvider({
     [ingredients, recipe, scaling.swapsByRecipeIngredientId],
   );
 
+  // Math source: applied session when committed; otherwise basic uniform meals.
+  const mathPerMealAudience = appliedPerMealAudience;
+  const mathExtraPortions =
+    appliedPerMealAudience != null ? appliedExtraPortions : 0;
+
+  const personMealCounts = useMemo(() => {
+    if (mathPerMealAudience) {
+      return derivePersonMealCounts(mathPerMealAudience);
+    }
+    const counts = new Map<string, number>();
+    for (const id of cookingFamilyMemberIds) {
+      counts.set(id, scaling.mealCount);
+    }
+    return counts;
+  }, [cookingFamilyMemberIds, mathPerMealAudience, scaling.mealCount]);
+
+  const nutritionCookingIds = useMemo(() => {
+    if (mathPerMealAudience) {
+      return deriveCookingUnionIds(mathPerMealAudience, familyMembers);
+    }
+    return cookingFamilyMemberIds;
+  }, [cookingFamilyMemberIds, familyMembers, mathPerMealAudience]);
+
   const nutrition = useRecipeNutrition({
     recipe,
     effectiveRecipe,
     ingredientCatalog: ingredients,
-    cookingFamilyMemberIds,
+    cookingFamilyMemberIds: nutritionCookingIds,
     calorieTarget: scaling.calorieTarget,
     globalScaleRatio: scaling.globalScaleRatio,
     localScaleByIngredientId: scaling.localScaleByIngredientId,
     familyMembers,
   });
 
-  const { ungroupedIngredients, visibleGroupedIngredients } = useIngredientGrouping({
-    ingredientGroups: recipe.ingredientGroups,
-    ingredients: effectiveRecipe.ingredients,
-  });
+  const { ungroupedIngredients, visibleGroupedIngredients } =
+    useIngredientGrouping({
+      ingredientGroups: recipe.ingredientGroups,
+      ingredients: effectiveRecipe.ingredients,
+    });
 
   const getRowDisplayScale = useCallback(
     (recipeIngredientId: string) => {
-      const row = nutrition.effectiveRecipeIngredientById.get(recipeIngredientId);
+      const row =
+        nutrition.effectiveRecipeIngredientById.get(recipeIngredientId);
       if (!row) {
         return 1;
       }
@@ -168,18 +248,28 @@ export function RecipePageProvider({
     () => ({
       recipeServings: recipe.servings,
       familyMembers,
-      cookingFamilyMemberIds,
+      cookingFamilyMemberIds: nutritionCookingIds,
       mealCount: scaling.mealCount,
       audienceMemberIds,
       memberPortions,
       getRowDisplayScale,
+      ...(mathPerMealAudience
+        ? {
+            perMealAudience: mathPerMealAudience,
+            personMealCounts,
+            extraPortions: mathExtraPortions,
+          }
+        : {}),
     }),
     [
       audienceMemberIds,
-      cookingFamilyMemberIds,
       familyMembers,
       getRowDisplayScale,
+      mathExtraPortions,
+      mathPerMealAudience,
       memberPortions,
+      nutritionCookingIds,
+      personMealCounts,
       recipe.servings,
       scaling.mealCount,
     ],
@@ -219,12 +309,165 @@ export function RecipePageProvider({
     [recipe.ingredients],
   );
 
+  const appliedPersonMealSummary = useMemo(() => {
+    if (!appliedPerMealAudience) {
+      return "";
+    }
+    return formatPersonMealSummary(
+      derivePersonMealCounts(appliedPerMealAudience),
+      familyMembers,
+    );
+  }, [appliedPerMealAudience, familyMembers]);
+
   const handleMealCountChange = useCallback(
     (nextCount: number) => {
       scaling.handleMealCountChange(nextCount);
+      // Applied mode: resize applied meals and auto-recommit.
+      if (advancedMode === "applied" && appliedPerMealAudience) {
+        const resized = resizePerMealAudience(
+          appliedPerMealAudience,
+          nextCount,
+          cookingFamilyMemberIds,
+        );
+        setAppliedPerMealAudience(resized);
+        setDraftPerMealAudience(clonePerMealAudience(resized));
+        setCookingFamilyMemberIds(
+          deriveCookingUnionIds(resized, familyMembers),
+        );
+      }
     },
-    [scaling],
+    [
+      advancedMode,
+      appliedPerMealAudience,
+      cookingFamilyMemberIds,
+      familyMembers,
+      scaling,
+    ],
   );
+
+  const handleCookingFamilyMemberIdsChange = useCallback(
+    (nextIds: string[]) => {
+      if (nextIds.length === 0) {
+        return;
+      }
+
+      const prevSet = new Set(cookingFamilyMemberIds);
+      const nextSet = new Set(nextIds);
+      const added = nextIds.filter((id) => !prevSet.has(id));
+      const removed = cookingFamilyMemberIds.filter((id) => !nextSet.has(id));
+
+      setCookingFamilyMemberIds(nextIds);
+
+      // Applied mode: add/remove people across all meal cards and recommit.
+      if (advancedMode === "applied" && appliedPerMealAudience) {
+        let nextMeals = clonePerMealAudience(appliedPerMealAudience);
+        for (const id of added) {
+          nextMeals = addMemberToAllMeals(nextMeals, id);
+        }
+        for (const id of removed) {
+          nextMeals = removeMemberFromAllMeals(nextMeals, id);
+        }
+        setAppliedPerMealAudience(nextMeals);
+        setDraftPerMealAudience(clonePerMealAudience(nextMeals));
+      }
+    },
+    [advancedMode, appliedPerMealAudience, cookingFamilyMemberIds],
+  );
+
+  const handleDraftPerMealAudienceChange = useCallback(
+    (mealIndex: number, nextIds: string[]) => {
+      setDraftPerMealAudience((prev) =>
+        prev.map((ids, index) => (index === mealIndex ? nextIds : ids)),
+      );
+    },
+    [],
+  );
+
+  const handleDraftExtraPortionsChange = useCallback((next: number) => {
+    setDraftExtraPortions(Math.max(0, Math.min(99, next)));
+  }, []);
+
+  const handleOpenAdvancedSettings = useCallback(() => {
+    // Seed draft from applied (if any) or from current basic selection.
+    if (appliedPerMealAudience) {
+      setDraftPerMealAudience(clonePerMealAudience(appliedPerMealAudience));
+      setDraftExtraPortions(appliedExtraPortions);
+    } else {
+      setDraftPerMealAudience(
+        seedPerMealAudience(scaling.mealCount, cookingFamilyMemberIds),
+      );
+      setDraftExtraPortions(0);
+    }
+    setAdvancedMode("editing");
+  }, [
+    appliedExtraPortions,
+    appliedPerMealAudience,
+    cookingFamilyMemberIds,
+    scaling.mealCount,
+  ]);
+
+  const handleDoneAdvanced = useCallback(() => {
+    const differs = isAdvancedDraftDifferentFromBasic({
+      perMealAudience: draftPerMealAudience,
+      cookingFamilyMemberIds,
+      extraPortions: draftExtraPortions,
+    });
+
+    if (!differs) {
+      // No-op Done — stay/return to basic without Advanced badge.
+      setAppliedPerMealAudience(null);
+      setAppliedExtraPortions(0);
+      setAdvancedMode("basic");
+      return;
+    }
+
+    const committed = clonePerMealAudience(draftPerMealAudience);
+    setAppliedPerMealAudience(committed);
+    setAppliedExtraPortions(draftExtraPortions);
+    setCookingFamilyMemberIds(
+      deriveCookingUnionIds(committed, familyMembers),
+    );
+    setAdvancedMode("applied");
+  }, [
+    cookingFamilyMemberIds,
+    draftExtraPortions,
+    draftPerMealAudience,
+    familyMembers,
+  ]);
+
+  const handleResetAdvanced = useCallback(() => {
+    if (advancedMode === "editing" && appliedPerMealAudience) {
+      // Discard draft; restore last applied.
+      setDraftPerMealAudience(clonePerMealAudience(appliedPerMealAudience));
+      setDraftExtraPortions(appliedExtraPortions);
+      setAdvancedMode("applied");
+      return;
+    }
+
+    // Clear applied / abandon draft → basic.
+    setAppliedPerMealAudience(null);
+    setAppliedExtraPortions(0);
+    setDraftPerMealAudience(
+      seedPerMealAudience(scaling.mealCount, cookingFamilyMemberIds),
+    );
+    setDraftExtraPortions(0);
+    setAdvancedMode("basic");
+  }, [
+    advancedMode,
+    appliedExtraPortions,
+    appliedPerMealAudience,
+    cookingFamilyMemberIds,
+    scaling.mealCount,
+  ]);
+
+  const handleEditAdvanced = useCallback(() => {
+    if (!appliedPerMealAudience) {
+      return;
+    }
+    setDraftPerMealAudience(clonePerMealAudience(appliedPerMealAudience));
+    setDraftExtraPortions(appliedExtraPortions);
+    setAdvancedMode("editing");
+  }, [appliedExtraPortions, appliedPerMealAudience]);
 
   const handleAggregatedAmountEdit = useCallback(
     (
@@ -251,7 +494,19 @@ export function RecipePageProvider({
       mealCount: scaling.mealCount,
       onMealCountChange: handleMealCountChange,
       cookingFamilyMemberIds,
-      onCookingFamilyMemberIdsChange: setCookingFamilyMemberIds,
+      onCookingFamilyMemberIdsChange: handleCookingFamilyMemberIdsChange,
+      advancedMode,
+      draftPerMealAudience,
+      onDraftPerMealAudienceChange: handleDraftPerMealAudienceChange,
+      draftExtraPortions,
+      onDraftExtraPortionsChange: handleDraftExtraPortionsChange,
+      appliedExtraPortions,
+      appliedPersonMealSummary,
+      personMealCounts,
+      onOpenAdvancedSettings: handleOpenAdvancedSettings,
+      onDoneAdvanced: handleDoneAdvanced,
+      onResetAdvanced: handleResetAdvanced,
+      onEditAdvanced: handleEditAdvanced,
       audienceMemberIds,
       memberPortions,
       calorieTarget: scaling.calorieTarget,
@@ -259,7 +514,8 @@ export function RecipePageProvider({
       onCaloriesChange: scaling.handleCaloriesChange,
       effectiveRecipeIngredientById: nutrition.effectiveRecipeIngredientById,
       selectedUnits: scaling.selectedUnits,
-      getIngredientDisplayScalingFactor: nutrition.getIngredientDisplayScalingFactor,
+      getIngredientDisplayScalingFactor:
+        nutrition.getIngredientDisplayScalingFactor,
       getIngredientCalorieFactor: nutrition.getIngredientCalorieFactor,
       hasActiveScaling: scaling.hasActiveScaling,
       hasActiveNutritionScaling: scaling.hasActiveNutritionScaling,
@@ -285,14 +541,26 @@ export function RecipePageProvider({
       availableLogDateKeys,
     }),
     [
+      advancedMode,
+      appliedExtraPortions,
+      appliedPersonMealSummary,
       audienceMemberIds,
       availableLogDateKeys,
       cookingAggregatedByGroupId,
       cookingAggregatedUngrouped,
       cookingFamilyMemberIds,
+      draftExtraPortions,
+      draftPerMealAudience,
       familyMembers,
       handleAggregatedAmountEdit,
+      handleCookingFamilyMemberIdsChange,
+      handleDoneAdvanced,
+      handleDraftExtraPortionsChange,
+      handleDraftPerMealAudienceChange,
+      handleEditAdvanced,
       handleMealCountChange,
+      handleOpenAdvancedSettings,
+      handleResetAdvanced,
       ingredients,
       memberPortions,
       nutrition.effectiveRecipeIngredientById,
@@ -301,6 +569,7 @@ export function RecipePageProvider({
       nutrition.nutritionRows,
       nutrition.recipeForScaledNutrition,
       originalRecipeIngredientById,
+      personMealCounts,
       recipe,
       scaling,
       ungroupedIngredients,
@@ -308,7 +577,9 @@ export function RecipePageProvider({
     ],
   );
 
-  return <RecipePageContext.Provider value={value}>{children}</RecipePageContext.Provider>;
+  return (
+    <RecipePageContext.Provider value={value}>{children}</RecipePageContext.Provider>
+  );
 }
 
 function useRecipePageContext() {
@@ -336,6 +607,17 @@ export function useRecipePageCookingForData() {
     familyMembers,
     cookingFamilyMemberIds,
     onCookingFamilyMemberIdsChange,
+    advancedMode,
+    draftPerMealAudience,
+    onDraftPerMealAudienceChange,
+    draftExtraPortions,
+    onDraftExtraPortionsChange,
+    appliedExtraPortions,
+    appliedPersonMealSummary,
+    onOpenAdvancedSettings,
+    onDoneAdvanced,
+    onResetAdvanced,
+    onEditAdvanced,
   } = useRecipePageContext();
   return {
     mealCount,
@@ -343,6 +625,17 @@ export function useRecipePageCookingForData() {
     familyMembers,
     cookingFamilyMemberIds,
     onCookingFamilyMemberIdsChange,
+    advancedMode,
+    draftPerMealAudience,
+    onDraftPerMealAudienceChange,
+    draftExtraPortions,
+    onDraftExtraPortionsChange,
+    appliedExtraPortions,
+    appliedPersonMealSummary,
+    onOpenAdvancedSettings,
+    onDoneAdvanced,
+    onResetAdvanced,
+    onEditAdvanced,
   };
 }
 
@@ -370,7 +663,7 @@ export function useRecipePageInstructionsSectionData() {
     cookingFamilyMemberIds,
     audienceMemberIds,
     memberPortions,
-    mealCount,
+    personMealCounts,
     effectiveRecipeIngredientById,
     selectedUnits,
     getIngredientDisplayScalingFactor,
@@ -388,7 +681,7 @@ export function useRecipePageInstructionsSectionData() {
     recipeServings: recipe.servings,
     audienceMemberIds,
     memberPortions,
-    mealCount,
+    personMealCounts,
     cookingFamilyMemberIds,
     effectiveRecipeIngredientById,
     selectedUnits,
@@ -405,6 +698,8 @@ export function useRecipePageIngredientsSectionData() {
     memberPortions,
     cookingFamilyMemberIds,
     mealCount,
+    personMealCounts,
+    advancedMode,
     effectiveRecipeIngredientById,
     hasActiveScaling,
     localScaleByIngredientId,
@@ -427,6 +722,8 @@ export function useRecipePageIngredientsSectionData() {
     memberPortions,
     cookingFamilyMemberIds,
     mealCount,
+    personMealCounts,
+    advancedMode,
     effectiveRecipeIngredientById,
     hasActiveScaling,
     localScaleByIngredientId,
@@ -447,7 +744,6 @@ export function useRecipePageAddToLogData() {
   const {
     recipe,
     familyMembers,
-    mealCount,
     recipeForScaledNutrition,
     cookingFamilyMemberIds,
     audienceMemberIds,
@@ -464,7 +760,8 @@ export function useRecipePageAddToLogData() {
     memberPortions,
     cookingFamilyMemberIds,
     recipeServings: recipe.servings,
-    mealCount,
+    // Always one personal portion — never × mealCount / personMealCounts.
+    mealCount: 1,
     availableLogDateKeys,
   };
 }

@@ -4,7 +4,7 @@ import { RotateCcw } from "lucide-react";
 import type { IngredientType } from "@/types/ingredient";
 import { IngredientItem } from "@/components/recipes/ingredient-item";
 import { isScaleModified } from "@/lib/recipes/helpers";
-import { getSharedPortionShares } from "@/lib/recipes/shared-portion-shares";
+import { getBatchPortionShares, getSharedPortionShares } from "@/lib/recipes/shared-portion-shares";
 import { useRecipePageIngredientsSectionData } from "@/components/context/recipe-page-context";
 import { PortionSplitCard } from "@/components/recipes/recipe-page/portion-split-card";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
@@ -12,7 +12,8 @@ import type { CookingAggregatedLine } from "@/lib/recipes/resolve-cooking-displa
 import type { RecipeType } from "@/types/recipe";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 
-const SHARED_INGREDIENTS_SCOPE_LABEL = "Portion sizes";
+const BASIC_PORTION_SCOPE_LABEL = "Portion sizes";
+const BATCH_SPLIT_SCOPE_LABEL = "Batch split";
 
 function resolveUnitForAggregatedLine(
   line: CookingAggregatedLine,
@@ -156,6 +157,8 @@ export function IngredientsSection() {
     memberPortions,
     cookingFamilyMemberIds,
     mealCount,
+    personMealCounts,
+    advancedMode,
     effectiveRecipeIngredientById,
     hasActiveScaling,
     localScaleByIngredientId,
@@ -176,9 +179,18 @@ export function IngredientsSection() {
     return familyMembers.filter((member) => cookingIdSet.has(member.id));
   }, [cookingFamilyMemberIds, familyMembers]);
 
+  const isAppliedAdvanced = advancedMode === "applied";
+
   const portionSplitMembers = useMemo(() => {
-    // Reflect only the active cook session — same people as "Cooking for".
-    const shares = getSharedPortionShares(cookingFamilyMembers, memberPortions);
+    // Applied advanced: batch split by meals × multiplier. Otherwise: one-meal pie.
+    const shares = isAppliedAdvanced
+      ? getBatchPortionShares(
+          cookingFamilyMembers,
+          memberPortions,
+          personMealCounts,
+        )
+      : getSharedPortionShares(cookingFamilyMembers, memberPortions);
+
     return shares.map((entry, index) => {
       const member = cookingFamilyMembers.find(
         (familyMember) => familyMember.id === entry.familyMemberId,
@@ -190,12 +202,20 @@ export function IngredientsSection() {
         label,
         share: entry.share,
         multiplier: entry.multiplier,
+        weight: entry.weight,
       };
     });
-  }, [cookingFamilyMembers, memberPortions]);
+  }, [
+    cookingFamilyMembers,
+    isAppliedAdvanced,
+    memberPortions,
+    personMealCounts,
+  ]);
 
-  // Always show when 2+ people are selected in Cooking for.
-  const showPortionSplitChart = cookingFamilyMembers.length > 1;
+  const showPortionSplitChart = portionSplitMembers.length > 1;
+  const portionScopeLabel = isAppliedAdvanced
+    ? BATCH_SPLIT_SCOPE_LABEL
+    : BASIC_PORTION_SCOPE_LABEL;
 
   const sharedRenderParams = useMemo(
     () => ({
@@ -258,7 +278,7 @@ export function IngredientsSection() {
       {showPortionSplitChart ? (
         <PortionSplitCard
           members={portionSplitMembers}
-          scopeLabel={SHARED_INGREDIENTS_SCOPE_LABEL}
+          scopeLabel={portionScopeLabel}
         />
       ) : null}
       {ungroupedIngredients.length > 0 && hasUngroupedLines ? (

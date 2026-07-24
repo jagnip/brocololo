@@ -10,6 +10,8 @@ export type PortionSplitMember = {
   label: string;
   share: number;
   multiplier: number;
+  /** Absolute batch weight (meals × multiplier) when showing batch split. */
+  weight?: number;
 };
 
 type PortionSplitCardProps = {
@@ -87,8 +89,11 @@ export function PortionSplitCard({ members, scopeLabel }: PortionSplitCardProps)
             aria-hidden="true"
           >
             {members.map((member, index) => {
-              const multiplierLabel =
-                formatPortionMultiplierBadgeLabel(member.multiplier) ?? "×1";
+              const detailLabel =
+                member.weight != null
+                  ? `${member.weight} portion${member.weight === 1 ? "" : "s"}`
+                  : (formatPortionMultiplierBadgeLabel(member.multiplier) ??
+                    "×1");
               return (
                 <span
                   key={`${member.label}-${index}`}
@@ -104,9 +109,7 @@ export function PortionSplitCard({ members, scopeLabel }: PortionSplitCardProps)
                     }}
                   />
                   <span>{member.label}</span>
-                  <span className="text-muted-foreground">
-                    · {multiplierLabel}
-                  </span>
+                  <span className="text-muted-foreground">· {detailLabel}</span>
                 </span>
               );
             })}

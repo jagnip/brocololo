@@ -30,7 +30,10 @@ function InstructionStepIngredientCard(props: {
   >["memberPortions"];
   recipeServings: number;
   selectedUnitId: string | null;
-  rowScaleFactor: number;
+  /** Manual/calorie scale only — meal counts applied per person below. */
+  manualScale: number;
+  /** Per-person meal counts for this cook session (defaults to 1 each). */
+  personMealCounts: Map<string, number>;
   showMemberBreakdown: boolean;
   badgeClassName?: string;
 }) {
@@ -42,7 +45,8 @@ function InstructionStepIngredientCard(props: {
     memberPortions,
     recipeServings,
     selectedUnitId,
-    rowScaleFactor,
+    manualScale,
+    personMealCounts,
     showMemberBreakdown,
     badgeClassName,
   } = props;
@@ -65,6 +69,11 @@ function InstructionStepIngredientCard(props: {
         continue;
       }
 
+      const memberMealCount = personMealCounts.get(memberId) ?? 0;
+      if (memberMealCount <= 0) {
+        continue;
+      }
+
       const badgeAmount = getInstructionIngredientBadgeAmount({
         amount: recipeIngredient.amount,
         memberAdjustments: recipeIngredient.memberAdjustments,
@@ -74,7 +83,7 @@ function InstructionStepIngredientCard(props: {
         memberPortions,
         cookingFamilyMemberIds,
         recipeServings,
-        rowScaleFactor,
+        rowScaleFactor: manualScale * memberMealCount,
       });
 
       if (badgeAmount == null) {
@@ -90,10 +99,11 @@ function InstructionStepIngredientCard(props: {
     cookingFamilyMemberIds,
     familyMembers,
     hasAmount,
+    manualScale,
     memberPortions,
+    personMealCounts,
     recipeIngredient,
     recipeServings,
-    rowScaleFactor,
   ]);
 
   const isVisibleToAnyone = cookingFamilyMemberIds.some((memberId) =>
@@ -173,7 +183,7 @@ export function InstructionsSection() {
     recipeServings,
     audienceMemberIds,
     memberPortions,
-    mealCount,
+    personMealCounts,
     cookingFamilyMemberIds,
     effectiveRecipeIngredientById,
     selectedUnits,
@@ -288,7 +298,8 @@ export function InstructionsSection() {
                           memberPortions={memberPortions}
                           recipeServings={recipeServings}
                           selectedUnitId={selectedUnitId}
-                          rowScaleFactor={manualScale * mealCount}
+                          manualScale={manualScale}
+                          personMealCounts={personMealCounts}
                           showMemberBreakdown={showMemberBreakdown}
                           badgeClassName={badgeClassName}
                         />
