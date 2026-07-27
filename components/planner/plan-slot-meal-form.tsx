@@ -414,6 +414,13 @@ export function PlanSlotMealForm({
             rows.length > 0 && "gap-4",
           )}
         >
+            {/* Recipe mode: amounts are computed from recipe + eaters — fields stay visible but locked. */}
+            {!isCustomMode ? (
+              <p className="text-sm text-muted-foreground">
+                Amounts are calculated from the recipe and assigned eaters.
+              </p>
+            ) : null}
+
             {rows.length > 0 ? (
               <div className="space-y-2">
                 {rows.map((row) => {
@@ -422,6 +429,8 @@ export function PlanSlotMealForm({
                     : null;
                   const availableUnits =
                     selectedIngredient?.unitConversions ?? [];
+                  // Recipe-linked rows are read-only; custom meal rows stay editable.
+                  const rowsDisabled = !isCustomMode;
 
                   return (
                     <div
@@ -435,6 +444,7 @@ export function PlanSlotMealForm({
                           renderLabel={renderIngredientDropdownLabel}
                           renderTriggerLabel={renderIngredientTriggerLabel}
                           value={row.ingredientId}
+                          disabled={rowsDisabled}
                           onValueChange={(nextValue) => {
                             if (!nextValue) {
                               setRows((prev) =>
@@ -491,6 +501,7 @@ export function PlanSlotMealForm({
                         min={0}
                         step="any"
                         placeholder="0"
+                        disabled={rowsDisabled}
                         className="w-full sm:w-24 sm:min-w-24 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         value={row.amount == null ? "" : row.amount}
                         onChange={(event) => {
@@ -518,7 +529,7 @@ export function PlanSlotMealForm({
                               ),
                             );
                           }}
-                          disabled={!selectedIngredient}
+                          disabled={rowsDisabled || !selectedIngredient}
                         >
                           <SelectTrigger className="min-w-0 w-full sm:w-32 sm:min-w-32">
                             <SelectValue placeholder="Unit" />
@@ -543,6 +554,7 @@ export function PlanSlotMealForm({
                         size="icon"
                         className="justify-self-start"
                         aria-label="Remove ingredient row"
+                        disabled={rowsDisabled}
                         onClick={() => handleRemoveRow(row.key)}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -553,14 +565,17 @@ export function PlanSlotMealForm({
               </div>
             ) : null}
 
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full sm:w-auto sm:self-start"
-              onClick={handleAddRow}
-            >
-            Add ingredient
-          </Button>
+            {/* Custom meals are the only place to add/edit ingredient rows on a plan slot. */}
+            {isCustomMode ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto sm:self-start"
+                onClick={handleAddRow}
+              >
+                Add ingredient
+              </Button>
+            ) : null}
         </section>
       </div>
 

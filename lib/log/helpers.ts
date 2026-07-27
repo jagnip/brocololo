@@ -66,6 +66,8 @@ function isPersonApplicableForTargeting(
 /**
  * Per-person amount for one meal from a recipe batch row.
  * Formula: (batch ÷ servings) × personMultiplier — independent per person, not a weighted split.
+ * Portion multipliers (RecipeMemberPortion / FamilyMember.portionMultiplier) are intentional
+ * permanent behavior, not legacy pending removal.
  */
 export function getFamilyMemberIngredientAmountPerMeal(params: {
   amount: number | null;
