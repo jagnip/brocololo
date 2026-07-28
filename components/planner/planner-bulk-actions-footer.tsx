@@ -8,6 +8,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 type PlannerBulkActionsFooterProps = {
   selectedCount: number;
   onReplaceMeals?: () => void;
+  onEditEaters?: () => void;
   onRemoveMeals?: () => void;
   onDone: () => void;
 };
@@ -64,6 +65,7 @@ function useSidebarInsetBounds(): InsetBounds {
 export function PlannerBulkActionsFooter({
   selectedCount,
   onReplaceMeals,
+  onEditEaters,
   onRemoveMeals,
   onDone,
 }: PlannerBulkActionsFooterProps) {
@@ -108,6 +110,17 @@ export function PlannerBulkActionsFooter({
                 className={bulkBarActionClassName}
               >
                 Replace meals
+              </Button>
+            ) : null}
+            {onEditEaters ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onEditEaters}
+                className={bulkBarActionClassName}
+              >
+                Edit eaters
               </Button>
             ) : null}
             {onRemoveMeals ? (
