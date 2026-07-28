@@ -343,6 +343,10 @@ export function PlannerForm({
   const generatedPlan = shouldShowGeneratedPlan(plan, isGenerating)
     ? plan
     : null;
+  // Save when any slot has a meal — Find meals or manual add recipe / custom meal.
+  const canSavePlan = plan.some(
+    (slot) => slot.recipe != null || slot.customMeal != null,
+  );
   const planColumnMode = getPlannerPlanColumnMode({
     isGenerating,
     plan,
@@ -352,25 +356,32 @@ export function PlannerForm({
   const fridgeIngredientIds = (form.watch("fridgeIngredientIds") ??
     []) as string[];
   const ingredientOptions = ingredientsToLogIngredientOptions(ingredients);
-  // Save stays in the global top bar; Find meals lives under the planner column on this page.
+  // Find meals + Save plan share the top bar; leave via Meal plan breadcrumb.
   const topbarActions = [
     {
-      id: "cancel-plan-create",
-      label: "Cancel",
-      href: ROUTES.planCurrent,
+      id: "find-meals",
+      label: isGenerating ? MESSAGES.planner.generatePending : "Find meals",
+      onClick: () => {
+        void form.handleSubmit(onSubmit)();
+      },
+      disabled:
+        isGenerating ||
+        hasInvalidTimeLimitInputs ||
+        hasInvalidRollingMealsInputs,
+      ariaBusy: isGenerating,
       variant: "outline" as const,
       size: "default" as const,
-      ariaLabel: "Cancel and go back to meal plan",
+      ariaLabel: "Find meals for this plan",
     },
     {
       id: "save-plan",
       label: isSaving ? MESSAGES.planner.savePending : "Save plan",
       onClick: () => {
-        if (!generatedPlan) return;
-        void handleSavePlan(generatedPlan);
+        if (!canSavePlan) return;
+        void handleSavePlan(plan);
       },
-      // Keep action visible for discoverability; enable only when plan exists.
-      disabled: !generatedPlan || isSaving,
+      // Visible for discoverability; enabled once at least one meal exists.
+      disabled: !canSavePlan || isSaving || isGenerating,
       ariaBusy: isSaving,
       variant: "default" as const,
       size: "default" as const,
@@ -671,7 +682,7 @@ export function PlannerForm({
       <div
         className={`flex flex-col gap-6 lg:grid ${desktopGridColumns} lg:items-start lg:gap-x-4 lg:gap-y-6`}
       >
-        {/* Form + Find meals: one sticky column so scroll does not leave the button under the form. */}
+        {/* Sticky criteria column; Find meals / Save live in the top bar. */}
         <div className="flex flex-col gap-3 lg:sticky lg:top-20">
           <Form {...form}>
               <form
@@ -790,27 +801,6 @@ export function PlannerForm({
               </div>
             </form>
           </Form>
-          <Button
-            type="button"
-            variant="outline"
-            size="default"
-            className={cn(
-              "w-full shrink-0 sm:w-fit",
-              // Desktop collapse hides criteria; keep Find meals in sync with that rail.
-              isFormCollapsed && "lg:hidden",
-            )}
-            disabled={
-              isGenerating ||
-              hasInvalidTimeLimitInputs ||
-              hasInvalidRollingMealsInputs
-            }
-            aria-busy={isGenerating}
-            onClick={() => {
-              void form.handleSubmit(onSubmit)();
-            }}
-          >
-            {isGenerating ? MESSAGES.planner.generatePending : "Find meals"}
-          </Button>
         </div>
 
         <div className="hidden lg:block">

@@ -178,12 +178,30 @@ describe("getPlannerPoolItemsForPlan", () => {
     id: string;
     used?: boolean;
     recipeName?: string;
+    /** Family members assigned as eaters (DB audienceMembers → cookingFamilyMemberIds). */
+    cookingFamilyMemberIds?: string[];
+    customMeal?: {
+      name: string;
+      ingredients: Array<{
+        ingredientId: string;
+        unitId: string;
+        amount: number;
+      }>;
+    } | null;
   }) {
+    const cookingFamilyMemberIds = overrides.cookingFamilyMemberIds ?? [
+      "fm-a",
+      "fm-b",
+    ];
     return {
       id: overrides.id,
       date: slotDate,
       mealType: "DINNER",
       used: overrides.used ?? false,
+      // getPlanById maps audienceMembers → cookingFamilyMemberIds
+      audienceMembers: cookingFamilyMemberIds.map((familyMemberId) => ({
+        familyMemberId,
+      })),
       recipe: overrides.recipeName
         ? {
             id: "recipe-1",
@@ -192,11 +210,13 @@ describe("getPlannerPoolItemsForPlan", () => {
             images: [],
             ingredients: [],
             memberPortions: [],
+            audienceMembers: [],
           }
         : null,
+      customName: overrides.customMeal?.name ?? null,
+      customIngredients: overrides.customMeal?.ingredients ?? [],
       customMeal: null,
       alternatives: [],
-      cookingFamilyMemberIds: ["fm-a", "fm-b"],
     };
   }
 
@@ -261,6 +281,71 @@ describe("getPlannerPoolItemsForPlan", () => {
     expect(poolForA).toHaveLength(0);
     expect(poolForB).toHaveLength(1);
     expect(poolForB[0]?.planSlotId).toBe("slot-1");
+  });
+
+  it("hides slots the selected person is not assigned to eat", async () => {
+    vi.mocked(prisma.plan.findFirst).mockResolvedValue({
+      audienceMembers: [{ familyMemberId: "fm-a" }, { familyMemberId: "fm-b" }],
+      slots: [
+        makePlanSlot({
+          id: "slot-a-only",
+          recipeName: "Toast",
+          cookingFamilyMemberIds: ["fm-a"],
+        }),
+        makePlanSlot({
+          id: "slot-b-only",
+          recipeName: "Soup",
+          cookingFamilyMemberIds: ["fm-b"],
+        }),
+      ],
+    } as never);
+    vi.mocked(prisma.logEntryRecipe.findMany).mockResolvedValue([]);
+
+    const poolForA = await getPlannerPoolItemsForPlan({
+      userId: "user-1",
+      planId: "plan-1",
+      familyMemberId: "fm-a",
+    });
+
+    expect(poolForA.map((item) => item.planSlotId)).toEqual(["slot-a-only"]);
+  });
+
+  it("equal-splits custom meal ingredient amounts across assigned eaters", async () => {
+    vi.mocked(prisma.plan.findFirst).mockResolvedValue({
+      audienceMembers: [{ familyMemberId: "fm-a" }, { familyMemberId: "fm-b" }],
+      slots: [
+        makePlanSlot({
+          id: "slot-custom",
+          cookingFamilyMemberIds: ["fm-a", "fm-b"],
+          customMeal: {
+            name: "Leftovers",
+            ingredients: [
+              {
+                ingredientId: "ing-milk",
+                unitId: "unit-ml",
+                amount: 240,
+              },
+            ],
+          },
+        }),
+      ],
+    } as never);
+    vi.mocked(prisma.logEntryRecipe.findMany).mockResolvedValue([]);
+
+    const poolForA = await getPlannerPoolItemsForPlan({
+      userId: "user-1",
+      planId: "plan-1",
+      familyMemberId: "fm-a",
+    });
+
+    expect(poolForA).toHaveLength(1);
+    expect(poolForA[0]?.ingredients).toEqual([
+      {
+        ingredientId: "ing-milk",
+        unitId: "unit-ml",
+        amount: 120,
+      },
+    ]);
   });
 });
 

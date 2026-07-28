@@ -17,6 +17,7 @@ import type { LogIngredientOption } from "@/components/log/log-ingredients-form"
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { PlannerBulkActionsFooter } from "./planner-bulk-actions-footer";
 import { PlanSlotMealDialog } from "./plan-slot-meal-dialog";
+import { PlannerBulkEditEatersDialog } from "./planner-bulk-edit-eaters-dialog";
 import { useSlotBulkSelection } from "./use-slot-bulk-selection";
 import { getReplaceMealDialogCopy } from "@/lib/planner/plan-slot-meal-dialog-copy";
 import { toast } from "sonner";
@@ -84,7 +85,10 @@ export function PlanView({
   });
 
   const [isBulkReplaceDialogOpen, setIsBulkReplaceDialogOpen] = useState(false);
+  const [isBulkEditEatersDialogOpen, setIsBulkEditEatersDialogOpen] =
+    useState(false);
   const bulkReplaceDialogCopy = getReplaceMealDialogCopy(selectedCount);
+  const canBulkEditEaters = onAudienceChange && familyMembers.length > 0;
 
   const handleBulkReplaceSave = async (payload: PlanSlotMealPayload) => {
     if (!onSetMeal) return;
@@ -102,6 +106,17 @@ export function PlanView({
     selectedKeys.forEach((slotKey) => {
       onRemove(slotKey);
     });
+    clearSelection();
+  };
+
+  const handleBulkEditEatersSave = (memberIds: string[]) => {
+    if (!onAudienceChange) return;
+
+    // Apply the same audience to every selected slot for a simple bulk replace flow.
+    selectedKeys.forEach((slotKey) => {
+      onAudienceChange(slotKey, memberIds);
+    });
+    setIsBulkEditEatersDialogOpen(false);
     clearSelection();
   };
 
@@ -168,6 +183,9 @@ export function PlanView({
         onReplaceMeals={
           onSetMeal ? () => setIsBulkReplaceDialogOpen(true) : undefined
         }
+        onEditEaters={
+          canBulkEditEaters ? () => setIsBulkEditEatersDialogOpen(true) : undefined
+        }
         onRemoveMeals={onRemove ? handleBulkRemoveMeals : undefined}
         onDone={clearSelection}
       />
@@ -189,6 +207,14 @@ export function PlanView({
           isSaving={false}
           onCancel={() => setIsBulkReplaceDialogOpen(false)}
           onSave={handleBulkReplaceSave}
+        />
+      ) : null}
+      {canBulkEditEaters ? (
+        <PlannerBulkEditEatersDialog
+          open={isBulkEditEatersDialogOpen}
+          familyMembers={familyMembers}
+          onCancel={() => setIsBulkEditEatersDialogOpen(false)}
+          onSave={handleBulkEditEatersSave}
         />
       ) : null}
     </section>

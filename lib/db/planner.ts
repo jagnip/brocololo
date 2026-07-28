@@ -754,6 +754,7 @@ export async function getPlannerPoolItemsForPlan(params: {
   if (!slots) return [];
 
   // Pool = Manage-tab skips (global `used`) plus per-person log linkage.
+  // Only slots this member is assigned to eat appear (hide unassigned meals).
   const items: PlannerPoolItem[] = [];
   for (const slot of slots) {
     if (slot.used) {
@@ -761,6 +762,11 @@ export async function getPlannerPoolItemsForPlan(params: {
     }
 
     if (slot.id && linkedSlotIds.has(slot.id)) {
+      continue;
+    }
+
+    // Member must be an assigned eater on this slot to see it in their pool.
+    if (!slot.cookingFamilyMemberIds?.includes(params.familyMemberId)) {
       continue;
     }
 
@@ -774,7 +780,6 @@ export async function getPlannerPoolItemsForPlan(params: {
       continue;
     }
 
-    const dayKey = slot.date.toISOString().slice(0, 10);
     const mealType = toLogMealType(slot.mealType);
 
     if (hasRecipe && slot.recipe) {
@@ -809,6 +814,8 @@ export async function getPlannerPoolItemsForPlan(params: {
     }
 
     if (hasCustom && slot.customMeal) {
+      // Equal-split the fixed custom meal total across assigned eaters for this person's log line.
+      const eaterCount = slot.cookingFamilyMemberIds?.length ?? 0;
       items.push({
         id: `plan-${slot.id}`,
         planSlotId: slot.id,
@@ -817,19 +824,22 @@ export async function getPlannerPoolItemsForPlan(params: {
         title: slot.customMeal.name,
         sourceRecipeId: null,
         imageUrl: null,
-        ingredients: slot.customMeal.ingredients
-          .filter(
-            (row): row is PlannerPoolIngredientRow =>
-              row.ingredientId != null &&
-              row.unitId != null &&
-              row.amount != null &&
-              row.amount > 0,
-          )
-          .map((row) => ({
-            ingredientId: row.ingredientId,
-            unitId: row.unitId!,
-            amount: row.amount!,
-          })),
+        ingredients:
+          eaterCount <= 0
+            ? []
+            : slot.customMeal.ingredients
+                .filter(
+                  (row): row is PlannerPoolIngredientRow =>
+                    row.ingredientId != null &&
+                    row.unitId != null &&
+                    row.amount != null &&
+                    row.amount > 0,
+                )
+                .map((row) => ({
+                  ingredientId: row.ingredientId,
+                  unitId: row.unitId!,
+                  amount: Math.round((row.amount! / eaterCount) * 1000) / 1000,
+                })),
       });
     }
   }
@@ -1031,17 +1041,6 @@ export async function updatePlan(
 
     if (existingPlan.log) {
       const logId = existingPlan.log.id;
-      const mealTypes = [
-        LogMealType.BREAKFAST,
-        LogMealType.LUNCH,
-        LogMealType.SNACK,
-        LogMealType.DINNER,
-      ] as const;
-      const familyMembers = await tx.familyMember.findMany({
-        where: { userId },
-        select: { id: true },
-        orderBy: { sortOrder: "asc" },
-      });
 
       // Keep log days aligned with plan dates.
       for (const dateKey of removedDateKeys) {
@@ -1052,17 +1051,26 @@ export async function updatePlan(
           },
         });
       }
+
+      // New dates: only create LogEntry rows for members assigned as eaters on each slot
+      // (matches createBaselineLogTx). SNACK only for members assigned to ≥1 meal that day.
       for (const dateKey of addedDateKeys) {
         const date = new Date(`${dateKey}T00:00:00.000Z`);
-        for (const familyMember of familyMembers) {
-          for (const mealType of mealTypes) {
+        const daySlots = slots.filter((slot) => toDateKey(slot.date) === dateKey);
+        const snackMemberIds = new Set<string>();
+
+        for (const slot of daySlots) {
+          const mealType = toLogMealType(slot.mealType);
+          const audienceIds = [...new Set(slot.cookingFamilyMemberIds ?? [])];
+          for (const familyMemberId of audienceIds) {
+            snackMemberIds.add(familyMemberId);
             await tx.logEntry.upsert({
               where: {
                 logId_date_mealType_familyMemberId: {
                   logId,
                   date,
                   mealType,
-                  familyMemberId: familyMember.id,
+                  familyMemberId,
                 },
               },
               update: {},
@@ -1070,10 +1078,30 @@ export async function updatePlan(
                 logId,
                 date,
                 mealType,
-                familyMemberId: familyMember.id,
+                familyMemberId,
               },
             });
           }
+        }
+
+        for (const familyMemberId of snackMemberIds) {
+          await tx.logEntry.upsert({
+            where: {
+              logId_date_mealType_familyMemberId: {
+                logId,
+                date,
+                mealType: LogMealType.SNACK,
+                familyMemberId,
+              },
+            },
+            update: {},
+            create: {
+              logId,
+              date,
+              mealType: LogMealType.SNACK,
+              familyMemberId,
+            },
+          });
         }
       }
     }

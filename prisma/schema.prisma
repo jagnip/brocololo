@@ -62,7 +62,10 @@ model FamilyMember {
   name      String
   isSelf    Boolean @default(false) @map("is_self")
   sortOrder Int     @map("sort_order")
-  /** Household default portion multiplier (1× = one base per-meal share). */
+  /**
+   * Household default portion multiplier (1× = one base per-meal share).
+   * Intentional permanent behavior — not legacy / not pending removal.
+   */
   portionMultiplier Float @default(1) @map("portion_multiplier")
 
   user                      User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
