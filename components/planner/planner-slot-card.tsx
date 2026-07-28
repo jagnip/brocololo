@@ -68,6 +68,8 @@ type PlannerSlotCardProps = {
   onToggleUsed?: () => void;
   familyMembers?: FamilyMemberRow[];
   onAudienceChange?: (memberIds: string[]) => void;
+  /** Live "N of M" label for batch-recipe groups with 2+ members. */
+  batchLabel?: { index: number; total: number };
   recipes: RecipeType[];
   ingredientOptions: LogIngredientOption[];
 };
@@ -84,6 +86,7 @@ export function PlannerSlotCard({
   onToggleUsed,
   familyMembers = [],
   onAudienceChange,
+  batchLabel,
   recipes,
   ingredientOptions,
 }: PlannerSlotCardProps) {
@@ -438,6 +441,16 @@ export function PlannerSlotCard({
           ) : (
             <RecipeImagePlaceholder />
           )}
+          {/* Batch badge only when recipe is marked batch AND live group has 2+ slots. */}
+          {recipe!.isBatchRecipe && batchLabel ? (
+            <Badge
+              variant="default"
+              className="absolute right-3 top-3 z-2 shadow-md"
+              aria-label={`Meal ${batchLabel.index} of ${batchLabel.total}`}
+            >
+              {batchLabel.index} of {batchLabel.total}
+            </Badge>
+          ) : null}
         </div>
         <CardHeader className="px-card-x py-card-y">
           <div className="min-w-0">

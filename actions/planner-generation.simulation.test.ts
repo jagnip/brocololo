@@ -82,7 +82,8 @@ function buildSimulationRecipes() {
       id: `sweet-${index}`,
       name: `Sweet ${index}`,
       categories: [breakfastOccasion],
-      servings: 2, // Avoid batch carry-forward for this baseline simulation.
+      servings: 2,
+      plannedMealCount: 1, // Avoid multi-meal carry-forward for this baseline simulation.
       handsOnTime: 10 + (index % 2) * 5, // Always <= weekday breakfast hands-on default (30).
       totalTime: 15 + (index % 3) * 5,
       lastUsedInPlanner: null,
@@ -103,7 +104,8 @@ function buildSimulationRecipes() {
           type: "PROTEIN",
         }),
       ],
-      servings: 2, // Avoid batch carry-forward for this baseline simulation.
+      servings: 2,
+      plannedMealCount: 1, // Avoid multi-meal carry-forward for this baseline simulation.
       handsOnTime: 15 + (index % 2) * 5, // Always <= weekday lunch hands-on default (30).
       totalTime: 25 + (index % 2) * 5, // Always <= weekday lunch/dinner total default (30).
       lastUsedInPlanner: null,
@@ -231,6 +233,103 @@ describe("planner generation simulation with default time limits", () => {
     // Conservative baseline for current algorithm. Tighten these as scoring improves.
     expect(metrics.uniqueRecipeRatio).toBeGreaterThanOrEqual(0.55);
     expect(metrics.maxRepeatCount).toBeLessThanOrEqual(3);
+  });
+
+  it("does not fail generation when a batch continuation day has tight time limits", async () => {
+    const dinnerOccasion = createMockCategory({
+      id: "occasion-dinner",
+      name: "Dinner",
+      slug: "dinner",
+      type: "MEAL_OCCASION",
+    });
+    const breakfastOccasion = createMockCategory({
+      id: "occasion-breakfast",
+      name: "Breakfast",
+      slug: "breakfast",
+      type: "MEAL_OCCASION",
+    });
+    const lunchOccasion = createMockCategory({
+      id: "occasion-lunch",
+      name: "Lunch",
+      slug: "lunch",
+      type: "MEAL_OCCASION",
+    });
+
+    // Long cook that is only eligible on day 1; day 2 would fail candidate filtering.
+    const batchDinner = createMockRecipe({
+      id: "batch-dinner",
+      name: "Batch Dinner",
+      categories: [dinnerOccasion],
+      plannedMealCount: 2,
+      isBatchRecipe: true,
+      handsOnTime: 45,
+      totalTime: 60,
+    });
+    const quickBreakfast = createMockRecipe({
+      id: "quick-breakfast",
+      name: "Quick Breakfast",
+      categories: [breakfastOccasion],
+      plannedMealCount: 1,
+      handsOnTime: 10,
+      totalTime: 15,
+    });
+    const quickLunch = createMockRecipe({
+      id: "quick-lunch",
+      name: "Quick Lunch",
+      categories: [lunchOccasion],
+      plannedMealCount: 1,
+      handsOnTime: 10,
+      totalTime: 15,
+    });
+
+    vi.mocked(getRecipes).mockResolvedValue([batchDinner, quickBreakfast, quickLunch]);
+    vi.mocked(listFamilyMembers).mockResolvedValue([
+      { id: "family-self", name: "You", isSelf: true, sortOrder: 0 } as any,
+      { id: "family-member-1", name: "Partner", isSelf: false, sortOrder: 1 } as any,
+    ]);
+
+    const start = new Date("2026-04-20T00:00:00.000Z");
+    const end = new Date("2026-04-21T00:00:00.000Z");
+    const dailyAudienceByMeal = buildDailyAudienceForSimulation(start, end);
+    const dailyTimeLimits: DayTimeLimitsType[] = [
+      {
+        date: "2026-04-20",
+        breakfastHandsOnMax: 30,
+        lunchHandsOnMax: 30,
+        dinnerHandsOnMax: 60,
+        breakfastTotalMax: 30,
+        lunchTotalMax: 30,
+        dinnerTotalMax: 90,
+      },
+      {
+        date: "2026-04-21",
+        breakfastHandsOnMax: 30,
+        lunchHandsOnMax: 30,
+        // Too tight for a fresh cook of batchDinner — continuation must still succeed.
+        dinnerHandsOnMax: 20,
+        breakfastTotalMax: 30,
+        lunchTotalMax: 30,
+        dinnerTotalMax: 30,
+      },
+    ];
+
+    const result = await generatePlan(
+      start,
+      end,
+      dailyAudienceByMeal,
+      dailyTimeLimits,
+      [],
+      [],
+    );
+
+    expect(result.type).toBe("success");
+    if (result.type !== "success") return;
+
+    const dinners = result.plan.filter((slot) => slot.mealType === "DINNER");
+    expect(dinners).toHaveLength(2);
+    expect(dinners.every((slot) => slot.recipe?.id === "batch-dinner")).toBe(true);
+    expect(dinners[0]?.batchGroupId).toBeTruthy();
+    expect(dinners[0]?.batchGroupId).toBe(dinners[1]?.batchGroupId);
   });
 
   it.runIf(process.env.PLANNER_DEBUG === "1")(

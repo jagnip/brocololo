@@ -35,6 +35,8 @@ export type SlotInputType = {
   alternatives: RecipeType[];
   cookingFamilyMemberIds?: string[];
   used: boolean;
+  /** Shared id across slots placed together as one multi-meal placement; null when alone. */
+  batchGroupId?: string | null;
 };
 
 export type PlanInputType = SlotInputType[];
@@ -47,4 +49,5 @@ export type SlotSaveData = {
   alternativeRecipeIds: string[];
   cookingFamilyMemberIds: string[];
   used: boolean;
+  batchGroupId?: string | null;
 };

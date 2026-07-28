@@ -101,18 +101,16 @@ export function getMaxDaysSinceLastUsedCandidate(candidates: RecipeType[], slotD
   }, 0);
 }
 
-export function getPlannerMealCountForAudience(
-  recipe: Pick<RecipeType, "servings">,
-  audienceMemberCount: number,
+export function getPlannerMealCount(
+  recipe: Pick<RecipeType, "plannedMealCount">,
 ): number {
-  if (audienceMemberCount <= 0) {
-    return 0;
-  }
-  return Math.floor(recipe.servings / audienceMemberCount);
+  // Explicit recipe default — no longer derived from servings / audience size.
+  return Math.max(recipe.plannedMealCount, 1);
 }
 
-// Marks future slots as claimed by a batch recipe (servings > selected audience count).
-// Carried slots inherit the source slot audience via batchSlotAudience.
+// Marks future slots as claimed by a multi-meal placement (batch leftovers or
+// non-batch repeats). Carried slots inherit the source slot audience via
+// batchSlotAudience and share batchGroupId for badge grouping.
 export function markBatchSlots(
   recipe: RecipeType,
   mealType: PlannerMealType,
@@ -120,28 +118,87 @@ export function markBatchSlots(
   days: Date[],
   batchFilledSlots: Map<string, RecipeType>,
   batchSlotAudience: Map<string, string[]>,
+  batchSlotGroupIds: Map<string, string>,
   cookingFamilyMemberIds: string[],
-  audienceMemberCount: number,
-  overrideMeals?: number,
+  batchGroupId: string,
+  options?: {
+    overrideMeals?: number;
+    enforceTimeLimit?: boolean;
+    allDaysTimeLimits?: DayTimeLimitsType[];
+  },
 ): void {
   const totalMeals =
-    overrideMeals ?? getPlannerMealCountForAudience(recipe, audienceMemberCount);
+    options?.overrideMeals ?? getPlannerMealCount(recipe);
   const extraMeals = totalMeals - 1;
   if (extraMeals <= 0) return;
+
+  const enforceTimeLimit = options?.enforceTimeLimit ?? false;
+  const allDaysTimeLimits = options?.allDaysTimeLimits ?? [];
 
   let placed = 0;
 
   for (let i = 1; placed < extraMeals; i++) {
     const futureDay = days[dayIndex + i];
-    if (!futureDay) break; // plan ends, waste remaining portions
+    if (!futureDay) break; // plan ends, waste remaining meals
 
     const futureSlotKey = `${futureDay.toISOString()}-${mealType}`;
     if (batchFilledSlots.has(futureSlotKey)) continue; // slot taken, skip to next day
 
+    // Non-batch repeats are a fresh cook each day — skip days that don't fit
+    // hands-on/total time limits. Batch leftovers skip this check entirely.
+    if (enforceTimeLimit) {
+      const dateStr = futureDay.toISOString().slice(0, 10);
+      const dayLimits = allDaysTimeLimits.find((d) => d.date === dateStr);
+      const handsOnLimit = getMealTimeLimit(dayLimits, mealType, "handsOn");
+      const totalLimit = getMealTimeLimit(dayLimits, mealType, "total");
+      if (handsOnLimit !== null && recipe.handsOnTime > handsOnLimit) continue;
+      if (totalLimit !== null && recipe.totalTime > totalLimit) continue;
+    }
+
     batchFilledSlots.set(futureSlotKey, recipe);
     batchSlotAudience.set(futureSlotKey, [...cookingFamilyMemberIds]);
+    batchSlotGroupIds.set(futureSlotKey, batchGroupId);
     placed++;
   }
+}
+
+/**
+ * Derives live "N of M" labels for slots that share a batchGroupId.
+ * Only groups with 2+ recipe-filled members are labeled.
+ */
+export function getBatchGroupLabels(
+  plan: PlanInputType,
+): Map<string, { index: number; total: number }> {
+  const byGroup = new Map<string, SlotInputType[]>();
+
+  for (const slot of plan) {
+    if (!slot.batchGroupId || !slot.recipe) continue;
+    const members = byGroup.get(slot.batchGroupId) ?? [];
+    members.push(slot);
+    byGroup.set(slot.batchGroupId, members);
+  }
+
+  const labels = new Map<string, { index: number; total: number }>();
+
+  for (const members of byGroup.values()) {
+    if (members.length < 2) continue;
+
+    const sorted = [...members].sort((a, b) => {
+      const dateA = a.date.toISOString().slice(0, 10);
+      const dateB = b.date.toISOString().slice(0, 10);
+      if (dateA !== dateB) return dateA.localeCompare(dateB);
+      return MEAL_TYPE_ORDER[a.mealType] - MEAL_TYPE_ORDER[b.mealType];
+    });
+
+    sorted.forEach((slot, index) => {
+      labels.set(getPlanSlotKey(slot), {
+        index: index + 1,
+        total: sorted.length,
+      });
+    });
+  }
+
+  return labels;
 }
 
 // Resolves a recipe's protein category slug to its scoring group key

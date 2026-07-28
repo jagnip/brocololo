@@ -87,6 +87,7 @@ export const slotSaveDataSchema = z
       .array(z.string().min(1))
       .min(1, "Choose at least one person for this meal"),
     used: z.boolean(),
+    batchGroupId: z.string().min(1).nullable().optional(),
   })
   .superRefine((slot, ctx) => {
     const hasRecipe = slot.recipeId != null;

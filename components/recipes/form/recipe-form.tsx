@@ -40,7 +40,6 @@ import {
 import { buildDraftRecipeForNutrition } from "@/lib/recipes/build-draft-recipe-for-nutrition";
 import { IngredientType } from "@/types/ingredient";
 import { IngredientSelector } from "./ingredient-selector";
-import { CheckboxWithLabel } from "@/components/ui/checkbox";
 import { InstructionStepsEditor } from "./instruction-steps-editor";
 import {
   SearchableSelect,
@@ -245,6 +244,8 @@ export default function RecipeForm({
           instructions: [],
           notes: "",
           excludeFromPlanner: false,
+          plannedMealCount: 1,
+          isBatchRecipe: false,
         },
   });
 
@@ -609,25 +610,108 @@ export default function RecipeForm({
                 )}
               />
 
+            </div>
+          </div>
+        </section>
+
+        {/* Planner-specific defaults: meal count, batch badge, and exclude toggle. */}
+        <section>
+          <div className="mb-3">
+            <Subheader>Planner settings</Subheader>
+          </div>
+          <div className="section-container">
+            <div className="flex flex-col gap-3">
               <FormField
                 control={form.control}
-                name="excludeFromPlanner"
+                name="plannedMealCount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormControl>
-                      <CheckboxWithLabel
-                        id="exclude-from-planner"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        label="Exclude from planner"
-                        labelClassName="shrink-0"
-                      />
-                    </FormControl>
+                    <FormLabel>Plan for</FormLabel>
+                    <div className="flex items-center gap-2">
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          min={1}
+                          className="w-20"
+                          // Keep controlled input behavior while still allowing an empty state.
+                          value={(field.value as number | undefined) ?? ""}
+                          onChange={(event) =>
+                            handleNumericFieldChange(field.onChange, event)
+                          }
+                          aria-label="Number of meals to plan for"
+                        />
+                      </FormControl>
+                      <span className="type-body text-muted-foreground">
+                        meals
+                      </span>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="isBatchRecipe"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Is it a batch recipe?</FormLabel>
+                    <FormControl>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant={field.value === true ? "default" : "outline"}
+                          onClick={() => field.onChange(true)}
+                        >
+                          Yes
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={field.value === false ? "default" : "outline"}
+                          onClick={() => field.onChange(false)}
+                        >
+                          No
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <p className="text-sm text-muted-foreground">
+                      Shows a batch badge on planner cards when this recipe is
+                      scheduled for more than one meal.
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="excludeFromPlanner"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Exclude from planner?</FormLabel>
+                    <FormControl>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant={field.value === true ? "default" : "outline"}
+                          onClick={() => field.onChange(true)}
+                        >
+                          Yes
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={field.value === false ? "default" : "outline"}
+                          onClick={() => field.onChange(false)}
+                        >
+                          No
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
         </section>

@@ -210,13 +210,15 @@ model ShoppingListItem {
 }
 
 model PlanSlot {
-  id         String          @id @default(cuid())
-  planId     String          @map("plan_id")
-  date       DateTime        @db.Date
-  mealType   PlannerMealType @map("meal_type")
-  recipeId   String?         @map("recipe_id")
-  customName String?         @map("custom_name")
-  used       Boolean         @default(false)
+  id           String          @id @default(cuid())
+  planId       String          @map("plan_id")
+  date         DateTime        @db.Date
+  mealType     PlannerMealType @map("meal_type")
+  recipeId     String?         @map("recipe_id")
+  customName   String?         @map("custom_name")
+  used         Boolean         @default(false)
+  // Links slots that were placed together as one multi-meal placement (batch or repeat).
+  batchGroupId String?         @map("batch_group_id")
 
   plan              Plan                       @relation(fields: [planId], references: [id], onDelete: Cascade)
   recipe            Recipe?                    @relation("recipe_plan_slots", fields: [recipeId], references: [id], onDelete: Cascade)
@@ -227,6 +229,7 @@ model PlanSlot {
 
   @@index([planId])
   @@index([recipeId])
+  @@index([batchGroupId])
   @@map("plan_slots")
 }
 
@@ -290,6 +293,10 @@ model Recipe {
   memberPortions     RecipeMemberPortion[]
   lastUsedInPlanner  DateTime?               @map("last_used_in_planner")
   excludeFromPlanner Boolean                 @default(false) @map("exclude_from_planner")
+  // Explicit default of how many meals this recipe should occupy when generated into a plan.
+  plannedMealCount   Int                     @default(1) @map("planned_meal_count")
+  // Cosmetic flag: when true, planner cards show an "N of M" badge for multi-slot placements.
+  isBatchRecipe      Boolean                 @default(false) @map("is_batch_recipe")
 
   user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   categories      Category[]            @relation("category_recipes")

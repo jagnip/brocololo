@@ -235,7 +235,8 @@ export const PlanSlotScalarFieldEnum = {
   mealType: 'mealType',
   recipeId: 'recipeId',
   customName: 'customName',
-  used: 'used'
+  used: 'used',
+  batchGroupId: 'batchGroupId'
 } as const
 
 export type PlanSlotScalarFieldEnum = (typeof PlanSlotScalarFieldEnum)[keyof typeof PlanSlotScalarFieldEnum]
@@ -281,7 +282,9 @@ export const RecipeScalarFieldEnum = {
   notes: 'notes',
   servings: 'servings',
   lastUsedInPlanner: 'lastUsedInPlanner',
-  excludeFromPlanner: 'excludeFromPlanner'
+  excludeFromPlanner: 'excludeFromPlanner',
+  plannedMealCount: 'plannedMealCount',
+  isBatchRecipe: 'isBatchRecipe'
 } as const
 
 export type RecipeScalarFieldEnum = (typeof RecipeScalarFieldEnum)[keyof typeof RecipeScalarFieldEnum]

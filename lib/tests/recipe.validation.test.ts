@@ -63,6 +63,8 @@ const baseRecipeInput = {
   ],
   notes: " note A \n\n note B ",
   excludeFromPlanner: false,
+  plannedMealCount: 1,
+  isBatchRecipe: false,
 };
 
 describe("createRecipeSchema", () => {

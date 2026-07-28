@@ -134,6 +134,7 @@ export function PlanEditor({
           ? s.cookingFamilyMemberIds
           : familyMembers.map((member) => member.id),
       used: s.used,
+      batchGroupId: s.batchGroupId ?? null,
     }));
 
     const result = await updateSavedPlan(planId, saveData);
@@ -248,6 +249,8 @@ export function PlanEditor({
         ...slot,
         recipe: nextRecipe,
         alternatives: [...restAlternatives, slot.recipe],
+        // Swapping recipes breaks membership in the previous multi-meal placement.
+        batchGroupId: null,
       };
     });
 
@@ -260,6 +263,7 @@ export function PlanEditor({
           ...slot,
           recipe: nextRecipe,
           alternatives: [...restAlternatives, slot.recipe],
+          batchGroupId: null,
         };
       }),
     );
@@ -278,6 +282,8 @@ export function PlanEditor({
           alternatives: slot.alternatives.filter(
             (recipe) => recipe.id !== payload.recipe.id,
           ),
+          // Manual set does not auto-fill following days; clear any prior group link.
+          batchGroupId: null,
         };
       }
 
@@ -290,6 +296,7 @@ export function PlanEditor({
             ingredients: payload.ingredients,
           },
           alternatives: [],
+          batchGroupId: null,
         };
       }
 
@@ -298,6 +305,7 @@ export function PlanEditor({
         recipe: null,
         customMeal: null,
         alternatives: [],
+        batchGroupId: null,
       };
     };
 
@@ -309,14 +317,26 @@ export function PlanEditor({
     allSlotsRef.current = allSlotsRef.current.map((slot) => {
       const key = `${slot.date.toISOString()}-${slot.mealType}`;
       if (key !== slotKey) return slot;
-      return { ...slot, recipe: null, customMeal: null, alternatives: [] };
+      return {
+        ...slot,
+        recipe: null,
+        customMeal: null,
+        alternatives: [],
+        batchGroupId: null,
+      };
     });
 
     setPlan((prev) =>
       prev.map((slot) => {
         const key = `${slot.date.toISOString()}-${slot.mealType}`;
         if (key !== slotKey) return slot;
-        return { ...slot, recipe: null, customMeal: null, alternatives: [] };
+        return {
+          ...slot,
+          recipe: null,
+          customMeal: null,
+          alternatives: [],
+          batchGroupId: null,
+        };
       }),
     );
   }, []);

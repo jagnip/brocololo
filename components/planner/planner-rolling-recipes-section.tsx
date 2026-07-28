@@ -13,7 +13,7 @@ import type { IngredientType } from "@/types/ingredient";
 import type { RecipeType } from "@/types/recipe";
 import MultipleSelector from "@/components/ui/multiselect";
 import type { Control } from "react-hook-form";
-import { getPlannerMealCountForAudience } from "@/lib/planner/helpers";
+import { getPlannerMealCount } from "@/lib/planner/helpers";
 
 type PlannerRollingRecipesSectionProps = {
   control: Control<PlannerCriteriaInputType>;
@@ -21,7 +21,6 @@ type PlannerRollingRecipesSectionProps = {
   onChange: (next: RollingRecipeType[]) => void;
   ingredients: IngredientType[];
   recipes: RecipeType[];
-  audienceMemberCount: number;
   previousPlanUnusedRecipes: RollingRecipeType[];
   onInvalidStateChange?: (hasInvalid: boolean) => void;
 };
@@ -32,7 +31,6 @@ export function PlannerRollingRecipesSection({
   onChange,
   ingredients,
   recipes,
-  audienceMemberCount,
   previousPlanUnusedRecipes,
   onInvalidStateChange,
 }: PlannerRollingRecipesSectionProps) {
@@ -100,16 +98,8 @@ export function PlannerRollingRecipesSection({
               const existing = selected.find((r) => r.recipeId === o.value);
               if (existing) return existing;
               const recipe = recipes.find((r) => r.id === o.value);
-              const defaultMeals =
-                recipe
-                  ? Math.max(
-                      getPlannerMealCountForAudience(
-                        recipe,
-                        audienceMemberCount,
-                      ),
-                      1,
-                    )
-                  : 1;
+              // Default override meals from the recipe's explicit plannedMealCount.
+              const defaultMeals = recipe ? getPlannerMealCount(recipe) : 1;
               return { recipeId: o.value, meals: defaultMeals };
             });
             onChange(updated);
@@ -129,24 +119,16 @@ export function PlannerRollingRecipesSection({
       {selected
         .filter((r) => {
           const recipe = recipes.find((rec) => rec.id === r.recipeId);
-          return (
-            recipe &&
-            getPlannerMealCountForAudience(recipe, audienceMemberCount) > 1
-          );
+          return recipe && getPlannerMealCount(recipe) > 1;
         })
         .map((r) => {
           const recipe = recipes.find((rec) => rec.id === r.recipeId)!;
-          const maxMeals = getPlannerMealCountForAudience(
-            recipe,
-            audienceMemberCount,
-          );
           return (
             <div key={r.recipeId} className="mt-2 flex items-center gap-2">
               <span className="flex-1 truncate text-sm">{recipe.name}</span>
               <Input
                 type="number"
                 min={1}
-                max={maxMeals}
                 value={mealsDraft[r.recipeId] ?? String(r.meals)}
                 onBlur={() =>
                   setBlurredRecipeIds((prev) => ({ ...prev, [r.recipeId]: true }))

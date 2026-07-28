@@ -338,7 +338,6 @@ export function PlannerForm({
     [];
 
   const dateRange = form.watch("dateRange");
-  const defaultAudienceMemberCount = defaultFamilyMemberIds.length;
   // Keep a narrowed generated plan reference so callback closures stay non-null-safe.
   const generatedPlan = shouldShowGeneratedPlan(plan, isGenerating)
     ? plan
@@ -790,7 +789,6 @@ export function PlannerForm({
                           onChange={field.onChange}
                           ingredients={ingredients}
                           recipes={recipes}
-                          audienceMemberCount={defaultAudienceMemberCount}
                           previousPlanUnusedRecipes={previousPlanUnusedRecipes}
                           onInvalidStateChange={setHasInvalidRollingMealsInputs}
                         />

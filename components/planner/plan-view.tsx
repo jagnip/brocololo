@@ -7,6 +7,7 @@ import {
   getPlanSlotKey,
   getMealsForDate,
   groupSlotsByDate,
+  getBatchGroupLabels,
 } from "@/lib/planner/helpers";
 import { PlanInputType, PlanSlotMealPayload, SlotInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
@@ -70,6 +71,8 @@ export function PlanView({
   const slotsByDate = groupSlotsByDate(plan);
   const sortedDates = Array.from(slotsByDate.keys()).sort();
   const orderedSlotKeys = getOrderedPlanSlots(plan).map((slot) => getPlanSlotKey(slot));
+  // Compute once per render so every card can look up its live "N of M" label.
+  const batchLabels = getBatchGroupLabels(plan);
   const {
     selectedKeys,
     selectedCount,
@@ -141,6 +144,7 @@ export function PlanView({
             ? (memberIds) => onAudienceChange(slotKey, memberIds)
             : undefined
         }
+        batchLabel={batchLabels.get(slotKey)}
         recipes={recipes}
         ingredientOptions={ingredientOptions}
       />

@@ -2,7 +2,13 @@
 
 import { getRecipes } from "@/lib/db/recipes";
 import { listFamilyMembers } from "@/lib/db/family-members";
-import { getDaysInRange as getDaysToPlan, getMaxDaysSinceLastUsedCandidate, getMealTimeLimit, markBatchSlots } from "@/lib/planner/helpers";
+import {
+  getDaysInRange as getDaysToPlan,
+  getMaxDaysSinceLastUsedCandidate,
+  getMealTimeLimit,
+  getPlannerMealCount,
+  markBatchSlots,
+} from "@/lib/planner/helpers";
 import { getSlotAudienceIdsForMeal } from "@/lib/planner/audience-mapping";
 import { PlanInputType, SlotSaveData } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
@@ -57,6 +63,7 @@ export async function generatePlan(
     const plan: PlanInputType = [];
     const batchFilledSlots = new Map<string, RecipeType>();
     const batchSlotAudience = new Map<string, string[]>();
+    const batchSlotGroupIds = new Map<string, string>();
 
     for (const day of days) {
       const dateStr = day.toISOString().slice(0, 10);
@@ -68,8 +75,25 @@ export async function generatePlan(
           ...new Set(getSlotAudienceIdsForMeal(dayAudience, mealType)),
         ];
         const slotKey = `${day.toISOString()}-${mealType}`;
+        // Continuation check first — leftover/repeat slots already know their recipe
+        // and must not be blocked by fresh-candidate time-limit filtering.
         const batchRecipe = batchFilledSlots.get(slotKey);
         const batchAudienceIds = batchSlotAudience.get(slotKey) ?? slotAudienceIds;
+        const continuationGroupId = batchSlotGroupIds.get(slotKey) ?? null;
+
+        if (batchRecipe) {
+          plan.push({
+            date: new Date(day),
+            mealType,
+            recipe: batchRecipe,
+            customMeal: null,
+            alternatives: [],
+            cookingFamilyMemberIds: batchAudienceIds,
+            used: false,
+            batchGroupId: continuationGroupId,
+          });
+          continue;
+        }
 
         let candidates = filterByMealOccasion(recipes, mealType);
         candidates = filterByHandsOnTime(candidates, getMealTimeLimit(dayTimeLimits, mealType, "handsOn"));
@@ -89,30 +113,25 @@ export async function generatePlan(
         };
         const { winner, alternatives } = pickBestCandidate(candidates, ctx);
 
-        if (batchRecipe) {
-          const alts = [winner, ...alternatives].filter((r) => r.id !== batchRecipe.id).slice(0, 10);
-          plan.push({
-            date: new Date(day),
-            mealType,
-            recipe: batchRecipe,
-            customMeal: null,
-            alternatives: alts,
-            cookingFamilyMemberIds: batchAudienceIds,
-            used: false,
-          });
-        } else {
-          plan.push({
-            date: new Date(day),
-            mealType,
-            recipe: winner,
-            customMeal: null,
-            alternatives,
-            cookingFamilyMemberIds: slotAudienceIds,
-            used: false,
-          });
+        const rollingEntry = rollingRecipes.find((r) => r.recipeId === winner.id);
+        const overrideMeals = rollingEntry ? rollingEntry.meals : undefined;
+        const totalMeals = overrideMeals ?? getPlannerMealCount(winner);
+        // Multi-meal placements share a group id so badges can recount after edits.
+        const batchGroupId =
+          totalMeals >= 2 ? crypto.randomUUID() : null;
 
-          const rollingEntry = rollingRecipes.find((r) => r.recipeId === winner.id);
-          const overrideMeals = rollingEntry ? rollingEntry.meals : undefined;
+        plan.push({
+          date: new Date(day),
+          mealType,
+          recipe: winner,
+          customMeal: null,
+          alternatives,
+          cookingFamilyMemberIds: slotAudienceIds,
+          used: false,
+          batchGroupId,
+        });
+
+        if (batchGroupId) {
           markBatchSlots(
             winner,
             mealType,
@@ -120,9 +139,15 @@ export async function generatePlan(
             days,
             batchFilledSlots,
             batchSlotAudience,
+            batchSlotGroupIds,
             slotAudienceIds,
-            slotAudienceIds.length,
-            overrideMeals,
+            batchGroupId,
+            {
+              overrideMeals,
+              // Batch leftovers skip time checks; non-batch repeats enforce them per day.
+              enforceTimeLimit: !winner.isBatchRecipe,
+              allDaysTimeLimits,
+            },
           );
         }
       }
