@@ -23,6 +23,11 @@ import { Textarea } from "../../ui/textarea";
 import { CategoryType } from "@/types/category";
 import { Button } from "../../ui/button";
 import {
+  SettingGridField,
+  SettingGridRow,
+} from "../../ui/setting-grid-field";
+import { SegmentedControl } from "../../ui/segmented-control";
+import {
   createRecipeAction,
   updateRecipeAction,
 } from "@/actions/recipe-actions";
@@ -614,108 +619,6 @@ export default function RecipeForm({
           </div>
         </section>
 
-        {/* Planner-specific defaults: meal count, batch badge, and exclude toggle. */}
-        <section>
-          <div className="mb-3">
-            <Subheader>Planner settings</Subheader>
-          </div>
-          <div className="section-container">
-            <div className="flex flex-col gap-3">
-              <FormField
-                control={form.control}
-                name="plannedMealCount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Plan for</FormLabel>
-                    <div className="flex items-center gap-2">
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="number"
-                          min={1}
-                          className="w-20"
-                          // Keep controlled input behavior while still allowing an empty state.
-                          value={(field.value as number | undefined) ?? ""}
-                          onChange={(event) =>
-                            handleNumericFieldChange(field.onChange, event)
-                          }
-                          aria-label="Number of meals to plan for"
-                        />
-                      </FormControl>
-                      <span className="type-body text-muted-foreground">
-                        meals
-                      </span>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="isBatchRecipe"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Is it a batch recipe?</FormLabel>
-                    <FormControl>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant={field.value === true ? "default" : "outline"}
-                          onClick={() => field.onChange(true)}
-                        >
-                          Yes
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={field.value === false ? "default" : "outline"}
-                          onClick={() => field.onChange(false)}
-                        >
-                          No
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <p className="text-sm text-muted-foreground">
-                      Shows a batch badge on planner cards when this recipe is
-                      scheduled for more than one meal.
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="excludeFromPlanner"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Exclude from planner?</FormLabel>
-                    <FormControl>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant={field.value === true ? "default" : "outline"}
-                          onClick={() => field.onChange(true)}
-                        >
-                          Yes
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={field.value === false ? "default" : "outline"}
-                          onClick={() => field.onChange(false)}
-                        >
-                          No
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-        </section>
-
         <section>
           <div className="mb-3">
             <Subheader>Categories</Subheader>
@@ -795,6 +698,104 @@ export default function RecipeForm({
                 )}
               />
             </div>
+          </div>
+        </section>
+
+        {/* Planner-specific defaults: meal count, batch badge, and exclude toggle. */}
+        <section>
+          <div className="mb-3">
+            <Subheader>Planner settings</Subheader>
+          </div>
+          <div className="section-container">
+            <SettingGridRow>
+              <FormField
+                control={form.control}
+                name="plannedMealCount"
+                render={({ field }) => (
+                  <FormItem>
+                    <SettingGridField
+                      label="Plan for"
+                      tooltip="How many days this meal repeats in the plan by default."
+                      tooltipAriaLabel="Show plan for guidance"
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            min={1}
+                            className="h-9 w-14 shrink-0 px-2 text-center font-semibold tabular-nums"
+                            value={(field.value as number | undefined) ?? ""}
+                            onChange={(event) =>
+                              handleNumericFieldChange(field.onChange, event)
+                            }
+                            aria-label="Number of meals to plan for"
+                          />
+                        </FormControl>
+                        <span className="text-sm text-muted-foreground">
+                          meals
+                        </span>
+                      </div>
+                    </SettingGridField>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="isBatchRecipe"
+                render={({ field }) => (
+                  <FormItem>
+                    <SettingGridField
+                      label="Batch recipe"
+                      tooltip="Cook once; leftovers cover the other planned days."
+                      tooltipAriaLabel="Show batch recipe guidance"
+                    >
+                      <FormControl>
+                        <SegmentedControl
+                          value={field.value ?? false}
+                          onChange={field.onChange}
+                          aria-label="Batch recipe"
+                          options={[
+                            { value: true, label: "Batch" },
+                            { value: false, label: "Single" },
+                          ]}
+                        />
+                      </FormControl>
+                    </SettingGridField>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="excludeFromPlanner"
+                render={({ field }) => (
+                  <FormItem>
+                    <SettingGridField
+                      label="Exclude from planner"
+                      tooltip="Left out of plan generation and meal pickers — won't appear in plans."
+                      tooltipAriaLabel="Show exclude from planner guidance"
+                    >
+                      <FormControl>
+                        <SegmentedControl
+                          value={field.value ?? false}
+                          onChange={field.onChange}
+                          aria-label="Exclude from planner"
+                          options={[
+                            { value: true, label: "Exclude" },
+                            { value: false, label: "Include" },
+                          ]}
+                        />
+                      </FormControl>
+                    </SettingGridField>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </SettingGridRow>
           </div>
         </section>
 
