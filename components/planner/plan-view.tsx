@@ -9,7 +9,7 @@ import {
   groupSlotsByDate,
   getBatchGroupLabels,
 } from "@/lib/planner/helpers";
-import { PlanInputType, PlanSlotMealPayload, SlotInputType } from "@/types/planner";
+import { PlanInputType, PlanSlotMealPayload, SetPlanMealOptions, SlotInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PlannerSlotCard } from "./planner-slot-card";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
@@ -45,7 +45,11 @@ type PlanViewProps = {
   recipes: RecipeType[];
   ingredientOptions: LogIngredientOption[];
   onShuffle?: (slotKey: string) => void;
-  onSetMeal?: (slotKey: string, payload: PlanSlotMealPayload) => void;
+  onSetMeal?: (
+    slotKey: string,
+    payload: PlanSlotMealPayload,
+    options?: SetPlanMealOptions,
+  ) => void;
   onRemove?: (slotKey: string) => void;
   onToggleUsed?: (slotKey: string) => void;
   familyMembers?: FamilyMemberRow[];
@@ -97,7 +101,8 @@ export function PlanView({
     if (!onSetMeal) return;
 
     selectedKeys.forEach((slotKey) => {
-      onSetMeal(slotKey, payload);
+      // Bulk picks explicit slots — do not spill into following days.
+      onSetMeal(slotKey, payload, { expandMultiMeal: false });
     });
     setIsBulkReplaceDialogOpen(false);
     clearSelection();

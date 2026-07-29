@@ -24,8 +24,9 @@ import {
   shouldShowGeneratedPlan,
 } from "./planner-plan-column-state";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PlanInputType, PlanSlotMealPayload } from "@/types/planner";
+import { PlanInputType, PlanSlotMealPayload, SetPlanMealOptions } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
+import { getPlanSlotKey, placeRecipeOnPlan } from "@/lib/planner/helpers";
 import type {
   DayAudienceByMealType,
   DayTimeLimitsType,
@@ -246,14 +247,23 @@ export function PlannerForm({
   }, []);
 
   const handleSetMeal = useCallback(
-    (slotKey: string, payload: PlanSlotMealPayload) => {
+    (
+      slotKey: string,
+      payload: PlanSlotMealPayload,
+      options?: SetPlanMealOptions,
+    ) => {
+      const expandMultiMeal = options?.expandMultiMeal !== false;
+
       setPlan((prev) => {
         if (!prev) return prev;
-        return prev.map((slot) => {
-          const key = `${slot.date.toISOString()}-${slot.mealType}`;
-          if (key !== slotKey) return slot;
 
-          if (payload.kind === "recipe") {
+        if (payload.kind === "recipe") {
+          if (expandMultiMeal) {
+            return placeRecipeOnPlan(prev, slotKey, payload.recipe);
+          }
+
+          return prev.map((slot) => {
+            if (getPlanSlotKey(slot) !== slotKey) return slot;
             return {
               ...slot,
               recipe: payload.recipe,
@@ -261,8 +271,13 @@ export function PlannerForm({
               alternatives: slot.alternatives.filter(
                 (recipe) => recipe.id !== payload.recipe.id,
               ),
+              batchGroupId: null,
             };
-          }
+          });
+        }
+
+        return prev.map((slot) => {
+          if (getPlanSlotKey(slot) !== slotKey) return slot;
 
           if (payload.kind === "custom") {
             return {
@@ -273,6 +288,7 @@ export function PlannerForm({
                 ingredients: payload.ingredients,
               },
               alternatives: [],
+              batchGroupId: null,
             };
           }
 
@@ -281,6 +297,7 @@ export function PlannerForm({
             recipe: null,
             customMeal: null,
             alternatives: [],
+            batchGroupId: null,
           };
         });
       });

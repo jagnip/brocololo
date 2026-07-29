@@ -748,18 +748,18 @@ export default function RecipeForm({
                 render={({ field }) => (
                   <FormItem>
                     <SettingGridField
-                      label="Batch recipe"
-                      tooltip="Cook once; leftovers cover the other planned days."
-                      tooltipAriaLabel="Show batch recipe guidance"
+                      label="Cooking style"
+                      tooltip="Cook fresh each planned day, or cook once and use leftovers."
+                      tooltipAriaLabel="Show cooking style guidance"
                     >
                       <FormControl>
                         <SegmentedControl
                           value={field.value ?? false}
                           onChange={field.onChange}
-                          aria-label="Batch recipe"
+                          aria-label="Cooking style"
                           options={[
-                            { value: true, label: "Batch" },
                             { value: false, label: "Single" },
+                            { value: true, label: "Batch" },
                           ]}
                         />
                       </FormControl>
@@ -775,18 +775,18 @@ export default function RecipeForm({
                 render={({ field }) => (
                   <FormItem>
                     <SettingGridField
-                      label="Exclude from planner"
-                      tooltip="Left out of plan generation and meal pickers — won't appear in plans."
-                      tooltipAriaLabel="Show exclude from planner guidance"
+                      label="Planner visibility"
+                      tooltip="Hidden recipes are left out of plan generation."
+                      tooltipAriaLabel="Show planner visibility guidance"
                     >
                       <FormControl>
                         <SegmentedControl
                           value={field.value ?? false}
                           onChange={field.onChange}
-                          aria-label="Exclude from planner"
+                          aria-label="Planner visibility"
                           options={[
-                            { value: true, label: "Exclude" },
-                            { value: false, label: "Include" },
+                            { value: false, label: "Visible" },
+                            { value: true, label: "Hidden" },
                           ]}
                         />
                       </FormControl>

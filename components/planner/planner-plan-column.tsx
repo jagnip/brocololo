@@ -1,6 +1,6 @@
 "use client";
 
-import type { PlanInputType, PlanSlotMealPayload } from "@/types/planner";
+import type { PlanInputType, PlanSlotMealPayload, SetPlanMealOptions } from "@/types/planner";
 import type { RecipeType } from "@/types/recipe";
 import { PlanView } from "./plan-view";
 import { PlanViewSkeleton } from "./plan-view-skeleton";
@@ -23,7 +23,11 @@ type PlannerPlanColumnProps = {
   ingredientOptions: LogIngredientOption[];
   familyMembers?: FamilyMemberRow[];
   onShuffle?: (slotKey: string) => void;
-  onSetMeal?: (slotKey: string, payload: PlanSlotMealPayload) => void;
+  onSetMeal?: (
+    slotKey: string,
+    payload: PlanSlotMealPayload,
+    options?: SetPlanMealOptions,
+  ) => void;
   onRemove?: (slotKey: string) => void;
   onAudienceChange?: (slotKey: string, memberIds: string[]) => void;
 };

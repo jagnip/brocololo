@@ -22,10 +22,12 @@ vi.mock("./plan-view", () => ({
     plan,
     onShuffle,
     onRemove,
+    onSetMeal,
   }: {
     plan: PlanInputType;
     onShuffle?: (slotKey: string) => void;
     onRemove?: (slotKey: string) => void;
+    onSetMeal?: (slotKey: string, payload: any) => void;
   }) => {
     const first = plan[0];
     const slotKey = `${first.date.toISOString()}-${first.mealType}`;
@@ -40,6 +42,13 @@ vi.mock("./plan-view", () => ({
       .map((s) => s.batchGroupId ?? "null")
       .join(",");
 
+    const batchRecipe = {
+      id: "batch-recipe",
+      name: "Batch recipe",
+      plannedMealCount: 2,
+      isBatchRecipe: true,
+    };
+
     return (
       <div>
         <div aria-label="slot-count">{plan.length}</div>
@@ -50,6 +59,14 @@ vi.mock("./plan-view", () => ({
         </button>
         <button type="button" onClick={() => onRemove?.(slotKey)}>
           Remove first
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            onSetMeal?.(slotKey, { kind: "recipe", recipe: batchRecipe })
+          }
+        >
+          Set batch recipe
         </button>
       </div>
     );
@@ -656,6 +673,48 @@ describe("PlanEditor batch group clearing", () => {
     await user.click(screen.getByRole("button", { name: "Remove first" }));
 
     expect(screen.getByLabelText("batch-groups")).toHaveTextContent("null,group-1");
+  });
+
+  it("expands a manually set multi-meal recipe onto following empty days with a shared batchGroupId", async () => {
+    const user = userEvent.setup();
+
+    const initialPlan: PlanInputType = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        mealType: "DINNER" as any,
+        recipe: null,
+        alternatives: [],
+        customMeal: null,
+        used: false,
+        batchGroupId: null,
+      },
+      {
+        date: new Date("2026-03-18T00:00:00.000Z"),
+        mealType: "DINNER" as any,
+        recipe: null,
+        alternatives: [],
+        customMeal: null,
+        used: false,
+        batchGroupId: null,
+      },
+    ];
+
+    renderPlanEditor({
+      planId: "plan-1",
+      initialPlan,
+      recipes: [],
+      ingredientOptions: emptyIngredientOptions,
+    });
+
+    await user.click(screen.getByRole("button", { name: "Set batch recipe" }));
+
+    expect(screen.getByLabelText("dinner-by-day")).toHaveTextContent(
+      "2026-03-17:batch-recipe,2026-03-18:batch-recipe",
+    );
+    const groups = screen.getByLabelText("batch-groups").textContent ?? "";
+    const [first, second] = groups.split(",");
+    expect(first).not.toBe("null");
+    expect(first).toBe(second);
   });
 });
 

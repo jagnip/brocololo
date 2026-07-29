@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { PlanInputType, PlanSlotMealPayload, SlotSaveData, type SlotInputType } from "@/types/planner";
+import { PlanInputType, PlanSlotMealPayload, SetPlanMealOptions, SlotSaveData, type SlotInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PlanView } from "./plan-view";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import {
   formatRangeChangeDialogDescription,
   formatRangeChangeDialogTitle,
 } from "@/lib/planner/planner-range-messages";
+import { getPlanSlotKey, placeRecipeOnPlan } from "@/lib/planner/helpers";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -269,48 +270,62 @@ export function PlanEditor({
     );
   }, []);
 
-  const handleSetMeal = useCallback((slotKey: string, payload: PlanSlotMealPayload) => {
-    const applyPayload = (slot: SlotInputType): SlotInputType => {
-      const key = `${slot.date.toISOString()}-${slot.mealType}`;
-      if (key !== slotKey) return slot;
+  const handleSetMeal = useCallback((
+    slotKey: string,
+    payload: PlanSlotMealPayload,
+    options?: SetPlanMealOptions,
+  ) => {
+    const expandMultiMeal = options?.expandMultiMeal !== false;
 
+    const applyPayload = (prev: PlanInputType): PlanInputType => {
       if (payload.kind === "recipe") {
-        return {
-          ...slot,
-          recipe: payload.recipe,
-          customMeal: null,
-          alternatives: slot.alternatives.filter(
-            (recipe) => recipe.id !== payload.recipe.id,
-          ),
-          // Manual set does not auto-fill following days; clear any prior group link.
-          batchGroupId: null,
-        };
+        // Match create/generate: multi-meal recipes fill following empty days + share a group id.
+        if (expandMultiMeal) {
+          return placeRecipeOnPlan(prev, slotKey, payload.recipe);
+        }
+
+        return prev.map((slot) => {
+          if (getPlanSlotKey(slot) !== slotKey) return slot;
+          return {
+            ...slot,
+            recipe: payload.recipe,
+            customMeal: null,
+            alternatives: slot.alternatives.filter(
+              (recipe) => recipe.id !== payload.recipe.id,
+            ),
+            batchGroupId: null,
+          };
+        });
       }
 
-      if (payload.kind === "custom") {
+      return prev.map((slot) => {
+        if (getPlanSlotKey(slot) !== slotKey) return slot;
+
+        if (payload.kind === "custom") {
+          return {
+            ...slot,
+            recipe: null,
+            customMeal: {
+              name: payload.name,
+              ingredients: payload.ingredients,
+            },
+            alternatives: [],
+            batchGroupId: null,
+          };
+        }
+
         return {
           ...slot,
           recipe: null,
-          customMeal: {
-            name: payload.name,
-            ingredients: payload.ingredients,
-          },
+          customMeal: null,
           alternatives: [],
           batchGroupId: null,
         };
-      }
-
-      return {
-        ...slot,
-        recipe: null,
-        customMeal: null,
-        alternatives: [],
-        batchGroupId: null,
-      };
+      });
     };
 
-    allSlotsRef.current = allSlotsRef.current.map(applyPayload);
-    setPlan((prev) => prev.map(applyPayload));
+    allSlotsRef.current = applyPayload(allSlotsRef.current);
+    setPlan((prev) => applyPayload(prev));
   }, []);
 
   const handleRemove = useCallback((slotKey: string) => {

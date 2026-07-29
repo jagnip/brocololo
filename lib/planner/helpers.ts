@@ -201,6 +201,113 @@ export function getBatchGroupLabels(
   return labels;
 }
 
+/**
+ * Places a recipe on one slot and, when plannedMealCount > 1, fills following
+ * empty same-meal slots with a shared batchGroupId — mirrors generatePlan.
+ *
+ * Batch recipes also join an existing same-recipe batch group when one is
+ * already on the plan (e.g. adding a 3rd Caprese after generation placed 2).
+ */
+export function placeRecipeOnPlan(
+  plan: PlanInputType,
+  slotKey: string,
+  recipe: RecipeType,
+): PlanInputType {
+  const source = plan.find((slot) => getPlanSlotKey(slot) === slotKey);
+  if (!source) return plan;
+
+  const totalMeals = getPlannerMealCount(recipe);
+  // Prefer attaching leftovers to an existing cook rather than starting a solo group.
+  const existingGroupId = recipe.isBatchRecipe
+    ? findNearestBatchGroupId(plan, recipe.id, slotKey, source.date)
+    : null;
+  const batchGroupId =
+    existingGroupId ?? (totalMeals >= 2 ? crypto.randomUUID() : null);
+  // Only auto-fill following days for a fresh multi-meal placement.
+  const shouldExpand = !existingGroupId && totalMeals >= 2;
+
+  const audienceIds = [...(source.cookingFamilyMemberIds ?? [])];
+  const fillKeys = new Set<string>([slotKey]);
+
+  if (shouldExpand) {
+    // Unique plan days in chronological order (UTC date keys).
+    const orderedDays = [
+      ...new Map(
+        plan.map(
+          (slot) =>
+            [slot.date.toISOString().slice(0, 10), slot.date] as const,
+        ),
+      ).entries(),
+    ]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([, date]) => date);
+
+    const sourceDay = source.date.toISOString().slice(0, 10);
+    const dayIndex = orderedDays.findIndex(
+      (date) => date.toISOString().slice(0, 10) === sourceDay,
+    );
+
+    let placed = 0;
+    for (let offset = 1; placed < totalMeals - 1; offset++) {
+      const futureDay = orderedDays[dayIndex + offset];
+      if (!futureDay) break;
+
+      const futureDayKey = futureDay.toISOString().slice(0, 10);
+      const futureSlot = plan.find(
+        (slot) =>
+          slot.date.toISOString().slice(0, 10) === futureDayKey &&
+          slot.mealType === source.mealType,
+      );
+      if (!futureSlot) continue;
+      // Occupied slots stay as-is; keep looking further like markBatchSlots.
+      if (futureSlot.recipe || futureSlot.customMeal) continue;
+
+      fillKeys.add(getPlanSlotKey(futureSlot));
+      placed++;
+    }
+  }
+
+  return plan.map((slot) => {
+    const key = getPlanSlotKey(slot);
+    if (!fillKeys.has(key)) return slot;
+
+    return {
+      ...slot,
+      recipe,
+      customMeal: null,
+      alternatives:
+        key === slotKey
+          ? slot.alternatives.filter((alt) => alt.id !== recipe.id)
+          : [],
+      cookingFamilyMemberIds:
+        key === slotKey ? slot.cookingFamilyMemberIds : audienceIds,
+      batchGroupId,
+    };
+  });
+}
+
+/** Picks the batchGroupId for this recipe whose members are closest in time. */
+function findNearestBatchGroupId(
+  plan: PlanInputType,
+  recipeId: string,
+  excludeSlotKey: string,
+  nearDate: Date,
+): string | null {
+  let best: { groupId: string; distance: number } | null = null;
+
+  for (const slot of plan) {
+    if (getPlanSlotKey(slot) === excludeSlotKey) continue;
+    if (slot.recipe?.id !== recipeId || !slot.batchGroupId) continue;
+
+    const distance = Math.abs(slot.date.getTime() - nearDate.getTime());
+    if (!best || distance < best.distance) {
+      best = { groupId: slot.batchGroupId, distance };
+    }
+  }
+
+  return best?.groupId ?? null;
+}
+
 // Resolves a recipe's protein category slug to its scoring group key
 // e.g. "beef" → "red-meat", "chicken" → "chicken"
 export function getProteinKey(recipe: RecipeType): string | null {

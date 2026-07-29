@@ -5,6 +5,7 @@ import {
   getOrderedPlanSlots,
   getPlannerMealCount,
   markBatchSlots,
+  placeRecipeOnPlan,
 } from "@/lib/planner/helpers";
 import type { RecipeType } from "@/types/recipe";
 import type { PlanInputType } from "@/types/planner";
@@ -252,6 +253,131 @@ describe("getBatchGroupLabels", () => {
     ];
 
     expect(getBatchGroupLabels(plan).size).toBe(0);
+  });
+});
+
+describe("placeRecipeOnPlan", () => {
+  function emptyDinner(dateIso: string) {
+    return {
+      date: new Date(dateIso),
+      mealType: PlannerMealType.DINNER,
+      recipe: null,
+      customMeal: null,
+      alternatives: [],
+      used: false,
+      cookingFamilyMemberIds: ["m1"],
+      batchGroupId: null,
+    };
+  }
+
+  it("fills following empty same-meal slots and shares a batchGroupId", () => {
+    const recipe = {
+      id: "r-batch",
+      plannedMealCount: 3,
+      isBatchRecipe: true,
+    } as RecipeType;
+
+    const plan: PlanInputType = [
+      emptyDinner("2026-03-17T00:00:00.000Z"),
+      emptyDinner("2026-03-18T00:00:00.000Z"),
+      emptyDinner("2026-03-19T00:00:00.000Z"),
+    ];
+
+    const slotKey = `${plan[0]!.date.toISOString()}-${PlannerMealType.DINNER}`;
+    const next = placeRecipeOnPlan(plan, slotKey, recipe);
+
+    expect(next.every((slot) => slot.recipe?.id === "r-batch")).toBe(true);
+    const groupIds = next.map((slot) => slot.batchGroupId);
+    expect(groupIds[0]).toBeTruthy();
+    expect(groupIds[0]).toBe(groupIds[1]);
+    expect(groupIds[0]).toBe(groupIds[2]);
+    expect(getBatchGroupLabels(next).size).toBe(3);
+  });
+
+  it("skips occupied following slots while still filling later empty ones", () => {
+    const recipe = {
+      id: "r-batch",
+      plannedMealCount: 3,
+      isBatchRecipe: true,
+    } as RecipeType;
+    const other = { id: "r-other" } as RecipeType;
+
+    const plan: PlanInputType = [
+      emptyDinner("2026-03-17T00:00:00.000Z"),
+      {
+        ...emptyDinner("2026-03-18T00:00:00.000Z"),
+        recipe: other,
+      },
+      emptyDinner("2026-03-19T00:00:00.000Z"),
+      emptyDinner("2026-03-20T00:00:00.000Z"),
+    ];
+
+    const slotKey = `${plan[0]!.date.toISOString()}-${PlannerMealType.DINNER}`;
+    const next = placeRecipeOnPlan(plan, slotKey, recipe);
+
+    expect(next[0]!.recipe?.id).toBe("r-batch");
+    expect(next[1]!.recipe?.id).toBe("r-other");
+    expect(next[2]!.recipe?.id).toBe("r-batch");
+    expect(next[3]!.recipe?.id).toBe("r-batch");
+    expect(next[0]!.batchGroupId).toBe(next[2]!.batchGroupId);
+    expect(next[0]!.batchGroupId).toBe(next[3]!.batchGroupId);
+    expect(next[1]!.batchGroupId).toBeNull();
+  });
+
+  it("does not create a group for single-meal recipes", () => {
+    const recipe = {
+      id: "r-1",
+      plannedMealCount: 1,
+      isBatchRecipe: false,
+    } as RecipeType;
+
+    const plan: PlanInputType = [
+      emptyDinner("2026-03-17T00:00:00.000Z"),
+      emptyDinner("2026-03-18T00:00:00.000Z"),
+    ];
+
+    const slotKey = `${plan[0]!.date.toISOString()}-${PlannerMealType.DINNER}`;
+    const next = placeRecipeOnPlan(plan, slotKey, recipe);
+
+    expect(next[0]!.recipe?.id).toBe("r-1");
+    expect(next[0]!.batchGroupId).toBeNull();
+    expect(next[1]!.recipe).toBeNull();
+  });
+
+  it("joins an existing same-recipe batch group instead of starting a new one", () => {
+    const recipe = {
+      id: "r-caprese",
+      plannedMealCount: 2,
+      isBatchRecipe: true,
+    } as RecipeType;
+
+    const plan: PlanInputType = [
+      {
+        ...emptyDinner("2026-03-17T00:00:00.000Z"),
+        recipe,
+        batchGroupId: "existing-group",
+      },
+      {
+        ...emptyDinner("2026-03-18T00:00:00.000Z"),
+        recipe,
+        batchGroupId: "existing-group",
+      },
+      emptyDinner("2026-03-19T00:00:00.000Z"),
+    ];
+
+    const slotKey = `${plan[2]!.date.toISOString()}-${PlannerMealType.DINNER}`;
+    const next = placeRecipeOnPlan(plan, slotKey, recipe);
+
+    expect(next[2]!.recipe?.id).toBe("r-caprese");
+    expect(next[2]!.batchGroupId).toBe("existing-group");
+    // Joining must not spill into further empty days.
+    expect(next.filter((slot) => slot.batchGroupId === "existing-group")).toHaveLength(
+      3,
+    );
+    expect(getBatchGroupLabels(next).get(slotKey)).toEqual({
+      index: 3,
+      total: 3,
+    });
   });
 });
 
