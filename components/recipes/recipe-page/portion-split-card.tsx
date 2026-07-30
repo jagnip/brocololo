@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
+  COOK_SESSION_EXTRAS_SHARE_ID,
+  getCookSessionPortionShares,
   getDisplayPercentages,
-  getSharedPortionShares,
   type SharedPortionShare,
 } from "@/lib/recipes/shared-portion-shares";
-import { formatPortionMultiplierBadgeLabel } from "@/lib/recipes/ingredient-adjustments";
-import { SegmentedFilterButton } from "@/components/ui/segmented-filter-button";
+import { Badge } from "@/components/ui/badge";
 
 export type PortionSplitAudienceMember = {
   id: string;
@@ -15,14 +15,18 @@ export type PortionSplitAudienceMember = {
   /** Household sort — keeps chart colors stable. */
   sortOrder: number;
   multiplier: number;
+  /** How many meals this person appears in for this cook session. */
+  mealCount: number;
 };
 
 type PortionSplitCardProps = {
   /** Everyone currently selected in Cooking (chart pool). */
   members: PortionSplitAudienceMember[];
+  /** Total meal occasions across all Cooking combinations. */
+  totalMealCount: number;
+  /** Anonymous extra portions (default ×1 shares) from Cooking. */
+  extraPortions?: number;
 };
-
-const SCOPE_LABEL = "Portion split per 1 meal";
 
 /** NomNom categorical chart hues — see `--portion-chart-*` in globals.css */
 export const PORTION_CHART_COLOR_VARS = [
@@ -36,79 +40,91 @@ export const PORTION_CHART_COLOR_VARS = [
   "var(--portion-chart-8)",
 ] as const;
 
-function formatMultiplierDetail(multiplier: number): string {
-  return formatPortionMultiplierBadgeLabel(multiplier) ?? "×1";
+const EXTRAS_SLICE_COLOR = "var(--muted-foreground)";
+
+/** Badge text: "Nelson · 4 portions" + optional " (2x)" when multiplier ≠ 1. */
+export function formatPortionSplitBadgeLabel(
+  label: string,
+  mealCount: number,
+  multiplier: number,
+): string {
+  const portionWord = mealCount === 1 ? "portion" : "portions";
+  const base = `${label} · ${mealCount} ${portionWord}`;
+  const multiplierSuffix = formatPortionSplitMultiplierSuffix(multiplier);
+  return multiplierSuffix ? `${base} ${multiplierSuffix}` : base;
+}
+
+/** "(2x)" / "(1.5x)" for non-default multipliers; null when ×1. */
+export function formatPortionSplitMultiplierSuffix(
+  multiplier: number,
+): string | null {
+  if (!Number.isFinite(multiplier) || multiplier <= 0 || multiplier === 1) {
+    return null;
+  }
+  const formatted = Number.isInteger(multiplier)
+    ? String(multiplier)
+    : multiplier.toFixed(2).replace(/\.?0+$/, "");
+  return `(${formatted}x)`;
+}
+
+function formatExtrasBadgeLabel(extraPortions: number): string {
+  return `${extraPortions} ${extraPortions === 1 ? "extra portion" : "extra portions"}`;
 }
 
 /**
- * Portion split for one default meal: Cooking people as the pool, click to
- * include/exclude from the pie. No batch / multi-meal view.
+ * Portion split for the whole cook session: read-only Cooking people + optional
+ * grey extras slice. Pie weights = meals × multiplier (+ extras as ×1).
  */
-export function PortionSplitCard({ members }: PortionSplitCardProps) {
-  const memberIdsKey = members.map((member) => member.id).join(",");
+export function PortionSplitCard({
+  members,
+  totalMealCount,
+  extraPortions = 0,
+}: PortionSplitCardProps) {
+  const scopeLabel = `Portion split for this cook (${totalMealCount} ${
+    totalMealCount === 1 ? "meal" : "meals"
+  })`;
 
-  // Chart selection starts as everyone in Cooking; stays in sync when Cooking changes.
-  const [selectedIds, setSelectedIds] = useState<string[]>(() =>
-    members.map((member) => member.id),
-  );
-
-  useEffect(() => {
-    const cookingIds = memberIdsKey.length > 0 ? memberIdsKey.split(",") : [];
-    const cookingSet = new Set(cookingIds);
-    setSelectedIds((prev) => {
-      const kept = prev.filter((id) => cookingSet.has(id));
-      const newlyAdded = cookingIds.filter((id) => !prev.includes(id));
-      // First sync / empty → select everyone Cooking has.
-      if (prev.length === 0) {
-        return cookingIds;
-      }
-      return [...kept, ...newlyAdded];
-    });
-  }, [memberIdsKey]);
-
-  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
-
-  const selectedMembers = useMemo(
-    () => members.filter((member) => selectedIdSet.has(member.id)),
-    [members, selectedIdSet],
-  );
-
-  // Multiplier-only shares for the selected subset (per 1 meal).
-  const shares: SharedPortionShare[] = useMemo(() => {
-    if (selectedMembers.length === 0) {
-      return [];
+  const personMealCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const member of members) {
+      counts.set(member.id, member.mealCount);
     }
-    if (selectedMembers.length === 1) {
-      const only = selectedMembers[0]!;
-      return [
-        {
-          familyMemberId: only.id,
-          share: 1,
-          multiplier: only.multiplier,
-        },
-      ];
-    }
-    return getSharedPortionShares(
-      selectedMembers.map((member) => ({
-        id: member.id,
-        isSelf: false,
-        sortOrder: member.sortOrder,
-      })),
-      selectedMembers.map((member) => ({
-        familyMemberId: member.id,
-        multiplier: member.multiplier,
-      })),
-    );
-  }, [selectedMembers]);
+    return counts;
+  }, [members]);
+
+  // Cook-session shares for everyone in Cooking (+ optional extras).
+  const shares: SharedPortionShare[] = useMemo(
+    () =>
+      getCookSessionPortionShares({
+        audienceMembers: members.map((member) => ({
+          id: member.id,
+          isSelf: false,
+          sortOrder: member.sortOrder,
+        })),
+        memberPortions: members.map((member) => ({
+          familyMemberId: member.id,
+          multiplier: member.multiplier,
+        })),
+        personMealCounts,
+        extraPortions,
+      }),
+    [extraPortions, members, personMealCounts],
+  );
 
   const percentages = getDisplayPercentages(shares);
-  // Pie stop colors follow person identity in the Cooking pool (stable hues).
-  const pieColorIndexes = shares.map((share) => {
+
+  // Person slice colors follow Cooking-pool order; extras use muted grey.
+  const pieColorValues = shares.map((share) => {
+    if (share.familyMemberId === COOK_SESSION_EXTRAS_SHARE_ID) {
+      return EXTRAS_SLICE_COLOR;
+    }
     const poolIndex = members.findIndex(
       (member) => member.id === share.familyMemberId,
     );
-    return poolIndex >= 0 ? poolIndex : 0;
+    const colorIndex = poolIndex >= 0 ? poolIndex : 0;
+    return PORTION_CHART_COLOR_VARS[colorIndex % PORTION_CHART_COLOR_VARS.length];
   });
+
   const pieBackground = (() => {
     if (percentages.length === 0) {
       return "conic-gradient(var(--muted) 0% 100%)";
@@ -116,9 +132,7 @@ export function PortionSplitCard({ members }: PortionSplitCardProps) {
     let cumulative = 0;
     const stops: string[] = [];
     percentages.forEach((pct, index) => {
-      const colorIndex = pieColorIndexes[index] ?? index;
-      const color =
-        PORTION_CHART_COLOR_VARS[colorIndex % PORTION_CHART_COLOR_VARS.length];
+      const color = pieColorValues[index] ?? "var(--muted)";
       const end = cumulative + pct;
       stops.push(`${color} ${cumulative}% ${end}%`);
       cumulative = end;
@@ -126,24 +140,19 @@ export function PortionSplitCard({ members }: PortionSplitCardProps) {
     return `conic-gradient(${stops.join(", ")})`;
   })();
 
-  const ariaLabel = `${SCOPE_LABEL}: ${selectedMembers
-    .map((member) => `${member.label} ${formatMultiplierDetail(member.multiplier)}`)
-    .join(", ")}`;
+  const personBadgeLabels = members.map((member) =>
+    formatPortionSplitBadgeLabel(member.label, member.mealCount, member.multiplier),
+  );
+  const extrasBadgeLabel =
+    extraPortions > 0 ? formatExtrasBadgeLabel(extraPortions) : null;
+  const ariaLabel = [
+    scopeLabel,
+    ...personBadgeLabels,
+    ...(extrasBadgeLabel ? [extrasBadgeLabel] : []),
+  ].join(": ");
 
-  function toggleMember(memberId: string) {
-    setSelectedIds((prev) => {
-      if (prev.includes(memberId)) {
-        // Keep at least one person in the chart.
-        if (prev.length <= 1) {
-          return prev;
-        }
-        return prev.filter((id) => id !== memberId);
-      }
-      return [...prev, memberId];
-    });
-  }
-
-  if (members.length <= 1) {
+  // Nothing useful to show (no people and no extras).
+  if (members.length === 0 && extraPortions <= 0) {
     return null;
   }
 
@@ -158,26 +167,29 @@ export function PortionSplitCard({ members }: PortionSplitCardProps) {
         />
 
         <div className="min-w-0 flex-1">
-          <div className="type-caption text-muted-foreground">{SCOPE_LABEL}</div>
-          {/* Same chip toggles as Cooking — clear that people can be pressed on/off. */}
+          <div className="type-caption text-muted-foreground">{scopeLabel}</div>
+          {/* Read-only mirrors of Cooking — not interactive. */}
           <div
             className="mt-tight flex flex-wrap items-center gap-item"
-            role="group"
+            role="list"
             aria-label="People in portion split"
           >
             {members.map((member, index) => {
-              const isSelected = selectedIdSet.has(member.id);
+              const portionWord =
+                member.mealCount === 1 ? "portion" : "portions";
+              const multiplierSuffix = formatPortionSplitMultiplierSuffix(
+                member.multiplier,
+              );
+              // Name keeps badge semibold; portion detail is muted like other outline badges.
+              const detail = ` · ${member.mealCount} ${portionWord}${
+                multiplierSuffix ? ` ${multiplierSuffix}` : ""
+              }`;
               return (
-                <SegmentedFilterButton
+                <Badge
                   key={member.id}
-                  selected={isSelected}
-                  size="sm"
-                  aria-pressed={isSelected}
-                  aria-label={`${isSelected ? "Hide" : "Show"} ${member.label} in portion split`}
-                  onClick={() => toggleMember(member.id)}
-                  // Badge-sized chip; keep text muted — selection via fill/border only
-                  // (accent text reads like a category color next to the pie dots).
-                  className="h-auto min-h-0 gap-1 rounded-full px-2 py-0.5 text-xs font-semibold text-muted-foreground hover:text-muted-foreground"
+                  role="listitem"
+                  variant="outline"
+                  className="gap-x-tight"
                 >
                   <span
                     className="inline-block size-2 shrink-0 rounded-full"
@@ -189,13 +201,25 @@ export function PortionSplitCard({ members }: PortionSplitCardProps) {
                     }}
                     aria-hidden
                   />
-                  {member.label}{" "}
-                  <span className="font-normal text-muted-foreground">
-                    {formatMultiplierDetail(member.multiplier)}
-                  </span>
-                </SegmentedFilterButton>
+                  <span>{member.label}</span>
+                  <span className="font-normal opacity-75">{detail}</span>
+                </Badge>
               );
             })}
+            {extrasBadgeLabel ? (
+              <Badge
+                role="listitem"
+                variant="outline"
+                className="gap-x-tight"
+              >
+                <span
+                  className="inline-block size-2 shrink-0 rounded-full bg-muted-foreground"
+                  aria-hidden
+                />
+                {/* Same weight/opacity as “· N portions” on person badges. */}
+                <span className="font-normal opacity-75">{extrasBadgeLabel}</span>
+              </Badge>
+            ) : null}
           </div>
         </div>
       </div>

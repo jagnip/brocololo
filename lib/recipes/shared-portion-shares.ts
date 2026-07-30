@@ -10,6 +10,9 @@ export type MemberPortionForSharedSplit = {
   multiplier: number;
 };
 
+/** Sentinel id for anonymous extra portions on the cook-session pie. */
+export const COOK_SESSION_EXTRAS_SHARE_ID = "__extras__";
+
 export type SharedPortionShare = {
   familyMemberId: string;
   share: number;
@@ -101,6 +104,69 @@ export function getBatchPortionShares(
     multiplier: entry.multiplier,
     weight: entry.weight,
   }));
+}
+
+/**
+ * Cook-session pie shares: person weight = meals × multiplier, plus optional
+ * anonymous extras (each extra = one default ×1 portion).
+ * Unlike getBatchPortionShares, a single person (or person + extras) is valid.
+ */
+export function getCookSessionPortionShares(params: {
+  audienceMembers: FamilyMemberForSharedPortion[];
+  memberPortions: MemberPortionForSharedSplit[];
+  personMealCounts: Map<string, number>;
+  extraPortions?: number;
+}): SharedPortionShare[] {
+  const {
+    audienceMembers,
+    memberPortions,
+    personMealCounts,
+    extraPortions = 0,
+  } = params;
+
+  const personEntries = [...audienceMembers]
+    .map((member) => {
+      const mealCount = personMealCounts.get(member.id) ?? 0;
+      const multiplier = getMemberMultiplier(member, memberPortions);
+      return {
+        member,
+        multiplier,
+        weight: mealCount * multiplier,
+      };
+    })
+    .filter((entry) => entry.weight > 0)
+    .sort((a, b) => a.member.sortOrder - b.member.sortOrder);
+
+  const extrasWeight =
+    Number.isFinite(extraPortions) && extraPortions > 0 ? extraPortions : 0;
+
+  if (personEntries.length === 0 && extrasWeight <= 0) {
+    return [];
+  }
+
+  const totalWeight =
+    personEntries.reduce((sum, entry) => sum + entry.weight, 0) + extrasWeight;
+  if (!Number.isFinite(totalWeight) || totalWeight <= 0) {
+    return [];
+  }
+
+  const shares: SharedPortionShare[] = personEntries.map((entry) => ({
+    familyMemberId: entry.member.id,
+    share: entry.weight / totalWeight,
+    multiplier: entry.multiplier,
+    weight: entry.weight,
+  }));
+
+  if (extrasWeight > 0) {
+    shares.push({
+      familyMemberId: COOK_SESSION_EXTRAS_SHARE_ID,
+      share: extrasWeight / totalWeight,
+      multiplier: 1,
+      weight: extrasWeight,
+    });
+  }
+
+  return shares;
 }
 
 /** Rounded display percentages that sum to 100 for pie charts. */
