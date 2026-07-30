@@ -153,23 +153,6 @@ export function IngredientItem({
   }).label;
   const amountAriaLabel = `Amount of ${ingredientDisplayName}`;
 
-  const getUnitOptionLabel = (unitId: string) => {
-    const optionDisplay = getIngredientDisplay(
-      resolvedBaseAmount ?? recipeIngredient.amount,
-      recipeIngredient.unit?.id ?? null,
-      recipeIngredient.unit?.name ?? null,
-      unitId,
-      ingredient.unitConversions,
-      servingScalingFactor,
-      calorieScalingFactor,
-    );
-    return getUnitDisplayName({
-      amount: optionDisplay.rawAmount,
-      unitName: optionDisplay.displayUnitName,
-      unitNamePlural: optionDisplay.displayUnitNamePlural,
-    });
-  };
-
   const nutrition = getIngredientNutritionPer100g(ingredient);
   const showPerOneSelectedUnitColumn =
     selectedUnitGramsPerUnit != null && !isGramUnit(displayUnitName);
@@ -266,8 +249,61 @@ export function IngredientItem({
   };
 
   const isEditable = rawAmount != null;
-  const canRenderAmountAndUnit =
-    recipeIngredient.unit != null && displayAmount != null;
+  const canRenderAmount = displayAmount != null;
+  const canRenderUnit = recipeIngredient.unit != null;
+  // Amount + unit, or unit-only (salt “to taste”) — same selector shell as handfuls.
+  const canRenderAmountOrUnit = canRenderAmount || canRenderUnit;
+
+  // Ensure qualitative recipe units (e.g. to taste) appear in the select even if
+  // they are missing from the ingredient's conversion catalog.
+  const unitSelectOptions = (() => {
+    const units = [...availableUnits];
+    const recipeUnit = recipeIngredient.unit;
+    if (
+      recipeUnit &&
+      !units.some((entry) => entry.unitId === recipeUnit.id)
+    ) {
+      units.unshift({
+        unitId: recipeUnit.id,
+        gramsPerUnit: 0,
+        unit: {
+          id: recipeUnit.id,
+          name: recipeUnit.name,
+          namePlural: recipeUnit.namePlural ?? null,
+        },
+      });
+    }
+    return units;
+  })();
+
+  const getUnitOptionLabel = (unitId: string) => {
+    // Qualitative rows have no amount — label from the unit catalog / recipe unit.
+    if (!canRenderAmount) {
+      const option = unitSelectOptions.find((entry) => entry.unitId === unitId);
+      if (option) {
+        return getUnitDisplayName({
+          amount: null,
+          unitName: option.unit.name,
+          unitNamePlural: option.unit.namePlural ?? null,
+        });
+      }
+    }
+    const optionDisplay = getIngredientDisplay(
+      resolvedBaseAmount ?? recipeIngredient.amount,
+      recipeIngredient.unit?.id ?? null,
+      recipeIngredient.unit?.name ?? null,
+      unitId,
+      ingredient.unitConversions,
+      servingScalingFactor,
+      calorieScalingFactor,
+    );
+    return getUnitDisplayName({
+      amount: optionDisplay.rawAmount,
+      unitName: optionDisplay.displayUnitName,
+      unitNamePlural: optionDisplay.displayUnitNamePlural,
+    });
+  };
+
   const ingredientCandidates = [
     ingredient,
     ...replacementCandidates.filter(
@@ -342,63 +378,74 @@ export function IngredientItem({
       <div
         className={cn(
           "gap-item",
-          canRenderAmountAndUnit
+          canRenderAmountOrUnit
             ? "flex items-center max-md:flex-row md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:grid-rows-[auto_auto] @lg/ingredient-row:flex @lg/ingredient-row:flex-row @lg/ingredient-row:flex-wrap @lg/ingredient-row:items-center"
             : "flex items-center gap-item md:flex-col md:items-stretch @lg/ingredient-row:flex-row",
         )}
       >
-        {canRenderAmountAndUnit ? (
+        {canRenderAmountOrUnit ? (
           <div className="flex items-center gap-item max-md:order-1 md:contents @lg/ingredient-row:order-1 @lg/ingredient-row:flex">
-            {isEditable ? (
-              <div className="w-16 h-8 flex items-center justify-center md:row-start-2 md:col-start-1">
-                <Input
-                  ref={inputRef}
-                  type="number"
-                  min="0.1"
-                  step="any"
-                  size="default"
-                  value={isEditing ? editValue : displayAmount}
-                  onFocus={handleFocus}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  onBlur={handleCommit}
-                  onKeyDown={handleKeyDown}
-                  className="w-16 min-w-16 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  aria-label={amountAriaLabel}
-                />
-              </div>
-            ) : (
-              <div className="w-16 min-w-16 h-8 flex items-center justify-center type-body leading-none text-center tabular-nums md:row-start-2 md:col-start-1">
-                {displayAmount}
-              </div>
-            )}
-            <div className="min-w-0 max-md:flex-1 md:row-start-2 md:col-start-2">
-              <Select
-                value={selectedUnitId ?? undefined}
-                disabled={false}
-                onValueChange={(value) => onUnitChange(value || null)}
-                allowInlineClear={false}
+            {/* Amount only when the recipe row has a quantity; unit-only keeps the Select. */}
+            {canRenderAmount ? (
+              isEditable ? (
+                <div className="w-16 h-8 flex items-center justify-center md:row-start-2 md:col-start-1">
+                  <Input
+                    ref={inputRef}
+                    type="number"
+                    min="0.1"
+                    step="any"
+                    size="default"
+                    value={isEditing ? editValue : displayAmount}
+                    onFocus={handleFocus}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onBlur={handleCommit}
+                    onKeyDown={handleKeyDown}
+                    className="w-16 min-w-16 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    aria-label={amountAriaLabel}
+                  />
+                </div>
+              ) : (
+                <div className="w-16 min-w-16 h-8 flex items-center justify-center type-body leading-none text-center tabular-nums md:row-start-2 md:col-start-1">
+                  {displayAmount}
+                </div>
+              )
+            ) : null}
+            {canRenderUnit ? (
+              <div
+                className={cn(
+                  "min-w-0 max-md:flex-1 md:row-start-2",
+                  // With no amount input, unit sits in the first auto column.
+                  canRenderAmount ? "md:col-start-2" : "md:col-start-1",
+                )}
               >
-                <SelectTrigger
-                  size="default"
-                  className="inline-flex w-full min-w-0 items-center @lg/ingredient-row:w-26 @lg/ingredient-row:min-w-26"
+                <Select
+                  value={selectedUnitId ?? recipeIngredient.unit?.id ?? undefined}
+                  disabled={false}
+                  onValueChange={(value) => onUnitChange(value || null)}
+                  allowInlineClear={false}
                 >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableUnits.map((uc) => (
-                    <SelectItem key={uc.unitId} value={uc.unitId}>
-                      {getUnitOptionLabel(uc.unitId)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  <SelectTrigger
+                    size="default"
+                    className="inline-flex w-full min-w-0 items-center @lg/ingredient-row:w-26 @lg/ingredient-row:min-w-26"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {unitSelectOptions.map((uc) => (
+                      <SelectItem key={uc.unitId} value={uc.unitId}>
+                        {getUnitOptionLabel(uc.unitId)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
           </div>
         ) : null}
         <div
           className={cn(
             "flex min-w-0 flex-wrap items-center gap-item",
-            canRenderAmountAndUnit
+            canRenderAmountOrUnit
               ? "max-md:order-2 max-md:flex-1 md:col-span-3 md:row-start-1 @lg/ingredient-row:order-2 @lg/ingredient-row:min-w-48 @lg/ingredient-row:flex-[1_1_12rem] @lg/ingredient-row:col-span-auto"
               : "order-2 flex-1 md:order-1 md:w-full @lg/ingredient-row:order-2 @lg/ingredient-row:flex-1",
           )}
@@ -412,29 +459,31 @@ export function IngredientItem({
               <span className="type-body truncate">{ingredientDisplayName}</span>
             </div>
           ) : (
-            <SearchableSelect
-              options={ingredientOptions}
-              renderLabel={renderIngredientDropdownLabel}
-              renderTriggerLabel={renderIngredientTriggerLabel}
-              value={ingredient.id}
-              onValueChange={(next) => {
-                if (!next) return;
-                onIngredientChange(next);
-              }}
-              size="default"
-              placeholder="Select ingredient..."
-              searchPlaceholder="Search ingredient..."
-              emptyLabel="No ingredient found."
-              allowClear={false}
-              className="min-w-0 w-full flex-1 @lg/ingredient-row:min-w-48 font-normal"
-              renderIcon={(option) => (
-                <IngredientIcon icon={option.icon ?? null} name={option.label} />
-              )}
-            />
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-item">
+              <SearchableSelect
+                options={ingredientOptions}
+                renderLabel={renderIngredientDropdownLabel}
+                renderTriggerLabel={renderIngredientTriggerLabel}
+                value={ingredient.id}
+                onValueChange={(next) => {
+                  if (!next) return;
+                  onIngredientChange(next);
+                }}
+                size="default"
+                placeholder="Select ingredient..."
+                searchPlaceholder="Search ingredient..."
+                emptyLabel="No ingredient found."
+                allowClear={false}
+                className="min-w-0 w-full flex-1 @lg/ingredient-row:min-w-48 font-normal"
+                renderIcon={(option) => (
+                  <IngredientIcon icon={option.icon ?? null} name={option.label} />
+                )}
+              />
+            </div>
           )}
-          {!canRenderAmountAndUnit ? renderNoteButton() : null}
+          {!canRenderAmountOrUnit ? renderNoteButton() : null}
         </div>
-        {canRenderAmountAndUnit
+        {canRenderAmountOrUnit
           ? renderNoteButton(
               "max-md:order-3 md:row-start-2 md:col-start-3 @lg/ingredient-row:order-3 @lg/ingredient-row:col-auto",
             )

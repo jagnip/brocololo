@@ -19,9 +19,12 @@ export type CookingAggregatedLine = {
   key: string;
   ingredientId: string;
   unitId: string;
-  /** Total amount for selected eaters × meals (includes row-level manual scale when provided). */
-  resolvedAmount: number;
-  /** Amount attributed to each selected eater for this line. */
+  /**
+   * Total amount for selected eaters × meals (includes row-level manual scale).
+   * Null for qualitative rows (salt/pepper — no numeric amount).
+   */
+  resolvedAmount: number | null;
+  /** Amount attributed to each selected eater for this line (empty for qualitative). */
   memberAmounts: CookingAggregatedMemberAmount[];
   sourceRecipeIngredientIds: string[];
   /** First contributing recipe row — used for notes and primary unit metadata. */
@@ -150,7 +153,27 @@ export function resolveCookingAggregatedLines(params: {
   const byKey = new Map<string, CookingAggregatedLine>();
 
   for (const recipeIngredient of recipeIngredients) {
-    if (recipeIngredient.amount == null || !recipeIngredient.unit?.id) {
+    // Qualitative rows (salt/pepper/etc.): no numeric amount — still list them,
+    // without people/extras badges. Keep recipe order.
+    if (recipeIngredient.amount == null) {
+      const key = `qualitative:${recipeIngredient.id}`;
+      if (!byKey.has(key)) {
+        orderKeys.push(key);
+        byKey.set(key, {
+          key,
+          ingredientId: recipeIngredient.ingredientId,
+          unitId: recipeIngredient.unit?.id ?? "",
+          resolvedAmount: null,
+          memberAmounts: [],
+          sourceRecipeIngredientIds: [recipeIngredient.id],
+          primaryRecipeIngredientId: recipeIngredient.id,
+          primaryAdditionalInfo: recipeIngredient.additionalInfo,
+        });
+      }
+      continue;
+    }
+
+    if (!recipeIngredient.unit?.id) {
       continue;
     }
 

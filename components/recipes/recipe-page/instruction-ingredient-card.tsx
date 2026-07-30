@@ -121,14 +121,13 @@ export function InstructionIngredientCard({
   const shouldShowMemberBreakdown =
     showMemberBreakdown && visibleShares.length > 0;
 
-  // Single-person / no breakdown — same secondary chip as ingredient member badges.
+  // Compact chip — do not stretch to match tall multi-person cards in a flex row.
   if (!shouldShowMemberBreakdown) {
     return (
       <Badge
         variant="secondary"
         className={cn(
-          // Keep the same chip behavior as the previous instruction badges.
-          "h-auto gap-x-tight border transition-[background-color,border-color,color,box-shadow]",
+          "h-auto self-start gap-x-tight border transition-[background-color,border-color,color,box-shadow]",
           className,
         )}
       >

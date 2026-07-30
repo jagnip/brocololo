@@ -360,9 +360,13 @@ export function getInstructionIngredientBadgeParts(
   const capitalizedName = toCapitalizedIngredientName(ingredientName);
 
   if (rawAmount == null || displayAmount == null) {
+    // No numeric amount (salt/pepper/etc.): still show a qualitative unit like "to taste".
+    const unitOnly = displayUnitName.trim();
+    const amountUnit =
+      unitOnly && !isPieceUnit(unitOnly) ? unitOnly : null;
     return {
       ingredientName: capitalizedName,
-      amountUnit: null,
+      amountUnit,
       additionalInfo: normalizedAdditionalInfo,
     };
   }

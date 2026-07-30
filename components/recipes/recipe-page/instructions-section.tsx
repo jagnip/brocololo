@@ -145,13 +145,14 @@ function InstructionStepIngredientCard(props: {
   }
 
   if (!hasAmount) {
+    // Match Ingredients: name (+ optional unit like "to taste"), no people breakdown.
     return (
       <InstructionIngredientCard
         badgeInput={{
           rawAmount: null,
           displayAmount: null,
-          displayUnitName: "",
-          displayUnitNamePlural: null,
+          displayUnitName: recipeIngredient.unit?.name ?? "",
+          displayUnitNamePlural: recipeIngredient.unit?.namePlural ?? null,
           ingredientName: recipeIngredient.ingredient.name,
           additionalInfo: recipeIngredient.additionalInfo,
         }}
@@ -160,6 +161,7 @@ function InstructionStepIngredientCard(props: {
         baseUnitId={recipeIngredient.unit?.id ?? null}
         baseUnitName={recipeIngredient.unit?.name ?? null}
         unitConversions={unitConversions}
+        showMemberBreakdown={false}
         className={badgeClassName}
       />
     );
@@ -306,7 +308,7 @@ export function InstructionsSection() {
                 </div>
 
                 {instruction.ingredients.length > 0 ? (
-                  <div className="flex flex-wrap gap-x-item gap-y-tight">
+                  <div className="flex flex-wrap items-start gap-x-item gap-y-tight">
                     {instruction.ingredients.map((link) => {
                       const recipeIngredient =
                         effectiveRecipeIngredientById.get(

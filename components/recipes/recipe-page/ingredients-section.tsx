@@ -86,18 +86,19 @@ function renderAggregatedLines(params: {
     const resolvedIngredient =
       ingredients.find((entry) => entry.id === line.ingredientId) ??
       primaryRecipeIngredient.ingredient;
-    const displayUnit = resolveUnitForAggregatedLine(
-      line,
-      primaryRecipeIngredient,
-      ingredients,
-    );
+    const displayUnit =
+      resolveUnitForAggregatedLine(
+        line,
+        primaryRecipeIngredient,
+        ingredients,
+      ) ?? primaryRecipeIngredient.unit ?? null;
     const displayRecipeIngredient: RecipeType["ingredients"][number] = {
       ...primaryRecipeIngredient,
       ingredient: resolvedIngredient,
       ingredientId: resolvedIngredient.id,
       additionalInfo: line.primaryAdditionalInfo,
       unit: displayUnit,
-      unitId: displayUnit?.id ?? line.unitId,
+      unitId: displayUnit?.id ?? (line.unitId || null),
     };
 
     const showApplyScaleAction = line.sourceRecipeIngredientIds.some((id) =>

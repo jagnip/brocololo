@@ -257,6 +257,42 @@ describe("resolveCookingAggregatedLines", () => {
     ]);
   });
 
+  it("includes qualitative rows (no amount) without member badges", () => {
+    const toTaste = createMockUnit({
+      id: "unit-to-taste",
+      name: "to taste",
+      namePlural: null,
+    });
+    const salt = createMockIngredient({ id: "ing-salt", name: "Salt" });
+    const saltRow = createMockRecipeIngredient({
+      id: "ri-salt",
+      amount: null,
+      nutritionTarget: "BOTH",
+      ingredient: salt,
+      unit: toTaste,
+      unitId: toTaste.id,
+    });
+
+    const lines = resolveCookingAggregatedLines({
+      recipeIngredients: [saltRow],
+      recipeServings: 4,
+      familyMembers,
+      cookingFamilyMemberIds: ["family-self", "family-member-1"],
+      mealCount: 1,
+      audienceMemberIds: familyMembers.map((member) => member.id),
+      memberPortions: buildMemberPortionsFromFamily(familyMembers),
+    });
+
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toMatchObject({
+      ingredientId: "ing-salt",
+      unitId: "unit-to-taste",
+      resolvedAmount: null,
+      memberAmounts: [],
+      primaryRecipeIngredientId: "ri-salt",
+    });
+  });
+
   it("adds anonymous extra portions attributed as COOK_SESSION_EXTRAS_SHARE_ID", () => {
     const sliceUnit = createMockUnit({ id: "unit-slice", name: "slice", namePlural: "slices" });
     const bread = createMockIngredient({
