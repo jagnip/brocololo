@@ -323,6 +323,8 @@ export function recipeToFormData(
     })),
     notes: recipe.notes.join("\n"),
     excludeFromPlanner: recipe.excludeFromPlanner,
+    plannedMealCount: recipe.plannedMealCount,
+    isBatchRecipe: recipe.isBatchRecipe,
   };
 }
 

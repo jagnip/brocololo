@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { PlanInputType, PlanSlotMealPayload, SlotSaveData, type SlotInputType } from "@/types/planner";
+import { PlanInputType, PlanSlotMealPayload, SetPlanMealOptions, SlotSaveData, type SlotInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PlanView } from "./plan-view";
 import { toast } from "sonner";
@@ -16,6 +16,8 @@ import {
   formatRangeChangeDialogDescription,
   formatRangeChangeDialogTitle,
 } from "@/lib/planner/planner-range-messages";
+import { getPlanSlotKey, placeRecipeOnPlan } from "@/lib/planner/helpers";
+import { rearrangePlanSlots } from "@/lib/planner/rearrange-plan-slots";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -134,6 +136,7 @@ export function PlanEditor({
           ? s.cookingFamilyMemberIds
           : familyMembers.map((member) => member.id),
       used: s.used,
+      batchGroupId: s.batchGroupId ?? null,
     }));
 
     const result = await updateSavedPlan(planId, saveData);
@@ -248,6 +251,8 @@ export function PlanEditor({
         ...slot,
         recipe: nextRecipe,
         alternatives: [...restAlternatives, slot.recipe],
+        // Swapping recipes breaks membership in the previous multi-meal placement.
+        batchGroupId: null,
       };
     });
 
@@ -260,66 +265,110 @@ export function PlanEditor({
           ...slot,
           recipe: nextRecipe,
           alternatives: [...restAlternatives, slot.recipe],
+          batchGroupId: null,
         };
       }),
     );
   }, []);
 
-  const handleSetMeal = useCallback((slotKey: string, payload: PlanSlotMealPayload) => {
-    const applyPayload = (slot: SlotInputType): SlotInputType => {
-      const key = `${slot.date.toISOString()}-${slot.mealType}`;
-      if (key !== slotKey) return slot;
+  const handleSetMeal = useCallback((
+    slotKey: string,
+    payload: PlanSlotMealPayload,
+    options?: SetPlanMealOptions,
+  ) => {
+    const expandMultiMeal = options?.expandMultiMeal !== false;
 
+    const applyPayload = (prev: PlanInputType): PlanInputType => {
       if (payload.kind === "recipe") {
-        return {
-          ...slot,
-          recipe: payload.recipe,
-          customMeal: null,
-          alternatives: slot.alternatives.filter(
-            (recipe) => recipe.id !== payload.recipe.id,
-          ),
-        };
+        // Match create/generate: multi-meal recipes fill following empty days + share a group id.
+        if (expandMultiMeal) {
+          return placeRecipeOnPlan(prev, slotKey, payload.recipe);
+        }
+
+        return prev.map((slot) => {
+          if (getPlanSlotKey(slot) !== slotKey) return slot;
+          return {
+            ...slot,
+            recipe: payload.recipe,
+            customMeal: null,
+            alternatives: slot.alternatives.filter(
+              (recipe) => recipe.id !== payload.recipe.id,
+            ),
+            batchGroupId: null,
+          };
+        });
       }
 
-      if (payload.kind === "custom") {
+      return prev.map((slot) => {
+        if (getPlanSlotKey(slot) !== slotKey) return slot;
+
+        if (payload.kind === "custom") {
+          return {
+            ...slot,
+            recipe: null,
+            customMeal: {
+              name: payload.name,
+              ingredients: payload.ingredients,
+            },
+            alternatives: [],
+            batchGroupId: null,
+          };
+        }
+
         return {
           ...slot,
           recipe: null,
-          customMeal: {
-            name: payload.name,
-            ingredients: payload.ingredients,
-          },
+          customMeal: null,
           alternatives: [],
+          batchGroupId: null,
         };
-      }
-
-      return {
-        ...slot,
-        recipe: null,
-        customMeal: null,
-        alternatives: [],
-      };
+      });
     };
 
-    allSlotsRef.current = allSlotsRef.current.map(applyPayload);
-    setPlan((prev) => prev.map(applyPayload));
+    allSlotsRef.current = applyPayload(allSlotsRef.current);
+    setPlan((prev) => applyPayload(prev));
   }, []);
 
   const handleRemove = useCallback((slotKey: string) => {
     allSlotsRef.current = allSlotsRef.current.map((slot) => {
       const key = `${slot.date.toISOString()}-${slot.mealType}`;
       if (key !== slotKey) return slot;
-      return { ...slot, recipe: null, customMeal: null, alternatives: [] };
+      return {
+        ...slot,
+        recipe: null,
+        customMeal: null,
+        alternatives: [],
+        batchGroupId: null,
+      };
     });
 
     setPlan((prev) =>
       prev.map((slot) => {
         const key = `${slot.date.toISOString()}-${slot.mealType}`;
         if (key !== slotKey) return slot;
-        return { ...slot, recipe: null, customMeal: null, alternatives: [] };
+        return {
+          ...slot,
+          recipe: null,
+          customMeal: null,
+          alternatives: [],
+          batchGroupId: null,
+        };
       }),
     );
   }, []);
+
+  // Slot↔slot DnD: move into empty, swap when both filled (no multi-meal expand).
+  const handleRearrangeSlots = useCallback(
+    (sourceKey: string, targetKey: string) => {
+      allSlotsRef.current = rearrangePlanSlots(
+        allSlotsRef.current,
+        sourceKey,
+        targetKey,
+      );
+      setPlan((prev) => rearrangePlanSlots(prev, sourceKey, targetKey));
+    },
+    [],
+  );
 
   const handleToggleUsed = useCallback((slotKey: string) => {
     allSlotsRef.current = allSlotsRef.current.map((slot) => {
@@ -601,6 +650,7 @@ export function PlanEditor({
         onShuffle={markEdited(handleShuffle)}
         onSetMeal={markEdited(handleSetMeal)}
         onRemove={markEdited(handleRemove)}
+        onRearrangeSlots={markEdited(handleRearrangeSlots)}
         onToggleUsed={markEdited(handleToggleUsed)}
         familyMembers={familyMembers}
         onAudienceChange={markEdited(handleAudienceChange)}

@@ -2,15 +2,45 @@
 
 import { useState } from "react";
 import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import {
   formatDayLabel,
   getOrderedPlanSlots,
   getPlanSlotKey,
   getMealsForDate,
   groupSlotsByDate,
+  getBatchGroupLabels,
 } from "@/lib/planner/helpers";
-import { PlanInputType, PlanSlotMealPayload, SlotInputType } from "@/types/planner";
+import {
+  getBatchGroupSlotsForRecipe,
+  getRecipeCookingHref,
+} from "@/lib/planner/plan-recipe-link";
+import {
+  PlanInputType,
+  PlanSlotMealPayload,
+  SetPlanMealOptions,
+  SlotInputType,
+} from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PlannerSlotCard } from "./planner-slot-card";
+import {
+  PLANNER_SLOT_DND_TYPE,
+  PlannerSlotDndWrapper,
+  PlannerSlotDragOverlayPreview,
+  getPlannerSlotDragPreview,
+  type PlannerSlotDragData,
+} from "./planner-slot-dnd";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { getIngredientDisplayName } from "@/lib/ingredients/format";
 import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
@@ -44,8 +74,14 @@ type PlanViewProps = {
   recipes: RecipeType[];
   ingredientOptions: LogIngredientOption[];
   onShuffle?: (slotKey: string) => void;
-  onSetMeal?: (slotKey: string, payload: PlanSlotMealPayload) => void;
+  onSetMeal?: (
+    slotKey: string,
+    payload: PlanSlotMealPayload,
+    options?: SetPlanMealOptions,
+  ) => void;
   onRemove?: (slotKey: string) => void;
+  /** Slot↔slot rearrange (move / swap). Enables DnD when provided. */
+  onRearrangeSlots?: (sourceKey: string, targetKey: string) => void;
   onToggleUsed?: (slotKey: string) => void;
   familyMembers?: FamilyMemberRow[];
   onAudienceChange?: (slotKey: string, memberIds: string[]) => void;
@@ -59,17 +95,34 @@ export function PlanView({
   onShuffle,
   onSetMeal,
   onRemove,
+  onRearrangeSlots,
   onToggleUsed,
   familyMembers = [],
   onAudienceChange,
 }: PlanViewProps) {
-  if (plan.length === 0) {
-    return null;
-  }
+  const [isBulkReplaceDialogOpen, setIsBulkReplaceDialogOpen] = useState(false);
+  const [isBulkEditEatersDialogOpen, setIsBulkEditEatersDialogOpen] =
+    useState(false);
+  const [activeDrag, setActiveDrag] = useState<PlannerSlotDragData | null>(
+    null,
+  );
 
-  const slotsByDate = groupSlotsByDate(plan);
-  const sortedDates = Array.from(slotsByDate.keys()).sort();
-  const orderedSlotKeys = getOrderedPlanSlots(plan).map((slot) => getPlanSlotKey(slot));
+  // Mouse distance vs touch long-press so clicks/taps still open the meal dialog.
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 250, tolerance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const orderedSlotKeys = getOrderedPlanSlots(plan).map((slot) =>
+    getPlanSlotKey(slot),
+  );
   const {
     selectedKeys,
     selectedCount,
@@ -84,17 +137,24 @@ export function PlanView({
     },
   });
 
-  const [isBulkReplaceDialogOpen, setIsBulkReplaceDialogOpen] = useState(false);
-  const [isBulkEditEatersDialogOpen, setIsBulkEditEatersDialogOpen] =
-    useState(false);
+  if (plan.length === 0) {
+    return null;
+  }
+
+  const slotsByDate = groupSlotsByDate(plan);
+  const sortedDates = Array.from(slotsByDate.keys()).sort();
+  // Compute once per render so every card can look up its live "N of M" label.
+  const batchLabels = getBatchGroupLabels(plan);
   const bulkReplaceDialogCopy = getReplaceMealDialogCopy(selectedCount);
   const canBulkEditEaters = onAudienceChange && familyMembers.length > 0;
+  const canRearrange = Boolean(onRearrangeSlots);
 
   const handleBulkReplaceSave = async (payload: PlanSlotMealPayload) => {
     if (!onSetMeal) return;
 
     selectedKeys.forEach((slotKey) => {
-      onSetMeal(slotKey, payload);
+      // Bulk picks explicit slots — do not spill into following days.
+      onSetMeal(slotKey, payload, { expandMultiMeal: false });
     });
     setIsBulkReplaceDialogOpen(false);
     clearSelection();
@@ -120,19 +180,76 @@ export function PlanView({
     clearSelection();
   };
 
+  const handleDragStart = (event: DragStartEvent) => {
+    const data = event.active.data.current as PlannerSlotDragData | undefined;
+    if (data?.type === PLANNER_SLOT_DND_TYPE) {
+      setActiveDrag(data);
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveDrag(null);
+    if (!onRearrangeSlots) return;
+
+    const activeData = event.active.data.current as
+      | PlannerSlotDragData
+      | undefined;
+    const overData = event.over?.data.current as
+      | PlannerSlotDragData
+      | undefined;
+    if (!activeData || !overData) return;
+    if (
+      activeData.type !== PLANNER_SLOT_DND_TYPE ||
+      overData.type !== PLANNER_SLOT_DND_TYPE
+    ) {
+      return;
+    }
+    if (activeData.slotKey === overData.slotKey) return;
+
+    // Silent rearrange — no toast / confirm.
+    onRearrangeSlots(activeData.slotKey, overData.slotKey);
+  };
+
+  const handleDragCancel = () => {
+    setActiveDrag(null);
+  };
+
   function renderSlot(slot: SlotInputType) {
     const slotKey = getPlanSlotKey(slot);
-    return (
+    const householdIds = familyMembers.map((member) => member.id);
+    // Batch recipes hand off the whole group's eaters; non-batch only this slot.
+    const recipeCookingHref = slot.recipe
+      ? getRecipeCookingHref(
+          slot.recipe.slug,
+          slot.recipe.isBatchRecipe && slot.batchGroupId
+            ? getBatchGroupSlotsForRecipe(
+                plan,
+                slot.batchGroupId,
+                slot.recipe.id,
+              )
+            : [slot],
+          householdIds,
+        )
+      : undefined;
+
+    const isFilled = Boolean(slot.recipe || slot.customMeal);
+    const preview = getPlannerSlotDragPreview(slot);
+
+    const card = (
       <PlannerSlotCard
         slot={slot}
         isSelected={isSelected(slotKey)}
         onSelectionChange={(checked) => setSelectionForKey(slotKey, checked)}
         onShiftSelect={() => shiftSelectToKey(slotKey)}
         fridgeMatchIngredients={
-          slot.recipe ? getFridgeMatchIngredients(slot.recipe, fridgeIngredientIds) : []
+          slot.recipe
+            ? getFridgeMatchIngredients(slot.recipe, fridgeIngredientIds)
+            : []
         }
         onShuffle={onShuffle ? () => onShuffle(slotKey) : undefined}
-        onSetMeal={onSetMeal ? (payload) => onSetMeal(slotKey, payload) : undefined}
+        onSetMeal={
+          onSetMeal ? (payload) => onSetMeal(slotKey, payload) : undefined
+        }
         onRemove={onRemove ? () => onRemove(slotKey) : undefined}
         onToggleUsed={onToggleUsed ? () => onToggleUsed(slotKey) : undefined}
         familyMembers={familyMembers}
@@ -141,13 +258,30 @@ export function PlanView({
             ? (memberIds) => onAudienceChange(slotKey, memberIds)
             : undefined
         }
+        batchLabel={batchLabels.get(slotKey)}
+        recipeCookingHref={recipeCookingHref}
         recipes={recipes}
         ingredientOptions={ingredientOptions}
       />
     );
+
+    if (!canRearrange) {
+      return card;
+    }
+
+    return (
+      <PlannerSlotDndWrapper
+        slotKey={slotKey}
+        canDrag={isFilled}
+        title={preview.title}
+        imageUrl={preview.imageUrl}
+      >
+        {card}
+      </PlannerSlotDndWrapper>
+    );
   }
 
-  return (
+  const grid = (
     <section className="min-w-0 space-y-8">
       {sortedDates.map((dateKey) => {
         const { date, breakfast, lunch, dinner } = getMealsForDate(
@@ -159,21 +293,9 @@ export function PlanView({
           <article key={dateKey} className="min-w-0 space-y-4">
             <Subheader>{formatDayLabel(date)}</Subheader>
             <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {breakfast && (
-                <div>
-                  {renderSlot(breakfast)}
-                </div>
-              )}
-              {lunch && (
-                <div>
-                  {renderSlot(lunch)}
-                </div>
-              )}
-              {dinner && (
-                <div>
-                  {renderSlot(dinner)}
-                </div>
-              )}
+              {breakfast && <div>{renderSlot(breakfast)}</div>}
+              {lunch && <div>{renderSlot(lunch)}</div>}
+              {dinner && <div>{renderSlot(dinner)}</div>}
             </div>
           </article>
         );
@@ -184,7 +306,9 @@ export function PlanView({
           onSetMeal ? () => setIsBulkReplaceDialogOpen(true) : undefined
         }
         onEditEaters={
-          canBulkEditEaters ? () => setIsBulkEditEatersDialogOpen(true) : undefined
+          canBulkEditEaters
+            ? () => setIsBulkEditEatersDialogOpen(true)
+            : undefined
         }
         onRemoveMeals={onRemove ? handleBulkRemoveMeals : undefined}
         onDone={clearSelection}
@@ -218,5 +342,29 @@ export function PlanView({
         />
       ) : null}
     </section>
+  );
+
+  if (!canRearrange) {
+    return grid;
+  }
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
+      {grid}
+      <DragOverlay dropAnimation={null}>
+        {activeDrag ? (
+          <PlannerSlotDragOverlayPreview
+            title={activeDrag.title}
+            imageUrl={activeDrag.imageUrl}
+          />
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 }

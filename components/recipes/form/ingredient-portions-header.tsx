@@ -24,6 +24,7 @@ import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { syncModifyAmountsToPortionMultipliers } from "@/lib/recipes/sync-modify-amounts-for-portions";
 import type { MemberPortionInput } from "@/lib/recipes/ingredient-adjustments";
 import { cn } from "@/lib/utils";
+import { SettingGridField, SettingGridRow } from "@/components/ui/setting-grid-field";
 
 function normalizeMemberPortionRows(
   rows: CreateRecipeFormValues["memberPortions"] | undefined,
@@ -81,39 +82,45 @@ export function IngredientPortionsHeader({
 
   return (
     <div className="mb-3 flex flex-col gap-3">
-      {/* Batch size: sentence with shared QuantityStepper (preserves RHF null-on-clear). */}
-      <FormField
-        control={form.control}
-        name="servings"
-        render={({ field }) => (
-          <FormItem>
-            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 type-body text-muted-foreground">
-              <span>Ingredient amounts below are for</span>
-              <FormControl>
-                <QuantityStepper
-                  value={
-                    typeof field.value === "number" &&
-                    Number.isFinite(field.value)
-                      ? field.value
-                      : null
-                  }
-                  onValueChange={(next) => {
-                    field.onChange(next);
-                  }}
-                  min={1}
-                  ariaLabel="Number of portions"
-                  decreaseLabel="Decrease portions"
-                  increaseLabel="Increase portions"
-                />
-              </FormControl>
-              <span>
-                <span className="font-bold">default</span> portions
-              </span>
-            </div>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <SettingGridRow>
+        <FormField
+          control={form.control}
+          name="servings"
+          render={({ field }) => (
+            <FormItem>
+              <SettingGridField
+                label="Ingredients for"
+                tooltip="Totals below are for this many portions. That sets 1 default portion — adjustable per person."
+                tooltipAriaLabel="Show ingredients for guidance"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <FormControl>
+                    <QuantityStepper
+                      value={
+                        typeof field.value === "number" &&
+                        Number.isFinite(field.value)
+                          ? field.value
+                          : null
+                      }
+                      onValueChange={(next) => {
+                        field.onChange(next);
+                      }}
+                      min={1}
+                      ariaLabel="Number of portions"
+                      decreaseLabel="Decrease portions"
+                      increaseLabel="Increase portions"
+                    />
+                  </FormControl>
+                  <span className="text-sm text-muted-foreground">
+                    default portions
+                  </span>
+                </div>
+              </SettingGridField>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </SettingGridRow>
 
       {/* Per-person portion size: DropdownMenu (not Select) so custom Name ×N triggers open reliably. */}
       <FormField

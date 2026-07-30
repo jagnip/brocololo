@@ -222,6 +222,16 @@ const recipeBaseSchema = z
       return lines;
     }),
     excludeFromPlanner: z.boolean().default(false),
+    // Explicit default of how many meals this recipe should occupy when generated.
+    plannedMealCount: preprocessRequiredNumberInput(
+      "Enter a number of meals above 0",
+      z
+        .number()
+        .int({ message: "Enter a number of meals above 0" })
+        .min(1, { message: "Enter a number of meals above 0" }),
+    ),
+    // Cosmetic flag: shows an "N of M" badge when the recipe is scheduled for >1 meal.
+    isBatchRecipe: z.boolean().default(false),
   })
   .superRefine((recipe, ctx) => {
     recipe.ingredients.forEach((ingredient, ingredientIndex) => {

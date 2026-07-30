@@ -1419,7 +1419,9 @@ export type $FamilyMemberPayload<ExtArgs extends runtime.Types.Extensions.Intern
     isSelf: boolean
     sortOrder: number
     /**
-     * * Household default portion multiplier (1× = one base per-meal share).
+     * *
+     *    * Household default portion multiplier (1× = one base per-meal share).
+     *    * Intentional permanent behavior — not legacy / not pending removal.
      */
     portionMultiplier: number
   }, ExtArgs["result"]["familyMember"]>

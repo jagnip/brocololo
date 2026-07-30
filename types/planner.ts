@@ -17,6 +17,16 @@ export type PlanSlotMealPayload =
   | { kind: "custom"; name: string; ingredients: PlanCustomMealIngredient[] }
   | { kind: "empty" };
 
+/** Options for manual meal placement in the plan editor. */
+export type SetPlanMealOptions = {
+  /**
+   * When true (default), recipes with plannedMealCount > 1 also fill following
+   * empty same-meal slots and share a batchGroupId — same as plan generation.
+   * Bulk replace sets this false so only the selected slots change.
+   */
+  expandMultiMeal?: boolean;
+};
+
 export type DayMealsType = {
   date: Date;
   breakfast: SlotInputType;
@@ -35,6 +45,8 @@ export type SlotInputType = {
   alternatives: RecipeType[];
   cookingFamilyMemberIds?: string[];
   used: boolean;
+  /** Shared id across slots placed together as one multi-meal placement; null when alone. */
+  batchGroupId?: string | null;
 };
 
 export type PlanInputType = SlotInputType[];
@@ -47,4 +59,5 @@ export type SlotSaveData = {
   alternativeRecipeIds: string[];
   cookingFamilyMemberIds: string[];
   used: boolean;
+  batchGroupId?: string | null;
 };

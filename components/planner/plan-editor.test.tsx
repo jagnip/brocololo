@@ -21,9 +21,13 @@ vi.mock("./plan-view", () => ({
   PlanView: ({
     plan,
     onShuffle,
+    onRemove,
+    onSetMeal,
   }: {
     plan: PlanInputType;
     onShuffle?: (slotKey: string) => void;
+    onRemove?: (slotKey: string) => void;
+    onSetMeal?: (slotKey: string, payload: any) => void;
   }) => {
     const first = plan[0];
     const slotKey = `${first.date.toISOString()}-${first.mealType}`;
@@ -33,12 +37,36 @@ vi.mock("./plan-view", () => ({
       .map((s) => `${s.date.toISOString().slice(0, 10)}:${s.recipe?.id ?? "empty"}`)
       .join(",");
 
+    // Expose batch group ids so tests can assert clearing on edit.
+    const batchGroups = plan
+      .map((s) => s.batchGroupId ?? "null")
+      .join(",");
+
+    const batchRecipe = {
+      id: "batch-recipe",
+      name: "Batch recipe",
+      plannedMealCount: 2,
+      isBatchRecipe: true,
+    };
+
     return (
       <div>
         <div aria-label="slot-count">{plan.length}</div>
         <div aria-label="dinner-by-day">{dinnerByDay}</div>
+        <div aria-label="batch-groups">{batchGroups}</div>
         <button type="button" onClick={() => onShuffle?.(slotKey)}>
           Shuffle
+        </button>
+        <button type="button" onClick={() => onRemove?.(slotKey)}>
+          Remove first
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            onSetMeal?.(slotKey, { kind: "recipe", recipe: batchRecipe })
+          }
+        >
+          Set batch recipe
         </button>
       </div>
     );
@@ -560,6 +588,133 @@ describe("PlanEditor autosave", () => {
     expect(vi.mocked(deletePlanAction)).toHaveBeenCalledWith("plan-1");
     expect(routerMock.push).toHaveBeenCalledWith("/plan/current");
     expect(routerMock.refresh).toHaveBeenCalled();
+  });
+});
+
+describe("PlanEditor batch group clearing", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(updateSavedPlan).mockResolvedValue({ type: "success" } as any);
+  });
+
+  it("clears batchGroupId on the shuffled slot without touching siblings", async () => {
+    const user = userEvent.setup();
+    const recipeA = createRecipe("recipe-a");
+    const recipeB = createRecipe("recipe-b");
+    const recipeC = createRecipe("recipe-c");
+
+    const initialPlan: PlanInputType = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        mealType: "DINNER" as any,
+        recipe: recipeA,
+        alternatives: [recipeB],
+        customMeal: null,
+        used: false,
+        batchGroupId: "group-1",
+      },
+      {
+        date: new Date("2026-03-18T00:00:00.000Z"),
+        mealType: "DINNER" as any,
+        recipe: recipeA,
+        alternatives: [recipeC],
+        customMeal: null,
+        used: false,
+        batchGroupId: "group-1",
+      },
+    ];
+
+    renderPlanEditor({
+      planId: "plan-1",
+      initialPlan,
+      recipes: [],
+      ingredientOptions: emptyIngredientOptions,
+    });
+
+    expect(screen.getByLabelText("batch-groups")).toHaveTextContent("group-1,group-1");
+
+    await user.click(screen.getByRole("button", { name: "Shuffle" }));
+
+    expect(screen.getByLabelText("batch-groups")).toHaveTextContent("null,group-1");
+  });
+
+  it("clears batchGroupId when removing a slot", async () => {
+    const user = userEvent.setup();
+    const recipeA = createRecipe("recipe-a");
+
+    const initialPlan: PlanInputType = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        mealType: "DINNER" as any,
+        recipe: recipeA,
+        alternatives: [],
+        customMeal: null,
+        used: false,
+        batchGroupId: "group-1",
+      },
+      {
+        date: new Date("2026-03-18T00:00:00.000Z"),
+        mealType: "DINNER" as any,
+        recipe: recipeA,
+        alternatives: [],
+        customMeal: null,
+        used: false,
+        batchGroupId: "group-1",
+      },
+    ];
+
+    renderPlanEditor({
+      planId: "plan-1",
+      initialPlan,
+      recipes: [],
+      ingredientOptions: emptyIngredientOptions,
+    });
+
+    await user.click(screen.getByRole("button", { name: "Remove first" }));
+
+    expect(screen.getByLabelText("batch-groups")).toHaveTextContent("null,group-1");
+  });
+
+  it("expands a manually set multi-meal recipe onto following empty days with a shared batchGroupId", async () => {
+    const user = userEvent.setup();
+
+    const initialPlan: PlanInputType = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        mealType: "DINNER" as any,
+        recipe: null,
+        alternatives: [],
+        customMeal: null,
+        used: false,
+        batchGroupId: null,
+      },
+      {
+        date: new Date("2026-03-18T00:00:00.000Z"),
+        mealType: "DINNER" as any,
+        recipe: null,
+        alternatives: [],
+        customMeal: null,
+        used: false,
+        batchGroupId: null,
+      },
+    ];
+
+    renderPlanEditor({
+      planId: "plan-1",
+      initialPlan,
+      recipes: [],
+      ingredientOptions: emptyIngredientOptions,
+    });
+
+    await user.click(screen.getByRole("button", { name: "Set batch recipe" }));
+
+    expect(screen.getByLabelText("dinner-by-day")).toHaveTextContent(
+      "2026-03-17:batch-recipe,2026-03-18:batch-recipe",
+    );
+    const groups = screen.getByLabelText("batch-groups").textContent ?? "";
+    const [first, second] = groups.split(",");
+    expect(first).not.toBe("null");
+    expect(first).toBe(second);
   });
 });
 

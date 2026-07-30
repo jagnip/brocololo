@@ -159,6 +159,7 @@ function slotInputToCreateData(s: SlotInputType) {
     recipeId: hasCustom ? null : (s.recipe?.id ?? null),
     customName: hasCustom ? customMeal.name : null,
     used: s.used,
+    batchGroupId: s.batchGroupId ?? null,
     audienceMembers: buildSlotAudienceCreates(s.cookingFamilyMemberIds),
     customIngredients: hasCustom
       ? buildCustomIngredientCreates(customMeal)
@@ -183,6 +184,7 @@ function slotSaveDataToCreateData(s: SlotSaveData) {
     recipeId: hasCustom ? null : s.recipeId,
     customName: hasCustom ? s.customMeal!.name : null,
     used: s.used,
+    batchGroupId: s.batchGroupId ?? null,
     audienceMembers: buildSlotAudienceCreates(s.cookingFamilyMemberIds),
     customIngredients: hasCustom
       ? buildCustomIngredientCreates(s.customMeal)
@@ -327,6 +329,7 @@ export async function getPlanById(userId: string, planId: string) {
       (member) => member.familyMemberId,
     ),
     used: slot.used,
+    batchGroupId: slot.batchGroupId,
   }));
 }
 

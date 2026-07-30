@@ -23,6 +23,11 @@ import { Textarea } from "../../ui/textarea";
 import { CategoryType } from "@/types/category";
 import { Button } from "../../ui/button";
 import {
+  SettingGridField,
+  SettingGridRow,
+} from "../../ui/setting-grid-field";
+import { SegmentedControl } from "../../ui/segmented-control";
+import {
   createRecipeAction,
   updateRecipeAction,
 } from "@/actions/recipe-actions";
@@ -40,7 +45,6 @@ import {
 import { buildDraftRecipeForNutrition } from "@/lib/recipes/build-draft-recipe-for-nutrition";
 import { IngredientType } from "@/types/ingredient";
 import { IngredientSelector } from "./ingredient-selector";
-import { CheckboxWithLabel } from "@/components/ui/checkbox";
 import { InstructionStepsEditor } from "./instruction-steps-editor";
 import {
   SearchableSelect,
@@ -245,6 +249,8 @@ export default function RecipeForm({
           instructions: [],
           notes: "",
           excludeFromPlanner: false,
+          plannedMealCount: 1,
+          isBatchRecipe: false,
         },
   });
 
@@ -609,25 +615,6 @@ export default function RecipeForm({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="excludeFromPlanner"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <CheckboxWithLabel
-                        id="exclude-from-planner"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        label="Exclude from planner"
-                        labelClassName="shrink-0"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
             </div>
           </div>
         </section>
@@ -711,6 +698,104 @@ export default function RecipeForm({
                 )}
               />
             </div>
+          </div>
+        </section>
+
+        {/* Planner-specific defaults: meal count, batch badge, and exclude toggle. */}
+        <section>
+          <div className="mb-3">
+            <Subheader>Planner settings</Subheader>
+          </div>
+          <div className="section-container">
+            <SettingGridRow>
+              <FormField
+                control={form.control}
+                name="plannedMealCount"
+                render={({ field }) => (
+                  <FormItem>
+                    <SettingGridField
+                      label="Plan for"
+                      tooltip="How many days this meal repeats in the plan by default."
+                      tooltipAriaLabel="Show plan for guidance"
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="number"
+                            min={1}
+                            className="h-9 w-14 shrink-0 px-2 text-center font-semibold tabular-nums"
+                            value={(field.value as number | undefined) ?? ""}
+                            onChange={(event) =>
+                              handleNumericFieldChange(field.onChange, event)
+                            }
+                            aria-label="Number of meals to plan for"
+                          />
+                        </FormControl>
+                        <span className="text-sm text-muted-foreground">
+                          meals
+                        </span>
+                      </div>
+                    </SettingGridField>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="isBatchRecipe"
+                render={({ field }) => (
+                  <FormItem>
+                    <SettingGridField
+                      label="Cooking style"
+                      tooltip="Cook fresh each planned day, or cook once and use leftovers."
+                      tooltipAriaLabel="Show cooking style guidance"
+                    >
+                      <FormControl>
+                        <SegmentedControl
+                          value={field.value ?? false}
+                          onChange={field.onChange}
+                          aria-label="Cooking style"
+                          options={[
+                            { value: false, label: "Single" },
+                            { value: true, label: "Batch" },
+                          ]}
+                        />
+                      </FormControl>
+                    </SettingGridField>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="excludeFromPlanner"
+                render={({ field }) => (
+                  <FormItem>
+                    <SettingGridField
+                      label="Planner visibility"
+                      tooltip="Hidden recipes are left out of plan generation."
+                      tooltipAriaLabel="Show planner visibility guidance"
+                    >
+                      <FormControl>
+                        <SegmentedControl
+                          value={field.value ?? false}
+                          onChange={field.onChange}
+                          aria-label="Planner visibility"
+                          options={[
+                            { value: false, label: "Visible" },
+                            { value: true, label: "Hidden" },
+                          ]}
+                        />
+                      </FormControl>
+                    </SettingGridField>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </SettingGridRow>
           </div>
         </section>
 

@@ -153,6 +153,9 @@ export function IngredientsSection() {
     familyMembers,
     memberPortions,
     cookingFamilyMemberIds,
+    mealCount,
+    personMealCounts,
+    extraPortions,
     effectiveRecipeIngredientById,
     hasActiveScaling,
     localScaleByIngredientId,
@@ -173,7 +176,7 @@ export function IngredientsSection() {
     return familyMembers.filter((member) => cookingIdSet.has(member.id));
   }, [cookingFamilyMemberIds, familyMembers]);
 
-  // Chart pool = Cooking selection; pie is always per-1-meal multipliers (no batch).
+  // Chart pool = Cooking union; pie weights = meals × multiplier (+ extras).
   const portionSplitAudience = useMemo(() => {
     const multiplierById = new Map(
       memberPortions.map((portion) => [
@@ -192,8 +195,12 @@ export function IngredientsSection() {
       ),
       sortOrder: member.sortOrder,
       multiplier: multiplierById.get(member.id) ?? 1,
+      mealCount: personMealCounts.get(member.id) ?? 0,
     }));
-  }, [cookingFamilyMembers, familyMembers, memberPortions]);
+  }, [cookingFamilyMembers, familyMembers, memberPortions, personMealCounts]);
+
+  const showPortionSplit =
+    portionSplitAudience.length >= 1 || extraPortions > 0;
 
   const sharedRenderParams = useMemo(
     () => ({
@@ -246,8 +253,12 @@ export function IngredientsSection() {
           )}
         </div>
       </div>
-      {portionSplitAudience.length > 1 ? (
-        <PortionSplitCard members={portionSplitAudience} />
+      {showPortionSplit ? (
+        <PortionSplitCard
+          members={portionSplitAudience}
+          totalMealCount={mealCount}
+          extraPortions={extraPortions}
+        />
       ) : null}
       {ungroupedIngredients.length > 0 && hasUngroupedLines ? (
         <div className="mb-item">

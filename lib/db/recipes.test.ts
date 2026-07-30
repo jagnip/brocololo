@@ -58,6 +58,8 @@ function baseCreateRecipeInput() {
     ],
     notes: [] as string[],
     excludeFromPlanner: false,
+    plannedMealCount: 1,
+    isBatchRecipe: false,
   };
 }
 
