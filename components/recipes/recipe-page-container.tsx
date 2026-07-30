@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getRecipeBySlug } from "@/lib/db/recipes";
 import { getIngredients } from "@/lib/db/ingredients";
@@ -5,16 +6,19 @@ import { mergeRecipeIngredientGroceries } from "@/lib/ingredients/merge-recipe-i
 import { getLogs } from "@/lib/db/logs";
 import RecipePage from "./recipe-page";
 import { getIngredientFormDependencies } from "@/components/ingredients/form/form-dependencies";
-import { RecipePageProvider } from "@/components/context/recipe-page-context";
+import { RecipePageCookSessionBridge } from "@/components/recipes/recipe-page-cook-session-bridge";
 import { requireUser } from "@/lib/auth/session";
 import { ensureSelfFamilyMember } from "@/lib/db/family-members";
 
 type RecipePageContainerProps = {
   recipeSlug: string;
+  /** Encoded planner cook hand-off from `?cook=`. */
+  cookParam?: string;
 };
 
 export default async function RecipePageContainer({
   recipeSlug,
+  cookParam,
 }: RecipePageContainerProps) {
   const { id: userId } = await requireUser();
   const [recipe, ingredients, ingredientFormDependencies, logs, familyMembers] = await Promise.all([
@@ -34,14 +38,30 @@ export default async function RecipePageContainer({
   const resolvedRecipe = mergeRecipeIngredientGroceries(recipe, ingredients);
 
   return (
-    <RecipePageProvider
-      recipe={resolvedRecipe}
-      ingredients={ingredients}
-      familyMembers={familyMembers}
-      availableLogDateKeys={logDateKeys}
+    // useSearchParams in the bridge needs a Suspense boundary in the App Router.
+    <Suspense
+      fallback={
+        <RecipePageCookSessionBridge
+          recipe={resolvedRecipe}
+          ingredients={ingredients}
+          familyMembers={familyMembers}
+          availableLogDateKeys={logDateKeys}
+          initialCookParam={cookParam}
+        >
+          <RecipePage ingredientFormDependencies={ingredientFormDependencies} />
+        </RecipePageCookSessionBridge>
+      }
     >
-      <RecipePage ingredientFormDependencies={ingredientFormDependencies} />
-    </RecipePageProvider>
+      <RecipePageCookSessionBridge
+        recipe={resolvedRecipe}
+        ingredients={ingredients}
+        familyMembers={familyMembers}
+        availableLogDateKeys={logDateKeys}
+        initialCookParam={cookParam}
+      >
+        <RecipePage ingredientFormDependencies={ingredientFormDependencies} />
+      </RecipePageCookSessionBridge>
+    </Suspense>
   );
 }
 

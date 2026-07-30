@@ -70,6 +70,8 @@ type PlannerSlotCardProps = {
   onAudienceChange?: (memberIds: string[]) => void;
   /** Live "N of M" label for batch-recipe groups with 2+ members. */
   batchLabel?: { index: number; total: number };
+  /** Prefills Cooking on the recipe page from this plan slot / batch group. */
+  recipeCookingHref?: string;
   recipes: RecipeType[];
   ingredientOptions: LogIngredientOption[];
 };
@@ -87,6 +89,7 @@ export function PlannerSlotCard({
   familyMembers = [],
   onAudienceChange,
   batchLabel,
+  recipeCookingHref,
   recipes,
   ingredientOptions,
 }: PlannerSlotCardProps) {
@@ -457,7 +460,7 @@ export function PlannerSlotCard({
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
                 <Link
-                  href={ROUTES.recipe(recipe!.slug)}
+                  href={recipeCookingHref ?? ROUTES.recipe(recipe!.slug)}
                   className="block min-w-0 truncate type-h3 hover:underline underline-offset-2"
                   title={recipe!.name}
                   onClick={(event) => event.stopPropagation()}

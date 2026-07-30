@@ -94,4 +94,21 @@ describe("PlannerSlotCard batch badge", () => {
 
     expect(screen.queryByLabelText(/Meal \d+ of \d+/)).toBeNull();
   });
+
+  it("uses recipeCookingHref for the title link when provided", () => {
+    const recipe = createBatchRecipe();
+    render(
+      <PlannerSlotCard
+        slot={createSlot(recipe)}
+        recipeCookingHref="/recipes/bolognese?cook=abc%3A2"
+        recipes={[recipe]}
+        ingredientOptions={[]}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "Bolognese" })).toHaveAttribute(
+      "href",
+      "/recipes/bolognese?cook=abc%3A2",
+    );
+  });
 });

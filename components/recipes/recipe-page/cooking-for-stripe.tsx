@@ -5,7 +5,10 @@ import { QuantityStepper } from "@/components/ui/quantity-stepper";
 import { MealCombinationRow } from "@/components/recipes/recipe-page/meal-combination-row";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
-import type { CookingCombination } from "@/lib/recipes/cook-session-portions";
+import {
+  totalMealCountFromCombinations,
+  type CookingCombination,
+} from "@/lib/recipes/cook-session-portions";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 
@@ -18,6 +21,9 @@ type CookingForStripeProps = {
   onCombinationMembersChange: (index: number, nextIds: string[]) => void;
   extraPortions: number;
   onExtraPortionsChange: (next: number) => void;
+  /** True when Cooking was prefilled from a planner `?cook=` link. */
+  isPlanCookSessionActive: boolean;
+  onResetPlanCookSession: () => void;
   className?: string;
 };
 
@@ -36,9 +42,12 @@ export function CookingForStripe({
   onCombinationMembersChange,
   extraPortions,
   onExtraPortionsChange,
+  isPlanCookSessionActive,
+  onResetPlanCookSession,
   className,
 }: CookingForStripeProps) {
   const canDeleteRows = combinations.length > 1;
+  const planMealCount = totalMealCountFromCombinations(combinations);
 
   return (
     <div className={cn("section-container", className)}>
@@ -55,6 +64,24 @@ export function CookingForStripe({
           <Plus aria-hidden />
         </Button>
       </div>
+
+      {/* Plan hand-off banner — clears as soon as the user edits Cooking. */}
+      {isPlanCookSessionActive ? (
+        <div className="mb-item flex items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+          <span className="text-muted-foreground">
+            Cooking set up for your meal plan ({planMealCount}{" "}
+            {planMealCount === 1 ? "meal" : "meals"}).
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onResetPlanCookSession}
+          >
+            Reset
+          </Button>
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-item">
         {combinations.map((combination, index) => (

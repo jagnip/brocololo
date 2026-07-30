@@ -9,6 +9,10 @@ import {
   groupSlotsByDate,
   getBatchGroupLabels,
 } from "@/lib/planner/helpers";
+import {
+  getBatchGroupSlotsForRecipe,
+  getRecipeCookingHref,
+} from "@/lib/planner/plan-recipe-link";
 import { PlanInputType, PlanSlotMealPayload, SetPlanMealOptions, SlotInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PlannerSlotCard } from "./planner-slot-card";
@@ -130,6 +134,22 @@ export function PlanView({
 
   function renderSlot(slot: SlotInputType) {
     const slotKey = getPlanSlotKey(slot);
+    const householdIds = familyMembers.map((member) => member.id);
+    // Batch recipes hand off the whole group's eaters; non-batch only this slot.
+    const recipeCookingHref = slot.recipe
+      ? getRecipeCookingHref(
+          slot.recipe.slug,
+          slot.recipe.isBatchRecipe && slot.batchGroupId
+            ? getBatchGroupSlotsForRecipe(
+                plan,
+                slot.batchGroupId,
+                slot.recipe.id,
+              )
+            : [slot],
+          householdIds,
+        )
+      : undefined;
+
     return (
       <PlannerSlotCard
         slot={slot}
@@ -150,6 +170,7 @@ export function PlanView({
             : undefined
         }
         batchLabel={batchLabels.get(slotKey)}
+        recipeCookingHref={recipeCookingHref}
         recipes={recipes}
         ingredientOptions={ingredientOptions}
       />

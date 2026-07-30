@@ -16,7 +16,10 @@ type RecipeCardProps = {
 
 export default function RecipeCard({ recipe }: RecipeCardProps) {
   const searchParams = useSearchParams();
-  const queryString = searchParams.toString();
+  // Preserve list filters, but never carry a planner cook hand-off between recipes.
+  const params = new URLSearchParams(searchParams.toString());
+  params.delete("cook");
+  const queryString = params.toString();
 
   const url = `/recipes/${recipe.slug}${queryString ? `?${queryString}` : ""}`;
 

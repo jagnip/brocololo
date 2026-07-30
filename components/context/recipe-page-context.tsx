@@ -37,12 +37,15 @@ import {
   totalMealCountFromCombinations,
   type CookingCombination,
 } from "@/lib/recipes/cook-session-portions";
+import { decodePlanCookParam } from "@/lib/recipes/plan-cook-session-link";
 
 type RecipePageProviderProps = {
   recipe: RecipeType;
   ingredients: IngredientType[];
   familyMembers: FamilyMemberRow[];
   availableLogDateKeys: string[];
+  /** Encoded planner cook hand-off (`?cook=`), if present. */
+  initialCookParam?: string | null;
   children: ReactNode;
 };
 
@@ -64,6 +67,9 @@ type RecipePageContextValue = {
   onExtraPortionsChange: (next: number) => void;
   /** True when multiple combinations or extras are set. */
   isAdvancedActive: boolean;
+  /** True when Cooking was prefilled from a planner link and not yet edited. */
+  isPlanCookSessionActive: boolean;
+  onResetPlanCookSession: () => void;
   personMealCounts: Map<string, number>;
   audienceMemberIds: string[];
   memberPortions: MemberPortionInput[];
@@ -112,18 +118,98 @@ type RecipePageContextValue = {
 
 const RecipePageContext = createContext<RecipePageContextValue | null>(null);
 
+type CookSessionState = {
+  combinations: CookingCombination[];
+  isPlanCookSessionActive: boolean;
+};
+
+/**
+ * The cooking session to start from: a planner `?cook=` hand-off when present,
+ * otherwise one meal for the whole household.
+ */
+function createCookSessionState(
+  initialCookParam: string | null,
+  familyMembers: FamilyMemberRow[],
+): CookSessionState {
+  const householdIds = familyMembers.map((member) => member.id);
+  const decoded = initialCookParam
+    ? decodePlanCookParam(initialCookParam, householdIds)
+    : null;
+
+  return {
+    combinations: decoded ?? createDefaultCombinations(householdIds),
+    isPlanCookSessionActive: decoded !== null,
+  };
+}
+
+/** Value-based identity of the inputs the cooking session is derived from. */
+function getCookSessionSignature(
+  recipeId: string,
+  familyMembers: FamilyMemberRow[],
+  initialCookParam: string | null,
+): string {
+  const householdIds = familyMembers.map((member) => member.id).join(",");
+  return `${recipeId}|${householdIds}|${initialCookParam ?? ""}`;
+}
+
 export function RecipePageProvider({
   recipe,
   ingredients,
   familyMembers,
   availableLogDateKeys,
+  initialCookParam = null,
   children,
 }: RecipePageProviderProps) {
-  // Primary cook-session model: combination rows (+ extras below in the UI).
-  const [combinations, setCombinations] = useState<CookingCombination[]>(() =>
-    createDefaultCombinations(familyMembers.map((member) => member.id)),
+  // Decode once for both combinations + banner flag (lazy state init only runs once).
+  const [cookSession, setCookSession] = useState(() =>
+    createCookSessionState(initialCookParam, familyMembers),
   );
   const [extraPortions, setExtraPortions] = useState(0);
+
+  // Re-derive the session when recipe / household / hand-off actually change.
+  // This used to be an effect, but effects re-run on every mount (React StrictMode
+  // runs them twice in dev) and on any new `familyMembers` array identity, which
+  // wiped a planner `?cook=` hand-off right after it was hydrated. Comparing the
+  // inputs by value during render makes the reset idempotent instead.
+  const cookSessionSignature = getCookSessionSignature(
+    recipe.id,
+    familyMembers,
+    initialCookParam,
+  );
+  const [appliedCookSessionSignature, setAppliedCookSessionSignature] =
+    useState(cookSessionSignature);
+
+  if (appliedCookSessionSignature !== cookSessionSignature) {
+    setAppliedCookSessionSignature(cookSessionSignature);
+    setCookSession(createCookSessionState(initialCookParam, familyMembers));
+    setExtraPortions(0);
+  }
+
+  const combinations = cookSession.combinations;
+  const isPlanCookSessionActive = cookSession.isPlanCookSessionActive;
+
+  const setCombinations = useCallback(
+    (
+      next:
+        | CookingCombination[]
+        | ((prev: CookingCombination[]) => CookingCombination[]),
+    ) => {
+      setCookSession((prev) => ({
+        ...prev,
+        combinations:
+          typeof next === "function" ? next(prev.combinations) : next,
+      }));
+    },
+    [],
+  );
+
+  const setIsPlanCookSessionActive = useCallback((next: boolean) => {
+    setCookSession((prev) =>
+      prev.isPlanCookSessionActive === next
+        ? prev
+        : { ...prev, isPlanCookSessionActive: next },
+    );
+  }, []);
 
   const scaling = useRecipeScalingState({ recipe });
 
@@ -142,13 +228,6 @@ export function RecipePageProvider({
       ),
     [familyMembers, recipe.memberPortions],
   );
-
-  // Reset cooking session when recipe or household changes.
-  useEffect(() => {
-    const allIds = familyMembers.map((member) => member.id);
-    setCombinations(createDefaultCombinations(allIds));
-    setExtraPortions(0);
-  }, [familyMembers, recipe.id]);
 
   const perMealAudience = useMemo(
     () => expandCombinationsToPerMealAudience(combinations),
@@ -293,21 +372,27 @@ export function RecipePageProvider({
   );
 
   const handleAddCombination = useCallback(() => {
+    setIsPlanCookSessionActive(false);
     const seedIds = familyMembers.map((member) => member.id);
     setCombinations((prev) => [...prev, { count: 1, memberIds: seedIds }]);
-  }, [familyMembers]);
+  }, [familyMembers, setCombinations, setIsPlanCookSessionActive]);
 
-  const handleRemoveCombination = useCallback((index: number) => {
-    setCombinations((prev) => {
-      if (prev.length <= 1) {
-        return prev;
-      }
-      return prev.filter((_, rowIndex) => rowIndex !== index);
-    });
-  }, []);
+  const handleRemoveCombination = useCallback(
+    (index: number) => {
+      setIsPlanCookSessionActive(false);
+      setCombinations((prev) => {
+        if (prev.length <= 1) {
+          return prev;
+        }
+        return prev.filter((_, rowIndex) => rowIndex !== index);
+      });
+    },
+    [setCombinations, setIsPlanCookSessionActive],
+  );
 
   const handleCombinationCountChange = useCallback(
     (index: number, nextCount: number) => {
+      setIsPlanCookSessionActive(false);
       const count = clampCombinationCount(nextCount);
       setCombinations((prev) =>
         prev.map((combination, rowIndex) =>
@@ -315,7 +400,7 @@ export function RecipePageProvider({
         ),
       );
     },
-    [],
+    [setCombinations, setIsPlanCookSessionActive],
   );
 
   const handleCombinationMembersChange = useCallback(
@@ -323,6 +408,7 @@ export function RecipePageProvider({
       if (nextIds.length === 0) {
         return;
       }
+      setIsPlanCookSessionActive(false);
       setCombinations((prev) =>
         prev.map((combination, rowIndex) =>
           rowIndex === index
@@ -331,12 +417,25 @@ export function RecipePageProvider({
         ),
       );
     },
-    [],
+    [setCombinations, setIsPlanCookSessionActive],
   );
 
-  const handleExtraPortionsChange = useCallback((next: number) => {
-    setExtraPortions(Math.max(0, Math.min(99, next)));
-  }, []);
+  const handleExtraPortionsChange = useCallback(
+    (next: number) => {
+      setIsPlanCookSessionActive(false);
+      setExtraPortions(Math.max(0, Math.min(99, next)));
+    },
+    [setIsPlanCookSessionActive],
+  );
+
+  const handleResetPlanCookSession = useCallback(() => {
+    const allIds = familyMembers.map((member) => member.id);
+    setCookSession({
+      combinations: createDefaultCombinations(allIds),
+      isPlanCookSessionActive: false,
+    });
+    setExtraPortions(0);
+  }, [familyMembers]);
 
   const handleAggregatedAmountEdit = useCallback(
     (
@@ -371,6 +470,8 @@ export function RecipePageProvider({
       extraPortions,
       onExtraPortionsChange: handleExtraPortionsChange,
       isAdvancedActive,
+      isPlanCookSessionActive,
+      onResetPlanCookSession: handleResetPlanCookSession,
       personMealCounts,
       audienceMemberIds,
       memberPortions,
@@ -420,8 +521,10 @@ export function RecipePageProvider({
       handleCombinationMembersChange,
       handleExtraPortionsChange,
       handleRemoveCombination,
+      handleResetPlanCookSession,
       ingredients,
       isAdvancedActive,
+      isPlanCookSessionActive,
       mealCount,
       memberPortions,
       nutrition.effectiveRecipeIngredientById,
@@ -483,6 +586,8 @@ export function useRecipePageCookingForData() {
     onCombinationMembersChange,
     extraPortions,
     onExtraPortionsChange,
+    isPlanCookSessionActive,
+    onResetPlanCookSession,
   } = useRecipePageContext();
   return {
     familyMembers,
@@ -493,6 +598,8 @@ export function useRecipePageCookingForData() {
     onCombinationMembersChange,
     extraPortions,
     onExtraPortionsChange,
+    isPlanCookSessionActive,
+    onResetPlanCookSession,
   };
 }
 
