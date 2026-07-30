@@ -70,6 +70,8 @@ type RecipePageContextValue = {
   /** True when Cooking was prefilled from a planner link and not yet edited. */
   isPlanCookSessionActive: boolean;
   onResetPlanCookSession: () => void;
+  /** Plan slot dates (YYYY-MM-DD) from the `?cook=` hand-off, when active. */
+  planCookDateKeys: string[];
   personMealCounts: Map<string, number>;
   audienceMemberIds: string[];
   memberPortions: MemberPortionInput[];
@@ -121,6 +123,8 @@ const RecipePageContext = createContext<RecipePageContextValue | null>(null);
 type CookSessionState = {
   combinations: CookingCombination[];
   isPlanCookSessionActive: boolean;
+  /** YYYY-MM-DD keys from the planner hand-off (for the Meals banner). */
+  planCookDateKeys: string[];
 };
 
 /**
@@ -137,8 +141,10 @@ function createCookSessionState(
     : null;
 
   return {
-    combinations: decoded ?? createDefaultCombinations(householdIds),
+    combinations:
+      decoded?.combinations ?? createDefaultCombinations(householdIds),
     isPlanCookSessionActive: decoded !== null,
+    planCookDateKeys: decoded?.dateKeys ?? [],
   };
 }
 
@@ -187,6 +193,7 @@ export function RecipePageProvider({
 
   const combinations = cookSession.combinations;
   const isPlanCookSessionActive = cookSession.isPlanCookSessionActive;
+  const planCookDateKeys = cookSession.planCookDateKeys;
 
   const setCombinations = useCallback(
     (
@@ -433,6 +440,7 @@ export function RecipePageProvider({
     setCookSession({
       combinations: createDefaultCombinations(allIds),
       isPlanCookSessionActive: false,
+      planCookDateKeys: [],
     });
     setExtraPortions(0);
   }, [familyMembers]);
@@ -472,6 +480,7 @@ export function RecipePageProvider({
       isAdvancedActive,
       isPlanCookSessionActive,
       onResetPlanCookSession: handleResetPlanCookSession,
+      planCookDateKeys,
       personMealCounts,
       audienceMemberIds,
       memberPortions,
@@ -525,6 +534,7 @@ export function RecipePageProvider({
       ingredients,
       isAdvancedActive,
       isPlanCookSessionActive,
+      planCookDateKeys,
       mealCount,
       memberPortions,
       nutrition.effectiveRecipeIngredientById,
@@ -588,6 +598,7 @@ export function useRecipePageCookingForData() {
     onExtraPortionsChange,
     isPlanCookSessionActive,
     onResetPlanCookSession,
+    planCookDateKeys,
   } = useRecipePageContext();
   return {
     familyMembers,
@@ -600,6 +611,7 @@ export function useRecipePageCookingForData() {
     onExtraPortionsChange,
     isPlanCookSessionActive,
     onResetPlanCookSession,
+    planCookDateKeys,
   };
 }
 

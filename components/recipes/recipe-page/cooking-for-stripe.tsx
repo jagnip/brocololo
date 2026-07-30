@@ -9,6 +9,7 @@ import {
   totalMealCountFromCombinations,
   type CookingCombination,
 } from "@/lib/recipes/cook-session-portions";
+import { formatPlanCookSessionBanner } from "@/lib/recipes/plan-cook-session-link";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 
@@ -21,14 +22,16 @@ type CookingForStripeProps = {
   onCombinationMembersChange: (index: number, nextIds: string[]) => void;
   extraPortions: number;
   onExtraPortionsChange: (next: number) => void;
-  /** True when Cooking was prefilled from a planner `?cook=` link. */
+  /** True when Meals was prefilled from a planner `?cook=` link. */
   isPlanCookSessionActive: boolean;
   onResetPlanCookSession: () => void;
+  /** Plan slot dates (YYYY-MM-DD) for the hand-off banner. */
+  planCookDateKeys?: string[];
   className?: string;
 };
 
 /**
- * Cooking session: combination rows + extras.
+ * Meals session: combination rows + extras.
  * Add next to the section title; each row is N meals for a people set.
  *
  * Terminology: a meal is one occasion; a portion is one person's share.
@@ -44,15 +47,20 @@ export function CookingForStripe({
   onExtraPortionsChange,
   isPlanCookSessionActive,
   onResetPlanCookSession,
+  planCookDateKeys = [],
   className,
 }: CookingForStripeProps) {
   const canDeleteRows = combinations.length > 1;
   const planMealCount = totalMealCountFromCombinations(combinations);
+  const planBanner = formatPlanCookSessionBanner({
+    dateKeys: planCookDateKeys,
+    mealCount: planMealCount,
+  });
 
   return (
     <div className={cn("section-container", className)}>
       <div className="mb-item flex items-center gap-item">
-        <Subheader>Cooking</Subheader>
+        <Subheader>Meals</Subheader>
         <Button
           type="button"
           variant="outline"
@@ -65,16 +73,13 @@ export function CookingForStripe({
         </Button>
       </div>
 
-      {/* Plan hand-off banner — clears as soon as the user edits Cooking. */}
+      {/* Plan hand-off banner — clears as soon as the user edits Meals. */}
       {isPlanCookSessionActive ? (
         <div className="mb-item flex items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
-          <span className="text-muted-foreground">
-            Cooking set up for your meal plan ({planMealCount}{" "}
-            {planMealCount === 1 ? "meal" : "meals"}).
-          </span>
+          <span className="text-muted-foreground">{planBanner}</span>
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={onResetPlanCookSession}
           >
