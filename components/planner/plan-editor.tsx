@@ -17,6 +17,7 @@ import {
   formatRangeChangeDialogTitle,
 } from "@/lib/planner/planner-range-messages";
 import { getPlanSlotKey, placeRecipeOnPlan } from "@/lib/planner/helpers";
+import { rearrangePlanSlots } from "@/lib/planner/rearrange-plan-slots";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -356,6 +357,19 @@ export function PlanEditor({
     );
   }, []);
 
+  // Slot↔slot DnD: move into empty, swap when both filled (no multi-meal expand).
+  const handleRearrangeSlots = useCallback(
+    (sourceKey: string, targetKey: string) => {
+      allSlotsRef.current = rearrangePlanSlots(
+        allSlotsRef.current,
+        sourceKey,
+        targetKey,
+      );
+      setPlan((prev) => rearrangePlanSlots(prev, sourceKey, targetKey));
+    },
+    [],
+  );
+
   const handleToggleUsed = useCallback((slotKey: string) => {
     allSlotsRef.current = allSlotsRef.current.map((slot) => {
       const key = `${slot.date.toISOString()}-${slot.mealType}`;
@@ -636,6 +650,7 @@ export function PlanEditor({
         onShuffle={markEdited(handleShuffle)}
         onSetMeal={markEdited(handleSetMeal)}
         onRemove={markEdited(handleRemove)}
+        onRearrangeSlots={markEdited(handleRearrangeSlots)}
         onToggleUsed={markEdited(handleToggleUsed)}
         familyMembers={familyMembers}
         onAudienceChange={markEdited(handleAudienceChange)}

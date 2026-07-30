@@ -27,6 +27,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PlanInputType, PlanSlotMealPayload, SetPlanMealOptions } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
 import { getPlanSlotKey, placeRecipeOnPlan } from "@/lib/planner/helpers";
+import { rearrangePlanSlots } from "@/lib/planner/rearrange-plan-slots";
 import type {
   DayAudienceByMealType,
   DayTimeLimitsType,
@@ -245,6 +246,17 @@ export function PlannerForm({
       });
     });
   }, []);
+
+  // Slot↔slot DnD on the create-plan preview (same semantics as plan editor).
+  const handleRearrangeSlots = useCallback(
+    (sourceKey: string, targetKey: string) => {
+      setPlan((prev) => {
+        if (!prev) return prev;
+        return rearrangePlanSlots(prev, sourceKey, targetKey);
+      });
+    },
+    [],
+  );
 
   const handleSetMeal = useCallback(
     (
@@ -829,6 +841,7 @@ export function PlannerForm({
             onShuffle={handleShuffle}
             onSetMeal={handleSetMeal}
             onRemove={handleRemove}
+            onRearrangeSlots={handleRearrangeSlots}
             familyMembers={familyMembers}
             onAudienceChange={handleAudienceChange}
           />
@@ -845,6 +858,7 @@ export function PlannerForm({
               onShuffle={handleShuffle}
               onSetMeal={handleSetMeal}
               onRemove={handleRemove}
+              onRearrangeSlots={handleRearrangeSlots}
               familyMembers={familyMembers}
               onAudienceChange={handleAudienceChange}
             />

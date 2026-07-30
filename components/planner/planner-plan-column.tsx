@@ -29,6 +29,7 @@ type PlannerPlanColumnProps = {
     options?: SetPlanMealOptions,
   ) => void;
   onRemove?: (slotKey: string) => void;
+  onRearrangeSlots?: (sourceKey: string, targetKey: string) => void;
   onAudienceChange?: (slotKey: string, memberIds: string[]) => void;
 };
 
@@ -43,6 +44,7 @@ export function PlannerPlanColumn({
   onShuffle,
   onSetMeal,
   onRemove,
+  onRearrangeSlots,
   onAudienceChange,
 }: PlannerPlanColumnProps) {
   if (mode === "loading") {
@@ -59,6 +61,7 @@ export function PlannerPlanColumn({
         onShuffle={onShuffle}
         onSetMeal={onSetMeal}
         onRemove={onRemove}
+        onRearrangeSlots={onRearrangeSlots}
         familyMembers={familyMembers}
         onAudienceChange={onAudienceChange}
       />
