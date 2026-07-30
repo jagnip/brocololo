@@ -48,6 +48,7 @@ import {
 } from "@/lib/recipes/ingredient-adjustments";
 import type { CookingAggregatedMemberAmount } from "@/lib/recipes/resolve-cooking-display-lines";
 import { IngredientMemberAmountBadges } from "@/components/recipes/recipe-page/ingredient-member-amount-badges";
+import { COOK_SESSION_EXTRAS_SHARE_ID } from "@/lib/recipes/shared-portion-shares";
 import { cn } from "@/lib/utils";
 
 type IngredientItemProps = {
@@ -76,6 +77,8 @@ type IngredientItemProps = {
   /** Per-person cook-session amounts for aggregated view rows. */
   cookingMemberAmounts?: CookingAggregatedMemberAmount[];
   cookingFamilyMembers?: FamilyMemberRow[];
+  /** Cooking extras count — for Extra portion(s) badge label. */
+  extraPortions?: number;
   /** Disable swap when an aggregated line spans multiple recipe rows. */
   disableIngredientSwap?: boolean;
 };
@@ -101,6 +104,7 @@ export function IngredientItem({
   hideSupermarketLink = false,
   cookingMemberAmounts,
   cookingFamilyMembers = [],
+  extraPortions = 0,
   disableIngredientSwap = false,
 }: IngredientItemProps) {
   const { ingredient } = recipeIngredient;
@@ -305,8 +309,15 @@ export function IngredientItem({
     [ingredientByIdForSelect],
   );
 
+  const hasExtrasAmount =
+    cookingMemberAmounts?.some(
+      (entry) =>
+        entry.familyMemberId === COOK_SESSION_EXTRAS_SHARE_ID &&
+        entry.amount > 0,
+    ) ?? false;
+  // Show breakdown for 2+ people, or when extras need their own badge.
   const showCookingMemberBreakdown =
-    cookingFamilyMembers.length > 1 &&
+    (cookingFamilyMembers.length > 1 || hasExtrasAmount) &&
     (cookingMemberAmounts?.some((entry) => entry.amount > 0) ?? false);
   const showActionButtons =
     !hidePeoplePanel ||
@@ -442,6 +453,7 @@ export function IngredientItem({
               unitConversions={
                 ingredient.unitConversions as UnitConversionWithName[]
               }
+              extraPortions={extraPortions}
             />
           ) : null}
           {showNotePanel ? (

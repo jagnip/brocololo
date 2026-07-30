@@ -9,6 +9,7 @@ import {
 } from "@/lib/recipes/helpers";
 import type { CookingAggregatedMemberAmount } from "@/lib/recipes/resolve-cooking-display-lines";
 import { PORTION_CHART_COLOR_VARS } from "@/components/recipes/recipe-page/portion-split-card";
+import { COOK_SESSION_EXTRAS_SHARE_ID } from "@/lib/recipes/shared-portion-shares";
 
 type IngredientMemberAmountBadgesProps = {
   memberAmounts: CookingAggregatedMemberAmount[];
@@ -17,6 +18,8 @@ type IngredientMemberAmountBadgesProps = {
   baseUnitId: string | null;
   baseUnitName: string | null;
   unitConversions: UnitConversionWithName[];
+  /** Cooking extras count — drives “Extra portion” vs “Extra portions” label. */
+  extraPortions?: number;
 };
 
 function memberLabel(member: FamilyMemberRow, index: number): string {
@@ -25,7 +28,11 @@ function memberLabel(member: FamilyMemberRow, index: number): string {
   );
 }
 
-/** Per-person cook-session shares for one aggregated ingredient line. */
+function extrasLabel(extraPortions: number): string {
+  return extraPortions === 1 ? "Extra portion" : "Extra portions";
+}
+
+/** Per-person cook-session shares for one aggregated ingredient line (+ extras). */
 export function IngredientMemberAmountBadges({
   memberAmounts,
   familyMembers,
@@ -33,6 +40,7 @@ export function IngredientMemberAmountBadges({
   baseUnitId,
   baseUnitName,
   unitConversions,
+  extraPortions = 0,
 }: IngredientMemberAmountBadgesProps) {
   const memberIndexById = new Map(
     familyMembers.map((member, index) => [member.id, index]),
@@ -40,11 +48,18 @@ export function IngredientMemberAmountBadges({
 
   const visibleAmounts = memberAmounts
     .filter((entry) => entry.amount > 0)
-    .sort(
-      (left, right) =>
+    .sort((left, right) => {
+      // Extras always last, after household-ordered people.
+      const leftExtras = left.familyMemberId === COOK_SESSION_EXTRAS_SHARE_ID;
+      const rightExtras = right.familyMemberId === COOK_SESSION_EXTRAS_SHARE_ID;
+      if (leftExtras !== rightExtras) {
+        return leftExtras ? 1 : -1;
+      }
+      return (
         (memberIndexById.get(left.familyMemberId) ?? 0) -
-        (memberIndexById.get(right.familyMemberId) ?? 0),
-    );
+        (memberIndexById.get(right.familyMemberId) ?? 0)
+      );
+    });
 
   if (visibleAmounts.length === 0) {
     return null;
@@ -53,14 +68,6 @@ export function IngredientMemberAmountBadges({
   return (
     <div className="flex flex-wrap gap-item">
       {visibleAmounts.map((entry) => {
-        const memberIndex = memberIndexById.get(entry.familyMemberId) ?? 0;
-        const member = familyMembers.find(
-          (candidate) => candidate.id === entry.familyMemberId,
-        );
-        if (!member) {
-          return null;
-        }
-
         const display = getIngredientDisplay(
           entry.amount,
           baseUnitId,
@@ -79,6 +86,34 @@ export function IngredientMemberAmountBadges({
           display.displayAmount != null
             ? `${display.displayAmount}${unitLabel ? ` ${unitLabel}` : ""}`
             : null;
+
+        if (entry.familyMemberId === COOK_SESSION_EXTRAS_SHARE_ID) {
+          return (
+            <Badge
+              key={COOK_SESSION_EXTRAS_SHARE_ID}
+              variant="secondary"
+              className="gap-x-tight"
+            >
+              <span
+                className="inline-block size-2 shrink-0 rounded-full bg-muted-foreground"
+                aria-hidden="true"
+              />
+              <span>{extrasLabel(extraPortions)}</span>
+              {amountLabel ? (
+                <span className="opacity-75">{` · ${amountLabel}`}</span>
+              ) : null}
+            </Badge>
+          );
+        }
+
+        const memberIndex = memberIndexById.get(entry.familyMemberId) ?? 0;
+        const member = familyMembers.find(
+          (candidate) => candidate.id === entry.familyMemberId,
+        );
+        if (!member) {
+          return null;
+        }
+
         const color =
           PORTION_CHART_COLOR_VARS[
             memberIndex % PORTION_CHART_COLOR_VARS.length

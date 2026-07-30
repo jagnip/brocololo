@@ -9,6 +9,7 @@ import {
   buildMemberPortionsFromFamily,
   resolveCookingAggregatedLines,
 } from "@/lib/recipes/resolve-cooking-display-lines";
+import { COOK_SESSION_EXTRAS_SHARE_ID } from "@/lib/recipes/shared-portion-shares";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 const familyMembers: FamilyMemberRow[] = [
@@ -256,7 +257,7 @@ describe("resolveCookingAggregatedLines", () => {
     ]);
   });
 
-  it("adds anonymous extra portions without attributing memberAmounts", () => {
+  it("adds anonymous extra portions attributed as COOK_SESSION_EXTRAS_SHARE_ID", () => {
     const sliceUnit = createMockUnit({ id: "unit-slice", name: "slice", namePlural: "slices" });
     const bread = createMockIngredient({
       id: "ing-bread",
@@ -297,6 +298,7 @@ describe("resolveCookingAggregatedLines", () => {
     expect(lines[0]?.memberAmounts).toEqual([
       { familyMemberId: J, amount: 6 },
       { familyMemberId: N, amount: 6 },
+      { familyMemberId: COOK_SESSION_EXTRAS_SHARE_ID, amount: 2 },
     ]);
   });
 

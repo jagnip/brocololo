@@ -10,9 +10,11 @@ import {
   type UnitConversionWithName,
 } from "@/lib/recipes/helpers";
 import { PORTION_CHART_COLOR_VARS } from "@/components/recipes/recipe-page/portion-split-card";
+import { COOK_SESSION_EXTRAS_SHARE_ID } from "@/lib/recipes/shared-portion-shares";
 import { cn } from "@/lib/utils";
 
 export type InstructionIngredientMemberShare = {
+  /** Family member id, or `COOK_SESSION_EXTRAS_SHARE_ID` for anonymous extras. */
   familyMemberId: string;
   amount: number;
 };
@@ -103,11 +105,18 @@ export function InstructionIngredientCard({
 
   const visibleShares = memberShares
     .filter((share) => share.amount > 0)
-    .sort(
-      (left, right) =>
+    .sort((left, right) => {
+      // Extras always last, after household-ordered people.
+      const leftExtras = left.familyMemberId === COOK_SESSION_EXTRAS_SHARE_ID;
+      const rightExtras = right.familyMemberId === COOK_SESSION_EXTRAS_SHARE_ID;
+      if (leftExtras !== rightExtras) {
+        return leftExtras ? 1 : -1;
+      }
+      return (
         (memberIndexById.get(left.familyMemberId) ?? 0) -
-        (memberIndexById.get(right.familyMemberId) ?? 0),
-    );
+        (memberIndexById.get(right.familyMemberId) ?? 0)
+      );
+    });
 
   const shouldShowMemberBreakdown =
     showMemberBreakdown && visibleShares.length > 0;
@@ -143,6 +152,30 @@ export function InstructionIngredientCard({
 
       <div className="flex w-full flex-col gap-0.5 border-t border-secondary-foreground/15 pt-tight">
         {visibleShares.map((share) => {
+          const amountLabel = formatCompactAmount(
+            share.amount,
+            baseUnitId,
+            baseUnitName,
+            selectedUnitId,
+            unitConversions,
+          );
+
+          if (share.familyMemberId === COOK_SESSION_EXTRAS_SHARE_ID) {
+            return (
+              <div
+                key={COOK_SESSION_EXTRAS_SHARE_ID}
+                className="type-micro inline-flex items-center gap-x-tight font-medium opacity-75"
+              >
+                <span
+                  className="inline-block size-1.5 shrink-0 rounded-full bg-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span>E</span>
+                {amountLabel ? <span>{` · ${amountLabel}`}</span> : null}
+              </div>
+            );
+          }
+
           const member = familyMembers.find(
             (entry) => entry.id === share.familyMemberId,
           );
@@ -151,13 +184,6 @@ export function InstructionIngredientCard({
           }
 
           const memberIndex = memberIndexById.get(share.familyMemberId) ?? 0;
-          const amountLabel = formatCompactAmount(
-            share.amount,
-            baseUnitId,
-            baseUnitName,
-            selectedUnitId,
-            unitConversions,
-          );
 
           return (
             <div

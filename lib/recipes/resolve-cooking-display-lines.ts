@@ -5,9 +5,11 @@ import {
 } from "@/lib/recipes/ingredient-adjustments";
 import type { MemberAdjustmentRow } from "@/lib/recipes/resolve-ingredient-lines";
 import { derivePersonMealCounts } from "@/lib/recipes/cook-session-portions";
+import { COOK_SESSION_EXTRAS_SHARE_ID } from "@/lib/recipes/shared-portion-shares";
 
 /** Per-person share of an aggregated cook-session ingredient line. */
 export type CookingAggregatedMemberAmount = {
+  /** Family member id, or `COOK_SESSION_EXTRAS_SHARE_ID` for anonymous extras. */
   familyMemberId: string;
   amount: number;
 };
@@ -90,7 +92,7 @@ function resolvePersonMealCounts(params: {
  *
  * When `personMealCounts` / `perMealAudience` is provided, each person is scaled by their
  * own meal count. `extraPortions` adds anonymous 1× base shares (batch÷servings) with no
- * personal multipliers / SKIP / MODIFY — not attributed in memberAmounts.
+ * personal multipliers / SKIP / MODIFY — attributed as `COOK_SESSION_EXTRAS_SHARE_ID`.
  */
 export function resolveCookingAggregatedLines(params: {
   recipeIngredients: RecipeIngredientForCookingDisplay[];
@@ -218,6 +220,7 @@ export function resolveCookingAggregatedLines(params: {
         if (existing) {
           existing.resolvedAmount =
             Math.round((existing.resolvedAmount + extraAmount) * 1000) / 1000;
+          addMemberAmount(existing, COOK_SESSION_EXTRAS_SHARE_ID, extraAmount);
           if (!existing.sourceRecipeIngredientIds.includes(recipeIngredient.id)) {
             existing.sourceRecipeIngredientIds.push(recipeIngredient.id);
           }
@@ -228,7 +231,12 @@ export function resolveCookingAggregatedLines(params: {
             ingredientId: recipeIngredient.ingredientId,
             unitId,
             resolvedAmount: extraAmount,
-            memberAmounts: [],
+            memberAmounts: [
+              {
+                familyMemberId: COOK_SESSION_EXTRAS_SHARE_ID,
+                amount: extraAmount,
+              },
+            ],
             sourceRecipeIngredientIds: [recipeIngredient.id],
             primaryRecipeIngredientId: recipeIngredient.id,
             primaryAdditionalInfo: recipeIngredient.additionalInfo,

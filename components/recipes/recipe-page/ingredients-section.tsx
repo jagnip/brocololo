@@ -50,6 +50,7 @@ function renderAggregatedLines(params: {
   localScaleByIngredientId: Record<string, number>;
   recipeServings: number;
   cookingFamilyMembers: FamilyMemberRow[];
+  extraPortions: number;
   onUnitChange: (recipeIngredientId: string, unitId: string | null) => void;
   onAggregatedAmountEdit: (
     sourceRecipeIngredientIds: string[],
@@ -67,6 +68,7 @@ function renderAggregatedLines(params: {
     localScaleByIngredientId,
     recipeServings,
     cookingFamilyMembers,
+    extraPortions,
     onUnitChange,
     onAggregatedAmountEdit,
     onApplyScaleToAll,
@@ -112,6 +114,7 @@ function renderAggregatedLines(params: {
         hideSupermarketLink
         cookingMemberAmounts={line.memberAmounts}
         cookingFamilyMembers={cookingFamilyMembers}
+        extraPortions={extraPortions}
         disableIngredientSwap={!allowIngredientSwap}
         selectedUnitId={
           selectedUnits[line.primaryRecipeIngredientId] || line.unitId
@@ -210,6 +213,7 @@ export function IngredientsSection() {
       localScaleByIngredientId,
       recipeServings: recipe.servings,
       cookingFamilyMembers,
+      extraPortions,
       onUnitChange,
       onAggregatedAmountEdit,
       onApplyScaleToAll,
@@ -217,6 +221,7 @@ export function IngredientsSection() {
     }),
     [
       effectiveRecipeIngredientById,
+      extraPortions,
       ingredients,
       localScaleByIngredientId,
       cookingFamilyMembers,
