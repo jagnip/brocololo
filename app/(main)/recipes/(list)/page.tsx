@@ -28,7 +28,7 @@ export default async function Page({ searchParams }: RecipesPageProps) {
       </Suspense>
       <TopbarConfigController
         config={{
-          breadcrumbs: [{ label: "Recipes" }],
+          breadcrumbs: [{ label: "My recipes" }],
           actions: [
             {
               id: "create-recipe",

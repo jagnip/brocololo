@@ -30,6 +30,15 @@ export function formatDayLabel(date: Date): string {
   });
 }
 
+/** Compact day label for dialogs (e.g. "Wed 5 Aug"). */
+export function formatShortDayLabel(date: Date): string {
+  return date.toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
+
 export function groupSlotsByDate(plan: PlanInputType): Map<string, SlotInputType[]> {
   const slotsByDate = new Map<string, SlotInputType[]>();
   for (const slot of plan) {

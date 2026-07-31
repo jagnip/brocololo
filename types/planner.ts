@@ -13,8 +13,18 @@ export type PlanCustomMeal = {
 };
 
 export type PlanSlotMealPayload =
-  | { kind: "recipe"; recipe: RecipeType }
-  | { kind: "custom"; name: string; ingredients: PlanCustomMealIngredient[] }
+  | {
+      kind: "recipe";
+      recipe: RecipeType;
+      /** When set, also updates the slot audience in the same operation. */
+      cookingFamilyMemberIds?: string[];
+    }
+  | {
+      kind: "custom";
+      name: string;
+      ingredients: PlanCustomMealIngredient[];
+      cookingFamilyMemberIds?: string[];
+    }
   | { kind: "empty" };
 
 /** Options for manual meal placement in the plan editor. */
@@ -25,6 +35,11 @@ export type SetPlanMealOptions = {
    * Bulk replace sets this false so only the selected slots change.
    */
   expandMultiMeal?: boolean;
+  /**
+   * Explicit batch group for non-expanding placement. Bulk assignment of a
+   * batch recipe passes one shared id so the selected slots read as one cook.
+   */
+  batchGroupId?: string | null;
 };
 
 export type DayMealsType = {

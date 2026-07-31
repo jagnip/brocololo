@@ -16,7 +16,8 @@ export function getFamilyMemberLabel(
   );
 }
 
-function toggleMemberIds(
+/** Toggle a member id while enforcing at least one selected eater. */
+export function toggleMemberIds(
   current: string[],
   memberId: string,
 ): string[] {

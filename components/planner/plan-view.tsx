@@ -49,7 +49,7 @@ import { PlannerBulkActionsFooter } from "./planner-bulk-actions-footer";
 import { PlanSlotMealDialog } from "./plan-slot-meal-dialog";
 import { PlannerBulkEditEatersDialog } from "./planner-bulk-edit-eaters-dialog";
 import { useSlotBulkSelection } from "./use-slot-bulk-selection";
-import { getReplaceMealDialogCopy } from "@/lib/planner/plan-slot-meal-dialog-copy";
+import { getBulkEditMealsDialogCopy } from "@/lib/planner/plan-slot-meal-dialog-copy";
 import { toast } from "sonner";
 
 function getFridgeMatchIngredients(
@@ -145,16 +145,50 @@ export function PlanView({
   const sortedDates = Array.from(slotsByDate.keys()).sort();
   // Compute once per render so every card can look up its live "N of M" label.
   const batchLabels = getBatchGroupLabels(plan);
-  const bulkReplaceDialogCopy = getReplaceMealDialogCopy(selectedCount);
+  const bulkReplaceDialogCopy = getBulkEditMealsDialogCopy(selectedCount);
   const canBulkEditEaters = onAudienceChange && familyMembers.length > 0;
   const canRearrange = Boolean(onRearrangeSlots);
+
+  // Seed bulk audience from the common defaulted audience across selected slots;
+  // fall back to all members when the selection disagrees.
+  const bulkInitialAudienceIds = (() => {
+    const allMemberIds = familyMembers.map((member) => member.id);
+    const keys = Array.from(selectedKeys);
+    if (keys.length === 0) return allMemberIds;
+
+    const audiences = keys.map((slotKey) => {
+      const slot = plan.find((item) => getPlanSlotKey(item) === slotKey);
+      if (
+        slot?.cookingFamilyMemberIds &&
+        slot.cookingFamilyMemberIds.length > 0
+      ) {
+        return [...slot.cookingFamilyMemberIds].sort();
+      }
+      return [...allMemberIds].sort();
+    });
+
+    const first = audiences[0]?.join(",") ?? "";
+    const allMatch = audiences.every((ids) => ids.join(",") === first);
+    return allMatch && audiences[0] ? audiences[0] : allMemberIds;
+  })();
 
   const handleBulkReplaceSave = async (payload: PlanSlotMealPayload) => {
     if (!onSetMeal) return;
 
+    // A batch recipe across several slots is one cook — share a group id so the
+    // cards read "1 of N" and link to the same cooking session.
+    const sharedBatchGroupId =
+      payload.kind === "recipe" &&
+      payload.recipe.isBatchRecipe &&
+      selectedKeys.size > 1
+        ? crypto.randomUUID()
+        : null;
+
     selectedKeys.forEach((slotKey) => {
-      // Bulk picks explicit slots — do not spill into following days.
-      onSetMeal(slotKey, payload, { expandMultiMeal: false });
+      onSetMeal(slotKey, payload, {
+        expandMultiMeal: false,
+        batchGroupId: sharedBatchGroupId,
+      });
     });
     setIsBulkReplaceDialogOpen(false);
     clearSelection();
@@ -326,8 +360,10 @@ export function PlanView({
           initialRecipeId={null}
           initialCustomName=""
           initialRows={[]}
+          defaultTab="repository"
+          initialOccasionSlug={null}
           familyMembers={familyMembers}
-          cookingFamilyMemberIds={familyMembers.map((member) => member.id)}
+          cookingFamilyMemberIds={bulkInitialAudienceIds}
           isSaving={false}
           onCancel={() => setIsBulkReplaceDialogOpen(false)}
           onSave={handleBulkReplaceSave}

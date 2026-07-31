@@ -83,7 +83,7 @@ export default function RecipePage({
     () => ({
       breadcrumbs: [
         {
-          label: "Recipes",
+          label: "My recipes",
           href: ROUTES.recipes,
           preserveQuery: "all" as const,
         },

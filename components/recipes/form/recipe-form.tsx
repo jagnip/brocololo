@@ -455,7 +455,7 @@ export default function RecipeForm({
       breadcrumbs:
         isEditMode && recipe
           ? [
-              { label: "Recipes", href: recipesListHref },
+              { label: "My recipes", href: recipesListHref },
               {
                 label: recipe.name,
                 href: ROUTES.recipe(recipe.slug),
@@ -463,7 +463,7 @@ export default function RecipeForm({
               { label: "Edit recipe" },
             ]
           : [
-              { label: "Recipes", href: recipesListHref },
+              { label: "My recipes", href: recipesListHref },
               { label: "Create recipe" },
             ],
       actions: [

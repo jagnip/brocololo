@@ -4,6 +4,7 @@ import {
   aggregateConsumableIngredientLines,
   formatSlotIngredientSummary,
   getPlannerRecipeDialogIngredientRows,
+  getPlannerSlotIngredientDisplayLines,
   getSlotCookingFamilyMemberIds,
   resolveCustomMealAggregatedIngredients,
   resolveRecipeSlotAggregatedIngredients,
@@ -203,6 +204,128 @@ describe("getPlannerRecipeDialogIngredientRows", () => {
 
     expect(rows).toEqual([
       { ingredientId: "ing-olive-oil", unitId: "unit-g", amount: 10 },
+    ]);
+  });
+});
+
+describe("getPlannerSlotIngredientDisplayLines", () => {
+  it("returns untruncated name/amount pairs that scale with audience", () => {
+    const recipe = {
+      servings: 2,
+      audienceMembers: [
+        { familyMemberId: "fm-jagoda" },
+        { familyMemberId: "fm-nelson" },
+      ],
+      memberPortions: [
+        { familyMemberId: "fm-jagoda", multiplier: 1 },
+        { familyMemberId: "fm-nelson", multiplier: 1 },
+      ],
+      ingredients: [
+        {
+          id: "ri-flour",
+          ingredientId: "ing-flour",
+          amount: 200,
+          additionalInfo: null,
+          unit: { id: "unit-g", name: "g" },
+          memberAdjustments: [],
+          ingredient: {
+            id: "ing-flour",
+            name: "Flour",
+            brand: null,
+            descriptor: null,
+          },
+        },
+      ],
+    } as unknown as Parameters<
+      typeof getPlannerSlotIngredientDisplayLines
+    >[0]["recipe"];
+
+    const ingredientOptions = [
+      {
+        id: "ing-flour",
+        name: "Flour",
+        brand: null,
+        descriptor: null,
+        unitConversions: [
+          { unitId: "unit-g", unitName: "g", unitNamePlural: null },
+        ],
+      },
+    ];
+
+    const both = getPlannerSlotIngredientDisplayLines({
+      recipe,
+      cookingFamilyMemberIds: ["fm-jagoda", "fm-nelson"],
+      familyMembers,
+      ingredientOptions,
+    });
+    const one = getPlannerSlotIngredientDisplayLines({
+      recipe,
+      cookingFamilyMemberIds: ["fm-jagoda"],
+      familyMembers,
+      ingredientOptions,
+    });
+
+    expect(both).toEqual([
+      { key: "ing-flour-unit-g", name: "Flour", amountLabel: "200 g" },
+    ]);
+    expect(one).toEqual([
+      { key: "ing-flour-unit-g", name: "Flour", amountLabel: "100 g" },
+    ]);
+  });
+
+  it("divides amounts by mealPortionCount for batch day share", () => {
+    const recipe = {
+      servings: 2,
+      audienceMembers: [
+        { familyMemberId: "fm-jagoda" },
+        { familyMemberId: "fm-nelson" },
+      ],
+      memberPortions: [
+        { familyMemberId: "fm-jagoda", multiplier: 1 },
+        { familyMemberId: "fm-nelson", multiplier: 1 },
+      ],
+      ingredients: [
+        {
+          id: "ri-flour",
+          ingredientId: "ing-flour",
+          amount: 200,
+          additionalInfo: null,
+          unit: { id: "unit-g", name: "g" },
+          memberAdjustments: [],
+          ingredient: {
+            id: "ing-flour",
+            name: "Flour",
+            brand: null,
+            descriptor: null,
+          },
+        },
+      ],
+    } as unknown as Parameters<
+      typeof getPlannerSlotIngredientDisplayLines
+    >[0]["recipe"];
+
+    const ingredientOptions = [
+      {
+        id: "ing-flour",
+        name: "Flour",
+        brand: null,
+        descriptor: null,
+        unitConversions: [
+          { unitId: "unit-g", unitName: "g", unitNamePlural: null },
+        ],
+      },
+    ];
+
+    expect(
+      getPlannerSlotIngredientDisplayLines({
+        recipe,
+        cookingFamilyMemberIds: ["fm-jagoda", "fm-nelson"],
+        familyMembers,
+        ingredientOptions,
+        mealPortionCount: 2,
+      }),
+    ).toEqual([
+      { key: "ing-flour-unit-g", name: "Flour", amountLabel: "100 g" },
     ]);
   });
 });

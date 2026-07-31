@@ -270,11 +270,23 @@ export function PlannerForm({
         if (!prev) return prev;
 
         if (payload.kind === "recipe") {
+          // Apply the new audience first so multi-meal spillover copies the updated eaters.
+          const withAudience = payload.cookingFamilyMemberIds
+            ? prev.map((slot) =>
+                getPlanSlotKey(slot) === slotKey
+                  ? {
+                      ...slot,
+                      cookingFamilyMemberIds: payload.cookingFamilyMemberIds,
+                    }
+                  : slot,
+              )
+            : prev;
+
           if (expandMultiMeal) {
-            return placeRecipeOnPlan(prev, slotKey, payload.recipe);
+            return placeRecipeOnPlan(withAudience, slotKey, payload.recipe);
           }
 
-          return prev.map((slot) => {
+          return withAudience.map((slot) => {
             if (getPlanSlotKey(slot) !== slotKey) return slot;
             return {
               ...slot,
@@ -283,7 +295,8 @@ export function PlannerForm({
               alternatives: slot.alternatives.filter(
                 (recipe) => recipe.id !== payload.recipe.id,
               ),
-              batchGroupId: null,
+              // Bulk batch assignment supplies a shared id; everything else clears it.
+              batchGroupId: options?.batchGroupId ?? null,
             };
           });
         }
@@ -301,6 +314,9 @@ export function PlannerForm({
               },
               alternatives: [],
               batchGroupId: null,
+              ...(payload.cookingFamilyMemberIds
+                ? { cookingFamilyMemberIds: payload.cookingFamilyMemberIds }
+                : {}),
             };
           }
 
