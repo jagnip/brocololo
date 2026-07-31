@@ -33,6 +33,7 @@ import type {
   EditableIngredientRow,
   LogIngredientOption,
 } from "@/components/log/log-ingredients-form";
+import type { FamilyMemberRow } from "@/lib/db/family-members";
 import type { PlanCustomMealIngredient } from "@/types/planner";
 import type { RecipeType } from "@/types/recipe";
 import {
@@ -40,6 +41,7 @@ import {
   type FamilyMemberRef,
 } from "@/lib/planner/resolve-slot-ingredients";
 import { cn } from "@/lib/utils";
+import { PlanSlotWhoEats } from "./plan-slot-who-eats";
 
 export type DialogIngredientRow = EditableIngredientRow & { key: string };
 
@@ -60,6 +62,15 @@ type PlanSlotIngredientsPanelProps = {
    * When set, amounts are divided by total so the panel shows one day's share.
    */
   batchLabel?: { index: number; total: number } | null;
+  /**
+   * Mobile sheet only — Cooking for chips inside the collapsible.
+   * Desktop keeps Cooking for outside this panel.
+   */
+  whoEats?: {
+    familyMembers: FamilyMemberRow[];
+    value: string[];
+    onChange: (nextValue: string[]) => void;
+  } | null;
 };
 
 function toRowKey() {
@@ -360,26 +371,28 @@ function IngredientsBody(props: PlanSlotIngredientsPanelProps) {
     props.batchLabel.total >= 2;
   const mealPortionCount = showBatchBadge ? props.batchLabel!.total : 1;
 
+  const batchBadge = showBatchBadge ? (
+    <Badge
+      variant="secondary"
+      aria-label={`Batch meal ${props.batchLabel!.index} of ${props.batchLabel!.total}`}
+    >
+      {/* Same hierarchy as instruction ingredient chips: bold label + muted detail. */}
+      <span className="type-caption font-semibold">
+        <span>Batch</span>
+        <span className="pl-0.5 font-medium opacity-75">
+          {` · ${props.batchLabel!.index} of ${props.batchLabel!.total}`}
+        </span>
+      </span>
+    </Badge>
+  ) : null;
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Ingredients for this meal
         </p>
-        {showBatchBadge ? (
-          <Badge
-            variant="secondary"
-            aria-label={`Batch meal ${props.batchLabel!.index} of ${props.batchLabel!.total}`}
-          >
-            {/* Same hierarchy as instruction ingredient chips: bold label + muted detail. */}
-            <span className="type-caption font-semibold">
-              <span>Batch</span>
-              <span className="pl-0.5 font-medium opacity-75">
-                {` · ${props.batchLabel!.index} of ${props.batchLabel!.total}`}
-              </span>
-            </span>
-          </Badge>
-        ) : null}
+        {batchBadge}
       </div>
 
       {props.mode === "recipe" ? (
@@ -404,10 +417,22 @@ function IngredientsBody(props: PlanSlotIngredientsPanelProps) {
   );
 }
 
+function formatIngredientsSheetTitle(lineCount: number, peopleCount: number) {
+  const ingredientLabel =
+    lineCount === 1 ? "1 ingredient" : `${lineCount} ingredients`;
+
+  if (peopleCount <= 0) {
+    return ingredientLabel;
+  }
+
+  const peopleLabel = peopleCount === 1 ? "1 person" : `${peopleCount} people`;
+  return `${ingredientLabel} for ${peopleLabel}`;
+}
+
 /**
  * Right-column (desktop) / collapsible (mobile) ingredient section.
  * Recipe mode is read-only; custom mode is fully editable.
- * Hidden entirely until a recipe is picked (From my recipes empty state).
+ * Desktop hides until a recipe is picked; mobile sheet stays up so Cooking for is reachable.
  */
 export function PlanSlotIngredientsPanel(props: PlanSlotIngredientsPanelProps) {
   const lineCount = useMemo(() => {
@@ -422,19 +447,20 @@ export function PlanSlotIngredientsPanel(props: PlanSlotIngredientsPanelProps) {
     }).length;
   }, [props]);
 
-  // From my recipes with nothing selected — hide the whole section (custom always shows).
-  if (props.mode === "empty") {
+  // Desktop: hide until a recipe is picked (Cooking for lives outside this panel).
+  if (props.mode === "empty" && !props.collapsibleOnMobile) {
     return null;
   }
 
-  const triggerLabel =
-    lineCount === 1 ? "1 ingredient" : `${lineCount} ingredients`;
-
   // Desktop: always expanded in the right column.
-  // Mobile: Collapsible pinned above the footer (see plan-slot-meal-form layout).
   if (!props.collapsibleOnMobile) {
     return <IngredientsBody {...props} />;
   }
+
+  const triggerLabel = formatIngredientsSheetTitle(
+    lineCount,
+    props.cookingFamilyMemberIds.length,
+  );
 
   return (
     <Collapsible className="group/ingredients border-t">
@@ -443,7 +469,16 @@ export function PlanSlotIngredientsPanel(props: PlanSlotIngredientsPanelProps) {
         <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]/ingredients:rotate-180" />
       </CollapsibleTrigger>
       <CollapsibleContent className="max-h-[40vh] overflow-y-auto border-t px-4 py-3 md:px-6">
-        <IngredientsBody {...props} />
+        <div className="space-y-4">
+          {props.whoEats != null ? (
+            <PlanSlotWhoEats
+              familyMembers={props.whoEats.familyMembers}
+              value={props.whoEats.value}
+              onChange={props.whoEats.onChange}
+            />
+          ) : null}
+          {props.mode !== "empty" ? <IngredientsBody {...props} /> : null}
+        </div>
       </CollapsibleContent>
     </Collapsible>
   );

@@ -286,6 +286,12 @@ export function PlanSlotMealForm({
     />
   );
 
+  const whoEatsProps = {
+    familyMembers,
+    value: audienceIds,
+    onChange: setAudienceIds,
+  };
+
   const ingredientsPanelProps = {
     mode: ingredientsMode as "recipe" | "custom" | "empty",
     recipe: selectedRecipe,
@@ -316,12 +322,12 @@ export function PlanSlotMealForm({
         {/*
           Layout:
           - Desktop (lg+): two columns — left = tabs + picker, right = cooking for + ingredients.
-          - Mobile (<lg): single scroll — cooking for above grid, ingredients collapsible above footer.
+          - Mobile (<lg): tabs + picker; cooking for + ingredients in the bottom sheet.
         */}
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
           {/* LEFT / PRIMARY COLUMN */}
           <div className="flex min-h-0 flex-1 flex-col lg:w-[58%] lg:shrink-0">
-            <div className="shrink-0 space-y-3 border-b px-4 py-3 md:px-6">
+            <div className="shrink-0 border-b px-4 py-3 md:px-6">
               <TabsList className="h-10 w-full gap-[2px] shadow-xs">
                 <TabsTrigger value="repository" className="flex-1">
                   From my recipes
@@ -330,9 +336,6 @@ export function PlanSlotMealForm({
                   Custom meal
                 </TabsTrigger>
               </TabsList>
-
-              {/* Mobile: Cooking for above the grid so it stays visible. */}
-              <div className="lg:hidden">{whoEats}</div>
             </div>
 
             <TabsContent
@@ -356,7 +359,7 @@ export function PlanSlotMealForm({
                 customName={customName}
                 onCustomNameChange={setCustomName}
               />
-              {/* Mobile custom: editable ingredients live in the collapsible below. */}
+              {/* Mobile custom: editable ingredients live in the sheet below. */}
             </TabsContent>
           </div>
 
@@ -369,21 +372,23 @@ export function PlanSlotMealForm({
           </div>
         </div>
 
-        {/* Mobile: ingredient list collapses above the footer. */}
+        {/* Mobile: Cooking for + ingredients collapse above the footer. */}
         <div className="shrink-0 lg:hidden">
           <PlanSlotIngredientsPanel
             {...ingredientsPanelProps}
             collapsibleOnMobile
+            whoEats={whoEatsProps}
           />
         </div>
       </Tabs>
 
-      <DialogFooter className="shrink-0 flex-col items-stretch gap-3 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between md:px-6">
-        {/* Recipe-only change summary — darker than muted so it stays readable. */}
-        <p className="text-sm text-foreground sm:mr-auto">
-          {changeSummary ?? "\u00a0"}
-        </p>
-        <div className="flex gap-2 sm:justify-end">
+      <DialogFooter className="shrink-0 flex-col items-stretch gap-3 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-end md:px-6">
+        {/* Only render when there is a recipe change — empty nbsp was leaving a gap above the buttons on mobile. */}
+        {changeSummary ? (
+          <p className="text-sm text-foreground sm:mr-auto">{changeSummary}</p>
+        ) : null}
+        {/* Mobile: equal-width Cancel / Save; desktop: compact button group. */}
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
           <Button
             type="button"
             variant="outline"
