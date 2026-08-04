@@ -449,8 +449,8 @@ export function PlannerForm({
   const ingredientOptions = ingredientsToLogIngredientOptions(ingredients);
   const fillEmptyLabel = isGenerating
     ? MESSAGES.planner.generatePending
-    : "Fill empty meals";
-  // Clear + Save share the top bar; Fill empty lives in the left column.
+    : "Suggest meals";
+  // Clear + Save share the top bar; Suggest meals lives in the left column.
   const topbarActions = [
     {
       id: "clear-plan",
@@ -934,7 +934,7 @@ export function PlannerForm({
                       className="w-full"
                       onClick={handleFillEmptyClick}
                       aria-busy={isGenerating}
-                      aria-label="Fill empty meals in this plan"
+                      aria-label="Suggest meals for empty slots"
                     >
                       {fillEmptyLabel}
                     </Button>
@@ -955,7 +955,7 @@ export function PlannerForm({
                   className="w-full"
                   onClick={handleFillEmptyClick}
                   aria-busy={isGenerating}
-                  aria-label="Fill empty meals in this plan"
+                  aria-label="Suggest meals for empty slots"
                 >
                   {fillEmptyLabel}
                 </Button>
