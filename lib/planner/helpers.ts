@@ -134,6 +134,8 @@ export function markBatchSlots(
     overrideMeals?: number;
     enforceTimeLimit?: boolean;
     allDaysTimeLimits?: DayTimeLimitsType[];
+    /** Keys already filled by the user — never overwrite with batch spill. */
+    reservedSlotKeys?: Set<string>;
   },
 ): void {
   const totalMeals =
@@ -143,6 +145,7 @@ export function markBatchSlots(
 
   const enforceTimeLimit = options?.enforceTimeLimit ?? false;
   const allDaysTimeLimits = options?.allDaysTimeLimits ?? [];
+  const reservedSlotKeys = options?.reservedSlotKeys;
 
   let placed = 0;
 
@@ -152,6 +155,8 @@ export function markBatchSlots(
 
     const futureSlotKey = `${futureDay.toISOString()}-${mealType}`;
     if (batchFilledSlots.has(futureSlotKey)) continue; // slot taken, skip to next day
+    // Skip hand-filled slots so fill-empty never overwrites user meals.
+    if (reservedSlotKeys?.has(futureSlotKey)) continue;
 
     // Non-batch repeats are a fresh cook each day — skip days that don't fit
     // hands-on/total time limits. Batch leftovers skip this check entirely.

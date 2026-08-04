@@ -417,16 +417,29 @@ function IngredientsBody(props: PlanSlotIngredientsPanelProps) {
   );
 }
 
-function formatIngredientsSheetTitle(lineCount: number, peopleCount: number) {
+function IngredientsSheetTitle({
+  lineCount,
+  peopleCount,
+}: {
+  lineCount: number;
+  peopleCount: number;
+}) {
   const ingredientLabel =
     lineCount === 1 ? "1 ingredient" : `${lineCount} ingredients`;
 
   if (peopleCount <= 0) {
-    return ingredientLabel;
+    return <>{ingredientLabel}</>;
   }
 
   const peopleLabel = peopleCount === 1 ? "1 person" : `${peopleCount} people`;
-  return `${ingredientLabel} for ${peopleLabel}`;
+
+  // "N ingredients" stays primary; "for M people" is muted (matches batch badge hierarchy).
+  return (
+    <>
+      <span>{ingredientLabel}</span>
+      <span className="font-normal text-muted-foreground">{` for ${peopleLabel}`}</span>
+    </>
+  );
 }
 
 /**
@@ -457,15 +470,15 @@ export function PlanSlotIngredientsPanel(props: PlanSlotIngredientsPanelProps) {
     return <IngredientsBody {...props} />;
   }
 
-  const triggerLabel = formatIngredientsSheetTitle(
-    lineCount,
-    props.cookingFamilyMemberIds.length,
-  );
-
   return (
     <Collapsible className="group/ingredients border-t">
       <CollapsibleTrigger className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-medium text-foreground hover:bg-muted/40 md:px-6">
-        <span>{triggerLabel}</span>
+        <span>
+          <IngredientsSheetTitle
+            lineCount={lineCount}
+            peopleCount={props.cookingFamilyMemberIds.length}
+          />
+        </span>
         <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]/ingredients:rotate-180" />
       </CollapsibleTrigger>
       <CollapsibleContent className="max-h-[40vh] overflow-y-auto border-t px-4 py-3 md:px-6">
