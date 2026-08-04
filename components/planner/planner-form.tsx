@@ -802,169 +802,199 @@ export function PlannerForm({
           desktopGridColumns,
         )}
       >
-        {/* Left: viewport-height sticky column; only this rail scrolls when criteria overflow. */}
+        {/* Left: Lists-style card rail — one outer chrome, thin section separators. */}
         <div
           className={cn(
-            "flex flex-col",
-            // Fill viewport under topbar (h-14) + page gutter; keep Fill empty pinned at bottom.
-            "lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)] lg:max-h-[calc(100vh-5rem)]",
+            "flex min-w-0 flex-col",
+            // Fill viewport under topbar + gutters (3.5rem + 1rem + 1rem). Plain rem calc —
+            // Tailwind breaks on `2*var(...)` in arbitrary values, which left empty space below.
+            // overflow-hidden: at lg the narrow rail wraps criteria taller than the viewport;
+            // without clipping, that overflow expands document scrollHeight and leaves a
+            // huge blank gap under the columns once you scroll (worse on lg than xl).
+            "lg:sticky lg:top-18 lg:h-[calc(100dvh-5.5rem)] lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-hidden",
           )}
         >
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="flex min-h-0 w-full flex-1 flex-col"
+              className={cn(
+                "flex h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden",
+                // Single outer card like groceries Lists (collapsed = caret only on lg).
+                !isFormCollapsed && "rounded-xl border border-border bg-card",
+                isFormCollapsed && "lg:items-center lg:justify-start",
+              )}
             >
-              {/* Criteria scroll inside the left rail only when content overflows. */}
-              <div className="flex min-h-0 flex-1 flex-col gap-3 lg:overflow-y-auto">
-                {/* Date + collapse: one row on lg; gap matches planner-time-limits rows. */}
-                <FormField
-                  control={form.control}
-                  name="dateRange"
-                  render={({ field }) => (
-                    <FormItem className="gap-0">
-                      <div
-                        className={cn(
-                          "mb-0 flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-1.5",
-                          isFormCollapsed && "lg:justify-end",
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "min-w-0 w-full flex-1",
-                            // Desktop-only collapse: keep the week picker on small screens.
-                            isFormCollapsed && "lg:hidden",
-                          )}
-                        >
-                          <FormControl>
-                            <WeekPicker
-                              value={field.value}
-                              onChange={field.onChange}
-                              occupiedDateKeys={occupiedDateKeys}
-                              compact
-                            />
-                          </FormControl>
-                        </div>
-                        <div className="hidden shrink-0 lg:flex lg:items-center">
-                          <span className="sr-only">
-                            {isFormCollapsed
-                              ? "Planner section collapsed"
-                              : "Planner criteria"}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setIsFormCollapsed((prev) => !prev)}
-                            aria-expanded={!isFormCollapsed}
-                            aria-label={
-                              isFormCollapsed
-                                ? "Expand planner form"
-                                : "Collapse planner form"
-                            }
-                            className="size-8"
-                          >
-                            {isFormCollapsed ? (
-                              <ChevronRight className="size-4" />
-                            ) : (
-                              <ChevronLeft className="size-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className={cn("block", isFormCollapsed && "lg:hidden")}>
-                  <PlannerTimeLimitsSection
-                    fields={fields}
-                    control={form.control}
-                    dailyTimeLimits={watchedDailyTimeLimits}
-                    timeLimitsMode={timeLimitsMode}
-                    groupTimeLimits={groupTimeLimits}
-                    hasWeekdays={hasWeekdays}
-                    hasWeekend={hasWeekend}
-                    onSwitchToGrouped={handleSwitchToGroupedTimeLimits}
-                    onSwitchToDaily={handleSwitchToDailyTimeLimits}
-                    onUpdateGroupLimit={updateGroupLimit}
-                    getDayLabel={formatDayLabel}
-                    onInvalidStateChange={setHasInvalidTimeLimitInputs}
-                  />
-                  <PlannerAudienceSection
-                    fields={audienceFields}
-                    control={form.control}
-                    familyMembers={familyMembers}
-                    audienceMode={audienceMode}
-                    groupAudience={groupAudience}
-                    hasWeekdays={hasWeekdays}
-                    hasWeekend={hasWeekend}
-                    onSwitchToGrouped={handleSwitchToGroupedAudience}
-                    onSwitchToDaily={handleSwitchToDailyAudience}
-                    onUpdateGroupAudience={updateGroupAudience}
-                    getDayLabel={formatDayLabel}
-                  />
-                  <div className="mt-4 rounded-xl border border-border bg-card p-4">
-                    <FormField
-                      control={form.control}
-                      name="rollingRecipes"
-                      render={({ field }) => {
-                        const selected = (field.value ??
-                          []) as RollingRecipeType[];
-                        return (
-                          <PlannerRollingRecipesSection
-                            control={form.control}
-                            selected={selected}
-                            onChange={field.onChange}
-                            ingredients={ingredients}
-                            recipes={recipes}
-                            previousPlanUnusedRecipes={previousPlanUnusedRecipes}
-                            onInvalidStateChange={setHasInvalidRollingMealsInputs}
-                          />
-                        );
-                      }}
-                    />
-                  </div>
-
-                  {/* Mobile: full-width Fill empty under the form (page flow). */}
-                  <div className="mt-4 lg:hidden">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={handleFillEmptyClick}
-                      aria-busy={isGenerating}
-                      aria-label="Suggest meals for empty slots"
-                    >
-                      {fillEmptyLabel}
-                    </Button>
-                  </div>
+              {/* Title + collapse caret — same left-group pattern as Lists. */}
+              <div
+                className={cn(
+                  "flex shrink-0 items-center gap-1.5",
+                  isFormCollapsed ? "p-4 lg:justify-center lg:p-0" : "p-4",
+                )}
+              >
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <h2
+                    className={cn(
+                      "text-sm font-semibold tracking-tight",
+                      // Keep the title on mobile even if the rail was collapsed on desktop.
+                      isFormCollapsed && "lg:hidden",
+                    )}
+                  >
+                    Suggest meals
+                  </h2>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setIsFormCollapsed((prev) => !prev)}
+                    aria-expanded={!isFormCollapsed}
+                    aria-label={
+                      isFormCollapsed
+                        ? "Expand suggest meals"
+                        : "Collapse suggest meals"
+                    }
+                    className="hidden size-8 shrink-0 lg:inline-flex"
+                  >
+                    {isFormCollapsed ? (
+                      <ChevronRight className="size-4" aria-hidden />
+                    ) : (
+                      <ChevronLeft className="size-4" aria-hidden />
+                    )}
+                  </Button>
                 </div>
               </div>
 
-              {/* Desktop: Fill empty pinned to the bottom of the sticky left rail. */}
+              {/* Body: date + criteria separated by thin rules (no nested cards). */}
               <div
                 className={cn(
-                  "mt-3 hidden shrink-0 border-t border-border bg-background pt-3 lg:block",
+                  "flex min-h-0 min-w-0 flex-1 flex-col",
                   isFormCollapsed && "lg:hidden",
                 )}
               >
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleFillEmptyClick}
-                  aria-busy={isGenerating}
-                  aria-label="Suggest meals for empty slots"
-                >
-                  {fillEmptyLabel}
-                </Button>
+                {/* Padding on the inner wrapper so full-width controls span edge-to-edge between gutters. */}
+                <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+                  <div className="min-w-0 divide-y divide-border px-4">
+                    {/* Date range — no top padding; spacing comes from the Suggest meals header. */}
+                    <div className="min-w-0 pb-4">
+                      <FormField
+                        control={form.control}
+                        name="dateRange"
+                        render={({ field }) => (
+                          <FormItem className="min-w-0 gap-0">
+                            <FormControl>
+                              <WeekPicker
+                                value={field.value}
+                                onChange={field.onChange}
+                                occupiedDateKeys={occupiedDateKeys}
+                                compact
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Time constraints */}
+                    <div className="min-w-0 py-4">
+                      <PlannerTimeLimitsSection
+                        fields={fields}
+                        control={form.control}
+                        dailyTimeLimits={watchedDailyTimeLimits}
+                        timeLimitsMode={timeLimitsMode}
+                        groupTimeLimits={groupTimeLimits}
+                        hasWeekdays={hasWeekdays}
+                        hasWeekend={hasWeekend}
+                        onSwitchToGrouped={handleSwitchToGroupedTimeLimits}
+                        onSwitchToDaily={handleSwitchToDailyTimeLimits}
+                        onUpdateGroupLimit={updateGroupLimit}
+                        getDayLabel={formatDayLabel}
+                        onInvalidStateChange={setHasInvalidTimeLimitInputs}
+                      />
+                    </div>
+
+                    {/* Who eats */}
+                    <div className="min-w-0 py-4">
+                      <PlannerAudienceSection
+                        fields={audienceFields}
+                        control={form.control}
+                        familyMembers={familyMembers}
+                        audienceMode={audienceMode}
+                        groupAudience={groupAudience}
+                        hasWeekdays={hasWeekdays}
+                        hasWeekend={hasWeekend}
+                        onSwitchToGrouped={handleSwitchToGroupedAudience}
+                        onSwitchToDaily={handleSwitchToDailyAudience}
+                        onUpdateGroupAudience={updateGroupAudience}
+                        getDayLabel={formatDayLabel}
+                      />
+                    </div>
+
+                    {/* Rolling + fridge */}
+                    <div className="min-w-0 py-4">
+                      <FormField
+                        control={form.control}
+                        name="rollingRecipes"
+                        render={({ field }) => {
+                          const selected = (field.value ??
+                            []) as RollingRecipeType[];
+                          return (
+                            <PlannerRollingRecipesSection
+                              control={form.control}
+                              selected={selected}
+                              onChange={field.onChange}
+                              ingredients={ingredients}
+                              recipes={recipes}
+                              previousPlanUnusedRecipes={
+                                previousPlanUnusedRecipes
+                              }
+                              onInvalidStateChange={
+                                setHasInvalidRollingMealsInputs
+                              }
+                            />
+                          );
+                        }}
+                      />
+                    </div>
+
+                    {/* Mobile: Suggest meals CTA in page flow */}
+                    <div className="min-w-0 py-4 lg:hidden">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full"
+                        onClick={handleFillEmptyClick}
+                        aria-busy={isGenerating}
+                        aria-label="Suggest meals for empty slots"
+                      >
+                        {fillEmptyLabel}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Desktop: CTA pinned to bottom of the Lists-style card */}
+                <div className="hidden shrink-0 border-t border-border p-4 lg:block">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleFillEmptyClick}
+                    aria-busy={isGenerating}
+                    aria-label="Suggest meals for empty slots"
+                  >
+                    {fillEmptyLabel}
+                  </Button>
+                </div>
               </div>
             </form>
           </Form>
         </div>
 
-        {/* Right: grows with content; scrolls with the page (no nested scrollbar). */}
+        {/* Right: grows naturally with content and scrolls with the page. Its height (not the
+            left rail's) drives the grid row — that's what gives the sticky rail room to pin
+            once the plan has more days than fit the viewport. If both columns were pinned to
+            the same fixed height, the rail's containing block would be exactly its own size,
+            leaving `sticky` zero room to engage — it would silently act like `static`. */}
         <div
           className={cn(
             "hidden min-w-0 lg:block",
