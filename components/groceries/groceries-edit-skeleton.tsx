@@ -6,7 +6,7 @@ export function GroceriesEditSkeleton() {
     // Match groceries edit page container: full-width canvas with gutter padding.
     <div className="flex min-w-0 w-full max-w-full flex-col">
       {/* Full-width category navigator placeholder — sticky under app topbar. */}
-      <div className="sticky top-14 z-10 mb-gutter w-full min-w-0 max-w-full overflow-x-hidden bg-background">
+      <div className="sticky top-0 z-10 mb-gutter w-full min-w-0 max-w-full overflow-x-hidden bg-background">
         <div className="chip-strip-fade relative -mx-gutter px-gutter">
           <div className="scroll-touch scroll-ps-gutter scroll-pe-gutter snap-x snap-mandatory w-full min-w-0 overflow-x-auto overflow-y-hidden hide-scrollbar py-2.5 pb-3">
             <div className="flex w-max flex-nowrap gap-item">

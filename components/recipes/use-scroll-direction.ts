@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { getAppScrollParent, getAppScrollY } from "@/lib/app-scroll";
 
 export function useScrollDirection(threshold = 12) {
   const lastY = useRef(0);
@@ -7,7 +8,7 @@ export function useScrollDirection(threshold = 12) {
     const onScroll = () => {
       // Clamp negative values that can appear during iOS/Safari "rubber band"
       // at the top edge; otherwise direction can get stuck and hide filters.
-      const y = Math.max(0, window.scrollY);
+      const y = Math.max(0, getAppScrollY());
 
       // When we're at the very top, always treat it as scrolling "up".
       // This prevents "-translate-y-full" from lingering when scroll bounces.
@@ -31,10 +32,12 @@ export function useScrollDirection(threshold = 12) {
 
     // Initialize from the current scroll position so first scroll event
     // doesn't compute an exaggerated delta on mobile.
-    lastY.current = Math.max(0, window.scrollY);
+    lastY.current = Math.max(0, getAppScrollY());
 
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    // Prefer the shell scrollport; fall back to window for non-shell pages.
+    const scroller: EventTarget = getAppScrollParent() ?? window;
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    return () => scroller.removeEventListener("scroll", onScroll);
   }, [threshold]);
   return direction;
 }

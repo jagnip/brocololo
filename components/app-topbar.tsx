@@ -86,10 +86,11 @@ export function AppTopbar() {
     [config?.breadcrumbs, hasBreadcrumbs],
   );
 
-  // z-20: stay above page controls that use z-10 (e.g. log card remove buttons) while scrolling.
+  // Outside the app scrollport (see AppSidebarContainer) — no sticky needed.
+  // border-b closes the chrome above the scrolling content + scrollbar.
   // bg-background matches the rose page canvas.
   return (
-    <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background px-4">
+    <header className="z-20 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-4">
       <SidebarTrigger className="shrink-0 lg:hidden" />
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <div className="min-w-0 flex-1 overflow-hidden">

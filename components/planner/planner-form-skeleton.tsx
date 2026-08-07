@@ -11,7 +11,7 @@ export function PlannerFormSkeleton() {
       aria-busy="true"
       aria-label="Loading planner"
     >
-      <div className="flex h-full w-full min-w-0 flex-col lg:sticky lg:top-18 lg:h-[calc(100dvh-5.5rem)] lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-hidden">
+      <div className="flex h-full w-full min-w-0 flex-col lg:sticky lg:top-4 lg:h-[calc(100dvh-5.5rem)] lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-hidden">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
           {/* Suggest meals title (day-header size) + caret top-right */}
           <div className="flex items-center justify-between gap-2 p-4">

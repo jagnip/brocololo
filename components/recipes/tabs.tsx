@@ -82,7 +82,8 @@ export function RecipeTabs({
     <div
       data-pending={isPending}
       className={[
-        "sticky top-14 z-5 bg-background transition-transform duration-200",
+        // top-0: app topbar sits outside [data-app-scroll].
+        "sticky top-0 z-5 bg-background transition-transform duration-200",
         hidden ? "-translate-y-full" : "translate-y-0",
       ].join(" ")}
     >

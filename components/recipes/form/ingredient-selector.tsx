@@ -35,6 +35,7 @@ import {
   getFallbackUnitIdFromConversions,
 } from "@/lib/ingredients/default-unit";
 import { cn } from "@/lib/utils";
+import { appScrollBy } from "@/lib/app-scroll";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { IngredientMemberAdjustmentsEditor } from "@/components/recipes/ingredient-member-adjustments-editor";
 import { IngredientNotePanel } from "@/components/recipes/ingredient-note-panel";
@@ -500,7 +501,7 @@ export function IngredientSelector({
       deltaY = Math.ceil(Math.max(1, intensity * AUTO_SCROLL_MAX_STEP_PX));
     }
     if (deltaY !== 0) {
-      window.scrollBy(0, deltaY);
+      appScrollBy({ top: deltaY });
     }
     autoScrollFrameRef.current =
       window.requestAnimationFrame(runAutoScrollFrame);

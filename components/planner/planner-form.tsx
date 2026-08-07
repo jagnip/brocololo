@@ -812,7 +812,8 @@ export function PlannerForm({
             // overflow-hidden: at lg the narrow rail wraps criteria taller than the viewport;
             // without clipping, that overflow expands document scrollHeight and leaves a
             // huge blank gap under the columns once you scroll (worse on lg than xl).
-            "lg:sticky lg:top-18 lg:h-[calc(100dvh-5.5rem)] lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-hidden",
+            // top-4 = page gutter under the topbar (topbar is outside [data-app-scroll]).
+            "lg:sticky lg:top-4 lg:h-[calc(100dvh-5.5rem)] lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-hidden",
           )}
         >
           <Form {...form}>
