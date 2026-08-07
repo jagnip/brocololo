@@ -26,6 +26,7 @@ import {
   shouldShowGeneratedPlan,
 } from "./planner-plan-column-state";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useScrollbarOnScroll } from "@/hooks/use-scrollbar-on-scroll";
 import { PlanInputType, PlanSlotMealPayload, SetPlanMealOptions } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
 import { getPlanSlotKey, placeRecipeOnPlan } from "@/lib/planner/helpers";
@@ -137,6 +138,8 @@ export function PlannerForm({
   const [hasInvalidRollingMealsInputs, setHasInvalidRollingMealsInputs] =
     useState(false);
   const [isFormCollapsed, setIsFormCollapsed] = useState(false);
+  // Suggest meals rail: thin scrollbar only while that pane is scrolling.
+  const suggestMealsScrollbar = useScrollbarOnScroll();
   // Desktop split: form(2) + plan(4), with collapsible left rail.
   const desktopGridColumns = isFormCollapsed
     ? "lg:grid-cols-[2rem_minmax(0,1fr)]"
@@ -872,8 +875,17 @@ export function PlannerForm({
                 )}
               >
                 {/* Padding on the inner wrapper so full-width controls span edge-to-edge between gutters. */}
-                <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-                  <div className="min-w-0 divide-y divide-border px-4">
+                <div
+                  ref={suggestMealsScrollbar.ref}
+                  className={cn(
+                    "min-h-0 min-w-0 flex-1 overflow-y-auto",
+                    suggestMealsScrollbar.className,
+                  )}
+                  style={suggestMealsScrollbar.style}
+                  onScroll={suggestMealsScrollbar.onScroll}
+                >
+                  {/* Right inset = 1rem − reserved gutter so both sides match when bar is hidden. */}
+                  <div className="min-w-0 divide-y divide-border pl-4 pr-[calc(1rem-var(--suggest-scrollbar-reserve,15px))]">
                     {/* Date range — no top padding; spacing comes from the Suggest meals header. */}
                     <div className="min-w-0 pb-4">
                       <FormField
@@ -959,7 +971,7 @@ export function PlannerForm({
                   </div>
 
                   {/* Outside divide-y so it doesn't draw a rule under fridge ingredients on lg. */}
-                  <div className="min-w-0 px-4 py-4 lg:hidden">
+                  <div className="min-w-0 py-4 pl-4 pr-[calc(1rem-var(--suggest-scrollbar-reserve,15px))] lg:hidden">
                     <Button
                       type="button"
                       variant="outline"

@@ -19,8 +19,8 @@ export function PlannerFormSkeleton() {
             <Skeleton className="hidden size-8 rounded-md lg:block" />
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <div className="divide-y divide-border px-4">
+          <div className="min-h-0 flex-1 overflow-y-auto hide-scrollbar pe-[var(--scrollbar-size)]">
+            <div className="divide-y divide-border pl-4 pr-[calc(1rem-var(--scrollbar-size))]">
               <div className="space-y-2 pb-4">
                 <Skeleton className="h-10 w-full rounded-md" />
               </div>
@@ -37,7 +37,7 @@ export function PlannerFormSkeleton() {
                 <Skeleton className="h-10 w-full rounded-md" />
               </div>
             </div>
-            <div className="px-4 py-4 lg:hidden">
+            <div className="py-4 pl-4 pr-[calc(1rem-var(--scrollbar-size))] lg:hidden">
               <Skeleton className="h-9 w-full rounded-md" />
             </div>
           </div>
