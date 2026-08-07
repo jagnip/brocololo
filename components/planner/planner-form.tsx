@@ -11,6 +11,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
+import { Subheader } from "@/components/recipes/recipe-page/subheader";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   plannerCriteriaSchema,
@@ -824,43 +825,42 @@ export function PlannerForm({
                 isFormCollapsed && "lg:items-center lg:justify-start",
               )}
             >
-              {/* Title + collapse caret — same left-group pattern as Lists. */}
+              {/* Title matches day headers (Subheader); collapse caret sits top-right. */}
               <div
                 className={cn(
-                  "flex shrink-0 items-center gap-1.5",
-                  isFormCollapsed ? "p-4 lg:justify-center lg:p-0" : "p-4",
+                  "flex shrink-0 items-center",
+                  isFormCollapsed
+                    ? "p-4 lg:justify-center lg:p-0"
+                    : "justify-between gap-2 p-4",
                 )}
               >
-                <div className="flex min-w-0 items-center gap-1.5">
-                  <h2
-                    className={cn(
-                      "text-sm font-semibold tracking-tight",
-                      // Keep the title on mobile even if the rail was collapsed on desktop.
-                      isFormCollapsed && "lg:hidden",
-                    )}
-                  >
-                    Suggest meals
-                  </h2>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setIsFormCollapsed((prev) => !prev)}
-                    aria-expanded={!isFormCollapsed}
-                    aria-label={
-                      isFormCollapsed
-                        ? "Expand suggest meals"
-                        : "Collapse suggest meals"
-                    }
-                    className="hidden size-8 shrink-0 lg:inline-flex"
-                  >
-                    {isFormCollapsed ? (
-                      <ChevronRight className="size-4" aria-hidden />
-                    ) : (
-                      <ChevronLeft className="size-4" aria-hidden />
-                    )}
-                  </Button>
-                </div>
+                <Subheader
+                  className={cn(
+                    // Keep the title on mobile even if the rail was collapsed on desktop.
+                    isFormCollapsed && "lg:hidden",
+                  )}
+                >
+                  Suggest meals
+                </Subheader>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setIsFormCollapsed((prev) => !prev)}
+                  aria-expanded={!isFormCollapsed}
+                  aria-label={
+                    isFormCollapsed
+                      ? "Expand suggest meals"
+                      : "Collapse suggest meals"
+                  }
+                  className="hidden size-8 shrink-0 lg:inline-flex"
+                >
+                  {isFormCollapsed ? (
+                    <ChevronRight className="size-4" aria-hidden />
+                  ) : (
+                    <ChevronLeft className="size-4" aria-hidden />
+                  )}
+                </Button>
               </div>
 
               {/* Body: date + criteria separated by thin rules (no nested cards). */}
@@ -929,7 +929,7 @@ export function PlannerForm({
                       />
                     </div>
 
-                    {/* Rolling + fridge */}
+                    {/* Rolling + fridge — last divide-y section (no trailing rule under fridge). */}
                     <div className="min-w-0 py-4">
                       <FormField
                         control={form.control}
@@ -955,20 +955,20 @@ export function PlannerForm({
                         }}
                       />
                     </div>
+                  </div>
 
-                    {/* Mobile: Suggest meals CTA in page flow */}
-                    <div className="min-w-0 py-4 lg:hidden">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full"
-                        onClick={handleFillEmptyClick}
-                        aria-busy={isGenerating}
-                        aria-label="Suggest meals for empty slots"
-                      >
-                        {fillEmptyLabel}
-                      </Button>
-                    </div>
+                  {/* Outside divide-y so it doesn't draw a rule under fridge ingredients on lg. */}
+                  <div className="min-w-0 px-4 py-4 lg:hidden">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleFillEmptyClick}
+                      aria-busy={isGenerating}
+                      aria-label="Suggest meals for empty slots"
+                    >
+                      {fillEmptyLabel}
+                    </Button>
                   </div>
                 </div>
 

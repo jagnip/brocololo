@@ -13,9 +13,9 @@ export function PlannerFormSkeleton() {
     >
       <div className="flex h-full w-full min-w-0 flex-col lg:sticky lg:top-18 lg:h-[calc(100dvh-5.5rem)] lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-hidden">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
-          {/* Suggest meals title + caret */}
-          <div className="flex items-center gap-1.5 p-4">
-            <Skeleton className="h-5 w-28 rounded-md" />
+          {/* Suggest meals title (day-header size) + caret top-right */}
+          <div className="flex items-center justify-between gap-2 p-4">
+            <Skeleton className="h-7 w-36 rounded-md" />
             <Skeleton className="hidden size-8 rounded-md lg:block" />
           </div>
 
@@ -36,9 +36,9 @@ export function PlannerFormSkeleton() {
                 <Skeleton className="h-9 w-56 max-w-full rounded-md" />
                 <Skeleton className="h-10 w-full rounded-md" />
               </div>
-              <div className="py-4 lg:hidden">
-                <Skeleton className="h-9 w-full rounded-md" />
-              </div>
+            </div>
+            <div className="px-4 py-4 lg:hidden">
+              <Skeleton className="h-9 w-full rounded-md" />
             </div>
           </div>
 
