@@ -82,7 +82,7 @@ export function PlannerRollingRecipesSection({
           );
         }}
       >
-        Add unused meals from previous plan
+        Use previous leftovers
       </Button>
       <FormLabel className="mt-4">Rolling recipes</FormLabel>
       <FormControl>

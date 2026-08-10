@@ -7,12 +7,16 @@ import {
   FormField,
   FormItem,
   FormControl,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Subheader } from "@/components/recipes/recipe-page/subheader";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+} from "lucide-react";
 import {
   plannerCriteriaSchema,
   type PlannerCriteriaInputType,
@@ -799,48 +803,50 @@ export function PlannerForm({
         }}
       />
 
-      {/* Desktop: sticky full-height criteria rail; meal plan scrolls with the page. */}
-      <div
-        className={cn(
-          "flex flex-col gap-6 lg:grid lg:items-start lg:gap-x-4 lg:gap-y-6",
-          desktopGridColumns,
-        )}
-      >
-        {/* Left: Lists-style card rail — one outer chrome, thin section separators. */}
+      {/* FormProvider wraps both columns so the date field can live with the plan title. */}
+      <Form {...form}>
+        {/* Desktop: sticky full-height criteria rail; meal plan scrolls with the page. */}
         <div
           className={cn(
-            "flex min-w-0 flex-col",
-            // Fill viewport under topbar + gutters (3.5rem + 1rem + 1rem). Plain rem calc —
-            // Tailwind breaks on `2*var(...)` in arbitrary values, which left empty space below.
-            // overflow-hidden: at lg the narrow rail wraps criteria taller than the viewport;
-            // without clipping, that overflow expands document scrollHeight and leaves a
-            // huge blank gap under the columns once you scroll (worse on lg than xl).
-            // top-4 = page gutter under the topbar (topbar is outside [data-app-scroll]).
-            "lg:sticky lg:top-4 lg:h-[calc(100dvh-5.5rem)] lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-hidden",
+            "flex flex-col gap-6 lg:grid lg:items-start lg:gap-x-4 lg:gap-y-6",
+            desktopGridColumns,
           )}
         >
-          <Form {...form}>
+          {/* Left: Lists-style card rail — one outer chrome, thin section separators. */}
+          <div
+            className={cn(
+              "flex min-w-0 flex-col",
+              // Fill viewport under topbar + gutters (3.5rem + 1rem + 1rem). Plain rem calc —
+              // Tailwind breaks on `2*var(...)` in arbitrary values, which left empty space below.
+              // overflow-hidden: at lg the narrow rail wraps criteria taller than the viewport;
+              // without clipping, that overflow expands document scrollHeight and leaves a
+              // huge blank gap under the columns once you scroll (worse on lg than xl).
+              // top-4 = page gutter under the topbar (topbar is outside [data-app-scroll]).
+              "lg:sticky lg:top-4 lg:h-[calc(100dvh-5.5rem)] lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-hidden",
+            )}
+          >
             <form
               onSubmit={form.handleSubmit(onSubmit)}
               className={cn(
                 "flex h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden",
-                // Single outer card like groceries Lists (collapsed = caret only on lg).
-                !isFormCollapsed && "rounded-xl border border-border bg-card",
-                isFormCollapsed && "lg:items-center lg:justify-start",
+                // Mobile: keep Lists card chrome when folded (title + caret only).
+                // Desktop: chrome when expanded; collapsed = caret-only rail.
+                "rounded-xl border border-border bg-card",
+                isFormCollapsed &&
+                  "lg:rounded-none lg:border-0 lg:bg-transparent lg:items-center lg:justify-start",
               )}
             >
-              {/* Title matches day headers (Subheader); collapse caret sits top-right. */}
+              {/* Column title (type-h2); pairs with “Meal plan for” on the right. */}
               <div
                 className={cn(
-                  "flex shrink-0 items-center",
-                  isFormCollapsed
-                    ? "p-4 lg:justify-center lg:p-0"
-                    : "justify-between gap-2 p-4",
+                  "flex shrink-0 items-center justify-between gap-2 p-4",
+                  // Desktop collapsed: center the caret in the narrow rail.
+                  isFormCollapsed && "lg:justify-center lg:p-0",
                 )}
               >
                 <Subheader
                   className={cn(
-                    // Keep the title on mobile even if the rail was collapsed on desktop.
+                    // Keep the title on mobile when folded; hide it in the desktop caret rail.
                     isFormCollapsed && "lg:hidden",
                   )}
                 >
@@ -857,21 +863,35 @@ export function PlannerForm({
                       ? "Expand suggest meals"
                       : "Collapse suggest meals"
                   }
-                  className="hidden size-8 shrink-0 lg:inline-flex"
+                  className="size-8 shrink-0"
                 >
+                  {/* Mobile: up/down. Desktop: left/right (same control, same state). */}
                   {isFormCollapsed ? (
-                    <ChevronRight className="size-4" aria-hidden />
+                    <>
+                      <ChevronDown className="size-4 lg:hidden" aria-hidden />
+                      <ChevronRight
+                        className="hidden size-4 lg:block"
+                        aria-hidden
+                      />
+                    </>
                   ) : (
-                    <ChevronLeft className="size-4" aria-hidden />
+                    <>
+                      <ChevronUp className="size-4 lg:hidden" aria-hidden />
+                      <ChevronLeft
+                        className="hidden size-4 lg:block"
+                        aria-hidden
+                      />
+                    </>
                   )}
                 </Button>
               </div>
 
-              {/* Body: date + criteria separated by thin rules (no nested cards). */}
+              {/* Body: criteria separated by thin rules (no nested cards). Date lives on the plan column. */}
               <div
                 className={cn(
                   "flex min-h-0 min-w-0 flex-1 flex-col",
-                  isFormCollapsed && "lg:hidden",
+                  // Folded on any viewport — mobile accordion + desktop caret rail.
+                  isFormCollapsed && "hidden",
                 )}
               >
                 {/* Padding on the inner wrapper so full-width controls span edge-to-edge between gutters. */}
@@ -886,29 +906,8 @@ export function PlannerForm({
                 >
                   {/* Right inset = 1rem − reserved gutter so both sides match when bar is hidden. */}
                   <div className="min-w-0 divide-y divide-border pl-4 pr-[calc(1rem-var(--suggest-scrollbar-reserve,15px))]">
-                    {/* Date range — no top padding; spacing comes from the Suggest meals header. */}
+                    {/* Time constraints — no top padding; spacing comes from the Suggest meals header. */}
                     <div className="min-w-0 pb-4">
-                      <FormField
-                        control={form.control}
-                        name="dateRange"
-                        render={({ field }) => (
-                          <FormItem className="min-w-0 gap-0">
-                            <FormControl>
-                              <WeekPicker
-                                value={field.value}
-                                onChange={field.onChange}
-                                occupiedDateKeys={occupiedDateKeys}
-                                compact
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    {/* Time constraints */}
-                    <div className="min-w-0 py-4">
                       <PlannerTimeLimitsSection
                         fields={fields}
                         control={form.control}
@@ -1000,44 +999,42 @@ export function PlannerForm({
                 </div>
               </div>
             </form>
-          </Form>
-        </div>
+          </div>
 
-        {/* Right: grows naturally with content and scrolls with the page. Its height (not the
-            left rail's) drives the grid row — that's what gives the sticky rail room to pin
-            once the plan has more days than fit the viewport. If both columns were pinned to
-            the same fixed height, the rail's containing block would be exactly its own size,
-            leaving `sticky` zero room to engage — it would silently act like `static`. */}
-        <div
-          className={cn(
-            "hidden min-w-0 lg:block",
-            pulsePlanWhileFilling && "animate-pulse",
-          )}
-        >
-          <PlannerPlanColumn
-            mode={planColumnMode}
-            plan={generatedPlan}
-            lastGenerationError={lastGenerationError}
-            fridgeIngredientIds={fridgeIngredientIds}
-            recipes={recipes}
-            ingredientOptions={ingredientOptions}
-            onShuffle={handleShuffle}
-            onSetMeal={handleSetMeal}
-            onRemove={handleRemove}
-            onRearrangeSlots={handleRearrangeSlots}
-            familyMembers={familyMembers}
-            onAudienceChange={handleAudienceChange}
-          />
-        </div>
-
-        {/* Mobile plan column */}
-        {showPlanColumn ? (
+          {/* Right (desktop) / below suggest (mobile): date title + meal grid.
+              Height here drives the sticky left rail's containing block — keep this column
+              in normal flow (not sticky) so `sticky` on the left can engage. */}
           <div
             className={cn(
-              "lg:hidden",
+              "min-w-0 space-y-6",
+              // Desktop always shows the date header; mobile only when the plan column has content.
+              showPlanColumn ? "block" : "hidden lg:block",
               pulsePlanWhileFilling && "animate-pulse",
             )}
           >
+            {/* Column title + date picker — drives suggest criteria and the meal grid. */}
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+              <Subheader className="shrink-0 whitespace-nowrap">
+                Meal plan for
+              </Subheader>
+              <FormField
+                control={form.control}
+                name="dateRange"
+                render={({ field }) => (
+                  <FormItem className="min-w-0 flex-1 gap-0 sm:max-w-sm">
+                    <FormControl>
+                      <WeekPicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        occupiedDateKeys={occupiedDateKeys}
+                        compact
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <PlannerPlanColumn
               mode={planColumnMode}
               plan={generatedPlan}
@@ -1051,10 +1048,11 @@ export function PlannerForm({
               onRearrangeSlots={handleRearrangeSlots}
               familyMembers={familyMembers}
               onAudienceChange={handleAudienceChange}
+              dayLabelVariant="subtext"
             />
           </div>
-        ) : null}
-      </div>
+        </div>
+      </Form>
     </>
   );
 }

@@ -50,6 +50,7 @@ import { PlanSlotMealDialog } from "./plan-slot-meal-dialog";
 import { PlannerBulkEditEatersDialog } from "./planner-bulk-edit-eaters-dialog";
 import { useSlotBulkSelection } from "./use-slot-bulk-selection";
 import { getBulkEditMealsDialogCopy } from "@/lib/planner/plan-slot-meal-dialog-copy";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 function getFridgeMatchIngredients(
@@ -85,6 +86,11 @@ type PlanViewProps = {
   onToggleUsed?: (slotKey: string) => void;
   familyMembers?: FamilyMemberRow[];
   onAudienceChange?: (slotKey: string, memberIds: string[]) => void;
+  /**
+   * Create-plan column titles own type-h2; days step down to subtext.
+   * Plan detail keeps day labels as section titles (default).
+   */
+  dayLabelVariant?: "title" | "subtext";
 };
 
 export function PlanView({
@@ -99,6 +105,7 @@ export function PlanView({
   onToggleUsed,
   familyMembers = [],
   onAudienceChange,
+  dayLabelVariant = "title",
 }: PlanViewProps) {
   const [isBulkReplaceDialogOpen, setIsBulkReplaceDialogOpen] = useState(false);
   const [isBulkEditEatersDialogOpen, setIsBulkEditEatersDialogOpen] =
@@ -316,7 +323,13 @@ export function PlanView({
   }
 
   const grid = (
-    <section className="min-w-0 space-y-8">
+    <section
+      className={cn(
+        "min-w-0",
+        // Create plan: tighter day rhythm under the column title. Plan detail keeps roomier sections.
+        dayLabelVariant === "subtext" ? "space-y-5" : "space-y-8",
+      )}
+    >
       {sortedDates.map((dateKey) => {
         const { date, breakfast, lunch, dinner } = getMealsForDate(
           slotsByDate,
@@ -324,8 +337,21 @@ export function PlanView({
         );
 
         return (
-          <article key={dateKey} className="min-w-0 space-y-4">
-            <Subheader>{formatDayLabel(date)}</Subheader>
+          <article
+            key={dateKey}
+            className={cn(
+              "min-w-0",
+              dayLabelVariant === "subtext" ? "space-y-2" : "space-y-4",
+            )}
+          >
+            {/* title = column-level Subheader; subtext = under "Meal plan for …". */}
+            {dayLabelVariant === "subtext" ? (
+              <h3 className="text-sm font-semibold tracking-tight text-foreground">
+                {formatDayLabel(date)}
+              </h3>
+            ) : (
+              <Subheader>{formatDayLabel(date)}</Subheader>
+            )}
             <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {breakfast && <div>{renderSlot(breakfast)}</div>}
               {lunch && <div>{renderSlot(lunch)}</div>}
