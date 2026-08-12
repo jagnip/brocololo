@@ -54,7 +54,7 @@ function createSlot(recipe: RecipeType): SlotInputType {
 }
 
 describe("PlannerSlotCard batch badge", () => {
-  it("shows N of M when recipe is a batch recipe and a label is provided", () => {
+  it("shows Batch · N of M when recipe is a batch recipe and a label is provided", () => {
     const recipe = createBatchRecipe();
     render(
       <PlannerSlotCard
@@ -65,7 +65,25 @@ describe("PlannerSlotCard batch badge", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Meal 1 of 2")).toHaveTextContent("1 of 2");
+    expect(screen.getByLabelText("Batch meal 1 of 2")).toHaveTextContent(
+      "Batch · 1 of 2",
+    );
+  });
+
+  it("always shows 1 of X even when the live group index is higher", () => {
+    const recipe = createBatchRecipe();
+    render(
+      <PlannerSlotCard
+        slot={createSlot(recipe)}
+        batchLabel={{ index: 2, total: 4 }}
+        recipes={[recipe]}
+        ingredientOptions={[]}
+      />,
+    );
+
+    expect(screen.getByLabelText("Batch meal 1 of 4")).toHaveTextContent(
+      "Batch · 1 of 4",
+    );
   });
 
   it("hides the badge when the recipe is not marked as a batch recipe", () => {
@@ -79,7 +97,7 @@ describe("PlannerSlotCard batch badge", () => {
       />,
     );
 
-    expect(screen.queryByLabelText("Meal 1 of 2")).toBeNull();
+    expect(screen.queryByLabelText("Batch meal 1 of 2")).toBeNull();
   });
 
   it("hides the badge when no batch label is provided", () => {
@@ -92,7 +110,7 @@ describe("PlannerSlotCard batch badge", () => {
       />,
     );
 
-    expect(screen.queryByLabelText(/Meal \d+ of \d+/)).toBeNull();
+    expect(screen.queryByLabelText(/Batch meal \d+ of \d+/)).toBeNull();
   });
 
   it("uses recipeCookingHref for the title link when provided", () => {

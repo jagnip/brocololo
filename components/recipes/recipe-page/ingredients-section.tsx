@@ -50,6 +50,7 @@ function renderAggregatedLines(params: {
   localScaleByIngredientId: Record<string, number>;
   recipeServings: number;
   cookingFamilyMembers: FamilyMemberRow[];
+  extraPortions: number;
   onUnitChange: (recipeIngredientId: string, unitId: string | null) => void;
   onAggregatedAmountEdit: (
     sourceRecipeIngredientIds: string[],
@@ -67,6 +68,7 @@ function renderAggregatedLines(params: {
     localScaleByIngredientId,
     recipeServings,
     cookingFamilyMembers,
+    extraPortions,
     onUnitChange,
     onAggregatedAmountEdit,
     onApplyScaleToAll,
@@ -84,18 +86,19 @@ function renderAggregatedLines(params: {
     const resolvedIngredient =
       ingredients.find((entry) => entry.id === line.ingredientId) ??
       primaryRecipeIngredient.ingredient;
-    const displayUnit = resolveUnitForAggregatedLine(
-      line,
-      primaryRecipeIngredient,
-      ingredients,
-    );
+    const displayUnit =
+      resolveUnitForAggregatedLine(
+        line,
+        primaryRecipeIngredient,
+        ingredients,
+      ) ?? primaryRecipeIngredient.unit ?? null;
     const displayRecipeIngredient: RecipeType["ingredients"][number] = {
       ...primaryRecipeIngredient,
       ingredient: resolvedIngredient,
       ingredientId: resolvedIngredient.id,
       additionalInfo: line.primaryAdditionalInfo,
       unit: displayUnit,
-      unitId: displayUnit?.id ?? line.unitId,
+      unitId: displayUnit?.id ?? (line.unitId || null),
     };
 
     const showApplyScaleAction = line.sourceRecipeIngredientIds.some((id) =>
@@ -112,6 +115,7 @@ function renderAggregatedLines(params: {
         hideSupermarketLink
         cookingMemberAmounts={line.memberAmounts}
         cookingFamilyMembers={cookingFamilyMembers}
+        extraPortions={extraPortions}
         disableIngredientSwap={!allowIngredientSwap}
         selectedUnitId={
           selectedUnits[line.primaryRecipeIngredientId] || line.unitId
@@ -210,6 +214,7 @@ export function IngredientsSection() {
       localScaleByIngredientId,
       recipeServings: recipe.servings,
       cookingFamilyMembers,
+      extraPortions,
       onUnitChange,
       onAggregatedAmountEdit,
       onApplyScaleToAll,
@@ -217,6 +222,7 @@ export function IngredientsSection() {
     }),
     [
       effectiveRecipeIngredientById,
+      extraPortions,
       ingredients,
       localScaleByIngredientId,
       cookingFamilyMembers,

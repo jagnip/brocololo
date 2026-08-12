@@ -32,6 +32,8 @@ export async function generatePlan(
   allDaysTimeLimits: DayTimeLimitsType[],
   fridgeIngredientIds: string[],
   rollingRecipes: RollingRecipeType[],
+  /** Current draft — filled slots are preserved; only empties are generated. */
+  existingPlan: PlanInputType = [],
 ): Promise<
   | { type: "success"; plan: PlanInputType; warnings: string[] }
   | { type: "error"; message: string }
@@ -59,11 +61,25 @@ export async function generatePlan(
       return { type: "error", message: PLAN_GENERATION_FAILED_MESSAGE };
     }
 
+    // Index existing draft slots so we can preserve hand-filled meals.
+    const existingByKey = new Map<string, (typeof existingPlan)[number]>();
+    for (const slot of existingPlan) {
+      existingByKey.set(`${slot.date.toISOString()}-${slot.mealType}`, slot);
+    }
+    const reservedSlotKeys = new Set(
+      [...existingByKey.entries()]
+        .filter(([, slot]) => slot.recipe != null || slot.customMeal != null)
+        .map(([key]) => key),
+    );
+
     const days = getDaysToPlan(start, end);
     const plan: PlanInputType = [];
     const batchFilledSlots = new Map<string, RecipeType>();
     const batchSlotAudience = new Map<string, string[]>();
     const batchSlotGroupIds = new Map<string, string>();
+    const warnings: string[] = [];
+    let emptySlotsAttempted = 0;
+    let emptySlotsFilled = 0;
 
     for (const day of days) {
       const dateStr = day.toISOString().slice(0, 10);
@@ -75,7 +91,22 @@ export async function generatePlan(
           ...new Set(getSlotAudienceIdsForMeal(dayAudience, mealType)),
         ];
         const slotKey = `${day.toISOString()}-${mealType}`;
-        // Continuation check first — leftover/repeat slots already know their recipe
+
+        // Preserve hand-filled / previously filled meals — never overwrite.
+        const existingSlot = existingByKey.get(slotKey);
+        if (
+          existingSlot &&
+          (existingSlot.recipe != null || existingSlot.customMeal != null)
+        ) {
+          plan.push({
+            ...existingSlot,
+            date: new Date(day),
+            mealType,
+          });
+          continue;
+        }
+
+        // Continuation check — leftover/repeat slots already know their recipe
         // and must not be blocked by fresh-candidate time-limit filtering.
         const batchRecipe = batchFilledSlots.get(slotKey);
         const batchAudienceIds = batchSlotAudience.get(slotKey) ?? slotAudienceIds;
@@ -92,15 +123,31 @@ export async function generatePlan(
             used: false,
             batchGroupId: continuationGroupId,
           });
+          emptySlotsAttempted += 1;
+          emptySlotsFilled += 1;
           continue;
         }
+
+        emptySlotsAttempted += 1;
 
         let candidates = filterByMealOccasion(recipes, mealType);
         candidates = filterByHandsOnTime(candidates, getMealTimeLimit(dayTimeLimits, mealType, "handsOn"));
         candidates = filterByTotalTime(candidates, getMealTimeLimit(dayTimeLimits, mealType, "total"));
 
+        // Leave the slot empty with a warning instead of failing the whole fill.
         if (candidates.length === 0) {
-          return { type: "error", message: PLAN_GENERATION_FAILED_MESSAGE };
+          plan.push({
+            date: new Date(day),
+            mealType,
+            recipe: null,
+            customMeal: null,
+            alternatives: [],
+            cookingFamilyMemberIds: slotAudienceIds,
+            used: false,
+            batchGroupId: null,
+          });
+          warnings.push(`No recipes fit ${mealType.toLowerCase()} on ${dateStr}.`);
+          continue;
         }
 
         const maxDaysSinceLastUsedCandidate = getMaxDaysSinceLastUsedCandidate(candidates, day);
@@ -130,6 +177,7 @@ export async function generatePlan(
           used: false,
           batchGroupId,
         });
+        emptySlotsFilled += 1;
 
         if (batchGroupId) {
           markBatchSlots(
@@ -147,14 +195,19 @@ export async function generatePlan(
               // Batch leftovers skip time checks; non-batch repeats enforce them per day.
               enforceTimeLimit: !winner.isBatchRecipe,
               allDaysTimeLimits,
+              reservedSlotKeys,
             },
           );
         }
       }
     }
 
+    // Tried to fill empties but nothing landed — treat as generation failure.
+    if (emptySlotsAttempted > 0 && emptySlotsFilled === 0) {
+      return { type: "error", message: PLAN_GENERATION_FAILED_MESSAGE };
+    }
+
     const placedRecipeIds = new Set(plan.filter((s) => s.recipe).map((s) => s.recipe!.id));
-    const warnings: string[] = [];
     for (const r of rollingRecipes) {
       if (!placedRecipeIds.has(r.recipeId)) {
         const name = recipes.find((rec) => rec.id === r.recipeId)?.name ?? r.recipeId;

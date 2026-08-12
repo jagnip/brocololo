@@ -447,7 +447,7 @@ const MultipleSelector = React.forwardRef<
           commandProps?.onKeyDown?.(e);
         }}
         className={cn(
-          "h-auto overflow-visible bg-transparent",
+          "h-auto min-w-0 w-full overflow-visible bg-transparent",
           commandProps?.className
         )}
         shouldFilter={
@@ -460,7 +460,8 @@ const MultipleSelector = React.forwardRef<
         <div
           className={cn(
             // Keep control height aligned with standard text inputs in forms.
-            "flex min-h-9 items-center justify-between rounded-md border border-input bg-card px-2 py-1 text-sm shadow-xs ring-offset-background transition-shadow focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+            // min-w-0 so badge chips wrap inside narrow columns instead of forcing horizontal scroll.
+            "flex min-h-9 min-w-0 w-full items-center justify-between rounded-md border border-input bg-card px-2 py-1 text-sm shadow-xs ring-offset-background transition-shadow focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
             {
               "cursor-text": !disabled && selected.length !== 0,
             },
@@ -478,8 +479,8 @@ const MultipleSelector = React.forwardRef<
                   key={option.value}
                   variant="secondary"
                   className={cn(
-                    // Compact chips prevent one-line selections from making the field taller.
-                    "h-5 px-2 py-0 text-xs",
+                    // Compact chips: wrap onto new lines, and shrink/truncate if one label is too long.
+                    "h-5 max-w-full min-w-0 shrink px-2 py-0 text-xs",
                     "data-[disabled]:bg-muted-foreground data-[disabled]:text-muted data-[disabled]:hover:bg-muted-foreground",
                     "data-[fixed]:bg-muted-foreground data-[fixed]:text-muted data-[fixed]:hover:bg-muted-foreground",
                     badgeClassName
@@ -487,7 +488,7 @@ const MultipleSelector = React.forwardRef<
                   data-fixed={option.fixed}
                   data-disabled={disabled || undefined}
                 >
-                  {option.label}
+                  <span className="min-w-0 truncate">{option.label}</span>
                   <button
                     type="button"
                     className={cn(

@@ -165,7 +165,8 @@ export function GroceriesEditCategoryNav({
   return (
     <div
       className={cn(
-        "sticky top-14 z-10 w-full min-w-0 max-w-full overflow-x-hidden bg-background",
+        // top-0: app topbar sits outside [data-app-scroll], so chip strip sticks to the pane top.
+        "sticky top-0 z-10 w-full min-w-0 max-w-full overflow-x-hidden bg-background",
         className,
       )}
     >

@@ -31,6 +31,8 @@ type PlannerPlanColumnProps = {
   onRemove?: (slotKey: string) => void;
   onRearrangeSlots?: (sourceKey: string, targetKey: string) => void;
   onAudienceChange?: (slotKey: string, memberIds: string[]) => void;
+  /** Forwarded to PlanView — create plan uses subtext under the column title. */
+  dayLabelVariant?: "title" | "subtext";
 };
 
 export function PlannerPlanColumn({
@@ -46,6 +48,7 @@ export function PlannerPlanColumn({
   onRemove,
   onRearrangeSlots,
   onAudienceChange,
+  dayLabelVariant,
 }: PlannerPlanColumnProps) {
   if (mode === "loading") {
     return <PlanViewSkeleton />;
@@ -64,6 +67,7 @@ export function PlannerPlanColumn({
         onRearrangeSlots={onRearrangeSlots}
         familyMembers={familyMembers}
         onAudienceChange={onAudienceChange}
+        dayLabelVariant={dayLabelVariant}
       />
     );
   }

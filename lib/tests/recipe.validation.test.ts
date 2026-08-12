@@ -358,16 +358,40 @@ describe("formatInstructionIngredientBadge", () => {
     expect(label).toBe("Salt · <0.1 g");
   });
 
-  it("shows ingredient name only when amount is null", () => {
+  it("shows ingredient name only when amount and unit are both missing", () => {
     const label = formatInstructionIngredientBadge({
       rawAmount: null,
       displayAmount: null,
-      displayUnitName: "g",
+      displayUnitName: "",
       ingredientName: "Salt",
-      additionalInfo: "to taste",
+      additionalInfo: null,
+    });
+
+    expect(label).toBe("Salt");
+  });
+
+  it("shows qualitative unit when amount is null (e.g. to taste)", () => {
+    const label = formatInstructionIngredientBadge({
+      rawAmount: null,
+      displayAmount: null,
+      displayUnitName: "to taste",
+      ingredientName: "Salt",
+      additionalInfo: null,
     });
 
     expect(label).toBe("Salt · to taste");
+  });
+
+  it("shows additional info when amount is null", () => {
+    const label = formatInstructionIngredientBadge({
+      rawAmount: null,
+      displayAmount: null,
+      displayUnitName: "",
+      ingredientName: "Salt",
+      additionalInfo: "pinch",
+    });
+
+    expect(label).toBe("Salt · pinch");
   });
 
   it("shows amount and additional info with mid dots", () => {

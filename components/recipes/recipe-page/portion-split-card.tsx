@@ -68,7 +68,9 @@ export function formatPortionSplitMultiplierSuffix(
 }
 
 function formatExtrasBadgeLabel(extraPortions: number): string {
-  return `${extraPortions} ${extraPortions === 1 ? "extra portion" : "extra portions"}`;
+  const portionWord = extraPortions === 1 ? "portion" : "portions";
+  // Same pattern as people: "Extra · 2 portions"
+  return `Extra · ${extraPortions} ${portionWord}`;
 }
 
 /**
@@ -206,7 +208,7 @@ export function PortionSplitCard({
                 </Badge>
               );
             })}
-            {extrasBadgeLabel ? (
+            {extraPortions > 0 ? (
               <Badge
                 role="listitem"
                 variant="outline"
@@ -216,8 +218,13 @@ export function PortionSplitCard({
                   className="inline-block size-2 shrink-0 rounded-full bg-muted-foreground"
                   aria-hidden
                 />
-                {/* Same weight/opacity as “· N portions” on person badges. */}
-                <span className="font-normal opacity-75">{extrasBadgeLabel}</span>
+                {/* Match person badges: bold label + muted “· N portions”. */}
+                <span>Extra</span>
+                <span className="font-normal opacity-75">
+                  {` · ${extraPortions} ${
+                    extraPortions === 1 ? "portion" : "portions"
+                  }`}
+                </span>
               </Badge>
             ) : null}
           </div>

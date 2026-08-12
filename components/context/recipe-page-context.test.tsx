@@ -80,7 +80,7 @@ describe("RecipePageProvider plan cook hydration", () => {
     renderCooking(cook);
 
     expect(
-      screen.getByText("Cooking set up for your meal plan (3 meals)."),
+      screen.getByText("Meals setup for your meal plan (3 meals)."),
     ).toBeInTheDocument();
     expect(
       screen.getByLabelText("Number of meals for combination 1"),
@@ -94,7 +94,7 @@ describe("RecipePageProvider plan cook hydration", () => {
     renderCooking("not-a-valid-param");
 
     expect(
-      screen.queryByText(/Cooking set up for your meal plan/),
+      screen.queryByText(/Meals setup for your meal plan/),
     ).toBeNull();
     expect(
       screen.getByLabelText("Number of meals for combination 1"),
@@ -106,15 +106,18 @@ describe("RecipePageProvider plan cook hydration", () => {
 
   it("clears the banner when the user edits Cooking", async () => {
     const user = userEvent.setup();
-    const cook = encodePlanCookParam([
-      { count: 1, memberIds: ["family-self"] },
-    ]);
+    const cook = encodePlanCookParam(
+      [{ count: 1, memberIds: ["family-self"] }],
+      ["2026-06-14"],
+    );
 
     renderCooking(cook);
 
     expect(
-      screen.getByText("Cooking set up for your meal plan (1 meal)."),
+      screen.getByText("Meals setup for 14th Jun (1 meal)."),
     ).toBeInTheDocument();
+    expect(screen.getByText("Meals")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reset" })).toBeInTheDocument();
 
     await user.click(
       screen.getByRole("button", {
@@ -122,9 +125,7 @@ describe("RecipePageProvider plan cook hydration", () => {
       }),
     );
 
-    expect(
-      screen.queryByText(/Cooking set up for your meal plan/),
-    ).toBeNull();
+    expect(screen.queryByText(/Meals setup for/)).toBeNull();
   });
 
   it("resets to the household default when Reset is clicked", async () => {
@@ -137,9 +138,7 @@ describe("RecipePageProvider plan cook hydration", () => {
 
     await user.click(screen.getByRole("button", { name: "Reset" }));
 
-    expect(
-      screen.queryByText(/Cooking set up for your meal plan/),
-    ).toBeNull();
+    expect(screen.queryByText(/Meals setup for/)).toBeNull();
     expect(
       screen.getByLabelText("Number of meals for combination 1"),
     ).toHaveTextContent("1");
@@ -195,7 +194,7 @@ describe("RecipePageProvider plan cook hydration in StrictMode", () => {
     renderStrict(encodePlanCookParam([{ count: 1, memberIds: [gloria, klaudia] }]));
 
     expect(
-      screen.getByText("Cooking set up for your meal plan (1 meal)."),
+      screen.getByText("Meals setup for your meal plan (1 meal)."),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Remove Gloria for combination 1" }),
@@ -219,7 +218,7 @@ describe("RecipePageProvider plan cook hydration in StrictMode", () => {
     );
 
     expect(
-      screen.getByText("Cooking set up for your meal plan (5 meals)."),
+      screen.getByText("Meals setup for your meal plan (5 meals)."),
     ).toBeInTheDocument();
     expect(
       screen.getByLabelText("Number of meals for combination 1"),
@@ -244,7 +243,7 @@ describe("RecipePageProvider plan cook hydration in StrictMode", () => {
     );
 
     expect(
-      screen.getByText("Cooking set up for your meal plan (2 meals)."),
+      screen.getByText("Meals setup for your meal plan (2 meals)."),
     ).toBeInTheDocument();
     expect(
       screen.getByLabelText("Number of meals for combination 1"),

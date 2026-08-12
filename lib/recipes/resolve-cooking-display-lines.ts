@@ -5,9 +5,11 @@ import {
 } from "@/lib/recipes/ingredient-adjustments";
 import type { MemberAdjustmentRow } from "@/lib/recipes/resolve-ingredient-lines";
 import { derivePersonMealCounts } from "@/lib/recipes/cook-session-portions";
+import { COOK_SESSION_EXTRAS_SHARE_ID } from "@/lib/recipes/shared-portion-shares";
 
 /** Per-person share of an aggregated cook-session ingredient line. */
 export type CookingAggregatedMemberAmount = {
+  /** Family member id, or `COOK_SESSION_EXTRAS_SHARE_ID` for anonymous extras. */
   familyMemberId: string;
   amount: number;
 };
@@ -17,9 +19,12 @@ export type CookingAggregatedLine = {
   key: string;
   ingredientId: string;
   unitId: string;
-  /** Total amount for selected eaters × meals (includes row-level manual scale when provided). */
-  resolvedAmount: number;
-  /** Amount attributed to each selected eater for this line. */
+  /**
+   * Total amount for selected eaters × meals (includes row-level manual scale).
+   * Null for qualitative rows (salt/pepper — no numeric amount).
+   */
+  resolvedAmount: number | null;
+  /** Amount attributed to each selected eater for this line (empty for qualitative). */
   memberAmounts: CookingAggregatedMemberAmount[];
   sourceRecipeIngredientIds: string[];
   /** First contributing recipe row — used for notes and primary unit metadata. */
@@ -90,7 +95,7 @@ function resolvePersonMealCounts(params: {
  *
  * When `personMealCounts` / `perMealAudience` is provided, each person is scaled by their
  * own meal count. `extraPortions` adds anonymous 1× base shares (batch÷servings) with no
- * personal multipliers / SKIP / MODIFY — not attributed in memberAmounts.
+ * personal multipliers / SKIP / MODIFY — attributed as `COOK_SESSION_EXTRAS_SHARE_ID`.
  */
 export function resolveCookingAggregatedLines(params: {
   recipeIngredients: RecipeIngredientForCookingDisplay[];
@@ -148,7 +153,27 @@ export function resolveCookingAggregatedLines(params: {
   const byKey = new Map<string, CookingAggregatedLine>();
 
   for (const recipeIngredient of recipeIngredients) {
-    if (recipeIngredient.amount == null || !recipeIngredient.unit?.id) {
+    // Qualitative rows (salt/pepper/etc.): no numeric amount — still list them,
+    // without people/extras badges. Keep recipe order.
+    if (recipeIngredient.amount == null) {
+      const key = `qualitative:${recipeIngredient.id}`;
+      if (!byKey.has(key)) {
+        orderKeys.push(key);
+        byKey.set(key, {
+          key,
+          ingredientId: recipeIngredient.ingredientId,
+          unitId: recipeIngredient.unit?.id ?? "",
+          resolvedAmount: null,
+          memberAmounts: [],
+          sourceRecipeIngredientIds: [recipeIngredient.id],
+          primaryRecipeIngredientId: recipeIngredient.id,
+          primaryAdditionalInfo: recipeIngredient.additionalInfo,
+        });
+      }
+      continue;
+    }
+
+    if (!recipeIngredient.unit?.id) {
       continue;
     }
 
@@ -185,7 +210,8 @@ export function resolveCookingAggregatedLines(params: {
 
       if (existing) {
         existing.resolvedAmount =
-          Math.round((existing.resolvedAmount + scaledAmount) * 1000) / 1000;
+          Math.round(((existing.resolvedAmount ?? 0) + scaledAmount) * 1000) /
+          1000;
         addMemberAmount(existing, member.id, scaledAmount);
         if (!existing.sourceRecipeIngredientIds.includes(recipeIngredient.id)) {
           existing.sourceRecipeIngredientIds.push(recipeIngredient.id);
@@ -217,7 +243,9 @@ export function resolveCookingAggregatedLines(params: {
         const existing = byKey.get(key);
         if (existing) {
           existing.resolvedAmount =
-            Math.round((existing.resolvedAmount + extraAmount) * 1000) / 1000;
+            Math.round(((existing.resolvedAmount ?? 0) + extraAmount) * 1000) /
+            1000;
+          addMemberAmount(existing, COOK_SESSION_EXTRAS_SHARE_ID, extraAmount);
           if (!existing.sourceRecipeIngredientIds.includes(recipeIngredient.id)) {
             existing.sourceRecipeIngredientIds.push(recipeIngredient.id);
           }
@@ -228,7 +256,12 @@ export function resolveCookingAggregatedLines(params: {
             ingredientId: recipeIngredient.ingredientId,
             unitId,
             resolvedAmount: extraAmount,
-            memberAmounts: [],
+            memberAmounts: [
+              {
+                familyMemberId: COOK_SESSION_EXTRAS_SHARE_ID,
+                amount: extraAmount,
+              },
+            ],
             sourceRecipeIngredientIds: [recipeIngredient.id],
             primaryRecipeIngredientId: recipeIngredient.id,
             primaryAdditionalInfo: recipeIngredient.additionalInfo,

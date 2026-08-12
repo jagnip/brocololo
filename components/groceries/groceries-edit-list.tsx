@@ -39,6 +39,11 @@ import {
 } from "@/components/ingredients/ingredient-searchable-select-labels";
 import type { SearchableSelectOption } from "@/components/ui/searchable-select";
 import { cn } from "@/lib/utils";
+import {
+  appScrollTo,
+  getAppScrollParent,
+  getAppScrollY,
+} from "@/lib/app-scroll";
 import { reconcileGroceryRowUnitsAfterIngredientUpdate } from "@/lib/groceries/reconcile-grocery-row-units-after-ingredient-update";
 import type { IngredientType } from "@/types/ingredient";
 
@@ -623,13 +628,17 @@ export function GroceriesEditList({
     setOptimisticCategoryId(categoryId);
     const sectionElement = sectionElementByCategoryIdRef.current.get(categoryId);
     if (!sectionElement) return;
-    // Manual scroll offset — mirrors Open Design scrollToSection (sticky header + chip strip).
-    const stickyChromeOffsetPx = 120;
+    // Chip strip only — topbar sits outside the app scrollport.
+    const stickyChromeOffsetPx = 64;
+    const scroller = getAppScrollParent();
+    const scrollY = getAppScrollY();
+    const scrollerTop = scroller?.getBoundingClientRect().top ?? 0;
     const top =
-      sectionElement.getBoundingClientRect().top +
-      window.scrollY -
+      sectionElement.getBoundingClientRect().top -
+      scrollerTop +
+      scrollY -
       stickyChromeOffsetPx;
-    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    appScrollTo({ top: Math.max(0, top), behavior: "smooth" });
   }, []);
   useEffect(() => {
     // Keep a valid active section when categories change.
@@ -656,16 +665,19 @@ export function GroceriesEditList({
     if (sectionEntries.length === 0) return;
 
     let ticking = false;
-    // App topbar (h-14) + sticky chip strip — same intent as Open Design nav-sticky offset.
-    const scrollSpyOffsetPx = 120;
+    // Sticky chip strip only — topbar is outside the app scrollport.
+    const scrollSpyOffsetPx = 64;
+    const scroller: EventTarget = getAppScrollParent() ?? window;
 
     const updateActiveSection = () => {
       ticking = false;
-      const scrollY = window.scrollY;
+      const scrollY = getAppScrollY();
+      const scrollerTop = getAppScrollParent()?.getBoundingClientRect().top ?? 0;
       let currentCategoryId = sectionEntries[0].categoryId;
 
       for (const entry of sectionEntries) {
-        const sectionTop = entry.element.getBoundingClientRect().top + scrollY;
+        const sectionTop =
+          entry.element.getBoundingClientRect().top - scrollerTop + scrollY;
         if (sectionTop - scrollSpyOffsetPx <= scrollY) {
           currentCategoryId = entry.categoryId;
         }
@@ -681,9 +693,9 @@ export function GroceriesEditList({
       requestAnimationFrame(updateActiveSection);
     };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
+    scroller.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => scroller.removeEventListener("scroll", onScroll);
   }, [groupedSections]);
   const selectedCategoryId = optimisticCategoryId ?? activeCategoryId;
 
@@ -757,7 +769,7 @@ export function GroceriesEditList({
     <div className="flex min-w-0 w-full max-w-full flex-col">
       <TopbarConfigController config={topbarConfig} />
 
-      {/* Full-width strip directly under the app topbar (sticky top-14, z-10 < topbar z-20). */}
+      {/* Full-width strip at the top of the app scrollport (sticky top-0). */}
       <GroceriesEditCategoryNav
         className="mb-gutter"
         sections={groupedSections.map((section) => ({

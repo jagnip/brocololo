@@ -64,12 +64,13 @@ function renderAudienceSelectRow(params: {
   const { mealLabel, selectedIds, familyMembers, onChange } = params;
 
   return (
-    <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-1.5">
-      <Label>{mealLabel}</Label>
+    <div className="grid min-w-0 grid-cols-[minmax(0,92px)_minmax(0,1fr)] items-start gap-1.5">
+      <Label className="pt-2">{mealLabel}</Label>
       <FamilyMemberMultiSelect
         familyMembers={familyMembers}
         value={selectedIds}
         onChange={onChange}
+        className="min-w-0"
       />
     </div>
   );
@@ -96,9 +97,9 @@ export function PlannerAudienceSection({
     const audience = groupAudience[group];
 
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex min-w-0 flex-col gap-2">
         {/* Same matrix header shape as time limits; one People column instead of Hands-on/Total. */}
-        <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-1.5">
+        <div className="grid min-w-0 grid-cols-[minmax(0,92px)_minmax(0,1fr)] items-center gap-1.5">
           <div />
           <Label>People</Label>
         </div>
@@ -117,8 +118,8 @@ export function PlannerAudienceSection({
 
   function renderDailyMatrix(index: number) {
     return (
-      <div className="flex flex-col gap-2">
-        <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-1.5">
+      <div className="flex min-w-0 flex-col gap-2">
+        <div className="grid min-w-0 grid-cols-[minmax(0,92px)_minmax(0,1fr)] items-center gap-1.5">
           <div />
           <Label>People</Label>
         </div>
@@ -143,7 +144,7 @@ export function PlannerAudienceSection({
   }
 
   return (
-    <div className="mt-4 rounded-xl border border-border bg-card p-4">
+    <div className="min-w-0">
       <Label className="mb-3 block">Who eats</Label>
       <SegmentedFilterGroup
         aria-label="Audience grouping mode"
@@ -154,6 +155,7 @@ export function PlannerAudienceSection({
           role="radio"
           aria-checked={audienceMode === "grouped"}
           onClick={onSwitchToGrouped}
+          className="h-auto min-w-0 max-w-full whitespace-normal"
         >
           Weekdays & weekends
         </SegmentedFilterButton>
@@ -162,6 +164,7 @@ export function PlannerAudienceSection({
           role="radio"
           aria-checked={audienceMode === "daily"}
           onClick={onSwitchToDaily}
+          className="h-auto min-w-0 max-w-full whitespace-normal"
         >
           All days
         </SegmentedFilterButton>

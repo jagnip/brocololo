@@ -56,13 +56,14 @@ export function PlannerRollingRecipesSection({
     "border-destructive focus-visible:ring-destructive/30 focus-visible:border-destructive";
 
   return (
-    <FormItem>
+    <FormItem className="min-w-0 w-full">
       {/* Bulk-add action sits above the rolling recipes selector. */}
       <Button
         type="button"
         variant="outline"
         size="default"
-        className="w-max"
+        // Full width + wrap so the long label never forces horizontal scroll in the rail.
+        className="h-auto w-full whitespace-normal"
         disabled={previousPlanUnusedRecipes.length === 0}
         onClick={() => {
           const currentIds = new Set(selected.map((r) => r.recipeId));
@@ -81,11 +82,12 @@ export function PlannerRollingRecipesSection({
           );
         }}
       >
-        Add unused meals from previous plan
+        Use previous leftovers
       </Button>
       <FormLabel className="mt-4">Rolling recipes</FormLabel>
       <FormControl>
         <MultipleSelector
+          className="w-full min-w-0"
           value={selected.map((r) => {
             const recipe = recipes.find((rec) => rec.id === r.recipeId);
             return {
@@ -124,8 +126,8 @@ export function PlannerRollingRecipesSection({
         .map((r) => {
           const recipe = recipes.find((rec) => rec.id === r.recipeId)!;
           return (
-            <div key={r.recipeId} className="mt-2 flex items-center gap-2">
-              <span className="flex-1 truncate text-sm">{recipe.name}</span>
+            <div key={r.recipeId} className="mt-2 flex min-w-0 items-center gap-2">
+              <span className="min-w-0 flex-1 truncate text-sm">{recipe.name}</span>
               <Input
                 type="number"
                 min={1}
@@ -169,10 +171,11 @@ export function PlannerRollingRecipesSection({
         control={control}
         name="fridgeIngredientIds"
         render={({ field }) => (
-          <FormItem className="mt-4">
+          <FormItem className="mt-4 min-w-0 w-full">
             <FormLabel>Fridge ingredients</FormLabel>
             <FormControl>
               <MultipleSelector
+                className="w-full min-w-0"
                 value={ingredients
                   .filter((ing) =>
                     (field.value as string[])?.includes(ing.id),

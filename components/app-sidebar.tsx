@@ -54,7 +54,7 @@ export function AppSidebar() {
         <SidebarGroup className="p-4 pt-0 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:p-2">
           <SidebarMenu className="gap-1.5 group-data-[collapsible=icon]:items-center">
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={isRecipes} tooltip="Recipes">
+              <SidebarMenuButton asChild isActive={isRecipes} tooltip="My recipes">
                 <Link
                   href={ROUTES.recipes}
                   onClick={() => {
@@ -63,7 +63,7 @@ export function AppSidebar() {
                   }}
                 >
                   <CookingPot />
-                  <span>Recipes</span>
+                  <span>My recipes</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

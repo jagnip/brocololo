@@ -9,20 +9,22 @@ import Link from "next/link";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, Shuffle, X, ArrowLeftRight } from "lucide-react";
+import { Check, Shuffle, X, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
 import { RecipeImagePlaceholder } from "@/components/recipes/recipe-image-placeholder";
 import { PlanSlotMealDialog } from "./plan-slot-meal-dialog";
 import type { LogIngredientOption } from "@/components/log/log-ingredients-form";
-import { getAddMealDialogCopy, getReplaceMealDialogCopy } from "@/lib/planner/plan-slot-meal-dialog-copy";
-import { formatDayLabel } from "@/lib/planner/helpers";
 import {
-  getPlannerRecipeDialogIngredientRows,
+  getAddMealDialogCopy,
+  getEditMealDialogCopy,
+} from "@/lib/planner/plan-slot-meal-dialog-copy";
+import { formatShortDayLabel } from "@/lib/planner/helpers";
+import {
   getPlannerSlotIngredientSummary,
 } from "@/lib/planner/resolve-slot-ingredients";
 import { ROUTES } from "@/lib/constants";
-import { SlotAudienceSelect } from "./slot-audience-select";
+import { PLANNER_MEAL_TYPE_TO_OCCASION_SLUG } from "@/lib/planner/recipe-picker-filters";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getSegmentedFilterSurfaceClassName } from "@/components/ui/segmented-filter-button";
@@ -87,7 +89,6 @@ export function PlannerSlotCard({
   onRemove,
   onToggleUsed,
   familyMembers = [],
-  onAudienceChange,
   batchLabel,
   recipeCookingHref,
   recipes,
@@ -103,18 +104,23 @@ export function PlannerSlotCard({
         ? "Lunch"
         : "Dinner";
 
-  const dialogSlotSubtitle = `${mealLabel} · ${formatDayLabel(slot.date)}`;
+  const dialogSlotSubtitle = `${formatShortDayLabel(slot.date)} · ${mealLabel}`;
+  const currentMealName = recipe?.name ?? customMeal?.name ?? null;
   const addMealDialogCopy = getAddMealDialogCopy(dialogSlotSubtitle);
-  const replaceMealDialogCopy = getReplaceMealDialogCopy(1);
+  const editMealDialogCopy = getEditMealDialogCopy(
+    currentMealName
+      ? `${dialogSlotSubtitle} · ${currentMealName}`
+      : dialogSlotSubtitle,
+  );
   const canEdit = Boolean(onSetMeal);
   const isEmpty = !recipe && !customMeal;
   const selectedAudienceIds =
     slot.cookingFamilyMemberIds && slot.cookingFamilyMemberIds.length > 0
       ? slot.cookingFamilyMemberIds
       : familyMembers.map((member) => member.id);
-  const showAudienceSelect =
-    familyMembers.length > 0 && Boolean(onAudienceChange);
   const hasSelectionControls = Boolean(onSelectionChange);
+  const initialOccasionSlug =
+    PLANNER_MEAL_TYPE_TO_OCCASION_SLUG[slot.mealType] ?? null;
 
   const ingredientSummary = useMemo(
     () =>
@@ -134,30 +140,10 @@ export function PlannerSlotCard({
     ],
   );
 
-  const recipeDialogInitialRows = useMemo(() => {
-    if (!recipe) {
-      return [];
-    }
-    return getPlannerRecipeDialogIngredientRows({
-      recipe,
-      cookingFamilyMemberIds: selectedAudienceIds,
-      familyMembers,
-    });
-  }, [familyMembers, recipe, selectedAudienceIds]);
-
   const mealDialogAudienceProps = {
     cookingFamilyMemberIds: selectedAudienceIds,
     familyMembers,
   };
-
-  const renderAudienceSelect = () =>
-    showAudienceSelect ? (
-      <SlotAudienceSelect
-        familyMembers={familyMembers}
-        value={selectedAudienceIds}
-        onChange={(memberIds) => onAudienceChange?.(memberIds)}
-      />
-    ) : null;
 
   const renderSlotActions = (options: {
     canShuffle: boolean;
@@ -167,8 +153,7 @@ export function PlannerSlotCard({
       options.canShuffle ||
       options.showChange ||
       onRemove ||
-      onToggleUsed ||
-      showAudienceSelect;
+      onToggleUsed;
     if (!hasActions) {
       return null;
     }
@@ -209,9 +194,9 @@ export function PlannerSlotCard({
               variant="outline"
               size="icon"
               onClick={openDialog}
-              aria-label="Change meal"
+              aria-label="Edit meal"
             >
-              <ArrowLeftRight className="h-4 w-4" />
+              <Pencil className="h-4 w-4" />
             </Button>
           )}
           {onRemove && (
@@ -225,18 +210,9 @@ export function PlannerSlotCard({
             </Button>
           )}
         </div>
-        {renderAudienceSelect()}
       </div>
     );
   };
-
-  const shouldIgnoreCardClick = (target: HTMLElement) =>
-    Boolean(
-      target.closest("button") ||
-        target.closest("[data-slot='checkbox']") ||
-        target.closest("a") ||
-        target.closest("[data-slot='popover-content']"),
-    );
 
   const renderSelectionCheckbox = (
     label: string,
@@ -324,6 +300,8 @@ export function PlannerSlotCard({
             initialRecipeId={null}
             initialCustomName=""
             initialRows={[]}
+            defaultTab="repository"
+            initialOccasionSlug={initialOccasionSlug}
             {...mealDialogAudienceProps}
             isSaving={false}
             onCancel={() => setIsDialogOpen(false)}
@@ -341,18 +319,13 @@ export function PlannerSlotCard({
           className={cn(
             "card-interactive relative h-full gap-0 overflow-hidden border-border py-0",
             slot.used && "opacity-50",
-            canEdit && "cursor-pointer",
             isSelected && "border-2 border-primary",
           )}
           onClick={(event) => {
-            const target = event.target as HTMLElement;
-            if (shouldIgnoreCardClick(target)) return;
-            if (event.shiftKey) {
-              event.preventDefault();
-              onShiftSelect?.();
-              return;
-            }
-            openDialog();
+            // Card body is inert — only shift-click range-selects.
+            if (!event.shiftKey) return;
+            event.preventDefault();
+            onShiftSelect?.();
           }}
         >
           {renderSelectionCheckbox(`Select ${customMeal.name} (${mealLabel})`, {
@@ -384,9 +357,9 @@ export function PlannerSlotCard({
           <PlanSlotMealDialog
             open={isDialogOpen}
             onOpenChange={setIsDialogOpen}
-            title={replaceMealDialogCopy.title}
-            subtitle={replaceMealDialogCopy.subtitle}
-            saveLabel={replaceMealDialogCopy.saveLabel}
+            title={editMealDialogCopy.title}
+            subtitle={editMealDialogCopy.subtitle}
+            saveLabel={editMealDialogCopy.saveLabel}
             recipes={recipes}
             ingredientOptions={ingredientOptions}
             initialRecipeId={null}
@@ -396,6 +369,8 @@ export function PlannerSlotCard({
               unitId: row.unitId,
               amount: row.amount,
             }))}
+            defaultTab="custom"
+            initialOccasionSlug={initialOccasionSlug}
             {...mealDialogAudienceProps}
             isSaving={false}
             onCancel={() => setIsDialogOpen(false)}
@@ -415,18 +390,14 @@ export function PlannerSlotCard({
         className={cn(
           "card-interactive relative h-full gap-0 overflow-hidden border-border py-0",
           slot.used && "opacity-50",
-          canEdit && "cursor-pointer",
           isSelected && "border-2 border-primary",
         )}
         onClick={(event) => {
-          const target = event.target as HTMLElement;
-          if (shouldIgnoreCardClick(target)) return;
-          if (event.shiftKey) {
-            event.preventDefault();
-            onShiftSelect?.();
-            return;
-          }
-          openDialog();
+          // Card body is inert — only shift-click range-selects. Title link
+          // remains the route to the recipe page.
+          if (!event.shiftKey) return;
+          event.preventDefault();
+          onShiftSelect?.();
         }}
       >
         {renderSelectionCheckbox(`Select ${recipe!.name} (${mealLabel})`, {
@@ -444,14 +415,21 @@ export function PlannerSlotCard({
           ) : (
             <RecipeImagePlaceholder />
           )}
-          {/* Batch badge only when recipe is marked batch AND live group has 2+ slots. */}
+          {/* Batch badge only when recipe is marked batch AND live group has 2+ slots.
+              Always "1 of X" — this card is one meal's share of the cook, not meal N. */}
           {recipe!.isBatchRecipe && batchLabel ? (
             <Badge
               variant="default"
               className="absolute right-3 top-3 z-2 shadow-md"
-              aria-label={`Meal ${batchLabel.index} of ${batchLabel.total}`}
+              aria-label={`Batch meal 1 of ${batchLabel.total}`}
             >
-              {batchLabel.index} of {batchLabel.total}
+              {/* Same hierarchy as instruction chips: bold label + muted detail. */}
+              <span className="type-caption font-semibold">
+                <span>Batch</span>
+                <span className="pl-0.5 font-medium opacity-75">
+                  {` · 1 of ${batchLabel.total}`}
+                </span>
+              </span>
             </Badge>
           ) : null}
         </div>
@@ -500,14 +478,19 @@ export function PlannerSlotCard({
         <PlanSlotMealDialog
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
-          title={replaceMealDialogCopy.title}
-          subtitle={replaceMealDialogCopy.subtitle}
-          saveLabel={replaceMealDialogCopy.saveLabel}
+          title={editMealDialogCopy.title}
+          subtitle={editMealDialogCopy.subtitle}
+          saveLabel={editMealDialogCopy.saveLabel}
           recipes={recipes}
           ingredientOptions={ingredientOptions}
           initialRecipeId={recipe!.id}
           initialCustomName=""
-          initialRows={recipeDialogInitialRows}
+          // Custom-tab draft starts empty; recipe ingredients are resolved live
+          // in the right column from the selected recipe + eaters.
+          initialRows={[]}
+          defaultTab="repository"
+          initialOccasionSlug={initialOccasionSlug}
+          batchLabel={batchLabel}
           {...mealDialogAudienceProps}
           isSaving={false}
           onCancel={() => setIsDialogOpen(false)}

@@ -10,9 +10,11 @@ import {
   type UnitConversionWithName,
 } from "@/lib/recipes/helpers";
 import { PORTION_CHART_COLOR_VARS } from "@/components/recipes/recipe-page/portion-split-card";
+import { COOK_SESSION_EXTRAS_SHARE_ID } from "@/lib/recipes/shared-portion-shares";
 import { cn } from "@/lib/utils";
 
 export type InstructionIngredientMemberShare = {
+  /** Family member id, or `COOK_SESSION_EXTRAS_SHARE_ID` for anonymous extras. */
   familyMemberId: string;
   amount: number;
 };
@@ -103,23 +105,29 @@ export function InstructionIngredientCard({
 
   const visibleShares = memberShares
     .filter((share) => share.amount > 0)
-    .sort(
-      (left, right) =>
+    .sort((left, right) => {
+      // Extras always last, after household-ordered people.
+      const leftExtras = left.familyMemberId === COOK_SESSION_EXTRAS_SHARE_ID;
+      const rightExtras = right.familyMemberId === COOK_SESSION_EXTRAS_SHARE_ID;
+      if (leftExtras !== rightExtras) {
+        return leftExtras ? 1 : -1;
+      }
+      return (
         (memberIndexById.get(left.familyMemberId) ?? 0) -
-        (memberIndexById.get(right.familyMemberId) ?? 0),
-    );
+        (memberIndexById.get(right.familyMemberId) ?? 0)
+      );
+    });
 
   const shouldShowMemberBreakdown =
     showMemberBreakdown && visibleShares.length > 0;
 
-  // Single-person / no breakdown — same secondary chip as ingredient member badges.
+  // Compact chip — do not stretch to match tall multi-person cards in a flex row.
   if (!shouldShowMemberBreakdown) {
     return (
       <Badge
         variant="secondary"
         className={cn(
-          // Keep the same chip behavior as the previous instruction badges.
-          "h-auto gap-x-tight border transition-[background-color,border-color,color,box-shadow]",
+          "h-auto self-start gap-x-tight border transition-[background-color,border-color,color,box-shadow]",
           className,
         )}
       >
@@ -143,6 +151,30 @@ export function InstructionIngredientCard({
 
       <div className="flex w-full flex-col gap-0.5 border-t border-secondary-foreground/15 pt-tight">
         {visibleShares.map((share) => {
+          const amountLabel = formatCompactAmount(
+            share.amount,
+            baseUnitId,
+            baseUnitName,
+            selectedUnitId,
+            unitConversions,
+          );
+
+          if (share.familyMemberId === COOK_SESSION_EXTRAS_SHARE_ID) {
+            return (
+              <div
+                key={COOK_SESSION_EXTRAS_SHARE_ID}
+                className="type-micro inline-flex items-center gap-x-tight font-medium opacity-75"
+              >
+                <span
+                  className="inline-block size-1.5 shrink-0 rounded-full bg-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span>E</span>
+                {amountLabel ? <span>{` · ${amountLabel}`}</span> : null}
+              </div>
+            );
+          }
+
           const member = familyMembers.find(
             (entry) => entry.id === share.familyMemberId,
           );
@@ -151,13 +183,6 @@ export function InstructionIngredientCard({
           }
 
           const memberIndex = memberIndexById.get(share.familyMemberId) ?? 0;
-          const amountLabel = formatCompactAmount(
-            share.amount,
-            baseUnitId,
-            baseUnitName,
-            selectedUnitId,
-            unitConversions,
-          );
 
           return (
             <div

@@ -13,12 +13,7 @@ import {
 } from "../ui/select";
 import { useScrollDirection } from "./use-scroll-direction";
 import { useOptimistic, useTransition } from "react";
-
-const TIME_OPTIONS = [
-  // Query params are strings; numeric-like strings keep URL and parsing simple.
-  { value: "20", label: "Below 20 min" },
-  { value: "30", label: "Below 30 min" },
-] as const;
+import { TIME_OPTIONS } from "@/lib/recipes/time-filter-options";
 
 export function RecipeTabs({
   mealOccasionCategories,
@@ -87,7 +82,8 @@ export function RecipeTabs({
     <div
       data-pending={isPending}
       className={[
-        "sticky top-14 z-5 bg-background transition-transform duration-200",
+        // top-0: app topbar sits outside [data-app-scroll].
+        "sticky top-0 z-5 bg-background transition-transform duration-200",
         hidden ? "-translate-y-full" : "translate-y-0",
       ].join(" ")}
     >
@@ -173,7 +169,7 @@ export function RecipeTabs({
         </div>
 
         <SearchInput
-          placeholder="Search recipes..."
+          placeholder="Search recipes by name..."
           className="col-span-2 w-full md:col-span-2 lg:col-span-2"
         />
       </div>

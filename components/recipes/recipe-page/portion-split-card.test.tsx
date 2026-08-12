@@ -130,7 +130,7 @@ describe("PortionSplitCard", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows muted extras chip and includes extras in the aria label", () => {
+  it("shows muted extras chip matching person badge structure", () => {
     render(
       <PortionSplitCard
         members={[jagoda, nelson]}
@@ -139,10 +139,11 @@ describe("PortionSplitCard", () => {
       />,
     );
 
-    expect(screen.getByText("3 extra portions")).toBeInTheDocument();
+    expect(screen.getByText("Extra")).toBeInTheDocument();
+    expect(screen.getByText("· 3 portions")).toBeInTheDocument();
     expect(
       screen.getByRole("img", {
-        name: /3 extra portions/,
+        name: /Extra · 3 portions/,
       }),
     ).toBeInTheDocument();
   });

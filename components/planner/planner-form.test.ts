@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getDailyLimitsForPlanAllDaysToggle } from "./planner-form";
 import {
   getPlannerPlanColumnMode,
+  planHasAnyMeal,
   shouldShowGeneratedPlan,
 } from "./planner-plan-column-state";
 import { MESSAGES } from "@/lib/messages";
@@ -10,21 +11,43 @@ import {
   WEEKEND_TIME_LIMIT_DEFAULTS,
 } from "@/lib/constants";
 import type { PlanInputType } from "@/types/planner";
+import { createMockRecipe } from "@/lib/tests/test-helpers";
+
+const emptyDinnerPlan: PlanInputType = [
+  {
+    date: new Date("2026-03-02"),
+    mealType: "DINNER",
+    recipe: null,
+    customMeal: null,
+    alternatives: [],
+    used: false,
+  },
+];
+
+const filledDinnerPlan: PlanInputType = [
+  {
+    date: new Date("2026-03-02"),
+    mealType: "DINNER",
+    recipe: createMockRecipe({ id: "r1", name: "Soup" }),
+    customMeal: null,
+    alternatives: [],
+    used: false,
+  },
+];
 
 describe("planner-form visibility helpers", () => {
-  it("hides generated plan while generation is in progress", () => {
-    const plan: PlanInputType = [
-      {
-        date: new Date("2026-03-02"),
-        mealType: "DINNER",
-        recipe: null,
-        customMeal: null,
-        alternatives: [],
-        used: false,
-      },
-    ];
+  it("planHasAnyMeal is false for empty slots and true when a recipe exists", () => {
+    expect(planHasAnyMeal(emptyDinnerPlan)).toBe(false);
+    expect(planHasAnyMeal(filledDinnerPlan)).toBe(true);
+    expect(planHasAnyMeal(null)).toBe(false);
+  });
 
-    expect(shouldShowGeneratedPlan(plan, true)).toBe(false);
+  it("hides an empty plan while generation is in progress (skeleton)", () => {
+    expect(shouldShowGeneratedPlan(emptyDinnerPlan, true)).toBe(false);
+  });
+
+  it("keeps showing a partially filled plan while generation is in progress", () => {
+    expect(shouldShowGeneratedPlan(filledDinnerPlan, true)).toBe(true);
   });
 
   it("hides generated plan when no plan exists yet", () => {
@@ -32,32 +55,30 @@ describe("planner-form visibility helpers", () => {
   });
 
   it("shows generated plan only when generation finished with results", () => {
-    const plan: PlanInputType = [
-      {
-        date: new Date("2026-03-02"),
-        mealType: "DINNER",
-        recipe: null,
-        customMeal: null,
-        alternatives: [],
-        used: false,
-      },
-    ];
-
-    expect(shouldShowGeneratedPlan(plan, false)).toBe(true);
+    expect(shouldShowGeneratedPlan(emptyDinnerPlan, false)).toBe(true);
   });
 
-  it("shows failure empty state after Find meals errors, hiding the previous plan", () => {
-    const plan: PlanInputType = [
-      {
-        date: new Date("2026-03-02"),
-        mealType: "DINNER",
-        recipe: null,
-        customMeal: null,
-        alternatives: [],
-        used: false,
-      },
-    ];
+  it("shows loading while filling a fully empty plan", () => {
+    expect(
+      getPlannerPlanColumnMode({
+        isGenerating: true,
+        plan: emptyDinnerPlan,
+        lastGenerationError: null,
+      }),
+    ).toBe("loading");
+  });
 
+  it("shows plan mode (with pulse) while filling when some meals already exist", () => {
+    expect(
+      getPlannerPlanColumnMode({
+        isGenerating: true,
+        plan: filledDinnerPlan,
+        lastGenerationError: null,
+      }),
+    ).toBe("plan");
+  });
+
+  it("shows failure empty state after Fill empty errors, hiding the previous plan", () => {
     expect(
       getPlannerPlanColumnMode({
         isGenerating: false,
@@ -68,28 +89,17 @@ describe("planner-form visibility helpers", () => {
     expect(
       getPlannerPlanColumnMode({
         isGenerating: false,
-        plan,
+        plan: emptyDinnerPlan,
         lastGenerationError: MESSAGES.planner.generationFailedTitle,
       }),
     ).toBe("failure");
   });
 
   it("shows the previous plan again when not generating and no error is set", () => {
-    const plan: PlanInputType = [
-      {
-        date: new Date("2026-03-02"),
-        mealType: "DINNER",
-        recipe: null,
-        customMeal: null,
-        alternatives: [],
-        used: false,
-      },
-    ];
-
     expect(
       getPlannerPlanColumnMode({
         isGenerating: false,
-        plan,
+        plan: emptyDinnerPlan,
         lastGenerationError: null,
       }),
     ).toBe("plan");
@@ -106,21 +116,10 @@ describe("planner-form visibility helpers", () => {
   });
 
   it("shows plan column content when generation succeeds", () => {
-    const plan: PlanInputType = [
-      {
-        date: new Date("2026-03-02"),
-        mealType: "DINNER",
-        recipe: null,
-        customMeal: null,
-        alternatives: [],
-        used: false,
-      },
-    ];
-
     expect(
       getPlannerPlanColumnMode({
         isGenerating: false,
-        plan,
+        plan: emptyDinnerPlan,
         lastGenerationError: null,
       }),
     ).toBe("plan");

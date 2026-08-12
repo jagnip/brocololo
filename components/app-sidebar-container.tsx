@@ -14,15 +14,21 @@ export function AppSidebarContainer({
   children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider>
+    // h-svh: lock the shell to the viewport so only the content pane scrolls.
+    <SidebarProvider className="h-svh overflow-hidden">
       <TopbarProvider>
         <Suspense fallback={<AppSidebarSkeleton />}>
           <AppSidebar />
         </Suspense>
-        <SidebarInset className="min-w-0 bg-background">
+        <SidebarInset className="min-h-0 min-w-0 overflow-hidden bg-background">
           <AppTopbar />
-          {/* min-w-0: flex child must shrink so wide chip rows don't cause page horizontal scroll */}
-          <main className="min-w-0 bg-background">{children}</main>
+          {/* Scrollport below the topbar — page scrollbar starts under sticky chrome. */}
+          <div
+            data-app-scroll
+            className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-background [scrollbar-gutter:stable]"
+          >
+            {children}
+          </div>
         </SidebarInset>
       </TopbarProvider>
     </SidebarProvider>

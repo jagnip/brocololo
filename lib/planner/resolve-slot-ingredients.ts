@@ -338,6 +338,79 @@ export function getPlannerSlotIngredientSummary(params: {
   return formatSlotIngredientSummary(lines, catalog, unitsById);
 }
 
+/** Untruncated name/amount rows for the meal dialog ingredient panel. */
+export function getPlannerSlotIngredientDisplayLines(params: {
+  recipe: RecipeType | null;
+  customMealIngredients?: PlanCustomMealIngredient[];
+  cookingFamilyMemberIds?: string[];
+  familyMembers: FamilyMemberRef[];
+  ingredientOptions: Array<{
+    id: string;
+    name: string;
+    brand?: string | null;
+    descriptor?: string | null;
+    unitConversions: Array<{
+      unitId: string;
+      unitName: string;
+      unitNamePlural?: string | null;
+    }>;
+  }>;
+  /**
+   * For batch recipes that span multiple plan days: divide amounts so the
+   * dialog shows one day's share (e.g. 2 → half). Defaults to 1.
+   */
+  mealPortionCount?: number;
+}): Array<{ key: string; name: string; amountLabel: string }> {
+  const lines = resolvePlannerSlotAggregatedIngredients({
+    recipe: params.recipe,
+    customMealIngredients: params.customMealIngredients,
+    cookingFamilyMemberIds: params.cookingFamilyMemberIds,
+    familyMembers: params.familyMembers,
+  });
+
+  const catalog = buildPlannerIngredientDisplayCatalog({
+    recipe: params.recipe,
+    ingredientOptions: params.ingredientOptions,
+  });
+
+  const unitsById = buildUnitCatalogFromIngredientOptions(
+    params.ingredientOptions,
+  );
+  if (params.recipe) {
+    const recipeUnits = buildUnitCatalogFromRecipe(
+      recipeTypeToResolutionInput(params.recipe),
+    );
+    for (const [unitId, unit] of recipeUnits) {
+      unitsById.set(unitId, unit);
+    }
+  }
+
+  const portionCount = Math.max(1, params.mealPortionCount ?? 1);
+
+  return lines.map((line) => {
+    const amount = line.amount / portionCount;
+    const name = getIngredientCatalogLabel(line.ingredientId, catalog);
+    const unit = unitsById.get(line.unitId);
+    const displayUnit = getUnitDisplayName({
+      amount,
+      unitName: unit?.name ?? null,
+      unitNamePlural: unit?.namePlural ?? null,
+    });
+    const amountText = formatIngredientAmount(amount, 2);
+
+    let amountLabel = amountText;
+    if (!isPieceUnit(displayUnit) && displayUnit) {
+      amountLabel = `${amountText} ${displayUnit}`.trim();
+    }
+
+    return {
+      key: `${line.ingredientId}-${line.unitId}`,
+      name,
+      amountLabel,
+    };
+  });
+}
+
 /** Resolved rows for meal dialog when a recipe is selected or reopened. */
 export function getPlannerRecipeDialogIngredientRows(params: {
   recipe: RecipeType;

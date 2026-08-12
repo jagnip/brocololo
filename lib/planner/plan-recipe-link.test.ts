@@ -136,7 +136,7 @@ describe("getRecipeCookingHref", () => {
     });
 
     expect(getRecipeCookingHref(recipe.slug, [slot], HOUSEHOLD)).toBe(
-      `/recipes/bolognese?cook=${encodeURIComponent(`${J},${N}:1`)}`,
+      `/recipes/bolognese?cook=${encodeURIComponent(`2026-03-17|${J},${N}:1`)}`,
     );
   });
 
@@ -154,7 +154,7 @@ describe("getRecipeCookingHref", () => {
     ];
 
     expect(getRecipeCookingHref(recipe.slug, slots, HOUSEHOLD)).toBe(
-      `/recipes/caprese?cook=${encodeURIComponent(`${J},${N}:2`)}`,
+      `/recipes/caprese?cook=${encodeURIComponent(`2026-03-17,2026-03-18|${J},${N}:2`)}`,
     );
   });
 
@@ -173,7 +173,7 @@ describe("getRecipeCookingHref", () => {
     ];
 
     expect(getRecipeCookingHref(recipe.slug, slots, HOUSEHOLD)).toBe(
-      `/recipes/caprese?cook=${encodeURIComponent(`${J},${N}:2;${J}:1`)}`,
+      `/recipes/caprese?cook=${encodeURIComponent(`2026-03-17,2026-03-18,2026-03-19|${J},${N}:2;${J}:1`)}`,
     );
   });
 
@@ -184,7 +184,7 @@ describe("getRecipeCookingHref", () => {
     });
 
     expect(getRecipeCookingHref(recipe.slug, [slot], HOUSEHOLD)).toBe(
-      `/recipes/pork-stir-fry?cook=${encodeURIComponent(`${J},${N},${G},${K}:1`)}`,
+      `/recipes/pork-stir-fry?cook=${encodeURIComponent(`2026-03-17|${J},${N},${G},${K}:1`)}`,
     );
   });
 
@@ -206,7 +206,7 @@ describe("getRecipeCookingHref", () => {
     ];
 
     expect(getRecipeCookingHref(recipe.slug, slots, HOUSEHOLD)).toBe(
-      `/recipes/caprese?cook=${encodeURIComponent(`${J},${N},${G},${K}:3`)}`,
+      `/recipes/caprese?cook=${encodeURIComponent(`2026-03-17,2026-03-18,2026-03-19|${J},${N},${G},${K}:3`)}`,
     );
   });
 });

@@ -85,6 +85,10 @@ export function getRecipeCookingHref(
     relevantSlots,
     fallbackMemberIds,
   );
-  const cook = encodePlanCookParam(combinations);
+  // Slot dates power the "Meals setup for 14th Jun…" banner on the recipe page.
+  const dateKeys = relevantSlots.map((slot) =>
+    slot.date.toISOString().slice(0, 10),
+  );
+  const cook = encodePlanCookParam(combinations, dateKeys);
   return `${ROUTES.recipe(recipeSlug)}?cook=${encodeURIComponent(cook)}`;
 }

@@ -99,14 +99,14 @@ export function PlannerTimeLimitsSection({
   function renderGroupedMatrix(group: keyof TimeLimitGroups) {
     const limits = groupTimeLimits[group];
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex min-w-0 flex-col gap-2">
         {/* Shared matrix header: meal rows on left, time dimensions on top. */}
-        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
+        <div className="grid min-w-0 grid-cols-[minmax(0,92px)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
           <div />
           <Label>Hands-on</Label>
           <Label>Total</Label>
         </div>
-        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
+        <div className="grid min-w-0 grid-cols-[minmax(0,92px)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
           <Label>Breakfast</Label>
           <Input
             type="number"
@@ -141,7 +141,7 @@ export function PlannerTimeLimitsSection({
             }
           />
         </div>
-        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
+        <div className="grid min-w-0 grid-cols-[minmax(0,92px)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
           <Label>Lunch</Label>
           <Input
             type="number"
@@ -176,7 +176,7 @@ export function PlannerTimeLimitsSection({
             }
           />
         </div>
-        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
+        <div className="grid min-w-0 grid-cols-[minmax(0,92px)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
           <Label>Dinner</Label>
           <Input
             type="number"
@@ -219,12 +219,12 @@ export function PlannerTimeLimitsSection({
     return (
       <div className="flex flex-col gap-2">
         {/* Keep daily mode matrix identical to grouped mode layout. */}
-        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
+        <div className="grid min-w-0 grid-cols-[minmax(0,92px)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
           <div />
           <Label>Hands-on</Label>
           <Label>Total</Label>
         </div>
-        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
+        <div className="grid min-w-0 grid-cols-[minmax(0,92px)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
           <Label>Breakfast</Label>
           <FormField
             control={control}
@@ -283,7 +283,7 @@ export function PlannerTimeLimitsSection({
             )}
           />
         </div>
-        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
+        <div className="grid min-w-0 grid-cols-[minmax(0,92px)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
           <Label>Lunch</Label>
           <FormField
             control={control}
@@ -342,7 +342,7 @@ export function PlannerTimeLimitsSection({
             )}
           />
         </div>
-        <div className="grid grid-cols-[92px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
+        <div className="grid min-w-0 grid-cols-[minmax(0,92px)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5">
           <Label>Dinner</Label>
           <FormField
             control={control}
@@ -410,7 +410,7 @@ export function PlannerTimeLimitsSection({
   }
 
   return (
-    <div className="mt-4 rounded-xl border border-border bg-card p-4">
+    <div className="min-w-0">
       <SegmentedFilterGroup
         aria-label="Time limits grouping mode"
         className="mb-3 gap-1.5"
@@ -420,6 +420,7 @@ export function PlannerTimeLimitsSection({
           role="radio"
           aria-checked={timeLimitsMode === "grouped"}
           onClick={onSwitchToGrouped}
+          className="h-auto min-w-0 max-w-full whitespace-normal"
         >
           Weekdays & weekends
         </SegmentedFilterButton>
@@ -428,6 +429,7 @@ export function PlannerTimeLimitsSection({
           role="radio"
           aria-checked={timeLimitsMode === "daily"}
           onClick={onSwitchToDaily}
+          className="h-auto min-w-0 max-w-full whitespace-normal"
         >
           All days
         </SegmentedFilterButton>

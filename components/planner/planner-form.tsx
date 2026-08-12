@@ -7,11 +7,16 @@ import {
   FormField,
   FormItem,
   FormControl,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Subheader } from "@/components/recipes/recipe-page/subheader";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+} from "lucide-react";
 import {
   plannerCriteriaSchema,
   type PlannerCriteriaInputType,
@@ -21,9 +26,11 @@ import { getDefaultDateRange, WeekPicker, type DateRangeValue } from "./date-ran
 import { PlannerPlanColumn } from "./planner-plan-column";
 import {
   getPlannerPlanColumnMode,
+  planHasAnyMeal,
   shouldShowGeneratedPlan,
 } from "./planner-plan-column-state";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useScrollbarOnScroll } from "@/hooks/use-scrollbar-on-scroll";
 import { PlanInputType, PlanSlotMealPayload, SetPlanMealOptions } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
 import { getPlanSlotKey, placeRecipeOnPlan } from "@/lib/planner/helpers";
@@ -96,6 +103,7 @@ type AudienceMode = "grouped" | "daily";
 
 export {
   getPlannerPlanColumnMode,
+  planHasAnyMeal,
   shouldShowGeneratedPlan,
 } from "./planner-plan-column-state";
 
@@ -134,6 +142,8 @@ export function PlannerForm({
   const [hasInvalidRollingMealsInputs, setHasInvalidRollingMealsInputs] =
     useState(false);
   const [isFormCollapsed, setIsFormCollapsed] = useState(false);
+  // Suggest meals rail: thin scrollbar only while that pane is scrolling.
+  const suggestMealsScrollbar = useScrollbarOnScroll();
   // Desktop split: form(2) + plan(4), with collapsible left rail.
   const desktopGridColumns = isFormCollapsed
     ? "lg:grid-cols-[2rem_minmax(0,1fr)]"
@@ -164,6 +174,8 @@ export function PlannerForm({
     lostMealsCount: number;
     relocatedCount: number;
   } | null>(null);
+  // Clear-all confirmation — only opened when the plan has at least one meal.
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
 
   const form = useForm<PlannerCriteriaInputType>({
     resolver: zodResolver(plannerCriteriaSchema),
@@ -182,7 +194,6 @@ export function PlannerForm({
     if (hasInvalidTimeLimitInputs || hasInvalidRollingMealsInputs) {
       return;
     }
-    // Only Find meals should swap the plan column to loading / empty states.
     setIsGenerating(true);
     setLastGenerationError(null);
     try {
@@ -194,6 +205,8 @@ export function PlannerForm({
         values.fridgeIngredientIds ?? [],
         // Coerced numeric fields are validated by Zod; cast input shape for server action typing.
         (values.rollingRecipes ?? []) as RollingRecipeType[],
+        // Pass current draft so filled slots stay put and only empties are filled.
+        plan,
       );
 
       if (result.type === "error") {
@@ -203,7 +216,7 @@ export function PlannerForm({
         return;
       }
 
-      // Show warnings for rolling recipes that couldn't be placed
+      // Show warnings for rolling recipes / unfilled slots that couldn't be placed.
       if (result.warnings.length > 0) {
         result.warnings.forEach((w) => toast.warning(w));
       }
@@ -214,6 +227,48 @@ export function PlannerForm({
     } finally {
       setIsGenerating(false);
     }
+  }
+
+  /** Shared entry for Fill empty meals (desktop sticky footer + mobile under form). */
+  function handleFillEmptyClick() {
+    if (isGenerating) return;
+    if (hasInvalidTimeLimitInputs || hasInvalidRollingMealsInputs) return;
+    // All slots already have meals — toast instead of a no-op server call.
+    if (
+      plan.length > 0 &&
+      plan.every((slot) => slot.recipe != null || slot.customMeal != null)
+    ) {
+      toast.info(MESSAGES.planner.nothingToFill);
+      return;
+    }
+    void form.handleSubmit(onSubmit)();
+  }
+
+  /** Clear meals only — keep dates, audience, time limits, rolling, fridge. */
+  function clearPlanMeals() {
+    setPlan((prev) =>
+      prev.map((slot) => ({
+        ...slot,
+        recipe: null,
+        customMeal: null,
+        alternatives: [],
+        batchGroupId: null,
+      })),
+    );
+    setLastGenerationError(null);
+    toast.success(MESSAGES.planner.cleared);
+  }
+
+  function handleClearPlanClick() {
+    if (isGenerating) {
+      toast.info(MESSAGES.planner.fillInProgress);
+      return;
+    }
+    if (!planHasAnyMeal(plan)) {
+      toast.info(MESSAGES.planner.nothingToClear);
+      return;
+    }
+    setClearConfirmOpen(true);
   }
 
   // Shuffle: rotate recipe and alternatives for a given slot
@@ -270,11 +325,23 @@ export function PlannerForm({
         if (!prev) return prev;
 
         if (payload.kind === "recipe") {
+          // Apply the new audience first so multi-meal spillover copies the updated eaters.
+          const withAudience = payload.cookingFamilyMemberIds
+            ? prev.map((slot) =>
+                getPlanSlotKey(slot) === slotKey
+                  ? {
+                      ...slot,
+                      cookingFamilyMemberIds: payload.cookingFamilyMemberIds,
+                    }
+                  : slot,
+              )
+            : prev;
+
           if (expandMultiMeal) {
-            return placeRecipeOnPlan(prev, slotKey, payload.recipe);
+            return placeRecipeOnPlan(withAudience, slotKey, payload.recipe);
           }
 
-          return prev.map((slot) => {
+          return withAudience.map((slot) => {
             if (getPlanSlotKey(slot) !== slotKey) return slot;
             return {
               ...slot,
@@ -283,7 +350,8 @@ export function PlannerForm({
               alternatives: slot.alternatives.filter(
                 (recipe) => recipe.id !== payload.recipe.id,
               ),
-              batchGroupId: null,
+              // Bulk batch assignment supplies a shared id; everything else clears it.
+              batchGroupId: options?.batchGroupId ?? null,
             };
           });
         }
@@ -301,6 +369,9 @@ export function PlannerForm({
               },
               alternatives: [],
               batchGroupId: null,
+              ...(payload.cookingFamilyMemberIds
+                ? { cookingFamilyMemberIds: payload.cookingFamilyMemberIds }
+                : {}),
             };
           }
 
@@ -371,10 +442,10 @@ export function PlannerForm({
   const generatedPlan = shouldShowGeneratedPlan(plan, isGenerating)
     ? plan
     : null;
-  // Save when any slot has a meal — Find meals or manual add recipe / custom meal.
-  const canSavePlan = plan.some(
-    (slot) => slot.recipe != null || slot.customMeal != null,
-  );
+  // Any meal enables Save; empty plan still shows the button and toasts on click.
+  const canSavePlan = planHasAnyMeal(plan);
+  // Pulse filled cards while filling empties; full skeleton only when plan is empty.
+  const pulsePlanWhileFilling = isGenerating && planHasAnyMeal(plan);
   const planColumnMode = getPlannerPlanColumnMode({
     isGenerating,
     plan,
@@ -384,32 +455,31 @@ export function PlannerForm({
   const fridgeIngredientIds = (form.watch("fridgeIngredientIds") ??
     []) as string[];
   const ingredientOptions = ingredientsToLogIngredientOptions(ingredients);
-  // Find meals + Save plan share the top bar; leave via Meal plan breadcrumb.
+  const fillEmptyLabel = isGenerating
+    ? MESSAGES.planner.generatePending
+    : "Suggest meals";
+  // Clear + Save share the top bar; Suggest meals lives in the left column.
   const topbarActions = [
     {
-      id: "find-meals",
-      label: isGenerating ? MESSAGES.planner.generatePending : "Find meals",
-      onClick: () => {
-        void form.handleSubmit(onSubmit)();
-      },
-      disabled:
-        isGenerating ||
-        hasInvalidTimeLimitInputs ||
-        hasInvalidRollingMealsInputs,
-      ariaBusy: isGenerating,
+      id: "clear-plan",
+      label: "Clear plan",
+      onClick: handleClearPlanClick,
       variant: "outline" as const,
       size: "default" as const,
-      ariaLabel: "Find meals for this plan",
+      ariaLabel: "Clear all meals from this plan",
     },
     {
       id: "save-plan",
       label: isSaving ? MESSAGES.planner.savePending : "Save plan",
       onClick: () => {
-        if (!canSavePlan) return;
+        if (!canSavePlan) {
+          toast.info(MESSAGES.planner.nothingToSave);
+          return;
+        }
         void handleSavePlan(plan);
       },
-      // Visible for discoverability; enabled once at least one meal exists.
-      disabled: !canSavePlan || isSaving || isGenerating,
+      // Always clickable for discoverability; toast when there is nothing to save.
+      disabled: isSaving,
       ariaBusy: isSaving,
       variant: "default" as const,
       size: "default" as const,
@@ -433,7 +503,7 @@ export function PlannerForm({
     setPlan(nextPlan);
   }, []);
 
-  // After a failed Find meals, editing criteria brings back the last plan (no empty placeholder).
+  // After a failed Fill empty, editing criteria brings back the last plan (no empty placeholder).
   useEffect(() => {
     if (generationErrorClearSkipRef.current) {
       generationErrorClearSkipRef.current = false;
@@ -697,6 +767,32 @@ export function PlannerForm({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Confirm before wiping every meal from the draft. */}
+      <AlertDialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear all meals?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes every meal from the plan. Your dates and preferences
+              stay.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-primary-foreground hover:bg-destructive/90"
+              onClick={() => {
+                clearPlanMeals();
+                setClearConfirmOpen(false);
+              }}
+            >
+              Clear
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <TopbarConfigController
         config={{
           breadcrumbs: [
@@ -706,148 +802,239 @@ export function PlannerForm({
           actions: topbarActions,
         }}
       />
-      {/* Desktop layout follows a 2/4 split: form | plan. */}
-      <div
-        className={`flex flex-col gap-6 lg:grid ${desktopGridColumns} lg:items-start lg:gap-x-4 lg:gap-y-6`}
-      >
-        {/* Sticky criteria column; Find meals / Save live in the top bar. */}
-        <div className="flex flex-col gap-3 lg:sticky lg:top-20">
-          <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="flex w-full flex-col"
+
+      {/* FormProvider wraps both columns so the date field can live with the plan title. */}
+      <Form {...form}>
+        {/* Desktop: sticky full-height criteria rail; meal plan scrolls with the page. */}
+        <div
+          className={cn(
+            "flex flex-col gap-6 lg:grid lg:items-start lg:gap-x-4 lg:gap-y-6",
+            desktopGridColumns,
+          )}
+        >
+          {/* Left: Lists-style card rail — one outer chrome, thin section separators. */}
+          <div
+            className={cn(
+              "flex min-w-0 flex-col",
+              // Fill viewport under topbar + gutters (3.5rem + 1rem + 1rem). Plain rem calc —
+              // Tailwind breaks on `2*var(...)` in arbitrary values, which left empty space below.
+              // overflow-hidden: at lg the narrow rail wraps criteria taller than the viewport;
+              // without clipping, that overflow expands document scrollHeight and leaves a
+              // huge blank gap under the columns once you scroll (worse on lg than xl).
+              // top-4 = page gutter under the topbar (topbar is outside [data-app-scroll]).
+              "lg:sticky lg:top-4 lg:h-[calc(100dvh-5.5rem)] lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-hidden",
+            )}
+          >
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className={cn(
+                "flex h-full min-h-0 min-w-0 w-full flex-1 flex-col overflow-hidden",
+                // Mobile: keep Lists card chrome when folded (title + caret only).
+                // Desktop: chrome when expanded; collapsed = caret-only rail.
+                "rounded-xl border border-border bg-card",
+                isFormCollapsed &&
+                  "lg:rounded-none lg:border-0 lg:bg-transparent lg:items-center lg:justify-start",
+              )}
+            >
+              {/* Column title (type-h2); pairs with “Meal plan for” on the right. */}
+              <div
+                className={cn(
+                  "flex shrink-0 items-center justify-between gap-2 p-4",
+                  // Desktop collapsed: center the caret in the narrow rail.
+                  isFormCollapsed && "lg:justify-center lg:p-0",
+                )}
               >
-              {/* Date + collapse: one row on lg; horizontal gap matches planner-time-limits rows (gap-1.5). */}
+                <Subheader
+                  className={cn(
+                    // Keep the title on mobile when folded; hide it in the desktop caret rail.
+                    isFormCollapsed && "lg:hidden",
+                  )}
+                >
+                  Suggest meals
+                </Subheader>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setIsFormCollapsed((prev) => !prev)}
+                  aria-expanded={!isFormCollapsed}
+                  aria-label={
+                    isFormCollapsed
+                      ? "Expand suggest meals"
+                      : "Collapse suggest meals"
+                  }
+                  className="size-8 shrink-0"
+                >
+                  {/* Mobile: up/down. Desktop: left/right (same control, same state). */}
+                  {isFormCollapsed ? (
+                    <>
+                      <ChevronDown className="size-4 lg:hidden" aria-hidden />
+                      <ChevronRight
+                        className="hidden size-4 lg:block"
+                        aria-hidden
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <ChevronUp className="size-4 lg:hidden" aria-hidden />
+                      <ChevronLeft
+                        className="hidden size-4 lg:block"
+                        aria-hidden
+                      />
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Body: criteria separated by thin rules (no nested cards). Date lives on the plan column. */}
+              <div
+                className={cn(
+                  "flex min-h-0 min-w-0 flex-1 flex-col",
+                  // Folded on any viewport — mobile accordion + desktop caret rail.
+                  isFormCollapsed && "hidden",
+                )}
+              >
+                {/* Padding on the inner wrapper so full-width controls span edge-to-edge between gutters. */}
+                <div
+                  ref={suggestMealsScrollbar.ref}
+                  className={cn(
+                    "min-h-0 min-w-0 flex-1 overflow-y-auto",
+                    suggestMealsScrollbar.className,
+                  )}
+                  style={suggestMealsScrollbar.style}
+                  onScroll={suggestMealsScrollbar.onScroll}
+                >
+                  {/* Right inset = 1rem − reserved gutter so both sides match when bar is hidden. */}
+                  <div className="min-w-0 divide-y divide-border pl-4 pr-[calc(1rem-var(--suggest-scrollbar-reserve,15px))]">
+                    {/* Time constraints — no top padding; spacing comes from the Suggest meals header. */}
+                    <div className="min-w-0 pb-4">
+                      <PlannerTimeLimitsSection
+                        fields={fields}
+                        control={form.control}
+                        dailyTimeLimits={watchedDailyTimeLimits}
+                        timeLimitsMode={timeLimitsMode}
+                        groupTimeLimits={groupTimeLimits}
+                        hasWeekdays={hasWeekdays}
+                        hasWeekend={hasWeekend}
+                        onSwitchToGrouped={handleSwitchToGroupedTimeLimits}
+                        onSwitchToDaily={handleSwitchToDailyTimeLimits}
+                        onUpdateGroupLimit={updateGroupLimit}
+                        getDayLabel={formatDayLabel}
+                        onInvalidStateChange={setHasInvalidTimeLimitInputs}
+                      />
+                    </div>
+
+                    {/* Who eats */}
+                    <div className="min-w-0 py-4">
+                      <PlannerAudienceSection
+                        fields={audienceFields}
+                        control={form.control}
+                        familyMembers={familyMembers}
+                        audienceMode={audienceMode}
+                        groupAudience={groupAudience}
+                        hasWeekdays={hasWeekdays}
+                        hasWeekend={hasWeekend}
+                        onSwitchToGrouped={handleSwitchToGroupedAudience}
+                        onSwitchToDaily={handleSwitchToDailyAudience}
+                        onUpdateGroupAudience={updateGroupAudience}
+                        getDayLabel={formatDayLabel}
+                      />
+                    </div>
+
+                    {/* Rolling + fridge — last divide-y section (no trailing rule under fridge). */}
+                    <div className="min-w-0 py-4">
+                      <FormField
+                        control={form.control}
+                        name="rollingRecipes"
+                        render={({ field }) => {
+                          const selected = (field.value ??
+                            []) as RollingRecipeType[];
+                          return (
+                            <PlannerRollingRecipesSection
+                              control={form.control}
+                              selected={selected}
+                              onChange={field.onChange}
+                              ingredients={ingredients}
+                              recipes={recipes}
+                              previousPlanUnusedRecipes={
+                                previousPlanUnusedRecipes
+                              }
+                              onInvalidStateChange={
+                                setHasInvalidRollingMealsInputs
+                              }
+                            />
+                          );
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Outside divide-y so it doesn't draw a rule under fridge ingredients on lg. */}
+                  <div className="min-w-0 py-4 pl-4 pr-[calc(1rem-var(--suggest-scrollbar-reserve,15px))] lg:hidden">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleFillEmptyClick}
+                      aria-busy={isGenerating}
+                      aria-label="Suggest meals for empty slots"
+                    >
+                      {fillEmptyLabel}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Desktop: CTA pinned to bottom of the Lists-style card */}
+                <div className="hidden shrink-0 border-t border-border p-4 lg:block">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleFillEmptyClick}
+                    aria-busy={isGenerating}
+                    aria-label="Suggest meals for empty slots"
+                  >
+                    {fillEmptyLabel}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          {/* Right (desktop) / below suggest (mobile): date title + meal grid.
+              Height here drives the sticky left rail's containing block — keep this column
+              in normal flow (not sticky) so `sticky` on the left can engage. */}
+          <div
+            className={cn(
+              "min-w-0 space-y-6",
+              // Desktop always shows the date header; mobile only when the plan column has content.
+              showPlanColumn ? "block" : "hidden lg:block",
+              pulsePlanWhileFilling && "animate-pulse",
+            )}
+          >
+            {/* Column title + date picker — drives suggest criteria and the meal grid. */}
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+              <Subheader className="shrink-0 whitespace-nowrap">
+                Meal plan for
+              </Subheader>
               <FormField
                 control={form.control}
                 name="dateRange"
                 render={({ field }) => (
-                  <FormItem className="gap-0">
-                    <div
-                      className={cn(
-                        "mb-0 flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-1.5",
-                        isFormCollapsed && "lg:justify-end",
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          "min-w-0 w-full flex-1",
-                          // Desktop-only collapse: keep the week picker on small screens.
-                          isFormCollapsed && "lg:hidden",
-                        )}
-                      >
-                        <FormControl>
-                          <WeekPicker
-                            value={field.value}
-                            onChange={field.onChange}
-                            occupiedDateKeys={occupiedDateKeys}
-                            compact
-                          />
-                        </FormControl>
-                      </div>
-                      <div className="hidden shrink-0 lg:flex lg:items-center">
-                        <span className="sr-only">
-                          {isFormCollapsed
-                            ? "Planner section collapsed"
-                            : "Planner criteria"}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => setIsFormCollapsed((prev) => !prev)}
-                          aria-expanded={!isFormCollapsed}
-                          aria-label={
-                            isFormCollapsed
-                              ? "Expand planner form"
-                              : "Collapse planner form"
-                          }
-                          className="size-8"
-                        >
-                          {isFormCollapsed ? (
-                            <ChevronRight className="size-4" />
-                          ) : (
-                            <ChevronLeft className="size-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
+                  <FormItem className="min-w-0 flex-1 gap-0 sm:max-w-sm">
+                    <FormControl>
+                      <WeekPicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        occupiedDateKeys={occupiedDateKeys}
+                        compact
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <div className={`block ${isFormCollapsed ? "lg:hidden" : ""}`}>
-                <PlannerTimeLimitsSection
-                  fields={fields}
-                  control={form.control}
-                  dailyTimeLimits={watchedDailyTimeLimits}
-                  timeLimitsMode={timeLimitsMode}
-                  groupTimeLimits={groupTimeLimits}
-                  hasWeekdays={hasWeekdays}
-                  hasWeekend={hasWeekend}
-                  onSwitchToGrouped={handleSwitchToGroupedTimeLimits}
-                  onSwitchToDaily={handleSwitchToDailyTimeLimits}
-                  onUpdateGroupLimit={updateGroupLimit}
-                  getDayLabel={formatDayLabel}
-                  onInvalidStateChange={setHasInvalidTimeLimitInputs}
-                />
-                <PlannerAudienceSection
-                  fields={audienceFields}
-                  control={form.control}
-                  familyMembers={familyMembers}
-                  audienceMode={audienceMode}
-                  groupAudience={groupAudience}
-                  hasWeekdays={hasWeekdays}
-                  hasWeekend={hasWeekend}
-                  onSwitchToGrouped={handleSwitchToGroupedAudience}
-                  onSwitchToDaily={handleSwitchToDailyAudience}
-                  onUpdateGroupAudience={updateGroupAudience}
-                  getDayLabel={formatDayLabel}
-                />
-                <div className="mt-4 rounded-xl border border-border bg-card p-4">
-                  <FormField
-                    control={form.control}
-                    name="rollingRecipes"
-                    render={({ field }) => {
-                      const selected = (field.value ??
-                        []) as RollingRecipeType[];
-                      return (
-                        <PlannerRollingRecipesSection
-                          control={form.control}
-                          selected={selected}
-                          onChange={field.onChange}
-                          ingredients={ingredients}
-                          recipes={recipes}
-                          previousPlanUnusedRecipes={previousPlanUnusedRecipes}
-                          onInvalidStateChange={setHasInvalidRollingMealsInputs}
-                        />
-                      );
-                    }}
-                  />
-                </div>
-              </div>
-            </form>
-          </Form>
-        </div>
-
-        <div className="hidden lg:block">
-          <PlannerPlanColumn
-            mode={planColumnMode}
-            plan={generatedPlan}
-            lastGenerationError={lastGenerationError}
-            fridgeIngredientIds={fridgeIngredientIds}
-            recipes={recipes}
-            ingredientOptions={ingredientOptions}
-            onShuffle={handleShuffle}
-            onSetMeal={handleSetMeal}
-            onRemove={handleRemove}
-            onRearrangeSlots={handleRearrangeSlots}
-            familyMembers={familyMembers}
-            onAudienceChange={handleAudienceChange}
-          />
-        </div>
-        {showPlanColumn ? (
-          <div className="lg:hidden">
+            </div>
             <PlannerPlanColumn
               mode={planColumnMode}
               plan={generatedPlan}
@@ -861,10 +1048,11 @@ export function PlannerForm({
               onRearrangeSlots={handleRearrangeSlots}
               familyMembers={familyMembers}
               onAudienceChange={handleAudienceChange}
+              dayLabelVariant="subtext"
             />
           </div>
-        ) : null}
-      </div>
+        </div>
+      </Form>
     </>
   );
 }

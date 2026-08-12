@@ -14,6 +14,7 @@ import {
   InstructionIngredientCard,
   type InstructionIngredientMemberShare,
 } from "@/components/recipes/recipe-page/instruction-ingredient-card";
+import { COOK_SESSION_EXTRAS_SHARE_ID } from "@/lib/recipes/shared-portion-shares";
 import type { RecipeType } from "@/types/recipe";
 
 type RecipeIngredient = RecipeType["ingredients"][number];
@@ -34,6 +35,8 @@ function InstructionStepIngredientCard(props: {
   manualScale: number;
   /** Per-person meal counts for this cook session (defaults to 1 each). */
   personMealCounts: Map<string, number>;
+  /** Anonymous extra portions from Meals (1× base shares). */
+  extraPortions: number;
   showMemberBreakdown: boolean;
   badgeClassName?: string;
 }) {
@@ -47,6 +50,7 @@ function InstructionStepIngredientCard(props: {
     selectedUnitId,
     manualScale,
     personMealCounts,
+    extraPortions,
     showMemberBreakdown,
     badgeClassName,
   } = props;
@@ -93,10 +97,33 @@ function InstructionStepIngredientCard(props: {
       shares.push({ familyMemberId: memberId, amount: badgeAmount });
     }
 
+    // Same formula as resolveCookingAggregatedLines: (batch ÷ servings) × extras × scale.
+    if (
+      extraPortions > 0 &&
+      hasAmount &&
+      recipeServings > 0 &&
+      recipeIngredient.amount != null
+    ) {
+      const extraAmount =
+        Math.round(
+          ((recipeIngredient.amount / recipeServings) *
+            extraPortions *
+            manualScale *
+            1000),
+        ) / 1000;
+      if (extraAmount > 0) {
+        shares.push({
+          familyMemberId: COOK_SESSION_EXTRAS_SHARE_ID,
+          amount: extraAmount,
+        });
+      }
+    }
+
     return shares;
   }, [
     audienceMemberIds,
     cookingFamilyMemberIds,
+    extraPortions,
     familyMembers,
     hasAmount,
     manualScale,
@@ -109,19 +136,23 @@ function InstructionStepIngredientCard(props: {
   const isVisibleToAnyone = cookingFamilyMemberIds.some((memberId) =>
     isInstructionIngredientVisibleForPerson(recipeIngredient, memberId),
   );
+  const hasExtrasShare = memberShares.some(
+    (share) => share.familyMemberId === COOK_SESSION_EXTRAS_SHARE_ID,
+  );
 
-  if (!isVisibleToAnyone) {
+  if (!isVisibleToAnyone && !hasExtrasShare) {
     return null;
   }
 
   if (!hasAmount) {
+    // Match Ingredients: name (+ optional unit like "to taste"), no people breakdown.
     return (
       <InstructionIngredientCard
         badgeInput={{
           rawAmount: null,
           displayAmount: null,
-          displayUnitName: "",
-          displayUnitNamePlural: null,
+          displayUnitName: recipeIngredient.unit?.name ?? "",
+          displayUnitNamePlural: recipeIngredient.unit?.namePlural ?? null,
           ingredientName: recipeIngredient.ingredient.name,
           additionalInfo: recipeIngredient.additionalInfo,
         }}
@@ -130,6 +161,7 @@ function InstructionStepIngredientCard(props: {
         baseUnitId={recipeIngredient.unit?.id ?? null}
         baseUnitName={recipeIngredient.unit?.name ?? null}
         unitConversions={unitConversions}
+        showMemberBreakdown={false}
         className={badgeClassName}
       />
     );
@@ -185,6 +217,7 @@ export function InstructionsSection() {
     memberPortions,
     personMealCounts,
     cookingFamilyMemberIds,
+    extraPortions,
     effectiveRecipeIngredientById,
     selectedUnits,
     getIngredientDisplayScalingFactor,
@@ -192,7 +225,9 @@ export function InstructionsSection() {
   } = useRecipePageInstructionsSectionData();
   const [selectedInstructionId, setSelectedInstructionId] = useState<string | null>(null);
 
-  const showMemberBreakdown = cookingFamilyMemberIds.length > 1;
+  // Breakdown when 2+ people cook, or extras need their own “E” row.
+  const showMemberBreakdown =
+    cookingFamilyMemberIds.length > 1 || extraPortions > 0;
 
   const renderTextWithMarkdownLinks = (text: string, keyPrefix: string) =>
     parseMarkdownLinks(text).map((segment, index) => {
@@ -273,7 +308,7 @@ export function InstructionsSection() {
                 </div>
 
                 {instruction.ingredients.length > 0 ? (
-                  <div className="flex flex-wrap gap-x-item gap-y-tight">
+                  <div className="flex flex-wrap items-start gap-x-item gap-y-tight">
                     {instruction.ingredients.map((link) => {
                       const recipeIngredient =
                         effectiveRecipeIngredientById.get(
@@ -300,6 +335,7 @@ export function InstructionsSection() {
                           selectedUnitId={selectedUnitId}
                           manualScale={manualScale}
                           personMealCounts={personMealCounts}
+                          extraPortions={extraPortions}
                           showMemberBreakdown={showMemberBreakdown}
                           badgeClassName={badgeClassName}
                         />
