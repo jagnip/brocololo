@@ -210,7 +210,8 @@ export function resolveCookingAggregatedLines(params: {
 
       if (existing) {
         existing.resolvedAmount =
-          Math.round((existing.resolvedAmount + scaledAmount) * 1000) / 1000;
+          Math.round(((existing.resolvedAmount ?? 0) + scaledAmount) * 1000) /
+          1000;
         addMemberAmount(existing, member.id, scaledAmount);
         if (!existing.sourceRecipeIngredientIds.includes(recipeIngredient.id)) {
           existing.sourceRecipeIngredientIds.push(recipeIngredient.id);
@@ -242,7 +243,8 @@ export function resolveCookingAggregatedLines(params: {
         const existing = byKey.get(key);
         if (existing) {
           existing.resolvedAmount =
-            Math.round((existing.resolvedAmount + extraAmount) * 1000) / 1000;
+            Math.round(((existing.resolvedAmount ?? 0) + extraAmount) * 1000) /
+            1000;
           addMemberAmount(existing, COOK_SESSION_EXTRAS_SHARE_ID, extraAmount);
           if (!existing.sourceRecipeIngredientIds.includes(recipeIngredient.id)) {
             existing.sourceRecipeIngredientIds.push(recipeIngredient.id);
