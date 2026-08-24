@@ -21,7 +21,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { ROUTES } from "@/lib/constants";
+import { APP_NAME, ROUTES } from "@/lib/constants";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -45,7 +45,7 @@ export function AppSidebar() {
             <CookingPot className="size-5 group-data-[collapsible=icon]:size-4" />
           </div>
           <span className="type-h2 whitespace-nowrap text-card-foreground tracking-tight group-data-[collapsible=icon]:hidden">
-            NomNom
+            {APP_NAME}
           </span>
         </Link>
       </SidebarHeader>

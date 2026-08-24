@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Quicksand } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { ClerkProvider } from "@clerk/nextjs";
+import { APP_NAME } from "@/lib/constants";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,7 +23,7 @@ const quicksand = Quicksand({
 });
 
 export const metadata: Metadata = {
-  title: "NomNom",
+  title: APP_NAME,
   description: "Recipes",
 };
 
@@ -49,10 +50,21 @@ export default function RootLayout({
         <ClerkProvider
           signInUrl="/sign-in"
           signUpUrl="/sign-up"
+          // Clerk still interpolates {{applicationName}} from the Dashboard
+          // (currently "Brocololo"). Hardcode the product name so auth screens
+          // match the rest of the app without a Dashboard rename.
+          localization={{
+            signIn: {
+              start: {
+                title: `Sign in to ${APP_NAME}`,
+                titleCombined: `Continue to ${APP_NAME}`,
+              },
+            },
+          }}
           appearance={{
             cssLayerName: "clerk",
             layout: {
-              applicationName: "NomNom",
+              applicationName: APP_NAME,
             },
             variables: {
               colorPrimary: "var(--primary)",

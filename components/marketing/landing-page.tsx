@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ROUTES } from "@/lib/constants";
+import { APP_NAME, ROUTES } from "@/lib/constants";
 
 const features = [
   {
@@ -48,7 +48,7 @@ export function LandingPage() {
             <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-rose-sm">
               <CookingPot className="size-4" />
             </span>
-            NomNom
+            {APP_NAME}
           </Link>
           <Button variant="outline" asChild>
             <Link href={ROUTES.signIn}>Sign in</Link>
@@ -66,7 +66,7 @@ export function LandingPage() {
             Plan meals. Shop smarter. Cook with confidence.
           </h1>
           <p className="type-body mt-4 max-w-xl text-muted-foreground">
-            NomNom brings your recipes, weekly meal plan, ingredient library,
+            {APP_NAME} brings your recipes, weekly meal plan, ingredient library,
             and grocery lists together — so dinner decisions take less mental
             energy.
           </p>
