@@ -1,5 +1,8 @@
 import { PlannerMealType } from "@/src/generated/enums";
 
+/** Product name shown in UI, metadata, and Clerk auth copy. */
+export const APP_NAME = "Turniply";
+
 export const MEAL_OCCASION_BREADCRUMB_LABELS: Record<string, string> = {
   breakfast: "Breakfast",
   lunch: "Lunch",
