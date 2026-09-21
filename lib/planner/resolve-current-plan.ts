@@ -29,3 +29,20 @@ export function resolveCurrentPlanFromList<T extends PlanDateRangeSlice>(
     plans.find((plan) => isWithinDateRange(today, plan.startDate, plan.endDate)) ?? plans[0]
   );
 }
+
+/**
+ * Day key for the Track tab: today when it falls in the plan, otherwise the nearest
+ * plan boundary (start if today is before the plan, end if after).
+ */
+export function resolveTrackDayKey(
+  plan: Pick<PlanDateRangeSlice, "startDate" | "endDate">,
+  today: Date = new Date(),
+): string {
+  const todayKey = toDateKey(today);
+  const startKey = toDateKey(plan.startDate);
+  const endKey = toDateKey(plan.endDate);
+  if (todayKey >= startKey && todayKey <= endKey) {
+    return todayKey;
+  }
+  return todayKey < startKey ? startKey : endKey;
+}

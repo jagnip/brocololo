@@ -47,6 +47,8 @@ type PlannerLogShellProps = {
   planId: string;
   initialTab: PlannerLogTab;
   initialDateRange: DateRangeValue;
+  /** Default Track day (today or nearest plan day). */
+  initialSelectedDayKey: string;
   initialPlan: PlanInputType;
   plannerRecipes: RecipeType[];
   ingredientOptions: LogIngredientOption[];
@@ -71,6 +73,7 @@ export function PlannerLogSharedShell({
   planId,
   initialTab,
   initialDateRange,
+  initialSelectedDayKey,
   initialPlan,
   plannerRecipes,
   ingredientOptions,
@@ -119,6 +122,10 @@ export function PlannerLogSharedShell({
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", nextTab);
     params.set("memberId", familyMemberId);
+    // Keep Track on today / nearest day when switching from Manage.
+    if (nextTab === "log" && !params.get("day")) {
+      params.set("day", initialSelectedDayKey);
+    }
     const query = params.toString();
     router.push(query ? `/plan/${planId}?${query}` : `/plan/${planId}`);
   };
@@ -376,6 +383,9 @@ export function PlannerLogSharedShell({
               days={logData.days}
               familyMembers={familyMembers}
               plannerPool={logData.plannerPool}
+              initialSelectedDayKey={
+                searchParams.get("day") ?? initialSelectedDayKey
+              }
               logId={logData.logId}
               familyMemberId={familyMemberId}
               recipeOptions={logData.recipeOptions}

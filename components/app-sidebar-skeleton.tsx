@@ -6,6 +6,8 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -31,6 +33,21 @@ export function AppSidebarSkeleton() {
                     style={{ width: `${Math.max(56, 84 - index * 8)}%` }}
                   />
                 </div>
+                {/* Meal plan is index 1 — reserve nested Manage/Track rows to avoid layout shift. */}
+                {index === 1 ? (
+                  <SidebarMenuSub>
+                    {Array.from({ length: 2 }).map((_, subIndex) => (
+                      <SidebarMenuSubItem key={`meal-plan-sub-${subIndex}`}>
+                        <div className="flex h-7 items-center rounded-md px-2">
+                          <Skeleton
+                            className="h-3.5 rounded-sm"
+                            style={{ width: `${Math.max(48, 72 - subIndex * 12)}%` }}
+                          />
+                        </div>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                ) : null}
               </SidebarMenuItem>
             ))}
           </SidebarMenu>

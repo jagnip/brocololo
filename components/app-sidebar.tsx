@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   CookingPot,
   UtensilsCrossed,
@@ -19,19 +19,34 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { isMobile, setOpenMobile } = useSidebar();
+
+  const closeMobileSidebar = () => {
+    if (!isMobile) return;
+    setOpenMobile(false);
+  };
 
   const isRecipes = pathname.startsWith(ROUTES.recipes);
   const isIngredients = pathname.startsWith(ROUTES.ingredients);
-  const isProgram = pathname.startsWith(ROUTES.plan) || pathname.startsWith(ROUTES.log);
+  const isProgram =
+    pathname.startsWith(ROUTES.plan) || pathname.startsWith(ROUTES.log);
   const isGroceries = pathname.startsWith(ROUTES.groceries);
   const isSettings = pathname.startsWith(ROUTES.settings);
+
+  // Manage is the default tab when `tab` is missing or anything other than log.
+  const planTab = searchParams.get("tab");
+  const isTrackTab = isProgram && planTab === "log";
+  const isManageTab = isProgram && !isTrackTab;
 
   return (
     <Sidebar collapsible="icon" className="border-sidebar-border">
@@ -55,45 +70,56 @@ export function AppSidebar() {
           <SidebarMenu className="gap-1.5 group-data-[collapsible=icon]:items-center">
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={isRecipes} tooltip="My recipes">
-                <Link
-                  href={ROUTES.recipes}
-                  onClick={() => {
-                    if (!isMobile) return;
-                    setOpenMobile(false);
-                  }}
-                >
+                <Link href={ROUTES.recipes} onClick={closeMobileSidebar}>
                   <CookingPot />
                   <span>My recipes</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+
+            {/* Meal plan: parent opens Manage; nested links open Manage or Track. */}
             <SidebarMenuItem>
               <SidebarMenuButton asChild isActive={isProgram} tooltip="Meal plan">
                 <Link
                   href={`${ROUTES.planCurrent}?tab=plan`}
-                  onClick={() => {
-                    if (!isMobile) return;
-                    setOpenMobile(false);
-                  }}
+                  onClick={closeMobileSidebar}
                 >
                   <UtensilsCrossed />
                   <span>Meal plan</span>
                 </Link>
               </SidebarMenuButton>
+              {/* Extra top margin so Manage plan isn’t flush under Meal plan. */}
+              <SidebarMenuSub className="mt-1.5">
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton asChild isActive={isManageTab}>
+                    <Link
+                      href={`${ROUTES.planCurrent}?tab=plan`}
+                      onClick={closeMobileSidebar}
+                    >
+                      <span>Manage plan</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton asChild isActive={isTrackTab}>
+                    <Link
+                      href={`${ROUTES.planCurrent}?tab=log`}
+                      onClick={closeMobileSidebar}
+                    >
+                      <span>Track plan</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              </SidebarMenuSub>
             </SidebarMenuItem>
+
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
                 isActive={isIngredients}
                 tooltip="Ingredients"
               >
-                <Link
-                  href={ROUTES.ingredients}
-                  onClick={() => {
-                    if (!isMobile) return;
-                    setOpenMobile(false);
-                  }}
-                >
+                <Link href={ROUTES.ingredients} onClick={closeMobileSidebar}>
                   <Apple />
                   <span>Ingredients</span>
                 </Link>
@@ -105,13 +131,7 @@ export function AppSidebar() {
                 isActive={isGroceries}
                 tooltip="Groceries"
               >
-                <Link
-                  href={ROUTES.groceriesCurrent}
-                  onClick={() => {
-                    if (!isMobile) return;
-                    setOpenMobile(false);
-                  }}
-                >
+                <Link href={ROUTES.groceriesCurrent} onClick={closeMobileSidebar}>
                   <ShoppingCart />
                   <span>Groceries</span>
                 </Link>
@@ -123,13 +143,7 @@ export function AppSidebar() {
                 isActive={isSettings}
                 tooltip="Settings"
               >
-                <Link
-                  href={ROUTES.settings}
-                  onClick={() => {
-                    if (!isMobile) return;
-                    setOpenMobile(false);
-                  }}
-                >
+                <Link href={ROUTES.settings} onClick={closeMobileSidebar}>
                   <Settings />
                   <span>Settings</span>
                 </Link>

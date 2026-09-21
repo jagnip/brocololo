@@ -173,6 +173,7 @@ export function SearchableSelect({
   );
   const [searchValue, setSearchValue] = React.useState("");
   const popoverContentRef = React.useRef<HTMLDivElement | null>(null);
+  const commandListRef = React.useRef<HTMLDivElement | null>(null);
 
   const selectedOption = getSelectedOption(options, value);
   const showClearAction = shouldShowClearAction({
@@ -251,6 +252,16 @@ export function SearchableSelect({
 
     return () => cancelAnimationFrame(raf);
   }, [open]);
+
+  // cmdk reorders matching items in the DOM on each keystroke and may scrollIntoView
+  // the active row; without a post-paint reset, the list stays stuck at the bottom.
+  React.useEffect(() => {
+    if (!open) return;
+    const id = requestAnimationFrame(() => {
+      commandListRef.current?.scrollTo({ top: 0 });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [open, searchValue, options.length, showCreateAction]);
 
   return (
     <Popover open={readOnly ? false : open} onOpenChange={setOpen}>
@@ -372,7 +383,10 @@ export function SearchableSelect({
             value={searchValue}
             onValueChange={setSearchValue}
           />
-          <CommandList className="max-h-full min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-py-1">
+          <CommandList
+            ref={commandListRef}
+            className="max-h-full min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-py-1 [overflow-anchor:none]"
+          >
             <CommandEmpty>{emptyLabel}</CommandEmpty>
             <CommandGroup>
               {showCreateAction ? (

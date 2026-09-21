@@ -14,17 +14,19 @@ import { requireUser } from "@/lib/auth/session";
 import { ensureSelfFamilyMember } from "@/lib/db/family-members";
 import { filterFamilyMembersToPlanAudience } from "@/lib/planner/plan-audience";
 import { ingredientsToLogIngredientOptions } from "@/lib/ingredients/to-log-ingredient-options";
+import {
+  resolveTrackDayKey,
+  toDateKey,
+} from "@/lib/planner/resolve-current-plan";
 import { LogMealType } from "@/src/generated/enums";
 
 type PlannerLogCombinedPageProps = {
   planId: string;
   tab?: string;
   memberId?: string;
+  /** Track tab day key from the URL; falls back to today / nearest plan day. */
+  day?: string;
 };
-
-function toDateKey(date: Date) {
-  return date.toISOString().slice(0, 10);
-}
 
 function toInitialDateRange(planSlots: Awaited<ReturnType<typeof getPlanById>>): DateRangeValue {
   if (!planSlots || planSlots.length === 0) {
@@ -41,6 +43,7 @@ export async function PlannerLogCombinedPage({
   planId,
   tab,
   memberId: rawMemberId,
+  day: dayFromUrl,
 }: PlannerLogCombinedPageProps) {
   const { id: userId } = await requireUser();
   const initialTab = tab === "log" ? "log" : "plan";
@@ -82,6 +85,13 @@ export async function PlannerLogCombinedPage({
   const log = await getLogByPlanId(userId, planId, selectedFamilyMember.id);
 
   const initialDateRange = toInitialDateRange(planSlots);
+  // Default Track day: URL value if present, else today / nearest boundary of this plan.
+  const initialSelectedDayKey =
+    dayFromUrl ??
+    resolveTrackDayKey({
+      startDate: new Date(`${initialDateRange.start}T00:00:00.000Z`),
+      endDate: new Date(`${initialDateRange.end}T00:00:00.000Z`),
+    });
 
   const ingredientOptions = ingredientsToLogIngredientOptions(ingredients);
 
@@ -188,6 +198,7 @@ export async function PlannerLogCombinedPage({
       planId={planId}
       initialTab={initialTab}
       initialDateRange={initialDateRange}
+      initialSelectedDayKey={initialSelectedDayKey}
       initialPlan={planSlots}
       plannerRecipes={plannerRecipes}
       ingredientOptions={ingredientOptions}
