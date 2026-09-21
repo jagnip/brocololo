@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   isWithinDateRange,
   resolveCurrentPlanFromList,
+  resolveTrackDayKey,
   toDateKey,
 } from "@/lib/planner/resolve-current-plan";
 
@@ -46,6 +47,31 @@ describe("resolveCurrentPlanFromList", () => {
     const plans = [newer, older];
     const today = new Date("2026-02-01T12:00:00.000Z");
     expect(resolveCurrentPlanFromList(plans, today)?.id).toBe("newer");
+  });
+});
+
+describe("resolveTrackDayKey", () => {
+  const plan = {
+    startDate: new Date("2026-01-08T00:00:00.000Z"),
+    endDate: new Date("2026-01-14T00:00:00.000Z"),
+  };
+
+  it("returns today when it falls inside the plan", () => {
+    expect(resolveTrackDayKey(plan, new Date("2026-01-10T12:00:00.000Z"))).toBe(
+      "2026-01-10",
+    );
+  });
+
+  it("clamps to the plan start when today is before the plan", () => {
+    expect(resolveTrackDayKey(plan, new Date("2026-01-01T12:00:00.000Z"))).toBe(
+      "2026-01-08",
+    );
+  });
+
+  it("clamps to the plan end when today is after the plan", () => {
+    expect(resolveTrackDayKey(plan, new Date("2026-02-01T12:00:00.000Z"))).toBe(
+      "2026-01-14",
+    );
   });
 });
 

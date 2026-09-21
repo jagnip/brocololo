@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, type CSSProperties } from "react";
 import {
   SidebarProvider,
   SidebarInset,
@@ -8,6 +8,9 @@ import { AppSidebarSkeleton } from "@/components/app-sidebar-skeleton";
 import { AppTopbar } from "@/components/app-topbar";
 import { TopbarProvider } from "@/components/context/topbar-context";
 
+/** Room for nested Meal plan labels (“Manage plan”) without truncate. */
+const APP_SIDEBAR_WIDTH = "13rem";
+
 export function AppSidebarContainer({
   children,
 }: {
@@ -15,7 +18,14 @@ export function AppSidebarContainer({
 }) {
   return (
     // h-svh: lock the shell to the viewport so only the content pane scrolls.
-    <SidebarProvider className="h-svh overflow-hidden">
+    <SidebarProvider
+      className="h-svh overflow-hidden"
+      style={
+        {
+          "--sidebar-width": APP_SIDEBAR_WIDTH,
+        } as CSSProperties
+      }
+    >
       <TopbarProvider>
         <Suspense fallback={<AppSidebarSkeleton />}>
           <AppSidebar />
