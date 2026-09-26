@@ -16,6 +16,7 @@ import {
   createMockUnit,
 } from "@/lib/tests/test-helpers";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
+import type { RecipeType } from "@/types/recipe";
 
 const familyMembers: FamilyMemberRow[] = [
   { id: "fm-jagoda", name: "Jagoda", isSelf: true, sortOrder: 0, portionMultiplier: 1 },
@@ -23,6 +24,24 @@ const familyMembers: FamilyMemberRow[] = [
 ];
 
 const nutritionFamilyMembers = familyMembers;
+
+type RecipeIngredientOverrides = NonNullable<
+  Parameters<typeof createMockRecipeIngredient>[0]
+> & {
+  memberAdjustments?: RecipeType["ingredients"][number]["memberAdjustments"];
+};
+
+function buildRecipeIngredient(overrides: RecipeIngredientOverrides) {
+  const { memberAdjustments, ...baseOverrides } = overrides;
+  const row = createMockRecipeIngredient(baseOverrides);
+  return memberAdjustments === undefined
+    ? row
+    : {
+        ...row,
+        appliesToEveryone: memberAdjustments.length === 0,
+        memberAdjustments,
+      };
+}
 
 function nutritionFor(
   recipe: RecipeForNutritionCalculation,
@@ -77,7 +96,7 @@ function createTunaAdjustmentRecipe() {
     unitConversions: [createMockIngredientUnit("ing-tuna-brine", "unit-g", 1)],
   });
 
-  const row = createMockRecipeIngredient({
+  const row = buildRecipeIngredient({
     id: "ri-tuna",
     amount: 85,
     ingredient: tunaInOil,
@@ -161,16 +180,23 @@ describe("nutrition with member adjustments", () => {
       ],
       memberPortions: [],
       ingredients: [
-        createMockRecipeIngredient({
+        buildRecipeIngredient({
           id: "ri-butter",
           amount: 40,
           ingredient: butter,
           unit: gramsUnit,
           memberAdjustments: [
-            { familyMemberId: "fm-nelson", kind: "SKIP" },
+            {
+              familyMemberId: "fm-nelson",
+              kind: "SKIP",
+              ingredientId: null,
+              amount: null,
+              unitId: null,
+              additionalInfo: null,
+            },
           ],
         }),
-        createMockRecipeIngredient({
+        buildRecipeIngredient({
           id: "ri-pasta",
           amount: 200,
           ingredient: pasta,
@@ -209,7 +235,7 @@ describe("nutrition with member adjustments", () => {
         { recipeId: "recipe-1", familyMemberId: "fm-nelson", multiplier: 2 },
       ],
       ingredients: [
-        createMockRecipeIngredient({
+        buildRecipeIngredient({
           id: "ri-rice",
           amount: 300,
           ingredient: rice,
@@ -266,7 +292,7 @@ describe("nutrition scaling with member adjustments", () => {
         { recipeId: "recipe-1", familyMemberId: "fm-nelson", multiplier: 1.5 },
       ],
       ingredients: [
-        createMockRecipeIngredient({
+        buildRecipeIngredient({
           id: "ri-chicken",
           amount: 400,
           ingredient: chicken,
@@ -336,6 +362,7 @@ describe("nutrition scaling with member adjustments", () => {
       familyMembers,
       memberPortions: [{ familyMemberId: "fm-nelson", multiplier: 2 }],
       cookingFamilyMemberIds: ["fm-jagoda", "fm-nelson"],
+      recipeServings: 2,
       rowScaleFactor: 1.5,
     });
 

@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { GroceriesEditableRow } from "@/components/groceries/groceries-edit-types";
+import type {
+  GroceriesEditableRow,
+  GroceriesEditIngredientOption,
+} from "@/components/groceries/groceries-edit-types";
 import {
   normalizeGroceryDisplayLabel,
   resolveAddFreeTextToGroceries,
@@ -24,14 +27,20 @@ function makeRow(overrides?: Partial<GroceriesEditableRow>): GroceriesEditableRo
   };
 }
 
-function makeIngredient() {
+function makeIngredient(): GroceriesEditIngredientOption {
   return {
     id: "ingredient-2",
+    userId: null,
     slug: "tomato",
     name: "Tomato",
     brand: null,
     descriptor: null,
     icon: null,
+    supermarketUrl: null,
+    calories: 18,
+    proteins: 1,
+    fats: 0,
+    carbs: 4,
     categoryId: "category-produce",
     defaultUnitId: "unit-piece",
     category: {
@@ -42,16 +51,22 @@ function makeIngredient() {
     },
     unitConversions: [
       {
+        ingredientId: "ingredient-2",
         unitId: "unit-piece",
-        unit: { id: "unit-piece", name: "piece" },
+        gramsPerUnit: 100,
+        unit: { id: "unit-piece", name: "piece", namePlural: "pieces" },
       },
     ],
     groceryIngredient: {
+      id: "grocery-ingredient-2",
+      ingredientId: "ingredient-2",
       additionalInfo: "ripe",
       substitutionNote: "or canned",
       substitutionsAllowed: true,
     },
-  } as const;
+    isGlobal: true,
+    hasUserCustomization: false,
+  };
 }
 
 describe("resolveAddIngredientToGroceries", () => {
@@ -114,8 +129,10 @@ describe("resolveAddIngredientToGroceries", () => {
       defaultUnitId: "unit-g",
       unitConversions: [
         {
+          ingredientId: "ingredient-2",
           unitId: "unit-g",
-          unit: { id: "unit-g", name: "g" },
+          gramsPerUnit: 1,
+          unit: { id: "unit-g", name: "g", namePlural: null },
         },
       ],
     };
@@ -142,8 +159,10 @@ describe("resolveAddIngredientToGroceries", () => {
       defaultUnitId: "unit-g",
       unitConversions: [
         {
+          ingredientId: "ingredient-2",
           unitId: "unit-g",
-          unit: { id: "unit-g", name: "g" },
+          gramsPerUnit: 1,
+          unit: { id: "unit-g", name: "g", namePlural: null },
         },
       ],
     };

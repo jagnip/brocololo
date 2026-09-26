@@ -13,7 +13,7 @@ const memberPortions = [{ familyMemberId: "family-member-1", multiplier: 2 }];
 const cookingFamilyMemberIds = ["family-self", "family-member-1"];
 const audienceMemberIds = cookingFamilyMemberIds;
 
-const sharedRow = { memberAdjustments: [] as const };
+const sharedRow = { memberAdjustments: [] };
 const selfOnlyRow = {
   memberAdjustments: [{ familyMemberId: "family-member-1", kind: "SKIP" as const }],
 };

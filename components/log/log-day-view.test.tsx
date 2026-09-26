@@ -69,22 +69,29 @@ if (!HTMLElement.prototype.scrollIntoView) {
   HTMLElement.prototype.scrollIntoView = () => {};
 }
 
+if (!HTMLElement.prototype.scrollTo) {
+  HTMLElement.prototype.scrollTo = () => {};
+}
+
 // Radix Select uses pointer capture APIs which aren't implemented in jsdom.
 if (!("hasPointerCapture" in Element.prototype)) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (Element.prototype as any).hasPointerCapture = () => false;
 }
 if (!("setPointerCapture" in Element.prototype)) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (Element.prototype as any).setPointerCapture = () => {};
 }
 if (!("releasePointerCapture" in Element.prototype)) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (Element.prototype as any).releasePointerCapture = () => {};
 }
 
 const testFamilyMembers = [
-  { id: "family-self", name: "You", isSelf: true, sortOrder: 0 },
+  {
+    id: "family-self",
+    name: "You",
+    isSelf: true,
+    sortOrder: 0,
+    portionMultiplier: 1,
+  },
 ] as const;
 
 const ingredientFormDependencies = {
@@ -887,7 +894,12 @@ describe("LogDayView", () => {
         logId="log-1"
         person="PRIMARY"
         recipeOptions={[
-          { id: "recipe-1", name: "Banana pancakes", initialRows: [] },
+          {
+            id: "recipe-1",
+            name: "Banana pancakes",
+            kind: "repository",
+            initialRows: [],
+          },
         ]}
         ingredientOptions={[]}
       />,

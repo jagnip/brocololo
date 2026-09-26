@@ -41,7 +41,7 @@ type CategoryChipProps = {
   categoryId: string;
   title: string;
   selected: boolean;
-  chipRef: (node: HTMLButtonElement | null) => void;
+  setChipRef: (categoryId: string, node: HTMLButtonElement | null) => void;
   onSelect: (categoryId: string) => void;
 };
 
@@ -49,12 +49,12 @@ const CategoryChip = memo(function CategoryChip({
   categoryId,
   title,
   selected,
-  chipRef,
+  setChipRef,
   onSelect,
 }: CategoryChipProps) {
   return (
     <SegmentedFilterButton
-      ref={chipRef}
+      ref={(node) => setChipRef(categoryId, node)}
       selected={selected}
       aria-pressed={selected}
       className="shrink-0 snap-start transition-none"
@@ -74,15 +74,10 @@ export function GroceriesEditCategoryNav({
 }: GroceriesEditCategoryNavProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const chipRefs = useRef(new Map<string, HTMLButtonElement>());
-  const chipRefCallbacks = useRef(
-    new Map<string, (node: HTMLButtonElement | null) => void>(),
-  );
-  const onCategorySelectRef = useRef(onCategorySelect);
   const userScrollingChipsRef = useRef(false);
   const userChipScrollIdleRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const isProgrammaticChipScrollRef = useRef(false);
   const prevSelectedCategoryIdRef = useRef<string | null>(null);
-  onCategorySelectRef.current = onCategorySelect;
 
   const centerChip = useCallback((categoryId: string, force = false) => {
     const container = scrollContainerRef.current;
@@ -96,19 +91,12 @@ export function GroceriesEditCategoryNav({
     });
   }, []);
 
-  const getChipRef = useCallback((categoryId: string) => {
-    const existing = chipRefCallbacks.current.get(categoryId);
-    if (existing) return existing;
-
-    const callback = (node: HTMLButtonElement | null) => {
-      if (node) {
-        chipRefs.current.set(categoryId, node);
-      } else {
-        chipRefs.current.delete(categoryId);
-      }
-    };
-    chipRefCallbacks.current.set(categoryId, callback);
-    return callback;
+  const setChipRef = useCallback((categoryId: string, node: HTMLButtonElement | null) => {
+    if (node) {
+      chipRefs.current.set(categoryId, node);
+    } else {
+      chipRefs.current.delete(categoryId);
+    }
   }, []);
 
   const markUserChipScroll = useCallback(() => {
@@ -154,11 +142,14 @@ export function GroceriesEditCategoryNav({
     return () => cancelAnimationFrame(frame);
   }, [selectedCategoryId, centerChip]);
 
-  const onChipSelect = useCallback((categoryId: string) => {
-    prevSelectedCategoryIdRef.current = categoryId;
-    centerChip(categoryId, true);
-    onCategorySelectRef.current(categoryId);
-  }, [centerChip]);
+  const onChipSelect = useCallback(
+    (categoryId: string) => {
+      prevSelectedCategoryIdRef.current = categoryId;
+      centerChip(categoryId, true);
+      onCategorySelect(categoryId);
+    },
+    [centerChip, onCategorySelect],
+  );
 
   if (sections.length === 0) return null;
 
@@ -187,7 +178,7 @@ export function GroceriesEditCategoryNav({
                 categoryId={section.categoryId}
                 title={section.title}
                 selected={selectedCategoryId === section.categoryId}
-                chipRef={getChipRef(section.categoryId)}
+                setChipRef={setChipRef}
                 onSelect={onChipSelect}
               />
             ))}

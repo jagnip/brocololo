@@ -42,7 +42,7 @@ export type UseRecipeNutritionResult = {
 };
 
 export function useRecipeNutrition({
-  recipe,
+  recipe: _recipe,
   effectiveRecipe,
   ingredientCatalog,
   cookingFamilyMemberIds,

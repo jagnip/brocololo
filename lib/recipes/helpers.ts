@@ -4,7 +4,6 @@ import type { UpdateRecipeFormValues } from "@/lib/validations/recipe";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import {
   getFamilyMemberIngredientAmountForScaledBatch,
-  getFamilyMemberIngredientAmountPerMeal,
 } from "@/lib/log/helpers";
 import {
   derivePortionTargetingFromAdjustments,

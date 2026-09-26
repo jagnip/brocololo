@@ -51,7 +51,6 @@ import {
 } from "@/components/ui/searchable-select";
 import type { IngredientType } from "@/types/ingredient";
 import type { UnitType } from "@/types/unit";
-import { MESSAGES } from "@/lib/messages";
 import { ROUTES } from "@/lib/constants";
 import { toSentenceCaseIngredientName } from "@/lib/recipes/helpers";
 import {
@@ -217,11 +216,14 @@ export default function IngredientForm({
     control: form.control,
     name: "unitConversions",
   });
-  const watchedConversions =
-    useWatch({
-      control: form.control,
-      name: "unitConversions",
-    }) ?? [];
+  const watchedConversionsRaw = useWatch({
+    control: form.control,
+    name: "unitConversions",
+  });
+  const watchedConversions = useMemo(
+    () => watchedConversionsRaw ?? [],
+    [watchedConversionsRaw],
+  );
 
   const handleNutritionChange = (
     onChange: (value: number | null) => void,
@@ -272,7 +274,7 @@ export default function IngredientForm({
     form.setValue("defaultUnitId", nextDefaultUnitId, { shouldValidate: true });
   }, [form, gramsUnitId, watchedConversions]);
 
-  async function onSubmit(values: IngredientFormValues) {
+  const onSubmit = useCallback(async (values: IngredientFormValues) => {
     const isDialogMode = mode === "dialog";
     const result = isDialogMode
       ? ingredient
@@ -297,7 +299,7 @@ export default function IngredientForm({
       }
       onSubmitted?.(result.ingredient);
     }
-  }
+  }, [ingredient, mode, onSubmitted]);
 
   const isSubmitting = form.formState.isSubmitting;
   const isPageCreateMode = mode === "page" && !ingredient;

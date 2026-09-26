@@ -67,6 +67,10 @@ describe("filterSlotsForGroceryGeneration", () => {
       servings: 2,
       ingredients: [
         {
+          id: "ri-stocked",
+          ingredientId: "ing-1",
+          additionalInfo: null,
+          memberAdjustments: [],
           ingredient: {
             id: "ing-1",
             name: "Onion",
@@ -89,6 +93,10 @@ describe("filterSlotsForGroceryGeneration", () => {
       servings: 2,
       ingredients: [
         {
+          id: "ri-shop",
+          ingredientId: "ing-1",
+          additionalInfo: null,
+          memberAdjustments: [],
           ingredient: {
             id: "ing-1",
             name: "Onion",

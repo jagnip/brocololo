@@ -38,7 +38,6 @@ type PlannerPlanColumnProps = {
 export function PlannerPlanColumn({
   mode,
   plan,
-  lastGenerationError,
   fridgeIngredientIds,
   recipes,
   ingredientOptions,

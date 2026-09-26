@@ -257,15 +257,17 @@ describe("getPlannerPoolItemsForPlan", () => {
       slots: [makePlanSlot({ id: "slot-1", recipeName: "Pasta" })],
     } as never);
 
-    vi.mocked(prisma.logEntryRecipe.findMany).mockImplementation(async (args) => {
-      const memberId = (
-        args as { where: { entry: { familyMemberId: string } } }
-      ).where.entry.familyMemberId;
-      if (memberId === "fm-a") {
-        return [{ planSlotId: "slot-1" }];
-      }
-      return [];
-    });
+    vi.mocked(prisma.logEntryRecipe.findMany)
+      .mockResolvedValueOnce([
+        {
+          id: "entry-recipe-1",
+          planSlotId: "slot-1",
+          position: 0,
+          entryId: "entry-1",
+          sourceRecipeId: null,
+        },
+      ])
+      .mockResolvedValueOnce([]);
 
     const poolForA = await getPlannerPoolItemsForPlan({
       userId: "user-1",

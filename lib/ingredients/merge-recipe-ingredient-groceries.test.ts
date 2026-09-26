@@ -7,7 +7,6 @@ function makeResolvedIngredient(
   overrides: Partial<IngredientType> & Pick<IngredientType, "id">,
 ): IngredientType {
   return {
-    id: overrides.id,
     userId: overrides.userId ?? null,
     name: overrides.name ?? "Tomato",
     slug: overrides.slug ?? "tomato",

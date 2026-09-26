@@ -11,11 +11,30 @@ import {
 } from "@/lib/recipes/resolve-cooking-display-lines";
 import { COOK_SESSION_EXTRAS_SHARE_ID } from "@/lib/recipes/shared-portion-shares";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
+import type { RecipeType } from "@/types/recipe";
 
 const familyMembers: FamilyMemberRow[] = [
   { id: "family-self", name: "Jagoda", isSelf: true, sortOrder: 0, portionMultiplier: 1 },
   { id: "family-member-1", name: "Nelson", isSelf: false, sortOrder: 1, portionMultiplier: 2 },
 ];
+
+type RecipeIngredientOverrides = NonNullable<
+  Parameters<typeof createMockRecipeIngredient>[0]
+> & {
+  memberAdjustments?: RecipeType["ingredients"][number]["memberAdjustments"];
+};
+
+function buildRecipeIngredient(overrides: RecipeIngredientOverrides) {
+  const { memberAdjustments, ...baseOverrides } = overrides;
+  const row = createMockRecipeIngredient(baseOverrides);
+  return memberAdjustments === undefined
+    ? row
+    : {
+        ...row,
+        appliesToEveryone: memberAdjustments.length === 0,
+        memberAdjustments,
+      };
+}
 
 describe("resolveCookingAggregatedLines", () => {
   it("aggregates shared ingredient amounts across selected eaters", () => {
@@ -26,7 +45,7 @@ describe("resolveCookingAggregatedLines", () => {
         createMockIngredientUnit("ing-bread", "unit-slice", 1, "slice"),
       ],
     });
-    const breadRow = createMockRecipeIngredient({
+    const breadRow = buildRecipeIngredient({
       id: "ri-bread",
       amount: 1,
       nutritionTarget: "BOTH",
@@ -65,7 +84,7 @@ describe("resolveCookingAggregatedLines", () => {
         createMockIngredientUnit("ing-bread", "unit-slice", 1, "slice"),
       ],
     });
-    const breadRow = createMockRecipeIngredient({
+    const breadRow = buildRecipeIngredient({
       id: "ri-bread",
       amount: 1,
       nutritionTarget: "BOTH",
@@ -103,7 +122,7 @@ describe("resolveCookingAggregatedLines", () => {
       unitConversions: [createMockIngredientUnit("ing-tuna-brine", "unit-g", 1, "grams")],
     });
 
-    const tunaRow = createMockRecipeIngredient({
+    const tunaRow = buildRecipeIngredient({
       id: "ri-tuna",
       amount: 100,
       nutritionTarget: "BOTH",
@@ -122,7 +141,7 @@ describe("resolveCookingAggregatedLines", () => {
     });
 
     const lines = resolveCookingAggregatedLines({
-      recipeIngredients: [{ ...tunaRow, ingredient: tunaOil }],
+      recipeIngredients: [tunaRow],
       recipeServings: 1,
       familyMembers,
       cookingFamilyMemberIds: ["family-self", "family-member-1"],
@@ -148,7 +167,7 @@ describe("resolveCookingAggregatedLines", () => {
       id: "ing-side",
       unitConversions: [createMockIngredientUnit("ing-side", "unit-g", 1, "grams")],
     });
-    const nelsonOnlyRow = createMockRecipeIngredient({
+    const nelsonOnlyRow = buildRecipeIngredient({
       id: "ri-side",
       amount: 100,
       nutritionTarget: "SECONDARY_ONLY",
@@ -179,14 +198,14 @@ describe("resolveCookingAggregatedLines", () => {
         createMockIngredientUnit("ing-bread", "unit-slice", 1, "slice"),
       ],
     });
-    const rowA = createMockRecipeIngredient({
+    const rowA = buildRecipeIngredient({
       id: "ri-bread-a",
       amount: 1,
       nutritionTarget: "BOTH",
       ingredient: bread,
       unit: sliceUnit,
     });
-    const rowB = createMockRecipeIngredient({
+    const rowB = buildRecipeIngredient({
       id: "ri-bread-b",
       position: 1,
       amount: 2,
@@ -221,7 +240,7 @@ describe("resolveCookingAggregatedLines", () => {
         createMockIngredientUnit("ing-bread", "unit-slice", 1, "slice"),
       ],
     });
-    const breadRow = createMockRecipeIngredient({
+    const breadRow = buildRecipeIngredient({
       id: "ri-bread",
       amount: 1,
       nutritionTarget: "BOTH",
@@ -264,7 +283,7 @@ describe("resolveCookingAggregatedLines", () => {
       namePlural: null,
     });
     const salt = createMockIngredient({ id: "ing-salt", name: "Salt" });
-    const saltRow = createMockRecipeIngredient({
+    const saltRow = buildRecipeIngredient({
       id: "ri-salt",
       amount: null,
       nutritionTarget: "BOTH",
@@ -301,7 +320,7 @@ describe("resolveCookingAggregatedLines", () => {
         createMockIngredientUnit("ing-bread", "unit-slice", 1, "slice"),
       ],
     });
-    const breadRow = createMockRecipeIngredient({
+    const breadRow = buildRecipeIngredient({
       id: "ri-bread",
       amount: 1,
       nutritionTarget: "BOTH",
@@ -353,7 +372,7 @@ describe("resolveCookingAggregatedLines", () => {
     const J = "family-self";
     const N = "family-member-1";
 
-    const tunaRow = createMockRecipeIngredient({
+    const tunaRow = buildRecipeIngredient({
       id: "ri-tuna",
       amount: 100,
       nutritionTarget: "BOTH",
@@ -372,7 +391,7 @@ describe("resolveCookingAggregatedLines", () => {
     });
 
     const lines = resolveCookingAggregatedLines({
-      recipeIngredients: [{ ...tunaRow, ingredient: tunaOil }],
+      recipeIngredients: [tunaRow],
       recipeServings: 1,
       familyMembers,
       cookingFamilyMemberIds: [J, N],

@@ -26,12 +26,11 @@ function normalizeRecipeIngredients(
   }>,
 ): NonNullable<PlanSlotData["recipe"]>["ingredients"] {
   return ingredients.map((row, index) => ({
+    ...row,
     id: `ri-${index}`,
     ingredientId: row.ingredient.id,
-    amount: row.amount,
     additionalInfo: null,
     memberAdjustments: [],
-    ...row,
   }));
 }
 
@@ -63,7 +62,11 @@ function slotFromRecipe(
   };
 }
 
-function baseRecipe(overrides?: Partial<NonNullable<PlanSlotData["recipe"]>>) {
+function baseRecipe(
+  overrides?: Omit<Partial<NonNullable<PlanSlotData["recipe"]>>, "ingredients"> & {
+    ingredients?: Parameters<typeof normalizeRecipeIngredients>[0];
+  },
+) {
   const rawIngredients =
     overrides?.ingredients ??
     ([

@@ -76,7 +76,10 @@ export function RecipeAddToLogDialogContainer({
     familyMembers.find((member) => member.isSelf)?.id ?? familyMembers[0]?.id ?? "";
   const [logFamilyMemberId, setLogFamilyMemberId] = useState(defaultFamilyMemberId);
   // Defensive fallback: some legacy render paths/tests may omit the allowlist prop.
-  const normalizedAvailableLogDateKeys = availableLogDateKeys ?? [];
+  const normalizedAvailableLogDateKeys = useMemo(
+    () => availableLogDateKeys ?? [],
+    [availableLogDateKeys],
+  );
   const [logDate, setLogDate] = useState(() =>
     getInitialLogDateKey(normalizedAvailableLogDateKeys),
   );

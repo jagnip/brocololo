@@ -19,7 +19,22 @@ describe("findIngredientIdentityDuplicate", () => {
   });
 
   it("checks ingredient identity case-insensitively", async () => {
-    findFirstMock.mockResolvedValue({ id: "ingredient-1" });
+    findFirstMock.mockResolvedValue({
+      id: "ingredient-1",
+      userId: "user-1",
+      name: "Chicken thighs",
+      slug: "chicken-thighs",
+      icon: null,
+      brand: "Tesco",
+      descriptor: "Boneless",
+      supermarketUrl: null,
+      calories: 0,
+      proteins: 0,
+      fats: 0,
+      carbs: 0,
+      categoryId: "category-1",
+      defaultUnitId: null,
+    });
 
     const result = await findIngredientIdentityDuplicate({
       name: "Chicken thighs",
@@ -39,7 +54,7 @@ describe("findIngredientIdentityDuplicate", () => {
       },
       select: { id: true },
     });
-    expect(result).toEqual({ id: "ingredient-1" });
+    expect(result?.id).toBe("ingredient-1");
   });
 
   it("keeps null descriptor and brand as null identity parts", async () => {

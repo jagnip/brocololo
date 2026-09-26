@@ -65,7 +65,7 @@ export function useImageUpload(
         } else {
           setErrors((prev) => ({ ...prev, [currentIndex]: result.error }));
         }
-      } catch (error) {
+      } catch {
         setErrors((prev) => ({
           ...prev,
           [currentIndex]: "Failed to upload image",
@@ -134,4 +134,3 @@ export function useImageUpload(
     acceptType,
   };
 }
-

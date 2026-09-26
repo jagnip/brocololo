@@ -43,7 +43,6 @@ import { IngredientRowActionButton } from "@/components/recipes/ingredient-row-a
 import {
   getDefaultPerPersonAmount,
   getMemberAdjustmentCount,
-  hasIngredientNote,
 } from "@/lib/recipes/ingredient-adjustments";
 
 type IngredientSelectorProps = {
@@ -476,44 +475,53 @@ export function IngredientSelector({
     dragPointerYRef.current = null;
   }, []);
 
-  function runAutoScrollFrame() {
-    if (!isDraggingRef.current) {
-      stopAutoScroll();
-      return;
-    }
-    const pointerY = dragPointerYRef.current;
-    if (pointerY == null) {
+  const runAutoScrollFrame = React.useCallback(
+    function runAutoScrollFrame() {
+      if (!isDraggingRef.current) {
+        stopAutoScroll();
+        return;
+      }
+      const pointerY = dragPointerYRef.current;
+      if (pointerY == null) {
+        autoScrollFrameRef.current =
+          window.requestAnimationFrame(runAutoScrollFrame);
+        return;
+      }
+      let deltaY = 0;
+      // Auto-scroll viewport near top/bottom edges so long drags are possible.
+      if (pointerY <= AUTO_SCROLL_EDGE_THRESHOLD_PX) {
+        const intensity =
+          (AUTO_SCROLL_EDGE_THRESHOLD_PX - pointerY) /
+          AUTO_SCROLL_EDGE_THRESHOLD_PX;
+        deltaY = -Math.ceil(Math.max(1, intensity * AUTO_SCROLL_MAX_STEP_PX));
+      } else if (
+        pointerY >=
+        window.innerHeight - AUTO_SCROLL_EDGE_THRESHOLD_PX
+      ) {
+        const intensity =
+          (pointerY - (window.innerHeight - AUTO_SCROLL_EDGE_THRESHOLD_PX)) /
+          AUTO_SCROLL_EDGE_THRESHOLD_PX;
+        deltaY = Math.ceil(Math.max(1, intensity * AUTO_SCROLL_MAX_STEP_PX));
+      }
+      if (deltaY !== 0) {
+        appScrollBy({ top: deltaY });
+      }
       autoScrollFrameRef.current =
         window.requestAnimationFrame(runAutoScrollFrame);
-      return;
-    }
-    let deltaY = 0;
-    // Auto-scroll viewport near top/bottom edges so long drags are possible.
-    if (pointerY <= AUTO_SCROLL_EDGE_THRESHOLD_PX) {
-      const intensity =
-        (AUTO_SCROLL_EDGE_THRESHOLD_PX - pointerY) /
-        AUTO_SCROLL_EDGE_THRESHOLD_PX;
-      deltaY = -Math.ceil(Math.max(1, intensity * AUTO_SCROLL_MAX_STEP_PX));
-    } else if (pointerY >= window.innerHeight - AUTO_SCROLL_EDGE_THRESHOLD_PX) {
-      const intensity =
-        (pointerY - (window.innerHeight - AUTO_SCROLL_EDGE_THRESHOLD_PX)) /
-        AUTO_SCROLL_EDGE_THRESHOLD_PX;
-      deltaY = Math.ceil(Math.max(1, intensity * AUTO_SCROLL_MAX_STEP_PX));
-    }
-    if (deltaY !== 0) {
-      appScrollBy({ top: deltaY });
-    }
-    autoScrollFrameRef.current =
-      window.requestAnimationFrame(runAutoScrollFrame);
-  }
+    },
+    [stopAutoScroll],
+  );
 
-  function trackDragPointer(clientY: number) {
-    dragPointerYRef.current = clientY;
-    if (autoScrollFrameRef.current == null) {
-      autoScrollFrameRef.current =
-        window.requestAnimationFrame(runAutoScrollFrame);
-    }
-  }
+  const trackDragPointer = React.useCallback(
+    (clientY: number) => {
+      dragPointerYRef.current = clientY;
+      if (autoScrollFrameRef.current == null) {
+        autoScrollFrameRef.current =
+          window.requestAnimationFrame(runAutoScrollFrame);
+      }
+    },
+    [runAutoScrollFrame],
+  );
 
   React.useEffect(() => {
     isDraggingRef.current = Boolean(draggingIngredientKey || draggingLaneKey);
@@ -753,7 +761,6 @@ export function IngredientSelector({
     };
     const baseUnit = units.find((uc) => uc.unitId === item.unitId)?.unit;
     const adjustmentCount = getMemberAdjustmentCount(item.memberAdjustments);
-    const hasNote = hasIngredientNote(item.additionalInfo);
     // Batch ÷ servings — same math as adjustment auto defaults.
     const perPortionAmount = getDefaultPerPersonAmount(item.amount, servings);
     const perPortionUnitLabel =

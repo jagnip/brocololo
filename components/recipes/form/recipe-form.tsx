@@ -21,7 +21,6 @@ import {
 import { Input } from "../../ui/input";
 import { Textarea } from "../../ui/textarea";
 import { CategoryType } from "@/types/category";
-import { Button } from "../../ui/button";
 import {
   SettingGridField,
   SettingGridRow,
@@ -54,7 +53,6 @@ import { CreateIngredientDialog } from "./create-ingredient-dialog";
 import { EditIngredientDialog } from "./edit-ingredient-dialog";
 import { getDefaultUnitIdForIngredient } from "@/lib/ingredients/default-unit";
 import { reconcileIngredientUnitsAfterUpdate } from "./ingredient-row-adjustments";
-import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { getRecipesListHrefWithStoredFilters } from "@/lib/recipes/recipes-list-filters-storage";
 import { TopbarConfigController } from "@/components/topbar-config";
@@ -256,10 +254,22 @@ export default function RecipeForm({
 
   // Live nutrition preview — subscribed fields only (see `buildDraftRecipeForNutrition`).
   const previewServings = useWatch({ control: form.control, name: "servings" });
-  const previewIngredients =
-    useWatch({ control: form.control, name: "ingredients" }) ?? [];
-  const previewMemberPortionsRaw =
-    useWatch({ control: form.control, name: "memberPortions" }) ?? [];
+  const previewIngredientsRaw = useWatch({
+    control: form.control,
+    name: "ingredients",
+  });
+  const previewIngredients = useMemo(
+    () => previewIngredientsRaw ?? [],
+    [previewIngredientsRaw],
+  );
+  const previewMemberPortionsWatched = useWatch({
+    control: form.control,
+    name: "memberPortions",
+  });
+  const previewMemberPortionsRaw = useMemo(
+    () => previewMemberPortionsWatched ?? [],
+    [previewMemberPortionsWatched],
+  );
   const previewMemberPortions = useMemo(
     () => coerceMemberPortionsForPreview(previewMemberPortionsRaw),
     [previewMemberPortionsRaw],
@@ -311,7 +321,7 @@ export default function RecipeForm({
     setLocalIngredients(ingredients);
   }, [ingredients]);
 
-  async function onSubmit(formData: CreateRecipeFormValues) {
+  const onSubmit = useCallback(async (formData: CreateRecipeFormValues) => {
     // zodResolver already transformed the data, so we can safely assert the type
     const transformed = recipe
       ? (formData as unknown as UpdateRecipePayload)
@@ -325,9 +335,9 @@ export default function RecipeForm({
     if (result?.type === "error") {
       toast.error(result.message);
     }
-  }
+  }, [recipe]);
 
-  function submitWithSanitizedInstructions() {
+  const submitWithSanitizedInstructions = useCallback(() => {
     const currentIngredientGroups = form.getValues("ingredientGroups") ?? [];
     const currentIngredients = form.getValues("ingredients") ?? [];
     const currentInstructions = form.getValues("instructions") ?? [];
@@ -370,7 +380,7 @@ export default function RecipeForm({
       });
     }
     void form.handleSubmit(onSubmit)();
-  }
+  }, [form, onSubmit]);
 
   function handleIngredientCreated(createdIngredient: IngredientType) {
     setLocalIngredients((prev) => {
@@ -497,6 +507,7 @@ export default function RecipeForm({
       isSubmitting,
       recipe,
       recipesListHref,
+      submitWithSanitizedInstructions,
       topbarSubmitLabel,
     ],
   );
