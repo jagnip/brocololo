@@ -102,3 +102,4 @@ Fix any errors and lint before considering the task complete.
 
 * When writing to project memory, prefix files by type: - playbook_ — standard process for a task type - feedback_ — a correction I gave you (include Why + How to apply) - project_ — state of an ongoing initiative - reference_ — hard-won technical facts (CI access, env gotchas)
 * Memory is for process lessons only — how we should work (corrections, playbooks, gotchas), never what the feature does. Feature/domain knowledge belongs in code, ADRs, or PR descriptions. If a memory would describe how something works rather than how to work, don't write it — put it in a comment, ADR, or PR instead.
+
