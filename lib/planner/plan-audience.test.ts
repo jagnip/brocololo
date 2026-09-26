@@ -3,9 +3,9 @@ import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { filterFamilyMembersToPlanAudience } from "./plan-audience";
 
 const household: FamilyMemberRow[] = [
-  { id: "self", name: "You", isSelf: true, sortOrder: 0 },
-  { id: "partner", name: "Partner", isSelf: false, sortOrder: 1 },
-  { id: "child", name: "Child", isSelf: false, sortOrder: 2 },
+  { id: "self", name: "You", isSelf: true, sortOrder: 0, portionMultiplier: 1 },
+  { id: "partner", name: "Partner", isSelf: false, sortOrder: 1, portionMultiplier: 1 },
+  { id: "child", name: "Child", isSelf: false, sortOrder: 2, portionMultiplier: 1 },
 ];
 
 describe("filterFamilyMembersToPlanAudience", () => {

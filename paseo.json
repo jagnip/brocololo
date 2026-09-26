@@ -4,6 +4,12 @@
       "set -euo pipefail",
       "cp \"$PASEO_SOURCE_CHECKOUT_PATH/.env.local\" .env.local",
       "npm ci"
+    ],
+    "terminals": [
+      {
+        "name": "shell",
+        "command": "zsh"
+      }
     ]
   }
 }

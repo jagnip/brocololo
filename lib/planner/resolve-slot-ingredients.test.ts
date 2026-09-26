@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { transformPlanToShoppingListRows, type PlanSlotData } from "@/lib/groceries/helpers";
 import {
+  createMockIngredient,
+  createMockIngredientUnit,
+  createMockRecipe,
+  createMockRecipeIngredient,
+  createMockUnit,
+} from "@/lib/tests/test-helpers";
+import {
   aggregateConsumableIngredientLines,
   formatSlotIngredientSummary,
   getPlannerRecipeDialogIngredientRows,
@@ -12,11 +19,55 @@ import {
   type IngredientUnitCatalogEntry,
   type RecipeSlotResolutionInput,
 } from "@/lib/planner/resolve-slot-ingredients";
+import type { RecipeType } from "@/types/recipe";
 
 const familyMembers = [
   { id: "fm-jagoda", isSelf: true },
   { id: "fm-nelson", isSelf: false },
 ];
+
+type RecipeIngredientOverrides = NonNullable<
+  Parameters<typeof createMockRecipeIngredient>[0]
+> & {
+  memberAdjustments?: RecipeType["ingredients"][number]["memberAdjustments"];
+};
+
+function buildTypedRecipeIngredient(overrides: RecipeIngredientOverrides) {
+  const { memberAdjustments, ...baseOverrides } = overrides;
+  const row = createMockRecipeIngredient(baseOverrides);
+  return memberAdjustments === undefined
+    ? row
+    : {
+        ...row,
+        appliesToEveryone: memberAdjustments.length === 0,
+        memberAdjustments,
+      };
+}
+
+function buildFullRecipeIngredientFixture(params: {
+  id: string;
+  ingredientId: string;
+  ingredientName: string;
+  amount: number;
+  memberAdjustments?: RecipeType["ingredients"][number]["memberAdjustments"];
+}) {
+  const unit = createMockUnit({ id: "unit-g", name: "g" });
+  const ingredient = createMockIngredient({
+    id: params.ingredientId,
+    name: params.ingredientName,
+    unitConversions: [
+      createMockIngredientUnit(params.ingredientId, unit.id, 1, unit.name),
+    ],
+  });
+  return buildTypedRecipeIngredient({
+    id: params.id,
+    ingredientId: ingredient.id,
+    amount: params.amount,
+    ingredient,
+    unit,
+    memberAdjustments: params.memberAdjustments,
+  });
+}
 
 function buildRecipe(overrides?: Partial<RecipeSlotResolutionInput>): RecipeSlotResolutionInput {
   return {
@@ -186,15 +237,40 @@ describe("formatSlotIngredientSummary", () => {
 
 describe("getPlannerRecipeDialogIngredientRows", () => {
   it("returns editable rows from aggregated resolver output", () => {
-    const recipe = {
+    const recipe = createMockRecipe({
       servings: 2,
       audienceMembers: [
         { familyMemberId: "fm-jagoda" },
         { familyMemberId: "fm-nelson" },
       ],
       memberPortions: [],
-      ingredients: buildRecipe().ingredients,
-    } as Parameters<typeof getPlannerRecipeDialogIngredientRows>[0]["recipe"];
+      ingredients: [
+        buildFullRecipeIngredientFixture({
+          id: "ri-butter",
+          ingredientId: "ing-butter",
+          ingredientName: "Butter",
+          amount: 40,
+          memberAdjustments: [
+            {
+              familyMemberId: "fm-jagoda",
+              kind: "MODIFY",
+              ingredientId: "ing-olive-oil",
+              amount: 10,
+              unitId: "unit-g",
+              additionalInfo: null,
+            },
+            {
+              familyMemberId: "fm-nelson",
+              kind: "SKIP",
+              ingredientId: null,
+              amount: null,
+              unitId: null,
+              additionalInfo: null,
+            },
+          ],
+        }),
+      ],
+    });
 
     const rows = getPlannerRecipeDialogIngredientRows({
       recipe,
@@ -210,35 +286,25 @@ describe("getPlannerRecipeDialogIngredientRows", () => {
 
 describe("getPlannerSlotIngredientDisplayLines", () => {
   it("returns untruncated name/amount pairs that scale with audience", () => {
-    const recipe = {
+    const recipe = createMockRecipe({
       servings: 2,
       audienceMembers: [
         { familyMemberId: "fm-jagoda" },
         { familyMemberId: "fm-nelson" },
       ],
       memberPortions: [
-        { familyMemberId: "fm-jagoda", multiplier: 1 },
-        { familyMemberId: "fm-nelson", multiplier: 1 },
+        { recipeId: "recipe-1", familyMemberId: "fm-jagoda", multiplier: 1 },
+        { recipeId: "recipe-1", familyMemberId: "fm-nelson", multiplier: 1 },
       ],
       ingredients: [
-        {
+        buildFullRecipeIngredientFixture({
           id: "ri-flour",
           ingredientId: "ing-flour",
+          ingredientName: "Flour",
           amount: 200,
-          additionalInfo: null,
-          unit: { id: "unit-g", name: "g" },
-          memberAdjustments: [],
-          ingredient: {
-            id: "ing-flour",
-            name: "Flour",
-            brand: null,
-            descriptor: null,
-          },
-        },
+        }),
       ],
-    } as unknown as Parameters<
-      typeof getPlannerSlotIngredientDisplayLines
-    >[0]["recipe"];
+    });
 
     const ingredientOptions = [
       {
@@ -274,35 +340,25 @@ describe("getPlannerSlotIngredientDisplayLines", () => {
   });
 
   it("divides amounts by mealPortionCount for batch day share", () => {
-    const recipe = {
+    const recipe = createMockRecipe({
       servings: 2,
       audienceMembers: [
         { familyMemberId: "fm-jagoda" },
         { familyMemberId: "fm-nelson" },
       ],
       memberPortions: [
-        { familyMemberId: "fm-jagoda", multiplier: 1 },
-        { familyMemberId: "fm-nelson", multiplier: 1 },
+        { recipeId: "recipe-1", familyMemberId: "fm-jagoda", multiplier: 1 },
+        { recipeId: "recipe-1", familyMemberId: "fm-nelson", multiplier: 1 },
       ],
       ingredients: [
-        {
+        buildFullRecipeIngredientFixture({
           id: "ri-flour",
           ingredientId: "ing-flour",
+          ingredientName: "Flour",
           amount: 200,
-          additionalInfo: null,
-          unit: { id: "unit-g", name: "g" },
-          memberAdjustments: [],
-          ingredient: {
-            id: "ing-flour",
-            name: "Flour",
-            brand: null,
-            descriptor: null,
-          },
-        },
+        }),
       ],
-    } as unknown as Parameters<
-      typeof getPlannerSlotIngredientDisplayLines
-    >[0]["recipe"];
+    });
 
     const ingredientOptions = [
       {
@@ -333,6 +389,25 @@ describe("getPlannerSlotIngredientDisplayLines", () => {
 function buildGrocerySlot(
   overrides?: Partial<PlanSlotData>,
 ): PlanSlotData {
+  const oliveOilAdjustment = {
+    familyMemberId: "fm-jagoda",
+    kind: "MODIFY" as const,
+    ingredientId: "ing-olive-oil",
+    amount: 10,
+    unitId: "unit-g",
+    ingredient: {
+      id: "ing-olive-oil",
+      name: "Olive oil",
+      brand: null,
+      descriptor: null,
+      icon: null,
+      supermarketUrl: null,
+      unitConversions: [{ unitId: "unit-g", gramsPerUnit: 1 }],
+      category: { id: "cat-1", name: "Oil", sortOrder: 0 },
+    },
+    unit: { id: "unit-g", name: "g" },
+  };
+
   return {
     recipeId: "recipe-1",
     cookingFamilyMemberIds: ["fm-jagoda", "fm-nelson"],
@@ -352,24 +427,7 @@ function buildGrocerySlot(
           amount: 40,
           additionalInfo: null,
           memberAdjustments: [
-            {
-              familyMemberId: "fm-jagoda",
-              kind: "MODIFY",
-              ingredientId: "ing-olive-oil",
-              amount: 10,
-              unitId: "unit-g",
-              ingredient: {
-                id: "ing-olive-oil",
-                name: "Olive oil",
-                brand: null,
-                descriptor: null,
-                icon: null,
-                supermarketUrl: null,
-                unitConversions: [{ unitId: "unit-g", gramsPerUnit: 1 }],
-                category: { id: "cat-1", name: "Oil", sortOrder: 0 },
-              },
-              unit: { id: "unit-g", name: "g" },
-            },
+            oliveOilAdjustment,
             { familyMemberId: "fm-nelson", kind: "SKIP" },
           ],
           ingredient: {

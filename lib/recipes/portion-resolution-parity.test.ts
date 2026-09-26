@@ -17,8 +17,8 @@ import {
  */
 
 const familyMembers: FamilyMemberRow[] = [
-  { id: "fm-jagoda", name: "Jagoda", isSelf: true, sortOrder: 0 },
-  { id: "fm-nelson", name: "Nelson", isSelf: false, sortOrder: 1 },
+  { id: "fm-jagoda", name: "Jagoda", isSelf: true, sortOrder: 0, portionMultiplier: 1 },
+  { id: "fm-nelson", name: "Nelson", isSelf: false, sortOrder: 1, portionMultiplier: 2 },
 ];
 
 const audienceMemberIds = ["fm-jagoda", "fm-nelson"];

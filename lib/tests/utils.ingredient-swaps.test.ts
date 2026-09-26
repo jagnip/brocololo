@@ -8,6 +8,7 @@ import {
   createMockIngredient,
   createMockIngredientUnit,
   createMockRecipe,
+  createMockRecipeIngredient,
   createMockUnit,
 } from './test-helpers';
 
@@ -54,7 +55,7 @@ describe('buildEffectiveRecipeForSimulation', () => {
 
     const recipe = createMockRecipe({
       ingredients: [
-        {
+        createMockRecipeIngredient({
           id: 'ri-flour',
           recipeId: 'recipe-1',
           ingredientId: originalIngredient.id,
@@ -64,7 +65,7 @@ describe('buildEffectiveRecipeForSimulation', () => {
           additionalInfo: null,
           ingredient: originalIngredient,
           unit: cupUnit,
-        },
+        }),
       ],
     });
 
@@ -77,7 +78,7 @@ describe('buildEffectiveRecipeForSimulation', () => {
 
     expect(row.ingredient.id).toBe('ing-oat-flour');
     expect(row.amount).toBe(1);
-    expect(row.unit.id).toBe('unit-cup');
+    expect(row.unit?.id).toBe('unit-cup');
   });
 
   it('falls back to grams when replacement lacks the original unit', () => {
@@ -109,7 +110,7 @@ describe('buildEffectiveRecipeForSimulation', () => {
 
     const recipe = createMockRecipe({
       ingredients: [
-        {
+        createMockRecipeIngredient({
           id: 'ri-rice',
           recipeId: 'recipe-1',
           ingredientId: originalIngredient.id,
@@ -119,7 +120,7 @@ describe('buildEffectiveRecipeForSimulation', () => {
           additionalInfo: null,
           ingredient: originalIngredient,
           unit: cupUnit,
-        },
+        }),
       ],
     });
 
@@ -132,7 +133,7 @@ describe('buildEffectiveRecipeForSimulation', () => {
 
     // 1.5 cups rice * 200g/cup = 300g; replacement uses grams as fallback.
     expect(row.ingredient.id).toBe('ing-potato');
-    expect(row.unit.name).toBe('g');
+    expect(row.unit?.name).toBe('g');
     expect(row.amount).toBe(300);
   });
 
@@ -197,7 +198,7 @@ describe('buildEffectiveRecipeForSimulation', () => {
 
     const recipe = createMockRecipe({
       ingredients: [
-        {
+        createMockRecipeIngredient({
           id: 'ri-chicken',
           recipeId: 'recipe-1',
           ingredientId: chicken.id,
@@ -207,8 +208,8 @@ describe('buildEffectiveRecipeForSimulation', () => {
           additionalInfo: null,
           ingredient: chicken,
           unit: createMockUnit({ id: 'unit-grams', name: 'g' }),
-        },
-        {
+        }),
+        createMockRecipeIngredient({
           id: 'ri-rice',
           recipeId: 'recipe-1',
           ingredientId: rice.id,
@@ -218,7 +219,7 @@ describe('buildEffectiveRecipeForSimulation', () => {
           additionalInfo: null,
           ingredient: rice,
           unit: createMockUnit({ id: 'unit-cup', name: 'cup' }),
-        },
+        }),
       ],
     });
 
@@ -262,7 +263,7 @@ describe('swap simulation nutrition integration', () => {
     const recipe = createMockRecipe({
       servings: 2,
       ingredients: [
-        {
+        createMockRecipeIngredient({
           id: 'ri-protein',
           recipeId: 'recipe-1',
           ingredientId: chicken.id,
@@ -272,7 +273,7 @@ describe('swap simulation nutrition integration', () => {
           additionalInfo: null,
           ingredient: chicken,
           unit: createMockUnit({ id: 'unit-grams', name: 'g' }),
-        },
+        }),
       ],
     });
 

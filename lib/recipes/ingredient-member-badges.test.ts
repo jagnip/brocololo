@@ -7,8 +7,8 @@ import {
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 
 const household: FamilyMemberRow[] = [
-  { id: "family-self", name: "Jagoda", isSelf: true, sortOrder: 0 },
-  { id: "family-member-1", name: "", isSelf: false, sortOrder: 1 },
+  { id: "family-self", name: "Jagoda", isSelf: true, sortOrder: 0, portionMultiplier: 1 },
+  { id: "family-member-1", name: "", isSelf: false, sortOrder: 1, portionMultiplier: 1 },
 ];
 const audience = ["family-self", "family-member-1"];
 
@@ -26,7 +26,14 @@ describe("ingredient member badges helpers", () => {
     const badges = getIngredientMemberBadges(
       {
         memberAdjustments: [
-          { familyMemberId: "family-self", kind: "SKIP" },
+          {
+            familyMemberId: "family-self",
+            kind: "SKIP",
+            ingredientId: null,
+            amount: null,
+            unitId: null,
+            additionalInfo: null,
+          },
         ],
       },
       household,
@@ -63,7 +70,14 @@ describe("ingredient member badges helpers", () => {
       getIngredientMemberBadges(
         {
           memberAdjustments: [
-            { familyMemberId: "family-member-1", kind: "SKIP" },
+            {
+              familyMemberId: "family-member-1",
+              kind: "SKIP",
+              ingredientId: null,
+              amount: null,
+              unitId: null,
+              additionalInfo: null,
+            },
           ],
         },
         [household[0]!],

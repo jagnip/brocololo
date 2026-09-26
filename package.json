@@ -9,6 +9,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "lint-dev": "eslint --max-warnings=0",
+    "typecheck": "tsc --noEmit",
     "test": "vitest",
     "migrate:ingredient-categories": "npx tsx prisma/migrate-ingredient-categories-prod.ts",
     "migrate:split-dairy-categories": "npx tsx prisma/migrate-split-dairy-categories.ts",

@@ -81,13 +81,25 @@ describe("ensureSnackLogEntriesForMember", () => {
   it("upserts one snack row per distinct day with any member entry", async () => {
     vi.mocked(prisma.logEntry.findMany).mockResolvedValue([
       {
+        id: "entry-1",
+        logId: "log-1",
         date: new Date("2026-03-17T00:00:00.000Z"),
+        mealType: LogMealType.BREAKFAST,
+        familyMemberId: "fm-1",
       },
       {
+        id: "entry-2",
+        logId: "log-1",
         date: new Date("2026-03-17T00:00:00.000Z"),
+        mealType: LogMealType.LUNCH,
+        familyMemberId: "fm-1",
       },
       {
+        id: "entry-3",
+        logId: "log-1",
         date: new Date("2026-03-18T00:00:00.000Z"),
+        mealType: LogMealType.DINNER,
+        familyMemberId: "fm-1",
       },
     ]);
 

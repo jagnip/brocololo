@@ -197,7 +197,7 @@ async function main() {
   const unitG = await prisma.unit.create({ data: { name: 'g' } });
   const unitMl = await prisma.unit.create({ data: { name: 'ml' } });
   const unitTbsp = await prisma.unit.create({ data: { name: 'tbsp' } });
-  const unitTsp = await prisma.unit.create({ data: { name: 'tsp' } });
+  await prisma.unit.create({ data: { name: 'tsp' } });
   const unitCup = await prisma.unit.create({ data: { name: 'cup' } });
 
   console.log('✅ Created units');

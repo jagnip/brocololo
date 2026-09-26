@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createPlan, updatePlan } from "@/lib/db/planner";
-import { savePlan, updateSavedPlan } from "./planner-actions";
+import { createPlan, deletePlanById, updatePlan } from "@/lib/db/planner";
+import { revalidatePath } from "next/cache";
+import {
+  deletePlanAction,
+  savePlan,
+  updateSavedPlan,
+} from "./planner-actions";
+import { ROUTES } from "@/lib/constants";
 
 vi.mock("@/lib/auth/session", () => ({
   requireUser: vi.fn().mockResolvedValue({ id: "user-1" }),
@@ -70,6 +76,7 @@ describe("planner-actions collisions", () => {
         recipeId: null,
         customMeal: null,
         alternativeRecipeIds: [],
+        cookingFamilyMemberIds: [],
         used: false,
       },
     ]);
@@ -82,26 +89,6 @@ describe("planner-actions collisions", () => {
     });
   });
 });
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { deletePlanById, updatePlan } from "@/lib/db/planner";
-import { revalidatePath } from "next/cache";
-import { deletePlanAction, updateSavedPlan } from "./planner-actions";
-import { ROUTES } from "@/lib/constants";
-
-vi.mock("@/lib/auth/session", () => ({
-  requireUser: vi.fn().mockResolvedValue({ id: "user-1" }),
-}));
-
-vi.mock("@/lib/db/planner", () => ({
-  updatePlan: vi.fn(),
-  generateBaselineLogForPlan: vi.fn(),
-  createPlan: vi.fn(),
-  deletePlanById: vi.fn(),
-}));
-
-vi.mock("next/cache", () => ({
-  revalidatePath: vi.fn(),
-}));
 
 describe("updateSavedPlan", () => {
   beforeEach(() => {
@@ -118,6 +105,7 @@ describe("updateSavedPlan", () => {
         recipeId: "recipe-1",
         customMeal: null,
         alternativeRecipeIds: [],
+        cookingFamilyMemberIds: [],
         used: false,
       },
     ]);
@@ -136,6 +124,7 @@ describe("updateSavedPlan", () => {
         recipeId: "recipe-1",
         customMeal: null,
         alternativeRecipeIds: [],
+        cookingFamilyMemberIds: [],
         used: false,
       },
     ]);

@@ -251,7 +251,7 @@ export function RecipePageProvider({
     if (scaling.mealCount !== mealCount) {
       scaling.handleMealCountChange(mealCount);
     }
-  }, [mealCount, scaling.handleMealCountChange, scaling.mealCount]);
+  }, [mealCount, scaling]);
 
   const cookingFamilyMemberIds = useMemo(
     () => deriveCookingUnionIds(perMealAudience, familyMembers),
@@ -546,18 +546,7 @@ export function RecipePageProvider({
       perMealAudience,
       personMealCounts,
       recipe,
-      scaling.calorieTarget,
-      scaling.handleCaloriesChange,
-      scaling.handleIngredientChange,
-      scaling.handleIngredientEdit,
-      scaling.handleApplyScaleToAll,
-      scaling.handleNutritionReset,
-      scaling.handleReset,
-      scaling.handleUnitChange,
-      scaling.hasActiveNutritionScaling,
-      scaling.hasActiveScaling,
-      scaling.localScaleByIngredientId,
-      scaling.selectedUnits,
+      scaling,
       ungroupedIngredients,
       visibleGroupedIngredients,
     ],

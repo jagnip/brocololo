@@ -12,7 +12,7 @@ function createCtx(
 ): ScoringContext {
   return {
     assignedSlots: [],
-    currentSlot: { date: new Date("2026-02-10"), mealType: "DINNER", alternatives: [], customMeal: null, used: false },
+    currentSlot: { date: new Date("2026-02-10"), mealType: "DINNER" },
     maxDaysSinceLastUsedCandidate: 30,
     fridgeIngredientIds: [],
     rollingRecipeIds: [],

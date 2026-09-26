@@ -194,7 +194,7 @@ export function IngredientItem({
   const [isEditing, setIsEditing] = useState(false);
   const [showPeoplePanel, setShowPeoplePanel] = useState(false);
   const [showNotePanel, setShowNotePanel] = useState(false);
-  const [showNutritionDetails, setShowNutritionDetails] = useState(false);
+  const [showNutritionDetails] = useState(false);
   const [editValue, setEditValue] = useState("");
   const initialEditValueRef = useRef("");
   const committedRef = useRef(false);
@@ -304,12 +304,15 @@ export function IngredientItem({
     });
   };
 
-  const ingredientCandidates = [
-    ingredient,
-    ...replacementCandidates.filter(
-      (candidate) => candidate.id !== ingredient.id,
-    ),
-  ];
+  const ingredientCandidates = useMemo(
+    () => [
+      ingredient,
+      ...replacementCandidates.filter(
+        (candidate) => candidate.id !== ingredient.id,
+      ),
+    ],
+    [ingredient, replacementCandidates],
+  );
   const ingredientSelectSources = useMemo(
     () =>
       ingredientCandidates.map((candidate) => ({

@@ -20,7 +20,7 @@ import type { RecipeType } from "@/types/recipe";
 import type { IngredientType } from "@/types/ingredient";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { format } from "date-fns";
-import { vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 function formatDatePickerLabel(isoDateKey: string): string {
   const [year, month, day] = isoDateKey.split("-").map(Number);
@@ -232,20 +232,17 @@ function createRecipeFixture(): { recipe: RecipeType; ingredients: IngredientTyp
         text: "Prepare both bowls",
         ingredients: [
           {
-            id: "step-link-shared",
-            recipeInstructionId: "step-1",
+            instructionId: "step-1",
             recipeIngredientId: "ri-shared-protein",
             recipeIngredient: sharedRow,
           },
           {
-            id: "step-link-jagoda",
-            recipeInstructionId: "step-1",
+            instructionId: "step-1",
             recipeIngredientId: "ri-side-veg-jagoda",
             recipeIngredient: sideVegRow,
           },
           {
-            id: "step-link-nelson",
-            recipeInstructionId: "step-1",
+            instructionId: "step-1",
             recipeIngredientId: "ri-side-sauce-nelson",
             recipeIngredient: sideSauceRow,
           },
@@ -701,8 +698,7 @@ describe("RecipePage nutrition integration", () => {
               ingredients: [
                 ...instruction.ingredients,
                 {
-                  id: "step-link-salt",
-                  recipeInstructionId: instruction.id,
+                  instructionId: instruction.id,
                   recipeIngredientId: saltRow.id,
                   recipeIngredient: saltRow,
                 },

@@ -1,4 +1,3 @@
 import { Prisma } from "@/src/generated/client";
 
-export type CategoryType = Prisma.CategoryGetPayload<{}>;
-
+export type CategoryType = Prisma.CategoryGetPayload<Prisma.CategoryDefaultArgs>;

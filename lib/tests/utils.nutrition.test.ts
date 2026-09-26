@@ -7,6 +7,7 @@ import {
   createMockIngredient,
   createMockIngredientUnit,
   createMockRecipe,
+  createMockRecipeIngredient,
   createMockUnit,
 } from "./test-helpers";
 
@@ -35,7 +36,7 @@ function createChickenSandwichRecipe() {
       { recipeId: "recipe-1", familyMemberId: "family-member-1", multiplier: 2 },
     ],
     ingredients: [
-      {
+      createMockRecipeIngredient({
         id: "ri-chicken",
         recipeId: "recipe-1",
         ingredientId: "ing-chicken",
@@ -52,8 +53,8 @@ function createChickenSandwichRecipe() {
           unitConversions: [createMockIngredientUnit("ing-chicken", "unit-grams", 1)],
         }),
         unit: createMockUnit({ id: "unit-grams", name: "grams" }),
-      },
-      {
+      }),
+      createMockRecipeIngredient({
         id: "ri-bread",
         recipeId: "recipe-1",
         ingredientId: "ing-bread",
@@ -70,7 +71,7 @@ function createChickenSandwichRecipe() {
           unitConversions: [createMockIngredientUnit("ing-bread", "unit-grams", 1)],
         }),
         unit: createMockUnit({ id: "unit-grams", name: "grams" }),
-      },
+      }),
     ],
   });
 }
@@ -96,7 +97,7 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
         { recipeId: "recipe-1", familyMemberId: "family-member-1", multiplier: 2 },
       ],
       ingredients: [
-        {
+        createMockRecipeIngredient({
           id: "ri-main",
           recipeId: "recipe-1",
           ingredientId: "ing-main",
@@ -113,8 +114,8 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
             unitConversions: [createMockIngredientUnit("ing-main", "unit-grams", 1)],
           }),
           unit: createMockUnit({ id: "unit-grams", name: "grams" }),
-        },
-        {
+        }),
+        createMockRecipeIngredient({
           id: "ri-oil",
           recipeId: "recipe-1",
           ingredientId: "ing-oil",
@@ -131,7 +132,7 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
             unitConversions: [createMockIngredientUnit("ing-oil", "unit-grams", 1)],
           }),
           unit: createMockUnit({ id: "unit-grams", name: "grams" }),
-        },
+        }),
       ],
     });
 
@@ -147,9 +148,8 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
   it("ignores null amount and missing conversion safely", () => {
     const recipe = createMockRecipe({
       servings: 2,
-      servingMultiplierForNelson: 1.5,
       ingredients: [
-        {
+        createMockRecipeIngredient({
           id: "ri-null",
           recipeId: "recipe-1",
           ingredientId: "ing-null",
@@ -166,8 +166,8 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
             unitConversions: [createMockIngredientUnit("ing-null", "unit-grams", 1)],
           }),
           unit: createMockUnit({ id: "unit-grams", name: "grams" }),
-        },
-        {
+        }),
+        createMockRecipeIngredient({
           id: "ri-missing",
           recipeId: "recipe-1",
           ingredientId: "ing-missing",
@@ -184,7 +184,7 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
             unitConversions: [],
           }),
           unit: createMockUnit({ id: "unit-cup", name: "cup" }),
-        },
+        }),
       ],
     });
 
@@ -208,7 +208,7 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
         { recipeId: "recipe-1", familyMemberId: "family-member-1", multiplier: 2 },
       ],
       ingredients: [
-        {
+        createMockRecipeIngredient({
           id: "ri-primary",
           recipeId: "recipe-1",
           ingredientId: "ing-primary",
@@ -225,7 +225,7 @@ describe("calculateNutritionPerServing canonical recipe model", () => {
             unitConversions: [createMockIngredientUnit("ing-primary", "unit-grams", 1)],
           }),
           unit: createMockUnit({ id: "unit-grams", name: "grams" }),
-        },
+        }),
       ],
     });
 

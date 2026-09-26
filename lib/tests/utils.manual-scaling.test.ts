@@ -11,6 +11,7 @@ import {
   createMockRecipe,
   createMockIngredient,
   createMockIngredientUnit,
+  createMockRecipeIngredient,
   createMockUnit,
 } from './test-helpers';
 
@@ -188,7 +189,7 @@ describe('Manual ingredient scaling — integration', () => {
         { recipeId: "recipe-1", familyMemberId: "family-member-1", multiplier: 1.5 },
       ],
       ingredients: [
-        {
+        createMockRecipeIngredient({
           id: 'ri-chicken',
           recipeId: 'recipe-1',
           ingredientId: 'ing-chicken',
@@ -208,8 +209,8 @@ describe('Manual ingredient scaling — integration', () => {
             ],
           }),
           unit: createMockUnit({ id: 'unit-grams', name: 'grams' }),
-        },
-        {
+        }),
+        createMockRecipeIngredient({
           id: 'ri-rice',
           recipeId: 'recipe-1',
           ingredientId: 'ing-rice',
@@ -229,13 +230,13 @@ describe('Manual ingredient scaling — integration', () => {
             ],
           }),
           unit: createMockUnit({ id: 'unit-grams', name: 'grams' }),
-        },
+        }),
       ],
     });
   }
 
   it('should scale all ingredients proportionally when one is edited', () => {
-    const { servingScalingFactor } = calculateServingScalingFactor(2, 4, 1.5);
+    const { servingScalingFactor } = calculateServingScalingFactor(2, 4);
 
     // Displayed amounts for 2 servings:
     // chicken = 400 * 0.5 = 200g, rice = 300 * 0.5 = 150g
@@ -257,7 +258,7 @@ describe('Manual ingredient scaling — integration', () => {
   });
 
   it('should override previous edits when a second ingredient is edited (last edit wins)', () => {
-    const { servingScalingFactor } = calculateServingScalingFactor(2, 4, 1.5);
+    const { servingScalingFactor } = calculateServingScalingFactor(2, 4);
 
     // Step 1: edit chicken 200 → 300 (ratio 1.5)
     const ratio1 = 300 / 200;
@@ -282,7 +283,7 @@ describe('Manual ingredient scaling — integration', () => {
   it('should absorb calorie scaling when ingredient is edited', () => {
     const recipe = createTestRecipe();
     const baseNutrition = nutritionFor(recipe, "jagoda");
-    const { servingScalingFactor } = calculateServingScalingFactor(2, 4, 1.5);
+    const { servingScalingFactor } = calculateServingScalingFactor(2, 4);
 
     // Set calorie target to 200 (base is 210 per meal for Jagoda)
     const calorieScale = 200 / baseNutrition.calories;
@@ -353,7 +354,7 @@ describe('Manual ingredient scaling — integration', () => {
   });
 
   it('should not affect null-amount ingredients', () => {
-    const { servingScalingFactor } = calculateServingScalingFactor(2, 4, 1.5);
+    const { servingScalingFactor } = calculateServingScalingFactor(2, 4);
     const manualScaleRatio = 1.5;
     const totalScale = servingScalingFactor * manualScaleRatio;
 

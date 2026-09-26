@@ -10,6 +10,7 @@ import {
 } from "@/lib/planner/audience-mapping";
 import type { DayTimeLimitsType } from "@/lib/validations/planner";
 import { createMockCategory, createMockRecipe } from "@/lib/tests/test-helpers";
+import type { PlanInputType } from "@/types/planner";
 
 vi.mock("@/lib/db/recipes", () => ({
   getRecipes: vi.fn(),
@@ -121,18 +122,24 @@ const simulationAudienceFamilyMemberIds = ["family-self", "family-member-1"];
 function setupSimulationMocks() {
   vi.mocked(getRecipes).mockResolvedValue(buildSimulationRecipes());
   vi.mocked(listFamilyMembers).mockResolvedValue([
-    { id: "family-self", userId: "user-test", name: "You", isSelf: true, sortOrder: 0 },
+    {
+      id: "family-self",
+      name: "You",
+      isSelf: true,
+      sortOrder: 0,
+      portionMultiplier: 1,
+    },
     {
       id: "family-member-1",
-      userId: "user-test",
       name: "Partner",
       isSelf: false,
       sortOrder: 1,
+      portionMultiplier: 1,
     },
   ]);
 }
 
-function getPlanMetrics(plan: NonNullable<Awaited<ReturnType<typeof generatePlan>> extends { type: "success"; plan: infer T } ? T : never>) {
+function getPlanMetrics(plan: PlanInputType) {
   const recipeIds = plan.map((slot) => slot.recipe?.id).filter((id): id is string => Boolean(id));
   const uniqueRecipeCount = new Set(recipeIds).size;
   const usageByRecipe = new Map<string, number>();
@@ -150,7 +157,7 @@ function getPlanMetrics(plan: NonNullable<Awaited<ReturnType<typeof generatePlan
 
 function printPlanForReview(
   label: string,
-  plan: NonNullable<Awaited<ReturnType<typeof generatePlan>> extends { type: "success"; plan: infer T } ? T : never>,
+  plan: PlanInputType,
 ) {
   // Group by day so manual inspection matches how humans review meal plans.
   const byDay = new Map<string, Array<{ mealType: string; recipeName: string }>>();
@@ -284,8 +291,20 @@ describe("planner generation simulation with default time limits", () => {
 
     vi.mocked(getRecipes).mockResolvedValue([batchDinner, quickBreakfast, quickLunch]);
     vi.mocked(listFamilyMembers).mockResolvedValue([
-      { id: "family-self", name: "You", isSelf: true, sortOrder: 0 } as any,
-      { id: "family-member-1", name: "Partner", isSelf: false, sortOrder: 1 } as any,
+      {
+        id: "family-self",
+        name: "You",
+        isSelf: true,
+        sortOrder: 0,
+        portionMultiplier: 1,
+      },
+      {
+        id: "family-member-1",
+        name: "Partner",
+        isSelf: false,
+        sortOrder: 1,
+        portionMultiplier: 1,
+      },
     ]);
 
     const start = new Date("2026-04-20T00:00:00.000Z");

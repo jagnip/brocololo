@@ -88,6 +88,9 @@ function makeValidIngredientFormValues(): IngredientFormValues {
 function makeIngredientRecord() {
   return {
     id: "ingredient-1",
+    userId: "user-test",
+    isGlobal: false,
+    hasUserCustomization: false,
     name: "Chicken Breast",
     brand: null,
     descriptor: null,

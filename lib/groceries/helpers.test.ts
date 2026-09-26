@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { transformPlanToShoppingListRows, type PlanSlotData } from "@/lib/groceries/helpers";
+import type { MemberAdjustmentRow } from "@/lib/recipes/resolve-ingredient-lines";
 
 const familyMembers = [
   { id: "fm-jagoda", isSelf: true },
@@ -9,6 +10,28 @@ const familyMembers = [
 function buildGrocerySlot(
   overrides?: Partial<PlanSlotData>,
 ): PlanSlotData {
+  const modifyAdjustment: MemberAdjustmentRow & {
+    ingredient: NonNullable<PlanSlotData["recipe"]>["ingredients"][number]["ingredient"];
+    unit: NonNullable<PlanSlotData["recipe"]>["ingredients"][number]["unit"];
+  } = {
+    familyMemberId: "fm-jagoda",
+    kind: "MODIFY",
+    ingredientId: "ing-olive-oil",
+    amount: 10,
+    unitId: "unit-g",
+    ingredient: {
+      id: "ing-olive-oil",
+      name: "Olive oil",
+      brand: null,
+      descriptor: null,
+      icon: null,
+      supermarketUrl: null,
+      unitConversions: [{ unitId: "unit-g", gramsPerUnit: 1 }],
+      category: { id: "cat-1", name: "Oil", sortOrder: 0 },
+    },
+    unit: { id: "unit-g", name: "g" },
+  };
+
   return {
     recipeId: "recipe-1",
     cookingFamilyMemberIds: ["fm-jagoda", "fm-nelson"],
@@ -28,24 +51,7 @@ function buildGrocerySlot(
           amount: 40,
           additionalInfo: null,
           memberAdjustments: [
-            {
-              familyMemberId: "fm-jagoda",
-              kind: "MODIFY",
-              ingredientId: "ing-olive-oil",
-              amount: 10,
-              unitId: "unit-g",
-              ingredient: {
-                id: "ing-olive-oil",
-                name: "Olive oil",
-                brand: null,
-                descriptor: null,
-                icon: null,
-                supermarketUrl: null,
-                unitConversions: [{ unitId: "unit-g", gramsPerUnit: 1 }],
-                category: { id: "cat-1", name: "Oil", sortOrder: 0 },
-              },
-              unit: { id: "unit-g", name: "g" },
-            },
+            modifyAdjustment,
             { familyMemberId: "fm-nelson", kind: "SKIP" },
           ],
           ingredient: {
