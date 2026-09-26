@@ -94,7 +94,7 @@ New unit/integration tests go next to the code they test. If the root `__test__/
 
 **All code changes must end with running:**
 ```bash
-npm lint-dev && npm typecheck
+npm run lint-dev && npm run typecheck
 ```
 Fix any errors and lint before considering the task complete.
 

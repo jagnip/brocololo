@@ -2,7 +2,7 @@
   "worktree": {
     "setup": [
       "set -euo pipefail",
-      "cp \"$PASEO_SOURCE_CHECKOUT_PATH/.env.local\" .env.local",
+      "cp \"$PASEO_SOURCE_CHECKOUT_PATH/.env\" .env",
       "npm ci"
     ],
     "terminals": [
