@@ -17,6 +17,7 @@ type LogDayPersonToolbarControlsProps = {
   selectedDayKey: string;
   onSelectDay: (dateKey: string) => void;
   familyMembers: FamilyMemberRow[];
+  showDaySelector?: boolean;
 };
 
 /** Day + person selectors shared by log header and meal-plan Track toolbar row. */
@@ -25,27 +26,30 @@ export function LogDayPersonToolbarControls({
   selectedDayKey,
   onSelectDay,
   familyMembers,
+  showDaySelector = true,
 }: LogDayPersonToolbarControlsProps) {
   return (
     <>
-      <div className="min-w-0 w-40 sm:w-48">
-        <Select
-          value={selectedDayKey}
-          onValueChange={onSelectDay}
-          allowInlineClear={false}
-        >
-          <SelectTrigger className="w-full min-w-0">
-            <SelectValue placeholder="Select a day" />
-          </SelectTrigger>
-          <SelectContent>
-            {days.map((day) => (
-              <SelectItem key={day.dateKey} value={day.dateKey}>
-                {formatDayLabel(day.date)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {showDaySelector ? (
+        <div className="min-w-0 w-40 sm:w-48">
+          <Select
+            value={selectedDayKey}
+            onValueChange={onSelectDay}
+            allowInlineClear={false}
+          >
+            <SelectTrigger className="w-full min-w-0">
+              <SelectValue placeholder="Select a day" />
+            </SelectTrigger>
+            <SelectContent>
+              {days.map((day) => (
+                <SelectItem key={day.dateKey} value={day.dateKey}>
+                  {formatDayLabel(day.date)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
       {familyMembers.length > 1 ? (
         <LogPersonSelectFromUrl familyMembers={familyMembers} />
       ) : null}

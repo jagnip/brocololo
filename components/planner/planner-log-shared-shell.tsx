@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useTopbar } from "@/components/context/topbar-context";
@@ -8,7 +8,7 @@ import { type DateRangeValue } from "@/components/planner/date-range-picker";
 import { PlanDateRangeDialog } from "@/components/planner/plan-date-range-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlanEditor } from "@/components/planner/plan-editor";
-import { LogDayViewController } from "@/components/log/log-day-view";
+import { LogDayViewController, type LogToolbarControls } from "@/components/log/log-day-view";
 import { usePlanTopbarState } from "@/components/planner/plan-topbar-state-context";
 import { deletePlanAction } from "@/actions/planner-actions";
 import { toast } from "sonner";
@@ -105,7 +105,7 @@ export function PlannerLogSharedShell({
     useState<GroceryGenerationExclusions | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [trackToolbarControls, setTrackToolbarControls] =
-    useState<ReactNode | null>(null);
+    useState<LogToolbarControls | null>(null);
   const [isPlanSaving, setIsPlanSaving] = useState(false);
   const [isLogSaving, setIsLogSaving] = useState(false);
   const { isLogFilterPending } = useTopbar();
@@ -318,7 +318,7 @@ export function PlannerLogSharedShell({
       </AlertDialog>
 
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Tabs
             value={displayedTab}
             onValueChange={(value) => {
@@ -352,8 +352,9 @@ export function PlannerLogSharedShell({
           ) : null}
         </div>
         {isTrackTab && trackToolbarControls ? (
-          <div className="flex min-w-0 items-center gap-2">
-            {trackToolbarControls}
+          <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
+            {trackToolbarControls.viewSwitcher}
+            {trackToolbarControls.filters}
           </div>
         ) : null}
       </div>
