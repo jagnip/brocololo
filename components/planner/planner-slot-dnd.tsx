@@ -63,12 +63,17 @@ export function PlannerSlotDndWrapper({
     imageUrl,
   };
 
-  const { attributes, listeners, setNodeRef: setDragRef, isDragging } =
-    useDraggable({
-      id: dragId,
-      data: dragData,
-      disabled: !canDrag,
-    });
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDragRef,
+    setActivatorNodeRef,
+    isDragging,
+  } = useDraggable({
+    id: dragId,
+    data: dragData,
+    disabled: !canDrag,
+  });
 
   const { setNodeRef: setDropRef, isOver } = useDroppable({
     id: dragId,
@@ -78,6 +83,7 @@ export function PlannerSlotDndWrapper({
   // Same node is both drag source and drop target.
   const setNodeRef = (node: HTMLElement | null) => {
     setDragRef(node);
+    setActivatorNodeRef(node);
     setDropRef(node);
   };
 
