@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { ComponentProps } from "react";
@@ -16,13 +16,15 @@ vi.mock("./planner-slot-card", () => ({
     slot,
     isSelected,
     onSelectionChange,
+    onCardSelect,
   }: {
     slot: { mealType: string };
     isSelected?: boolean;
     onSelectionChange?: (checked: boolean) => void;
+    onCardSelect?: (modifiers: { shiftKey: boolean; metaKey: boolean; ctrlKey: boolean }) => void;
   }) => (
-    <div>
-      <div>{slot.mealType}</div>
+    <div data-planner-selection-card="">
+      <div onClick={(event) => onCardSelect?.(event)}>{slot.mealType}</div>
       <div>{isSelected ? "selected" : "not-selected"}</div>
       <button type="button" onClick={() => onSelectionChange?.(true)}>
         Select {slot.mealType}
@@ -46,7 +48,7 @@ vi.mock("./planner-bulk-actions-footer", () => ({
     onDone: () => void;
   }) =>
     selectedCount > 0 ? (
-      <div>
+      <div data-planner-bulk-actions="">
         <div aria-label="selected-count">{selectedCount}</div>
         {/* Keep button order explicit so the test matches the intended footer sequence. */}
         {onReplaceMeals ? <button type="button" onClick={onReplaceMeals}>Replace meals</button> : null}
@@ -138,6 +140,57 @@ function renderPlanView(props: Partial<ComponentProps<typeof PlanView>> = {}) {
 }
 
 describe("PlanView bulk edit eaters", () => {
+  it("replaces plain-click selection, toggles with Ctrl/Cmd, and clears outside or on Escape", () => {
+    renderPlanView();
+    fireEvent.click(screen.getByText("BREAKFAST"));
+    fireEvent.click(screen.getByText("LUNCH"));
+    expect(screen.getByLabelText("selected-count")).toHaveTextContent("1");
+    fireEvent.click(screen.getByText("LUNCH"));
+    expect(screen.getByLabelText("selected-count")).toHaveTextContent("1");
+    fireEvent.click(screen.getByText("BREAKFAST"), { ctrlKey: true });
+    expect(screen.getByLabelText("selected-count")).toHaveTextContent("2");
+    fireEvent.click(screen.getByText("BREAKFAST"), { metaKey: true });
+    expect(screen.getByLabelText("selected-count")).toHaveTextContent("1");
+    fireEvent.click(document.body);
+    expect(screen.queryByLabelText("selected-count")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText("BREAKFAST"));
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByLabelText("selected-count")).not.toBeInTheDocument();
+  });
+
+  it("selects ranges in either direction and keeps the original anchor", () => {
+    renderPlanView({
+      plan: [
+        createSlot("2026-03-17T00:00:00.000Z", "BREAKFAST", []),
+        createSlot("2026-03-17T00:00:00.000Z", "LUNCH", []),
+        createSlot("2026-03-17T00:00:00.000Z", "DINNER", []),
+      ],
+    });
+    fireEvent.click(screen.getByText("DINNER"));
+    fireEvent.click(screen.getByText("BREAKFAST"), { shiftKey: true });
+    expect(screen.getByLabelText("selected-count")).toHaveTextContent("3");
+    fireEvent.click(screen.getByText("LUNCH"), { shiftKey: true });
+    expect(screen.getByLabelText("selected-count")).toHaveTextContent("2");
+    fireEvent.keyDown(document, { key: "Escape" });
+    fireEvent.click(screen.getByText("BREAKFAST"), { shiftKey: true });
+    expect(screen.getByLabelText("selected-count")).toHaveTextContent("1");
+    fireEvent.click(screen.getByText("DINNER"), { shiftKey: true });
+    expect(screen.getByLabelText("selected-count")).toHaveTextContent("3");
+  });
+
+  it("clears selection on plan whitespace but preserves it in the toolbar and bulk dialog", () => {
+    const { container } = renderPlanView({ onAudienceChange: vi.fn() });
+    fireEvent.click(screen.getByText("BREAKFAST"));
+    fireEvent.click(screen.getByLabelText("selected-count"));
+    expect(screen.getByLabelText("selected-count")).toHaveTextContent("1");
+    fireEvent.click(screen.getByRole("button", { name: "Edit eaters" }));
+    fireEvent.click(screen.getByText("Edit eaters dialog"));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel edit eaters" }));
+    expect(screen.getByLabelText("selected-count")).toHaveTextContent("1");
+    fireEvent.click(container.querySelector("section")!);
+    expect(screen.queryByLabelText("selected-count")).not.toBeInTheDocument();
+  });
+
   it("shows bulk actions in the expected order when audience editing is available", async () => {
     const user = userEvent.setup();
 
