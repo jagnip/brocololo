@@ -39,6 +39,11 @@ export function useSlotBulkSelection({
     setAnchorKey(key);
   }, []);
 
+  const selectOnlyKey = useCallback((key: string) => {
+    setSelectedKeys(new Set([key]));
+    setAnchorKey(key);
+  }, []);
+
   const shiftSelectToKey = useCallback(
     (key: string) => {
       const targetIndex = keyToIndex.get(key);
@@ -51,12 +56,7 @@ export function useSlotBulkSelection({
       const start = Math.min(anchorIndex, targetIndex);
       const end = Math.max(anchorIndex, targetIndex);
       const rangeKeys = orderedKeys.slice(start, end + 1);
-      setSelectedKeys((previous) => {
-        const next = new Set(previous);
-        rangeKeys.forEach((rangeKey) => next.add(rangeKey));
-        return next;
-      });
-      setAnchorKey(key);
+      setSelectedKeys(new Set(rangeKeys));
     },
     [anchorKey, keyToIndex, orderedKeys, setSelectionForKey],
   );
@@ -88,6 +88,7 @@ export function useSlotBulkSelection({
     isSelected: (key: string) => selectedKeys.has(key),
     clearSelection,
     setSelectionForKey,
+    selectOnlyKey,
     shiftSelectToKey,
   };
 }

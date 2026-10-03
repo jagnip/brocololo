@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -107,6 +107,7 @@ export function PlanView({
   onAudienceChange,
   dayLabelVariant = "title",
 }: PlanViewProps) {
+  const selectionRootRef = useRef<HTMLElement>(null);
   const [isBulkReplaceDialogOpen, setIsBulkReplaceDialogOpen] = useState(false);
   const [isBulkEditEatersDialogOpen, setIsBulkEditEatersDialogOpen] =
     useState(false);
@@ -135,6 +136,7 @@ export function PlanView({
     selectedCount,
     isSelected,
     setSelectionForKey,
+    selectOnlyKey,
     shiftSelectToKey,
     clearSelection,
   } = useSlotBulkSelection({
@@ -143,6 +145,32 @@ export function PlanView({
       toast.info("Selection cleared after date range change.");
     },
   });
+
+  useEffect(() => {
+    if (selectedCount === 0) return;
+
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (!(event.target instanceof Element)) return;
+      if (isBulkReplaceDialogOpen || isBulkEditEatersDialogOpen || activeDrag) return;
+      if (event.target.closest('[data-planner-bulk-actions], [role="dialog"], [role="alertdialog"]')) return;
+      const card = event.target.closest("[data-planner-selection-card]");
+      if (card && selectionRootRef.current?.contains(card)) return;
+      clearSelection();
+    };
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented || activeDrag) return;
+      if (isBulkReplaceDialogOpen || isBulkEditEatersDialogOpen) return;
+      if (document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
+      clearSelection();
+    };
+
+    document.addEventListener("click", handleOutsideClick, true);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("click", handleOutsideClick, true);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [selectedCount, clearSelection, isBulkReplaceDialogOpen, isBulkEditEatersDialogOpen, activeDrag]);
 
   if (plan.length === 0) {
     return null;
@@ -281,7 +309,15 @@ export function PlanView({
         slot={slot}
         isSelected={isSelected(slotKey)}
         onSelectionChange={(checked) => setSelectionForKey(slotKey, checked)}
-        onShiftSelect={() => shiftSelectToKey(slotKey)}
+        onCardSelect={({ shiftKey, metaKey, ctrlKey }) => {
+          if (shiftKey) {
+            shiftSelectToKey(slotKey);
+          } else if (metaKey || ctrlKey) {
+            setSelectionForKey(slotKey, !isSelected(slotKey));
+          } else {
+            selectOnlyKey(slotKey);
+          }
+        }}
         fridgeMatchIngredients={
           slot.recipe
             ? getFridgeMatchIngredients(slot.recipe, fridgeIngredientIds)
@@ -324,6 +360,7 @@ export function PlanView({
 
   const grid = (
     <section
+      ref={selectionRootRef}
       className={cn(
         "min-w-0",
         // Create plan: tighter day rhythm under the column title. Plan detail keeps roomier sections.

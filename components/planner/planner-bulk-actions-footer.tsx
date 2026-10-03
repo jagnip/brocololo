@@ -91,6 +91,7 @@ export function PlannerBulkActionsFooter({
         width: insetBounds.width,
       }}
       role="toolbar"
+      data-planner-bulk-actions=""
       aria-label="Bulk slot actions"
     >
       {/* Count on the left; actions + Done grouped on the right. */}

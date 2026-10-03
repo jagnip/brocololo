@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { PlannerMealType } from "@/src/generated/enums";
 import { PlannerSlotCard } from "./planner-slot-card";
@@ -10,7 +10,7 @@ vi.mock("next/image", () => ({
 }));
 
 vi.mock("./plan-slot-meal-dialog", () => ({
-  PlanSlotMealDialog: () => null,
+  PlanSlotMealDialog: ({ open }: { open: boolean }) => open ? <div role="dialog">Meal editor</div> : null,
 }));
 
 vi.mock("./slot-audience-select", () => ({
@@ -54,6 +54,36 @@ function createSlot(recipe: RecipeType): SlotInputType {
 }
 
 describe("PlannerSlotCard batch badge", () => {
+  it.each(["recipe", "custom", "empty"])("selects the %s card body without intercepting controls", (kind) => {
+    const recipe = createBatchRecipe();
+    const slot = createSlot(recipe);
+    if (kind !== "recipe") slot.recipe = null;
+    if (kind === "custom") slot.customMeal = { name: "Custom dinner", ingredients: [] };
+    const onCardSelect = vi.fn();
+    const onSelectionChange = vi.fn();
+    const onRemove = vi.fn();
+    const { container } = render(
+      <PlannerSlotCard
+        slot={slot}
+        onCardSelect={onCardSelect}
+        onSelectionChange={onSelectionChange}
+        onSetMeal={vi.fn()}
+        onRemove={onRemove}
+        recipes={[recipe]}
+        ingredientOptions={[]}
+      />,
+    );
+    const card = container.querySelector("[data-planner-selection-card]")!;
+    fireEvent.click(card, { shiftKey: true });
+    expect(onCardSelect).toHaveBeenCalledWith({ shiftKey: true, metaKey: false, ctrlKey: false });
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(onSelectionChange).toHaveBeenCalledWith(true);
+    expect(onCardSelect).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: kind === "empty" ? /Add meal/ : "Edit meal" }));
+    expect(screen.getByRole("dialog")).toHaveTextContent("Meal editor");
+    expect(onCardSelect).toHaveBeenCalledTimes(1);
+  });
+
   it("shows Batch · N of M when recipe is a batch recipe and a label is provided", () => {
     const recipe = createBatchRecipe();
     render(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type MouseEvent } from "react";
 import type { SlotInputType } from "@/types/planner";
 import type { PlanSlotMealPayload } from "@/types/planner";
 import type { RecipeType } from "@/types/recipe";
@@ -62,7 +62,7 @@ type PlannerSlotCardProps = {
   slot: SlotInputType;
   isSelected?: boolean;
   onSelectionChange?: (checked: boolean) => void;
-  onShiftSelect?: () => void;
+  onCardSelect?: (modifiers: { shiftKey: boolean; metaKey: boolean; ctrlKey: boolean }) => void;
   fridgeMatchIngredients?: string[];
   onShuffle?: () => void;
   onSetMeal?: (payload: PlanSlotMealPayload) => void;
@@ -82,7 +82,7 @@ export function PlannerSlotCard({
   slot,
   isSelected = false,
   onSelectionChange,
-  onShiftSelect,
+  onCardSelect,
   fridgeMatchIngredients,
   onShuffle,
   onSetMeal,
@@ -119,6 +119,16 @@ export function PlannerSlotCard({
       ? slot.cookingFamilyMemberIds
       : familyMembers.map((member) => member.id);
   const hasSelectionControls = Boolean(onSelectionChange);
+  const handleCardClick = (event: MouseEvent<HTMLElement>) => {
+    if (!onCardSelect || !(event.target instanceof Element)) return;
+    if (event.target.closest("a, button, input, select, textarea, [role='checkbox']")) return;
+    event.preventDefault();
+    onCardSelect({
+      shiftKey: event.shiftKey,
+      metaKey: event.metaKey,
+      ctrlKey: event.ctrlKey,
+    });
+  };
   const initialOccasionSlug =
     PLANNER_MEAL_TYPE_TO_OCCASION_SLUG[slot.mealType] ?? null;
 
@@ -260,11 +270,8 @@ export function PlannerSlotCard({
             "relative flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed border-border bg-card p-0 py-0 shadow-none transition-colors",
             isSelected && "border-2 border-primary",
           )}
-          onClick={(event) => {
-            if (!event.shiftKey) return;
-            event.preventDefault();
-            onShiftSelect?.();
-          }}
+          data-planner-selection-card=""
+          onClick={handleCardClick}
         >
           {renderSelectionCheckbox(`Select ${mealLabel} slot`)}
           {canEdit ? (
@@ -321,12 +328,8 @@ export function PlannerSlotCard({
             slot.used && "opacity-50",
             isSelected && "border-2 border-primary",
           )}
-          onClick={(event) => {
-            // Card body is inert — only shift-click range-selects.
-            if (!event.shiftKey) return;
-            event.preventDefault();
-            onShiftSelect?.();
-          }}
+          data-planner-selection-card=""
+          onClick={handleCardClick}
         >
           {renderSelectionCheckbox(`Select ${customMeal.name} (${mealLabel})`, {
             elevated: true,
@@ -392,13 +395,8 @@ export function PlannerSlotCard({
           slot.used && "opacity-50",
           isSelected && "border-2 border-primary",
         )}
-        onClick={(event) => {
-          // Card body is inert — only shift-click range-selects. Title link
-          // remains the route to the recipe page.
-          if (!event.shiftKey) return;
-          event.preventDefault();
-          onShiftSelect?.();
-        }}
+        data-planner-selection-card=""
+        onClick={handleCardClick}
       >
         {renderSelectionCheckbox(`Select ${recipe!.name} (${mealLabel})`, {
           elevated: true,
