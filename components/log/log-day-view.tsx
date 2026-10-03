@@ -11,7 +11,9 @@ import {
 } from "@dnd-kit/core";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Printer } from "lucide-react";
 import { useTopbar } from "@/components/context/topbar-context";
+import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 import { LogMealType } from "@/src/generated/enums";
 import { formatDayLabel } from "@/lib/planner/helpers";
@@ -50,9 +52,12 @@ import { LogDuplicateEntryDialog } from "./log-duplicate-entry-dialog";
 import { LogDayPersonToolbarControls } from "./log-day-person-toolbar-controls";
 import type { DateRangeValue } from "@/components/planner/date-range-picker";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LogPlanSummary } from "./log-plan-summary";
 
 const MISSING_LOG_CONTEXT_MESSAGE = "Missing log context for this action";
 const SLOT_NOT_READY_MESSAGE = "This slot isn't set up for this day yet";
+type LogViewMode = "day" | "all-days";
 
 type IngredientFormDependencies = {
   categories: Array<{ id: string; name: string }>;
@@ -149,6 +154,11 @@ function toRecipeIngredients(
   });
 }
 
+export type LogToolbarControls = {
+  viewSwitcher: ReactNode;
+  filters: ReactNode;
+};
+
 type LogDayViewProps = {
   days: LogDayData[];
   familyMembers?: FamilyMemberRow[];
@@ -167,7 +177,7 @@ type LogDayViewProps = {
   >;
   ingredientFormDependencies?: IngredientFormDependencies;
   hideDayPersonInHeader?: boolean;
-  onRegisterToolbarControls?: (node: ReactNode | null) => void;
+  onRegisterToolbarControls?: (controls: LogToolbarControls | null) => void;
   /** Mirrors PlanEditor: drives toolbar spinner while log mutations are in flight. */
   onSaveStatusChange?: (isSaving: boolean) => void;
 };
@@ -242,6 +252,7 @@ export function LogDayViewController({
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(
     defaultDayKey,
   );
+  const [viewMode, setViewMode] = useState<LogViewMode>("day");
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlotState | null>(
     null,
   );
@@ -1023,19 +1034,53 @@ export function LogDayViewController({
       return;
     }
 
-    if (!selectedDayKey || visibleDays.length === 0) {
+    if (viewMode === "day" && (!selectedDayKey || visibleDays.length === 0)) {
       onRegisterToolbarControls(null);
       return;
     }
 
-    onRegisterToolbarControls(
-      <LogDayPersonToolbarControls
-        days={visibleDays}
-        selectedDayKey={selectedDayKey}
-        onSelectDay={handleSelectDay}
-        familyMembers={familyMembers}
-      />,
-    );
+    onRegisterToolbarControls({
+      viewSwitcher: (
+        <Tabs
+          value={viewMode}
+          onValueChange={(value) => {
+            if (value === "day" || value === "all-days") {
+              setViewMode(value);
+            }
+          }}
+          className="w-fit shrink-0"
+        >
+          <TabsList className="h-10 gap-[2px] shadow-xs" aria-label="Log view">
+            <TabsTrigger value="day">Day</TabsTrigger>
+            <TabsTrigger value="all-days">All days</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      ),
+      filters: (
+      <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
+        <LogDayPersonToolbarControls
+          days={visibleDays}
+          selectedDayKey={selectedDayKey ?? ""}
+          onSelectDay={handleSelectDay}
+          familyMembers={familyMembers}
+          showDaySelector={viewMode === "day"}
+        />
+        {viewMode === "all-days" ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="shrink-0 print:hidden"
+            aria-label="Print / Save PDF"
+            disabled={isContentPending || isLogActionPending || visibleDays.length === 0}
+            onClick={() => window.print()}
+          >
+            <Printer />
+          </Button>
+        ) : null}
+      </div>
+      ),
+    });
 
     return () => {
       onRegisterToolbarControls(null);
@@ -1044,8 +1089,11 @@ export function LogDayViewController({
     familyMembers,
     hideDayPersonInHeader,
     handleSelectDay,
+    isContentPending,
+    isLogActionPending,
     onRegisterToolbarControls,
     selectedDayKey,
+    viewMode,
     visibleDays,
   ]);
 
@@ -1176,6 +1224,9 @@ export function LogDayViewController({
           }}
           onSubmit={handleDuplicateEntry}
         />
+        {viewMode === "all-days" ? <LogPlanSummary days={visibleDays} /> : null}
+        {/* Keep editor drafts and their effects mounted while reviewing statistics. */}
+        <div hidden={viewMode !== "day"}>
         {activeDay ? (
           <LogActiveDayView
             day={activeDay}
@@ -1206,6 +1257,7 @@ export function LogDayViewController({
             onSave={handleSlotSave}
           />
         ) : null}
+        </div>
       </section>
     </DndContext>
   );

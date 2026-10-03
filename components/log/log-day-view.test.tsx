@@ -1,10 +1,12 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ComponentProps } from "react";
+import { useCallback, useState, type ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LogMealType } from "@/src/generated/enums";
-import { LogDayView } from "./log-day-view";
+import { LogDayView, type LogToolbarControls } from "./log-day-view";
 import type { LogDayData } from "@/lib/log/view-model";
+
+const filterState = vi.hoisted(() => ({ pending: false }));
 
 vi.mock("@/components/context/topbar-context", async (importOriginal) => {
   const actual =
@@ -15,7 +17,7 @@ vi.mock("@/components/context/topbar-context", async (importOriginal) => {
       config: null,
       setConfig: vi.fn(),
       clearConfig: vi.fn(),
-      isLogFilterPending: false,
+      isLogFilterPending: filterState.pending,
       setLogFilterPending: vi.fn(),
     }),
   };
@@ -93,6 +95,7 @@ const testFamilyMembers = [
     portionMultiplier: 1,
   },
 ] as const;
+const toolbarFamilyMembers = testFamilyMembers.map((member) => ({ ...member }));
 
 const ingredientFormDependencies = {
   categories: [{ id: "cat-dairy", name: "Dairy" }],
@@ -110,9 +113,30 @@ function TestLogDayView(props: ComponentProps<typeof LogDayView>) {
   );
 }
 
+function TestLogDayViewWithToolbar(props: ComponentProps<typeof LogDayView>) {
+  const [toolbar, setToolbar] = useState<LogToolbarControls | null>(null);
+  const registerToolbar = useCallback((node: LogToolbarControls | null) => {
+    setToolbar(node);
+  }, []);
+
+  return (
+    <>
+      {toolbar?.viewSwitcher}
+      {toolbar?.filters}
+      <TestLogDayView
+        {...props}
+        familyMembers={toolbarFamilyMembers}
+        hideDayPersonInHeader
+        onRegisterToolbarControls={registerToolbar}
+      />
+    </>
+  );
+}
+
 describe("LogDayView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    filterState.pending = false;
     appendNextLogDayActionMock.mockResolvedValue({
       type: "success",
       dateKey: "2026-03-18",
@@ -121,6 +145,61 @@ describe("LogDayView", () => {
       type: "success",
       nextDayKey: "2026-03-19",
     });
+  });
+
+  it("switches from one-day tracking to the all-days summary", async () => {
+    const user = userEvent.setup();
+    const days: LogDayData[] = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        dateKey: "2026-03-17",
+        slots: [
+          {
+            mealType: LogMealType.BREAKFAST,
+            label: "Breakfast",
+            recipes: [
+              {
+                id: "r1",
+                entryRecipeId: "r1",
+                sourceRecipeId: "recipe-oatmeal",
+                mealLabel: "Breakfast",
+                cardKind: "recipe",
+                title: "Oatmeal",
+                slug: "oatmeal",
+                imageUrl: null,
+                calories: 350,
+                proteins: 12,
+                fats: 7,
+                carbs: 60,
+              },
+            ],
+          },
+          { mealType: LogMealType.LUNCH, label: "Lunch", recipes: [] },
+          { mealType: LogMealType.SNACK, label: "Snack", recipes: [] },
+          { mealType: LogMealType.DINNER, label: "Dinner", recipes: [] },
+        ],
+      },
+    ];
+
+    const view = renderLogDayView(<TestLogDayViewWithToolbar days={days} />);
+
+    const printMock = vi.spyOn(window, "print").mockImplementation(() => {});
+    await user.click(await screen.findByRole("tab", { name: "All days" }));
+
+    expect(screen.getByRole("heading", { name: "Daily breakdown" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Planned meals" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Print / Save PDF" }));
+    expect(printMock).toHaveBeenCalledOnce();
+    printMock.mockRestore();
+
+    filterState.pending = true;
+    view.rerender(<TestLogDayViewWithToolbar days={days} />);
+    expect(screen.getByRole("button", { name: "Print / Save PDF" })).toBeDisabled();
+    filterState.pending = false;
+    view.rerender(<TestLogDayViewWithToolbar days={[]} />);
+    expect(screen.getByRole("button", { name: "Print / Save PDF" })).toBeDisabled();
   });
 
   it("groups duplicate planner pool cards and shows quantity counter", () => {
@@ -506,7 +585,7 @@ describe("LogDayView", () => {
     ];
 
     renderLogDayView(
-      <TestLogDayView
+      <TestLogDayViewWithToolbar
         days={days}
         logId="log-1"
         person="PRIMARY"
@@ -541,6 +620,13 @@ describe("LogDayView", () => {
     expect(
       screen.getAllByRole("button", { name: /add ingredient/i }).length,
     ).toBeGreaterThan(0);
+
+    const amount = screen.getByRole("spinbutton");
+    await user.clear(amount);
+    await user.type(amount, "75");
+    await user.click(screen.getByRole("tab", { name: "All days" }));
+    await user.click(screen.getByRole("tab", { name: "Day" }));
+    expect(screen.getByRole("spinbutton")).toHaveValue(75);
   });
 
   it("adds next day and navigates to new day tab URL", async () => {

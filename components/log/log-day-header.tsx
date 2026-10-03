@@ -8,21 +8,7 @@ import type { LogDayData } from "@/lib/log/view-model";
 import { formatDayLabel } from "@/lib/planner/helpers";
 import { PageHeader } from "../page-header";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
-
-function toDayMacros(day: LogDayData) {
-  return day.slots.reduce(
-    (totals, slot) => {
-      for (const recipe of slot.recipes) {
-        totals.calories += recipe.calories;
-        totals.proteins += recipe.proteins;
-        totals.fats += recipe.fats;
-        totals.carbs += recipe.carbs;
-      }
-      return totals;
-    },
-    { calories: 0, proteins: 0, fats: 0, carbs: 0 },
-  );
-}
+import { getLogDayStatistics } from "@/lib/log/statistics";
 
 /** Title row for the active log day: label, remove, daily macro totals. */
 export type LogDayPanelHeaderProps = {
@@ -58,7 +44,7 @@ export function LogDayHeader({
   showPageHeader = true,
   familyMembers,
 }: LogDayPanelHeaderProps) {
-  const dayMacros = toDayMacros(day);
+  const dayMacros = getLogDayStatistics(day);
 
   return (
     <div>

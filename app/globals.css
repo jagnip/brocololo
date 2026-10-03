@@ -467,3 +467,47 @@
     background: linear-gradient(-90deg, var(--background), transparent);
   }
 }
+
+@media print {
+  /* Keep the report in normal flow so the browser can paginate the full diary. */
+  body:has([data-log-plan-summary]),
+  body *:has([data-log-plan-summary]) {
+    display: block !important;
+    position: static !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  body:has([data-log-plan-summary]) > :not(:has([data-log-plan-summary])):not([data-log-plan-summary]),
+  body *:has([data-log-plan-summary]) > :not(:has([data-log-plan-summary])):not([data-log-plan-summary]) {
+    display: none !important;
+  }
+
+  [data-log-plan-summary] {
+    position: static;
+    width: 100%;
+    background: var(--card);
+    color: var(--card-foreground);
+  }
+
+  [data-log-summary-row] {
+    break-inside: avoid;
+  }
+
+  [data-log-food-diary] {
+    break-before: page;
+  }
+
+  [data-log-food-heading] {
+    break-after: avoid;
+  }
+
+  [data-log-food-group] {
+    break-inside: avoid;
+  }
+}
