@@ -1,4 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
+import { useState } from "react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { LogMealType } from "@/src/generated/enums";
 import type { LogDayData, LogSlotData } from "@/lib/log/view-model";
@@ -47,9 +49,14 @@ const days: LogDayData[] = [
   },
 ];
 
+function TestSummary({ days }: { days: LogDayData[] }) {
+  const [excludedDayKeys, setExcludedDayKeys] = useState<Set<string>>(() => new Set());
+  return <LogPlanSummary days={days} excludedDayKeys={excludedDayKeys} onExcludedDayKeysChange={setExcludedDayKeys} />;
+}
+
 describe("LogPlanSummary", () => {
   it("shows selected-person averages and every plan day", () => {
-    render(<LogPlanSummary days={days} />);
+    render(<TestSummary days={days} />);
 
     expect(screen.getAllByText("450 kcal")).toHaveLength(2);
     expect(screen.getByText("No entries")).toBeInTheDocument();
@@ -76,7 +83,7 @@ describe("LogPlanSummary", () => {
       ],
     }];
 
-    render(<LogPlanSummary days={[loggedDay]} />);
+    render(<TestSummary days={[loggedDay]} />);
 
     const recipeIngredients = screen.getByRole("list", { name: "Oatmeal ingredients", hidden: true });
     expect(within(recipeIngredients).getByText("Oats")).toBeInTheDocument();
@@ -89,5 +96,40 @@ describe("LogPlanSummary", () => {
     expect(within(standaloneIngredients).getByText("1 piece")).toBeInTheDocument();
     expect(screen.queryByText("Custom snack")).not.toBeInTheDocument();
     expect(screen.queryByText(/Planned meals still waiting/)).not.toBeInTheDocument();
+  });
+
+  it("defaults to all days and uses selection for averages and the food report", async () => {
+    const user = userEvent.setup();
+    const secondDay = { ...days[1]!, slots: makeSlots(true) };
+    secondDay.slots[0]!.recipes[0] = {
+      ...secondDay.slots[0]!.recipes[0]!,
+      title: "Toast",
+      calories: 150,
+      proteins: 10,
+      fats: 5,
+      carbs: 20,
+    };
+    render(<TestSummary days={[days[0]!, secondDay]} />);
+
+    expect(screen.getByRole("checkbox", { name: "Select all days" })).toBeChecked();
+    expect(screen.queryByRole("heading", { name: "Daily averages" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/days selected/)).not.toBeInTheDocument();
+    expect(screen.getByText("300 kcal")).toBeInTheDocument();
+    expect(screen.getByText("Toast")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("checkbox", { name: "Include Wed 18 Mar" }));
+
+    expect(screen.getAllByText("450 kcal")).toHaveLength(2);
+    expect(screen.getByRole("checkbox", { name: "Select all days" })).toBePartiallyChecked();
+    expect(screen.queryByText("Toast")).not.toBeInTheDocument();
+    const rows = within(screen.getByRole("list", { name: "Daily nutrition statistics" })).getAllByRole("listitem");
+    expect(rows[1]).toHaveAttribute("data-selected", "false");
+
+    await user.click(screen.getByRole("checkbox", { name: "Select all days" }));
+    expect(screen.getByText("300 kcal")).toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: "Select all days" }));
+    expect(screen.getAllByText("--")).toHaveLength(4);
+    expect(screen.queryByText(/Select at least one day/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Oatmeal")).not.toBeInTheDocument();
   });
 });
