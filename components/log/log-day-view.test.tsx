@@ -147,6 +147,58 @@ describe("LogDayView", () => {
     });
   });
 
+  it("keeps planned meals foldable in the separate Log layout on phones", async () => {
+    vi.stubGlobal("innerWidth", 390);
+    const user = userEvent.setup();
+    const date = new Date("2026-03-17T00:00:00.000Z");
+
+    try {
+      renderLogDayView(
+        <TestLogDayViewWithToolbar
+          days={[{ date, dateKey: "2026-03-17", slots: [] }]}
+          logId="log-1"
+          familyMemberId="family-self"
+          allowDayManagement={false}
+          plannerPool={[
+            {
+              id: "plan-slot-1",
+              planSlotId: "slot-1",
+              date,
+              dateKey: "2026-03-17",
+              mealType: LogMealType.BREAKFAST,
+              mealLabel: "Breakfast",
+              title: "Planned oatmeal",
+              sourceRecipeId: "recipe-oatmeal",
+              imageUrl: null,
+              ingredients: [],
+            },
+          ]}
+        />,
+      );
+
+      const trigger = await screen.findByRole("button", { name: "Planned meals" });
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+      expect(trigger).toHaveAttribute("data-variant", "outline");
+      expect(screen.queryByText("Planned oatmeal")).not.toBeInTheDocument();
+
+      await user.click(trigger);
+      expect(trigger).toHaveAttribute("aria-expanded", "true");
+      expect(screen.getByText("Planned oatmeal")).toBeVisible();
+
+      await user.click(screen.getByRole("tab", { name: "All days" }));
+      expect(screen.queryByRole("button", { name: "Planned meals" })).not.toBeInTheDocument();
+      await user.click(screen.getByRole("tab", { name: "Day" }));
+      expect(trigger).toHaveAttribute("aria-expanded", "true");
+      expect(screen.getByText("Planned oatmeal")).toBeVisible();
+
+      await user.click(trigger);
+      expect(trigger).toHaveAttribute("aria-expanded", "false");
+      expect(screen.queryByText("Planned oatmeal")).not.toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("switches from one-day tracking to the all-days summary", async () => {
     const user = userEvent.setup();
     const days: LogDayData[] = [
@@ -378,10 +430,15 @@ describe("LogDayView", () => {
     expect(screen.getByText("Oatmeal")).toBeInTheDocument();
     expect(screen.getByText("Chicken Bowl")).toBeInTheDocument();
     expect(screen.getByText("Salmon Rice")).toBeInTheDocument();
-    expect(screen.getByText("1750 kcal")).toBeInTheDocument();
-    expect(screen.getByText("115.0g protein")).toBeInTheDocument();
-    expect(screen.getByText("57.0g fat")).toBeInTheDocument();
-    expect(screen.getByText("164.0g carbs")).toBeInTheDocument();
+    const nutrition = within(screen.getByRole("region", { name: "Daily nutrition" }));
+    expect(nutrition.getByText("Calories")).toBeInTheDocument();
+    expect(nutrition.getByText("1750 kcal")).toBeInTheDocument();
+    expect(nutrition.getByText("Protein")).toBeInTheDocument();
+    expect(nutrition.getByText("115.0 g")).toBeInTheDocument();
+    expect(nutrition.getByText("Fat")).toBeInTheDocument();
+    expect(nutrition.getByText("57.0 g")).toBeInTheDocument();
+    expect(nutrition.getByText("Carbs")).toBeInTheDocument();
+    expect(nutrition.getByText("164.0 g")).toBeInTheDocument();
     expect(screen.queryByText("Snack: empty")).not.toBeInTheDocument();
 
     expect(
