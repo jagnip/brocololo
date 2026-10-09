@@ -460,10 +460,6 @@ export function PlannerSlotCard({
                   </Badge>
                 ))}
             </div>
-            <SlotIngredientSummary
-              visibleLines={ingredientSummary.visibleLines}
-              remainingCount={ingredientSummary.remainingCount}
-            />
             {renderSlotActions({
               canShuffle: Boolean(canShuffle),
               showChange: canEdit,

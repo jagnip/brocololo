@@ -4,6 +4,7 @@ import { PlannerMealType } from "@/src/generated/enums";
 import { PlannerSlotCard } from "./planner-slot-card";
 import type { RecipeType } from "@/types/recipe";
 import type { SlotInputType } from "@/types/planner";
+import { createMockIngredient, createMockRecipeIngredient } from "@/lib/tests/test-helpers";
 
 vi.mock("next/image", () => ({
   default: (props: { alt: string }) => <img alt={props.alt} />,
@@ -54,6 +55,33 @@ function createSlot(recipe: RecipeType): SlotInputType {
 }
 
 describe("PlannerSlotCard batch badge", () => {
+  it("omits recipe ingredient previews while preserving recipe details and editing", () => {
+    const ingredients = ["Apple", "Milk", "Oats", "Cinnamon", "Egg", "Yogurt"].map((name, index) =>
+      createMockRecipeIngredient({
+        id: `ri-${index}`,
+        ingredientId: `ingredient-${index}`,
+        ingredient: createMockIngredient({ id: `ingredient-${index}`, name }),
+      }),
+    );
+    const recipe = createBatchRecipe({ ingredients });
+    render(
+      <PlannerSlotCard
+        slot={createSlot(recipe)}
+        onSetMeal={vi.fn()}
+        recipes={[recipe]}
+        ingredientOptions={[]}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "Bolognese" })).toBeInTheDocument();
+    expect(screen.getByText("Dinner")).toBeInTheDocument();
+    expect(screen.getByText("25 min")).toBeInTheDocument();
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Apple|Milk|Oats|Cinnamon|Egg|Yogurt|and \d+ more/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Edit meal" }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
   it.each(["recipe", "custom", "empty"])("selects the %s card body without intercepting controls", (kind) => {
     const recipe = createBatchRecipe();
     const slot = createSlot(recipe);
