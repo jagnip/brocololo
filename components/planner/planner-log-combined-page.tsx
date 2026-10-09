@@ -58,10 +58,10 @@ export async function PlannerLogCombinedPage({
   ] =
     await Promise.all([
       getPlanById(userId, planId),
-      getRecipes(userId, undefined, undefined, false),
-      getRecipes(userId),
+      initialTab === "plan" ? getRecipes(userId, undefined, undefined, false) : Promise.resolve([]),
+      initialTab === "log" ? getRecipes(userId) : Promise.resolve([]),
       getIngredients(userId),
-      planHasShoppingList(userId, planId),
+      initialTab === "plan" ? planHasShoppingList(userId, planId) : Promise.resolve(false),
       ensureSelfFamilyMember(userId),
     ]);
 
@@ -82,7 +82,9 @@ export async function PlannerLogCombinedPage({
     planAudienceMembers.find((member) => member.isSelf) ??
     planAudienceMembers[0];
   if (!selectedFamilyMember) notFound();
-  const log = await getLogByPlanId(userId, planId, selectedFamilyMember.id);
+  const log = initialTab === "log"
+    ? await getLogByPlanId(userId, planId, selectedFamilyMember.id)
+    : null;
 
   const initialDateRange = toInitialDateRange(planSlots);
   // Default Track day: URL value if present, else today / nearest boundary of this plan.

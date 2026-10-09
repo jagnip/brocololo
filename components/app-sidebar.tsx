@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   CookingPot,
   UtensilsCrossed,
   ShoppingCart,
   Apple,
   Settings,
+  NotebookPen,
 } from "lucide-react";
 import { SidebarUserMenu } from "@/components/sidebar-user-menu";
 import {
@@ -19,16 +20,12 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { isMobile, setOpenMobile } = useSidebar();
 
   const closeMobileSidebar = () => {
@@ -38,15 +35,10 @@ export function AppSidebar() {
 
   const isRecipes = pathname.startsWith(ROUTES.recipes);
   const isIngredients = pathname.startsWith(ROUTES.ingredients);
-  const isProgram =
-    pathname.startsWith(ROUTES.plan) || pathname.startsWith(ROUTES.log);
+  const isPlan = pathname.startsWith(ROUTES.plan);
+  const isLog = pathname.startsWith(ROUTES.log);
   const isGroceries = pathname.startsWith(ROUTES.groceries);
   const isSettings = pathname.startsWith(ROUTES.settings);
-
-  // Manage is the default tab when `tab` is missing or anything other than log.
-  const planTab = searchParams.get("tab");
-  const isTrackTab = isProgram && planTab === "log";
-  const isManageTab = isProgram && !isTrackTab;
 
   return (
     <Sidebar collapsible="icon" className="border-sidebar-border">
@@ -77,40 +69,24 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
 
-            {/* Meal plan: parent opens Manage; nested links open Manage or Track. */}
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={isProgram} tooltip="Meal plan">
+              <SidebarMenuButton asChild isActive={isPlan} tooltip="Meal plan">
                 <Link
-                  href={`${ROUTES.planCurrent}?tab=plan`}
+                  href={ROUTES.planCurrent}
                   onClick={closeMobileSidebar}
                 >
                   <UtensilsCrossed />
                   <span>Meal plan</span>
                 </Link>
               </SidebarMenuButton>
-              {/* Extra top margin so Manage plan isn’t flush under Meal plan. */}
-              <SidebarMenuSub className="mt-1.5">
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton asChild isActive={isManageTab}>
-                    <Link
-                      href={`${ROUTES.planCurrent}?tab=plan`}
-                      onClick={closeMobileSidebar}
-                    >
-                      <span>Manage plan</span>
-                    </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton asChild isActive={isTrackTab}>
-                    <Link
-                      href={`${ROUTES.planCurrent}?tab=log`}
-                      onClick={closeMobileSidebar}
-                    >
-                      <span>Track plan</span>
-                    </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              </SidebarMenuSub>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={isLog} tooltip="Log">
+                <Link href={ROUTES.logCurrent} onClick={closeMobileSidebar}>
+                  <NotebookPen />
+                  <span>Log</span>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
 
             <SidebarMenuItem>

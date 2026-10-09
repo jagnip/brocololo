@@ -34,6 +34,11 @@ import {
 } from "@/lib/validations/log";
 import { requireUser } from "@/lib/auth/session";
 
+function revalidateLog(logId: string) {
+  revalidatePath(ROUTES.logView(logId));
+  revalidatePath("/log/plan/[planId]", "page");
+}
+
 export async function updateLogRecipeIngredientsAction(
   input: UpdateLogRecipeIngredientsInput,
 ) {
@@ -56,7 +61,7 @@ export async function updateLogRecipeIngredientsAction(
     };
   }
 
-  revalidatePath(ROUTES.logView(parsed.data.logId));
+  revalidateLog(parsed.data.logId);
   return { type: "success" as const };
 }
 
@@ -72,7 +77,7 @@ export async function addRecipeToLogAction(input: AddRecipeToLogInput) {
   try {
     const { id: userId } = await requireUser();
     const { logId } = await replaceMealSlotWithRecipe(userId, parsed.data);
-    revalidatePath(ROUTES.logView(logId));
+    revalidateLog(logId);
     revalidatePath(ROUTES.log);
     revalidatePath(ROUTES.logCurrent);
     revalidatePath("/");
@@ -113,7 +118,7 @@ export async function upsertLogSlotAction(input: UpsertLogSlotInput) {
     };
   }
 
-  revalidatePath(ROUTES.logView(parsed.data.logId));
+  revalidateLog(parsed.data.logId);
   return { type: "success" as const };
 }
 
@@ -147,7 +152,7 @@ export async function placePlannerPoolItemAction(input: PlacePlannerPoolItemInpu
     };
   }
 
-  revalidatePath(ROUTES.logView(parsed.data.logId));
+  revalidateLog(parsed.data.logId);
   return { type: "success" as const };
 }
 
@@ -171,7 +176,7 @@ export async function clearLogEntryAssignmentAction(input: ClearLogEntryAssignme
     };
   }
 
-  revalidatePath(ROUTES.logView(parsed.data.logId));
+  revalidateLog(parsed.data.logId);
   return { type: "success" as const };
 }
 
@@ -201,7 +206,7 @@ export async function duplicateLogEntryAction(input: DuplicateLogEntryInput) {
     };
   }
 
-  revalidatePath(ROUTES.logView(parsed.data.logId));
+  revalidateLog(parsed.data.logId);
   return { type: "success" as const };
 }
 
@@ -220,7 +225,7 @@ export async function appendNextLogDayAction(input: AppendNextLogDayInput) {
     if (result.type === "date_conflict") {
       return result;
     }
-    revalidatePath(ROUTES.logView(parsed.data.logId));
+    revalidateLog(parsed.data.logId);
     revalidatePath(ROUTES.planView(result.planId));
     revalidatePath(ROUTES.planCurrent);
     return { type: "success" as const, dateKey: result.dateKey };
@@ -248,7 +253,7 @@ export async function removeLogDayAction(input: RemoveLogDayInput) {
     if (result.type === "impact_warning") {
       return result;
     }
-    revalidatePath(ROUTES.logView(parsed.data.logId));
+    revalidateLog(parsed.data.logId);
     return result;
   } catch (error) {
     console.error("Error removing log day", error);
@@ -280,6 +285,7 @@ export async function deleteLogAction(
     await deleteLogById(userId, logId);
     const remainingLogs = await getLogs(userId);
     const nextLogId = remainingLogs[0]?.id ?? null;
+    revalidateLog(logId);
     revalidatePath(ROUTES.log);
     revalidatePath("/");
     return { type: "success", nextLogId };

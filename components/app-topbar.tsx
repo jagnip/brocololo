@@ -20,6 +20,7 @@ function pathnameExpectsBreadcrumbs(pathname: string): boolean {
   if (pathname === "/ingredients" || pathname.startsWith("/ingredients/"))
     return true;
   if (pathname.startsWith("/plan")) return true;
+  if (pathname.startsWith("/log")) return true;
   if (pathname.startsWith("/groceries")) return true;
   if (pathname === "/settings" || pathname.startsWith("/settings/")) return true;
   return false;
@@ -46,7 +47,6 @@ export function AppTopbar() {
   const isRecipesIndexRoute = pathname === "/recipes";
   const isRecipeCreateRoute = pathname === "/recipes/create";
   const isRecipeEditRoute = /^\/recipes\/[^/]+\/edit$/.test(pathname);
-  const isLogDetailRoute = /^\/log\/[^/]+$/.test(pathname);
   const isIngredientsIndexRoute = pathname === "/ingredients";
   const isIngredientCreateRoute = pathname === "/ingredients/create";
   const isIngredientEditRoute = /^\/ingredients\/[^/]+\/edit$/.test(pathname);
@@ -61,7 +61,6 @@ export function AppTopbar() {
   const shouldShowRecipesIndexTopbarSkeleton = isRecipesIndexRoute && !config;
   const shouldShowRecipeCreateTopbarSkeleton = isRecipeCreateRoute && !config;
   const shouldShowRecipeEditTopbarSkeleton = isRecipeEditRoute && !config;
-  const shouldShowLogTopbarSkeleton = isLogDetailRoute && !config;
   const shouldShowIngredientsTopbarSkeleton =
     isIngredientsIndexRoute && !config;
   const shouldShowIngredientCreateTopbarSkeleton =
@@ -121,14 +120,6 @@ export function AppTopbar() {
             <>
               <Skeleton className="h-9 w-20 rounded-md" />
               <Skeleton className="h-9 w-28 rounded-md" />
-            </>
-          ) : null}
-          {shouldShowLogTopbarSkeleton ? (
-            <>
-              <Skeleton className="h-9 w-48 rounded-md" />
-              <Skeleton className="h-9 w-32 rounded-md" />
-              <Skeleton className="h-9 w-9 rounded-md" />
-              <Skeleton className="h-9 w-9 rounded-md" />
             </>
           ) : null}
           {shouldShowIngredientsTopbarSkeleton ? (

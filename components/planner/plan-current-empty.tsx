@@ -26,11 +26,13 @@ export function PlanCurrentEmpty({
           <div className="flex items-center gap-2">
             <UtensilsCrossed className="h-5 w-5 text-muted-foreground" aria-hidden />
             <h1 id="plan-empty-heading" className="text-lg font-semibold tracking-tight">
-              No plans yet
+              {emptyBreadcrumbContext === "log" ? "Create a plan to start logging" : "No plans yet"}
             </h1>
           </div>
           <p className="text-sm text-muted-foreground">
-            Create your first plan to start scheduling meals.
+            {emptyBreadcrumbContext === "log"
+              ? "Plan your household's meals first, then record what each person actually ate here."
+              : "Create your first plan to start scheduling meals."}
           </p>
           <div>
             <Button asChild>

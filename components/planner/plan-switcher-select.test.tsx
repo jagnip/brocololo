@@ -1,17 +1,18 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PlanSwitcherSelect } from "./plan-switcher-select";
 
 const pushMock = vi.hoisted(() => vi.fn());
+const queryMock = vi.hoisted(() => ({ value: "memberId=member-1&day=2026-03-17" }));
 
 vi.mock("next/navigation", async () => {
   const actual = await vi.importActual<typeof import("next/navigation")>("next/navigation");
   return {
     ...actual,
     useRouter: () => ({ push: pushMock }),
-    useSearchParams: () => new URLSearchParams("person=PRIMARY&day=2026-03-17"),
+    useSearchParams: () => new URLSearchParams(queryMock.value),
   };
 });
 
@@ -51,6 +52,28 @@ const planOptions = [
 ];
 
 describe("PlanSwitcherSelect", () => {
+  beforeEach(() => {
+    queryMock.value = "memberId=member-1&day=2026-03-17";
+  });
+  it("kind=log stays in Log and resets the day when switching plans", async () => {
+    const user = userEvent.setup();
+    pushMock.mockClear();
+
+    render(
+      <PlanSwitcherSelect
+        variant="default"
+        kind="log"
+        options={planOptions}
+        currentId="plan-1"
+        ariaLabel="Switch meal plan"
+      />,
+    );
+
+    await user.selectOptions(screen.getByLabelText("plan-switcher-select"), "plan-2");
+
+    expect(pushMock).toHaveBeenCalledWith("/log/plan/plan-2?memberId=member-1");
+  });
+
   it("kind=plan navigates to selected plan and preserves query params", async () => {
     const user = userEvent.setup();
     pushMock.mockClear();
@@ -67,7 +90,7 @@ describe("PlanSwitcherSelect", () => {
 
     await user.selectOptions(screen.getByLabelText("plan-switcher-select"), "plan-2");
 
-    expect(pushMock).toHaveBeenCalledWith("/plan/plan-2?person=PRIMARY&day=2026-03-17");
+    expect(pushMock).toHaveBeenCalledWith("/plan/plan-2?memberId=member-1&day=2026-03-17");
   });
 
   it("kind=groceries navigates to groceries view and preserves query params", async () => {
@@ -86,7 +109,7 @@ describe("PlanSwitcherSelect", () => {
 
     await user.selectOptions(screen.getByLabelText("plan-switcher-select"), "plan-2");
 
-    expect(pushMock).toHaveBeenCalledWith("/groceries/plan-2?person=PRIMARY&day=2026-03-17");
+    expect(pushMock).toHaveBeenCalledWith("/groceries/plan-2?memberId=member-1&day=2026-03-17");
   });
 
   it("does not navigate when selecting the current plan", async () => {
@@ -106,6 +129,23 @@ describe("PlanSwitcherSelect", () => {
     await user.selectOptions(screen.getByLabelText("plan-switcher-select"), "plan-1");
 
     expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("does not let a legacy tracking tab move Meal plan switching into Log", async () => {
+    queryMock.value = "memberId=member-1&tab=log";
+    pushMock.mockClear();
+    const user = userEvent.setup();
+    render(
+      <PlanSwitcherSelect
+        variant="default"
+        kind="plan"
+        options={planOptions}
+        currentId="plan-1"
+        ariaLabel="Switch meal plan"
+      />,
+    );
+    await user.selectOptions(screen.getByLabelText("plan-switcher-select"), "plan-2");
+    expect(pushMock).toHaveBeenCalledWith("/plan/plan-2?memberId=member-1");
   });
 
   it("breadcrumb variant with one option renders static text", () => {

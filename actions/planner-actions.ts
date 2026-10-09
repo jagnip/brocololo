@@ -303,6 +303,8 @@ export async function updateSavedPlan(
     return { type: "error", message: "Failed to update plan." };
   }
 
+  revalidatePath(ROUTES.planView(planId));
+  revalidatePath(ROUTES.logPlanView(planId));
   revalidatePath("/");
   return { type: "success" };
 }
@@ -318,6 +320,7 @@ export async function generateLogFromPlan(
   try {
     const { id: userId } = await requireUser();
     const result = await generateBaselineLogForPlan(userId, planId);
+    revalidatePath(ROUTES.logPlanView(planId));
     revalidatePath(ROUTES.log);
     return result;
   } catch (error) {
@@ -342,6 +345,9 @@ export async function deletePlanAction(
   }
 
   revalidatePath(ROUTES.planCurrent);
+  revalidatePath(ROUTES.planView(planId));
+  revalidatePath(ROUTES.logPlanView(planId));
+  revalidatePath(ROUTES.logCurrent);
   revalidatePath(ROUTES.log);
   revalidatePath("/");
   return { type: "success" };
