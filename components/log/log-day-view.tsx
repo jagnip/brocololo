@@ -253,6 +253,9 @@ export function LogDayViewController({
     defaultDayKey,
   );
   const [viewMode, setViewMode] = useState<LogViewMode>("day");
+  const [excludedDayKeys, setExcludedDayKeys] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlotState | null>(
     null,
   );
@@ -279,6 +282,9 @@ export function LogDayViewController({
       }),
     [dateRange, localDays],
   );
+  const reportDayCount = visibleDays.filter(
+    (day) => !excludedDayKeys.has(day.dateKey),
+  ).length;
 
   const visiblePlannerPool = useMemo(
     () =>
@@ -1072,7 +1078,7 @@ export function LogDayViewController({
             size="icon"
             className="shrink-0 print:hidden"
             aria-label="Print / Save PDF"
-            disabled={isContentPending || isLogActionPending || visibleDays.length === 0}
+            disabled={isContentPending || isLogActionPending || reportDayCount === 0}
             onClick={() => window.print()}
           >
             <Printer />
@@ -1092,6 +1098,7 @@ export function LogDayViewController({
     isContentPending,
     isLogActionPending,
     onRegisterToolbarControls,
+    reportDayCount,
     selectedDayKey,
     viewMode,
     visibleDays,
@@ -1224,7 +1231,14 @@ export function LogDayViewController({
           }}
           onSubmit={handleDuplicateEntry}
         />
-        {viewMode === "all-days" ? <LogPlanSummary days={visibleDays} /> : null}
+        {viewMode === "all-days" ? (
+          <LogPlanSummary
+            days={visibleDays}
+            excludedDayKeys={excludedDayKeys}
+            onExcludedDayKeysChange={setExcludedDayKeys}
+            disabled={isContentPending || isLogActionPending}
+          />
+        ) : null}
         {/* Keep editor drafts and their effects mounted while reviewing statistics. */}
         <div hidden={viewMode !== "day"}>
         {activeDay ? (
