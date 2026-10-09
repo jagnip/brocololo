@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PlanInputType } from "@/types/planner";
@@ -23,11 +23,13 @@ vi.mock("./plan-view", () => ({
     onShuffle,
     onRemove,
     onSetMeal,
+    onToggleUsed,
   }: {
     plan: PlanInputType;
     onShuffle?: (slotKey: string) => void;
     onRemove?: (slotKey: string) => void;
     onSetMeal?: (slotKey: string, payload: any) => void;
+    onToggleUsed?: (slotKey: string) => void;
   }) => {
     const first = plan[0];
     const slotKey = `${first.date.toISOString()}-${first.mealType}`;
@@ -54,6 +56,10 @@ vi.mock("./plan-view", () => ({
         <div aria-label="slot-count">{plan.length}</div>
         <div aria-label="dinner-by-day">{dinnerByDay}</div>
         <div aria-label="batch-groups">{batchGroups}</div>
+        <div aria-label="slot-used">{plan.map((slot) => String(slot.used)).join(",")}</div>
+        <button type="button" onClick={() => onToggleUsed?.(slotKey)}>
+          Toggle first cooked
+        </button>
         <button type="button" onClick={() => onShuffle?.(slotKey)}>
           Shuffle
         </button>
@@ -198,6 +204,144 @@ describe("PlanEditor autosave", () => {
     await waitFor(() => {
       expect(updateSavedPlan).toHaveBeenCalledTimes(1);
     }, { timeout: 2500 });
+  });
+
+  it("checks and unchecks every matching recipe slot through existing autosave", async () => {
+    vi.useFakeTimers();
+    const recipe = createRecipe("shared-meal");
+    const initialPlan: PlanInputType = [
+      { date: new Date("2026-03-17T00:00:00.000Z"), mealType: PlannerMealType.LUNCH, recipe, customMeal: null, alternatives: [], used: false },
+      { date: new Date("2026-03-18T00:00:00.000Z"), mealType: PlannerMealType.DINNER, recipe, customMeal: null, alternatives: [], used: false },
+      { date: new Date("2026-03-18T00:00:00.000Z"), mealType: PlannerMealType.LUNCH, recipe: createRecipe("other-meal"), customMeal: null, alternatives: [], used: false },
+    ];
+    const props = { planId: "plan-1", initialPlan, recipes: [], ingredientOptions: emptyIngredientOptions };
+    let view = renderPlanEditor(props);
+
+    try {
+      fireEvent.click(screen.getByRole("checkbox", { name: "Mark all shared-meal slots cooked" }));
+      expect(screen.getByLabelText("slot-used")).toHaveTextContent("true,true,false");
+      expect(within(screen.getByRole("region", { name: "Lunch" })).getByText("1 meal left")).toBeInTheDocument();
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      expect(updateSavedPlan).toHaveBeenCalledTimes(1);
+      const saved = vi.mocked(updateSavedPlan).mock.calls[0][1];
+      expect(saved.map((slot) => slot.used)).toEqual([true, true, false]);
+      expect(saved.map((slot) => [slot.date, slot.mealType, slot.recipeId])).toEqual(
+        initialPlan.map((slot) => [slot.date, slot.mealType, slot.recipe!.id]),
+      );
+
+      view.unmount();
+      view = renderPlanEditor({ ...props, initialPlan: initialPlan.map((slot, index) => ({ ...slot, used: saved[index].used })) });
+      expect(screen.getByRole("checkbox", { name: "Mark all shared-meal slots cooked" })).toBeChecked();
+      fireEvent.click(screen.getByRole("checkbox", { name: "Mark all shared-meal slots cooked" }));
+      expect(screen.getByLabelText("slot-used")).toHaveTextContent("false,false,false");
+      expect(within(screen.getByRole("region", { name: "Lunch" })).getByText("2 meals left")).toBeInTheDocument();
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      expect(updateSavedPlan).toHaveBeenCalledTimes(2);
+      expect(vi.mocked(updateSavedPlan).mock.calls[1][1].map((slot) => slot.used)).toEqual([false, false, false]);
+    } finally {
+      view.unmount();
+      vi.useRealTimers();
+    }
+  });
+
+  it("reflects individual card changes and keeps bulk checks during a date-range edit", () => {
+    const recipe = createRecipe("shared-meal");
+    const initialPlan: PlanInputType = [
+      { date: new Date("2026-03-17T00:00:00.000Z"), mealType: PlannerMealType.DINNER, recipe, customMeal: null, alternatives: [], used: false },
+      { date: new Date("2026-03-18T00:00:00.000Z"), mealType: PlannerMealType.DINNER, recipe, customMeal: null, alternatives: [], used: false },
+    ];
+    renderPlanEditor({ planId: "plan-1", initialPlan, recipes: [], ingredientOptions: emptyIngredientOptions });
+
+    fireEvent.click(screen.getByRole("button", { name: "Toggle first cooked" }));
+    expect(screen.getByRole("checkbox", { name: "Mark all shared-meal slots cooked" })).toHaveAttribute("aria-checked", "mixed");
+    fireEvent.click(screen.getByRole("checkbox", { name: "Mark all shared-meal slots cooked" }));
+    expect(screen.getByLabelText("slot-used")).toHaveTextContent("true,true");
+    fireEvent.click(screen.getByRole("button", { name: "Range restore" }));
+    expect(screen.getByRole("checkbox", { name: "Mark all shared-meal slots cooked" })).toBeChecked();
+    expect(within(screen.getByRole("region", { name: "Meal checklist" })).getByLabelText("2 planned slots")).toBeInTheDocument();
+  });
+
+  it("preserves checklist edits and existing error feedback when autosave fails", async () => {
+    vi.useFakeTimers();
+    vi.mocked(updateSavedPlan).mockResolvedValue({ type: "error", message: "Save failed" });
+    const view = renderPlanEditor({ planId: "plan-1", initialPlan: initialPlanForTests(), recipes: [], ingredientOptions: emptyIngredientOptions });
+
+    try {
+      const checkbox = screen.getByRole("checkbox", { name: "Mark all recipe-a slots cooked" });
+      fireEvent.click(checkbox);
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      expect(checkbox).toBeChecked();
+      expect(toast.error).toHaveBeenCalledWith("Save failed");
+      await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+      expect(updateSavedPlan).toHaveBeenCalledTimes(1);
+    } finally {
+      view.unmount();
+      vi.useRealTimers();
+    }
+  });
+
+  it.each([
+    { type: "success" as const },
+    { type: "error" as const, message: "Save failed" },
+    {
+      type: "date_conflict" as const,
+      dates: ["2026-03-18"],
+      conflictingLogIds: [],
+      conflictingPlanIds: [],
+    },
+    {
+      type: "sync_conflict" as const,
+      impactedDates: ["2026-03-17"],
+      impactedLogMealsCount: 1,
+      impactedPlanMealsCount: 1,
+    },
+  ])("reports pending debounce and in-flight save until $type", async (result) => {
+    vi.useFakeTimers();
+    const onSaveStatusChange = vi.fn();
+    let resolveSave!: (value: Awaited<ReturnType<typeof updateSavedPlan>>) => void;
+    vi.mocked(updateSavedPlan).mockReturnValueOnce(new Promise((resolve) => {
+      resolveSave = resolve;
+    }));
+    const view = renderPlanEditor({
+      planId: "plan-1",
+      initialPlan: initialPlanForTests(),
+      recipes: [],
+      ingredientOptions: emptyIngredientOptions,
+      onSaveStatusChange,
+    });
+
+    try {
+      expect(onSaveStatusChange).toHaveBeenLastCalledWith(false);
+      fireEvent.click(screen.getByRole("button", { name: "Shuffle" }));
+      expect(onSaveStatusChange).toHaveBeenLastCalledWith(true);
+      onSaveStatusChange.mockClear();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(999);
+      });
+      expect(updateSavedPlan).not.toHaveBeenCalled();
+      expect(onSaveStatusChange).not.toHaveBeenCalledWith(false);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1);
+      });
+      expect(updateSavedPlan).toHaveBeenCalledTimes(1);
+      expect(onSaveStatusChange).toHaveBeenLastCalledWith(true);
+      expect(onSaveStatusChange).not.toHaveBeenCalledWith(false);
+
+      await act(async () => {
+        resolveSave(result);
+      });
+      expect(onSaveStatusChange).toHaveBeenLastCalledWith(false);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      expect(updateSavedPlan).toHaveBeenCalledTimes(1);
+    } finally {
+      view.unmount();
+      vi.useRealTimers();
+    }
   });
 
   it("persists the whole plan payload via autosave", async () => {
@@ -734,4 +878,3 @@ function initialPlanForTests(): PlanInputType {
     },
   ];
 }
-

@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { PlanInputType, PlanSlotMealPayload, SetPlanMealOptions, SlotSaveData, type SlotInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PlanView } from "./plan-view";
+import { PlanMealChecklist } from "./plan-meal-checklist";
 import { toast } from "sonner";
 import { ROUTES } from "@/lib/constants";
 import { useRouter } from "next/navigation";
@@ -43,7 +44,7 @@ type PlanEditorProps = {
   hideInlineControls?: boolean;
   hidePageHeader?: boolean;
   disableDeleteDialog?: boolean;
-  /** Embedded shell shows save progress next to tabs instead of inline. */
+  /** Embedded shell tracks pending debounce and in-flight saves to guard navigation. */
   onSaveStatusChange?: (isSaving: boolean) => void;
 };
 
@@ -162,6 +163,7 @@ export function PlanEditor({
     }
     if (result.type === "error") {
       setSaveStatus("idle");
+      blockedAutosaveVersionRef.current = saveEditVersion;
       toast.error(result.message);
       return;
     }
@@ -181,7 +183,7 @@ export function PlanEditor({
     if (!isDirty || saveStatus === "saving" || syncConflict != null) {
       return;
     }
-    // If latest attempt hit date conflict, wait for a new edit before retrying.
+    // If latest attempt failed, wait for a new edit before retrying.
     if (blockedAutosaveVersionRef.current === editVersionRef.current) {
       return;
     }
@@ -402,6 +404,15 @@ export function PlanEditor({
     );
   }, []);
 
+  const handleChecklistCheckedChange = (slotKeys: string[], used: boolean) => {
+    const keys = new Set(slotKeys);
+    const applyCheckedState = (slot: SlotInputType) =>
+      keys.has(getPlanSlotKey(slot)) ? { ...slot, used } : slot;
+
+    allSlotsRef.current = allSlotsRef.current.map(applyCheckedState);
+    setPlan((previous) => previous.map(applyCheckedState));
+  };
+
   const handleAudienceChange = useCallback((slotKey: string, memberIds: string[]) => {
     const applyAudience = (slot: SlotInputType): SlotInputType => {
       const key = `${slot.date.toISOString()}-${slot.mealType}`;
@@ -447,8 +458,13 @@ export function PlanEditor({
   }, [planId]);
 
   useEffect(() => {
-    onSaveStatusChange?.(saveStatus === "saving");
-  }, [onSaveStatusChange, saveStatus]);
+    onSaveStatusChange?.(
+      saveStatus === "saving" ||
+        (isDirty &&
+          syncConflict == null &&
+          blockedAutosaveVersionRef.current !== editVersionRef.current),
+    );
+  }, [isDirty, onSaveStatusChange, plan, saveStatus, syncConflict]);
 
   useEffect(() => {
     if (disableDeleteDialog) {
@@ -659,6 +675,10 @@ export function PlanEditor({
         </div>
       )}
 
+      <PlanMealChecklist
+        plan={plan}
+        onCheckedChange={markEdited(handleChecklistCheckedChange)}
+      />
       <PlanView
         plan={plan}
         recipes={recipes}

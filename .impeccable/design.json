@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-09T13:30:00Z",
+  "title": "Design System: Turniply",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Rose",
+        "canonical": "oklch(0.72 0.165 13.4)",
+        "tonalRamp": [
+          "oklch(0.67 0.2 15)",
+          "oklch(0.72 0.165 13.4)",
+          "oklch(0.815 0.098 11.6)",
+          "oklch(0.941 0.024 12.4)",
+          "oklch(0.969 0.012 12.4)"
+        ]
+      }
+    },
+    "shadows": [
+      {
+        "name": "rose-lg",
+        "value": "0 10px 15px -3px color-mix(in oklch, var(--rose-100) 80%, transparent)",
+        "purpose": "Existing primary button and expanded logo elevation."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "description": "Existing primary action; use the Button primitive in the app.",
+      "html": "<button class=\"ds-button\">Create new plan</button>",
+      "css": ".ds-button { background: var(--primary); color: var(--primary-foreground); border: 0; border-radius: var(--radius-md); padding: 0.5rem 1rem; min-height: 2.25rem; font: 500 0.875rem var(--font-sans); box-shadow: var(--shadow-rose-lg); transition: background-color 150ms; } .ds-button:hover { background: color-mix(in oklch, var(--primary) 90%, transparent); } .ds-button:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; } .ds-button:disabled { opacity: 0.5; pointer-events: none; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "description": "Secondary navigation and actions use the existing outline variant.",
+      "html": "<button class=\"ds-outline\">View meal plan</button>",
+      "css": ".ds-outline { background: var(--sidebar); color: var(--secondary-foreground); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.5rem 1rem; min-height: 2.25rem; font: 500 0.875rem var(--font-sans); transition: background-color 150ms; } .ds-outline:hover { background: var(--muted); border-color: var(--ring); } .ds-outline:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; } .ds-outline:disabled { opacity: 0.5; pointer-events: none; }"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "description": "Existing bordered, rounded text field with visible focus and error states.",
+      "html": "<input class=\"ds-input\" aria-label=\"Meal name\" placeholder=\"Meal name\" />",
+      "css": ".ds-input { width: 100%; min-width: 0; height: 2.25rem; padding: 0.25rem 0.75rem; background: var(--card); color: var(--foreground); border: 1px solid var(--input); border-radius: var(--radius-md); font: 400 0.875rem var(--font-sans); } .ds-input::placeholder { color: var(--muted-foreground); } .ds-input:hover { border-color: var(--input); } .ds-input:focus-visible { outline: 2px solid var(--ring); } .ds-input[aria-invalid=true] { border-color: var(--destructive); } .ds-input:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Sidebar Navigation",
+      "kind": "nav",
+      "description": "Peer task destinations with a single active item; the app uses Sidebar primitives.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Main navigation\"><a href=\"/plan/current\" aria-current=\"page\">Meal plan</a><a href=\"/log/current\">Log</a></nav>",
+      "css": ".ds-nav { display: grid; gap: 0.375rem; background: var(--sidebar); font: 500 0.875rem var(--font-sans); } .ds-nav a { display: flex; align-items: center; min-height: 2rem; padding: 0.5rem; color: var(--sidebar-foreground); border-radius: var(--radius-md); text-decoration: none; } .ds-nav a:hover, .ds-nav a[aria-current=page] { background: var(--sidebar-accent); color: var(--sidebar-accent-foreground); } .ds-nav a:focus-visible { outline: 2px solid var(--sidebar-ring); }"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "description": "Existing rose-toned, pill-shaped label.",
+      "html": "<span class=\"ds-badge\">Breakfast</span>",
+      "css": ".ds-badge { display: inline-flex; width: fit-content; padding: 0.125rem 0.5rem; background: var(--accent); color: var(--accent-foreground); border: 1px solid var(--border); border-radius: 9999px; font: 600 0.75rem var(--font-sans); } .ds-badge:hover { background: var(--accent); } .ds-badge:focus-visible { outline: 3px solid var(--ring); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "description": "Existing rounded surface for grouped content, not a replacement page scaffold.",
+      "html": "<section class=\"ds-card\"><h2>Breakfast</h2><p>Planned meals</p></section>",
+      "css": ".ds-card { display: flex; flex-direction: column; gap: 1.5rem; padding: 1.5rem; background: var(--card); color: var(--card-foreground); border: 1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); } .ds-card h2 { margin: 0; font-family: var(--font-display); } .ds-card p { margin: 0; font-family: var(--font-sans); }"
+    }
+  ],
+  "narrative": {
+    "overview": "Preserve the incumbent visual identity: rose accents, light canvas, slate text, rounded controls, Quicksand headings, and Geist body text.",
+    "keyCharacteristics": [
+      "Semantic theme tokens",
+      "Existing shadcn primitives",
+      "Wrapping mobile controls"
+    ],
+    "rules": [],
+    "dos": [
+      "Reuse existing components and their state variants.",
+      "Use semantic color and spacing tokens."
+    ],
+    "donts": [
+      "Do not edit components/ui/ primitives.",
+      "Do not introduce one-off colors or fonts."
+    ]
+  }
+}

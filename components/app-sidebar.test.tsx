@@ -36,48 +36,48 @@ describe("AppSidebar meal plan links", () => {
     navigationState.searchParams = new URLSearchParams();
   });
 
-  it("exposes Manage plan and Track plan under Meal plan", () => {
+  it("exposes Meal plan and Log as peer destinations", () => {
     renderSidebar();
 
     expect(screen.getByRole("link", { name: "Meal plan" })).toHaveAttribute(
       "href",
-      `${ROUTES.planCurrent}?tab=plan`,
+      ROUTES.planCurrent,
     );
-    expect(screen.getByRole("link", { name: "Manage plan" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Log" })).toHaveAttribute(
       "href",
-      `${ROUTES.planCurrent}?tab=plan`,
+      ROUTES.logCurrent,
     );
-    expect(screen.getByRole("link", { name: "Track plan" })).toHaveAttribute(
-      "href",
-      `${ROUTES.planCurrent}?tab=log`,
+    expect(screen.queryByRole("link", { name: "Manage plan" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Track plan" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Log" }).closest("ul")).toBe(
+      screen.getByRole("link", { name: "Meal plan" }).closest("ul"),
     );
   });
 
-  it("marks Manage plan active on the plan tab", () => {
+  it("marks only Meal plan active on a plan page", () => {
     navigationState.pathname = "/plan/plan-1";
     navigationState.searchParams = new URLSearchParams("tab=plan");
     renderSidebar();
 
-    expect(screen.getByRole("link", { name: "Manage plan" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Meal plan" })).toHaveAttribute(
       "data-active",
       "true",
     );
-    expect(screen.getByRole("link", { name: "Track plan" })).not.toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Log" })).not.toHaveAttribute(
       "data-active",
       "true",
     );
   });
 
-  it("marks Track plan active on the log tab", () => {
-    navigationState.pathname = "/plan/plan-1";
-    navigationState.searchParams = new URLSearchParams("tab=log");
+  it("marks only Log active on a log page", () => {
+    navigationState.pathname = ROUTES.logPlanView("plan-1");
     renderSidebar();
 
-    expect(screen.getByRole("link", { name: "Track plan" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Log" })).toHaveAttribute(
       "data-active",
       "true",
     );
-    expect(screen.getByRole("link", { name: "Manage plan" })).not.toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Meal plan" })).not.toHaveAttribute(
       "data-active",
       "true",
     );

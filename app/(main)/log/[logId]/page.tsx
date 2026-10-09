@@ -12,7 +12,7 @@ export default async function LogDetailPage({
   searchParams: Promise<{ memberId?: string; day?: string }>;
 }) {
   const { logId } = await params;
-  const { memberId } = await searchParams;
+  const { memberId, day } = await searchParams;
   const { id: userId } = await requireUser();
   const familyMembers = await ensureSelfFamilyMember(userId);
   const selectedMember =
@@ -28,9 +28,9 @@ export default async function LogDetailPage({
   }
 
   const paramsForRedirect = new URLSearchParams();
-  paramsForRedirect.set("tab", "log");
+  if (day) paramsForRedirect.set("day", day);
   if (memberId) {
     paramsForRedirect.set("memberId", memberId);
   }
-  redirect(`${ROUTES.planView(log.plan.id)}?${paramsForRedirect.toString()}`);
+  redirect(`${ROUTES.logPlanView(log.plan.id)}${paramsForRedirect.size ? `?${paramsForRedirect}` : ""}`);
 }

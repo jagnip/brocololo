@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { ROUTES } from "@/lib/constants";
 
-export type PlanCurrentEmptyBreadcrumbContext = "meal-plan" | "groceries";
+export type PlanCurrentEmptyBreadcrumbContext = "meal-plan" | "groceries" | "log";
 
 type PlanCurrentEmptyTopbarProps = {
   context: PlanCurrentEmptyBreadcrumbContext;
@@ -21,6 +21,8 @@ export function PlanCurrentEmptyTopbar({ context }: PlanCurrentEmptyTopbarProps)
               { label: "Meal plan", href: ROUTES.planCurrent },
               { label: "No plans yet" },
             ]
+          : context === "log"
+            ? [{ label: "Log", href: ROUTES.logCurrent }, { label: "No plans yet" }]
           : [
               { label: "Groceries", href: ROUTES.groceriesCurrent },
               { label: "No plans yet" },

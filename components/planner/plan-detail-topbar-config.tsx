@@ -11,6 +11,7 @@ type PlanDetailTopbarConfigProps = {
   planId: string;
   planDateRangeLabel: string;
   planOptions: BreadcrumbSelectOption[];
+  surface?: "plan" | "log";
 };
 
 /** Plan detail: Create plan + overflow actions; plan switcher lives on the leaf breadcrumb. */
@@ -18,6 +19,7 @@ export function PlanDetailTopbarConfig({
   planId,
   planDateRangeLabel,
   planOptions,
+  surface = "plan",
 }: PlanDetailTopbarConfigProps) {
   const { state } = usePlanTopbarState();
 
@@ -29,8 +31,8 @@ export function PlanDetailTopbarConfig({
 
   const config = useMemo(
     () => ({
-      actions: PLAN_TOPBAR_ACTIONS,
-      overflowMenu: {
+      actions: surface === "log" ? [] : PLAN_TOPBAR_ACTIONS,
+      overflowMenu: surface === "log" ? undefined : {
         ariaLabel: "Meal plan actions",
         items: [
           {
@@ -59,15 +61,16 @@ export function PlanDetailTopbarConfig({
         ],
       },
       breadcrumbs: [
-        { label: "Meal plan", href: ROUTES.planCurrent },
+        { label: surface === "log" ? "Log" : "Meal plan", href: surface === "log" ? ROUTES.logCurrent : ROUTES.planCurrent },
         {
           label: planDateRangeLabel,
-          select: { kind: "plan" as const, options: planOptions, currentId: planId },
+          select: { kind: surface, options: planOptions, currentId: planId },
         },
       ],
     }),
     [
       generateGroceryLabel,
+      surface,
       planDateRangeLabel,
       planId,
       planOptions,

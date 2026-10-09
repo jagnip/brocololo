@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useTopbar } from "@/components/context/topbar-context";
 import { type DateRangeValue } from "@/components/planner/date-range-picker";
 import { PlanDateRangeDialog } from "@/components/planner/plan-date-range-dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlanEditor } from "@/components/planner/plan-editor";
 import { LogDayViewController, type LogToolbarControls } from "@/components/log/log-day-view";
 import { usePlanTopbarState } from "@/components/planner/plan-topbar-state-context";
@@ -30,7 +29,7 @@ import type {
   LogIngredientOption,
   EditableIngredientRow,
 } from "@/components/log/log-ingredients-form";
-import { useOptimistic, useTransition } from "react";
+import { useTransition } from "react";
 import { ROUTES } from "@/lib/constants";
 import {
   generateGroceryListFromPlan,
@@ -87,13 +86,7 @@ export function PlannerLogSharedShell({
   const searchParams = useSearchParams();
   const [dateRange, setDateRange] = useState<DateRangeValue>(initialDateRange);
 
-  const tabFromUrl = searchParams.get("tab");
-  const activeTab: PlannerLogTab =
-    tabFromUrl === "log" || tabFromUrl === "plan" ? tabFromUrl : initialTab;
-  const [isTabPending, startTabTransition] = useTransition();
   const [isGeneratingGroceries, startGroceryTransition] = useTransition();
-  const [optimisticTab, setOptimisticTab] =
-    useOptimistic<PlannerLogTab>(activeTab);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDateRangeDialogOpen, setIsDateRangeDialogOpen] = useState(false);
   const [isOverwriteGroceryDialogOpen, setIsOverwriteGroceryDialogOpen] =
@@ -111,26 +104,15 @@ export function PlannerLogSharedShell({
   const { isLogFilterPending } = useTopbar();
   const { setState: setPlanTopbarState, resetState: resetPlanTopbarState } =
     usePlanTopbarState();
-  const displayedTab = isTabPending ? optimisticTab : activeTab;
-  const isTrackTab = displayedTab === "log";
+  const isTrackTab = initialTab === "log";
   const showToolbarSpinner =
-    isTabPending ||
     isPlanSaving ||
     (isTrackTab && (isLogFilterPending || isLogSaving));
-
-  const setTab = (nextTab: PlannerLogTab) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", nextTab);
-    params.set("memberId", familyMemberId);
-    // Keep Track on today / nearest day when switching from Manage.
-    if (nextTab === "log" && !params.get("day")) {
-      params.set("day", initialSelectedDayKey);
-    }
-    const query = params.toString();
-    router.push(query ? `/plan/${planId}?${query}` : `/plan/${planId}`);
-  };
-
-  const hasLogData = useMemo(() => logData != null, [logData]);
+  const pendingLabel = isPlanSaving
+    ? "Saving plan"
+    : isLogSaving
+      ? "Saving log"
+      : "Loading log";
 
   const openMealSelectionDialog = useCallback(() => {
     setIsMealSelectionOpen(true);
@@ -184,6 +166,7 @@ export function PlannerLogSharedShell({
     isDeleting || isGeneratingGroceries || isLoadingMeals;
 
   useEffect(() => {
+    if (isTrackTab) return;
     setPlanTopbarState({
       onEditDates: () => setIsDateRangeDialogOpen(true),
       onGenerateGroceryList: openMealSelectionDialog,
@@ -201,6 +184,7 @@ export function PlannerLogSharedShell({
     };
   }, [
     actionBusy,
+    isTrackTab,
     isDeleting,
     isGeneratingGroceries,
     isLoadingMeals,
@@ -317,97 +301,57 @@ export function PlannerLogSharedShell({
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <Tabs
-            value={displayedTab}
-            onValueChange={(value) => {
-              if (value === "plan" || value === "log") {
-                setOptimisticTab(value);
-                startTabTransition(() => {
-                  setTab(value);
-                });
-              }
-            }}
-            className="w-fit shrink-0"
-          >
-            <TabsList className="h-10 gap-[2px] shadow-xs">
-              <TabsTrigger value="plan">Manage</TabsTrigger>
-              <TabsTrigger value="log">Track</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          {showToolbarSpinner ? (
-            <Loader2
-              className="h-4 w-4 shrink-0 animate-spin text-muted-foreground"
-              aria-label={
-                isPlanSaving
-                  ? "Saving plan"
-                  : isLogSaving
-                    ? "Saving log"
-                    : isTabPending
-                      ? "Loading tab"
-                      : "Loading log"
-              }
-            />
-          ) : null}
+      {showToolbarSpinner ? (
+        <div role="status" className="flex items-center gap-2 type-caption text-muted-foreground">
+          <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden="true" />
+          {pendingLabel}
         </div>
-        {isTrackTab && trackToolbarControls ? (
-          <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
-            {trackToolbarControls.viewSwitcher}
-            {trackToolbarControls.filters}
-          </div>
-        ) : null}
-      </div>
+      ) : null}
+      {isTrackTab && trackToolbarControls ? (
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+          {trackToolbarControls.filters}
+          {trackToolbarControls.viewSwitcher}
+        </div>
+      ) : null}
 
-      <Tabs value={displayedTab} className="w-full">
-        <TabsContent
-          value="plan"
-          forceMount
-          className={displayedTab !== "plan" ? "hidden" : undefined}
-        >
-          <PlanEditor
-            planId={planId}
-            initialPlan={initialPlan}
-            recipes={plannerRecipes}
-            ingredientOptions={ingredientOptions}
-            familyMembers={familyMembers}
-            sharedDateRange={dateRange}
-            hideInlineControls
-            hidePageHeader
-            disableDeleteDialog
-            onSaveStatusChange={setIsPlanSaving}
-          />
-        </TabsContent>
-        <TabsContent value="log">
-          {hasLogData && logData ? (
-            <LogDayViewController
-              days={logData.days}
-              familyMembers={familyMembers}
-              plannerPool={logData.plannerPool}
-              initialSelectedDayKey={
-                searchParams.get("day") ?? initialSelectedDayKey
-              }
-              logId={logData.logId}
-              familyMemberId={familyMemberId}
-              recipeOptions={logData.recipeOptions}
-              ingredientOptions={logData.ingredientOptions}
-              plannedMealsBySlotKey={plannedMealsBySlotKey}
-              dateRange={dateRange}
-              allowDayManagement={false}
-              hideDayPersonInHeader
-              onRegisterToolbarControls={setTrackToolbarControls}
-              onSaveStatusChange={setIsLogSaving}
-            />
-          ) : (
-            <section className="rounded-lg border border-border bg-card p-6">
-              <h2 className="text-lg font-medium">No log yet for this plan</h2>
-              <p className="text-sm text-muted-foreground">
-                A log will appear automatically for newly created plans.
-              </p>
-            </section>
-          )}
-        </TabsContent>
-      </Tabs>
+      {!isTrackTab ? (
+        <PlanEditor
+          planId={planId}
+          initialPlan={initialPlan}
+          recipes={plannerRecipes}
+          ingredientOptions={ingredientOptions}
+          familyMembers={familyMembers}
+          sharedDateRange={dateRange}
+          hideInlineControls
+          hidePageHeader
+          disableDeleteDialog
+          onSaveStatusChange={setIsPlanSaving}
+        />
+      ) : logData ? (
+        <LogDayViewController
+          days={logData.days}
+          familyMembers={familyMembers}
+          plannerPool={logData.plannerPool}
+          initialSelectedDayKey={searchParams.get("day") ?? initialSelectedDayKey}
+          logId={logData.logId}
+          familyMemberId={familyMemberId}
+          recipeOptions={logData.recipeOptions}
+          ingredientOptions={logData.ingredientOptions}
+          plannedMealsBySlotKey={plannedMealsBySlotKey}
+          dateRange={dateRange}
+          allowDayManagement={false}
+          hideDayPersonInHeader
+          onRegisterToolbarControls={setTrackToolbarControls}
+          onSaveStatusChange={setIsLogSaving}
+        />
+      ) : (
+        <section className="rounded-lg border border-border bg-card p-6">
+          <h2 className="type-h2">No log yet for this plan</h2>
+          <p className="type-body text-muted-foreground">
+            A log will appear automatically for newly created plans.
+          </p>
+        </section>
+      )}
     </div>
   );
 }

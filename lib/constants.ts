@@ -43,6 +43,7 @@ export const ROUTES = {
   /** URL prefix for log routes; there is no list page at this path (index redirects). */
   log: "/log",
   logCurrent: "/log/current",
+  logPlanView: (planId: string) => `/log/plan/${planId}`,
   logView: (logId: string) => `/log/${logId}`,
   settings: "/settings",
 } as const;

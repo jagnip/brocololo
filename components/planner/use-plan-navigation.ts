@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import { ROUTES } from "@/lib/constants";
 
-export type PlanNavigationKind = "plan" | "groceries";
+export type PlanNavigationKind = "plan" | "groceries" | "log";
 
 type UsePlanNavigationParams = {
   currentPlanId: string;
@@ -15,6 +15,8 @@ function getPlanPath(nextPlanId: string, kind: PlanNavigationKind) {
   switch (kind) {
     case "plan":
       return ROUTES.planView(nextPlanId);
+    case "log":
+      return ROUTES.logPlanView(nextPlanId);
     case "groceries":
       // Groceries switcher is view-only; edit route never mounts the switcher.
       return ROUTES.groceriesView(nextPlanId);
@@ -34,8 +36,13 @@ export function usePlanNavigation({
   const handleValueChange = (nextPlanId: string) => {
     if (nextPlanId === optimisticPlanId) return;
 
-    // Preserve existing query params (e.g. tab=log, person filters) while switching plan id.
+    // Preserve person filters without allowing a legacy tab to change destinations.
     const params = new URLSearchParams(searchParams.toString());
+    if (kind !== "groceries") params.delete("tab");
+    if (kind === "log") {
+      // A day from another plan may be outside the next plan's range.
+      params.delete("day");
+    }
     const query = params.toString();
     const nextPath = getPlanPath(nextPlanId, kind);
 
