@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -147,6 +147,7 @@ export function LogIngredientsForm({
   onCancel,
   onSave,
 }: DailyLogIngredientsFormProps) {
+  const amountInputs = useRef(new Map<string, HTMLInputElement>());
   const [rows, setRows] = useState<DialogRow[]>(() =>
     initialRows.map((row) => ({
       ...row,
@@ -380,6 +381,7 @@ export function LogIngredientsForm({
                                   : item,
                               ),
                             );
+                            amountInputs.current.get(row.key)?.focus();
                           }}
                           placeholder="Select ingredient..."
                           searchPlaceholder="Search ingredient..."
@@ -390,6 +392,13 @@ export function LogIngredientsForm({
                       </div>
 
                       <Input
+                        ref={(input) => {
+                          if (input) {
+                            amountInputs.current.set(row.key, input);
+                          } else {
+                            amountInputs.current.delete(row.key);
+                          }
+                        }}
                         type="number"
                         min={0}
                         step="any"
