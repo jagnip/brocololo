@@ -6,7 +6,7 @@ import type { RecipeType } from "@/types/recipe";
 import { PlanMealChecklist } from "./plan-meal-checklist";
 
 function recipe(id: string, name = id): RecipeType {
-  const partial: Partial<RecipeType> = { id, name, images: [], servings: 8, plannedMealCount: 4 };
+  const partial: Partial<RecipeType> = { id, slug: id, name, images: [], servings: 8, plannedMealCount: 4 };
   return partial as RecipeType;
 }
 
@@ -23,6 +23,42 @@ function slot(day: number, overrides: Partial<SlotInputType> = {}): SlotInputTyp
 }
 
 describe("PlanMealChecklist", () => {
+  it.each([false, true])("links the recipe name without toggling cooked state (cooked: %s)", async (used) => {
+    const user = userEvent.setup();
+    const onCheckedChange = vi.fn();
+    render(<PlanMealChecklist plan={[slot(17, { recipe: recipe("soup", "Soup"), used })]} onCheckedChange={onCheckedChange} />);
+
+    const link = screen.getByRole("link", { name: "Soup" });
+    expect(link).toHaveAttribute("href", "/recipes/soup");
+    await user.click(link);
+    link.focus();
+    await user.keyboard("{Enter}");
+
+    expect(onCheckedChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("checkbox")).toHaveAttribute("aria-checked", String(used));
+  });
+
+  it.each(["padding", "thumbnail", "count", "checkbox"])("clicking the %s toggles cooked state exactly once", async (target) => {
+    const user = userEvent.setup();
+    const onCheckedChange = vi.fn();
+    const soup = {
+      ...recipe("soup", "Soup"),
+      images: [{ id: "image", recipeId: "soup", url: "/soup.jpg", createdAt: new Date(), isCover: true }],
+    };
+    render(<PlanMealChecklist plan={[slot(17, { recipe: soup })]} onCheckedChange={onCheckedChange} />);
+
+    const checkbox = screen.getByRole("checkbox");
+    const targets = {
+      padding: checkbox.parentElement!.parentElement!,
+      thumbnail: screen.getByAltText(""),
+      count: screen.getByLabelText("1 planned slots"),
+      checkbox,
+    };
+    await user.click(targets[target as keyof typeof targets]);
+
+    expect(onCheckedChange).toHaveBeenCalledExactlyOnceWith(["2026-03-17T00:00:00.000Z-DINNER"], true);
+  });
+
   it("groups recipes by ID, keeps identical names with different IDs separate, and counts occurrences rather than servings", () => {
     const plan: PlanInputType = [
       slot(17, { recipe: recipe("soup-a", "Soup") }),
@@ -135,7 +171,7 @@ describe("PlanMealChecklist", () => {
       onCheckedChange.mockClear();
 
       if (interaction === "click") {
-        await user.click(screen.getByText("Soup"));
+        await user.click(screen.getByRole("checkbox", { name: "Mark all Soup slots cooked" }));
       } else {
         screen.getByRole("checkbox", { name: "Mark all Soup slots cooked" }).focus();
         await user.keyboard(" ");
@@ -175,7 +211,7 @@ describe("PlanMealChecklist", () => {
     expect(within(screen.getByRole("region", { name: "Dinner" })).getByText("1 meal left")).toBeInTheDocument();
     expect(within(screen.getByRole("region", { name: "Breakfast" })).getByText("Toast")).toBeInTheDocument();
 
-    await user.click(screen.getByText("Soup"));
+    await user.click(screen.getByLabelText("2 planned slots"));
     expect(onCheckedChange).toHaveBeenCalledExactlyOnceWith([
       "2026-03-18T00:00:00.000Z-DINNER",
       "2026-03-20T00:00:00.000Z-LUNCH",
