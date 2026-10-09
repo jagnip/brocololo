@@ -4,6 +4,7 @@ import { useId } from "react";
 import Image from "next/image";
 import { Minus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RecipeImagePlaceholder } from "@/components/recipes/recipe-image-placeholder";
 import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
@@ -72,7 +73,7 @@ export function PlanMealChecklist({ plan, onCheckedChange }: PlanMealChecklistPr
                 {remainingCount} {remainingCount === 1 ? "meal" : "meals"} left
               </span>
             </div>
-            <ul>
+            <ul className="space-y-2">
               {items.map(([key, meal], index) => {
                 const cookedCount = meal.slots.filter((slot) => slot.used).length;
                 const checked = cookedCount === meal.slots.length
@@ -82,39 +83,38 @@ export function PlanMealChecklist({ plan, onCheckedChange }: PlanMealChecklistPr
 
                 return (
                   <li key={key} data-cooked={checked === true}>
-                    <Label
-                      htmlFor={checkboxId}
-                      className={cn(
-                        "flex min-w-0 cursor-pointer items-center gap-3 border-b border-border px-1 py-3 font-normal normal-case tracking-normal text-foreground transition-colors",
-                        checked === true ? "bg-muted hover:bg-muted" : "hover:bg-accent",
-                      )}
-                    >
-                      <span className="relative flex shrink-0">
-                        <Checkbox
-                          id={checkboxId}
-                          checked={checked}
-                          aria-label={`Mark all ${meal.name} slots cooked`}
-                          className={cn("size-5", checked === "indeterminate" && "[&_[data-slot=checkbox-indicator]]:invisible")}
-                          onCheckedChange={(value) => onCheckedChange(meal.slots.map(getPlanSlotKey), value === true)}
-                        />
-                        {checked === "indeterminate" ? (
-                          <Minus aria-hidden="true" className="pointer-events-none absolute inset-0 m-auto size-3.5 text-foreground" />
-                        ) : null}
-                      </span>
-                      <span className={cn("relative size-8 shrink-0 overflow-hidden rounded-sm", checked === true && "grayscale opacity-50")}>
-                        {meal.imageUrl ? (
-                          <Image src={meal.imageUrl} alt="" width={32} height={32} className="size-8 object-cover" />
-                        ) : (
-                          <RecipeImagePlaceholder showLabel={false} />
-                        )}
-                      </span>
-                      <span className={cn("min-w-0 flex-1 break-words type-body font-medium", checked === true && "text-muted-foreground")}>
-                        {meal.name}
-                      </span>
-                      <span className="type-caption shrink-0 tabular-nums text-muted-foreground" aria-label={`${meal.slots.length} planned slots`}>
-                        {meal.slots.length}&times;
-                      </span>
-                    </Label>
+                    <Card className="gap-0 overflow-hidden rounded-md py-0 shadow-none transition-colors hover:bg-muted/40 focus-within:bg-muted/40">
+                      <Label
+                        htmlFor={checkboxId}
+                        className="flex min-w-0 cursor-pointer items-center gap-item p-nest font-normal normal-case tracking-normal text-foreground"
+                      >
+                        <span className="relative flex shrink-0">
+                          <Checkbox
+                            id={checkboxId}
+                            checked={checked}
+                            aria-label={`Mark all ${meal.name} slots cooked`}
+                            className={cn("size-5", checked === "indeterminate" && "[&_[data-slot=checkbox-indicator]]:invisible")}
+                            onCheckedChange={(value) => onCheckedChange(meal.slots.map(getPlanSlotKey), value === true)}
+                          />
+                          {checked === "indeterminate" ? (
+                            <Minus aria-hidden="true" className="pointer-events-none absolute inset-0 m-auto size-3.5 text-foreground" />
+                          ) : null}
+                        </span>
+                        <span className={cn("relative size-8 shrink-0 overflow-hidden rounded-sm", checked === true && "grayscale opacity-50")}>
+                          {meal.imageUrl ? (
+                            <Image src={meal.imageUrl} alt="" width={32} height={32} className="size-8 object-cover" />
+                          ) : (
+                            <RecipeImagePlaceholder showLabel={false} />
+                          )}
+                        </span>
+                        <span className={cn("min-w-0 flex-1 break-words type-body font-medium", checked === true && "text-muted-foreground")}>
+                          {meal.name}
+                        </span>
+                        <span className="type-caption shrink-0 tabular-nums text-muted-foreground" aria-label={`${meal.slots.length} planned slots`}>
+                          {meal.slots.length}&times;
+                        </span>
+                      </Label>
+                    </Card>
                   </li>
                 );
               })}
