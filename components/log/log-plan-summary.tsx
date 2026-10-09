@@ -1,11 +1,16 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import type { LogDayData } from "@/lib/log/view-model";
-import { getLogPeriodStatistics } from "@/lib/log/statistics";
+import { getLogDayStatistics, getLogPeriodStatistics } from "@/lib/log/statistics";
 
 type LogPlanSummaryProps = {
   days: LogDayData[];
+  excludedDayKeys: Set<string>;
+  onExcludedDayKeysChange: (keys: Set<string>) => void;
+  disabled?: boolean;
 };
 
 function formatReportDate(date: Date): string {
@@ -22,8 +27,15 @@ function formatMacro(value: number, unit: string, hasEntries: boolean): string {
   return `${value.toFixed(unit === "kcal" ? 0 : 1)} ${unit}`;
 }
 
-export function LogPlanSummary({ days }: LogPlanSummaryProps) {
-  const summary = getLogPeriodStatistics(days);
+export function LogPlanSummary({
+  days,
+  excludedDayKeys,
+  onExcludedDayKeysChange,
+  disabled,
+}: LogPlanSummaryProps) {
+  const selectedDays = days.filter((day) => !excludedDayKeys.has(day.dateKey));
+  const summary = getLogPeriodStatistics(selectedDays);
+  const dayStatistics = days.map(getLogDayStatistics);
   const hasLoggedDays = summary.loggedDayCount > 0;
   const metrics = [
     {
@@ -72,6 +84,28 @@ export function LogPlanSummary({ days }: LogPlanSummaryProps) {
         </div>
 
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-rose-sm">
+          <Label className="flex min-h-11 cursor-pointer gap-3 border-b border-border px-4 py-3 text-sm normal-case tracking-normal text-foreground print:hidden">
+            <Checkbox
+              aria-label="Select all days"
+              disabled={disabled || days.length === 0}
+              checked={
+                selectedDays.length === days.length && days.length > 0
+                  ? true
+                  : selectedDays.length > 0
+                    ? "indeterminate"
+                    : false
+              }
+              onCheckedChange={(checked) => {
+                const next = new Set(excludedDayKeys);
+                for (const day of days) {
+                  if (checked === true) next.delete(day.dateKey);
+                  else next.add(day.dateKey);
+                }
+                onExcludedDayKeysChange(next);
+              }}
+            />
+            Select all days
+          </Label>
           <div
             className="hidden grid-cols-5 gap-4 border-b border-border bg-muted px-4 py-2 text-xs font-medium text-muted-foreground sm:grid"
             aria-hidden="true"
@@ -83,15 +117,28 @@ export function LogPlanSummary({ days }: LogPlanSummaryProps) {
             <span className="text-right">Carbs</span>
           </div>
           <ul aria-label="Daily nutrition statistics">
-            {summary.days.map((day) => (
+            {dayStatistics.map((day) => (
               <li
                 key={day.day.dateKey}
-                className="grid grid-cols-2 gap-x-4 gap-y-3 border-b border-border px-4 py-4 last:border-b-0 sm:grid-cols-5 sm:items-center sm:gap-4 sm:py-3"
+                className="grid grid-cols-2 gap-x-4 gap-y-3 border-b border-border px-4 py-4 last:border-b-0 sm:grid-cols-5 sm:items-center sm:gap-4 sm:py-3 data-[selected=false]:print:hidden"
                 data-log-summary-row
+                data-selected={!excludedDayKeys.has(day.day.dateKey)}
               >
-                <p className="col-span-2 font-medium sm:col-span-1">
+                <Label className="col-span-2 flex cursor-pointer gap-3 text-sm font-medium normal-case tracking-normal text-foreground sm:col-span-1">
+                  <Checkbox
+                    className="print:hidden"
+                    aria-label={`Include ${formatReportDate(day.day.date)}`}
+                    disabled={disabled}
+                    checked={!excludedDayKeys.has(day.day.dateKey)}
+                    onCheckedChange={(checked) => {
+                      const next = new Set(excludedDayKeys);
+                      if (checked === true) next.delete(day.day.dateKey);
+                      else next.add(day.day.dateKey);
+                      onExcludedDayKeysChange(next);
+                    }}
+                  />
                   {formatReportDate(day.day.date)}
-                </p>
+                </Label>
                 {day.hasEntries ? (
                   <>
                     <p className="text-sm tabular-nums sm:text-right">

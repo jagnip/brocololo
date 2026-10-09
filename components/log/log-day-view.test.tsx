@@ -194,6 +194,15 @@ describe("LogDayView", () => {
     expect(printMock).toHaveBeenCalledOnce();
     printMock.mockRestore();
 
+    await user.click(screen.getByRole("checkbox", { name: "Select all days" }));
+    expect(screen.getByRole("button", { name: "Print / Save PDF" })).toBeDisabled();
+    await user.click(screen.getByRole("tab", { name: "Day" }));
+    await user.click(screen.getByRole("tab", { name: "All days" }));
+    expect(screen.getByRole("checkbox", { name: "Select all days" })).not.toBeChecked();
+    expect(screen.getByRole("button", { name: "Print / Save PDF" })).toBeDisabled();
+    await user.click(screen.getByRole("checkbox", { name: "Select all days" }));
+    expect(screen.getByRole("button", { name: "Print / Save PDF" })).toBeEnabled();
+
     filterState.pending = true;
     view.rerender(<TestLogDayViewWithToolbar days={days} />);
     expect(screen.getByRole("button", { name: "Print / Save PDF" })).toBeDisabled();
