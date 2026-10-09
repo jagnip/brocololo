@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { LogNutritionSummary } from "./log-nutrition-summary";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import type { LogDayData } from "@/lib/log/view-model";
@@ -58,27 +58,11 @@ export function LogPlanSummary({
 
   return (
     <article className="space-y-6" data-log-plan-summary>
-      <Card className="gap-0 overflow-hidden py-0 shadow-rose-sm">
-        <CardContent className="grid grid-cols-2 p-0 sm:grid-cols-4">
-          {metrics.map((metric) => (
-            <div
-              key={metric.label}
-              className="border-border px-4 py-4 even:border-l [&:nth-child(-n+2)]:border-b sm:border-b-0 sm:border-l sm:first:border-l-0"
-            >
-              <p className="text-xs font-medium text-muted-foreground">
-                {metric.label}
-              </p>
-              <p className="mt-1 text-lg font-semibold tabular-nums">
-                {metric.value}
-              </p>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      <LogNutritionSummary label="Average daily nutrition" metrics={metrics} />
 
       <section className="space-y-3" aria-labelledby="daily-breakdown-title">
         <div className="space-y-1">
-          <h2 id="daily-breakdown-title" className="type-h1">
+          <h2 id="daily-breakdown-title" className="type-h2">
             Daily breakdown
           </h2>
         </div>

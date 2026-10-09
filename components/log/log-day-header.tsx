@@ -1,7 +1,6 @@
 "use client";
 
 import { Loader2, Plus, Trash2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LogDayPersonToolbarControls } from "@/components/log/log-day-person-toolbar-controls";
 import type { LogDayData } from "@/lib/log/view-model";
@@ -9,6 +8,7 @@ import { formatDayLabel } from "@/lib/planner/helpers";
 import { PageHeader } from "../page-header";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { getLogDayStatistics } from "@/lib/log/statistics";
+import { LogNutritionSummary } from "./log-nutrition-summary";
 
 /** Title row for the active log day: label, remove, daily macro totals. */
 export type LogDayPanelHeaderProps = {
@@ -50,7 +50,7 @@ export function LogDayHeader({
     <div>
       {showPageHeader ? <PageHeader title="Log details" /> : null}
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-2">
+      <div className="flex flex-col gap-4">
         {showDayControls ? (
           <div className="flex flex-nowrap items-center gap-1.5 md:flex-wrap md:gap-2">
             {hideDayPersonInHeader ? null : (
@@ -93,17 +93,15 @@ export function LogDayHeader({
           </div>
         ) : null}
 
-        {/* Macro badges */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline">{dayMacros.calories.toFixed(0)} kcal</Badge>
-          <Badge variant="outline">
-            {dayMacros.proteins.toFixed(1)}g protein
-          </Badge>
-          <Badge variant="outline">{dayMacros.fats.toFixed(1)}g fat</Badge>
-          <Badge variant="outline">{dayMacros.carbs.toFixed(1)}g carbs</Badge>
-        </div>
-
-        {/* Actions */}
+        <LogNutritionSummary
+          label="Daily nutrition"
+          metrics={[
+            { label: "Calories", value: `${dayMacros.calories.toFixed(0)} kcal` },
+            { label: "Protein", value: `${dayMacros.proteins.toFixed(1)} g` },
+            { label: "Fat", value: `${dayMacros.fats.toFixed(1)} g` },
+            { label: "Carbs", value: `${dayMacros.carbs.toFixed(1)} g` },
+          ]}
+        />
       </div>
     </div>
   );
