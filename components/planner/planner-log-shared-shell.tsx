@@ -308,9 +308,9 @@ export function PlannerLogSharedShell({
         </div>
       ) : null}
       {isTrackTab && trackToolbarControls ? (
-        <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-          {trackToolbarControls.filters}
+        <div className="flex min-w-0 flex-col items-start justify-between gap-2 sm:flex-row-reverse sm:flex-wrap sm:items-center">
           {trackToolbarControls.viewSwitcher}
+          {trackToolbarControls.filters}
         </div>
       ) : null}
 
