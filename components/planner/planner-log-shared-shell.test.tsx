@@ -124,5 +124,10 @@ describe("separate planning and logging surfaces", () => {
     }));
     expect(screen.getByText("Person and day controls")).toBeInTheDocument();
     expect(screen.getByText("Day and all-days controls")).toBeInTheDocument();
+    expect(
+      screen.getByText("Day and all-days controls").compareDocumentPosition(
+        screen.getByText("Person and day controls"),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });
