@@ -62,7 +62,23 @@ vi.mock("./planner-bulk-actions-footer", () => ({
 }));
 
 vi.mock("./plan-slot-meal-dialog", () => ({
-  PlanSlotMealDialog: () => null,
+  PlanSlotMealDialog: ({
+    open,
+    initialOccasionSlug,
+    onCancel,
+  }: {
+    open: boolean;
+    initialOccasionSlug?: string | null;
+    onCancel: () => void;
+  }) =>
+    open ? (
+      <div role="dialog" aria-label="Replace meals">
+        <div aria-label="Initial meal occasion">
+          {initialOccasionSlug ?? "All occasions"}
+        </div>
+        <button type="button" onClick={onCancel}>Cancel replacement</button>
+      </div>
+    ) : null,
 }));
 
 vi.mock("./planner-bulk-edit-eaters-dialog", () => ({
@@ -138,6 +154,44 @@ function renderPlanView(props: Partial<ComponentProps<typeof PlanView>> = {}) {
     />,
   );
 }
+
+describe("PlanView bulk replacement meal occasion", () => {
+  it.each([
+    ["BREAKFAST", "breakfast"],
+    ["LUNCH", "lunch"],
+    ["DINNER", "dinner"],
+  ])("preselects %s for single and multiple matching slots", (mealType, occasion) => {
+    renderPlanView({
+      plan: [
+        createSlot("2026-03-17T00:00:00.000Z", mealType, []),
+        createSlot("2026-03-18T00:00:00.000Z", mealType, []),
+        createSlot("2026-03-17T00:00:00.000Z", mealType === "LUNCH" ? "DINNER" : "LUNCH", []),
+      ],
+      onSetMeal: vi.fn(),
+    });
+
+    const selectButtons = screen.getAllByRole("button", { name: `Select ${mealType}` });
+    fireEvent.click(selectButtons[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Replace meals" }));
+    expect(screen.getByLabelText("Initial meal occasion")).toHaveTextContent(occasion);
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel replacement" }));
+    fireEvent.click(selectButtons[1]);
+    expect(screen.getByLabelText("selected-count")).toHaveTextContent("2");
+    fireEvent.click(screen.getByRole("button", { name: "Replace meals" }));
+    expect(screen.getByLabelText("Initial meal occasion")).toHaveTextContent(occasion);
+  });
+
+  it("leaves mixed meal types unfiltered", () => {
+    renderPlanView({ onSetMeal: vi.fn() });
+
+    fireEvent.click(screen.getByRole("button", { name: "Select BREAKFAST" }));
+    fireEvent.click(screen.getByRole("button", { name: "Select LUNCH" }));
+    fireEvent.click(screen.getByRole("button", { name: "Replace meals" }));
+
+    expect(screen.getByLabelText("Initial meal occasion")).toHaveTextContent("All occasions");
+  });
+});
 
 describe("PlanView bulk edit eaters", () => {
   it("replaces plain-click selection, toggles with Ctrl/Cmd, and clears outside or on Escape", () => {
