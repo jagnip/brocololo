@@ -397,6 +397,9 @@ export const ModelName = {
   ShoppingListItem: 'ShoppingListItem',
   PlanSlot: 'PlanSlot',
   PlanSlotAudienceMember: 'PlanSlotAudienceMember',
+  PlanBatch: 'PlanBatch',
+  PlanBatchStorageRow: 'PlanBatchStorageRow',
+  PlanBatchStorageRowAudienceMember: 'PlanBatchStorageRowAudienceMember',
   PlanSlotCustomIngredient: 'PlanSlotCustomIngredient',
   PlanSlotAlternative: 'PlanSlotAlternative',
   Recipe: 'Recipe',
@@ -435,7 +438,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "category" | "user" | "familyMember" | "plan" | "planAudienceMember" | "groceryIngredient" | "shoppingLayoutPreset" | "shoppingLayoutPresetCategory" | "shoppingList" | "shoppingListShare" | "shoppingListItem" | "planSlot" | "planSlotAudienceMember" | "planSlotCustomIngredient" | "planSlotAlternative" | "recipe" | "recipeAudienceMember" | "recipeMemberPortion" | "ingredient" | "ingredientUserCustomization" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientMemberTarget" | "recipeIngredientMemberAdjustment" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage" | "log" | "logEntry" | "logEntryRecipe" | "logIngredient" | "ingredientList" | "ingredientListItem"
+    modelProps: "category" | "user" | "familyMember" | "plan" | "planAudienceMember" | "groceryIngredient" | "shoppingLayoutPreset" | "shoppingLayoutPresetCategory" | "shoppingList" | "shoppingListShare" | "shoppingListItem" | "planSlot" | "planSlotAudienceMember" | "planBatch" | "planBatchStorageRow" | "planBatchStorageRowAudienceMember" | "planSlotCustomIngredient" | "planSlotAlternative" | "recipe" | "recipeAudienceMember" | "recipeMemberPortion" | "ingredient" | "ingredientUserCustomization" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientMemberTarget" | "recipeIngredientMemberAdjustment" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage" | "log" | "logEntry" | "logEntryRecipe" | "logIngredient" | "ingredientList" | "ingredientListItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1398,6 +1401,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.PlanSlotAudienceMemberCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.PlanSlotAudienceMemberCountAggregateOutputType> | number
+        }
+      }
+    }
+    PlanBatch: {
+      payload: Prisma.$PlanBatchPayload<ExtArgs>
+      fields: Prisma.PlanBatchFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PlanBatchFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PlanBatchFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchPayload>
+        }
+        findFirst: {
+          args: Prisma.PlanBatchFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PlanBatchFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchPayload>
+        }
+        findMany: {
+          args: Prisma.PlanBatchFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchPayload>[]
+        }
+        create: {
+          args: Prisma.PlanBatchCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchPayload>
+        }
+        createMany: {
+          args: Prisma.PlanBatchCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PlanBatchCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchPayload>[]
+        }
+        delete: {
+          args: Prisma.PlanBatchDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchPayload>
+        }
+        update: {
+          args: Prisma.PlanBatchUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchPayload>
+        }
+        deleteMany: {
+          args: Prisma.PlanBatchDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PlanBatchUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PlanBatchUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchPayload>[]
+        }
+        upsert: {
+          args: Prisma.PlanBatchUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchPayload>
+        }
+        aggregate: {
+          args: Prisma.PlanBatchAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePlanBatch>
+        }
+        groupBy: {
+          args: Prisma.PlanBatchGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlanBatchGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PlanBatchCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlanBatchCountAggregateOutputType> | number
+        }
+      }
+    }
+    PlanBatchStorageRow: {
+      payload: Prisma.$PlanBatchStorageRowPayload<ExtArgs>
+      fields: Prisma.PlanBatchStorageRowFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PlanBatchStorageRowFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PlanBatchStorageRowFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowPayload>
+        }
+        findFirst: {
+          args: Prisma.PlanBatchStorageRowFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PlanBatchStorageRowFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowPayload>
+        }
+        findMany: {
+          args: Prisma.PlanBatchStorageRowFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowPayload>[]
+        }
+        create: {
+          args: Prisma.PlanBatchStorageRowCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowPayload>
+        }
+        createMany: {
+          args: Prisma.PlanBatchStorageRowCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PlanBatchStorageRowCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowPayload>[]
+        }
+        delete: {
+          args: Prisma.PlanBatchStorageRowDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowPayload>
+        }
+        update: {
+          args: Prisma.PlanBatchStorageRowUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowPayload>
+        }
+        deleteMany: {
+          args: Prisma.PlanBatchStorageRowDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PlanBatchStorageRowUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PlanBatchStorageRowUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowPayload>[]
+        }
+        upsert: {
+          args: Prisma.PlanBatchStorageRowUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowPayload>
+        }
+        aggregate: {
+          args: Prisma.PlanBatchStorageRowAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePlanBatchStorageRow>
+        }
+        groupBy: {
+          args: Prisma.PlanBatchStorageRowGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlanBatchStorageRowGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PlanBatchStorageRowCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlanBatchStorageRowCountAggregateOutputType> | number
+        }
+      }
+    }
+    PlanBatchStorageRowAudienceMember: {
+      payload: Prisma.$PlanBatchStorageRowAudienceMemberPayload<ExtArgs>
+      fields: Prisma.PlanBatchStorageRowAudienceMemberFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PlanBatchStorageRowAudienceMemberFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowAudienceMemberPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PlanBatchStorageRowAudienceMemberFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowAudienceMemberPayload>
+        }
+        findFirst: {
+          args: Prisma.PlanBatchStorageRowAudienceMemberFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowAudienceMemberPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PlanBatchStorageRowAudienceMemberFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowAudienceMemberPayload>
+        }
+        findMany: {
+          args: Prisma.PlanBatchStorageRowAudienceMemberFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowAudienceMemberPayload>[]
+        }
+        create: {
+          args: Prisma.PlanBatchStorageRowAudienceMemberCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowAudienceMemberPayload>
+        }
+        createMany: {
+          args: Prisma.PlanBatchStorageRowAudienceMemberCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PlanBatchStorageRowAudienceMemberCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowAudienceMemberPayload>[]
+        }
+        delete: {
+          args: Prisma.PlanBatchStorageRowAudienceMemberDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowAudienceMemberPayload>
+        }
+        update: {
+          args: Prisma.PlanBatchStorageRowAudienceMemberUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowAudienceMemberPayload>
+        }
+        deleteMany: {
+          args: Prisma.PlanBatchStorageRowAudienceMemberDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PlanBatchStorageRowAudienceMemberUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PlanBatchStorageRowAudienceMemberUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowAudienceMemberPayload>[]
+        }
+        upsert: {
+          args: Prisma.PlanBatchStorageRowAudienceMemberUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchStorageRowAudienceMemberPayload>
+        }
+        aggregate: {
+          args: Prisma.PlanBatchStorageRowAudienceMemberAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePlanBatchStorageRowAudienceMember>
+        }
+        groupBy: {
+          args: Prisma.PlanBatchStorageRowAudienceMemberGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlanBatchStorageRowAudienceMemberGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PlanBatchStorageRowAudienceMemberCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlanBatchStorageRowAudienceMemberCountAggregateOutputType> | number
         }
       }
     }
@@ -3287,6 +3512,34 @@ export const PlanSlotAudienceMemberScalarFieldEnum = {
 export type PlanSlotAudienceMemberScalarFieldEnum = (typeof PlanSlotAudienceMemberScalarFieldEnum)[keyof typeof PlanSlotAudienceMemberScalarFieldEnum]
 
 
+export const PlanBatchScalarFieldEnum = {
+  id: 'id',
+  planId: 'planId',
+  recipeId: 'recipeId',
+  extraPortions: 'extraPortions'
+} as const
+
+export type PlanBatchScalarFieldEnum = (typeof PlanBatchScalarFieldEnum)[keyof typeof PlanBatchScalarFieldEnum]
+
+
+export const PlanBatchStorageRowScalarFieldEnum = {
+  id: 'id',
+  planBatchId: 'planBatchId',
+  count: 'count',
+  position: 'position'
+} as const
+
+export type PlanBatchStorageRowScalarFieldEnum = (typeof PlanBatchStorageRowScalarFieldEnum)[keyof typeof PlanBatchStorageRowScalarFieldEnum]
+
+
+export const PlanBatchStorageRowAudienceMemberScalarFieldEnum = {
+  storageRowId: 'storageRowId',
+  familyMemberId: 'familyMemberId'
+} as const
+
+export type PlanBatchStorageRowAudienceMemberScalarFieldEnum = (typeof PlanBatchStorageRowAudienceMemberScalarFieldEnum)[keyof typeof PlanBatchStorageRowAudienceMemberScalarFieldEnum]
+
+
 export const PlanSlotCustomIngredientScalarFieldEnum = {
   id: 'id',
   planSlotId: 'planSlotId',
@@ -3801,6 +4054,9 @@ export type GlobalOmitConfig = {
   shoppingListItem?: Prisma.ShoppingListItemOmit
   planSlot?: Prisma.PlanSlotOmit
   planSlotAudienceMember?: Prisma.PlanSlotAudienceMemberOmit
+  planBatch?: Prisma.PlanBatchOmit
+  planBatchStorageRow?: Prisma.PlanBatchStorageRowOmit
+  planBatchStorageRowAudienceMember?: Prisma.PlanBatchStorageRowAudienceMemberOmit
   planSlotCustomIngredient?: Prisma.PlanSlotCustomIngredientOmit
   planSlotAlternative?: Prisma.PlanSlotAlternativeOmit
   recipe?: Prisma.RecipeOmit

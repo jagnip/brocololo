@@ -125,6 +125,7 @@ type CookSessionState = {
   isPlanCookSessionActive: boolean;
   /** YYYY-MM-DD keys from the planner hand-off (for the Meals banner). */
   planCookDateKeys: string[];
+  extraPortions: number;
 };
 
 /**
@@ -145,6 +146,7 @@ function createCookSessionState(
       decoded?.combinations ?? createDefaultCombinations(householdIds),
     isPlanCookSessionActive: decoded !== null,
     planCookDateKeys: decoded?.dateKeys ?? [],
+    extraPortions: decoded?.extraPortions ?? 0,
   };
 }
 
@@ -170,7 +172,7 @@ export function RecipePageProvider({
   const [cookSession, setCookSession] = useState(() =>
     createCookSessionState(initialCookParam, familyMembers),
   );
-  const [extraPortions, setExtraPortions] = useState(0);
+  const [extraPortions, setExtraPortions] = useState(cookSession.extraPortions);
 
   // Re-derive the session when recipe / household / hand-off actually change.
   // This used to be an effect, but effects re-run on every mount (React StrictMode
@@ -188,7 +190,9 @@ export function RecipePageProvider({
   if (appliedCookSessionSignature !== cookSessionSignature) {
     setAppliedCookSessionSignature(cookSessionSignature);
     setCookSession(createCookSessionState(initialCookParam, familyMembers));
-    setExtraPortions(0);
+    setExtraPortions(
+      createCookSessionState(initialCookParam, familyMembers).extraPortions,
+    );
   }
 
   const combinations = cookSession.combinations;
@@ -441,6 +445,7 @@ export function RecipePageProvider({
       combinations: createDefaultCombinations(allIds),
       isPlanCookSessionActive: false,
       planCookDateKeys: [],
+      extraPortions: 0,
     });
     setExtraPortions(0);
   }, [familyMembers]);

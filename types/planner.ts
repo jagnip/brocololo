@@ -66,6 +66,21 @@ export type SlotInputType = {
 
 export type PlanInputType = SlotInputType[];
 
+export type PlanBatchStorageRow = {
+  count: number;
+  cookingFamilyMemberIds: string[];
+};
+
+/** Shared data for one actual batch cook. `id` matches its slots' batchGroupId. */
+export type PlanBatchInput = {
+  id: string;
+  recipeId: string;
+  storageRows: PlanBatchStorageRow[];
+  extraPortions: number;
+};
+
+export type PlanBatchSaveData = PlanBatchInput;
+
 export type SlotSaveData = {
   date: Date;
   mealType: PlannerMealType;

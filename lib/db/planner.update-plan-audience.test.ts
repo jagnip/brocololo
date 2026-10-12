@@ -21,8 +21,11 @@ describe("updatePlan added-date log entries respect slot audience", () => {
   const logEntryUpsert = vi.fn();
   const planSlotAlternativeDeleteMany = vi.fn();
   const planSlotDeleteMany = vi.fn();
+  const planBatchDeleteMany = vi.fn();
   const planAudienceMemberDeleteMany = vi.fn();
   const planUpdate = vi.fn();
+  const recipeCount = vi.fn();
+  const familyMemberCount = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -36,19 +39,25 @@ describe("updatePlan added-date log entries respect slot audience", () => {
         },
         planSlotAlternative: { deleteMany: planSlotAlternativeDeleteMany },
         planSlot: { deleteMany: planSlotDeleteMany },
+        planBatch: { deleteMany: planBatchDeleteMany },
         planAudienceMember: { deleteMany: planAudienceMemberDeleteMany },
+        recipe: { count: recipeCount },
+        familyMember: { count: familyMemberCount },
       }),
     );
     vi.mocked(prisma.recipe.updateMany).mockResolvedValue({ count: 0 } as never);
 
     planSlotAlternativeDeleteMany.mockResolvedValue({ count: 0 });
     planSlotDeleteMany.mockResolvedValue({ count: 0 });
+    planBatchDeleteMany.mockResolvedValue({ count: 0 });
     planAudienceMemberDeleteMany.mockResolvedValue({ count: 0 });
     planUpdate.mockResolvedValue({ slots: [] });
     logEntryDeleteMany.mockResolvedValue({ count: 0 });
     logEntryUpsert.mockResolvedValue({});
     // No date collisions on the newly added day.
     logEntryFindMany.mockResolvedValue([]);
+    recipeCount.mockResolvedValue(1);
+    familyMemberCount.mockResolvedValue(2);
   });
 
   function makeSlot(params: {
@@ -176,5 +185,74 @@ describe("updatePlan added-date log entries respect slot audience", () => {
     expect(
       upsertCreates.some((row) => row.familyMemberId === "fm-b"),
     ).toBe(false);
+  });
+
+  it("recreates batch storage independently from recreated slots", async () => {
+    planFindFirst.mockResolvedValue({
+      id: "plan-1",
+      log: null,
+      slots: [
+        {
+          date: new Date("2026-03-17T00:00:00.000Z"),
+          recipeId: "recipe-1",
+          customName: null,
+        },
+      ],
+    });
+
+    await updatePlan(
+      "user-1",
+      "plan-1",
+      [
+        {
+          ...makeSlot({
+            date: "2026-03-17",
+            mealType: PlannerMealType.DINNER,
+            cookingFamilyMemberIds: ["jagoda"],
+          }),
+          batchGroupId: "batch-1",
+        },
+      ],
+      {},
+      [
+        {
+          id: "batch-1",
+          recipeId: "recipe-1",
+          storageRows: [
+            {
+              count: 2,
+              cookingFamilyMemberIds: ["jagoda", "nelson"],
+            },
+          ],
+          extraPortions: 1,
+        },
+      ],
+    );
+
+    expect(planBatchDeleteMany).toHaveBeenCalledWith({
+      where: { planId: "plan-1" },
+    });
+    expect(recipeCount).toHaveBeenCalledWith({
+      where: {
+        userId: "user-1",
+        id: { in: ["recipe-1"] },
+        isBatchRecipe: true,
+      },
+    });
+    expect(planUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          batches: {
+            create: [
+              expect.objectContaining({
+                id: "batch-1",
+                recipeId: "recipe-1",
+                extraPortions: 1,
+              }),
+            ],
+          },
+        }),
+      }),
+    );
   });
 });

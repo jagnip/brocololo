@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getPlanById } from "@/lib/db/planner";
+import { getPlanBatchesById, getPlanById } from "@/lib/db/planner";
 import { getRecipes } from "@/lib/db/recipes";
 import { getIngredients } from "@/lib/db/ingredients";
 import { PlanEditor } from "./plan-editor";
@@ -13,14 +13,15 @@ type PlanEditorContainerProps = {
 
 export async function PlanEditorContainer({ planId }: PlanEditorContainerProps) {
   const { id: userId } = await requireUser();
-  const [plan, recipes, ingredients, familyMembers] = await Promise.all([
+  const [plan, batches, recipes, ingredients, familyMembers] = await Promise.all([
     getPlanById(userId, planId),
+    getPlanBatchesById(userId, planId),
     getRecipes(userId, undefined, undefined, false),
     getIngredients(userId),
     listFamilyMembers(userId),
   ]);
 
-  if (!plan) {
+  if (!plan || !batches) {
     notFound();
   }
 
@@ -28,6 +29,7 @@ export async function PlanEditorContainer({ planId }: PlanEditorContainerProps) 
     <PlanEditor
       planId={planId}
       initialPlan={plan}
+      initialBatches={batches}
       recipes={recipes}
       ingredientOptions={ingredientsToLogIngredientOptions(ingredients)}
       familyMembers={familyMembers}

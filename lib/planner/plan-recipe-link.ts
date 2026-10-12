@@ -2,7 +2,7 @@ import { getOrderedPlanSlots } from "@/lib/planner/helpers";
 import { encodePlanCookParam } from "@/lib/recipes/plan-cook-session-link";
 import type { CookingCombination } from "@/lib/recipes/cook-session-portions";
 import { ROUTES } from "@/lib/constants";
-import type { PlanInputType, SlotInputType } from "@/types/planner";
+import type { PlanBatchInput, PlanInputType, SlotInputType } from "@/types/planner";
 
 /** All slots (chronological) sharing this batch group AND this exact recipe. */
 export function getBatchGroupSlotsForRecipe(
@@ -80,15 +80,25 @@ export function getRecipeCookingHref(
   recipeSlug: string,
   relevantSlots: SlotInputType[],
   fallbackMemberIds: string[] = [],
+  batch?: PlanBatchInput,
 ): string {
-  const combinations = buildCookingCombinationsFromSlots(
+  const scheduledCombinations = buildCookingCombinationsFromSlots(
     relevantSlots,
     fallbackMemberIds,
   );
+  const combinations = batch
+    ? [
+        ...scheduledCombinations,
+        ...batch.storageRows.map((row) => ({
+          count: row.count,
+          memberIds: row.cookingFamilyMemberIds,
+        })),
+      ]
+    : scheduledCombinations;
   // Slot dates power the "Meals setup for 14th Jun…" banner on the recipe page.
   const dateKeys = relevantSlots.map((slot) =>
     slot.date.toISOString().slice(0, 10),
   );
-  const cook = encodePlanCookParam(combinations, dateKeys);
+  const cook = encodePlanCookParam(combinations, dateKeys, batch?.extraPortions ?? 0);
   return `${ROUTES.recipe(recipeSlug)}?cook=${encodeURIComponent(cook)}`;
 }

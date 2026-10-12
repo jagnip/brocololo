@@ -267,7 +267,7 @@ describe("planner generation simulation with default time limits", () => {
       id: "batch-dinner",
       name: "Batch Dinner",
       categories: [dinnerOccasion],
-      plannedMealCount: 2,
+      plannedMealCount: 4,
       isBatchRecipe: true,
       handsOnTime: 45,
       totalTime: 60,
@@ -349,6 +349,19 @@ describe("planner generation simulation with default time limits", () => {
     expect(dinners.every((slot) => slot.recipe?.id === "batch-dinner")).toBe(true);
     expect(dinners[0]?.batchGroupId).toBeTruthy();
     expect(dinners[0]?.batchGroupId).toBe(dinners[1]?.batchGroupId);
+    expect(result.batches).toEqual([
+      {
+        id: dinners[0]!.batchGroupId,
+        recipeId: "batch-dinner",
+        storageRows: [
+          {
+            count: 2,
+            cookingFamilyMemberIds: simulationAudienceFamilyMemberIds,
+          },
+        ],
+        extraPortions: 0,
+      },
+    ]);
   });
 
   it.runIf(process.env.PLANNER_DEBUG === "1")(

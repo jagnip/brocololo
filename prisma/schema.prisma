@@ -72,6 +72,7 @@ model FamilyMember {
   logEntries                LogEntry[]
   planAudienceMemberships     PlanAudienceMember[]
   planSlotAudienceMemberships PlanSlotAudienceMember[]
+  planBatchStorageMemberships PlanBatchStorageRowAudienceMember[]
   recipeAudienceMemberships           RecipeAudienceMember[]
   recipeMemberPortions                RecipeMemberPortion[]
   recipeIngredientTargets             RecipeIngredientMemberTarget[]
@@ -93,6 +94,7 @@ model Plan {
   endDate         DateTime             @map("end_date")
   createdAt       DateTime             @default(now()) @map("created_at")
   slots           PlanSlot[]
+  batches         PlanBatch[]
   audienceMembers PlanAudienceMember[]
   log             Log?
   shoppingList    ShoppingList?
@@ -245,6 +247,46 @@ model PlanSlotAudienceMember {
   @@map("plan_slot_audience_members")
 }
 
+model PlanBatch {
+  id            String @id
+  planId        String @map("plan_id")
+  recipeId      String @map("recipe_id")
+  extraPortions Int    @default(0) @map("extra_portions")
+
+  plan        Plan                  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  recipe      Recipe                @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  storageRows PlanBatchStorageRow[]
+
+  @@index([planId])
+  @@index([recipeId])
+  @@map("plan_batches")
+}
+
+model PlanBatchStorageRow {
+  id          String @id @default(cuid())
+  planBatchId String @map("plan_batch_id")
+  count       Int
+  position    Int
+
+  planBatch       PlanBatch                           @relation(fields: [planBatchId], references: [id], onDelete: Cascade)
+  audienceMembers PlanBatchStorageRowAudienceMember[]
+
+  @@index([planBatchId, position])
+  @@map("plan_batch_storage_rows")
+}
+
+model PlanBatchStorageRowAudienceMember {
+  storageRowId   String @map("storage_row_id")
+  familyMemberId String @map("family_member_id")
+
+  storageRow  PlanBatchStorageRow @relation(fields: [storageRowId], references: [id], onDelete: Cascade)
+  familyMember FamilyMember       @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+
+  @@id([storageRowId, familyMemberId])
+  @@index([familyMemberId])
+  @@map("plan_batch_storage_row_audience_members")
+}
+
 model PlanSlotCustomIngredient {
   id           String  @id @default(cuid())
   planSlotId   String  @map("plan_slot_id")
@@ -301,6 +343,7 @@ model Recipe {
   user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   categories      Category[]            @relation("category_recipes")
   planSlots       PlanSlot[]            @relation("recipe_plan_slots")
+  planBatches     PlanBatch[]
   alternatives    PlanSlotAlternative[] @relation("recipe_alternatives")
   logEntryRecipes LogEntryRecipe[]
 

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getPlanById } from "@/lib/db/planner";
+import { getPlanBatchesById, getPlanById } from "@/lib/db/planner";
 import { getRecipes } from "@/lib/db/recipes";
 import { getLogByPlanId } from "@/lib/db/logs";
 import { getPlannerPoolItemsForPlan } from "@/lib/db/planner";
@@ -50,6 +50,7 @@ export async function PlannerLogCombinedPage({
 
   const [
     planSlots,
+    planBatches,
     plannerRecipes,
     allRecipes,
     ingredients,
@@ -58,6 +59,7 @@ export async function PlannerLogCombinedPage({
   ] =
     await Promise.all([
       getPlanById(userId, planId),
+      getPlanBatchesById(userId, planId),
       initialTab === "plan" ? getRecipes(userId, undefined, undefined, false) : Promise.resolve([]),
       initialTab === "log" ? getRecipes(userId) : Promise.resolve([]),
       getIngredients(userId),
@@ -65,11 +67,16 @@ export async function PlannerLogCombinedPage({
       ensureSelfFamilyMember(userId),
     ]);
 
-  if (!planSlots) notFound();
+  if (!planSlots || !planBatches) notFound();
 
   // Track tab person selector: union of everyone included on any planned meal.
   const planAudienceIds = [
-    ...new Set(planSlots.flatMap((slot) => slot.cookingFamilyMemberIds ?? [])),
+    ...new Set([
+      ...planSlots.flatMap((slot) => slot.cookingFamilyMemberIds ?? []),
+      ...planBatches.flatMap((batch) =>
+        batch.storageRows.flatMap((row) => row.cookingFamilyMemberIds),
+      ),
+    ]),
   ];
   const planAudienceMembers = filterFamilyMembersToPlanAudience(
     familyMembers,
@@ -202,6 +209,7 @@ export async function PlannerLogCombinedPage({
       initialDateRange={initialDateRange}
       initialSelectedDayKey={initialSelectedDayKey}
       initialPlan={planSlots}
+      initialBatches={planBatches}
       plannerRecipes={plannerRecipes}
       ingredientOptions={ingredientOptions}
       plannedMealsBySlotKey={plannedMealsBySlotKey}

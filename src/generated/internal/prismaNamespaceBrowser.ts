@@ -64,6 +64,9 @@ export const ModelName = {
   ShoppingListItem: 'ShoppingListItem',
   PlanSlot: 'PlanSlot',
   PlanSlotAudienceMember: 'PlanSlotAudienceMember',
+  PlanBatch: 'PlanBatch',
+  PlanBatchStorageRow: 'PlanBatchStorageRow',
+  PlanBatchStorageRowAudienceMember: 'PlanBatchStorageRowAudienceMember',
   PlanSlotCustomIngredient: 'PlanSlotCustomIngredient',
   PlanSlotAlternative: 'PlanSlotAlternative',
   Recipe: 'Recipe',
@@ -248,6 +251,34 @@ export const PlanSlotAudienceMemberScalarFieldEnum = {
 } as const
 
 export type PlanSlotAudienceMemberScalarFieldEnum = (typeof PlanSlotAudienceMemberScalarFieldEnum)[keyof typeof PlanSlotAudienceMemberScalarFieldEnum]
+
+
+export const PlanBatchScalarFieldEnum = {
+  id: 'id',
+  planId: 'planId',
+  recipeId: 'recipeId',
+  extraPortions: 'extraPortions'
+} as const
+
+export type PlanBatchScalarFieldEnum = (typeof PlanBatchScalarFieldEnum)[keyof typeof PlanBatchScalarFieldEnum]
+
+
+export const PlanBatchStorageRowScalarFieldEnum = {
+  id: 'id',
+  planBatchId: 'planBatchId',
+  count: 'count',
+  position: 'position'
+} as const
+
+export type PlanBatchStorageRowScalarFieldEnum = (typeof PlanBatchStorageRowScalarFieldEnum)[keyof typeof PlanBatchStorageRowScalarFieldEnum]
+
+
+export const PlanBatchStorageRowAudienceMemberScalarFieldEnum = {
+  storageRowId: 'storageRowId',
+  familyMemberId: 'familyMemberId'
+} as const
+
+export type PlanBatchStorageRowAudienceMemberScalarFieldEnum = (typeof PlanBatchStorageRowAudienceMemberScalarFieldEnum)[keyof typeof PlanBatchStorageRowAudienceMemberScalarFieldEnum]
 
 
 export const PlanSlotCustomIngredientScalarFieldEnum = {

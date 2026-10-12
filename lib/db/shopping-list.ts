@@ -229,17 +229,46 @@ async function ensureGroceryIngredientsForIngredientIds(
   return rows;
 }
 
-function slotsToPlanSlotData(
+export function slotsToPlanSlotData(
   plan: NonNullable<Awaited<ReturnType<typeof getPlanForGroceries>>>,
 ): PlanSlotData[] {
-  return plan.slots.map((s) => ({
+  const scheduled = plan.slots.map((s) => ({
     recipeId: s.recipeId,
+    batchGroupId: s.batchGroupId,
     cookingFamilyMemberIds: s.cookingFamilyMemberIds,
     familyMembers: plan.familyMembers,
     recipe: s.recipe as PlanSlotData["recipe"],
     customName: s.customName,
     customIngredients: s.customIngredients,
   }));
+  const stored: PlanSlotData[] = [];
+  for (const batch of plan.batches) {
+    const source = scheduled.find(
+      (slot) =>
+        slot.batchGroupId === batch.id && slot.recipeId === batch.recipeId,
+    );
+    if (!source?.recipe) continue;
+    for (const row of batch.storageRows) {
+      for (let index = 0; index < row.count; index += 1) {
+        stored.push({
+          ...source,
+          cookingFamilyMemberIds: row.cookingFamilyMemberIds,
+          customName: null,
+          customIngredients: [],
+        });
+      }
+    }
+    if (batch.extraPortions > 0) {
+      stored.push({
+        ...source,
+        cookingFamilyMemberIds: [],
+        extraPortions: batch.extraPortions,
+        customName: null,
+        customIngredients: [],
+      });
+    }
+  }
+  return [...scheduled, ...stored];
 }
 
 export async function getGroceryGenerationMealOptionsForPlan(

@@ -95,4 +95,30 @@ describe("transformPlanToShoppingListRows with member adjustments", () => {
     expect(rows.find((row) => row.ingredientName.includes("Olive oil"))).toBeUndefined();
     expect(rows).toHaveLength(0);
   });
+
+  it("adds stored meal audiences and anonymous extras exactly once", () => {
+    const rows = transformPlanToShoppingListRows([
+      buildGrocerySlot({ cookingFamilyMemberIds: ["fm-jagoda"] }),
+      buildGrocerySlot({ cookingFamilyMemberIds: ["fm-jagoda"] }),
+      buildGrocerySlot({ cookingFamilyMemberIds: ["fm-nelson"] }),
+      buildGrocerySlot({ cookingFamilyMemberIds: [], extraPortions: 2 }),
+    ]);
+
+    // Jagoda's MODIFY contributes 10 g twice. Nelson skips. Two anonymous
+    // standard portions contribute 40 g butter (40 batch / 2 servings × 2).
+    expect(rows.find((row) => row.ingredientName === "Olive oil")?.amount).toBe(20);
+    expect(rows.find((row) => row.ingredientName === "Butter")?.amount).toBe(40);
+  });
+
+  it("excludes scheduled, stored, and extra quantities by recipe id", () => {
+    const rows = transformPlanToShoppingListRows(
+      [
+        buildGrocerySlot(),
+        buildGrocerySlot({ cookingFamilyMemberIds: ["fm-jagoda"] }),
+        buildGrocerySlot({ cookingFamilyMemberIds: [], extraPortions: 2 }),
+      ],
+      { excludedRecipeIds: ["recipe-1"], excludedCustomMealNames: [] },
+    );
+    expect(rows).toEqual([]);
+  });
 });

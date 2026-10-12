@@ -72,6 +72,7 @@ type PlannerSlotCardProps = {
   onAudienceChange?: (memberIds: string[]) => void;
   /** Live "N of M" label for batch-recipe groups with 2+ members. */
   batchLabel?: { index: number; total: number };
+  onEditBatch?: () => void;
   /** Prefills Cooking on the recipe page from this plan slot / batch group. */
   recipeCookingHref?: string;
   recipes: RecipeType[];
@@ -90,6 +91,7 @@ export function PlannerSlotCard({
   onToggleUsed,
   familyMembers = [],
   batchLabel,
+  onEditBatch,
   recipeCookingHref,
   recipes,
   ingredientOptions,
@@ -416,19 +418,41 @@ export function PlannerSlotCard({
           {/* Batch badge only when recipe is marked batch AND live group has 2+ slots.
               Always "1 of X" — this card is one meal's share of the cook, not meal N. */}
           {recipe!.isBatchRecipe && batchLabel ? (
-            <Badge
-              variant="default"
-              className="absolute right-3 top-3 z-2 shadow-md"
-              aria-label={`Batch meal 1 of ${batchLabel.total}`}
-            >
-              {/* Same hierarchy as instruction chips: bold label + muted detail. */}
-              <span className="type-caption font-semibold">
-                <span>Batch</span>
-                <span className="pl-0.5 font-medium opacity-75">
-                  {` · 1 of ${batchLabel.total}`}
+            onEditBatch ? (
+              <Badge asChild variant="default">
+                <button
+                  type="button"
+                  className="absolute right-3 top-3 z-2 shadow-md hover:bg-border"
+                  aria-label={`Batch meal 1 of ${batchLabel.total}`}
+                  title="Edit batch"
+                  aria-haspopup="dialog"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onEditBatch();
+                  }}
+                >
+                  <span className="type-caption font-semibold">
+                    <span>Batch</span>
+                    <span className="pl-0.5 font-medium opacity-75">
+                      {` · 1 of ${batchLabel.total}`}
+                    </span>
+                  </span>
+                </button>
+              </Badge>
+            ) : (
+              <Badge
+                variant="default"
+                className="absolute right-3 top-3 z-2 shadow-md"
+                aria-label={`Batch meal 1 of ${batchLabel.total}`}
+              >
+                <span className="type-caption font-semibold">
+                  <span>Batch</span>
+                  <span className="pl-0.5 font-medium opacity-75">
+                    {` · 1 of ${batchLabel.total}`}
+                  </span>
                 </span>
-              </span>
-            </Badge>
+              </Badge>
+            )
           ) : null}
         </div>
         <CardHeader className="px-card-x py-card-y">

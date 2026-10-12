@@ -1,5 +1,6 @@
 import { cache } from "react";
 import {
+  PlanBatchSaveData,
   PlanCustomMeal,
   SlotInputType,
   SlotSaveData,
@@ -147,6 +148,64 @@ function buildSlotAudienceCreates(cookingFamilyMemberIds: string[] | undefined) 
   return {
     create: ids.map((familyMemberId) => ({ familyMemberId })),
   };
+}
+
+function batchSaveDataToCreateData(batch: PlanBatchSaveData) {
+  return {
+    id: batch.id,
+    recipeId: batch.recipeId,
+    extraPortions: batch.extraPortions,
+    storageRows: {
+      create: batch.storageRows.map((row, position) => ({
+        count: row.count,
+        position,
+        audienceMembers: {
+          create: [...new Set(row.cookingFamilyMemberIds)].map(
+            (familyMemberId) => ({ familyMemberId }),
+          ),
+        },
+      })),
+    },
+  };
+}
+
+async function assertOwnedBatchData(params: {
+  tx: Prisma.TransactionClient;
+  userId: string;
+  slots: Array<{ recipeId: string | null; batchGroupId?: string | null }>;
+  batches: PlanBatchSaveData[];
+}) {
+  if (params.batches.length === 0) return;
+  const recipeIds = [...new Set(params.batches.map((batch) => batch.recipeId))];
+  const memberIds = [
+    ...new Set(
+      params.batches.flatMap((batch) =>
+        batch.storageRows.flatMap((row) => row.cookingFamilyMemberIds),
+      ),
+    ),
+  ];
+  const [recipeCount, memberCount] = await Promise.all([
+    params.tx.recipe.count({
+      where: {
+        userId: params.userId,
+        id: { in: recipeIds },
+        isBatchRecipe: true,
+      },
+    }),
+    params.tx.familyMember.count({ where: { userId: params.userId, id: { in: memberIds } } }),
+  ]);
+  if (recipeCount !== recipeIds.length || memberCount !== memberIds.length) {
+    throw new Error("INVALID_PLAN_BATCH_OWNERSHIP");
+  }
+  for (const batch of params.batches) {
+    const hasMatchingSlot = params.slots.some(
+      (slot) =>
+        slot.batchGroupId === batch.id && slot.recipeId === batch.recipeId,
+    );
+    if (!hasMatchingSlot) {
+      throw new Error("INVALID_PLAN_BATCH");
+    }
+  }
 }
 
 function slotInputToCreateData(s: SlotInputType) {
@@ -333,6 +392,44 @@ export async function getPlanById(userId: string, planId: string) {
   }));
 }
 
+export async function getPlanBatchesById(userId: string, planId: string) {
+  const plan = await prisma.plan.findFirst({
+    where: { id: planId, userId },
+    select: {
+      batches: {
+        orderBy: { id: "asc" },
+        select: {
+          id: true,
+          recipeId: true,
+          extraPortions: true,
+          storageRows: {
+            orderBy: { position: "asc" },
+            select: {
+              count: true,
+              audienceMembers: {
+                select: { familyMemberId: true },
+                orderBy: { familyMemberId: "asc" },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  if (!plan) return null;
+  return plan.batches.map((batch) => ({
+    id: batch.id,
+    recipeId: batch.recipeId,
+    extraPortions: batch.extraPortions,
+    storageRows: batch.storageRows.map((row) => ({
+      count: row.count,
+      cookingFamilyMemberIds: row.audienceMembers.map(
+        (member) => member.familyMemberId,
+      ),
+    })),
+  }));
+}
+
 export async function getPlanDateRangeById(userId: string, planId: string) {
   return prisma.plan.findFirst({
     where: { id: planId, userId },
@@ -420,6 +517,20 @@ export async function getPlanForGroceries(userId: string, planId: string) {
     prisma.plan.findFirst({
       where: { id: planId, userId },
       include: {
+        batches: {
+          select: {
+            id: true,
+            recipeId: true,
+            extraPortions: true,
+            storageRows: {
+              orderBy: { position: "asc" },
+              select: {
+                count: true,
+                audienceMembers: { select: { familyMemberId: true } },
+              },
+            },
+          },
+        },
         slots: {
           include: {
             audienceMembers: {
@@ -522,6 +633,7 @@ export async function getPlanForGroceries(userId: string, planId: string) {
     familyMembers,
     slots: plan.slots.map((s) => ({
       recipeId: s.recipeId,
+      batchGroupId: s.batchGroupId,
       date: s.date.toISOString(),
       cookingFamilyMemberIds: s.audienceMembers.map(
         (member) => member.familyMemberId,
@@ -529,6 +641,17 @@ export async function getPlanForGroceries(userId: string, planId: string) {
       recipe: s.recipe,
       customName: s.customName,
       customIngredients: s.customIngredients,
+    })),
+    batches: plan.batches.map((batch) => ({
+      id: batch.id,
+      recipeId: batch.recipeId,
+      extraPortions: batch.extraPortions,
+      storageRows: batch.storageRows.map((row) => ({
+        count: row.count,
+        cookingFamilyMemberIds: row.audienceMembers.map(
+          (member) => member.familyMemberId,
+        ),
+      })),
     })),
     startDate: plan.startDate.toISOString(),
     endDate: plan.endDate.toISOString(),
@@ -539,7 +662,8 @@ export async function createPlan(
   userId: string,
   startDate: Date,
   endDate: Date,
-  slots: SlotInputType[]
+  slots: SlotInputType[],
+  batches: PlanBatchSaveData[] = [],
 ): Promise<
   | {
       type: "success";
@@ -572,6 +696,15 @@ export async function createPlan(
         conflictingPlanIds: dateCollision.conflictingPlanIds,
       };
     }
+    await assertOwnedBatchData({
+      tx,
+      userId,
+      slots: slots.map((slot) => ({
+        recipeId: slot.recipe?.id ?? null,
+        batchGroupId: slot.batchGroupId,
+      })),
+      batches,
+    });
 
     const createdPlan = await tx.plan.create({
       data: {
@@ -580,11 +713,21 @@ export async function createPlan(
         endDate,
         audienceMembers: {
           create: [
-            ...new Set(slots.flatMap((slot) => slot.cookingFamilyMemberIds ?? [])),
+            ...new Set([
+              ...slots.flatMap((slot) => slot.cookingFamilyMemberIds ?? []),
+              ...batches.flatMap((batch) =>
+                batch.storageRows.flatMap(
+                  (row) => row.cookingFamilyMemberIds,
+                ),
+              ),
+            ]),
           ].map((familyMemberId) => ({ familyMemberId })),
         },
         slots: {
           create: slots.map((s) => slotInputToCreateData(s)),
+        },
+        batches: {
+          create: batches.map(batchSaveDataToCreateData),
         },
       },
       include: { slots: true },
@@ -939,6 +1082,7 @@ export async function updatePlan(
   planId: string,
   slots: SlotSaveData[],
   options: UpdatePlanOptions = {},
+  batches: PlanBatchSaveData[] = [],
 ): Promise<UpdatePlanResult> {
   const now = new Date();
   const uniqueRecipeIds = [
@@ -968,6 +1112,7 @@ export async function updatePlan(
     if (!existingPlan) {
       throw new Error("PLAN_NOT_FOUND");
     }
+    await assertOwnedBatchData({ tx, userId, slots, batches });
 
     const existingDateKeys = new Set(existingPlan.slots.map((slot) => toDateKey(slot.date)));
     const removedDateKeys = [...existingDateKeys].filter((dateKey) => !nextDateKeys.has(dateKey)).sort();
@@ -1020,9 +1165,15 @@ export async function updatePlan(
 
     await tx.planSlotAlternative.deleteMany({ where: { planSlot: { planId } } });
     await tx.planSlot.deleteMany({ where: { planId } });
+    await tx.planBatch.deleteMany({ where: { planId } });
 
     const planAudienceIds = [
-      ...new Set(slots.flatMap((slot) => slot.cookingFamilyMemberIds ?? [])),
+      ...new Set([
+        ...slots.flatMap((slot) => slot.cookingFamilyMemberIds ?? []),
+        ...batches.flatMap((batch) =>
+          batch.storageRows.flatMap((row) => row.cookingFamilyMemberIds),
+        ),
+      ]),
     ];
 
     await tx.planAudienceMember.deleteMany({ where: { planId } });
@@ -1037,6 +1188,9 @@ export async function updatePlan(
         },
         slots: {
           create: slots.map((s) => slotSaveDataToCreateData(s)),
+        },
+        batches: {
+          create: batches.map(batchSaveDataToCreateData),
         },
       },
       include: { slots: true },

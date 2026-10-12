@@ -92,6 +92,17 @@ describe("encodePlanCookParam / decodePlanCookParam", () => {
       dateKeys: [],
     });
   });
+
+  it("round-trips anonymous extra portions without changing legacy values", () => {
+    const combinations = [{ count: 2, memberIds: [J, N] }];
+    const encoded = encodePlanCookParam(combinations, ["2026-06-14"], 3);
+    expect(encoded).toBe(`2026-06-14|${J},${N}:2~3`);
+    expect(decodePlanCookParam(encoded, HOUSEHOLD)).toEqual({
+      combinations,
+      dateKeys: ["2026-06-14"],
+      extraPortions: 3,
+    });
+  });
 });
 
 describe("formatPlanCookSessionDates", () => {

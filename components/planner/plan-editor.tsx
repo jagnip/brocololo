@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { PlanInputType, PlanSlotMealPayload, SetPlanMealOptions, SlotSaveData, type SlotInputType } from "@/types/planner";
+import { PlanBatchInput, PlanInputType, PlanSlotMealPayload, SetPlanMealOptions, SlotSaveData, type SlotInputType } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { PlanView } from "./plan-view";
 import { PlanMealChecklist } from "./plan-meal-checklist";
@@ -19,6 +19,12 @@ import {
 } from "@/lib/planner/planner-range-messages";
 import { getPlanSlotKey, placeRecipeOnPlan } from "@/lib/planner/helpers";
 import { rearrangePlanSlots } from "@/lib/planner/rearrange-plan-slots";
+import {
+  detachMealFromBatch,
+  ensureBatchAfterPlacement,
+  pruneBatchesWithoutScheduledMeals,
+  transferRangeRemovedBatchMeals,
+} from "@/lib/planner/batch-storage";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +43,7 @@ import type { FamilyMemberRow } from "@/lib/db/family-members";
 type PlanEditorProps = {
   planId: string;
   initialPlan: PlanInputType;
+  initialBatches?: PlanBatchInput[];
   recipes: RecipeType[];
   ingredientOptions: LogIngredientOption[];
   familyMembers?: FamilyMemberRow[];
@@ -54,6 +61,7 @@ type SyncConflictState = {
   impactedLogMealsCount: number;
   impactedPlanMealsCount: number;
   saveData: SlotSaveData[];
+  batchData: PlanBatchInput[];
 };
 
 type PendingDateRangeChange = {
@@ -66,6 +74,7 @@ type PendingDateRangeChange = {
 export function PlanEditor({
   planId,
   initialPlan,
+  initialBatches = [],
   recipes,
   ingredientOptions,
   familyMembers = [],
@@ -77,6 +86,8 @@ export function PlanEditor({
 }: PlanEditorProps) {
   const AUTOSAVE_DELAY_MS = 1000;
   const [plan, setPlan] = useState<PlanInputType>(initialPlan);
+  const [batches, setBatches] = useState<PlanBatchInput[]>(initialBatches);
+  const batchesRef = useRef<PlanBatchInput[]>(initialBatches);
   const allSlotsRef = useRef<PlanInputType>(initialPlan);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [isDirty, setIsDirty] = useState(false);
@@ -140,7 +151,7 @@ export function PlanEditor({
       batchGroupId: s.batchGroupId ?? null,
     }));
 
-    const result = await updateSavedPlan(planId, saveData);
+    const result = await updateSavedPlan(planId, saveData, undefined, batches);
     if (result.type === "date_conflict") {
       setSaveStatus("idle");
       // Avoid retry-toasts in a loop: wait for a new user edit before autosave retries.
@@ -158,6 +169,7 @@ export function PlanEditor({
         impactedLogMealsCount: result.impactedLogMealsCount,
         impactedPlanMealsCount: result.impactedPlanMealsCount,
         saveData,
+        batchData: batches,
       });
       return;
     }
@@ -176,7 +188,7 @@ export function PlanEditor({
       // because the database persisted only the visible `plan` subset.
       allSlotsRef.current = plan;
     }
-  }, [familyMembers, isDirty, plan, planId, saveStatus]);
+  }, [batches, familyMembers, isDirty, plan, planId, saveStatus]);
 
   useEffect(() => {
     // Debounced autosave reuses the existing save pipeline and conflict handling.
@@ -225,6 +237,14 @@ export function PlanEditor({
 
       setDateRange(next);
       setPlan(rescueResult.plan);
+      const nextBatches = transferRangeRemovedBatchMeals({
+        previousPlan: allSlotsRef.current,
+        nextPlan: rescueResult.plan,
+        batches: batchesRef.current,
+        fallbackFamilyMemberIds: familyMembers.map((member) => member.id),
+      });
+      batchesRef.current = nextBatches;
+      setBatches(nextBatches);
       allSlotsRef.current = rescueResult.plan;
 
       editVersionRef.current += 1;
@@ -233,7 +253,7 @@ export function PlanEditor({
         setSaveStatus("idle");
       }
     },
-    [dateRange.start, dateRange.end, saveStatus],
+    [dateRange.start, dateRange.end, familyMembers, saveStatus],
   );
 
   function markEdited<T extends unknown[]>(fn: (...args: T) => void) {
@@ -245,6 +265,14 @@ export function PlanEditor({
   }
 
   const handleShuffle = useCallback((slotKey: string) => {
+    const nextBatches = detachMealFromBatch({
+      plan: allSlotsRef.current,
+      batches: batchesRef.current,
+      slotKey,
+      fallbackFamilyMemberIds: familyMembers.map((member) => member.id),
+    });
+    batchesRef.current = nextBatches;
+    setBatches(nextBatches);
     allSlotsRef.current = allSlotsRef.current.map((slot) => {
       const key = `${slot.date.toISOString()}-${slot.mealType}`;
       if (key !== slotKey || !slot.recipe || slot.alternatives.length === 0) return slot;
@@ -271,7 +299,7 @@ export function PlanEditor({
         };
       }),
     );
-  }, []);
+  }, [familyMembers]);
 
   const handleSetMeal = useCallback((
     slotKey: string,
@@ -308,8 +336,11 @@ export function PlanEditor({
             alternatives: slot.alternatives.filter(
               (recipe) => recipe.id !== payload.recipe.id,
             ),
-            // Bulk batch assignment supplies a shared id; everything else clears it.
-            batchGroupId: options?.batchGroupId ?? null,
+            batchGroupId:
+              options?.batchGroupId ??
+              (currentSlot?.recipe?.id === payload.recipe.id
+                ? (currentSlot.batchGroupId ?? null)
+                : null),
           };
         });
       }
@@ -343,11 +374,49 @@ export function PlanEditor({
       });
     };
 
+    const currentSlot = allSlotsRef.current.find(
+      (slot) => getPlanSlotKey(slot) === slotKey,
+    );
+    const keepsSameRecipe =
+      payload.kind === "recipe" &&
+      currentSlot?.recipe?.id === payload.recipe.id;
+    let nextBatches = keepsSameRecipe
+      ? batchesRef.current
+      : detachMealFromBatch({
+          plan: allSlotsRef.current,
+          batches: batchesRef.current,
+          slotKey,
+          fallbackFamilyMemberIds: familyMembers.map((member) => member.id),
+        });
+    const previousPlan = allSlotsRef.current;
     allSlotsRef.current = applyPayload(allSlotsRef.current);
+    if (payload.kind === "recipe") {
+      nextBatches = ensureBatchAfterPlacement({
+        previousPlan,
+        plan: allSlotsRef.current,
+        batches: nextBatches,
+        slotKey,
+        requestedMeals: payload.recipe.plannedMealCount,
+        fallbackFamilyMemberIds: familyMembers.map((member) => member.id),
+      });
+    } else {
+      nextBatches = pruneBatchesWithoutScheduledMeals(
+        allSlotsRef.current,
+        nextBatches,
+      );
+    }
+    batchesRef.current = nextBatches;
+    setBatches(nextBatches);
     setPlan((prev) => applyPayload(prev));
-  }, []);
+  }, [familyMembers]);
 
   const handleRemove = useCallback((slotKey: string) => {
+    let nextBatches = detachMealFromBatch({
+      plan: allSlotsRef.current,
+      batches: batchesRef.current,
+      slotKey,
+      fallbackFamilyMemberIds: familyMembers.map((member) => member.id),
+    });
     allSlotsRef.current = allSlotsRef.current.map((slot) => {
       const key = `${slot.date.toISOString()}-${slot.mealType}`;
       if (key !== slotKey) return slot;
@@ -359,6 +428,12 @@ export function PlanEditor({
         batchGroupId: null,
       };
     });
+    nextBatches = pruneBatchesWithoutScheduledMeals(
+      allSlotsRef.current,
+      nextBatches,
+    );
+    batchesRef.current = nextBatches;
+    setBatches(nextBatches);
 
     setPlan((prev) =>
       prev.map((slot) => {
@@ -373,6 +448,11 @@ export function PlanEditor({
         };
       }),
     );
+  }, [familyMembers]);
+
+  const handleBatchesChange = useCallback((nextBatches: PlanBatchInput[]) => {
+    batchesRef.current = nextBatches;
+    setBatches(nextBatches);
   }, []);
 
   // Slot↔slot DnD: move into empty, swap when both filled (no multi-meal expand).
@@ -564,6 +644,7 @@ export function PlanEditor({
                     planId,
                     syncConflict.saveData,
                     { forceDestructiveSync: true },
+                    syncConflict.batchData,
                   );
                   if (forcedResult.type === "error") {
                     toast.error(forcedResult.message);
@@ -583,6 +664,7 @@ export function PlanEditor({
                       impactedLogMealsCount: forcedResult.impactedLogMealsCount,
                       impactedPlanMealsCount: forcedResult.impactedPlanMealsCount,
                       saveData: syncConflict.saveData,
+                      batchData: syncConflict.batchData,
                     });
                     setSaveStatus("idle");
                     return;
@@ -633,6 +715,14 @@ export function PlanEditor({
                 }
                 setDateRange(pendingDateRangeChange.nextRange);
                 setPlan(pendingDateRangeChange.nextPlan);
+                const nextBatches = transferRangeRemovedBatchMeals({
+                  previousPlan: allSlotsRef.current,
+                  nextPlan: pendingDateRangeChange.nextPlan,
+                  batches: batchesRef.current,
+                  fallbackFamilyMemberIds: familyMembers.map((member) => member.id),
+                });
+                batchesRef.current = nextBatches;
+                setBatches(nextBatches);
                 allSlotsRef.current = pendingDateRangeChange.nextPlan;
                 editVersionRef.current += 1;
                 setIsDirty(true);
@@ -681,6 +771,7 @@ export function PlanEditor({
       />
       <PlanView
         plan={plan}
+        batches={batches}
         recipes={recipes}
         ingredientOptions={ingredientOptions}
         onShuffle={markEdited(handleShuffle)}
@@ -690,6 +781,7 @@ export function PlanEditor({
         onToggleUsed={markEdited(handleToggleUsed)}
         familyMembers={familyMembers}
         onAudienceChange={markEdited(handleAudienceChange)}
+        onBatchesChange={markEdited(handleBatchesChange)}
       />
     </>
   );

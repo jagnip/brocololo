@@ -1,4 +1,4 @@
-import { DayMealsType, PlanInputType, SlotInputType } from "@/types/planner";
+import { DayMealsType, PlanBatchInput, PlanInputType, SlotInputType } from "@/types/planner";
 import { PlannerMealType } from "@/src/generated/enums";
 import { DayTimeLimitsType } from "@/lib/validations/planner";
 import { differenceInDays } from "date-fns";
@@ -182,6 +182,7 @@ export function markBatchSlots(
  */
 export function getBatchGroupLabels(
   plan: PlanInputType,
+  batches: PlanBatchInput[] = [],
 ): Map<string, { index: number; total: number }> {
   const byGroup = new Map<string, SlotInputType[]>();
 
@@ -194,8 +195,14 @@ export function getBatchGroupLabels(
 
   const labels = new Map<string, { index: number; total: number }>();
 
-  for (const members of byGroup.values()) {
-    if (members.length < 2) continue;
+  const batchById = new Map(batches.map((batch) => [batch.id, batch]));
+  for (const [groupId, members] of byGroup) {
+    const storedCount =
+      batchById
+        .get(groupId)
+        ?.storageRows.reduce((sum, row) => sum + row.count, 0) ?? 0;
+    const total = members.length + storedCount;
+    if (total < 2) continue;
 
     const sorted = [...members].sort((a, b) => {
       const dateA = a.date.toISOString().slice(0, 10);
@@ -207,7 +214,7 @@ export function getBatchGroupLabels(
     sorted.forEach((slot, index) => {
       labels.set(getPlanSlotKey(slot), {
         index: index + 1,
-        total: sorted.length,
+        total,
       });
     });
   }
@@ -233,7 +240,9 @@ export function placeRecipeOnPlan(
   const totalMeals = getPlannerMealCount(recipe);
   // Prefer attaching leftovers to an existing cook rather than starting a solo group.
   const existingGroupId = recipe.isBatchRecipe
-    ? findNearestBatchGroupId(plan, recipe.id, slotKey, source.date)
+    ? source.recipe?.id === recipe.id && source.batchGroupId
+      ? source.batchGroupId
+      : findNearestBatchGroupId(plan, recipe.id, slotKey, source.date)
     : null;
   const batchGroupId =
     existingGroupId ?? (totalMeals >= 2 ? crypto.randomUUID() : null);
