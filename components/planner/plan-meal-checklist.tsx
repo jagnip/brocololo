@@ -2,14 +2,15 @@
 
 import { useId } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Minus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { RecipeImagePlaceholder } from "@/components/recipes/recipe-image-placeholder";
 import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
 import { getOrderedPlanSlots, getPlanSlotKey } from "@/lib/planner/helpers";
 import { cn } from "@/lib/utils";
+import { ROUTES } from "@/lib/constants";
 import type { PlanInputType, SlotInputType } from "@/types/planner";
 
 const MEAL_GROUPS = [
@@ -27,6 +28,7 @@ export function PlanMealChecklist({ plan, onCheckedChange }: PlanMealChecklistPr
   const id = useId();
   const meals = new Map<string, {
     name: string;
+    href: string | null;
     imageUrl: string | null;
     mealType: SlotInputType["mealType"];
     slots: SlotInputType[];
@@ -49,6 +51,7 @@ export function PlanMealChecklist({ plan, onCheckedChange }: PlanMealChecklistPr
     } else {
       meals.set(key, {
         name: slot.recipe?.name ?? slot.customMeal!.name,
+        href: slot.recipe ? ROUTES.recipe(slot.recipe.slug) : null,
         imageUrl: getRecipeDisplayImageUrl(slot.recipe?.images),
         mealType: slot.mealType,
         slots: [slot],
@@ -83,11 +86,14 @@ export function PlanMealChecklist({ plan, onCheckedChange }: PlanMealChecklistPr
 
                 return (
                   <li key={key} data-cooked={checked === true}>
-                    <Card className="gap-0 overflow-hidden rounded-md py-0 shadow-none transition-colors hover:bg-muted/40 focus-within:bg-muted/40">
-                      <Label
-                        htmlFor={checkboxId}
-                        className="flex min-w-0 cursor-pointer items-center gap-item p-nest font-normal normal-case tracking-normal text-foreground"
-                      >
+                    <Card
+                      className="cursor-pointer gap-0 overflow-hidden rounded-md py-0 shadow-none transition-colors hover:bg-muted/40 focus-within:bg-muted/40"
+                      onClick={(event) => {
+                        if ((event.target as HTMLElement).closest("a, button")) return;
+                        onCheckedChange(meal.slots.map(getPlanSlotKey), checked !== true);
+                      }}
+                    >
+                      <div className="flex min-w-0 items-center gap-item p-nest font-normal normal-case tracking-normal text-foreground">
                         <span className="relative flex shrink-0">
                           <Checkbox
                             id={checkboxId}
@@ -108,12 +114,19 @@ export function PlanMealChecklist({ plan, onCheckedChange }: PlanMealChecklistPr
                           )}
                         </span>
                         <span className={cn("min-w-0 flex-1 break-words type-body font-medium", checked === true && "text-muted-foreground")}>
-                          {meal.name}
+                          {meal.href ? (
+                            <Link
+                              href={meal.href}
+                              className="hover:underline focus-visible:underline"
+                            >
+                              {meal.name}
+                            </Link>
+                          ) : meal.name}
                         </span>
                         <span className="type-caption shrink-0 tabular-nums text-muted-foreground" aria-label={`${meal.slots.length} planned slots`}>
                           {meal.slots.length}&times;
                         </span>
-                      </Label>
+                      </div>
                     </Card>
                   </li>
                 );

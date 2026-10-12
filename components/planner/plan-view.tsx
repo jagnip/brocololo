@@ -52,6 +52,7 @@ import { PlanSlotMealDialog } from "./plan-slot-meal-dialog";
 import { PlannerBulkEditEatersDialog } from "./planner-bulk-edit-eaters-dialog";
 import { useSlotBulkSelection } from "./use-slot-bulk-selection";
 import { getBulkEditMealsDialogCopy } from "@/lib/planner/plan-slot-meal-dialog-copy";
+import { PLANNER_MEAL_TYPE_TO_OCCASION_SLUG } from "@/lib/planner/recipe-picker-filters";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { PlanBatchDialog } from "./plan-batch-dialog";
@@ -191,6 +192,16 @@ export function PlanView({
   const bulkReplaceDialogCopy = getBulkEditMealsDialogCopy(selectedCount);
   const canBulkEditEaters = onAudienceChange && familyMembers.length > 0;
   const canRearrange = Boolean(onRearrangeSlots);
+  const selectedMealTypes = new Set(
+    plan
+      .filter((slot) => selectedKeys.has(getPlanSlotKey(slot)))
+      .map((slot) => slot.mealType),
+  );
+  const [selectedMealType] = selectedMealTypes;
+  const bulkInitialOccasionSlug =
+    selectedMealTypes.size === 1
+      ? PLANNER_MEAL_TYPE_TO_OCCASION_SLUG[selectedMealType]
+      : null;
 
   // Seed bulk audience from the common defaulted audience across selected slots;
   // fall back to all members when the selection disagrees.
@@ -444,7 +455,7 @@ export function PlanView({
           initialCustomName=""
           initialRows={[]}
           defaultTab="repository"
-          initialOccasionSlug={null}
+          initialOccasionSlug={bulkInitialOccasionSlug}
           familyMembers={familyMembers}
           cookingFamilyMemberIds={bulkInitialAudienceIds}
           isSaving={false}
