@@ -37,6 +37,7 @@ import {
 } from "@/actions/shopping-list-actions";
 import { GroceryMealSelectionDialog } from "@/components/planner/grocery-meal-selection-dialog";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
+import type { PlanBatchInput } from "@/types/planner";
 import type { GroceryGenerationExclusions } from "@/lib/groceries/generation-options";
 import type { GroceryMealOption } from "@/lib/groceries/generation-options";
 
@@ -49,6 +50,7 @@ type PlannerLogShellProps = {
   /** Default Track day (today or nearest plan day). */
   initialSelectedDayKey: string;
   initialPlan: PlanInputType;
+  initialBatches?: PlanBatchInput[];
   plannerRecipes: RecipeType[];
   ingredientOptions: LogIngredientOption[];
   plannedMealsBySlotKey: Record<
@@ -74,6 +76,7 @@ export function PlannerLogSharedShell({
   initialDateRange,
   initialSelectedDayKey,
   initialPlan,
+  initialBatches = [],
   plannerRecipes,
   ingredientOptions,
   plannedMealsBySlotKey,
@@ -318,6 +321,7 @@ export function PlannerLogSharedShell({
         <PlanEditor
           planId={planId}
           initialPlan={initialPlan}
+          initialBatches={initialBatches}
           recipes={plannerRecipes}
           ingredientOptions={ingredientOptions}
           familyMembers={familyMembers}

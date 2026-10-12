@@ -103,3 +103,34 @@ export const slotSaveDataSchema = z
   });
 
 export const planSlotsSaveSchema = z.array(slotSaveDataSchema).min(1);
+
+export const planBatchStorageRowSchema = z.object({
+  count: z.coerce.number().int().min(1).max(99),
+  cookingFamilyMemberIds: z
+    .array(z.string().min(1))
+    .min(1, "Choose at least one person")
+    .transform((ids) => [...new Set(ids)]),
+});
+
+export const planBatchSaveSchema = z.object({
+  id: z.string().min(1),
+  recipeId: z.string().min(1),
+  storageRows: z.array(planBatchStorageRowSchema).max(99),
+  extraPortions: z.coerce.number().int().min(0).max(99),
+});
+
+export const planBatchesSaveSchema = z
+  .array(planBatchSaveSchema)
+  .superRefine((batches, ctx) => {
+    const seen = new Set<string>();
+    batches.forEach((batch, index) => {
+      if (seen.has(batch.id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Batch ids must be unique",
+          path: [index, "id"],
+        });
+      }
+      seen.add(batch.id);
+    });
+  });

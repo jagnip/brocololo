@@ -6,6 +6,7 @@ export type PlanCookSessionPayload = {
   combinations: CookingCombination[];
   /** Unique YYYY-MM-DD keys for the plan slots in this hand-off (chronological). */
   dateKeys: string[];
+  extraPortions?: number;
 };
 
 /**
@@ -16,6 +17,7 @@ export type PlanCookSessionPayload = {
 export function encodePlanCookParam(
   combinations: CookingCombination[],
   dateKeys: string[] = [],
+  extraPortions = 0,
 ): string {
   const body = combinations
     .map((combination) => {
@@ -31,10 +33,8 @@ export function encodePlanCookParam(
     ),
   ].sort((a, b) => a.localeCompare(b));
 
-  if (uniqueDates.length === 0) {
-    return body;
-  }
-  return `${uniqueDates.join(",")}|${body}`;
+  const datedBody = uniqueDates.length === 0 ? body : `${uniqueDates.join(",")}|${body}`;
+  return extraPortions > 0 ? `${datedBody}~${Math.min(99, Math.floor(extraPortions))}` : datedBody;
 }
 
 /**
@@ -58,6 +58,15 @@ export function decodePlanCookParam(
     }
   } catch {
     return null;
+  }
+
+  let extraPortions: number | undefined;
+  const extrasIndex = raw.lastIndexOf("~");
+  if (extrasIndex >= 0) {
+    const extrasPart = raw.slice(extrasIndex + 1);
+    if (!/^\d+$/.test(extrasPart)) return null;
+    extraPortions = Math.max(0, Math.min(99, Number.parseInt(extrasPart, 10)));
+    raw = raw.slice(0, extrasIndex);
   }
 
   let dateKeys: string[] = [];
@@ -114,7 +123,9 @@ export function decodePlanCookParam(
     return null;
   }
 
-  return { combinations, dateKeys };
+  return extraPortions == null
+    ? { combinations, dateKeys }
+    : { combinations, dateKeys, extraPortions };
 }
 
 /** English ordinal day: 1 → 1st, 2 → 2nd, 14 → 14th. */

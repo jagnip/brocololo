@@ -10,7 +10,7 @@ import {
   markBatchSlots,
 } from "@/lib/planner/helpers";
 import { getSlotAudienceIdsForMeal } from "@/lib/planner/audience-mapping";
-import { PlanInputType, SlotSaveData } from "@/types/planner";
+import { PlanBatchInput, PlanInputType, SlotSaveData } from "@/types/planner";
 import { RecipeType } from "@/types/recipe";
 import { createPlan, deletePlanById, updatePlan } from "@/lib/db/planner";
 import { MEAL_TYPES, ROUTES } from "@/lib/constants";
@@ -22,6 +22,7 @@ import { pickBestCandidate } from "@/lib/planner/scoring";
 import { generateBaselineLogForPlan } from "@/lib/db/planner";
 import { requireUser } from "@/lib/auth/session";
 import { MESSAGES } from "@/lib/messages";
+import { planBatchesSaveSchema } from "@/lib/validations/planner";
 
 const PLAN_GENERATION_FAILED_MESSAGE = MESSAGES.planner.generationFailedMessage;
 
@@ -34,8 +35,9 @@ export async function generatePlan(
   rollingRecipes: RollingRecipeType[],
   /** Current draft — filled slots are preserved; only empties are generated. */
   existingPlan: PlanInputType = [],
+  existingBatches: PlanBatchInput[] = [],
 ): Promise<
-  | { type: "success"; plan: PlanInputType; warnings: string[] }
+  | { type: "success"; plan: PlanInputType; batches: PlanBatchInput[]; warnings: string[] }
   | { type: "error"; message: string }
 > {
   try {
@@ -77,6 +79,10 @@ export async function generatePlan(
     const batchFilledSlots = new Map<string, RecipeType>();
     const batchSlotAudience = new Map<string, string[]>();
     const batchSlotGroupIds = new Map<string, string>();
+    const generatedBatches = new Map<
+      string,
+      { recipeId: string; requestedMeals: number; cookingFamilyMemberIds: string[] }
+    >();
     const warnings: string[] = [];
     let emptySlotsAttempted = 0;
     let emptySlotsFilled = 0;
@@ -180,6 +186,13 @@ export async function generatePlan(
         emptySlotsFilled += 1;
 
         if (batchGroupId) {
+          if (winner.isBatchRecipe) {
+            generatedBatches.set(batchGroupId, {
+              recipeId: winner.id,
+              requestedMeals: totalMeals,
+              cookingFamilyMemberIds: slotAudienceIds,
+            });
+          }
           markBatchSlots(
             winner,
             mealType,
@@ -215,14 +228,56 @@ export async function generatePlan(
       }
     }
 
-    return { type: "success", plan, warnings };
+    const generatedBatchValues: PlanBatchInput[] = [...generatedBatches].flatMap(
+      ([id, batch]) => {
+        const scheduledCount = plan.filter(
+          (slot) =>
+            slot.batchGroupId === id && slot.recipe?.id === batch.recipeId,
+        ).length;
+        if (scheduledCount === 0) return [];
+        const storageCount = Math.max(batch.requestedMeals - scheduledCount, 0);
+        return [
+          {
+            id,
+            recipeId: batch.recipeId,
+            storageRows:
+              storageCount > 0
+                ? [
+                    {
+                      count: storageCount,
+                      cookingFamilyMemberIds: batch.cookingFamilyMemberIds,
+                    },
+                  ]
+                : [],
+            extraPortions: 0,
+          },
+        ];
+      },
+    );
+    const generatedIds = new Set(generatedBatchValues.map((batch) => batch.id));
+    const batches = [
+      ...existingBatches.filter(
+        (batch) =>
+          !generatedIds.has(batch.id) &&
+          plan.some(
+            (slot) =>
+              slot.batchGroupId === batch.id &&
+              slot.recipe?.id === batch.recipeId,
+          ),
+      ),
+      ...generatedBatchValues,
+    ];
+    return { type: "success", plan, batches, warnings };
   } catch (error) {
     console.error("Error generating plan", error);
     return { type: "error", message: "Failed to generate plan." };
   }
 }
 
-export async function savePlan(plan: PlanInputType): Promise<
+export async function savePlan(
+  plan: PlanInputType,
+  batches: PlanBatchInput[] = [],
+): Promise<
   | { type: "success"; planId: string }
   | {
       type: "date_conflict";
@@ -243,7 +298,8 @@ export async function savePlan(plan: PlanInputType): Promise<
   let planId: string;
   try {
     const { id: userId } = await requireUser();
-    const created = await createPlan(userId, startDate, endDate, plan);
+    const parsedBatches = planBatchesSaveSchema.parse(batches);
+    const created = await createPlan(userId, startDate, endDate, plan, parsedBatches);
     if (created.type === "date_conflict") {
       return created;
     }
@@ -269,6 +325,7 @@ export async function updateSavedPlan(
   planId: string,
   slots: SlotSaveData[],
   options?: { forceDestructiveSync?: boolean },
+  batches: PlanBatchInput[] = [],
 ): Promise<
   | { type: "success" }
   | {
@@ -291,7 +348,14 @@ export async function updateSavedPlan(
 
   try {
     const { id: userId } = await requireUser();
-    const result = await updatePlan(userId, planId, slots, options);
+    const parsedBatches = planBatchesSaveSchema.parse(batches);
+    const result = await updatePlan(
+      userId,
+      planId,
+      slots,
+      options,
+      parsedBatches,
+    );
     if (result.type === "date_conflict") {
       return result;
     }

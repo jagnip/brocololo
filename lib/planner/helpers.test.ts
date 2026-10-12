@@ -238,6 +238,35 @@ describe("getBatchGroupLabels", () => {
     expect(labels.get(day2Key)).toEqual({ index: 2, total: 2 });
   });
 
+  it("includes stored meals in totals but excludes extra portions", () => {
+    const recipe = {
+      id: "batch-recipe",
+      isBatchRecipe: true,
+      plannedMealCount: 4,
+    } as RecipeType;
+    const plan: PlanInputType = [
+      {
+        date: new Date("2026-10-19T00:00:00.000Z"),
+        mealType: PlannerMealType.DINNER,
+        recipe,
+        customMeal: null,
+        alternatives: [],
+        used: false,
+        batchGroupId: "batch-1",
+      },
+    ];
+    const labels = getBatchGroupLabels(plan, [
+      {
+        id: "batch-1",
+        recipeId: recipe.id,
+        storageRows: [{ count: 3, cookingFamilyMemberIds: ["member-1"] }],
+        extraPortions: 7,
+      },
+    ]);
+    const key = `${plan[0]!.date.toISOString()}-${PlannerMealType.DINNER}`;
+    expect(labels.get(key)).toEqual({ index: 1, total: 4 });
+  });
+
   it("skips groups with a single remaining member", () => {
     const recipe = { id: "r-1", isBatchRecipe: true } as RecipeType;
     const plan: PlanInputType = [

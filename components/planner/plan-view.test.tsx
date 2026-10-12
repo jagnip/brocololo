@@ -17,15 +17,18 @@ vi.mock("./planner-slot-card", () => ({
     isSelected,
     onSelectionChange,
     onCardSelect,
+    onEditBatch,
   }: {
     slot: { mealType: string };
     isSelected?: boolean;
     onSelectionChange?: (checked: boolean) => void;
     onCardSelect?: (modifiers: { shiftKey: boolean; metaKey: boolean; ctrlKey: boolean }) => void;
+    onEditBatch?: () => void;
   }) => (
     <div data-planner-selection-card="">
       <div onClick={(event) => onCardSelect?.(event)}>{slot.mealType}</div>
       <div>{isSelected ? "selected" : "not-selected"}</div>
+      {onEditBatch ? <button type="button" onClick={onEditBatch}>Edit batch {slot.mealType}</button> : null}
       <button type="button" onClick={() => onSelectionChange?.(true)}>
         Select {slot.mealType}
       </button>
@@ -194,6 +197,27 @@ describe("PlanView bulk replacement meal occasion", () => {
 });
 
 describe("PlanView bulk edit eaters", () => {
+  it("removes every scheduled batch slot without touching other meals", async () => {
+    const user = userEvent.setup();
+    const onRemove = vi.fn();
+    const recipe = { ...createRecipe("batch-recipe"), isBatchRecipe: true };
+    const plan = [
+      { ...createSlot("2026-03-17T00:00:00.000Z", "LUNCH", ["fm-a"]), recipe, batchGroupId: "batch-1" },
+      { ...createSlot("2026-03-17T00:00:00.000Z", "DINNER", ["fm-a"]), recipe, batchGroupId: "batch-1" },
+      createSlot("2026-03-17T00:00:00.000Z", "BREAKFAST", ["fm-a"]),
+    ];
+    renderPlanView({ plan, onRemove, onBatchesChange: vi.fn() });
+
+    await user.click(screen.getByRole("button", { name: "Edit batch LUNCH" }));
+    await user.click(screen.getByRole("button", { name: "Remove batch" }));
+
+    expect(onRemove.mock.calls).toEqual([
+      ["2026-03-17T00:00:00.000Z-LUNCH"],
+      ["2026-03-17T00:00:00.000Z-DINNER"],
+    ]);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("replaces plain-click selection, toggles with Ctrl/Cmd, and clears outside or on Escape", () => {
     renderPlanView();
     fireEvent.click(screen.getByText("BREAKFAST"));

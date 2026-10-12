@@ -183,6 +183,7 @@ export type PlanWhereInput = {
   endDate?: Prisma.DateTimeFilter<"Plan"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Plan"> | Date | string
   slots?: Prisma.PlanSlotListRelationFilter
+  batches?: Prisma.PlanBatchListRelationFilter
   audienceMembers?: Prisma.PlanAudienceMemberListRelationFilter
   log?: Prisma.XOR<Prisma.LogNullableScalarRelationFilter, Prisma.LogWhereInput> | null
   shoppingList?: Prisma.XOR<Prisma.ShoppingListNullableScalarRelationFilter, Prisma.ShoppingListWhereInput> | null
@@ -196,6 +197,7 @@ export type PlanOrderByWithRelationInput = {
   endDate?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   slots?: Prisma.PlanSlotOrderByRelationAggregateInput
+  batches?: Prisma.PlanBatchOrderByRelationAggregateInput
   audienceMembers?: Prisma.PlanAudienceMemberOrderByRelationAggregateInput
   log?: Prisma.LogOrderByWithRelationInput
   shoppingList?: Prisma.ShoppingListOrderByWithRelationInput
@@ -212,6 +214,7 @@ export type PlanWhereUniqueInput = Prisma.AtLeast<{
   endDate?: Prisma.DateTimeFilter<"Plan"> | Date | string
   createdAt?: Prisma.DateTimeFilter<"Plan"> | Date | string
   slots?: Prisma.PlanSlotListRelationFilter
+  batches?: Prisma.PlanBatchListRelationFilter
   audienceMembers?: Prisma.PlanAudienceMemberListRelationFilter
   log?: Prisma.XOR<Prisma.LogNullableScalarRelationFilter, Prisma.LogWhereInput> | null
   shoppingList?: Prisma.XOR<Prisma.ShoppingListNullableScalarRelationFilter, Prisma.ShoppingListWhereInput> | null
@@ -246,6 +249,7 @@ export type PlanCreateInput = {
   endDate: Date | string
   createdAt?: Date | string
   slots?: Prisma.PlanSlotCreateNestedManyWithoutPlanInput
+  batches?: Prisma.PlanBatchCreateNestedManyWithoutPlanInput
   audienceMembers?: Prisma.PlanAudienceMemberCreateNestedManyWithoutPlanInput
   log?: Prisma.LogCreateNestedOneWithoutPlanInput
   shoppingList?: Prisma.ShoppingListCreateNestedOneWithoutPlanInput
@@ -259,6 +263,7 @@ export type PlanUncheckedCreateInput = {
   endDate: Date | string
   createdAt?: Date | string
   slots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutPlanInput
+  batches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutPlanInput
   audienceMembers?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutPlanInput
   log?: Prisma.LogUncheckedCreateNestedOneWithoutPlanInput
   shoppingList?: Prisma.ShoppingListUncheckedCreateNestedOneWithoutPlanInput
@@ -270,6 +275,7 @@ export type PlanUpdateInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   slots?: Prisma.PlanSlotUpdateManyWithoutPlanNestedInput
+  batches?: Prisma.PlanBatchUpdateManyWithoutPlanNestedInput
   audienceMembers?: Prisma.PlanAudienceMemberUpdateManyWithoutPlanNestedInput
   log?: Prisma.LogUpdateOneWithoutPlanNestedInput
   shoppingList?: Prisma.ShoppingListUpdateOneWithoutPlanNestedInput
@@ -283,6 +289,7 @@ export type PlanUncheckedUpdateInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   slots?: Prisma.PlanSlotUncheckedUpdateManyWithoutPlanNestedInput
+  batches?: Prisma.PlanBatchUncheckedUpdateManyWithoutPlanNestedInput
   audienceMembers?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutPlanNestedInput
   log?: Prisma.LogUncheckedUpdateOneWithoutPlanNestedInput
   shoppingList?: Prisma.ShoppingListUncheckedUpdateOneWithoutPlanNestedInput
@@ -434,6 +441,20 @@ export type PlanUpdateOneRequiredWithoutSlotsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.PlanUpdateToOneWithWhereWithoutSlotsInput, Prisma.PlanUpdateWithoutSlotsInput>, Prisma.PlanUncheckedUpdateWithoutSlotsInput>
 }
 
+export type PlanCreateNestedOneWithoutBatchesInput = {
+  create?: Prisma.XOR<Prisma.PlanCreateWithoutBatchesInput, Prisma.PlanUncheckedCreateWithoutBatchesInput>
+  connectOrCreate?: Prisma.PlanCreateOrConnectWithoutBatchesInput
+  connect?: Prisma.PlanWhereUniqueInput
+}
+
+export type PlanUpdateOneRequiredWithoutBatchesNestedInput = {
+  create?: Prisma.XOR<Prisma.PlanCreateWithoutBatchesInput, Prisma.PlanUncheckedCreateWithoutBatchesInput>
+  connectOrCreate?: Prisma.PlanCreateOrConnectWithoutBatchesInput
+  upsert?: Prisma.PlanUpsertWithoutBatchesInput
+  connect?: Prisma.PlanWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PlanUpdateToOneWithWhereWithoutBatchesInput, Prisma.PlanUpdateWithoutBatchesInput>, Prisma.PlanUncheckedUpdateWithoutBatchesInput>
+}
+
 export type PlanCreateNestedOneWithoutLogInput = {
   create?: Prisma.XOR<Prisma.PlanCreateWithoutLogInput, Prisma.PlanUncheckedCreateWithoutLogInput>
   connectOrCreate?: Prisma.PlanCreateOrConnectWithoutLogInput
@@ -454,6 +475,7 @@ export type PlanCreateWithoutUserInput = {
   endDate: Date | string
   createdAt?: Date | string
   slots?: Prisma.PlanSlotCreateNestedManyWithoutPlanInput
+  batches?: Prisma.PlanBatchCreateNestedManyWithoutPlanInput
   audienceMembers?: Prisma.PlanAudienceMemberCreateNestedManyWithoutPlanInput
   log?: Prisma.LogCreateNestedOneWithoutPlanInput
   shoppingList?: Prisma.ShoppingListCreateNestedOneWithoutPlanInput
@@ -465,6 +487,7 @@ export type PlanUncheckedCreateWithoutUserInput = {
   endDate: Date | string
   createdAt?: Date | string
   slots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutPlanInput
+  batches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutPlanInput
   audienceMembers?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutPlanInput
   log?: Prisma.LogUncheckedCreateNestedOneWithoutPlanInput
   shoppingList?: Prisma.ShoppingListUncheckedCreateNestedOneWithoutPlanInput
@@ -513,6 +536,7 @@ export type PlanCreateWithoutAudienceMembersInput = {
   endDate: Date | string
   createdAt?: Date | string
   slots?: Prisma.PlanSlotCreateNestedManyWithoutPlanInput
+  batches?: Prisma.PlanBatchCreateNestedManyWithoutPlanInput
   log?: Prisma.LogCreateNestedOneWithoutPlanInput
   shoppingList?: Prisma.ShoppingListCreateNestedOneWithoutPlanInput
   user: Prisma.UserCreateNestedOneWithoutPlansInput
@@ -525,6 +549,7 @@ export type PlanUncheckedCreateWithoutAudienceMembersInput = {
   endDate: Date | string
   createdAt?: Date | string
   slots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutPlanInput
+  batches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutPlanInput
   log?: Prisma.LogUncheckedCreateNestedOneWithoutPlanInput
   shoppingList?: Prisma.ShoppingListUncheckedCreateNestedOneWithoutPlanInput
 }
@@ -551,6 +576,7 @@ export type PlanUpdateWithoutAudienceMembersInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   slots?: Prisma.PlanSlotUpdateManyWithoutPlanNestedInput
+  batches?: Prisma.PlanBatchUpdateManyWithoutPlanNestedInput
   log?: Prisma.LogUpdateOneWithoutPlanNestedInput
   shoppingList?: Prisma.ShoppingListUpdateOneWithoutPlanNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPlansNestedInput
@@ -563,6 +589,7 @@ export type PlanUncheckedUpdateWithoutAudienceMembersInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   slots?: Prisma.PlanSlotUncheckedUpdateManyWithoutPlanNestedInput
+  batches?: Prisma.PlanBatchUncheckedUpdateManyWithoutPlanNestedInput
   log?: Prisma.LogUncheckedUpdateOneWithoutPlanNestedInput
   shoppingList?: Prisma.ShoppingListUncheckedUpdateOneWithoutPlanNestedInput
 }
@@ -573,6 +600,7 @@ export type PlanCreateWithoutShoppingListInput = {
   endDate: Date | string
   createdAt?: Date | string
   slots?: Prisma.PlanSlotCreateNestedManyWithoutPlanInput
+  batches?: Prisma.PlanBatchCreateNestedManyWithoutPlanInput
   audienceMembers?: Prisma.PlanAudienceMemberCreateNestedManyWithoutPlanInput
   log?: Prisma.LogCreateNestedOneWithoutPlanInput
   user: Prisma.UserCreateNestedOneWithoutPlansInput
@@ -585,6 +613,7 @@ export type PlanUncheckedCreateWithoutShoppingListInput = {
   endDate: Date | string
   createdAt?: Date | string
   slots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutPlanInput
+  batches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutPlanInput
   audienceMembers?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutPlanInput
   log?: Prisma.LogUncheckedCreateNestedOneWithoutPlanInput
 }
@@ -611,6 +640,7 @@ export type PlanUpdateWithoutShoppingListInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   slots?: Prisma.PlanSlotUpdateManyWithoutPlanNestedInput
+  batches?: Prisma.PlanBatchUpdateManyWithoutPlanNestedInput
   audienceMembers?: Prisma.PlanAudienceMemberUpdateManyWithoutPlanNestedInput
   log?: Prisma.LogUpdateOneWithoutPlanNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPlansNestedInput
@@ -623,6 +653,7 @@ export type PlanUncheckedUpdateWithoutShoppingListInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   slots?: Prisma.PlanSlotUncheckedUpdateManyWithoutPlanNestedInput
+  batches?: Prisma.PlanBatchUncheckedUpdateManyWithoutPlanNestedInput
   audienceMembers?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutPlanNestedInput
   log?: Prisma.LogUncheckedUpdateOneWithoutPlanNestedInput
 }
@@ -632,6 +663,7 @@ export type PlanCreateWithoutSlotsInput = {
   startDate: Date | string
   endDate: Date | string
   createdAt?: Date | string
+  batches?: Prisma.PlanBatchCreateNestedManyWithoutPlanInput
   audienceMembers?: Prisma.PlanAudienceMemberCreateNestedManyWithoutPlanInput
   log?: Prisma.LogCreateNestedOneWithoutPlanInput
   shoppingList?: Prisma.ShoppingListCreateNestedOneWithoutPlanInput
@@ -644,6 +676,7 @@ export type PlanUncheckedCreateWithoutSlotsInput = {
   startDate: Date | string
   endDate: Date | string
   createdAt?: Date | string
+  batches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutPlanInput
   audienceMembers?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutPlanInput
   log?: Prisma.LogUncheckedCreateNestedOneWithoutPlanInput
   shoppingList?: Prisma.ShoppingListUncheckedCreateNestedOneWithoutPlanInput
@@ -670,6 +703,7 @@ export type PlanUpdateWithoutSlotsInput = {
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  batches?: Prisma.PlanBatchUpdateManyWithoutPlanNestedInput
   audienceMembers?: Prisma.PlanAudienceMemberUpdateManyWithoutPlanNestedInput
   log?: Prisma.LogUpdateOneWithoutPlanNestedInput
   shoppingList?: Prisma.ShoppingListUpdateOneWithoutPlanNestedInput
@@ -682,6 +716,71 @@ export type PlanUncheckedUpdateWithoutSlotsInput = {
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  batches?: Prisma.PlanBatchUncheckedUpdateManyWithoutPlanNestedInput
+  audienceMembers?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutPlanNestedInput
+  log?: Prisma.LogUncheckedUpdateOneWithoutPlanNestedInput
+  shoppingList?: Prisma.ShoppingListUncheckedUpdateOneWithoutPlanNestedInput
+}
+
+export type PlanCreateWithoutBatchesInput = {
+  id?: string
+  startDate: Date | string
+  endDate: Date | string
+  createdAt?: Date | string
+  slots?: Prisma.PlanSlotCreateNestedManyWithoutPlanInput
+  audienceMembers?: Prisma.PlanAudienceMemberCreateNestedManyWithoutPlanInput
+  log?: Prisma.LogCreateNestedOneWithoutPlanInput
+  shoppingList?: Prisma.ShoppingListCreateNestedOneWithoutPlanInput
+  user: Prisma.UserCreateNestedOneWithoutPlansInput
+}
+
+export type PlanUncheckedCreateWithoutBatchesInput = {
+  id?: string
+  userId: string
+  startDate: Date | string
+  endDate: Date | string
+  createdAt?: Date | string
+  slots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutPlanInput
+  audienceMembers?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutPlanInput
+  log?: Prisma.LogUncheckedCreateNestedOneWithoutPlanInput
+  shoppingList?: Prisma.ShoppingListUncheckedCreateNestedOneWithoutPlanInput
+}
+
+export type PlanCreateOrConnectWithoutBatchesInput = {
+  where: Prisma.PlanWhereUniqueInput
+  create: Prisma.XOR<Prisma.PlanCreateWithoutBatchesInput, Prisma.PlanUncheckedCreateWithoutBatchesInput>
+}
+
+export type PlanUpsertWithoutBatchesInput = {
+  update: Prisma.XOR<Prisma.PlanUpdateWithoutBatchesInput, Prisma.PlanUncheckedUpdateWithoutBatchesInput>
+  create: Prisma.XOR<Prisma.PlanCreateWithoutBatchesInput, Prisma.PlanUncheckedCreateWithoutBatchesInput>
+  where?: Prisma.PlanWhereInput
+}
+
+export type PlanUpdateToOneWithWhereWithoutBatchesInput = {
+  where?: Prisma.PlanWhereInput
+  data: Prisma.XOR<Prisma.PlanUpdateWithoutBatchesInput, Prisma.PlanUncheckedUpdateWithoutBatchesInput>
+}
+
+export type PlanUpdateWithoutBatchesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  slots?: Prisma.PlanSlotUpdateManyWithoutPlanNestedInput
+  audienceMembers?: Prisma.PlanAudienceMemberUpdateManyWithoutPlanNestedInput
+  log?: Prisma.LogUpdateOneWithoutPlanNestedInput
+  shoppingList?: Prisma.ShoppingListUpdateOneWithoutPlanNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutPlansNestedInput
+}
+
+export type PlanUncheckedUpdateWithoutBatchesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  slots?: Prisma.PlanSlotUncheckedUpdateManyWithoutPlanNestedInput
   audienceMembers?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutPlanNestedInput
   log?: Prisma.LogUncheckedUpdateOneWithoutPlanNestedInput
   shoppingList?: Prisma.ShoppingListUncheckedUpdateOneWithoutPlanNestedInput
@@ -693,6 +792,7 @@ export type PlanCreateWithoutLogInput = {
   endDate: Date | string
   createdAt?: Date | string
   slots?: Prisma.PlanSlotCreateNestedManyWithoutPlanInput
+  batches?: Prisma.PlanBatchCreateNestedManyWithoutPlanInput
   audienceMembers?: Prisma.PlanAudienceMemberCreateNestedManyWithoutPlanInput
   shoppingList?: Prisma.ShoppingListCreateNestedOneWithoutPlanInput
   user: Prisma.UserCreateNestedOneWithoutPlansInput
@@ -705,6 +805,7 @@ export type PlanUncheckedCreateWithoutLogInput = {
   endDate: Date | string
   createdAt?: Date | string
   slots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutPlanInput
+  batches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutPlanInput
   audienceMembers?: Prisma.PlanAudienceMemberUncheckedCreateNestedManyWithoutPlanInput
   shoppingList?: Prisma.ShoppingListUncheckedCreateNestedOneWithoutPlanInput
 }
@@ -731,6 +832,7 @@ export type PlanUpdateWithoutLogInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   slots?: Prisma.PlanSlotUpdateManyWithoutPlanNestedInput
+  batches?: Prisma.PlanBatchUpdateManyWithoutPlanNestedInput
   audienceMembers?: Prisma.PlanAudienceMemberUpdateManyWithoutPlanNestedInput
   shoppingList?: Prisma.ShoppingListUpdateOneWithoutPlanNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutPlansNestedInput
@@ -743,6 +845,7 @@ export type PlanUncheckedUpdateWithoutLogInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   slots?: Prisma.PlanSlotUncheckedUpdateManyWithoutPlanNestedInput
+  batches?: Prisma.PlanBatchUncheckedUpdateManyWithoutPlanNestedInput
   audienceMembers?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutPlanNestedInput
   shoppingList?: Prisma.ShoppingListUncheckedUpdateOneWithoutPlanNestedInput
 }
@@ -760,6 +863,7 @@ export type PlanUpdateWithoutUserInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   slots?: Prisma.PlanSlotUpdateManyWithoutPlanNestedInput
+  batches?: Prisma.PlanBatchUpdateManyWithoutPlanNestedInput
   audienceMembers?: Prisma.PlanAudienceMemberUpdateManyWithoutPlanNestedInput
   log?: Prisma.LogUpdateOneWithoutPlanNestedInput
   shoppingList?: Prisma.ShoppingListUpdateOneWithoutPlanNestedInput
@@ -771,6 +875,7 @@ export type PlanUncheckedUpdateWithoutUserInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   slots?: Prisma.PlanSlotUncheckedUpdateManyWithoutPlanNestedInput
+  batches?: Prisma.PlanBatchUncheckedUpdateManyWithoutPlanNestedInput
   audienceMembers?: Prisma.PlanAudienceMemberUncheckedUpdateManyWithoutPlanNestedInput
   log?: Prisma.LogUncheckedUpdateOneWithoutPlanNestedInput
   shoppingList?: Prisma.ShoppingListUncheckedUpdateOneWithoutPlanNestedInput
@@ -790,11 +895,13 @@ export type PlanUncheckedUpdateManyWithoutUserInput = {
 
 export type PlanCountOutputType = {
   slots: number
+  batches: number
   audienceMembers: number
 }
 
 export type PlanCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   slots?: boolean | PlanCountOutputTypeCountSlotsArgs
+  batches?: boolean | PlanCountOutputTypeCountBatchesArgs
   audienceMembers?: boolean | PlanCountOutputTypeCountAudienceMembersArgs
 }
 
@@ -818,6 +925,13 @@ export type PlanCountOutputTypeCountSlotsArgs<ExtArgs extends runtime.Types.Exte
 /**
  * PlanCountOutputType without action
  */
+export type PlanCountOutputTypeCountBatchesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PlanBatchWhereInput
+}
+
+/**
+ * PlanCountOutputType without action
+ */
 export type PlanCountOutputTypeCountAudienceMembersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.PlanAudienceMemberWhereInput
 }
@@ -830,6 +944,7 @@ export type PlanSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   endDate?: boolean
   createdAt?: boolean
   slots?: boolean | Prisma.Plan$slotsArgs<ExtArgs>
+  batches?: boolean | Prisma.Plan$batchesArgs<ExtArgs>
   audienceMembers?: boolean | Prisma.Plan$audienceMembersArgs<ExtArgs>
   log?: boolean | Prisma.Plan$logArgs<ExtArgs>
   shoppingList?: boolean | Prisma.Plan$shoppingListArgs<ExtArgs>
@@ -866,6 +981,7 @@ export type PlanSelectScalar = {
 export type PlanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "startDate" | "endDate" | "createdAt", ExtArgs["result"]["plan"]>
 export type PlanInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   slots?: boolean | Prisma.Plan$slotsArgs<ExtArgs>
+  batches?: boolean | Prisma.Plan$batchesArgs<ExtArgs>
   audienceMembers?: boolean | Prisma.Plan$audienceMembersArgs<ExtArgs>
   log?: boolean | Prisma.Plan$logArgs<ExtArgs>
   shoppingList?: boolean | Prisma.Plan$shoppingListArgs<ExtArgs>
@@ -883,6 +999,7 @@ export type $PlanPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name: "Plan"
   objects: {
     slots: Prisma.$PlanSlotPayload<ExtArgs>[]
+    batches: Prisma.$PlanBatchPayload<ExtArgs>[]
     audienceMembers: Prisma.$PlanAudienceMemberPayload<ExtArgs>[]
     log: Prisma.$LogPayload<ExtArgs> | null
     shoppingList: Prisma.$ShoppingListPayload<ExtArgs> | null
@@ -1289,6 +1406,7 @@ readonly fields: PlanFieldRefs;
 export interface Prisma__PlanClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   slots<T extends Prisma.Plan$slotsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Plan$slotsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlanSlotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  batches<T extends Prisma.Plan$batchesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Plan$batchesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlanBatchPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   audienceMembers<T extends Prisma.Plan$audienceMembersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Plan$audienceMembersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlanAudienceMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   log<T extends Prisma.Plan$logArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Plan$logArgs<ExtArgs>>): Prisma.Prisma__LogClient<runtime.Types.Result.GetResult<Prisma.$LogPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   shoppingList<T extends Prisma.Plan$shoppingListArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Plan$shoppingListArgs<ExtArgs>>): Prisma.Prisma__ShoppingListClient<runtime.Types.Result.GetResult<Prisma.$ShoppingListPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
@@ -1744,6 +1862,30 @@ export type Plan$slotsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
   take?: number
   skip?: number
   distinct?: Prisma.PlanSlotScalarFieldEnum | Prisma.PlanSlotScalarFieldEnum[]
+}
+
+/**
+ * Plan.batches
+ */
+export type Plan$batchesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PlanBatch
+   */
+  select?: Prisma.PlanBatchSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PlanBatch
+   */
+  omit?: Prisma.PlanBatchOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PlanBatchInclude<ExtArgs> | null
+  where?: Prisma.PlanBatchWhereInput
+  orderBy?: Prisma.PlanBatchOrderByWithRelationInput | Prisma.PlanBatchOrderByWithRelationInput[]
+  cursor?: Prisma.PlanBatchWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PlanBatchScalarFieldEnum | Prisma.PlanBatchScalarFieldEnum[]
 }
 
 /**

@@ -1,6 +1,6 @@
 "use client";
 
-import type { PlanInputType, PlanSlotMealPayload, SetPlanMealOptions } from "@/types/planner";
+import type { PlanBatchInput, PlanInputType, PlanSlotMealPayload, SetPlanMealOptions } from "@/types/planner";
 import type { RecipeType } from "@/types/recipe";
 import { PlanView } from "./plan-view";
 import { PlanViewSkeleton } from "./plan-view-skeleton";
@@ -17,6 +17,7 @@ export { getPlannerPlanColumnMode, type PlannerPlanColumnMode };
 type PlannerPlanColumnProps = {
   mode: PlannerPlanColumnMode;
   plan: PlanInputType | null;
+  batches?: PlanBatchInput[];
   lastGenerationError: string | null;
   fridgeIngredientIds: string[];
   recipes: RecipeType[];
@@ -31,6 +32,7 @@ type PlannerPlanColumnProps = {
   onRemove?: (slotKey: string) => void;
   onRearrangeSlots?: (sourceKey: string, targetKey: string) => void;
   onAudienceChange?: (slotKey: string, memberIds: string[]) => void;
+  onBatchesChange?: (batches: PlanBatchInput[]) => void;
   /** Forwarded to PlanView — create plan uses subtext under the column title. */
   dayLabelVariant?: "title" | "subtext";
 };
@@ -38,6 +40,7 @@ type PlannerPlanColumnProps = {
 export function PlannerPlanColumn({
   mode,
   plan,
+  batches = [],
   fridgeIngredientIds,
   recipes,
   ingredientOptions,
@@ -47,6 +50,7 @@ export function PlannerPlanColumn({
   onRemove,
   onRearrangeSlots,
   onAudienceChange,
+  onBatchesChange,
   dayLabelVariant,
 }: PlannerPlanColumnProps) {
   if (mode === "loading") {
@@ -57,6 +61,7 @@ export function PlannerPlanColumn({
     return (
       <PlanView
         plan={plan}
+        batches={batches}
         fridgeIngredientIds={fridgeIngredientIds}
         recipes={recipes}
         ingredientOptions={ingredientOptions}
@@ -66,6 +71,7 @@ export function PlannerPlanColumn({
         onRearrangeSlots={onRearrangeSlots}
         familyMembers={familyMembers}
         onAudienceChange={onAudienceChange}
+        onBatchesChange={onBatchesChange}
         dayLabelVariant={dayLabelVariant}
       />
     );

@@ -484,7 +484,7 @@ export async function updateRecipe(
   return prisma.$transaction(async (tx) => {
     const owned = await tx.recipe.findFirst({
       where: { id: recipeId, userId },
-      select: { id: true },
+      select: { id: true, isBatchRecipe: true },
     });
     if (!owned) {
       throw new Error("RECIPE_NOT_FOUND");
@@ -506,6 +506,14 @@ export async function updateRecipe(
         },
       },
     });
+
+    if (owned.isBatchRecipe && !recipeData.isBatchRecipe) {
+      await tx.planBatch.deleteMany({ where: { recipeId } });
+      await tx.planSlot.updateMany({
+        where: { recipeId },
+        data: { batchGroupId: null },
+      });
+    }
 
     await tx.recipeMemberPortion.deleteMany({
       where: { recipeId },

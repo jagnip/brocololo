@@ -23,10 +23,12 @@ import {
   getBatchGroupLabels,
 } from "@/lib/planner/helpers";
 import {
+  buildCookingCombinationsFromSlots,
   getBatchGroupSlotsForRecipe,
   getRecipeCookingHref,
 } from "@/lib/planner/plan-recipe-link";
 import {
+  PlanBatchInput,
   PlanInputType,
   PlanSlotMealPayload,
   SetPlanMealOptions,
@@ -53,6 +55,7 @@ import { getBulkEditMealsDialogCopy } from "@/lib/planner/plan-slot-meal-dialog-
 import { PLANNER_MEAL_TYPE_TO_OCCASION_SLUG } from "@/lib/planner/recipe-picker-filters";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { PlanBatchDialog } from "./plan-batch-dialog";
 
 function getFridgeMatchIngredients(
   recipe: RecipeType,
@@ -72,6 +75,7 @@ function getFridgeMatchIngredients(
 
 type PlanViewProps = {
   plan: PlanInputType;
+  batches?: PlanBatchInput[];
   fridgeIngredientIds?: string[];
   recipes: RecipeType[];
   ingredientOptions: LogIngredientOption[];
@@ -87,6 +91,7 @@ type PlanViewProps = {
   onToggleUsed?: (slotKey: string) => void;
   familyMembers?: FamilyMemberRow[];
   onAudienceChange?: (slotKey: string, memberIds: string[]) => void;
+  onBatchesChange?: (batches: PlanBatchInput[]) => void;
   /**
    * Create-plan column titles own type-h2; days step down to subtext.
    * Plan detail keeps day labels as section titles (default).
@@ -96,6 +101,7 @@ type PlanViewProps = {
 
 export function PlanView({
   plan,
+  batches = [],
   fridgeIngredientIds = [],
   recipes,
   ingredientOptions,
@@ -106,6 +112,7 @@ export function PlanView({
   onToggleUsed,
   familyMembers = [],
   onAudienceChange,
+  onBatchesChange,
   dayLabelVariant = "title",
 }: PlanViewProps) {
   const selectionRootRef = useRef<HTMLElement>(null);
@@ -115,6 +122,7 @@ export function PlanView({
   const [activeDrag, setActiveDrag] = useState<PlannerSlotDragData | null>(
     null,
   );
+  const [editingBatchId, setEditingBatchId] = useState<string | null>(null);
 
   // Mouse distance vs touch long-press so clicks/taps still open the meal dialog.
   const sensors = useSensors(
@@ -180,7 +188,7 @@ export function PlanView({
   const slotsByDate = groupSlotsByDate(plan);
   const sortedDates = Array.from(slotsByDate.keys()).sort();
   // Compute once per render so every card can look up its live "N of M" label.
-  const batchLabels = getBatchGroupLabels(plan);
+  const batchLabels = getBatchGroupLabels(plan, batches);
   const bulkReplaceDialogCopy = getBulkEditMealsDialogCopy(selectedCount);
   const canBulkEditEaters = onAudienceChange && familyMembers.length > 0;
   const canRearrange = Boolean(onRearrangeSlots);
@@ -297,6 +305,12 @@ export function PlanView({
   function renderSlot(slot: SlotInputType) {
     const slotKey = getPlanSlotKey(slot);
     const householdIds = familyMembers.map((member) => member.id);
+    const batchForSlot = slot.batchGroupId
+      ? batches.find(
+          (batch) =>
+            batch.id === slot.batchGroupId && batch.recipeId === slot.recipe?.id,
+        )
+      : undefined;
     // Batch recipes hand off the whole group's eaters; non-batch only this slot.
     const recipeCookingHref = slot.recipe
       ? getRecipeCookingHref(
@@ -309,6 +323,7 @@ export function PlanView({
               )
             : [slot],
           householdIds,
+          batchForSlot,
         )
       : undefined;
 
@@ -347,6 +362,11 @@ export function PlanView({
             : undefined
         }
         batchLabel={batchLabels.get(slotKey)}
+        onEditBatch={
+          slot.recipe?.isBatchRecipe && slot.batchGroupId && onBatchesChange
+            ? () => setEditingBatchId(slot.batchGroupId!)
+            : undefined
+        }
         recipeCookingHref={recipeCookingHref}
         recipes={recipes}
         ingredientOptions={ingredientOptions}
@@ -451,6 +471,54 @@ export function PlanView({
           onSave={handleBulkEditEatersSave}
         />
       ) : null}
+      {editingBatchId ? (() => {
+        const firstSlot = plan.find(
+          (slot) => slot.batchGroupId === editingBatchId && slot.recipe?.isBatchRecipe,
+        );
+        if (!firstSlot?.recipe) return null;
+        const existing = batches.find((batch) => batch.id === editingBatchId);
+        const batch: PlanBatchInput = existing ?? {
+          id: editingBatchId,
+          recipeId: firstSlot.recipe.id,
+          storageRows: [],
+          extraPortions: 0,
+        };
+        const scheduledSlots = getBatchGroupSlotsForRecipe(
+          plan,
+          editingBatchId,
+          firstSlot.recipe.id,
+        );
+        return (
+          <PlanBatchDialog
+            key={`${editingBatchId}-${JSON.stringify(batch)}`}
+            open
+            recipeName={firstSlot.recipe.name}
+            batch={batch}
+            scheduledCombinations={buildCookingCombinationsFromSlots(
+              scheduledSlots,
+              familyMembers.map((member) => member.id),
+            )}
+            familyMembers={familyMembers}
+            onRemove={onRemove ? () => {
+              for (const slot of scheduledSlots) {
+                onRemove(getPlanSlotKey(slot));
+              }
+            } : undefined}
+            onOpenChange={(open) => {
+              if (!open) setEditingBatchId(null);
+            }}
+            onSave={(nextBatch) =>
+              onBatchesChange?.(
+                existing
+                  ? batches.map((item) =>
+                      item.id === nextBatch.id ? nextBatch : item,
+                    )
+                  : [...batches, nextBatch],
+              )
+            }
+          />
+        );
+      })() : null}
     </section>
   );
 

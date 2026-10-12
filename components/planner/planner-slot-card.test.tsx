@@ -144,6 +144,27 @@ describe("PlannerSlotCard batch badge", () => {
     );
   });
 
+  it("opens batch editing from the badge without selecting the card", () => {
+    const recipe = createBatchRecipe();
+    const onEditBatch = vi.fn();
+    const onCardSelect = vi.fn();
+    render(
+      <PlannerSlotCard
+        slot={createSlot(recipe)}
+        batchLabel={{ index: 1, total: 4 }}
+        onEditBatch={onEditBatch}
+        onCardSelect={onCardSelect}
+        recipes={[recipe]}
+        ingredientOptions={[]}
+      />,
+    );
+    const badge = screen.getByRole("button", { name: "Batch meal 1 of 4" });
+    expect(badge).toHaveAttribute("aria-haspopup", "dialog");
+    fireEvent.click(badge);
+    expect(onEditBatch).toHaveBeenCalledOnce();
+    expect(onCardSelect).not.toHaveBeenCalled();
+  });
+
   it("hides the badge when the recipe is not marked as a batch recipe", () => {
     const recipe = createBatchRecipe({ isBatchRecipe: false });
     render(

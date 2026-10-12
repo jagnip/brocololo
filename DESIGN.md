@@ -69,6 +69,7 @@ Use existing radius tokens and primitive defaults. Cards and dialogs use the exi
 - `AppSidebar`: shared navigation with one active peer destination and mobile dismissal on selection.
 - `PlanSwitcherSelect`: existing breadcrumb or in-page plan switching.
 - `PlanEditor`: household meal arrangement and editing.
+- `PlanBatchDialog`: shared batch summary and Storage quantities, opened from batch badges in Create and Manage plan.
 - `PlanMealChecklist`: grouped cooking checklist composing Checkbox, Label, and existing recipe-image handling; derived from the editor's live plan.
 - `LogDayViewController`: day-first actual intake, with optional all-days view.
 - `LogDayPersonToolbarControls`: existing date navigation and person selection.

@@ -130,7 +130,27 @@ export async function deleteFamilyMember(input: {
     throw new Error("CANNOT_DELETE_SELF_MEMBER");
   }
 
-  await prisma.familyMember.delete({ where: { id: input.id } });
+  await prisma.$transaction(async (tx) => {
+    const storageRows = await tx.planBatchStorageRow.findMany({
+      where: {
+        audienceMembers: { some: { familyMemberId: input.id } },
+        planBatch: { plan: { userId: input.userId } },
+      },
+      select: {
+        id: true,
+        _count: { select: { audienceMembers: true } },
+      },
+    });
+    const rowsWithNoRemainingAudience = storageRows
+      .filter((row) => row._count.audienceMembers === 1)
+      .map((row) => row.id);
+    if (rowsWithNoRemainingAudience.length > 0) {
+      await tx.planBatchStorageRow.deleteMany({
+        where: { id: { in: rowsWithNoRemainingAudience } },
+      });
+    }
+    await tx.familyMember.delete({ where: { id: input.id } });
+  });
 }
 
 export type FamilyMemberRecipeImpact = {

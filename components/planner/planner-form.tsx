@@ -31,10 +31,16 @@ import {
 } from "./planner-plan-column-state";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useScrollbarOnScroll } from "@/hooks/use-scrollbar-on-scroll";
-import { PlanInputType, PlanSlotMealPayload, SetPlanMealOptions } from "@/types/planner";
+import { PlanBatchInput, PlanInputType, PlanSlotMealPayload, SetPlanMealOptions } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
 import { getPlanSlotKey, placeRecipeOnPlan } from "@/lib/planner/helpers";
 import { rearrangePlanSlots } from "@/lib/planner/rearrange-plan-slots";
+import {
+  detachMealFromBatch,
+  ensureBatchAfterPlacement,
+  pruneBatchesWithoutScheduledMeals,
+  transferRangeRemovedBatchMeals,
+} from "@/lib/planner/batch-storage";
 import type {
   DayAudienceByMealType,
   DayTimeLimitsType,
@@ -123,7 +129,10 @@ export function PlannerForm({
   occupiedDateKeys,
   familyMembers,
 }: PlannerFormProps) {
-  const defaultFamilyMemberIds = familyMembers.map((member) => member.id);
+  const defaultFamilyMemberIds = useMemo(
+    () => familyMembers.map((member) => member.id),
+    [familyMembers],
+  );
   const initialPlannerState = useMemo(() => {
     const dateRange = getDefaultDateRange(occupiedDateKeys);
     return {
@@ -132,6 +141,9 @@ export function PlannerForm({
     };
   }, [occupiedDateKeys]);
   const [plan, setPlan] = useState<PlanInputType>(initialPlannerState.plan);
+  const planRef = useRef<PlanInputType>(initialPlannerState.plan);
+  const [batches, setBatches] = useState<PlanBatchInput[]>([]);
+  const batchesRef = useRef<PlanBatchInput[]>([]);
   const [lastGenerationError, setLastGenerationError] = useState<string | null>(
     null,
   );
@@ -189,6 +201,10 @@ export function PlannerForm({
     },
   });
 
+  useEffect(() => {
+    planRef.current = plan;
+  }, [plan]);
+
   async function onSubmit(values: PlannerCriteriaInputType) {
     // Block generation while numeric fields are invalid (red state in sections).
     if (hasInvalidTimeLimitInputs || hasInvalidRollingMealsInputs) {
@@ -207,6 +223,7 @@ export function PlannerForm({
         (values.rollingRecipes ?? []) as RollingRecipeType[],
         // Pass current draft so filled slots stay put and only empties are filled.
         plan,
+        batches,
       );
 
       if (result.type === "error") {
@@ -222,6 +239,8 @@ export function PlannerForm({
       }
 
       setPlan(result.plan);
+      setBatches(result.batches);
+      batchesRef.current = result.batches;
       setLastGenerationError(null);
       toast.success(MESSAGES.planner.generated);
     } finally {
@@ -255,6 +274,8 @@ export function PlannerForm({
         batchGroupId: null,
       })),
     );
+    setBatches([]);
+    batchesRef.current = [];
     setLastGenerationError(null);
     toast.success(MESSAGES.planner.cleared);
   }
@@ -273,34 +294,51 @@ export function PlannerForm({
 
   // Shuffle: rotate recipe and alternatives for a given slot
   const handleShuffle = useCallback((slotKey: string) => {
-    setPlan((prev) => {
-      if (!prev) return prev;
-      return prev.map((slot) => {
-        const key = `${slot.date.toISOString()}-${slot.mealType}`;
-        if (key !== slotKey || !slot.recipe || slot.alternatives.length === 0)
-          return slot;
-
-        // Rotate: current recipe goes to end of alternatives, first alternative becomes recipe
-        const [nextRecipe, ...restAlternatives] = slot.alternatives;
-        return {
-          ...slot,
-          recipe: nextRecipe,
-          alternatives: [...restAlternatives, slot.recipe],
-        };
-      });
+    const currentPlan = planRef.current;
+    const nextBatches = detachMealFromBatch({
+      plan: currentPlan,
+      batches: batchesRef.current,
+      slotKey,
+      fallbackFamilyMemberIds: defaultFamilyMemberIds,
     });
-  }, []);
+    const nextPlan = currentPlan.map((slot) => {
+      const key = `${slot.date.toISOString()}-${slot.mealType}`;
+      if (key !== slotKey || !slot.recipe || slot.alternatives.length === 0)
+        return slot;
+
+      // Rotate: current recipe goes to end of alternatives, first alternative becomes recipe
+      const [nextRecipe, ...restAlternatives] = slot.alternatives;
+      return {
+        ...slot,
+        recipe: nextRecipe,
+        alternatives: [...restAlternatives, slot.recipe],
+        batchGroupId: null,
+      };
+    });
+    batchesRef.current = nextBatches;
+    planRef.current = nextPlan;
+    setBatches(nextBatches);
+    setPlan(nextPlan);
+  }, [defaultFamilyMemberIds]);
 
   const handleRemove = useCallback((slotKey: string) => {
-    setPlan((prev) => {
-      if (!prev) return prev;
-      return prev.map((slot) => {
-        const key = `${slot.date.toISOString()}-${slot.mealType}`;
-        if (key !== slotKey) return slot;
-        return { ...slot, recipe: null, customMeal: null, alternatives: [] };
-      });
+    const currentPlan = planRef.current;
+    const nextBatches = detachMealFromBatch({
+      plan: currentPlan,
+      batches: batchesRef.current,
+      slotKey,
+      fallbackFamilyMemberIds: defaultFamilyMemberIds,
     });
-  }, []);
+    const nextPlan = currentPlan.map((slot) => {
+      const key = `${slot.date.toISOString()}-${slot.mealType}`;
+      if (key !== slotKey) return slot;
+      return { ...slot, recipe: null, customMeal: null, alternatives: [], batchGroupId: null };
+    });
+    batchesRef.current = nextBatches;
+    planRef.current = nextPlan;
+    setBatches(nextBatches);
+    setPlan(nextPlan);
+  }, [defaultFamilyMemberIds]);
 
   // Slot↔slot DnD on the create-plan preview (same semantics as plan editor).
   const handleRearrangeSlots = useCallback(
@@ -321,71 +359,115 @@ export function PlannerForm({
     ) => {
       const expandMultiMeal = options?.expandMultiMeal !== false;
 
-      setPlan((prev) => {
-        if (!prev) return prev;
-
-        if (payload.kind === "recipe") {
-          // Apply the new audience first so multi-meal spillover copies the updated eaters.
-          const withAudience = payload.cookingFamilyMemberIds
-            ? prev.map((slot) =>
-                getPlanSlotKey(slot) === slotKey
-                  ? {
-                      ...slot,
-                      cookingFamilyMemberIds: payload.cookingFamilyMemberIds,
-                    }
-                  : slot,
-              )
-            : prev;
-
-          if (expandMultiMeal) {
-            return placeRecipeOnPlan(withAudience, slotKey, payload.recipe);
-          }
-
-          return withAudience.map((slot) => {
-            if (getPlanSlotKey(slot) !== slotKey) return slot;
-            return {
-              ...slot,
-              recipe: payload.recipe,
-              customMeal: null,
-              alternatives: slot.alternatives.filter(
-                (recipe) => recipe.id !== payload.recipe.id,
-              ),
-              // Bulk batch assignment supplies a shared id; everything else clears it.
-              batchGroupId: options?.batchGroupId ?? null,
-            };
+      const previousPlan = planRef.current;
+      const currentSlot = previousPlan.find(
+        (slot) => getPlanSlotKey(slot) === slotKey,
+      );
+      const keepsSameRecipe =
+        payload.kind === "recipe" &&
+        currentSlot?.recipe?.id === payload.recipe.id;
+      let nextBatches = keepsSameRecipe
+        ? batchesRef.current
+        : detachMealFromBatch({
+            plan: previousPlan,
+            batches: batchesRef.current,
+            slotKey,
+            fallbackFamilyMemberIds: defaultFamilyMemberIds,
           });
+
+      if (payload.kind === "recipe") {
+        // Apply the new audience first so multi-meal spillover copies the updated eaters.
+        const withAudience = payload.cookingFamilyMemberIds
+          ? previousPlan.map((slot) =>
+              getPlanSlotKey(slot) === slotKey
+                ? {
+                    ...slot,
+                    cookingFamilyMemberIds: payload.cookingFamilyMemberIds,
+                  }
+                : slot,
+            )
+          : previousPlan;
+
+        if (expandMultiMeal) {
+          const nextPlan = placeRecipeOnPlan(withAudience, slotKey, payload.recipe);
+          nextBatches = ensureBatchAfterPlacement({
+            previousPlan,
+            plan: nextPlan,
+            batches: nextBatches,
+            slotKey,
+            requestedMeals: payload.recipe.plannedMealCount,
+            fallbackFamilyMemberIds: defaultFamilyMemberIds,
+          });
+          batchesRef.current = nextBatches;
+          planRef.current = nextPlan;
+          setBatches(nextBatches);
+          setPlan(nextPlan);
+          return;
         }
 
-        return prev.map((slot) => {
+        const nextPlan = withAudience.map((slot) => {
           if (getPlanSlotKey(slot) !== slotKey) return slot;
+          return {
+            ...slot,
+            recipe: payload.recipe,
+            customMeal: null,
+            alternatives: slot.alternatives.filter(
+              (recipe) => recipe.id !== payload.recipe.id,
+            ),
+            batchGroupId:
+              options?.batchGroupId ??
+              (keepsSameRecipe ? (currentSlot?.batchGroupId ?? null) : null),
+          };
+        });
+        nextBatches = ensureBatchAfterPlacement({
+          previousPlan,
+          plan: nextPlan,
+          batches: nextBatches,
+          slotKey,
+          requestedMeals: payload.recipe.plannedMealCount,
+          fallbackFamilyMemberIds: defaultFamilyMemberIds,
+        });
+        batchesRef.current = nextBatches;
+        planRef.current = nextPlan;
+        setBatches(nextBatches);
+        setPlan(nextPlan);
+        return;
+      }
 
-          if (payload.kind === "custom") {
-            return {
-              ...slot,
-              recipe: null,
-              customMeal: {
-                name: payload.name,
-                ingredients: payload.ingredients,
-              },
-              alternatives: [],
-              batchGroupId: null,
-              ...(payload.cookingFamilyMemberIds
-                ? { cookingFamilyMemberIds: payload.cookingFamilyMemberIds }
-                : {}),
-            };
-          }
+      const nextPlan = previousPlan.map((slot) => {
+        if (getPlanSlotKey(slot) !== slotKey) return slot;
 
+        if (payload.kind === "custom") {
           return {
             ...slot,
             recipe: null,
-            customMeal: null,
+            customMeal: {
+              name: payload.name,
+              ingredients: payload.ingredients,
+            },
             alternatives: [],
             batchGroupId: null,
+            ...(payload.cookingFamilyMemberIds
+              ? { cookingFamilyMemberIds: payload.cookingFamilyMemberIds }
+              : {}),
           };
-        });
+        }
+
+        return {
+          ...slot,
+          recipe: null,
+          customMeal: null,
+          alternatives: [],
+          batchGroupId: null,
+        };
       });
+      const pruned = pruneBatchesWithoutScheduledMeals(nextPlan, nextBatches);
+      batchesRef.current = pruned;
+      planRef.current = nextPlan;
+      setBatches(pruned);
+      setPlan(nextPlan);
     },
-    [],
+    [defaultFamilyMemberIds],
   );
 
   const handleAudienceChange = useCallback((slotKey: string, memberIds: string[]) => {
@@ -402,7 +484,7 @@ export function PlannerForm({
   async function handleSavePlan(plan: PlanInputType) {
     setIsSaving(true);
     try {
-      const result = await savePlan(plan);
+      const result = await savePlan(plan, batches);
       if (result.type === "date_conflict") {
         // Hard-block collisions so one plan/log owner exists per date globally.
         toast.error(
@@ -499,9 +581,21 @@ export function PlannerForm({
   });
   const dateRangeCriteriaKey = `${dateRange?.start ?? ""}|${dateRange?.end ?? ""}`;
 
-  const applyRebuiltPlan = useCallback((nextPlan: PlanInputType) => {
-    setPlan(nextPlan);
-  }, []);
+  const applyRebuiltPlan = useCallback(
+    (nextPlan: PlanInputType) => {
+      const nextBatches = transferRangeRemovedBatchMeals({
+        previousPlan: planRef.current,
+        nextPlan,
+        batches: batchesRef.current,
+        fallbackFamilyMemberIds: defaultFamilyMemberIds,
+      });
+      batchesRef.current = nextBatches;
+      planRef.current = nextPlan;
+      setBatches(nextBatches);
+      setPlan(nextPlan);
+    },
+    [defaultFamilyMemberIds],
+  );
 
   // After a failed Fill empty, editing criteria brings back the last plan (no empty placeholder).
   useEffect(() => {
@@ -1038,6 +1132,7 @@ export function PlannerForm({
             <PlannerPlanColumn
               mode={planColumnMode}
               plan={generatedPlan}
+              batches={batches}
               lastGenerationError={lastGenerationError}
               fridgeIngredientIds={fridgeIngredientIds}
               recipes={recipes}
@@ -1048,6 +1143,10 @@ export function PlannerForm({
               onRearrangeSlots={handleRearrangeSlots}
               familyMembers={familyMembers}
               onAudienceChange={handleAudienceChange}
+              onBatchesChange={(nextBatches) => {
+                batchesRef.current = nextBatches;
+                setBatches(nextBatches);
+              }}
               dayLabelVariant="subtext"
             />
           </div>

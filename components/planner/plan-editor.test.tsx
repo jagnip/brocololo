@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { PlanInputType } from "@/types/planner";
+import type { PlanBatchInput, PlanInputType } from "@/types/planner";
 import { PlannerMealType } from "@/src/generated/enums";
 const emptyIngredientOptions: never[] = [];
 
@@ -20,12 +20,14 @@ vi.mock("@/actions/planner-actions", () => ({
 vi.mock("./plan-view", () => ({
   PlanView: ({
     plan,
+    batches = [],
     onShuffle,
     onRemove,
     onSetMeal,
     onToggleUsed,
   }: {
     plan: PlanInputType;
+    batches?: PlanBatchInput[];
     onShuffle?: (slotKey: string) => void;
     onRemove?: (slotKey: string) => void;
     onSetMeal?: (slotKey: string, payload: any) => void;
@@ -56,6 +58,7 @@ vi.mock("./plan-view", () => ({
         <div aria-label="slot-count">{plan.length}</div>
         <div aria-label="dinner-by-day">{dinnerByDay}</div>
         <div aria-label="batch-groups">{batchGroups}</div>
+        <div aria-label="batch-storage">{JSON.stringify(batches)}</div>
         <div aria-label="slot-used">{plan.map((slot) => String(slot.used)).join(",")}</div>
         <button type="button" onClick={() => onToggleUsed?.(slotKey)}>
           Toggle first cooked
@@ -817,6 +820,135 @@ describe("PlanEditor batch group clearing", () => {
     await user.click(screen.getByRole("button", { name: "Remove first" }));
 
     expect(screen.getByLabelText("batch-groups")).toHaveTextContent("null,group-1");
+  });
+
+  it("moves a removed batch meal to storage while a sibling remains", async () => {
+    const user = userEvent.setup();
+    const recipeA = { ...createRecipe("recipe-a"), isBatchRecipe: true };
+    const initialPlan: PlanInputType = [
+      {
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        mealType: PlannerMealType.DINNER,
+        recipe: recipeA,
+        alternatives: [],
+        customMeal: null,
+        cookingFamilyMemberIds: ["j"],
+        used: false,
+        batchGroupId: "group-1",
+      },
+      {
+        date: new Date("2026-03-18T00:00:00.000Z"),
+        mealType: PlannerMealType.DINNER,
+        recipe: recipeA,
+        alternatives: [],
+        customMeal: null,
+        cookingFamilyMemberIds: ["j"],
+        used: false,
+        batchGroupId: "group-1",
+      },
+    ];
+    renderPlanEditor({
+      planId: "plan-1",
+      initialPlan,
+      initialBatches: [
+        {
+          id: "group-1",
+          recipeId: "recipe-a",
+          storageRows: [],
+          extraPortions: 0,
+        },
+      ],
+      recipes: [],
+      ingredientOptions: emptyIngredientOptions,
+      familyMembers: [
+        { id: "j", name: "Jagoda", isSelf: true, sortOrder: 0, portionMultiplier: 1 },
+      ],
+    });
+
+    await user.click(screen.getByRole("button", { name: "Remove first" }));
+    expect(screen.getByLabelText("batch-storage")).toHaveTextContent(
+      '"storageRows":[{"count":1,"cookingFamilyMemberIds":["j"]}]',
+    );
+  });
+
+  it("deletes batch storage with the final scheduled meal", async () => {
+    const user = userEvent.setup();
+    const recipeA = { ...createRecipe("recipe-a"), isBatchRecipe: true };
+    renderPlanEditor({
+      planId: "plan-1",
+      initialPlan: [
+        {
+          date: new Date("2026-03-17T00:00:00.000Z"),
+          mealType: PlannerMealType.DINNER,
+          recipe: recipeA,
+          alternatives: [],
+          customMeal: null,
+          cookingFamilyMemberIds: ["j"],
+          used: false,
+          batchGroupId: "group-1",
+        },
+      ],
+      initialBatches: [
+        {
+          id: "group-1",
+          recipeId: "recipe-a",
+          storageRows: [{ count: 3, cookingFamilyMemberIds: ["j"] }],
+          extraPortions: 2,
+        },
+      ],
+      recipes: [],
+      ingredientOptions: emptyIngredientOptions,
+      familyMembers: [
+        { id: "j", name: "Jagoda", isSelf: true, sortOrder: 0, portionMultiplier: 1 },
+      ],
+    });
+
+    await user.click(screen.getByRole("button", { name: "Remove first" }));
+    expect(screen.getByLabelText("batch-storage")).toHaveTextContent("[]");
+  });
+
+  it("preserves storage when re-saving the same recipe on the only scheduled meal", async () => {
+    const user = userEvent.setup();
+    const recipe = {
+      ...createRecipe("batch-recipe"),
+      isBatchRecipe: true,
+      plannedMealCount: 2,
+    };
+    renderPlanEditor({
+      planId: "plan-1",
+      initialPlan: [
+        {
+          date: new Date("2026-03-17T00:00:00.000Z"),
+          mealType: PlannerMealType.DINNER,
+          recipe,
+          alternatives: [],
+          customMeal: null,
+          cookingFamilyMemberIds: ["j"],
+          used: false,
+          batchGroupId: "group-1",
+        },
+      ],
+      initialBatches: [
+        {
+          id: "group-1",
+          recipeId: "batch-recipe",
+          storageRows: [{ count: 2, cookingFamilyMemberIds: ["j"] }],
+          extraPortions: 3,
+        },
+      ],
+      recipes: [],
+      ingredientOptions: emptyIngredientOptions,
+      familyMembers: [
+        { id: "j", name: "Jagoda", isSelf: true, sortOrder: 0, portionMultiplier: 1 },
+      ],
+    });
+
+    await user.click(screen.getByRole("button", { name: "Set batch recipe" }));
+
+    expect(screen.getByLabelText("batch-groups")).toHaveTextContent("group-1");
+    expect(screen.getByLabelText("batch-storage")).toHaveTextContent(
+      '"storageRows":[{"count":2,"cookingFamilyMemberIds":["j"]}],"extraPortions":3',
+    );
   });
 
   it("expands a manually set multi-meal recipe onto following empty days with a shared batchGroupId", async () => {
