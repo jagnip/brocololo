@@ -6,7 +6,6 @@ import {
   detachMealFromBatch,
   ensureBatchAfterPlacement,
   getBatchMealTotal,
-  mergeBatchStorageRow,
   transferRangeRemovedBatchMeals,
 } from "./batch-storage";
 
@@ -41,15 +40,7 @@ const batch: PlanBatchInput = {
 };
 
 describe("batch storage lifecycle", () => {
-  it("merges equivalent audiences without depending on member order", () => {
-    expect(
-      mergeBatchStorageRow(batch.storageRows, ["nelson", "jagoda"]),
-    ).toEqual([
-      { count: 3, cookingFamilyMemberIds: ["jagoda", "nelson"] },
-    ]);
-  });
-
-  it("moves a removed scheduled meal into storage while siblings remain", () => {
+  it("does not move removed scheduled meals into storage while siblings remain", () => {
     const plan: PlanInputType = [
       slot(19, ["jagoda"]),
       slot(20, ["jagoda"]),
@@ -61,10 +52,7 @@ describe("batch storage lifecycle", () => {
       fallbackFamilyMemberIds: ["jagoda", "nelson"],
     });
 
-    expect(result[0]?.storageRows).toEqual([
-      { count: 2, cookingFamilyMemberIds: ["jagoda", "nelson"] },
-      { count: 1, cookingFamilyMemberIds: ["jagoda"] },
-    ]);
+    expect(result).toEqual([batch]);
   });
 
   it("deletes the entire batch when its final scheduled meal is removed", () => {
@@ -78,7 +66,7 @@ describe("batch storage lifecycle", () => {
     ).toEqual([]);
   });
 
-  it("creates overflow storage and excludes extra portions from meal totals", () => {
+  it("creates empty metadata and counts only scheduled meals", () => {
     const plan = [slot(19, ["jagoda"]), slot(20, ["jagoda"])];
     const result = ensureBatchAfterPlacement({
       plan,
@@ -87,13 +75,12 @@ describe("batch storage lifecycle", () => {
       requestedMeals: 4,
       fallbackFamilyMemberIds: ["jagoda", "nelson"],
     });
-    expect(result[0]?.storageRows).toEqual([
-      { count: 2, cookingFamilyMemberIds: ["jagoda"] },
-    ]);
-    expect(getBatchMealTotal(plan, { ...result[0]!, extraPortions: 8 })).toBe(4);
+    expect(result[0]?.storageRows).toEqual([]);
+    expect(getBatchMealTotal(plan, { ...batch, extraPortions: 8 })).toBe(4);
+    expect(getBatchMealTotal(plan.map((slot) => ({ ...slot, alreadyCooked: true })), batch)).toBe(2);
   });
 
-  it("consumes storage when another scheduled sibling joins the batch", () => {
+  it("preserves existing storage metadata when another scheduled sibling joins", () => {
     const previousPlan = [slot(19, ["jagoda"])];
     const result = ensureBatchAfterPlacement({
       previousPlan,
@@ -109,11 +96,11 @@ describe("batch storage lifecycle", () => {
       fallbackFamilyMemberIds: ["jagoda", "nelson"],
     });
     expect(result[0]?.storageRows).toEqual([
-      { count: 2, cookingFamilyMemberIds: ["jagoda"] },
+      { count: 3, cookingFamilyMemberIds: ["jagoda"] },
     ]);
   });
 
-  it("moves range-truncated audiences to storage but removes storage-only batches", () => {
+  it("never stores range-truncated meals and removes storage-only batches", () => {
     const previousPlan = [
       slot(19, ["jagoda"]),
       slot(20, ["jagoda", "nelson"]),
@@ -125,9 +112,7 @@ describe("batch storage lifecycle", () => {
         batches: [{ ...batch, storageRows: [] }],
         fallbackFamilyMemberIds: ["jagoda", "nelson"],
       })[0]?.storageRows,
-    ).toEqual([
-      { count: 1, cookingFamilyMemberIds: ["jagoda", "nelson"] },
-    ]);
+    ).toEqual([]);
     expect(
       transferRangeRemovedBatchMeals({
         previousPlan,

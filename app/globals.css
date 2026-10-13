@@ -442,6 +442,15 @@
     scrollbar-width: none;
   }
 
+  /* Hide the thumb without changing the scrollbar's width or gutter. */
+  .scrollbar-idle {
+    scrollbar-color: transparent transparent;
+  }
+  .scrollbar-idle::-webkit-scrollbar-thumb,
+  .scrollbar-idle::-webkit-scrollbar-thumb:hover {
+    background: transparent;
+  }
+
   /* Momentum scrolling for horizontal chip rows on iOS. */
   .scroll-touch {
     -webkit-overflow-scrolling: touch;

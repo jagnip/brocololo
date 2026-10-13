@@ -230,7 +230,7 @@ export function PlanView({
     if (!onSetMeal) return;
 
     // A batch recipe across several slots is one cook — share a group id so the
-    // cards read "1 of N" and link to the same cooking session.
+    // Cards show their chronological batch positions and share a cooking session.
     const sharedBatchGroupId =
       payload.kind === "recipe" &&
       payload.recipe.isBatchRecipe &&
@@ -305,12 +305,6 @@ export function PlanView({
   function renderSlot(slot: SlotInputType) {
     const slotKey = getPlanSlotKey(slot);
     const householdIds = familyMembers.map((member) => member.id);
-    const batchForSlot = slot.batchGroupId
-      ? batches.find(
-          (batch) =>
-            batch.id === slot.batchGroupId && batch.recipeId === slot.recipe?.id,
-        )
-      : undefined;
     // Batch recipes hand off the whole group's eaters; non-batch only this slot.
     const recipeCookingHref = slot.recipe
       ? getRecipeCookingHref(
@@ -323,7 +317,7 @@ export function PlanView({
               )
             : [slot],
           householdIds,
-          batchForSlot,
+          batches.find((batch) => batch.id === slot.batchGroupId && batch.recipeId === slot.recipe?.id),
         )
       : undefined;
 
@@ -476,13 +470,6 @@ export function PlanView({
           (slot) => slot.batchGroupId === editingBatchId && slot.recipe?.isBatchRecipe,
         );
         if (!firstSlot?.recipe) return null;
-        const existing = batches.find((batch) => batch.id === editingBatchId);
-        const batch: PlanBatchInput = existing ?? {
-          id: editingBatchId,
-          recipeId: firstSlot.recipe.id,
-          storageRows: [],
-          extraPortions: 0,
-        };
         const scheduledSlots = getBatchGroupSlotsForRecipe(
           plan,
           editingBatchId,
@@ -490,10 +477,20 @@ export function PlanView({
         );
         return (
           <PlanBatchDialog
-            key={`${editingBatchId}-${JSON.stringify(batch)}`}
+            key={editingBatchId}
             open
             recipeName={firstSlot.recipe.name}
-            batch={batch}
+            alreadyCooked={scheduledSlots.every((slot) => slot.alreadyCooked)}
+            batch={batches.find((batch) => batch.id === editingBatchId) ?? {
+              id: editingBatchId,
+              recipeId: firstSlot.recipe.id,
+              storageRows: [],
+              extraPortions: 0,
+            }}
+            onSave={onBatchesChange ? (nextBatch) => onBatchesChange([
+              ...batches.filter((batch) => batch.id !== nextBatch.id),
+              nextBatch,
+            ]) : undefined}
             scheduledCombinations={buildCookingCombinationsFromSlots(
               scheduledSlots,
               familyMembers.map((member) => member.id),
@@ -507,15 +504,6 @@ export function PlanView({
             onOpenChange={(open) => {
               if (!open) setEditingBatchId(null);
             }}
-            onSave={(nextBatch) =>
-              onBatchesChange?.(
-                existing
-                  ? batches.map((item) =>
-                      item.id === nextBatch.id ? nextBatch : item,
-                    )
-                  : [...batches, nextBatch],
-              )
-            }
           />
         );
       })() : null}

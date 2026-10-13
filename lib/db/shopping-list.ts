@@ -234,6 +234,8 @@ export function slotsToPlanSlotData(
 ): PlanSlotData[] {
   const scheduled = plan.slots.map((s) => ({
     recipeId: s.recipeId,
+    isRolledOver: s.isRolledOver,
+    alreadyCooked: s.alreadyCooked,
     batchGroupId: s.batchGroupId,
     cookingFamilyMemberIds: s.cookingFamilyMemberIds,
     familyMembers: plan.familyMembers,
@@ -243,29 +245,12 @@ export function slotsToPlanSlotData(
   }));
   const stored: PlanSlotData[] = [];
   for (const batch of plan.batches) {
-    const source = scheduled.find(
-      (slot) =>
-        slot.batchGroupId === batch.id && slot.recipeId === batch.recipeId,
-    );
-    if (!source?.recipe) continue;
+    const source = scheduled.find((slot) => slot.batchGroupId === batch.id && slot.recipeId === batch.recipeId);
+    if (!source?.recipe || source.alreadyCooked) continue;
     for (const row of batch.storageRows) {
       for (let index = 0; index < row.count; index += 1) {
-        stored.push({
-          ...source,
-          cookingFamilyMemberIds: row.cookingFamilyMemberIds,
-          customName: null,
-          customIngredients: [],
-        });
+        stored.push({ ...source, isStorage: true, cookingFamilyMemberIds: row.cookingFamilyMemberIds });
       }
-    }
-    if (batch.extraPortions > 0) {
-      stored.push({
-        ...source,
-        cookingFamilyMemberIds: [],
-        extraPortions: batch.extraPortions,
-        customName: null,
-        customIngredients: [],
-      });
     }
   }
   return [...scheduled, ...stored];
@@ -277,7 +262,13 @@ export async function getGroceryGenerationMealOptionsForPlan(
 ): Promise<GroceryMealOption[] | null> {
   const plan = await getPlanForGroceries(userId, planId);
   if (!plan) return null;
-  return buildGroceryMealOptionsFromSlots(plan.slots);
+  return buildGroceryMealOptionsFromSlots(slotsToPlanSlotData(plan).map((slot) => ({
+    ...slot,
+    recipeId: slot.recipeId ?? null,
+    customName: slot.customName ?? null,
+    customIngredients: slot.customIngredients,
+    recipe: slot.recipe ?? null,
+  })));
 }
 
 /**
@@ -296,9 +287,6 @@ export async function generateShoppingListForPlan(
 > {
   const plan = await getPlanForGroceries(userId, planId);
   if (!plan) return { ok: false, error: "plan_not_found" };
-
-  const gramUnitId = await getGramUnitId();
-  if (!gramUnitId) return { ok: false, error: "no_gram_unit" };
 
   const rows = transformPlanToShoppingListRows(
     slotsToPlanSlotData(plan),
@@ -321,6 +309,9 @@ export async function generateShoppingListForPlan(
     );
     return { ok: true, shoppingListId: emptyListId };
   }
+
+  const gramUnitId = await getGramUnitId();
+  if (!gramUnitId) return { ok: false, error: "no_gram_unit" };
 
   const distinctIngredientIds = [...new Set(rows.map((r) => r.ingredientId))];
 

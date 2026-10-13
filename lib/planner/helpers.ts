@@ -117,6 +117,15 @@ export function getPlannerMealCount(
   return Math.max(recipe.plannedMealCount, 1);
 }
 
+export function getEffectivePlannerRecipe(
+  recipe: RecipeType,
+  alreadyCooked = false,
+): RecipeType {
+  return alreadyCooked && recipe.isBatchRecipe
+    ? { ...recipe, handsOnTime: 10, totalTime: 10 }
+    : recipe;
+}
+
 // Marks future slots as claimed by a multi-meal placement (batch leftovers or
 // non-batch repeats). Carried slots inherit the source slot audience via
 // batchSlotAudience and share batchGroupId for badge grouping.
@@ -133,6 +142,7 @@ export function markBatchSlots(
   options?: {
     overrideMeals?: number;
     enforceTimeLimit?: boolean;
+    alreadyCooked?: boolean;
     allDaysTimeLimits?: DayTimeLimitsType[];
     /** Keys already filled by the user — never overwrite with batch spill. */
     reservedSlotKeys?: Set<string>;
@@ -143,7 +153,8 @@ export function markBatchSlots(
   const extraMeals = totalMeals - 1;
   if (extraMeals <= 0) return;
 
-  const enforceTimeLimit = options?.enforceTimeLimit ?? false;
+  const effectiveRecipe = getEffectivePlannerRecipe(recipe, options?.alreadyCooked);
+  const enforceTimeLimit = options?.alreadyCooked || (options?.enforceTimeLimit ?? false);
   const allDaysTimeLimits = options?.allDaysTimeLimits ?? [];
   const reservedSlotKeys = options?.reservedSlotKeys;
 
@@ -158,15 +169,14 @@ export function markBatchSlots(
     // Skip hand-filled slots so fill-empty never overwrites user meals.
     if (reservedSlotKeys?.has(futureSlotKey)) continue;
 
-    // Non-batch repeats are a fresh cook each day — skip days that don't fit
-    // hands-on/total time limits. Batch leftovers skip this check entirely.
+    // Fresh repeats use recipe times; already-cooked batch meals need 10 minutes.
     if (enforceTimeLimit) {
       const dateStr = futureDay.toISOString().slice(0, 10);
       const dayLimits = allDaysTimeLimits.find((d) => d.date === dateStr);
       const handsOnLimit = getMealTimeLimit(dayLimits, mealType, "handsOn");
       const totalLimit = getMealTimeLimit(dayLimits, mealType, "total");
-      if (handsOnLimit !== null && recipe.handsOnTime > handsOnLimit) continue;
-      if (totalLimit !== null && recipe.totalTime > totalLimit) continue;
+      if (handsOnLimit !== null && effectiveRecipe.handsOnTime > handsOnLimit) continue;
+      if (totalLimit !== null && effectiveRecipe.totalTime > totalLimit) continue;
     }
 
     batchFilledSlots.set(futureSlotKey, recipe);
@@ -183,7 +193,7 @@ export function markBatchSlots(
 export function getBatchGroupLabels(
   plan: PlanInputType,
   batches: PlanBatchInput[] = [],
-): Map<string, { index: number; total: number }> {
+): Map<string, { index: number; total: number; storageCount?: number }> {
   const byGroup = new Map<string, SlotInputType[]>();
 
   for (const slot of plan) {
@@ -193,15 +203,13 @@ export function getBatchGroupLabels(
     byGroup.set(slot.batchGroupId, members);
   }
 
-  const labels = new Map<string, { index: number; total: number }>();
+  const labels = new Map<string, { index: number; total: number; storageCount?: number }>();
 
-  const batchById = new Map(batches.map((batch) => [batch.id, batch]));
   for (const [groupId, members] of byGroup) {
-    const storedCount =
-      batchById
-        .get(groupId)
-        ?.storageRows.reduce((sum, row) => sum + row.count, 0) ?? 0;
-    const total = members.length + storedCount;
+    const storageCount = members.some((slot) => slot.alreadyCooked)
+      ? 0
+      : batches.find((batch) => batch.id === groupId)?.storageRows.reduce((sum, row) => sum + row.count, 0) ?? 0;
+    const total = members.length + storageCount;
     if (total < 2) continue;
 
     const sorted = [...members].sort((a, b) => {
@@ -215,6 +223,7 @@ export function getBatchGroupLabels(
       labels.set(getPlanSlotKey(slot), {
         index: index + 1,
         total,
+        ...(storageCount > 0 ? { storageCount } : {}),
       });
     });
   }
@@ -238,16 +247,18 @@ export function placeRecipeOnPlan(
   if (!source) return plan;
 
   const totalMeals = getPlannerMealCount(recipe);
+  const sameRecipe = source.recipe?.id === recipe.id;
   // Prefer attaching leftovers to an existing cook rather than starting a solo group.
-  const existingGroupId = recipe.isBatchRecipe
-    ? source.recipe?.id === recipe.id && source.batchGroupId
-      ? source.batchGroupId
-      : findNearestBatchGroupId(plan, recipe.id, slotKey, source.date)
-    : null;
-  const batchGroupId =
-    existingGroupId ?? (totalMeals >= 2 ? crypto.randomUUID() : null);
+  const existingGroupId = sameRecipe && source.batchGroupId
+    ? source.batchGroupId
+    : recipe.isBatchRecipe && !sameRecipe
+      ? findNearestBatchGroupId(plan, recipe.id, slotKey, source.date)
+      : null;
+  const batchGroupId = sameRecipe
+    ? source.batchGroupId ?? null
+    : existingGroupId ?? (totalMeals >= 2 ? crypto.randomUUID() : null);
   // Only auto-fill following days for a fresh multi-meal placement.
-  const shouldExpand = !existingGroupId && totalMeals >= 2;
+  const shouldExpand = !sameRecipe && !existingGroupId && totalMeals >= 2;
 
   const audienceIds = [...(source.cookingFamilyMemberIds ?? [])];
   const fillKeys = new Set<string>([slotKey]);
@@ -305,6 +316,8 @@ export function placeRecipeOnPlan(
       cookingFamilyMemberIds:
         key === slotKey ? slot.cookingFamilyMemberIds : audienceIds,
       batchGroupId,
+      isRolledOver: key === slotKey && sameRecipe ? source.isRolledOver ?? false : false,
+      alreadyCooked: key === slotKey && sameRecipe ? source.alreadyCooked ?? false : false,
     };
   });
 }
@@ -321,6 +334,10 @@ function findNearestBatchGroupId(
   for (const slot of plan) {
     if (getPlanSlotKey(slot) === excludeSlotKey) continue;
     if (slot.recipe?.id !== recipeId || !slot.batchGroupId) continue;
+    if (plan.some((member) =>
+      member.batchGroupId === slot.batchGroupId &&
+      (member.isRolledOver || member.alreadyCooked),
+    )) continue;
 
     const distance = Math.abs(slot.date.getTime() - nearDate.getTime());
     if (!best || distance < best.distance) {

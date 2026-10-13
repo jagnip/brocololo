@@ -47,6 +47,7 @@ const dayAudienceByMealSchema = z.object({
 const rollingRecipeSchema = z.object({
   recipeId: z.string(),
   meals: z.coerce.number().int().min(1),
+  alreadyCooked: z.boolean().default(false).optional(),
 });
 
 export const plannerCriteriaSchema = z.object({
@@ -88,6 +89,8 @@ export const slotSaveDataSchema = z
       .min(1, "Choose at least one person for this meal"),
     used: z.boolean(),
     batchGroupId: z.string().min(1).nullable().optional(),
+    isRolledOver: z.boolean().default(false),
+    alreadyCooked: z.boolean().default(false),
   })
   .superRefine((slot, ctx) => {
     const hasRecipe = slot.recipeId != null;

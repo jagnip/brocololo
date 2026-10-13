@@ -49,6 +49,8 @@ describe("rearrangePlanSlots", () => {
       cookingFamilyMemberIds: ["fm-1"],
       used: true,
       batchGroupId: "batch-1",
+      isRolledOver: true,
+      alreadyCooked: true,
       alternatives: [createRecipe("alt")],
     });
     const target = slot(DAY_B, PlannerMealType.DINNER, {
@@ -78,11 +80,15 @@ describe("rearrangePlanSlots", () => {
     expect(nextSource.cookingFamilyMemberIds).toEqual([]);
     expect(nextSource.used).toBe(false);
     expect(nextSource.batchGroupId).toBeNull();
+    expect(nextSource.isRolledOver).toBe(false);
+    expect(nextSource.alreadyCooked).toBe(false);
 
     expect(nextTarget.recipe).toBe(pasta);
     expect(nextTarget.cookingFamilyMemberIds).toEqual(["fm-1"]);
     expect(nextTarget.used).toBe(true);
     expect(nextTarget.batchGroupId).toBe("batch-1");
+    expect(nextTarget.isRolledOver).toBe(true);
+    expect(nextTarget.alreadyCooked).toBe(true);
     expect(nextTarget.alternatives).toHaveLength(1);
   });
 
@@ -95,6 +101,8 @@ describe("rearrangePlanSlots", () => {
       cookingFamilyMemberIds: ["fm-1"],
       used: true,
       batchGroupId: "g-pasta",
+      isRolledOver: true,
+      alreadyCooked: true,
     });
     const target = slot(DAY_B, PlannerMealType.LUNCH, {
       id: "b",
@@ -119,12 +127,16 @@ describe("rearrangePlanSlots", () => {
     expect(nextB.mealType).toBe(PlannerMealType.LUNCH);
 
     expect(nextA.recipe).toBe(salad);
+    expect(nextA.isRolledOver).toBe(false);
+    expect(nextA.alreadyCooked).toBe(false);
     expect(nextA.cookingFamilyMemberIds).toEqual(["fm-2"]);
     expect(nextA.used).toBe(false);
     expect(nextA.batchGroupId).toBe("g-salad");
     expect(nextA.alternatives).toHaveLength(1);
 
     expect(nextB.recipe).toBe(pasta);
+    expect(nextB.isRolledOver).toBe(true);
+    expect(nextB.alreadyCooked).toBe(true);
     expect(nextB.cookingFamilyMemberIds).toEqual(["fm-1"]);
     expect(nextB.used).toBe(true);
     expect(nextB.batchGroupId).toBe("g-pasta");

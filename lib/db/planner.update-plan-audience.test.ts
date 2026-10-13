@@ -82,6 +82,7 @@ describe("updatePlan added-date log entries respect slot audience", () => {
     planFindFirst.mockResolvedValue({
       id: "plan-1",
       log: { id: "log-1" },
+      batches: [],
       slots: [
         {
           date: new Date("2026-03-17T00:00:00.000Z"),
@@ -153,6 +154,7 @@ describe("updatePlan added-date log entries respect slot audience", () => {
     planFindFirst.mockResolvedValue({
       id: "plan-1",
       log: { id: "log-1" },
+      batches: [],
       slots: [
         {
           date: new Date("2026-03-17T00:00:00.000Z"),
@@ -191,6 +193,7 @@ describe("updatePlan added-date log entries respect slot audience", () => {
     planFindFirst.mockResolvedValue({
       id: "plan-1",
       log: null,
+      batches: [],
       slots: [
         {
           date: new Date("2026-03-17T00:00:00.000Z"),
@@ -230,7 +233,7 @@ describe("updatePlan added-date log entries respect slot audience", () => {
     );
 
     expect(planBatchDeleteMany).toHaveBeenCalledWith({
-      where: { planId: "plan-1" },
+      where: { planId: "plan-1", id: { notIn: [] } },
     });
     expect(recipeCount).toHaveBeenCalledWith({
       where: {
@@ -254,5 +257,102 @@ describe("updatePlan added-date log entries respect slot audience", () => {
         }),
       }),
     );
+  });
+
+  it.each([
+    undefined,
+    [],
+  ])("preserves legacy rows with a matching scheduled group and batches %j", async (incoming) => {
+    familyMemberCount.mockResolvedValue(0);
+    const slot = {
+      ...makeSlot({ date: "2026-03-17", mealType: PlannerMealType.DINNER, cookingFamilyMemberIds: ["fm-a"] }),
+      batchGroupId: "batch-1",
+      isRolledOver: true,
+      alreadyCooked: true,
+    };
+    planFindFirst.mockResolvedValue({
+      id: "plan-1",
+      log: null,
+      slots: [slot],
+      batches: [{
+        id: "batch-1",
+        recipeId: "recipe-1",
+        extraPortions: 3,
+        storageRows: [{ count: 2, audienceMembers: [{ familyMemberId: "fm-b" }] }],
+      }],
+    });
+    expect(await updatePlan("user-1", "plan-1", [slot], {}, incoming)).toEqual({ type: "success" });
+    expect(planBatchDeleteMany).toHaveBeenCalledWith({
+      where: { planId: "plan-1", id: { notIn: ["batch-1"] } },
+    });
+    expect(planUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        batches: { create: [] },
+        audienceMembers: { create: [{ familyMemberId: "fm-a" }, { familyMemberId: "fm-b" }] },
+        slots: { create: [expect.objectContaining({ isRolledOver: true, alreadyCooked: true })] },
+      }),
+    }));
+  });
+
+  it("deletes legacy storage when its last scheduled meal is removed", async () => {
+    const slot = makeSlot({ date: "2026-03-17", mealType: PlannerMealType.DINNER, cookingFamilyMemberIds: ["fm-a"] });
+    planFindFirst.mockResolvedValue({
+      id: "plan-1",
+      log: null,
+      slots: [{ ...slot, batchGroupId: "batch-1" }],
+      batches: [{ id: "batch-1", recipeId: "recipe-1", storageRows: [] }],
+    });
+    await updatePlan("user-1", "plan-1", [slot]);
+    expect(planBatchDeleteMany).toHaveBeenCalledWith({
+      where: { planId: "plan-1", id: { notIn: [] } },
+    });
+    expect(planUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        slots: { create: [expect.objectContaining({ isRolledOver: false, alreadyCooked: false })] },
+      }),
+    }));
+  });
+
+  it("preserves a legacy storage-only batch during an unrelated edit", async () => {
+    const slot = makeSlot({ date: "2026-03-17", mealType: PlannerMealType.DINNER, cookingFamilyMemberIds: ["fm-a"] });
+    planFindFirst.mockResolvedValue({
+      id: "plan-1",
+      log: null,
+      slots: [slot],
+      batches: [{
+        id: "storage-only",
+        recipeId: "another-recipe",
+        storageRows: [{ count: 2, audienceMembers: [{ familyMemberId: "fm-b" }] }],
+      }],
+    });
+    await updatePlan("user-1", "plan-1", [slot]);
+    expect(planBatchDeleteMany).toHaveBeenCalledWith({
+      where: { planId: "plan-1", id: { notIn: ["storage-only"] } },
+    });
+  });
+
+  it("allows explicitly saving an empty storage list", async () => {
+    familyMemberCount.mockResolvedValue(0);
+    const slot = { ...makeSlot({ date: "2026-03-17", mealType: PlannerMealType.DINNER, cookingFamilyMemberIds: ["fm-a"] }), batchGroupId: "batch-1" };
+    planFindFirst.mockResolvedValue({
+      id: "plan-1", log: null, slots: [slot],
+      batches: [{ id: "batch-1", recipeId: "recipe-1", extraPortions: 0, storageRows: [{ count: 2, audienceMembers: [{ familyMemberId: "fm-a" }] }] }],
+    });
+    await updatePlan("user-1", "plan-1", [slot], {}, [{ id: "batch-1", recipeId: "recipe-1", storageRows: [], extraPortions: 0 }]);
+    expect(planBatchDeleteMany).toHaveBeenCalledWith({ where: { planId: "plan-1", id: { notIn: [] } } });
+    expect(planUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ batches: { create: [expect.objectContaining({ storageRows: { create: [] } })] } }),
+    }));
+  });
+
+  it("rejects cooked flags for recipes that are not owned batch recipes", async () => {
+    const slot = { ...makeSlot({ date: "2026-03-17", mealType: PlannerMealType.DINNER, cookingFamilyMemberIds: ["fm-a"] }), alreadyCooked: true };
+    planFindFirst.mockResolvedValue({ id: "plan-1", log: null, slots: [slot], batches: [] });
+    recipeCount.mockResolvedValue(0);
+    await expect(updatePlan("user-1", "plan-1", [slot])).rejects.toThrow("INVALID_ALREADY_COOKED_RECIPE");
+    expect(planSlotDeleteMany).not.toHaveBeenCalled();
+    expect(recipeCount).toHaveBeenCalledWith({
+      where: { userId: "user-1", id: { in: ["recipe-1"] }, isBatchRecipe: true },
+    });
   });
 });

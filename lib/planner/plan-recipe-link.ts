@@ -82,23 +82,20 @@ export function getRecipeCookingHref(
   fallbackMemberIds: string[] = [],
   batch?: PlanBatchInput,
 ): string {
-  const scheduledCombinations = buildCookingCombinationsFromSlots(
+  const combinations = buildCookingCombinationsFromSlots(
     relevantSlots,
     fallbackMemberIds,
   );
-  const combinations = batch
-    ? [
-        ...scheduledCombinations,
-        ...batch.storageRows.map((row) => ({
-          count: row.count,
-          memberIds: row.cookingFamilyMemberIds,
-        })),
-      ]
-    : scheduledCombinations;
+  if (batch && !relevantSlots.some((slot) => slot.alreadyCooked)) {
+    combinations.push(...batch.storageRows.map((row) => ({
+      count: row.count,
+      memberIds: row.cookingFamilyMemberIds,
+    })));
+  }
   // Slot dates power the "Meals setup for 14th Jun…" banner on the recipe page.
   const dateKeys = relevantSlots.map((slot) =>
     slot.date.toISOString().slice(0, 10),
   );
-  const cook = encodePlanCookParam(combinations, dateKeys, batch?.extraPortions ?? 0);
+  const cook = encodePlanCookParam(combinations, dateKeys);
   return `${ROUTES.recipe(recipeSlug)}?cook=${encodeURIComponent(cook)}`;
 }

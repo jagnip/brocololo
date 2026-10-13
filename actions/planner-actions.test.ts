@@ -7,6 +7,7 @@ import {
   updateSavedPlan,
 } from "./planner-actions";
 import { ROUTES } from "@/lib/constants";
+import { createMockRecipe } from "@/lib/tests/test-helpers";
 
 vi.mock("@/lib/auth/session", () => ({
   requireUser: vi.fn().mockResolvedValue({ id: "user-1" }),
@@ -76,7 +77,7 @@ describe("planner-actions collisions", () => {
         recipeId: null,
         customMeal: null,
         alternativeRecipeIds: [],
-        cookingFamilyMemberIds: [],
+        cookingFamilyMemberIds: ["member-1"],
         used: false,
       },
     ]);
@@ -95,6 +96,28 @@ describe("updateSavedPlan", () => {
     vi.clearAllMocks();
   });
 
+  it("parses, preserves and defaults saved flags before calling the DB", async () => {
+    vi.mocked(updatePlan).mockResolvedValue({} as never);
+    const slot = { date: new Date("2026-03-30T00:00:00.000Z"), mealType: "DINNER" as const, recipeId: "recipe-1", customMeal: null, alternativeRecipeIds: [], cookingFamilyMemberIds: ["member-1"], used: false };
+    await updateSavedPlan("plan-1", [slot, { ...slot, isRolledOver: true, alreadyCooked: true }, { ...slot, recipeId: null, isRolledOver: true, alreadyCooked: true }]);
+    expect(vi.mocked(updatePlan).mock.calls[0]?.[2]).toEqual([
+      { ...slot, isRolledOver: false, alreadyCooked: false },
+      { ...slot, isRolledOver: true, alreadyCooked: true },
+      { ...slot, recipeId: null, isRolledOver: false, alreadyCooked: false },
+    ]);
+  });
+
+  it("serializes create-plan flags with defaults and clears empty-slot flags", async () => {
+    vi.mocked(createPlan).mockResolvedValue({ type: "date_conflict", dates: [], conflictingLogIds: [], conflictingPlanIds: [] });
+    const slot = { date: new Date("2026-03-30T00:00:00.000Z"), mealType: "DINNER" as const, recipe: createMockRecipe(), customMeal: null, alternatives: [], used: false };
+    await savePlan([slot, { ...slot, isRolledOver: true, alreadyCooked: true }, { ...slot, recipe: null, isRolledOver: true, alreadyCooked: true }]);
+    expect(vi.mocked(createPlan).mock.calls[0]?.[3]).toEqual([
+      { ...slot, isRolledOver: false, alreadyCooked: false },
+      { ...slot, isRolledOver: true, alreadyCooked: true },
+      { ...slot, recipe: null, isRolledOver: false, alreadyCooked: false },
+    ]);
+  });
+
   it("revalidates root on success", async () => {
     vi.mocked(updatePlan).mockResolvedValue({} as never);
 
@@ -105,7 +128,7 @@ describe("updateSavedPlan", () => {
         recipeId: "recipe-1",
         customMeal: null,
         alternativeRecipeIds: [],
-        cookingFamilyMemberIds: [],
+        cookingFamilyMemberIds: ["member-1"],
         used: false,
       },
     ]);
@@ -124,7 +147,7 @@ describe("updateSavedPlan", () => {
         recipeId: "recipe-1",
         customMeal: null,
         alternativeRecipeIds: [],
-        cookingFamilyMemberIds: [],
+        cookingFamilyMemberIds: ["member-1"],
         used: false,
       },
     ]);

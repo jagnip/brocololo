@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { revalidatePath } from "next/cache";
 import { ROUTES } from "@/lib/constants";
-import { saveShoppingListEditsAction } from "@/actions/shopping-list-actions";
-import { updateShoppingListItems } from "@/lib/db/shopping-list";
+import { generateGroceryListFromPlan, saveShoppingListEditsAction } from "@/actions/shopping-list-actions";
+import { generateShoppingListForPlan, updateShoppingListItems } from "@/lib/db/shopping-list";
 
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
@@ -48,6 +48,17 @@ function makeValidInput() {
 describe("saveShoppingListEditsAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("forwards an explicit available-meal opt-in through server validation", async () => {
+    vi.mocked(generateShoppingListForPlan).mockResolvedValue({ ok: true, shoppingListId: "list-1" });
+    const selection = {
+      excludedRecipeIds: ["recipe-1"],
+      excludedCustomMealNames: [],
+      includedAvailableRecipeIds: ["recipe-1"],
+    };
+    expect(await generateGroceryListFromPlan("plan-1", selection)).toEqual({ type: "success", shoppingListId: "list-1" });
+    expect(generateShoppingListForPlan).toHaveBeenCalledWith("user-1", "plan-1", selection);
   });
 
   it("returns error for invalid payload", async () => {

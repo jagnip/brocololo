@@ -24,8 +24,9 @@ export type PlanSlotData = {
   recipeId?: string | null;
   batchGroupId?: string | null;
   cookingFamilyMemberIds?: string[];
-  /** Anonymous standard recipe portions, included once for a batch source. */
-  extraPortions?: number;
+  isRolledOver?: boolean;
+  alreadyCooked?: boolean;
+  isStorage?: boolean;
   familyMembers?: Array<{ id: string; isSelf: boolean }>;
   recipe: {
     name: string;
@@ -189,10 +190,7 @@ function scaleIngredients(slots: PlanSlotData[]): ScaledIngredient[] {
         }
       }
 
-      const consumables =
-        (slot.extraPortions ?? 0) > 0
-          ? []
-          : resolveRecipeSlotScaledConsumables(slot);
+      const consumables = resolveRecipeSlotScaledConsumables(slot);
 
       const memberItems = consumables.flatMap((consumable) => {
         const scaled = toScaledIngredient({
@@ -205,23 +203,7 @@ function scaleIngredients(slots: PlanSlotData[]): ScaledIngredient[] {
         });
         return scaled ? [scaled] : [];
       });
-      const extraItems = (slot.extraPortions ?? 0) > 0
-        ? slot.recipe.ingredients.flatMap((row) => {
-            if (row.amount == null || !row.unit) return [];
-            const scaled = toScaledIngredient({
-              ingredientId: row.ingredientId,
-              unitId: row.unit.id,
-              amount:
-                (row.amount / Math.max(slot.recipe!.servings, 1)) *
-                (slot.extraPortions ?? 0),
-              recipeName: slot.recipe!.name,
-              catalog,
-              unitsById,
-            });
-            return scaled ? [scaled] : [];
-          })
-        : [];
-      return [...memberItems, ...extraItems];
+      return memberItems;
     })();
 
     return [...recipeItems, ...mapCustomIngredients(slot)];
@@ -348,7 +330,10 @@ export function transformPlanToShoppingListRows(
     excludedCustomMealNames: [],
   },
 ): ShoppingListGeneratedLine[] {
-  const eligibleSlots = filterSlotsForGroceryGeneration(slots, exclusions);
+  const eligibleSlots = filterSlotsForGroceryGeneration(
+    slots,
+    exclusions,
+  );
   const scaled = scaleIngredients(eligibleSlots);
   return aggregateIngredients(scaled);
 }

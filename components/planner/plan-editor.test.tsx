@@ -181,6 +181,32 @@ describe("PlanEditor autosave", () => {
     routerMock.refresh.mockClear();
   });
 
+  it("persists rolling flags and clears them when replacing the recipe", async () => {
+    vi.useFakeTimers();
+    const initialPlan: PlanInputType = [{
+      date: new Date("2026-03-17T00:00:00.000Z"),
+      mealType: PlannerMealType.DINNER,
+      recipe: { ...createRecipe("rolled-meal"), isBatchRecipe: true },
+      customMeal: null,
+      alternatives: [createRecipe("fresh-meal")],
+      used: false,
+      isRolledOver: true,
+      alreadyCooked: true,
+    }];
+    const view = renderPlanEditor({ planId: "plan-1", initialPlan, recipes: [], ingredientOptions: emptyIngredientOptions });
+    try {
+      fireEvent.click(screen.getByRole("button", { name: "Toggle first cooked" }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      expect(vi.mocked(updateSavedPlan).mock.calls[0][1][0]).toMatchObject({ isRolledOver: true, alreadyCooked: true });
+      fireEvent.click(screen.getByRole("button", { name: "Shuffle" }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      expect(vi.mocked(updateSavedPlan).mock.calls[1][1][0]).toMatchObject({ recipeId: "fresh-meal", isRolledOver: false, alreadyCooked: false });
+    } finally {
+      view.unmount();
+      vi.useRealTimers();
+    }
+  });
+
   it("auto-saves after a short debounce when user edits the plan", async () => {
     const user = userEvent.setup();
 
@@ -822,7 +848,7 @@ describe("PlanEditor batch group clearing", () => {
     expect(screen.getByLabelText("batch-groups")).toHaveTextContent("null,group-1");
   });
 
-  it("moves a removed batch meal to storage while a sibling remains", async () => {
+  it("removes a batch meal without creating storage while a sibling remains", async () => {
     const user = userEvent.setup();
     const recipeA = { ...createRecipe("recipe-a"), isBatchRecipe: true };
     const initialPlan: PlanInputType = [
@@ -867,7 +893,7 @@ describe("PlanEditor batch group clearing", () => {
 
     await user.click(screen.getByRole("button", { name: "Remove first" }));
     expect(screen.getByLabelText("batch-storage")).toHaveTextContent(
-      '"storageRows":[{"count":1,"cookingFamilyMemberIds":["j"]}]',
+      '"storageRows":[]',
     );
   });
 

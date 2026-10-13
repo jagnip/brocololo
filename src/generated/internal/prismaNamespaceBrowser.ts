@@ -239,6 +239,8 @@ export const PlanSlotScalarFieldEnum = {
   recipeId: 'recipeId',
   customName: 'customName',
   used: 'used',
+  isRolledOver: 'isRolledOver',
+  alreadyCooked: 'alreadyCooked',
   batchGroupId: 'batchGroupId'
 } as const
 

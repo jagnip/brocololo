@@ -129,6 +129,21 @@ describe("buildCookingCombinationsFromSlots", () => {
 });
 
 describe("getRecipeCookingHref", () => {
+  it("includes storage only when the batch is not already cooked", () => {
+    const recipe = createRecipe("caprese", { isBatchRecipe: true });
+    const slot = dinnerSlot("2026-03-17T00:00:00.000Z", recipe, { cookingFamilyMemberIds: [J] });
+    const batch = { id: "g1", recipeId: recipe.id, storageRows: [{ count: 2, cookingFamilyMemberIds: [N] }], extraPortions: 0 };
+    expect(getRecipeCookingHref(recipe.slug, [slot], HOUSEHOLD, batch)).toContain(encodeURIComponent(`${N}:2`));
+    expect(getRecipeCookingHref(recipe.slug, [{ ...slot, alreadyCooked: true }], HOUSEHOLD, batch)).toBe(getRecipeCookingHref(recipe.slug, [slot], HOUSEHOLD));
+  });
+
+  it("uses scheduled meals only", () => {
+    const recipe = createRecipe("caprese", { isBatchRecipe: true });
+    const slot = dinnerSlot("2026-03-17T00:00:00.000Z", recipe, { cookingFamilyMemberIds: [J] });
+    expect(getRecipeCookingHref(recipe.slug, [slot], HOUSEHOLD)).toBe(
+      `/recipes/caprese?cook=${encodeURIComponent(`2026-03-17|${J}:1`)}`,
+    );
+  });
   it("builds a cook query for a single non-batch slot with eaters", () => {
     const recipe = createRecipe("bolognese");
     const slot = dinnerSlot("2026-03-17T00:00:00.000Z", recipe, {

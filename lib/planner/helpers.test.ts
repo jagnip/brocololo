@@ -238,7 +238,7 @@ describe("getBatchGroupLabels", () => {
     expect(labels.get(day2Key)).toEqual({ index: 2, total: 2 });
   });
 
-  it("includes stored meals in totals but excludes extra portions", () => {
+  it("excludes storage and extra portions from badge totals", () => {
     const recipe = {
       id: "batch-recipe",
       isBatchRecipe: true,
@@ -264,7 +264,10 @@ describe("getBatchGroupLabels", () => {
       },
     ]);
     const key = `${plan[0]!.date.toISOString()}-${PlannerMealType.DINNER}`;
-    expect(labels.get(key)).toEqual({ index: 1, total: 4 });
+    expect(labels.get(key)).toEqual({ index: 1, total: 4, storageCount: 3 });
+    expect(getBatchGroupLabels(plan.map((slot) => ({ ...slot, alreadyCooked: true })), [
+      { id: "batch-1", recipeId: recipe.id, storageRows: [{ count: 3, cookingFamilyMemberIds: ["member-1"] }], extraPortions: 0 },
+    ]).has(key)).toBe(false);
   });
 
   it("skips groups with a single remaining member", () => {
@@ -298,6 +301,35 @@ describe("placeRecipeOnPlan", () => {
       batchGroupId: null,
     };
   }
+
+  it.each([{ isRolledOver: true, alreadyCooked: false }, { isRolledOver: false, alreadyCooked: true }])("never joins a fresh placement to an existing group with %o", (flags) => {
+    const recipe = { id: "r-batch", plannedMealCount: 2, isBatchRecipe: true } as RecipeType;
+    const plan: PlanInputType = [
+      { ...emptyDinner("2026-03-17T00:00:00.000Z"), recipe, batchGroupId: "existing", ...flags },
+      emptyDinner("2026-03-18T00:00:00.000Z"),
+      emptyDinner("2026-03-19T00:00:00.000Z"),
+    ];
+    const next = placeRecipeOnPlan(plan, `${plan[1]!.date.toISOString()}-DINNER`, recipe);
+    expect(next[0]).toEqual(plan[0]);
+    expect(next[1]?.batchGroupId).not.toBe("existing");
+    expect(next[1]?.batchGroupId).toBe(next[2]?.batchGroupId);
+    expect(next.slice(1).every((slot) => slot.isRolledOver === false && slot.alreadyCooked === false)).toBe(true);
+  });
+
+  it("preserves flags and grouping on same-recipe edits without expanding finite rolling meals", () => {
+    const recipe = { id: "r-batch", plannedMealCount: 3, isBatchRecipe: true } as RecipeType;
+    const plan: PlanInputType = [
+      { ...emptyDinner("2026-03-17T00:00:00.000Z"), recipe, batchGroupId: "rolling", isRolledOver: true, alreadyCooked: true },
+      emptyDinner("2026-03-18T00:00:00.000Z"),
+    ];
+    const key = `${plan[0]!.date.toISOString()}-DINNER`;
+    const next = placeRecipeOnPlan(plan, key, { ...recipe, name: "Updated" });
+    expect(next[0]).toMatchObject({ batchGroupId: "rolling", isRolledOver: true, alreadyCooked: true });
+    expect(next[1]?.recipe).toBeNull();
+    const replacement = placeRecipeOnPlan(plan, key, { ...recipe, id: "replacement" });
+    expect(replacement.every((slot) => slot.isRolledOver === false && slot.alreadyCooked === false)).toBe(true);
+    expect(replacement[0]?.batchGroupId).not.toBe("rolling");
+  });
 
   it("fills following empty same-meal slots and shares a batchGroupId", () => {
     const recipe = {

@@ -55,6 +55,8 @@ Meal Plan and Log are peer destinations. Meal Plan owns household meal editing, 
 
 Meal Plan's cooking checklist sits above the unchanged daily planner. Group unique meals under Breakfast, Lunch, and Dinner, with three columns on desktop and stacked groups on mobile. Rows contain only a Checkbox, small thumbnail, meal name, and planned-slot count. Group counts show unique meals left to cook; partially checked meals count until all matching slots are checked. Omit an overall heading, progress count, helper text, row subtitles, and Reset/Hide controls. Checking a row updates all matching slots in the current plan; partial completion uses an indeterminate checkbox. Checked rows stay in place with muted text and grayscale thumbnails. Reuse the existing daily-card checked state without changing card markup or styling.
 
+Rolling recipes initialize once from the latest created plan's unused scheduled meals and Storage meal counts. They are recipe/count entries without an audience; placement uses the new plan's eaters. Keep the selector and editable meal counts, omit the import button, and preserve user removals during regeneration. Batch entries expose an unchecked-by-default Already cooked checkbox, meaning 10 minutes preparation and total time. Scheduled cards append one status to the meal description with a middot: Already cooked takes precedence over Rolled over. Grocery selection offers fresh quantities checked by default and rolled-over/already-cooked quantities unchecked but selectable. Keep these sources separate when the same recipe has both, and include available quantities only on explicit opt-in. Storage is editable for all batch recipes except Already cooked batches. Anonymous extra portions do not carry over and are not managed in the active planner.
+
 ## Elevation & Depth
 
 Preserve existing `shadow-xs` and rose-tinted `shadow-rose-sm/md/lg/xl` tokens from `app/globals.css`. Do not add decorative elevation to page headers.
@@ -69,7 +71,7 @@ Use existing radius tokens and primitive defaults. Cards and dialogs use the exi
 - `AppSidebar`: shared navigation with one active peer destination and mobile dismissal on selection.
 - `PlanSwitcherSelect`: existing breadcrumb or in-page plan switching.
 - `PlanEditor`: household meal arrangement and editing.
-- `PlanBatchDialog`: shared batch summary and Storage quantities, opened from batch badges in Create and Manage plan.
+- `PlanBatchDialog`: scheduled batch summary and destructive outlined Remove batch action, opened from batch badges in Create and Manage plan. Storage editing is available for all batch recipes except Already cooked batches. Uncooked Storage quantities contribute to batch totals, cooking links, and grocery selection; cooked batches ignore Storage quantities.
 - `PlanMealChecklist`: grouped cooking checklist composing Checkbox, Label, and existing recipe-image handling; derived from the editor's live plan.
 - `LogDayViewController`: day-first actual intake, with optional all-days view.
 - `LogDayPersonToolbarControls`: existing date navigation and person selection.

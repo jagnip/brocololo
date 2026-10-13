@@ -2,6 +2,8 @@ import { act, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PlannerLogSharedShell } from "./planner-log-shared-shell";
+import { generateGroceryListFromPlan, getGroceryGenerationMealOptions } from "@/actions/shopping-list-actions";
+import { toast } from "sonner";
 
 const { setState, resetState, planEditor, logView } = vi.hoisted(() => ({
   setState: vi.fn(),
@@ -36,9 +38,7 @@ vi.mock("@/components/log/log-day-view", () => ({
 vi.mock("@/components/planner/plan-date-range-dialog", () => ({
   PlanDateRangeDialog: () => null,
 }));
-vi.mock("@/components/planner/grocery-meal-selection-dialog", () => ({
-  GroceryMealSelectionDialog: () => null,
-}));
+vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 vi.mock("@/actions/planner-actions", () => ({ deletePlanAction: vi.fn() }));
 vi.mock("@/actions/shopping-list-actions", () => ({
   generateGroceryListFromPlan: vi.fn(),
@@ -104,6 +104,25 @@ describe("separate planning and logging surfaces", () => {
 
     expect(screen.getByRole("heading", { name: "No log yet for this plan" })).toBeInTheDocument();
     expect(planEditor).not.toHaveBeenCalled();
+  });
+
+  it("explains no ingredients to buy without generating or showing an error", async () => {
+    vi.mocked(getGroceryGenerationMealOptions).mockResolvedValue({
+      type: "success",
+      meals: [],
+    });
+    render(<PlannerLogSharedShell {...props} hasExistingShoppingList />);
+
+    await act(async () => {
+      setState.mock.calls.at(-1)![0].onGenerateGroceryList();
+    });
+
+    expect(getGroceryGenerationMealOptions).toHaveBeenCalledWith("plan-1");
+    expect(screen.getByText(/No ingredients to buy/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Generate list" })).toBeDisabled();
+    expect(screen.queryByText("Replace existing grocery list?")).not.toBeInTheDocument();
+    expect(generateGroceryListFromPlan).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it("keeps saving feedback without the removed header", () => {

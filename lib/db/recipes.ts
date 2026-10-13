@@ -511,7 +511,7 @@ export async function updateRecipe(
       await tx.planBatch.deleteMany({ where: { recipeId } });
       await tx.planSlot.updateMany({
         where: { recipeId },
-        data: { batchGroupId: null },
+        data: { batchGroupId: null, alreadyCooked: false },
       });
     }
 

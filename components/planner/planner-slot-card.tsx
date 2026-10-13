@@ -71,7 +71,7 @@ type PlannerSlotCardProps = {
   familyMembers?: FamilyMemberRow[];
   onAudienceChange?: (memberIds: string[]) => void;
   /** Live "N of M" label for batch-recipe groups with 2+ members. */
-  batchLabel?: { index: number; total: number };
+  batchLabel?: { index: number; total: number; storageCount?: number };
   onEditBatch?: () => void;
   /** Prefills Cooking on the recipe page from this plan slot / batch group. */
   recipeCookingHref?: string;
@@ -415,15 +415,14 @@ export function PlannerSlotCard({
           ) : (
             <RecipeImagePlaceholder />
           )}
-          {/* Batch badge only when recipe is marked batch AND live group has 2+ slots.
-              Always "1 of X" — this card is one meal's share of the cook, not meal N. */}
+          {/* Chronological position within this batch, including stored meals in the total. */}
           {recipe!.isBatchRecipe && batchLabel ? (
             onEditBatch ? (
               <Badge asChild variant="default">
                 <button
                   type="button"
                   className="absolute right-3 top-3 z-2 shadow-md hover:bg-border"
-                  aria-label={`Batch meal 1 of ${batchLabel.total}`}
+                  aria-label={`Batch meal ${batchLabel.index} of ${batchLabel.total}${batchLabel.storageCount ? `, ${batchLabel.storageCount} in storage` : ""}`}
                   title="Edit batch"
                   aria-haspopup="dialog"
                   onClick={(event) => {
@@ -432,10 +431,10 @@ export function PlannerSlotCard({
                   }}
                 >
                   <span className="type-caption font-semibold">
-                    <span>Batch</span>
-                    <span className="pl-0.5 font-medium opacity-75">
-                      {` · 1 of ${batchLabel.total}`}
-                    </span>
+                    <strong className="font-bold">{`${batchLabel.index} of ${batchLabel.total}`}</strong>
+                    {batchLabel.storageCount ? (
+                      <span className="font-medium opacity-75">{` · ${batchLabel.storageCount} in storage`}</span>
+                    ) : null}
                   </span>
                 </button>
               </Badge>
@@ -443,13 +442,13 @@ export function PlannerSlotCard({
               <Badge
                 variant="default"
                 className="absolute right-3 top-3 z-2 shadow-md"
-                aria-label={`Batch meal 1 of ${batchLabel.total}`}
+                aria-label={`Batch meal ${batchLabel.index} of ${batchLabel.total}${batchLabel.storageCount ? `, ${batchLabel.storageCount} in storage` : ""}`}
               >
                 <span className="type-caption font-semibold">
-                  <span>Batch</span>
-                  <span className="pl-0.5 font-medium opacity-75">
-                    {` · 1 of ${batchLabel.total}`}
-                  </span>
+                  <strong className="font-bold">{`${batchLabel.index} of ${batchLabel.total}`}</strong>
+                  {batchLabel.storageCount ? (
+                    <span className="font-medium opacity-75">{` · ${batchLabel.storageCount} in storage`}</span>
+                  ) : null}
                 </span>
               </Badge>
             )
@@ -469,10 +468,12 @@ export function PlannerSlotCard({
                 </Link>
                 <p className="type-body mt-0.5 text-sm text-muted-foreground">
                   {mealLabel}
+                  {slot.isRolledOver && !slot.alreadyCooked ? " \u00b7 Rolled over" : ""}
+                  {slot.alreadyCooked ? " \u00b7 Already cooked" : ""}
                 </p>
               </div>
               <Badge variant="outline" className="shrink-0">
-                {recipe!.handsOnTime} min
+                {slot.alreadyCooked ? 10 : recipe!.handsOnTime} min
               </Badge>
             </div>
             <div className="mt-item flex flex-wrap items-start gap-2">

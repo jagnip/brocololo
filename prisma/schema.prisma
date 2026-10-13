@@ -219,6 +219,8 @@ model PlanSlot {
   recipeId     String?         @map("recipe_id")
   customName   String?         @map("custom_name")
   used         Boolean         @default(false)
+  isRolledOver Boolean         @default(false) @map("is_rolled_over")
+  alreadyCooked Boolean        @default(false) @map("already_cooked")
   // Links slots that were placed together as one multi-meal placement (batch or repeat).
   batchGroupId String?         @map("batch_group_id")
 
