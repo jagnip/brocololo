@@ -15,12 +15,15 @@ import {
   type InstructionIngredientMemberShare,
 } from "@/components/recipes/recipe-page/instruction-ingredient-card";
 import { COOK_SESSION_EXTRAS_SHARE_ID } from "@/lib/recipes/shared-portion-shares";
+import { resolveIngredientLineForMember } from "@/lib/recipes/resolve-ingredient-lines";
+import type { IngredientType } from "@/types/ingredient";
 import type { RecipeType } from "@/types/recipe";
 
 type RecipeIngredient = RecipeType["ingredients"][number];
 
 function InstructionStepIngredientCard(props: {
   recipeIngredient: RecipeIngredient;
+  ingredients: IngredientType[];
   cookingFamilyMemberIds: string[];
   familyMembers: ReturnType<
     typeof useRecipePageInstructionsSectionData
@@ -42,6 +45,7 @@ function InstructionStepIngredientCard(props: {
 }) {
   const {
     recipeIngredient,
+    ingredients,
     cookingFamilyMemberIds,
     familyMembers,
     audienceMemberIds,
@@ -167,50 +171,102 @@ function InstructionStepIngredientCard(props: {
     );
   }
 
-  const aggregatedRawAmount = memberShares.reduce(
-    (total, share) => total + share.amount,
-    0,
-  );
+  const groups = new Map<
+    string,
+    {
+      ingredient: RecipeIngredient["ingredient"];
+      unit: { id: string; name: string } | null;
+      additionalInfo: string | null;
+      shares: InstructionIngredientMemberShare[];
+    }
+  >();
 
-  if (aggregatedRawAmount <= 0) {
-    return null;
+  for (const share of memberShares) {
+    // Anonymous extras use the base recipe, never a person's replacement.
+    const resolved =
+      share.familyMemberId === COOK_SESSION_EXTRAS_SHARE_ID
+        ? recipeIngredient
+        : resolveIngredientLineForMember(recipeIngredient, share.familyMemberId);
+    if (!resolved || share.amount <= 0) {
+      continue;
+    }
+    const ingredient =
+      ingredients.find((entry) => entry.id === resolved.ingredientId) ??
+      recipeIngredient.ingredient;
+    const unit =
+      resolved.unitId === recipeIngredient.unit?.id
+        ? recipeIngredient.unit
+        : ingredient.unitConversions.find(
+            (entry) => entry.unitId === resolved.unitId,
+          )?.unit ?? null;
+    const key = JSON.stringify([
+      resolved.ingredientId,
+      resolved.unitId,
+      resolved.additionalInfo,
+    ]);
+    const group = groups.get(key);
+    if (group) {
+      group.shares.push(share);
+    } else {
+      groups.set(key, {
+        ingredient,
+        unit,
+        additionalInfo: resolved.additionalInfo,
+        shares: [share],
+      });
+    }
   }
 
-  const display = getIngredientDisplay(
-    aggregatedRawAmount,
-    recipeIngredient.unit?.id ?? null,
-    recipeIngredient.unit?.name ?? null,
-    selectedUnitId,
-    unitConversions,
-    1,
-    1,
-  );
-
   return (
-    <InstructionIngredientCard
-      badgeInput={{
-        rawAmount: display.rawAmount,
-        displayAmount: display.displayAmount,
-        displayUnitName: display.displayUnitName,
-        displayUnitNamePlural: display.displayUnitNamePlural,
-        ingredientName: recipeIngredient.ingredient.name,
-        additionalInfo: recipeIngredient.additionalInfo,
-      }}
-      memberShares={memberShares}
-      familyMembers={familyMembers}
-      selectedUnitId={selectedUnitId}
-      baseUnitId={recipeIngredient.unit?.id ?? null}
-      baseUnitName={recipeIngredient.unit?.name ?? null}
-      unitConversions={unitConversions}
-      showMemberBreakdown={showMemberBreakdown}
-      className={badgeClassName}
-    />
+    <>
+      {Array.from(groups, ([key, group]) => {
+        const conversions =
+          group.ingredient.unitConversions as UnitConversionWithName[];
+        const displayUnitId = conversions.some(
+          (entry) => entry.unitId === selectedUnitId,
+        )
+          ? selectedUnitId
+          : group.unit?.id ?? null;
+        const display = getIngredientDisplay(
+          group.shares.reduce((total, share) => total + share.amount, 0),
+          group.unit?.id ?? null,
+          group.unit?.name ?? null,
+          displayUnitId,
+          conversions,
+          1,
+          1,
+        );
+
+        return (
+          <InstructionIngredientCard
+            key={key}
+            badgeInput={{
+              rawAmount: display.rawAmount,
+              displayAmount: display.displayAmount,
+              displayUnitName: display.displayUnitName,
+              displayUnitNamePlural: display.displayUnitNamePlural,
+              ingredientName: group.ingredient.name,
+              additionalInfo: group.additionalInfo,
+            }}
+            memberShares={group.shares}
+            familyMembers={familyMembers}
+            selectedUnitId={displayUnitId}
+            baseUnitId={group.unit?.id ?? null}
+            baseUnitName={group.unit?.name ?? null}
+            unitConversions={conversions}
+            showMemberBreakdown={showMemberBreakdown}
+            className={badgeClassName}
+          />
+        );
+      })}
+    </>
   );
 }
 
 export function InstructionsSection() {
   const {
     instructions,
+    ingredients,
     familyMembers,
     recipeServings,
     audienceMemberIds,
@@ -327,6 +383,7 @@ export function InstructionsSection() {
                         <InstructionStepIngredientCard
                           key={`${instruction.id}-${recipeIngredient.id}`}
                           recipeIngredient={recipeIngredient}
+                          ingredients={ingredients}
                           cookingFamilyMemberIds={cookingFamilyMemberIds}
                           familyMembers={familyMembers}
                           audienceMemberIds={audienceMemberIds}
