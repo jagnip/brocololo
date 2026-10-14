@@ -1,9 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { deleteFamilyMember } from "./family-members";
+import { deleteFamilyMember, getFamilyMemberRecipeImpact } from "./family-members";
 
 vi.mock("./index", () => ({
   prisma: {
     familyMember: { findFirst: vi.fn() },
+    recipeAudienceMember: { count: vi.fn() },
+    recipeMemberPortion: { count: vi.fn() },
+    recipeIngredientMemberTarget: { count: vi.fn() },
+    recipeMemberPreference: { count: vi.fn() },
     $transaction: vi.fn(),
   },
 }));
@@ -47,6 +51,22 @@ describe("deleteFamilyMember", () => {
     });
     expect(familyMemberDelete).toHaveBeenCalledWith({
       where: { id: "member-2" },
+    });
+  });
+});
+
+describe("getFamilyMemberRecipeImpact", () => {
+  it.each([0, 1])("includes preference-only impact with %i rows", async (count) => {
+    vi.mocked(prisma.familyMember.findFirst).mockResolvedValue({ id: "member-2" } as never);
+    vi.mocked(prisma.recipeAudienceMember.count).mockResolvedValue(0);
+    vi.mocked(prisma.recipeMemberPortion.count).mockResolvedValue(0);
+    vi.mocked(prisma.recipeIngredientMemberTarget.count).mockResolvedValue(0);
+    vi.mocked(prisma.recipeMemberPreference.count).mockResolvedValue(count);
+
+    await expect(getFamilyMemberRecipeImpact({ userId: "user-1", id: "member-2" }))
+      .resolves.toEqual({ hasRecipeImpact: count > 0 });
+    expect(prisma.recipeMemberPreference.count).toHaveBeenCalledWith({
+      where: { familyMemberId: "member-2", recipe: { userId: "user-1" } },
     });
   });
 });

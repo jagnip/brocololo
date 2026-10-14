@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { planBatchesSaveSchema } from "./planner";
+import { planBatchesSaveSchema, plannerCriteriaSchema, slotSaveDataSchema } from "./planner";
 
 const validBatch = {
   id: "batch-1",
@@ -9,6 +9,26 @@ const validBatch = {
   ],
   extraPortions: 0,
 };
+
+describe("rolling and slot flags", () => {
+  it("defaults unchecked rolling cooked state to false", () => {
+    const criteria = {
+      dateRange: { start: "2026-04-20", end: "2026-04-20" },
+      dailyAudienceByMeal: [{ date: "2026-04-20", breakfastFamilyMemberIds: ["member-1"], lunchFamilyMemberIds: ["member-1"], dinnerFamilyMemberIds: ["member-1"] }],
+      dailyTimeLimits: [{ date: "2026-04-20", breakfastHandsOnMax: null, lunchHandsOnMax: null, dinnerHandsOnMax: null, breakfastTotalMax: null, lunchTotalMax: null, dinnerTotalMax: null }],
+      rollingRecipes: [{ recipeId: "recipe-1", meals: 2 }],
+    };
+    expect(plannerCriteriaSchema.parse(criteria).rollingRecipes[0]?.alreadyCooked).toBe(false);
+    expect(plannerCriteriaSchema.parse({ ...criteria, rollingRecipes: [{ recipeId: "recipe-1", meals: 2, alreadyCooked: true }] }).rollingRecipes[0]?.alreadyCooked).toBe(true);
+  });
+
+  it("defaults saved slot flags and rejects non-boolean flags", () => {
+    const slot = { date: "2026-04-20", mealType: "DINNER", recipeId: "recipe-1", customMeal: null, alternativeRecipeIds: [], cookingFamilyMemberIds: ["member-1"], used: false };
+    expect(slotSaveDataSchema.parse(slot)).toMatchObject({ isRolledOver: false, alreadyCooked: false });
+    expect(slotSaveDataSchema.parse({ ...slot, isRolledOver: true, alreadyCooked: true })).toMatchObject({ isRolledOver: true, alreadyCooked: true });
+    expect(slotSaveDataSchema.safeParse({ ...slot, alreadyCooked: "true" }).success).toBe(false);
+  });
+});
 
 describe("planBatchesSaveSchema", () => {
   it("accepts zero storage rows and zero extra portions", () => {

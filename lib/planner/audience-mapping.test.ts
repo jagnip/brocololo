@@ -9,6 +9,34 @@ import {
 describe("audience-mapping", () => {
   const familyIds = ["fm-1", "fm-2"];
 
+  it("defaults breakfasts and weekday lunches to the solo member, with shared weekend lunches and dinners", () => {
+    const groups = createDefaultAudienceGroups(familyIds, "fm-1");
+    for (const group of [groups.weekday, groups.weekend]) {
+      expect(group.breakfastFamilyMemberIds).toEqual(["fm-1"]);
+      expect(group.dinnerFamilyMemberIds).toEqual(familyIds);
+    }
+    expect(groups.weekday.lunchFamilyMemberIds).toEqual(["fm-1"]);
+    expect(groups.weekend.lunchFamilyMemberIds).toEqual(familyIds);
+    const daily = mapGroupAudienceToDaily([
+      new Date("2026-07-06T12:00:00.000Z"),
+      new Date("2026-07-11T12:00:00.000Z"),
+    ], groups);
+    for (const day of daily) {
+      expect(day.breakfastFamilyMemberIds).toEqual(["fm-1"]);
+      expect(day.dinnerFamilyMemberIds).toEqual(familyIds);
+    }
+    expect(daily[0]?.lunchFamilyMemberIds).toEqual(["fm-1"]);
+    expect(daily[1]?.lunchFamilyMemberIds).toEqual(familyIds);
+  });
+
+  it("keeps solo meal audience defaults independent when edited", () => {
+    const groups = createDefaultAudienceGroups(familyIds, "fm-1");
+    groups.weekday.breakfastFamilyMemberIds.push("fm-2");
+    expect(groups.weekday.lunchFamilyMemberIds).toEqual(["fm-1"]);
+    expect(groups.weekend.breakfastFamilyMemberIds).toEqual(["fm-1"]);
+    expect(groups.weekend.lunchFamilyMemberIds).toEqual(familyIds);
+  });
+
   it("maps grouped weekday/weekend audience to daily rows", () => {
     const groups = createDefaultAudienceGroups(familyIds);
     groups.weekday.breakfastFamilyMemberIds = ["fm-1"];

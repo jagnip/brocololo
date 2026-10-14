@@ -55,6 +55,25 @@ function createSlot(recipe: RecipeType): SlotInputType {
 }
 
 describe("PlannerSlotCard batch badge", () => {
+  it.each([
+    [true, true, "Dinner \u00b7 Already cooked"],
+    [true, false, "Dinner \u00b7 Rolled over"],
+    [false, true, "Dinner \u00b7 Already cooked"],
+    [false, false, "Dinner"],
+  ] as const)("shows rolling and cooked statuses in the description (%s, %s)", (isRolledOver, alreadyCooked, description) => {
+    const recipe = createBatchRecipe();
+    render(
+      <PlannerSlotCard
+        slot={{ ...createSlot(recipe), isRolledOver, alreadyCooked }}
+        recipes={[recipe]}
+        ingredientOptions={[]}
+      />,
+    );
+    expect(screen.getByText(description)).toBeInTheDocument();
+    expect(screen.queryByText(/^Rolled over$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Already cooked$/)).not.toBeInTheDocument();
+  });
+
   it("omits recipe ingredient previews while preserving recipe details and editing", () => {
     const ingredients = ["Apple", "Milk", "Oats", "Cinnamon", "Egg", "Yogurt"].map((name, index) =>
       createMockRecipeIngredient({
@@ -112,7 +131,7 @@ describe("PlannerSlotCard batch badge", () => {
     expect(onCardSelect).toHaveBeenCalledTimes(1);
   });
 
-  it("shows Batch · N of M when recipe is a batch recipe and a label is provided", () => {
+  it("shows N of M when recipe is a batch recipe and a label is provided", () => {
     const recipe = createBatchRecipe();
     render(
       <PlannerSlotCard
@@ -124,11 +143,11 @@ describe("PlannerSlotCard batch badge", () => {
     );
 
     expect(screen.getByLabelText("Batch meal 1 of 2")).toHaveTextContent(
-      "Batch · 1 of 2",
+      "1 of 2",
     );
   });
 
-  it("always shows 1 of X even when the live group index is higher", () => {
+  it("shows the meal's chronological position within its batch", () => {
     const recipe = createBatchRecipe();
     render(
       <PlannerSlotCard
@@ -139,9 +158,22 @@ describe("PlannerSlotCard batch badge", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Batch meal 1 of 4")).toHaveTextContent(
-      "Batch · 1 of 4",
+    expect(screen.getByLabelText("Batch meal 2 of 4")).toHaveTextContent(
+      "2 of 4",
     );
+  });
+
+  it("identifies storage in an editable batch badge", () => {
+    const recipe = createBatchRecipe();
+    render(<PlannerSlotCard
+      slot={createSlot(recipe)}
+      batchLabel={{ index: 2, total: 5, storageCount: 7 }}
+      onEditBatch={vi.fn()}
+      recipes={[recipe]}
+      ingredientOptions={[]}
+    />);
+    expect(screen.getByRole("button", { name: "Batch meal 2 of 5, 7 in storage" })).toHaveTextContent("2 of 5 · 7 in storage");
+    expect(screen.getByText("2 of 5")).toBeInTheDocument();
   });
 
   it("opens batch editing from the badge without selecting the card", () => {

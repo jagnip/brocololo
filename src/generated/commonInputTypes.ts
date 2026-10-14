@@ -263,6 +263,23 @@ export type EnumPlannerMealTypeWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumPlannerMealTypeFilter<$PrismaModel>
 }
 
+export type EnumRecipePreferenceFilter<$PrismaModel = never> = {
+  equals?: $Enums.RecipePreference | Prisma.EnumRecipePreferenceFieldRefInput<$PrismaModel>
+  in?: $Enums.RecipePreference[] | Prisma.ListEnumRecipePreferenceFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RecipePreference[] | Prisma.ListEnumRecipePreferenceFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRecipePreferenceFilter<$PrismaModel> | $Enums.RecipePreference
+}
+
+export type EnumRecipePreferenceWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RecipePreference | Prisma.EnumRecipePreferenceFieldRefInput<$PrismaModel>
+  in?: $Enums.RecipePreference[] | Prisma.ListEnumRecipePreferenceFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RecipePreference[] | Prisma.ListEnumRecipePreferenceFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRecipePreferenceWithAggregatesFilter<$PrismaModel> | $Enums.RecipePreference
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRecipePreferenceFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRecipePreferenceFilter<$PrismaModel>
+}
+
 export type EnumRecipeIngredientAdjustmentKindFilter<$PrismaModel = never> = {
   equals?: $Enums.RecipeIngredientAdjustmentKind | Prisma.EnumRecipeIngredientAdjustmentKindFieldRefInput<$PrismaModel>
   in?: $Enums.RecipeIngredientAdjustmentKind[] | Prisma.ListEnumRecipeIngredientAdjustmentKindFieldRefInput<$PrismaModel>
@@ -546,6 +563,23 @@ export type NestedEnumPlannerMealTypeWithAggregatesFilter<$PrismaModel = never> 
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumPlannerMealTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumPlannerMealTypeFilter<$PrismaModel>
+}
+
+export type NestedEnumRecipePreferenceFilter<$PrismaModel = never> = {
+  equals?: $Enums.RecipePreference | Prisma.EnumRecipePreferenceFieldRefInput<$PrismaModel>
+  in?: $Enums.RecipePreference[] | Prisma.ListEnumRecipePreferenceFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RecipePreference[] | Prisma.ListEnumRecipePreferenceFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRecipePreferenceFilter<$PrismaModel> | $Enums.RecipePreference
+}
+
+export type NestedEnumRecipePreferenceWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RecipePreference | Prisma.EnumRecipePreferenceFieldRefInput<$PrismaModel>
+  in?: $Enums.RecipePreference[] | Prisma.ListEnumRecipePreferenceFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RecipePreference[] | Prisma.ListEnumRecipePreferenceFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRecipePreferenceWithAggregatesFilter<$PrismaModel> | $Enums.RecipePreference
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRecipePreferenceFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRecipePreferenceFilter<$PrismaModel>
 }
 
 export type NestedEnumRecipeIngredientAdjustmentKindFilter<$PrismaModel = never> = {

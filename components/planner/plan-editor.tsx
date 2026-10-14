@@ -148,6 +148,8 @@ export function PlanEditor({
           ? s.cookingFamilyMemberIds
           : familyMembers.map((member) => member.id),
       used: s.used,
+      isRolledOver: s.isRolledOver ?? false,
+      alreadyCooked: s.alreadyCooked ?? false,
       batchGroupId: s.batchGroupId ?? null,
     }));
 
@@ -280,6 +282,8 @@ export function PlanEditor({
       return {
         ...slot,
         recipe: nextRecipe,
+        isRolledOver: false,
+        alreadyCooked: false,
         alternatives: [...restAlternatives, slot.recipe],
         // Swapping recipes breaks membership in the previous multi-meal placement.
         batchGroupId: null,
@@ -294,6 +298,8 @@ export function PlanEditor({
         return {
           ...slot,
           recipe: nextRecipe,
+          isRolledOver: false,
+          alreadyCooked: false,
           alternatives: [...restAlternatives, slot.recipe],
           batchGroupId: null,
         };
@@ -332,6 +338,8 @@ export function PlanEditor({
           return {
             ...slot,
             recipe: payload.recipe,
+            isRolledOver: slot.recipe?.id === payload.recipe.id ? (slot.isRolledOver ?? false) : false,
+            alreadyCooked: slot.recipe?.id === payload.recipe.id ? (slot.alreadyCooked ?? false) : false,
             customMeal: null,
             alternatives: slot.alternatives.filter(
               (recipe) => recipe.id !== payload.recipe.id,
@@ -352,6 +360,8 @@ export function PlanEditor({
           return {
             ...slot,
             recipe: null,
+            isRolledOver: false,
+            alreadyCooked: false,
             customMeal: {
               name: payload.name,
               ingredients: payload.ingredients,
@@ -367,6 +377,8 @@ export function PlanEditor({
         return {
           ...slot,
           recipe: null,
+          isRolledOver: false,
+          alreadyCooked: false,
           customMeal: null,
           alternatives: [],
           batchGroupId: null,
@@ -423,6 +435,8 @@ export function PlanEditor({
       return {
         ...slot,
         recipe: null,
+        isRolledOver: false,
+        alreadyCooked: false,
         customMeal: null,
         alternatives: [],
         batchGroupId: null,
@@ -442,6 +456,8 @@ export function PlanEditor({
         return {
           ...slot,
           recipe: null,
+          isRolledOver: false,
+          alreadyCooked: false,
           customMeal: null,
           alternatives: [],
           batchGroupId: null,

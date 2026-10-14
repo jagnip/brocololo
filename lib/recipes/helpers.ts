@@ -311,6 +311,10 @@ export function recipeToFormData(
         recipe.audienceMembers.map((member) => member.familyMemberId),
       recipe.memberPortions,
     ),
+    memberPreferences: recipe.memberPreferences.filter((row) =>
+      (familyMemberIds ?? recipe.audienceMembers.map((member) => member.familyMemberId))
+        .includes(row.familyMemberId),
+    ),
     ingredientGroups,
     ingredients: ingredientRows,
     instructions: recipe.instructions.map((instruction) => ({

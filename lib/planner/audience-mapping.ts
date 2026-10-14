@@ -27,13 +27,18 @@ export function createDefaultMealAudienceIds(
 
 export function createDefaultAudienceGroups(
   familyMemberIds: string[],
+  soloMealFamilyMemberId?: string,
 ): AudienceGroups {
   const defaults = createDefaultMealAudienceIds(familyMemberIds);
+  if (soloMealFamilyMemberId) {
+    defaults.breakfastFamilyMemberIds = [soloMealFamilyMemberId];
+    defaults.lunchFamilyMemberIds = [soloMealFamilyMemberId];
+  }
   return {
     weekday: { ...defaults },
     weekend: {
       breakfastFamilyMemberIds: [...defaults.breakfastFamilyMemberIds],
-      lunchFamilyMemberIds: [...defaults.lunchFamilyMemberIds],
+      lunchFamilyMemberIds: [...familyMemberIds],
       dinnerFamilyMemberIds: [...defaults.dinnerFamilyMemberIds],
     },
   };

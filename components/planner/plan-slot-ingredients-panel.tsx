@@ -61,7 +61,7 @@ type PlanSlotIngredientsPanelProps = {
    * Live "N of M meals" for a batch cook spanning multiple plan days.
    * When set, amounts are divided by total so the panel shows one day's share.
    */
-  batchLabel?: { index: number; total: number } | null;
+  batchLabel?: { index: number; total: number; storageCount?: number } | null;
   /**
    * Mobile sheet only — Cooking for chips inside the collapsible.
    * Desktop keeps Cooking for outside this panel.
@@ -376,12 +376,11 @@ function IngredientsBody(props: PlanSlotIngredientsPanelProps) {
       variant="secondary"
       aria-label={`Batch meal ${props.batchLabel!.index} of ${props.batchLabel!.total}`}
     >
-      {/* Same hierarchy as instruction ingredient chips: bold label + muted detail. */}
-      <span className="type-caption font-semibold">
-        <span>Batch</span>
-        <span className="pl-0.5 font-medium opacity-75">
-          {` · ${props.batchLabel!.index} of ${props.batchLabel!.total}`}
-        </span>
+      <span>
+        <span>{`${props.batchLabel!.index} of ${props.batchLabel!.total}`}</span>
+        {props.batchLabel!.storageCount ? (
+          <span className="opacity-75">{` · ${props.batchLabel!.storageCount} in storage`}</span>
+        ) : null}
       </span>
     </Badge>
   ) : null;

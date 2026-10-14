@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import type {
@@ -21,7 +20,6 @@ type PlannerRollingRecipesSectionProps = {
   onChange: (next: RollingRecipeType[]) => void;
   ingredients: IngredientType[];
   recipes: RecipeType[];
-  previousPlanUnusedRecipes: RollingRecipeType[];
   onInvalidStateChange?: (hasInvalid: boolean) => void;
 };
 
@@ -31,7 +29,6 @@ export function PlannerRollingRecipesSection({
   onChange,
   ingredients,
   recipes,
-  previousPlanUnusedRecipes,
   onInvalidStateChange,
 }: PlannerRollingRecipesSectionProps) {
   const [mealsDraft, setMealsDraft] = useState<Record<string, string>>({});
@@ -57,34 +54,7 @@ export function PlannerRollingRecipesSection({
 
   return (
     <FormItem className="min-w-0 w-full">
-      {/* Bulk-add action sits above the rolling recipes selector. */}
-      <Button
-        type="button"
-        variant="outline"
-        size="default"
-        // Full width + wrap so the long label never forces horizontal scroll in the rail.
-        className="h-auto w-full whitespace-normal"
-        disabled={previousPlanUnusedRecipes.length === 0}
-        onClick={() => {
-          const currentIds = new Set(selected.map((r) => r.recipeId));
-          const toAdd = previousPlanUnusedRecipes.filter(
-            (r) => !currentIds.has(r.recipeId),
-          );
-
-          if (toAdd.length === 0) {
-            toast.info("All unused recipes already added.");
-            return;
-          }
-
-          onChange([...selected, ...toAdd]);
-          toast.success(
-            `Added ${toAdd.length} unused recipe${toAdd.length > 1 ? "s" : ""}.`,
-          );
-        }}
-      >
-        Use previous leftovers
-      </Button>
-      <FormLabel className="mt-4">Rolling recipes</FormLabel>
+      <FormLabel>Rolling recipes</FormLabel>
       <FormControl>
         <MultipleSelector
           className="w-full min-w-0"
@@ -95,14 +65,21 @@ export function PlannerRollingRecipesSection({
               label: recipe?.name ?? r.recipeId,
             };
           })}
-          onChange={(options) => {
+           onChange={(options) => {
+             const selectedIds = new Set(options.map((option) => option.value));
+             setMealsDraft((current) => Object.fromEntries(
+               Object.entries(current).filter(([id]) => selectedIds.has(id)),
+             ));
+             setBlurredRecipeIds((current) => Object.fromEntries(
+               Object.entries(current).filter(([id]) => selectedIds.has(id)),
+             ));
             const updated = options.map((o) => {
               const existing = selected.find((r) => r.recipeId === o.value);
               if (existing) return existing;
               const recipe = recipes.find((r) => r.id === o.value);
               // Default override meals from the recipe's explicit plannedMealCount.
               const defaultMeals = recipe ? getPlannerMealCount(recipe) : 1;
-              return { recipeId: o.value, meals: defaultMeals };
+               return { recipeId: o.value, meals: defaultMeals, alreadyCooked: false };
             });
             onChange(updated);
           }}
@@ -118,19 +95,22 @@ export function PlannerRollingRecipesSection({
           }
         />
       </FormControl>
+      <div className="divide-y divide-border">
       {selected
         .filter((r) => {
           const recipe = recipes.find((rec) => rec.id === r.recipeId);
-          return recipe && getPlannerMealCount(recipe) > 1;
+           return recipe != null;
         })
         .map((r) => {
           const recipe = recipes.find((rec) => rec.id === r.recipeId)!;
           return (
-            <div key={r.recipeId} className="mt-2 flex min-w-0 items-center gap-2">
+            <div key={r.recipeId} className="space-y-2 py-3">
+              <div className="flex min-w-0 items-center gap-2">
               <span className="min-w-0 flex-1 truncate text-sm">{recipe.name}</span>
               <Input
                 type="number"
-                min={1}
+                 min={1}
+                 aria-label={`Rolling meals for ${recipe.name}`}
                 value={mealsDraft[r.recipeId] ?? String(r.meals)}
                 onBlur={() =>
                   setBlurredRecipeIds((prev) => ({ ...prev, [r.recipeId]: true }))
@@ -164,9 +144,25 @@ export function PlannerRollingRecipesSection({
               <span className="type-body whitespace-nowrap text-muted-foreground">
                 meals
               </span>
+              </div>
+              {recipe.isBatchRecipe ? (
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    aria-label={`Already cooked ${recipe.name}`}
+                    checked={r.alreadyCooked ?? false}
+                    onCheckedChange={(checked) => onChange(selected.map((entry) =>
+                      entry.recipeId === r.recipeId
+                        ? { ...entry, alreadyCooked: checked === true }
+                        : entry,
+                    ))}
+                  />
+                  Already cooked
+                </label>
+              ) : null}
             </div>
           );
         })}
+      </div>
       <FormField
         control={control}
         name="fridgeIngredientIds"

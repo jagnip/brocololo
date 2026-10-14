@@ -102,5 +102,11 @@ export type RecipeType = Prisma.RecipeGetPayload<{
       };
     };
     memberPortions: true;
+    memberPreferences: {
+      select: {
+        familyMemberId: true;
+        preference: true;
+      };
+    };
   };
 }>;

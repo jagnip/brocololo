@@ -48,7 +48,7 @@ export type PlanSlotMealFormProps = {
    * Live "N of M" when the current slot is part of a batch group.
    * Used for the ingredients panel badge and per-day amount scaling.
    */
-  batchLabel?: { index: number; total: number } | null;
+  batchLabel?: { index: number; total: number; storageCount?: number } | null;
   isSaving: boolean;
   onCancel: () => void;
   onSave: (payload: PlanSlotMealPayload) => Promise<void>;
@@ -127,8 +127,7 @@ export function PlanSlotMealForm({
     [recipes, selectedRecipeId],
   );
 
-  // Batch badge + per-day scaling: ingredients are one meal's share, so the
-  // badge always reads "1 of X" (X = meals in this plan batch, or recipe default).
+  // Preserve the selected slot's position while scaling its ingredients to one meal.
   const displayBatchLabel = useMemo(() => {
     if (!selectedRecipe?.isBatchRecipe) return null;
 
@@ -137,7 +136,7 @@ export function PlanSlotMealForm({
       batchLabel != null &&
       batchLabel.total >= 2
     ) {
-      return { index: 1, total: batchLabel.total };
+      return batchLabel;
     }
 
     const total = getPlannerMealCount(selectedRecipe);

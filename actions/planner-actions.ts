@@ -6,6 +6,7 @@ import {
   getDaysInRange as getDaysToPlan,
   getMaxDaysSinceLastUsedCandidate,
   getMealTimeLimit,
+  getEffectivePlannerRecipe,
   getPlannerMealCount,
   markBatchSlots,
 } from "@/lib/planner/helpers";
@@ -16,13 +17,13 @@ import { createPlan, deletePlanById, updatePlan } from "@/lib/db/planner";
 import { MEAL_TYPES, ROUTES } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { filterByMealOccasion, filterByHandsOnTime, filterByTotalTime } from "@/lib/planner/filters";
+import { filterByMealOccasion } from "@/lib/planner/filters";
 import { DayAudienceByMealType, DayTimeLimitsType, RollingRecipeType } from "@/lib/validations/planner";
-import { pickBestCandidate } from "@/lib/planner/scoring";
+import { isRecipeAvoidedByAudience, pickBestCandidate } from "@/lib/planner/scoring";
 import { generateBaselineLogForPlan } from "@/lib/db/planner";
 import { requireUser } from "@/lib/auth/session";
 import { MESSAGES } from "@/lib/messages";
-import { planBatchesSaveSchema } from "@/lib/validations/planner";
+import { planBatchesSaveSchema, planSlotsSaveSchema } from "@/lib/validations/planner";
 
 const PLAN_GENERATION_FAILED_MESSAGE = MESSAGES.planner.generationFailedMessage;
 
@@ -75,13 +76,45 @@ export async function generatePlan(
     );
 
     const days = getDaysToPlan(start, end);
+    const dayKeys = new Set(days.map((day) => day.toISOString()));
+    const remainingRolling = new Map(
+      rollingRecipes.map((entry) => [entry.recipeId, entry.meals]),
+    );
+    // Reserve scheduled and stored rolling meals before scheduling continuations.
+    for (const slot of existingByKey.values()) {
+      if (slot.recipe && slot.isRolledOver && dayKeys.has(slot.date.toISOString())) {
+        remainingRolling.set(
+          slot.recipe.id,
+          Math.max((remainingRolling.get(slot.recipe.id) ?? 0) - 1, 0),
+        );
+      }
+    }
+    for (const batch of existingBatches) {
+      // Retained Storage stays allocated even when the cooked toggle hides it.
+      const hasRetainedRollingSlot = [...existingByKey.values()].some(
+        (slot) => slot.isRolledOver &&
+          slot.batchGroupId === batch.id && slot.recipe?.id === batch.recipeId &&
+          dayKeys.has(slot.date.toISOString()),
+      );
+      if (hasRetainedRollingSlot) {
+        const storedMeals = batch.storageRows.reduce((count, row) => count + row.count, 0);
+        remainingRolling.set(
+          batch.recipeId,
+          Math.max((remainingRolling.get(batch.recipeId) ?? 0) - storedMeals, 0),
+        );
+      }
+    }
     const plan: PlanInputType = [];
     const batchFilledSlots = new Map<string, RecipeType>();
     const batchSlotAudience = new Map<string, string[]>();
     const batchSlotGroupIds = new Map<string, string>();
+    const batchGroupFlags = new Map<
+      string,
+      { isRolledOver: boolean; alreadyCooked: boolean }
+    >();
     const generatedBatches = new Map<
       string,
-      { recipeId: string; requestedMeals: number; cookingFamilyMemberIds: string[] }
+      { recipeId: string; storageRows: PlanBatchInput["storageRows"] }
     >();
     const warnings: string[] = [];
     let emptySlotsAttempted = 0;
@@ -112,8 +145,7 @@ export async function generatePlan(
           continue;
         }
 
-        // Continuation check — leftover/repeat slots already know their recipe
-        // and must not be blocked by fresh-candidate time-limit filtering.
+        // Continuations were checked when reserved, before fresh-candidate filtering.
         const batchRecipe = batchFilledSlots.get(slotKey);
         const batchAudienceIds = batchSlotAudience.get(slotKey) ?? slotAudienceIds;
         const continuationGroupId = batchSlotGroupIds.get(slotKey) ?? null;
@@ -128,6 +160,7 @@ export async function generatePlan(
             cookingFamilyMemberIds: batchAudienceIds,
             used: false,
             batchGroupId: continuationGroupId,
+            ...batchGroupFlags.get(continuationGroupId ?? ""),
           });
           emptySlotsAttempted += 1;
           emptySlotsFilled += 1;
@@ -136,9 +169,18 @@ export async function generatePlan(
 
         emptySlotsAttempted += 1;
 
-        let candidates = filterByMealOccasion(recipes, mealType);
-        candidates = filterByHandsOnTime(candidates, getMealTimeLimit(dayTimeLimits, mealType, "handsOn"));
-        candidates = filterByTotalTime(candidates, getMealTimeLimit(dayTimeLimits, mealType, "total"));
+        const handsOnLimit = getMealTimeLimit(dayTimeLimits, mealType, "handsOn");
+        const totalLimit = getMealTimeLimit(dayTimeLimits, mealType, "total");
+        const candidates = filterByMealOccasion(recipes, mealType).filter((recipe) => {
+          if (isRecipeAvoidedByAudience(recipe, slotAudienceIds)) return false;
+          const effectiveRecipe = getEffectivePlannerRecipe(
+            recipe,
+            (remainingRolling.get(recipe.id) ?? 0) > 0 &&
+              rollingRecipes.some((entry) => entry.recipeId === recipe.id && entry.alreadyCooked),
+          );
+          return (handsOnLimit === null || effectiveRecipe.handsOnTime <= handsOnLimit) &&
+            (totalLimit === null || effectiveRecipe.totalTime <= totalLimit);
+        });
 
         // Leave the slot empty with a warning instead of failing the whole fill.
         if (candidates.length === 0) {
@@ -151,6 +193,8 @@ export async function generatePlan(
             cookingFamilyMemberIds: slotAudienceIds,
             used: false,
             batchGroupId: null,
+            isRolledOver: false,
+            alreadyCooked: false,
           });
           warnings.push(`No recipes fit ${mealType.toLowerCase()} on ${dateStr}.`);
           continue;
@@ -159,15 +203,24 @@ export async function generatePlan(
         const maxDaysSinceLastUsedCandidate = getMaxDaysSinceLastUsedCandidate(candidates, day);
         const ctx = {
           assignedSlots: plan,
+          currentAudienceFamilyMemberIds: slotAudienceIds,
           currentSlot: { date: day, mealType },
           maxDaysSinceLastUsedCandidate,
           fridgeIngredientIds,
-          rollingRecipeIds: rollingRecipes.map((r) => r.recipeId),
+          rollingRecipeIds: rollingRecipes
+            .filter((r) => (remainingRolling.get(r.recipeId) ?? 0) > 0)
+            .map((r) => r.recipeId),
         };
         const { winner, alternatives } = pickBestCandidate(candidates, ctx);
 
-        const rollingEntry = rollingRecipes.find((r) => r.recipeId === winner.id);
-        const overrideMeals = rollingEntry ? rollingEntry.meals : undefined;
+        const rollingEntry = rollingRecipes.find(
+          (r) => r.recipeId === winner.id && (remainingRolling.get(r.recipeId) ?? 0) > 0,
+        );
+        const overrideMeals = rollingEntry ? remainingRolling.get(winner.id) : undefined;
+        const flags = {
+          isRolledOver: !!rollingEntry,
+          alreadyCooked: !!rollingEntry?.alreadyCooked && winner.isBatchRecipe,
+        };
         const totalMeals = overrideMeals ?? getPlannerMealCount(winner);
         // Multi-meal placements share a group id so badges can recount after edits.
         const batchGroupId =
@@ -182,17 +235,13 @@ export async function generatePlan(
           cookingFamilyMemberIds: slotAudienceIds,
           used: false,
           batchGroupId,
+          ...flags,
         });
         emptySlotsFilled += 1;
 
         if (batchGroupId) {
-          if (winner.isBatchRecipe) {
-            generatedBatches.set(batchGroupId, {
-              recipeId: winner.id,
-              requestedMeals: totalMeals,
-              cookingFamilyMemberIds: slotAudienceIds,
-            });
-          }
+          batchGroupFlags.set(batchGroupId, flags);
+          const previousContinuationCount = batchFilledSlots.size;
           markBatchSlots(
             winner,
             mealType,
@@ -205,12 +254,32 @@ export async function generatePlan(
             batchGroupId,
             {
               overrideMeals,
-              // Batch leftovers skip time checks; non-batch repeats enforce them per day.
+              // Uncooked batch leftovers retain normal behavior; cooked meals need 10 minutes.
               enforceTimeLimit: !winner.isBatchRecipe,
+              alreadyCooked: flags.alreadyCooked,
               allDaysTimeLimits,
               reservedSlotKeys,
             },
           );
+          const unplacedMeals = totalMeals - 1 - (batchFilledSlots.size - previousContinuationCount);
+          const storageRows: PlanBatchInput["storageRows"] =
+            winner.isBatchRecipe && !flags.alreadyCooked && unplacedMeals > 0
+              ? [{ count: unplacedMeals, cookingFamilyMemberIds: [...slotAudienceIds] }]
+              : [];
+          if (winner.isBatchRecipe) {
+            generatedBatches.set(batchGroupId, {
+              recipeId: winner.id,
+              storageRows,
+            });
+          }
+          if (rollingEntry) {
+            remainingRolling.set(
+              winner.id,
+              storageRows.length > 0 ? 0 : unplacedMeals,
+            );
+          }
+        } else if (rollingEntry) {
+          remainingRolling.set(winner.id, 0);
         }
       }
     }
@@ -220,9 +289,8 @@ export async function generatePlan(
       return { type: "error", message: PLAN_GENERATION_FAILED_MESSAGE };
     }
 
-    const placedRecipeIds = new Set(plan.filter((s) => s.recipe).map((s) => s.recipe!.id));
     for (const r of rollingRecipes) {
-      if (!placedRecipeIds.has(r.recipeId)) {
+      if ((remainingRolling.get(r.recipeId) ?? 0) > 0) {
         const name = recipes.find((rec) => rec.id === r.recipeId)?.name ?? r.recipeId;
         warnings.push(`Could not place "${name}" — no compatible slot available.`);
       }
@@ -235,20 +303,11 @@ export async function generatePlan(
             slot.batchGroupId === id && slot.recipe?.id === batch.recipeId,
         ).length;
         if (scheduledCount === 0) return [];
-        const storageCount = Math.max(batch.requestedMeals - scheduledCount, 0);
         return [
           {
             id,
             recipeId: batch.recipeId,
-            storageRows:
-              storageCount > 0
-                ? [
-                    {
-                      count: storageCount,
-                      cookingFamilyMemberIds: batch.cookingFamilyMemberIds,
-                    },
-                  ]
-                : [],
+            storageRows: batch.storageRows,
             extraPortions: 0,
           },
         ];
@@ -299,7 +358,12 @@ export async function savePlan(
   try {
     const { id: userId } = await requireUser();
     const parsedBatches = planBatchesSaveSchema.parse(batches);
-    const created = await createPlan(userId, startDate, endDate, plan, parsedBatches);
+    const normalizedPlan = plan.map((slot) => ({
+      ...slot,
+      isRolledOver: slot.recipe != null && (slot.isRolledOver ?? false),
+      alreadyCooked: slot.recipe != null && (slot.alreadyCooked ?? false),
+    }));
+    const created = await createPlan(userId, startDate, endDate, normalizedPlan, parsedBatches);
     if (created.type === "date_conflict") {
       return created;
     }
@@ -349,10 +413,15 @@ export async function updateSavedPlan(
   try {
     const { id: userId } = await requireUser();
     const parsedBatches = planBatchesSaveSchema.parse(batches);
+    const parsedSlots = planSlotsSaveSchema.parse(slots).map((slot) => ({
+      ...slot,
+      isRolledOver: slot.recipeId != null && slot.isRolledOver,
+      alreadyCooked: slot.recipeId != null && slot.alreadyCooked,
+    }));
     const result = await updatePlan(
       userId,
       planId,
-      slots,
+      parsedSlots,
       options,
       parsedBatches,
     );

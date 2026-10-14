@@ -176,7 +176,10 @@ export function PlannerForm({
     null,
   );
   const [groupAudience, setGroupAudience] = useState<AudienceGroups>(() =>
-    createDefaultAudienceGroups(defaultFamilyMemberIds),
+    createDefaultAudienceGroups(
+      defaultFamilyMemberIds,
+      familyMembers.find((member) => member.isSelf)?.id,
+    ),
   );
   const previousDateRangeRef = useRef<DateRangeValue>(initialPlannerState.dateRange);
   const [pendingRangeRebuild, setPendingRangeRebuild] = useState<{
@@ -197,7 +200,10 @@ export function PlannerForm({
       dailyAudienceByMeal: [],
       dailyTimeLimits: [],
       fridgeIngredientIds: [],
-      rollingRecipes: [],
+      rollingRecipes: previousPlanUnusedRecipes.map((entry) => ({
+        ...entry,
+        alreadyCooked: false,
+      })),
     },
   });
 
@@ -269,6 +275,8 @@ export function PlannerForm({
       prev.map((slot) => ({
         ...slot,
         recipe: null,
+        isRolledOver: false,
+        alreadyCooked: false,
         customMeal: null,
         alternatives: [],
         batchGroupId: null,
@@ -311,6 +319,8 @@ export function PlannerForm({
       return {
         ...slot,
         recipe: nextRecipe,
+        isRolledOver: false,
+        alreadyCooked: false,
         alternatives: [...restAlternatives, slot.recipe],
         batchGroupId: null,
       };
@@ -332,7 +342,7 @@ export function PlannerForm({
     const nextPlan = currentPlan.map((slot) => {
       const key = `${slot.date.toISOString()}-${slot.mealType}`;
       if (key !== slotKey) return slot;
-      return { ...slot, recipe: null, customMeal: null, alternatives: [], batchGroupId: null };
+      return { ...slot, recipe: null, customMeal: null, alternatives: [], batchGroupId: null, isRolledOver: false, alreadyCooked: false };
     });
     batchesRef.current = nextBatches;
     planRef.current = nextPlan;
@@ -410,6 +420,8 @@ export function PlannerForm({
           return {
             ...slot,
             recipe: payload.recipe,
+            isRolledOver: keepsSameRecipe ? (slot.isRolledOver ?? false) : false,
+            alreadyCooked: keepsSameRecipe ? (slot.alreadyCooked ?? false) : false,
             customMeal: null,
             alternatives: slot.alternatives.filter(
               (recipe) => recipe.id !== payload.recipe.id,
@@ -441,6 +453,8 @@ export function PlannerForm({
           return {
             ...slot,
             recipe: null,
+            isRolledOver: false,
+            alreadyCooked: false,
             customMeal: {
               name: payload.name,
               ingredients: payload.ingredients,
@@ -456,6 +470,8 @@ export function PlannerForm({
         return {
           ...slot,
           recipe: null,
+          isRolledOver: false,
+          alreadyCooked: false,
           customMeal: null,
           alternatives: [],
           batchGroupId: null,
@@ -990,16 +1006,14 @@ export function PlannerForm({
               >
                 {/* Padding on the inner wrapper so full-width controls span edge-to-edge between gutters. */}
                 <div
-                  ref={suggestMealsScrollbar.ref}
                   className={cn(
-                    "min-h-0 min-w-0 flex-1 overflow-y-auto",
+                    "min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto",
                     suggestMealsScrollbar.className,
                   )}
                   style={suggestMealsScrollbar.style}
                   onScroll={suggestMealsScrollbar.onScroll}
                 >
-                  {/* Right inset = 1rem − reserved gutter so both sides match when bar is hidden. */}
-                  <div className="min-w-0 divide-y divide-border pl-4 pr-[calc(1rem-var(--suggest-scrollbar-reserve,15px))]">
+                  <div className="min-w-0 divide-y divide-border px-4">
                     {/* Time constraints — no top padding; spacing comes from the Suggest meals header. */}
                     <div className="min-w-0 pb-4">
                       <PlannerTimeLimitsSection
@@ -1047,12 +1061,18 @@ export function PlannerForm({
                             <PlannerRollingRecipesSection
                               control={form.control}
                               selected={selected}
-                              onChange={field.onChange}
+                              onChange={(nextEntries) => {
+                                field.onChange(nextEntries);
+                                const nextPlan = planRef.current.map((slot) => {
+                                  if (!slot.isRolledOver || !slot.recipe?.isBatchRecipe) return slot;
+                                  const entry = nextEntries.find((item) => item.recipeId === slot.recipe!.id);
+                                  return entry ? { ...slot, alreadyCooked: entry.alreadyCooked ?? false } : slot;
+                                });
+                                planRef.current = nextPlan;
+                                setPlan(nextPlan);
+                              }}
                               ingredients={ingredients}
                               recipes={recipes}
-                              previousPlanUnusedRecipes={
-                                previousPlanUnusedRecipes
-                              }
                               onInvalidStateChange={
                                 setHasInvalidRollingMealsInputs
                               }
@@ -1064,7 +1084,7 @@ export function PlannerForm({
                   </div>
 
                   {/* Outside divide-y so it doesn't draw a rule under fridge ingredients on lg. */}
-                  <div className="min-w-0 py-4 pl-4 pr-[calc(1rem-var(--suggest-scrollbar-reserve,15px))] lg:hidden">
+                  <div className="min-w-0 px-4 py-4 lg:hidden">
                     <Button
                       type="button"
                       variant="outline"

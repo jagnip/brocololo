@@ -10,6 +10,8 @@ type MovableMeal = Pick<
   | "cookingFamilyMemberIds"
   | "used"
   | "batchGroupId"
+  | "isRolledOver"
+  | "alreadyCooked"
 >;
 
 function isSlotEmpty(slot: SlotInputType): boolean {
@@ -24,6 +26,8 @@ function getMovableMeal(slot: SlotInputType): MovableMeal {
     cookingFamilyMemberIds: slot.cookingFamilyMemberIds,
     used: slot.used,
     batchGroupId: slot.batchGroupId,
+    isRolledOver: slot.isRolledOver ?? false,
+    alreadyCooked: slot.alreadyCooked ?? false,
   };
 }
 
@@ -37,6 +41,8 @@ function clearMeal(slot: SlotInputType): SlotInputType {
     cookingFamilyMemberIds: [],
     used: false,
     batchGroupId: null,
+    isRolledOver: false,
+    alreadyCooked: false,
   };
 }
 
@@ -49,6 +55,8 @@ function applyMeal(slot: SlotInputType, meal: MovableMeal): SlotInputType {
     cookingFamilyMemberIds: meal.cookingFamilyMemberIds,
     used: meal.used,
     batchGroupId: meal.batchGroupId ?? null,
+    isRolledOver: meal.isRolledOver ?? false,
+    alreadyCooked: meal.alreadyCooked ?? false,
   };
 }
 

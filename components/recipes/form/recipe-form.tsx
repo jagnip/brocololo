@@ -7,6 +7,7 @@ import {
   UpdateRecipePayload,
 } from "@/lib/validations/recipe";
 import { toast } from "sonner";
+import { Heart, Minus, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Resolver, useForm, useWatch } from "react-hook-form";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -249,6 +250,7 @@ export default function RecipeForm({
           excludeFromPlanner: false,
           plannedMealCount: 1,
           isBatchRecipe: false,
+          memberPreferences: [],
         },
   });
 
@@ -807,6 +809,116 @@ export default function RecipeForm({
                 )}
               />
             </SettingGridRow>
+          </div>
+        </section>
+
+        <section>
+          <div className="mb-3">
+            <Subheader>Preferences</Subheader>
+          </div>
+          <div className="section-container flex flex-col gap-block">
+            <FormField
+              control={form.control}
+              name="memberPreferences"
+              render={({ field }) => (
+                <FormItem>
+                  <fieldset disabled={isSubmitting} className="grid w-fit max-w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-block gap-y-item disabled:opacity-50">
+                    {familyMembers.map((member, index) => {
+                      const name = member.name.trim() || (member.isSelf ? "You" : `Family member ${index}`);
+                      const value = field.value?.find((row) => row.familyMemberId === member.id)?.preference ?? "NEUTRAL";
+                      return (
+                        <div key={member.id} className="contents">
+                          <span className="min-w-0 text-sm break-words">{name}</span>
+                          <SegmentedControl
+                            aria-label={`${name} recipe preference`}
+                            className="[&_[role=radio]]:size-9 [&_[role=radio]]:min-w-0 [&_[role=radio]]:px-0"
+                            onKeyDown={(event) => {
+                              const radios = Array.from(
+                                event.currentTarget.querySelectorAll<HTMLButtonElement>("[role=radio]"),
+                              );
+                              const current = radios.indexOf(event.target as HTMLButtonElement);
+                              if (current < 0) return;
+                              let next: number;
+                              switch (event.key) {
+                                case "Home":
+                                  next = 0;
+                                  break;
+                                case "End":
+                                  next = radios.length - 1;
+                                  break;
+                                case "ArrowRight":
+                                case "ArrowDown":
+                                  next = (current + 1) % radios.length;
+                                  break;
+                                case "ArrowLeft":
+                                case "ArrowUp":
+                                  next = (current - 1 + radios.length) % radios.length;
+                                  break;
+                                default:
+                                  return;
+                              }
+                              event.preventDefault();
+                              radios[next]?.focus();
+                              radios[next]?.click();
+                            }}
+                            value={value}
+                            onChange={(preference) => {
+                              if (isSubmitting) return;
+                              const next = (field.value ?? []).filter((row) => row.familyMemberId !== member.id);
+                              if (preference !== "NEUTRAL") {
+                                next.push({ familyMemberId: member.id, preference });
+                              }
+                              field.onChange(familyMembers.flatMap((person) =>
+                                next.filter((row) => row.familyMemberId === person.id),
+                              ));
+                            }}
+                            options={[
+                              {
+                                value: "AVOID",
+                                label: (
+                                  <span title="Avoid" className="flex size-full items-center justify-center">
+                                    <ThumbsDown aria-hidden="true" className="size-4" />
+                                    <span className="sr-only">Avoid</span>
+                                  </span>
+                                ),
+                              },
+                              {
+                                value: "NEUTRAL",
+                                label: (
+                                  <span title="Neutral" className="flex size-full items-center justify-center">
+                                    <Minus aria-hidden="true" className="size-4" />
+                                    <span className="sr-only">Neutral</span>
+                                  </span>
+                                ),
+                              },
+                              {
+                                value: "LIKE",
+                                label: (
+                                  <span title="Like" className="flex size-full items-center justify-center">
+                                    <ThumbsUp aria-hidden="true" className="size-4" />
+                                    <span className="sr-only">Like</span>
+                                  </span>
+                                ),
+                              },
+                              {
+                                value: "LOVE",
+                                label: (
+                                  <span title="Love" className="flex size-full items-center justify-center">
+                                    <Heart aria-hidden="true" className="size-4" />
+                                    <span className="sr-only">Love</span>
+                                  </span>
+                                ),
+                              },
+                            ] as const}
+                          />
+                        </div>
+                      );
+                    })}
+                  </fieldset>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
         </section>
 

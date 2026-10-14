@@ -1,6 +1,7 @@
 import {
   CreateRecipePayload,
   UpdateRecipePayload,
+  recipeMemberPreferencesSchema,
 } from "../validations/recipe";
 import { prisma } from "./index";
 import { Prisma } from "@/src/generated/client";
@@ -134,6 +135,9 @@ const recipeInclude = {
     select: { familyMemberId: true },
   },
   memberPortions: true,
+  memberPreferences: {
+    select: { familyMemberId: true, preference: true },
+  },
 } satisfies Prisma.RecipeInclude;
 
 export async function getRecipeBySlug(
@@ -291,8 +295,10 @@ export async function createRecipe(
     instructions,
     images,
     memberPortions,
+    memberPreferences: rawMemberPreferences,
     ...recipeData
   } = data;
+  const memberPreferences = recipeMemberPreferencesSchema.parse(rawMemberPreferences);
   const categories = await validateAndBuildCategoryIds({
     mealOccasionCategoryIds,
     proteinCategoryId,
@@ -304,6 +310,7 @@ export async function createRecipe(
   assertKnownFamilyMemberIds(
     [
       ...memberPortions.map((portion) => portion.familyMemberId),
+      ...memberPreferences.map((row) => row.familyMemberId),
       ...ingredients.flatMap((ingredient) =>
         ingredient.memberAdjustments.map((adjustment) => adjustment.familyMemberId),
       ),
@@ -336,6 +343,9 @@ export async function createRecipe(
           create: audienceFamilyMemberIds.map((familyMemberId) => ({
             familyMemberId,
           })),
+        },
+        memberPreferences: {
+          create: memberPreferences,
         },
       },
       select: { id: true },
@@ -454,8 +464,10 @@ export async function updateRecipe(
     instructions,
     images,
     memberPortions,
+    memberPreferences: rawMemberPreferences,
     ...recipeData
   } = data;
+  const memberPreferences = recipeMemberPreferencesSchema.parse(rawMemberPreferences);
   const categories = await validateAndBuildCategoryIds({
     mealOccasionCategoryIds,
     proteinCategoryId,
@@ -467,6 +479,7 @@ export async function updateRecipe(
   assertKnownFamilyMemberIds(
     [
       ...memberPortions.map((portion) => portion.familyMemberId),
+      ...memberPreferences.map((row) => row.familyMemberId),
       ...ingredients.flatMap((ingredient) =>
         ingredient.memberAdjustments.map((adjustment) => adjustment.familyMemberId),
       ),
@@ -504,6 +517,10 @@ export async function updateRecipe(
             isCover: img.isCover,
           })),
         },
+        memberPreferences: {
+          deleteMany: {},
+          create: memberPreferences,
+        },
       },
     });
 
@@ -511,7 +528,7 @@ export async function updateRecipe(
       await tx.planBatch.deleteMany({ where: { recipeId } });
       await tx.planSlot.updateMany({
         where: { recipeId },
-        data: { batchGroupId: null },
+        data: { batchGroupId: null, alreadyCooked: false },
       });
     }
 

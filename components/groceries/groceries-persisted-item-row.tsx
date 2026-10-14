@@ -178,7 +178,7 @@ export function GroceriesPersistedItemRow({
                         <Badge
                           key={name}
                           variant="secondary"
-                          className="max-w-48 truncate font-normal"
+                          className="max-w-48 truncate"
                         >
                           {name}
                         </Badge>

@@ -43,7 +43,7 @@ describe("resolvePresetCategoryOrderIds", () => {
 });
 
 describe("slotsToPlanSlotData batch storage", () => {
-  it("expands each storage meal once and adds one anonymous extras source", () => {
+  it.each([false, true])("includes storage only for uncooked batches (%s)", (alreadyCooked) => {
     const recipe = { name: "Bolognese", servings: 2, ingredients: [] };
     const result = slotsToPlanSlotData({
       familyMembers: [{ id: "j", isSelf: true }, { id: "n", isSelf: false }],
@@ -51,6 +51,8 @@ describe("slotsToPlanSlotData batch storage", () => {
         {
           recipeId: "recipe-1",
           batchGroupId: "batch-1",
+          isRolledOver: true,
+          alreadyCooked,
           cookingFamilyMemberIds: ["j"],
           recipe,
           customName: null,
@@ -71,12 +73,14 @@ describe("slotsToPlanSlotData batch storage", () => {
       endDate: "2026-10-25T00:00:00.000Z",
     } as never);
 
-    expect(result).toHaveLength(4);
-    expect(
-      result.filter(
-        (slot) => slot.cookingFamilyMemberIds?.join(",") === "j,n",
-      ),
-    ).toHaveLength(2);
-    expect(result.filter((slot) => slot.extraPortions === 3)).toHaveLength(1);
+    expect(result).toHaveLength(alreadyCooked ? 1 : 3);
+    expect(result[0]).toMatchObject({
+      cookingFamilyMemberIds: ["j"],
+      isRolledOver: true,
+      alreadyCooked,
+    });
+    if (!alreadyCooked) {
+      expect(result[1]).toMatchObject({ cookingFamilyMemberIds: ["j", "n"], isRolledOver: true });
+    }
   });
 });

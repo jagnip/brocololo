@@ -71,6 +71,7 @@ export const ModelName = {
   PlanSlotAlternative: 'PlanSlotAlternative',
   Recipe: 'Recipe',
   RecipeAudienceMember: 'RecipeAudienceMember',
+  RecipeMemberPreference: 'RecipeMemberPreference',
   RecipeMemberPortion: 'RecipeMemberPortion',
   Ingredient: 'Ingredient',
   IngredientUserCustomization: 'IngredientUserCustomization',
@@ -239,6 +240,8 @@ export const PlanSlotScalarFieldEnum = {
   recipeId: 'recipeId',
   customName: 'customName',
   used: 'used',
+  isRolledOver: 'isRolledOver',
+  alreadyCooked: 'alreadyCooked',
   batchGroupId: 'batchGroupId'
 } as const
 
@@ -327,6 +330,15 @@ export const RecipeAudienceMemberScalarFieldEnum = {
 } as const
 
 export type RecipeAudienceMemberScalarFieldEnum = (typeof RecipeAudienceMemberScalarFieldEnum)[keyof typeof RecipeAudienceMemberScalarFieldEnum]
+
+
+export const RecipeMemberPreferenceScalarFieldEnum = {
+  recipeId: 'recipeId',
+  familyMemberId: 'familyMemberId',
+  preference: 'preference'
+} as const
+
+export type RecipeMemberPreferenceScalarFieldEnum = (typeof RecipeMemberPreferenceScalarFieldEnum)[keyof typeof RecipeMemberPreferenceScalarFieldEnum]
 
 
 export const RecipeMemberPortionScalarFieldEnum = {

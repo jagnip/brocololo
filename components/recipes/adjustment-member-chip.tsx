@@ -33,12 +33,12 @@ export function AdjustmentMemberChip({
   const trailingBadges = (
     <>
       {portionBadgeLabel ? (
-        <Badge variant="outline" className="px-1.5 py-0 text-[10px] font-medium">
+        <Badge variant="outline" className="px-1.5 py-0">
           {portionBadgeLabel}
         </Badge>
       ) : null}
       {adjustmentBadgeLabel ? (
-        <Badge variant="secondary" className="px-1.5 py-0 text-[10px] font-medium">
+        <Badge variant="secondary" className="px-1.5 py-0">
           {adjustmentBadgeLabel}
         </Badge>
       ) : null}
