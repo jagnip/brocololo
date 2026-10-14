@@ -167,7 +167,7 @@ export function LogRecipeCard({
           <Badge
             variant="outline"
             className={cn(
-              "px-1 py-0 text-[10px] tabular-nums",
+              "px-1 py-0 tabular-nums",
               isSelected && "border-primary/20 bg-background",
             )}
           >
@@ -176,7 +176,7 @@ export function LogRecipeCard({
           <Badge
             variant="outline"
             className={cn(
-              "px-1 py-0 text-[10px] tabular-nums",
+              "px-1 py-0 tabular-nums",
               isSelected && "border-primary/20 bg-background",
             )}
           >
@@ -185,7 +185,7 @@ export function LogRecipeCard({
           <Badge
             variant="outline"
             className={cn(
-              "px-1 py-0 text-[10px] tabular-nums",
+              "px-1 py-0 tabular-nums",
               isSelected && "border-primary/20 bg-background",
             )}
           >
@@ -194,7 +194,7 @@ export function LogRecipeCard({
           <Badge
             variant="outline"
             className={cn(
-              "px-1 py-0 text-[10px] tabular-nums",
+              "px-1 py-0 tabular-nums",
               isSelected && "border-primary/20 bg-background",
             )}
           >

@@ -172,6 +172,26 @@ const recipeMemberPortionSchema = z.object({
   ),
 });
 
+export const recipeMemberPreferencesSchema = z
+  .array(z.object({
+    familyMemberId: z.string().min(1),
+    preference: z.enum(["LIKE", "LOVE", "AVOID"]),
+  }))
+  .default([])
+  .superRefine((preferences, ctx) => {
+    const seenMemberIds = new Set<string>();
+    preferences.forEach((row, index) => {
+      if (seenMemberIds.has(row.familyMemberId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [index, "familyMemberId"],
+          message: "Each person can only have one recipe preference",
+        });
+      }
+      seenMemberIds.add(row.familyMemberId);
+    });
+  });
+
 const recipeBaseSchema = z
   .object({
     name: z.string().min(1, { message: "Enter a recipe name" }),
@@ -211,6 +231,7 @@ const recipeBaseSchema = z
         .min(1, { message: "Enter a number of portions above 0" }),
     ),
     memberPortions: z.array(recipeMemberPortionSchema).default([]),
+    memberPreferences: recipeMemberPreferencesSchema,
     ingredientGroups: z.array(recipeIngredientGroupSchema).default([]),
     // Keep arrays required but allow empty collections for draft-like recipes.
     ingredients: z.array(recipeIngredientSchema),

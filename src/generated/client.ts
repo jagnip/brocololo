@@ -106,17 +106,17 @@ export type PlanSlot = Prisma.PlanSlotModel
 export type PlanSlotAudienceMember = Prisma.PlanSlotAudienceMemberModel
 /**
  * Model PlanBatch
- *
+ * 
  */
 export type PlanBatch = Prisma.PlanBatchModel
 /**
  * Model PlanBatchStorageRow
- *
+ * 
  */
 export type PlanBatchStorageRow = Prisma.PlanBatchStorageRowModel
 /**
  * Model PlanBatchStorageRowAudienceMember
- *
+ * 
  */
 export type PlanBatchStorageRowAudienceMember = Prisma.PlanBatchStorageRowAudienceMemberModel
 /**
@@ -139,6 +139,11 @@ export type Recipe = Prisma.RecipeModel
  * 
  */
 export type RecipeAudienceMember = Prisma.RecipeAudienceMemberModel
+/**
+ * Model RecipeMemberPreference
+ * 
+ */
+export type RecipeMemberPreference = Prisma.RecipeMemberPreferenceModel
 /**
  * Model RecipeMemberPortion
  * 

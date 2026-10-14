@@ -13,7 +13,37 @@ export type ScoringContext = {
   maxDaysSinceLastUsedCandidate: number; // max days since last used recipe in this pool of candidates
   fridgeIngredientIds: string[]; // ingredient IDs the user has in their fridge
   rollingRecipeIds: string[]; // recipe IDs the user wants included in the plan
+  currentAudienceFamilyMemberIds: string[];
 };
+
+const RECIPE_PREFERENCE_SCORES = { LIKE: 0.5, LOVE: 1, AVOID: 0 } as const;
+// Keep the maximum bonus below the 1.5-point first-repeat penalty.
+const RECIPE_PREFERENCE_WEIGHT = 1;
+
+export function isRecipeAvoidedByAudience(
+  recipe: Pick<RecipeType, "memberPreferences">,
+  audienceIds: string[],
+): boolean {
+  return recipe.memberPreferences.some(
+    (row) => row.preference === "AVOID" && audienceIds.includes(row.familyMemberId),
+  );
+}
+
+export function scoreRecipePreferences(
+  recipe: RecipeType,
+  ctx: ScoringContext,
+): number {
+  const audienceIds = [...new Set(ctx.currentAudienceFamilyMemberIds)];
+  if (audienceIds.length === 0) return 0;
+  return recipe.memberPreferences.reduce(
+    (sum, row) => sum + (
+      audienceIds.includes(row.familyMemberId)
+        ? RECIPE_PREFERENCE_SCORES[row.preference]
+        : 0
+    ),
+    0,
+  ) / audienceIds.length;
+}
 
 type Scorer = {
   name: string;
@@ -27,6 +57,7 @@ const scorers: Scorer[] = [
   // { name: "proteinBalance", fn: scoreProteinBalance, weight: 2 },
   { name: "fridgeIngredients", fn: scoreFridgeIngredients, weight: 3 },
   { name: "rollingRecipe", fn: scoreRollingRecipe, weight: 10 },
+  { name: "recipePreferences", fn: scoreRecipePreferences, weight: RECIPE_PREFERENCE_WEIGHT },
 ];
 
 // Returns raw score for Last used

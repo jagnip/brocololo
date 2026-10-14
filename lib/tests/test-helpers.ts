@@ -218,6 +218,7 @@ export function createMockRecipe(overrides?: Partial<RecipeType>): RecipeType {
   const defaultUnit = createMockUnit({ id: 'unit-grams', name: 'grams' });
 
   const defaultRecipe: RecipeType = {
+    memberPreferences: [],
     id: defaultRecipeId,
     userId: 'user-test',
     name: 'Test Recipe',
@@ -470,6 +471,7 @@ export function createRecipeWithMissingConversions(): RecipeType {
  */
 export function createMinimalRecipe(): RecipeType {
   return {
+    memberPreferences: [],
     id: 'recipe-minimal',
     userId: 'user-test',
     name: 'Minimal Recipe',

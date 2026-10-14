@@ -169,7 +169,7 @@ export async function getFamilyMemberRecipeImpact(input: {
     throw new Error("FAMILY_MEMBER_NOT_FOUND");
   }
 
-  const [audienceRows, portionRows, ingredientTargetRows] = await Promise.all([
+  const [audienceRows, portionRows, ingredientTargetRows, preferenceRows] = await Promise.all([
     prisma.recipeAudienceMember.count({
       where: {
         familyMemberId: input.id,
@@ -188,10 +188,16 @@ export async function getFamilyMemberRecipeImpact(input: {
         recipeIngredient: { recipe: { userId: input.userId } },
       },
     }),
+    prisma.recipeMemberPreference.count({
+      where: {
+        familyMemberId: input.id,
+        recipe: { userId: input.userId },
+      },
+    }),
   ]);
 
   return {
     hasRecipeImpact:
-      audienceRows + portionRows + ingredientTargetRows > 0,
+      audienceRows + portionRows + ingredientTargetRows + preferenceRows > 0,
   };
 }

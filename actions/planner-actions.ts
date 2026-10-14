@@ -19,7 +19,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { filterByMealOccasion } from "@/lib/planner/filters";
 import { DayAudienceByMealType, DayTimeLimitsType, RollingRecipeType } from "@/lib/validations/planner";
-import { pickBestCandidate } from "@/lib/planner/scoring";
+import { isRecipeAvoidedByAudience, pickBestCandidate } from "@/lib/planner/scoring";
 import { generateBaselineLogForPlan } from "@/lib/db/planner";
 import { requireUser } from "@/lib/auth/session";
 import { MESSAGES } from "@/lib/messages";
@@ -157,6 +157,7 @@ export async function generatePlan(
         const handsOnLimit = getMealTimeLimit(dayTimeLimits, mealType, "handsOn");
         const totalLimit = getMealTimeLimit(dayTimeLimits, mealType, "total");
         const candidates = filterByMealOccasion(recipes, mealType).filter((recipe) => {
+          if (isRecipeAvoidedByAudience(recipe, slotAudienceIds)) return false;
           const effectiveRecipe = getEffectivePlannerRecipe(
             recipe,
             (remainingRolling.get(recipe.id) ?? 0) > 0 &&
@@ -187,6 +188,7 @@ export async function generatePlan(
         const maxDaysSinceLastUsedCandidate = getMaxDaysSinceLastUsedCandidate(candidates, day);
         const ctx = {
           assignedSlots: plan,
+          currentAudienceFamilyMemberIds: slotAudienceIds,
           currentSlot: { date: day, mealType },
           maxDaysSinceLastUsedCandidate,
           fridgeIngredientIds,

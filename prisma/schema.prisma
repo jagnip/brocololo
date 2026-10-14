@@ -75,6 +75,7 @@ model FamilyMember {
   planBatchStorageMemberships PlanBatchStorageRowAudienceMember[]
   recipeAudienceMemberships           RecipeAudienceMember[]
   recipeMemberPortions                RecipeMemberPortion[]
+  recipePreferences                   RecipeMemberPreference[]
   recipeIngredientTargets             RecipeIngredientMemberTarget[]
   recipeIngredientMemberAdjustments   RecipeIngredientMemberAdjustment[]
 
@@ -335,6 +336,7 @@ model Recipe {
   images             RecipeImage[]
   audienceMembers    RecipeAudienceMember[]
   memberPortions     RecipeMemberPortion[]
+  memberPreferences  RecipeMemberPreference[]
   lastUsedInPlanner  DateTime?               @map("last_used_in_planner")
   excludeFromPlanner Boolean                 @default(false) @map("exclude_from_planner")
   // Explicit default of how many meals this recipe should occupy when generated into a plan.
@@ -366,6 +368,25 @@ model RecipeAudienceMember {
   @@id([recipeId, familyMemberId])
   @@index([familyMemberId])
   @@map("recipe_audience_members")
+}
+
+enum RecipePreference {
+  LIKE
+  LOVE
+  AVOID
+}
+
+model RecipeMemberPreference {
+  recipeId       String           @map("recipe_id")
+  familyMemberId String           @map("family_member_id")
+  preference     RecipePreference
+
+  recipe       Recipe       @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  familyMember FamilyMember @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+
+  @@id([recipeId, familyMemberId])
+  @@index([familyMemberId])
+  @@map("recipe_member_preferences")
 }
 
 model RecipeMemberPortion {

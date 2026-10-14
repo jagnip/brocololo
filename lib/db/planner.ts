@@ -101,6 +101,9 @@ const recipeInclude = {
     select: { familyMemberId: true },
   },
   memberPortions: true,
+  memberPreferences: {
+    select: { familyMemberId: true, preference: true },
+  },
 } as const;
 
 function mapCustomMealFromSlot(slot: {

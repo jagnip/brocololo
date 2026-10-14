@@ -132,7 +132,7 @@ export function GroceryMealSelectionDialog({
                         <span className="min-w-0 flex-1 space-y-1">
                           <span className="flex items-start justify-between gap-2">
                             <span className="min-w-0 flex-1 break-words type-body font-medium">{meal.name}</span>
-                            {status ? <Badge variant="secondary" className="shrink-0 font-normal text-muted-foreground">{status}</Badge> : null}
+                            {status ? <Badge variant="secondary" className="shrink-0 text-muted-foreground">{status}</Badge> : null}
                           </span>
                           <span className="block type-caption tabular-nums text-muted-foreground">{quantities}</span>
                         </span>

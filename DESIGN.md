@@ -47,6 +47,8 @@ Use semantic Tailwind roles backed by CSS variables: `background`, `foreground`,
 
 Use `type-h1`, `type-h2`, `type-h3`, `type-body`, and `type-caption` presets. Headings establish task hierarchy; supporting descriptions use body text and muted foreground. Keep numerical nutrition values tabular.
 
+Badges across the app inherit the Badge primitive's text-xs, semibold typography, including nested text and per-person ingredient shares. Do not override badge font size, weight, or line height locally. Preserve semantic variants, muted details, and tabular numerals where relevant. Do not introduce an icon-only badge variant.
+
 ## Layout
 
 Use the existing `page-container` and Tailwind spacing scale (one unit = 0.25rem), plus named spacing tokens above. Existing layouts use wrapping flex controls and responsive meal grids. Mobile navigation uses the sidebar sheet; desktop supports expanded and icon-only navigation.
@@ -56,6 +58,10 @@ Meal Plan and Log are peer destinations. Meal Plan owns household meal editing, 
 Meal Plan's cooking checklist sits above the unchanged daily planner. Group unique meals under Breakfast, Lunch, and Dinner, with three columns on desktop and stacked groups on mobile. Rows contain only a Checkbox, small thumbnail, meal name, and planned-slot count. Group counts show unique meals left to cook; partially checked meals count until all matching slots are checked. Omit an overall heading, progress count, helper text, row subtitles, and Reset/Hide controls. Checking a row updates all matching slots in the current plan; partial completion uses an indeterminate checkbox. Checked rows stay in place with muted text and grayscale thumbnails. Reuse the existing daily-card checked state without changing card markup or styling.
 
 Rolling recipes initialize once from the latest created plan's unused scheduled meals and Storage meal counts. They are recipe/count entries without an audience; placement uses the new plan's eaters. Keep the selector and editable meal counts, omit the import button, and preserve user removals during regeneration. Batch entries expose an unchecked-by-default Already cooked checkbox, meaning 10 minutes preparation and total time. Scheduled cards append one status to the meal description with a middot: Already cooked takes precedence over Rolled over. Grocery selection offers fresh quantities checked by default and rolled-over/already-cooked quantities unchecked but selectable. Keep these sources separate when the same recipe has both, and include available quantities only on explicit opt-in. Storage is editable for all batch recipes except Already cooked batches. Anonymous extra portions do not carry over and are not managed in the active planner.
+
+Recipe preferences appear after Planner settings and before Ingredients in the editor, without a description. Each household member gets the existing SegmentedControl beside their name in a compact, aligned two-column layout, including on mobile. Use Lucide ThumbsDown for Avoid, Minus for Neutral, ThumbsUp for Like, and Heart for Love in square icon segments with accessible text and hover titles. Neutral means no stored row. Like and Love contribute small, persistent bonuses averaged across all assigned eaters; recency and repeat scoring provide rotation. Any eater's Avoid vetoes automatic selection, including rolling recipes, but manual placement and existing filled slots remain allowed. Generated batch continuations retain their source audience.
+
+Recipe detail's People module replaces the Nutrition section beside the photos, retaining its mobile position. Show one Card per household member in household order, matching Meals to shop for: rounded-md corners, p-4 padding, no shadow, gap-3 between cards, and muted hover/focus-within surfaces. Each card's header pairs the person's medium-weight body name with a read-only secondary preference badge using the editor's icon and a visible Avoid, Neutral, Like, or Love label in shared badge typography with muted text. Always show Neutral for missing preferences. Below the header, show editable calories followed by protein, fat, and carbs without a Per serving caption; nutrition remains per serving. Keep the nutrition reset action beside People. Members outside Cooking For retain their cards and preferences with Not included in Cooking For in caption text instead of zero nutrition. Cooking For continues to manage portions; omit the separate Preferences section. Preserve existing card tokens, wrapping controls, and long-name handling.
 
 ## Elevation & Depth
 
@@ -77,6 +83,7 @@ Use existing radius tokens and primitive defaults. Cards and dialogs use the exi
 - `LogDayPersonToolbarControls`: existing date navigation and person selection.
 - `PlanCurrentEmpty`: actionable no-plan state reused for Meal Plan, Log, and Groceries.
 - `TopbarConfigController`: contextual breadcrumbs and actions.
+- `PeopleSection`: recipe-detail household preferences and per-serving nutrition, composing `Card`, `NutritionPersonSummaryRow`, `Badge`, and `EditableCaloriesField` with the Meals to shop for card styling.
 
 Reuse these components; compose primitives rather than modifying `components/ui/`. Preserve their hover, focus, disabled, loading, and error patterns. Display saving feedback next to the page task.
 

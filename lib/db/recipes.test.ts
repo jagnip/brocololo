@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createRecipe } from "./recipes";
+import { createRecipe, updateRecipe } from "./recipes";
+import type { CreateRecipePayload } from "../validations/recipe";
 
 vi.mock("./index", () => ({
   prisma: {
@@ -37,6 +38,7 @@ function baseCreateRecipeInput() {
     servings: 2,
     audienceFamilyMemberIds: ["family-self"],
     memberPortions: [],
+    memberPreferences: [] as CreateRecipePayload["memberPreferences"],
     ingredientGroups: [],
     ingredients: [
       {
@@ -66,6 +68,8 @@ function baseCreateRecipeInput() {
 const TEST_USER_ID = "user-test";
 
 describe("createRecipe category type rules", () => {
+  const recipeCreate = vi.fn();
+  const recipeUpdate = vi.fn();
   const mockedPrisma = prisma as unknown as {
     category: { findMany: ReturnType<typeof vi.fn> };
     familyMember: { findMany: ReturnType<typeof vi.fn> };
@@ -75,6 +79,8 @@ describe("createRecipe category type rules", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    recipeCreate.mockResolvedValue({ id: "recipe-id" });
+    recipeUpdate.mockResolvedValue({ id: "recipe-id" });
 
     mockedPrisma.familyMember.findMany.mockResolvedValue([
       { id: "family-self", name: "Jagoda", isSelf: true, sortOrder: 0 },
@@ -84,19 +90,28 @@ describe("createRecipe category type rules", () => {
     mockedPrisma.$transaction.mockImplementation(async (callback: (tx: unknown) => Promise<string>) =>
       callback({
         recipe: {
-          create: vi.fn().mockResolvedValue({ id: "recipe-id" }),
+          create: recipeCreate,
+          update: recipeUpdate,
+          findFirst: vi.fn().mockResolvedValue({ id: "recipe-id", isBatchRecipe: false }),
+          findUniqueOrThrow: vi.fn().mockResolvedValue({ id: "recipe-id" }),
         },
         recipeAudienceMember: {
           createMany: vi.fn(),
+          deleteMany: vi.fn(),
         },
         recipeMemberPortion: {
           createMany: vi.fn(),
+          deleteMany: vi.fn(),
         },
         recipeIngredientGroup: {
           create: vi.fn(),
+          findMany: vi.fn().mockResolvedValue([]),
+          updateMany: vi.fn(),
         },
         recipeIngredient: {
           create: vi.fn().mockResolvedValue({ id: "recipe-ingredient-id" }),
+          findMany: vi.fn().mockResolvedValue([]),
+          updateMany: vi.fn(),
         },
         recipeIngredientMemberAdjustment: {
           deleteMany: vi.fn(),
@@ -104,9 +119,11 @@ describe("createRecipe category type rules", () => {
         },
         recipeInstruction: {
           create: vi.fn().mockResolvedValue({ id: "instruction-id" }),
+          findMany: vi.fn().mockResolvedValue([]),
         },
         recipeInstructionIngredient: {
           createMany: vi.fn(),
+          deleteMany: vi.fn(),
         },
       }),
     );
@@ -158,6 +175,114 @@ describe("createRecipe category type rules", () => {
 
     await expect(createRecipe(TEST_USER_ID, input)).resolves.toMatchObject({
       id: "recipe-id",
+    });
+  });
+
+  describe("member preferences", () => {
+    beforeEach(() => {
+      mockedPrisma.category.findMany.mockResolvedValue([
+        { id: "meal-breakfast-id", slug: "breakfast", type: "MEAL_OCCASION" },
+      ]);
+    });
+
+    it("creates sparse preferences inside the recipe transaction without reparsing notes", async () => {
+      const memberPreferences = [{ familyMemberId: "family-self", preference: "LOVE" as const }];
+      await createRecipe(TEST_USER_ID, {
+        ...baseCreateRecipeInput(),
+        notes: ["Already transformed"],
+        memberPreferences,
+      });
+
+      expect(mockedPrisma.$transaction).toHaveBeenCalledOnce();
+      expect(recipeCreate).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          notes: ["Already transformed"],
+          memberPreferences: { create: memberPreferences },
+        }),
+      }));
+      expect(mockedPrisma.recipe.findUniqueOrThrow).toHaveBeenCalledWith(expect.objectContaining({
+        include: expect.objectContaining({
+          memberPreferences: { select: { familyMemberId: true, preference: true } },
+        }),
+      }));
+    });
+
+    it.each([
+      { memberPreferences: [] },
+      { memberPreferences: [{ familyMemberId: "family-self", preference: "AVOID" as const }] },
+    ])(
+      "replaces all preferences on update: %j",
+      async ({ memberPreferences }) => {
+        await updateRecipe(TEST_USER_ID, "recipe-id", {
+          ...baseCreateRecipeInput(),
+          memberPreferences,
+        });
+
+        expect(recipeUpdate).toHaveBeenCalledWith(expect.objectContaining({
+          where: { id: "recipe-id" },
+          data: expect.objectContaining({
+            memberPreferences: { deleteMany: {}, create: memberPreferences },
+          }),
+        }));
+        expect(mockedPrisma.$transaction).toHaveBeenCalledOnce();
+      },
+    );
+
+    it.each(["create", "update"] as const)("rejects foreign members before %s writes", async (operation) => {
+      const input = {
+        ...baseCreateRecipeInput(),
+        memberPreferences: [{ familyMemberId: "foreign-member", preference: "LIKE" as const }],
+      };
+      const result = operation === "create"
+        ? createRecipe(TEST_USER_ID, input)
+        : updateRecipe(TEST_USER_ID, "recipe-id", input);
+
+      await expect(result).rejects.toThrow("INVALID_FAMILY_MEMBER_SELECTION");
+      expect(mockedPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it("defaults omitted preferences to an empty replacement at the DB boundary", async () => {
+      const input = baseCreateRecipeInput();
+      const { memberPreferences: omitted, ...withoutPreferences } = input;
+      expect(omitted).toEqual([]);
+      await updateRecipe(TEST_USER_ID, "recipe-id", withoutPreferences as typeof input);
+      expect(recipeUpdate).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          memberPreferences: { deleteMany: {}, create: [] },
+        }),
+      }));
+    });
+
+    it.each(["create", "update"] as const)("propagates preference write failures from the %s transaction", async (operation) => {
+      const failure = new Error("Preference write failed");
+      (operation === "create" ? recipeCreate : recipeUpdate).mockRejectedValueOnce(failure);
+      const input = {
+        ...baseCreateRecipeInput(),
+        memberPreferences: [{ familyMemberId: "family-self", preference: "LIKE" as const }],
+      };
+      const result = operation === "create"
+        ? createRecipe(TEST_USER_ID, input)
+        : updateRecipe(TEST_USER_ID, "recipe-id", input);
+
+      await expect(result).rejects.toThrow(failure);
+      expect(mockedPrisma.recipe.findUniqueOrThrow).not.toHaveBeenCalled();
+    });
+
+    it.each(["create", "update"] as const)("runtime-validates preferences before %s writes", async (operation) => {
+      for (const memberPreferences of [
+        [{ familyMemberId: "family-self", preference: "NEUTRAL" }],
+        [
+          { familyMemberId: "family-self", preference: "LIKE" },
+          { familyMemberId: "family-self", preference: "LOVE" },
+        ],
+      ]) {
+        const input = { ...baseCreateRecipeInput(), memberPreferences } as CreateRecipePayload & { slug: string };
+        const result = operation === "create"
+          ? createRecipe(TEST_USER_ID, input)
+          : updateRecipe(TEST_USER_ID, "recipe-id", input);
+        await expect(result).rejects.toThrow();
+      }
+      expect(mockedPrisma.$transaction).not.toHaveBeenCalled();
     });
   });
 });

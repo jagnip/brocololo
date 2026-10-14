@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 
 type NutritionPersonCardProps = {
   children: ReactNode;
+  ariaLabel?: string;
   /** Dark glass panel on recipe detail; light card in form preview. */
   variant?: "light" | "dark" | "spotlight";
 };
@@ -14,9 +15,12 @@ type NutritionPersonCardProps = {
 export function NutritionPersonCard({
   children,
   variant = "light",
+  ariaLabel,
 }: NutritionPersonCardProps) {
   return (
     <div
+      role={ariaLabel ? "group" : undefined}
+      aria-label={ariaLabel}
       className={
         variant === "dark"
           ? "flex flex-col gap-item rounded-lg border border-white/5 bg-white/10 px-nest py-nest backdrop-blur-md"
@@ -32,7 +36,7 @@ export function NutritionPersonCard({
 }
 
 type NutritionPersonSummaryRowProps = {
-  personLabel: string;
+  personLabel?: string;
   /** Custom calories chunk: Input + label on recipe view, Badge-only in form preview. */
   caloriesArea: ReactNode;
   protein: number;
@@ -55,15 +59,17 @@ export function NutritionPersonSummaryRow({
 }: NutritionPersonSummaryRowProps) {
   return (
     <div className="flex flex-wrap items-center gap-item">
-      <span
-        className={
-          tone === "dark"
-            ? "w-[52px] shrink-0 type-body leading-4 text-slate-400"
-            : "w-[52px] shrink-0 type-body leading-4 text-muted-foreground"
-        }
-      >
-        {personLabel}
-      </span>
+      {personLabel ? (
+        <span
+          className={
+            tone === "dark"
+              ? "w-[52px] shrink-0 type-body leading-4 text-slate-400"
+              : "w-[52px] shrink-0 type-body leading-4 text-muted-foreground"
+          }
+        >
+          {personLabel}
+        </span>
+      ) : null}
       {/* Left-aligned: kcal control, then macro badges as readouts. */}
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-tight">
         {caloriesArea}

@@ -204,7 +204,7 @@ export function PortionSplitCard({
                     aria-hidden
                   />
                   <span>{member.label}</span>
-                  <span className="font-normal opacity-75">{detail}</span>
+                  <span className="opacity-75">{detail}</span>
                 </Badge>
               );
             })}
@@ -218,9 +218,9 @@ export function PortionSplitCard({
                   className="inline-block size-2 shrink-0 rounded-full bg-muted-foreground"
                   aria-hidden
                 />
-                {/* Match person badges: bold label + muted “· N portions”. */}
+                {/* Match person badges: shared typography with muted portion details. */}
                 <span>Extra</span>
-                <span className="font-normal opacity-75">
+                <span className="opacity-75">
                   {` · ${extraPortions} ${
                     extraPortions === 1 ? "portion" : "portions"
                   }`}

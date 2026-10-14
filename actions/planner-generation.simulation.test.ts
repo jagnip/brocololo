@@ -119,6 +119,107 @@ function buildSimulationRecipes() {
 
 const simulationAudienceFamilyMemberIds = ["family-self", "family-member-1"];
 
+describe("audience recipe preferences", () => {
+  const start = new Date("2026-04-20T00:00:00.000Z");
+  const breakfast = createMockCategory({ slug: "breakfast", type: "MEAL_OCCASION" });
+
+  function breakfastRecipe(id: string, memberPreferences: ReturnType<typeof createMockRecipe>["memberPreferences"] = []) {
+    return createMockRecipe({ id, name: id, categories: [breakfast], handsOnTime: 10, totalTime: 10, memberPreferences });
+  }
+
+  function setBreakfastCandidates(recipes: ReturnType<typeof createMockRecipe>[]) {
+    setupSimulationMocks();
+    vi.mocked(getRecipes).mockResolvedValue([
+      ...recipes,
+      ...buildSimulationRecipes().filter((recipe) => recipe.id.startsWith("savoury")),
+    ]);
+  }
+
+  it("rotates multiple loved solo breakfasts through unused neutral options", async () => {
+    const end = new Date("2026-04-26T00:00:00.000Z");
+    setBreakfastCandidates([
+      breakfastRecipe("neutral"),
+      breakfastRecipe("love-a", [{ familyMemberId: "family-self", preference: "LOVE" }]),
+      breakfastRecipe("love-b", [{ familyMemberId: "family-self", preference: "LOVE" }]),
+    ]);
+    const audience = buildDailyAudienceForSimulation(start, end).map((day) => ({ ...day, breakfastFamilyMemberIds: ["family-self"] }));
+    const result = await generatePlan(start, end, audience, buildDailyTimeLimitsFromDefaults(start, end), [], []);
+    expect(result.type).toBe("success");
+    if (result.type !== "success") return;
+    const breakfasts = result.plan.filter((slot) => slot.mealType === "BREAKFAST");
+    expect(breakfasts.slice(0, 3).map((slot) => slot.recipe?.id)).toEqual(["love-a", "love-b", "neutral"]);
+    expect(new Set(breakfasts.map((slot) => slot.recipe?.id)).size).toBe(3);
+  });
+
+  it("vetoes Love with any eater's Avoid, including alternatives and rolling", async () => {
+    const avoided = breakfastRecipe("avoided", [
+      { familyMemberId: "family-self", preference: "LOVE" },
+      { familyMemberId: "family-member-1", preference: "AVOID" },
+    ]);
+    setBreakfastCandidates([avoided, breakfastRecipe("safe"), breakfastRecipe("alternative")]);
+    const result = await generatePlan(start, start, buildDailyAudienceForSimulation(start, start), buildDailyTimeLimitsFromDefaults(start, start), [], [{ recipeId: "avoided", meals: 1, alreadyCooked: false }]);
+    expect(result.type).toBe("success");
+    if (result.type !== "success") return;
+    expect(result.plan.some((slot) => slot.recipe?.id === "avoided")).toBe(false);
+    expect(result.plan.flatMap((slot) => slot.alternatives).some((recipe) => recipe.id === "avoided")).toBe(false);
+    expect(result.warnings).toContain('Could not place "avoided" — no compatible slot available.');
+  });
+
+  it("ignores preferences from people who are not eating", async () => {
+    setBreakfastCandidates([
+      breakfastRecipe("neutral"),
+      breakfastRecipe("solo-favorite", [
+        { familyMemberId: "family-self", preference: "LOVE" },
+        { familyMemberId: "family-member-1", preference: "AVOID" },
+      ]),
+    ]);
+    const audience = buildDailyAudienceForSimulation(start, start).map((day) => ({ ...day, breakfastFamilyMemberIds: ["family-self"] }));
+    const result = await generatePlan(start, start, audience, buildDailyTimeLimitsFromDefaults(start, start), [], []);
+    expect(result.type).toBe("success");
+    if (result.type !== "success") return;
+    expect(result.plan.find((slot) => slot.mealType === "BREAKFAST")?.recipe?.id).toBe("solo-favorite");
+  });
+
+  it("preserves manually filled avoided meals", async () => {
+    const avoided = breakfastRecipe("manual", [{ familyMemberId: "family-self", preference: "AVOID" }]);
+    setBreakfastCandidates([avoided, breakfastRecipe("safe")]);
+    const result = await generatePlan(start, start, buildDailyAudienceForSimulation(start, start), buildDailyTimeLimitsFromDefaults(start, start), [], [], [{ date: start, mealType: "BREAKFAST", recipe: avoided, alternatives: [], customMeal: null, used: false, cookingFamilyMemberIds: simulationAudienceFamilyMemberIds }]);
+    expect(result.type).toBe("success");
+    if (result.type !== "success") return;
+    expect(result.plan.find((slot) => slot.mealType === "BREAKFAST")?.recipe?.id).toBe("manual");
+  });
+
+  it("keeps automatic batch continuations safe for their inherited audience", async () => {
+    const end = new Date("2026-04-21T00:00:00.000Z");
+    const recipe = breakfastRecipe("solo-batch", [
+      { familyMemberId: "family-self", preference: "LOVE" },
+      { familyMemberId: "family-member-1", preference: "AVOID" },
+    ]);
+    recipe.isBatchRecipe = true;
+    recipe.plannedMealCount = 2;
+    setBreakfastCandidates([recipe, breakfastRecipe("safe")]);
+    const audience = buildDailyAudienceForSimulation(start, end);
+    audience[0]!.breakfastFamilyMemberIds = ["family-self"];
+    const result = await generatePlan(
+      start,
+      end,
+      audience,
+      buildDailyTimeLimitsFromDefaults(start, end),
+      [],
+      [],
+    );
+    expect(result.type).toBe("success");
+    if (result.type !== "success") return;
+    const breakfasts = result.plan.filter((slot) => slot.mealType === "BREAKFAST");
+    expect(breakfasts.map((slot) => slot.recipe?.id)).toEqual(["solo-batch", "solo-batch"]);
+    expect(breakfasts.map((slot) => slot.cookingFamilyMemberIds)).toEqual([
+      ["family-self"],
+      ["family-self"],
+    ]);
+    expect(breakfasts[0]?.batchGroupId).toBe(breakfasts[1]?.batchGroupId);
+  });
+});
+
 function setupSimulationMocks() {
   vi.mocked(getRecipes).mockResolvedValue(buildSimulationRecipes());
   vi.mocked(listFamilyMembers).mockResolvedValue([

@@ -7,7 +7,7 @@ import { ROUTES } from "@/lib/constants";
 import { type LogIngredientOption } from "@/components/log/log-ingredients-form";
 import { PageHeader } from "@/components/page-header";
 import { TopbarConfigController } from "@/components/topbar-config";
-import { NutritionSection } from "@/components/recipes/recipe-page/nutrition-section";
+import { PeopleSection } from "@/components/recipes/recipe-page/people-section";
 import { InstructionsSection } from "@/components/recipes/recipe-page/instructions-section";
 import { IngredientsSection } from "@/components/recipes/recipe-page/ingredients-section";
 import { CookingForStripe } from "@/components/recipes/recipe-page/cooking-for-stripe";
@@ -150,13 +150,13 @@ export default function RecipePage({
           ) : null}
         </div>
 
-        {/* Photos left, nutrition right — photo stretches to match nutrition height. */}
+        {/* Photos left, People right; photo stretches to match the cards. */}
         <div className="order-3 md:order-0 md:col-span-3 md:h-full">
           <ImageGallery images={recipe.images || []} fillHeight />
         </div>
 
         <div className="order-5 md:order-0 md:col-span-2 md:h-full">
-          <NutritionSection />
+          <PeopleSection />
         </div>
 
         {/* Full-width cooking for under the photos/nutrition row. */}

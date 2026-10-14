@@ -173,7 +173,7 @@ describe("PlannerSlotCard batch badge", () => {
       ingredientOptions={[]}
     />);
     expect(screen.getByRole("button", { name: "Batch meal 2 of 5, 7 in storage" })).toHaveTextContent("2 of 5 · 7 in storage");
-    expect(screen.getByText("2 of 5").tagName).toBe("STRONG");
+    expect(screen.getByText("2 of 5")).toBeInTheDocument();
   });
 
   it("opens batch editing from the badge without selecting the card", () => {

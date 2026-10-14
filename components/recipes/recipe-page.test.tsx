@@ -385,6 +385,65 @@ function expectNutritionToMatchScaledRecipe(
   }
 }
 
+describe("RecipePage People", () => {
+  it("combines nutrition and all preferences in household order, not saved-row order", () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    const familyMembers: FamilyMemberRow[] = [
+      ...mockFamilyMembers,
+      { id: "family-member-2", name: "Alex", isSelf: false, sortOrder: 2, portionMultiplier: 1 },
+      { id: "family-member-3", name: "Sam", isSelf: false, sortOrder: 3, portionMultiplier: 1 },
+    ];
+    renderRecipePage({
+      ...recipe,
+      memberPreferences: [
+        { familyMemberId: "family-member-2", preference: "AVOID" },
+        { familyMemberId: "family-member-1", preference: "LOVE" },
+        { familyMemberId: "family-self", preference: "LIKE" },
+      ],
+    }, ingredients, familyMembers);
+
+    const section = screen.getByRole("region", { name: "People" });
+    expect(within(section).getByRole("heading", { name: "People" })).toBeInTheDocument();
+    expect(within(section).getAllByRole("group").map((card) => card.getAttribute("aria-label"))).toEqual([
+      "Jagoda", "Nelson", "Alex", "Sam",
+    ]);
+    for (const [name, preference] of [["Jagoda", "Like"], ["Nelson", "Love"], ["Alex", "Avoid"], ["Sam", "Neutral"]]) {
+      const card = within(section).getByRole("group", { name });
+      expect(within(card).getByLabelText(`Recipe preference: ${preference}`)).toBeInTheDocument();
+      expect(within(card).getByLabelText(`Calories per portion for ${name}`)).toBeInTheDocument();
+      expect(within(card).queryByText("Per serving")).not.toBeInTheDocument();
+    }
+    expect(screen.queryByRole("region", { name: "Preferences" })).not.toBeInTheDocument();
+  });
+
+  it("shows Neutral for every person when no preferences are stored", () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    renderRecipePage({ ...recipe, memberPreferences: [] }, ingredients);
+
+    expect(screen.queryByRole("region", { name: "Preferences" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Preferences" })).not.toBeInTheDocument();
+    const section = screen.getByRole("region", { name: "People" });
+    expect(within(section).getAllByLabelText("Recipe preference: Neutral")).toHaveLength(2);
+  });
+
+  it("keeps excluded people and their preference visible without misleading nutrition", async () => {
+    const user = userEvent.setup();
+    const { recipe, ingredients } = createRecipeFixture();
+    renderRecipePage({
+      ...recipe,
+      memberPreferences: [{ familyMemberId: "family-member-1", preference: "LOVE" }],
+    }, ingredients);
+    await user.click(screen.getByRole("button", { name: "Remove Nelson for combination 1" }));
+    const card = within(screen.getByRole("region", { name: "People" })).getByRole("group", { name: "Nelson" });
+    expect(within(card).getByLabelText("Recipe preference: Love")).toBeInTheDocument();
+    expect(within(card).getByText("Not included in Cooking For")).toBeInTheDocument();
+    expect(within(card).queryByLabelText("Calories per portion for Nelson")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Add Nelson for combination 1" }));
+    expect(within(card).getByLabelText("Calories per portion for Nelson")).toBeInTheDocument();
+    expect(within(card).queryByText("Not included in Cooking For")).not.toBeInTheDocument();
+  });
+});
+
 describe("RecipePage nutrition integration", () => {
   it("opens add to log dialog with Jagoda and today's date defaults", async () => {
     const { recipe, ingredients } = createRecipeFixture();

@@ -286,6 +286,7 @@ export type RecipeWhereInput = {
   images?: Prisma.RecipeImageListRelationFilter
   audienceMembers?: Prisma.RecipeAudienceMemberListRelationFilter
   memberPortions?: Prisma.RecipeMemberPortionListRelationFilter
+  memberPreferences?: Prisma.RecipeMemberPreferenceListRelationFilter
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   categories?: Prisma.CategoryListRelationFilter
   planSlots?: Prisma.PlanSlotListRelationFilter
@@ -313,6 +314,7 @@ export type RecipeOrderByWithRelationInput = {
   images?: Prisma.RecipeImageOrderByRelationAggregateInput
   audienceMembers?: Prisma.RecipeAudienceMemberOrderByRelationAggregateInput
   memberPortions?: Prisma.RecipeMemberPortionOrderByRelationAggregateInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceOrderByRelationAggregateInput
   user?: Prisma.UserOrderByWithRelationInput
   categories?: Prisma.CategoryOrderByRelationAggregateInput
   planSlots?: Prisma.PlanSlotOrderByRelationAggregateInput
@@ -345,6 +347,7 @@ export type RecipeWhereUniqueInput = Prisma.AtLeast<{
   images?: Prisma.RecipeImageListRelationFilter
   audienceMembers?: Prisma.RecipeAudienceMemberListRelationFilter
   memberPortions?: Prisma.RecipeMemberPortionListRelationFilter
+  memberPreferences?: Prisma.RecipeMemberPreferenceListRelationFilter
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   categories?: Prisma.CategoryListRelationFilter
   planSlots?: Prisma.PlanSlotListRelationFilter
@@ -409,6 +412,7 @@ export type RecipeCreateInput = {
   images?: Prisma.RecipeImageCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceCreateNestedManyWithoutRecipeInput
   user: Prisma.UserCreateNestedOneWithoutRecipesInput
   categories?: Prisma.CategoryCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotCreateNestedManyWithoutRecipeInput
@@ -436,6 +440,7 @@ export type RecipeUncheckedCreateInput = {
   images?: Prisma.RecipeImageUncheckedCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutRecipeInput
   planBatches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutRecipeInput
@@ -461,6 +466,7 @@ export type RecipeUpdateInput = {
   images?: Prisma.RecipeImageUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUpdateManyWithoutRecipeNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutRecipesNestedInput
   categories?: Prisma.CategoryUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUpdateManyWithoutRecipeNestedInput
@@ -488,6 +494,7 @@ export type RecipeUncheckedUpdateInput = {
   images?: Prisma.RecipeImageUncheckedUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUncheckedUpdateManyWithoutRecipeNestedInput
   planBatches?: Prisma.PlanBatchUncheckedUpdateManyWithoutRecipeNestedInput
@@ -781,6 +788,20 @@ export type RecipeUpdateOneRequiredWithoutAudienceMembersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.RecipeUpdateToOneWithWhereWithoutAudienceMembersInput, Prisma.RecipeUpdateWithoutAudienceMembersInput>, Prisma.RecipeUncheckedUpdateWithoutAudienceMembersInput>
 }
 
+export type RecipeCreateNestedOneWithoutMemberPreferencesInput = {
+  create?: Prisma.XOR<Prisma.RecipeCreateWithoutMemberPreferencesInput, Prisma.RecipeUncheckedCreateWithoutMemberPreferencesInput>
+  connectOrCreate?: Prisma.RecipeCreateOrConnectWithoutMemberPreferencesInput
+  connect?: Prisma.RecipeWhereUniqueInput
+}
+
+export type RecipeUpdateOneRequiredWithoutMemberPreferencesNestedInput = {
+  create?: Prisma.XOR<Prisma.RecipeCreateWithoutMemberPreferencesInput, Prisma.RecipeUncheckedCreateWithoutMemberPreferencesInput>
+  connectOrCreate?: Prisma.RecipeCreateOrConnectWithoutMemberPreferencesInput
+  upsert?: Prisma.RecipeUpsertWithoutMemberPreferencesInput
+  connect?: Prisma.RecipeWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.RecipeUpdateToOneWithWhereWithoutMemberPreferencesInput, Prisma.RecipeUpdateWithoutMemberPreferencesInput>, Prisma.RecipeUncheckedUpdateWithoutMemberPreferencesInput>
+}
+
 export type RecipeCreateNestedOneWithoutMemberPortionsInput = {
   create?: Prisma.XOR<Prisma.RecipeCreateWithoutMemberPortionsInput, Prisma.RecipeUncheckedCreateWithoutMemberPortionsInput>
   connectOrCreate?: Prisma.RecipeCreateOrConnectWithoutMemberPortionsInput
@@ -885,6 +906,7 @@ export type RecipeCreateWithoutCategoriesInput = {
   images?: Prisma.RecipeImageCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceCreateNestedManyWithoutRecipeInput
   user: Prisma.UserCreateNestedOneWithoutRecipesInput
   planSlots?: Prisma.PlanSlotCreateNestedManyWithoutRecipeInput
   planBatches?: Prisma.PlanBatchCreateNestedManyWithoutRecipeInput
@@ -911,6 +933,7 @@ export type RecipeUncheckedCreateWithoutCategoriesInput = {
   images?: Prisma.RecipeImageUncheckedCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedCreateNestedManyWithoutRecipeInput
   planSlots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutRecipeInput
   planBatches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutRecipeInput
   alternatives?: Prisma.PlanSlotAlternativeUncheckedCreateNestedManyWithoutRecipeInput
@@ -974,6 +997,7 @@ export type RecipeCreateWithoutUserInput = {
   images?: Prisma.RecipeImageCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotCreateNestedManyWithoutRecipeInput
   planBatches?: Prisma.PlanBatchCreateNestedManyWithoutRecipeInput
@@ -999,6 +1023,7 @@ export type RecipeUncheckedCreateWithoutUserInput = {
   images?: Prisma.RecipeImageUncheckedCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutRecipeInput
   planBatches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutRecipeInput
@@ -1050,6 +1075,7 @@ export type RecipeCreateWithoutPlanSlotsInput = {
   images?: Prisma.RecipeImageCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceCreateNestedManyWithoutRecipeInput
   user: Prisma.UserCreateNestedOneWithoutRecipesInput
   categories?: Prisma.CategoryCreateNestedManyWithoutRecipesInput
   planBatches?: Prisma.PlanBatchCreateNestedManyWithoutRecipeInput
@@ -1076,6 +1102,7 @@ export type RecipeUncheckedCreateWithoutPlanSlotsInput = {
   images?: Prisma.RecipeImageUncheckedCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutRecipesInput
   planBatches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutRecipeInput
   alternatives?: Prisma.PlanSlotAlternativeUncheckedCreateNestedManyWithoutRecipeInput
@@ -1116,6 +1143,7 @@ export type RecipeUpdateWithoutPlanSlotsInput = {
   images?: Prisma.RecipeImageUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUpdateManyWithoutRecipeNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutRecipesNestedInput
   categories?: Prisma.CategoryUpdateManyWithoutRecipesNestedInput
   planBatches?: Prisma.PlanBatchUpdateManyWithoutRecipeNestedInput
@@ -1142,6 +1170,7 @@ export type RecipeUncheckedUpdateWithoutPlanSlotsInput = {
   images?: Prisma.RecipeImageUncheckedUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutRecipesNestedInput
   planBatches?: Prisma.PlanBatchUncheckedUpdateManyWithoutRecipeNestedInput
   alternatives?: Prisma.PlanSlotAlternativeUncheckedUpdateManyWithoutRecipeNestedInput
@@ -1166,6 +1195,7 @@ export type RecipeCreateWithoutPlanBatchesInput = {
   images?: Prisma.RecipeImageCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceCreateNestedManyWithoutRecipeInput
   user: Prisma.UserCreateNestedOneWithoutRecipesInput
   categories?: Prisma.CategoryCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotCreateNestedManyWithoutRecipeInput
@@ -1192,6 +1222,7 @@ export type RecipeUncheckedCreateWithoutPlanBatchesInput = {
   images?: Prisma.RecipeImageUncheckedCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutRecipeInput
   alternatives?: Prisma.PlanSlotAlternativeUncheckedCreateNestedManyWithoutRecipeInput
@@ -1232,6 +1263,7 @@ export type RecipeUpdateWithoutPlanBatchesInput = {
   images?: Prisma.RecipeImageUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUpdateManyWithoutRecipeNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutRecipesNestedInput
   categories?: Prisma.CategoryUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUpdateManyWithoutRecipeNestedInput
@@ -1258,6 +1290,7 @@ export type RecipeUncheckedUpdateWithoutPlanBatchesInput = {
   images?: Prisma.RecipeImageUncheckedUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUncheckedUpdateManyWithoutRecipeNestedInput
   alternatives?: Prisma.PlanSlotAlternativeUncheckedUpdateManyWithoutRecipeNestedInput
@@ -1282,6 +1315,7 @@ export type RecipeCreateWithoutAlternativesInput = {
   images?: Prisma.RecipeImageCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceCreateNestedManyWithoutRecipeInput
   user: Prisma.UserCreateNestedOneWithoutRecipesInput
   categories?: Prisma.CategoryCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotCreateNestedManyWithoutRecipeInput
@@ -1308,6 +1342,7 @@ export type RecipeUncheckedCreateWithoutAlternativesInput = {
   images?: Prisma.RecipeImageUncheckedCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutRecipeInput
   planBatches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutRecipeInput
@@ -1348,6 +1383,7 @@ export type RecipeUpdateWithoutAlternativesInput = {
   images?: Prisma.RecipeImageUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUpdateManyWithoutRecipeNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutRecipesNestedInput
   categories?: Prisma.CategoryUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUpdateManyWithoutRecipeNestedInput
@@ -1374,6 +1410,7 @@ export type RecipeUncheckedUpdateWithoutAlternativesInput = {
   images?: Prisma.RecipeImageUncheckedUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUncheckedUpdateManyWithoutRecipeNestedInput
   planBatches?: Prisma.PlanBatchUncheckedUpdateManyWithoutRecipeNestedInput
@@ -1397,6 +1434,7 @@ export type RecipeCreateWithoutAudienceMembersInput = {
   instructions?: Prisma.RecipeInstructionCreateNestedManyWithoutRecipeInput
   images?: Prisma.RecipeImageCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceCreateNestedManyWithoutRecipeInput
   user: Prisma.UserCreateNestedOneWithoutRecipesInput
   categories?: Prisma.CategoryCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotCreateNestedManyWithoutRecipeInput
@@ -1423,6 +1461,7 @@ export type RecipeUncheckedCreateWithoutAudienceMembersInput = {
   instructions?: Prisma.RecipeInstructionUncheckedCreateNestedManyWithoutRecipeInput
   images?: Prisma.RecipeImageUncheckedCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutRecipeInput
   planBatches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutRecipeInput
@@ -1463,6 +1502,7 @@ export type RecipeUpdateWithoutAudienceMembersInput = {
   instructions?: Prisma.RecipeInstructionUpdateManyWithoutRecipeNestedInput
   images?: Prisma.RecipeImageUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUpdateManyWithoutRecipeNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutRecipesNestedInput
   categories?: Prisma.CategoryUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUpdateManyWithoutRecipeNestedInput
@@ -1489,6 +1529,127 @@ export type RecipeUncheckedUpdateWithoutAudienceMembersInput = {
   instructions?: Prisma.RecipeInstructionUncheckedUpdateManyWithoutRecipeNestedInput
   images?: Prisma.RecipeImageUncheckedUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedUpdateManyWithoutRecipeNestedInput
+  categories?: Prisma.CategoryUncheckedUpdateManyWithoutRecipesNestedInput
+  planSlots?: Prisma.PlanSlotUncheckedUpdateManyWithoutRecipeNestedInput
+  planBatches?: Prisma.PlanBatchUncheckedUpdateManyWithoutRecipeNestedInput
+  alternatives?: Prisma.PlanSlotAlternativeUncheckedUpdateManyWithoutRecipeNestedInput
+  logEntryRecipes?: Prisma.LogEntryRecipeUncheckedUpdateManyWithoutSourceRecipeNestedInput
+}
+
+export type RecipeCreateWithoutMemberPreferencesInput = {
+  id?: string
+  name: string
+  slug: string
+  handsOnTime: number
+  totalTime: number
+  notes?: Prisma.RecipeCreatenotesInput | string[]
+  servings: number
+  lastUsedInPlanner?: Date | string | null
+  excludeFromPlanner?: boolean
+  plannedMealCount?: number
+  isBatchRecipe?: boolean
+  ingredients?: Prisma.RecipeIngredientCreateNestedManyWithoutRecipeInput
+  ingredientGroups?: Prisma.RecipeIngredientGroupCreateNestedManyWithoutRecipeInput
+  instructions?: Prisma.RecipeInstructionCreateNestedManyWithoutRecipeInput
+  images?: Prisma.RecipeImageCreateNestedManyWithoutRecipeInput
+  audienceMembers?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutRecipeInput
+  memberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutRecipeInput
+  user: Prisma.UserCreateNestedOneWithoutRecipesInput
+  categories?: Prisma.CategoryCreateNestedManyWithoutRecipesInput
+  planSlots?: Prisma.PlanSlotCreateNestedManyWithoutRecipeInput
+  planBatches?: Prisma.PlanBatchCreateNestedManyWithoutRecipeInput
+  alternatives?: Prisma.PlanSlotAlternativeCreateNestedManyWithoutRecipeInput
+  logEntryRecipes?: Prisma.LogEntryRecipeCreateNestedManyWithoutSourceRecipeInput
+}
+
+export type RecipeUncheckedCreateWithoutMemberPreferencesInput = {
+  id?: string
+  userId: string
+  name: string
+  slug: string
+  handsOnTime: number
+  totalTime: number
+  notes?: Prisma.RecipeCreatenotesInput | string[]
+  servings: number
+  lastUsedInPlanner?: Date | string | null
+  excludeFromPlanner?: boolean
+  plannedMealCount?: number
+  isBatchRecipe?: boolean
+  ingredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutRecipeInput
+  ingredientGroups?: Prisma.RecipeIngredientGroupUncheckedCreateNestedManyWithoutRecipeInput
+  instructions?: Prisma.RecipeInstructionUncheckedCreateNestedManyWithoutRecipeInput
+  images?: Prisma.RecipeImageUncheckedCreateNestedManyWithoutRecipeInput
+  audienceMembers?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutRecipeInput
+  memberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutRecipeInput
+  categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutRecipesInput
+  planSlots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutRecipeInput
+  planBatches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutRecipeInput
+  alternatives?: Prisma.PlanSlotAlternativeUncheckedCreateNestedManyWithoutRecipeInput
+  logEntryRecipes?: Prisma.LogEntryRecipeUncheckedCreateNestedManyWithoutSourceRecipeInput
+}
+
+export type RecipeCreateOrConnectWithoutMemberPreferencesInput = {
+  where: Prisma.RecipeWhereUniqueInput
+  create: Prisma.XOR<Prisma.RecipeCreateWithoutMemberPreferencesInput, Prisma.RecipeUncheckedCreateWithoutMemberPreferencesInput>
+}
+
+export type RecipeUpsertWithoutMemberPreferencesInput = {
+  update: Prisma.XOR<Prisma.RecipeUpdateWithoutMemberPreferencesInput, Prisma.RecipeUncheckedUpdateWithoutMemberPreferencesInput>
+  create: Prisma.XOR<Prisma.RecipeCreateWithoutMemberPreferencesInput, Prisma.RecipeUncheckedCreateWithoutMemberPreferencesInput>
+  where?: Prisma.RecipeWhereInput
+}
+
+export type RecipeUpdateToOneWithWhereWithoutMemberPreferencesInput = {
+  where?: Prisma.RecipeWhereInput
+  data: Prisma.XOR<Prisma.RecipeUpdateWithoutMemberPreferencesInput, Prisma.RecipeUncheckedUpdateWithoutMemberPreferencesInput>
+}
+
+export type RecipeUpdateWithoutMemberPreferencesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  handsOnTime?: Prisma.IntFieldUpdateOperationsInput | number
+  totalTime?: Prisma.IntFieldUpdateOperationsInput | number
+  notes?: Prisma.RecipeUpdatenotesInput | string[]
+  servings?: Prisma.IntFieldUpdateOperationsInput | number
+  lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  ingredients?: Prisma.RecipeIngredientUpdateManyWithoutRecipeNestedInput
+  ingredientGroups?: Prisma.RecipeIngredientGroupUpdateManyWithoutRecipeNestedInput
+  instructions?: Prisma.RecipeInstructionUpdateManyWithoutRecipeNestedInput
+  images?: Prisma.RecipeImageUpdateManyWithoutRecipeNestedInput
+  audienceMembers?: Prisma.RecipeAudienceMemberUpdateManyWithoutRecipeNestedInput
+  memberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutRecipeNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutRecipesNestedInput
+  categories?: Prisma.CategoryUpdateManyWithoutRecipesNestedInput
+  planSlots?: Prisma.PlanSlotUpdateManyWithoutRecipeNestedInput
+  planBatches?: Prisma.PlanBatchUpdateManyWithoutRecipeNestedInput
+  alternatives?: Prisma.PlanSlotAlternativeUpdateManyWithoutRecipeNestedInput
+  logEntryRecipes?: Prisma.LogEntryRecipeUpdateManyWithoutSourceRecipeNestedInput
+}
+
+export type RecipeUncheckedUpdateWithoutMemberPreferencesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  handsOnTime?: Prisma.IntFieldUpdateOperationsInput | number
+  totalTime?: Prisma.IntFieldUpdateOperationsInput | number
+  notes?: Prisma.RecipeUpdatenotesInput | string[]
+  servings?: Prisma.IntFieldUpdateOperationsInput | number
+  lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
+  isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  ingredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutRecipeNestedInput
+  ingredientGroups?: Prisma.RecipeIngredientGroupUncheckedUpdateManyWithoutRecipeNestedInput
+  instructions?: Prisma.RecipeInstructionUncheckedUpdateManyWithoutRecipeNestedInput
+  images?: Prisma.RecipeImageUncheckedUpdateManyWithoutRecipeNestedInput
+  audienceMembers?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutRecipeNestedInput
+  memberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUncheckedUpdateManyWithoutRecipeNestedInput
   planBatches?: Prisma.PlanBatchUncheckedUpdateManyWithoutRecipeNestedInput
@@ -1513,6 +1674,7 @@ export type RecipeCreateWithoutMemberPortionsInput = {
   instructions?: Prisma.RecipeInstructionCreateNestedManyWithoutRecipeInput
   images?: Prisma.RecipeImageCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceCreateNestedManyWithoutRecipeInput
   user: Prisma.UserCreateNestedOneWithoutRecipesInput
   categories?: Prisma.CategoryCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotCreateNestedManyWithoutRecipeInput
@@ -1539,6 +1701,7 @@ export type RecipeUncheckedCreateWithoutMemberPortionsInput = {
   instructions?: Prisma.RecipeInstructionUncheckedCreateNestedManyWithoutRecipeInput
   images?: Prisma.RecipeImageUncheckedCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutRecipeInput
   planBatches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutRecipeInput
@@ -1579,6 +1742,7 @@ export type RecipeUpdateWithoutMemberPortionsInput = {
   instructions?: Prisma.RecipeInstructionUpdateManyWithoutRecipeNestedInput
   images?: Prisma.RecipeImageUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUpdateManyWithoutRecipeNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutRecipesNestedInput
   categories?: Prisma.CategoryUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUpdateManyWithoutRecipeNestedInput
@@ -1605,6 +1769,7 @@ export type RecipeUncheckedUpdateWithoutMemberPortionsInput = {
   instructions?: Prisma.RecipeInstructionUncheckedUpdateManyWithoutRecipeNestedInput
   images?: Prisma.RecipeImageUncheckedUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUncheckedUpdateManyWithoutRecipeNestedInput
   planBatches?: Prisma.PlanBatchUncheckedUpdateManyWithoutRecipeNestedInput
@@ -1629,6 +1794,7 @@ export type RecipeCreateWithoutIngredientsInput = {
   images?: Prisma.RecipeImageCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceCreateNestedManyWithoutRecipeInput
   user: Prisma.UserCreateNestedOneWithoutRecipesInput
   categories?: Prisma.CategoryCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotCreateNestedManyWithoutRecipeInput
@@ -1655,6 +1821,7 @@ export type RecipeUncheckedCreateWithoutIngredientsInput = {
   images?: Prisma.RecipeImageUncheckedCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutRecipeInput
   planBatches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutRecipeInput
@@ -1695,6 +1862,7 @@ export type RecipeUpdateWithoutIngredientsInput = {
   images?: Prisma.RecipeImageUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUpdateManyWithoutRecipeNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutRecipesNestedInput
   categories?: Prisma.CategoryUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUpdateManyWithoutRecipeNestedInput
@@ -1721,6 +1889,7 @@ export type RecipeUncheckedUpdateWithoutIngredientsInput = {
   images?: Prisma.RecipeImageUncheckedUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUncheckedUpdateManyWithoutRecipeNestedInput
   planBatches?: Prisma.PlanBatchUncheckedUpdateManyWithoutRecipeNestedInput
@@ -1745,6 +1914,7 @@ export type RecipeCreateWithoutIngredientGroupsInput = {
   images?: Prisma.RecipeImageCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceCreateNestedManyWithoutRecipeInput
   user: Prisma.UserCreateNestedOneWithoutRecipesInput
   categories?: Prisma.CategoryCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotCreateNestedManyWithoutRecipeInput
@@ -1771,6 +1941,7 @@ export type RecipeUncheckedCreateWithoutIngredientGroupsInput = {
   images?: Prisma.RecipeImageUncheckedCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutRecipeInput
   planBatches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutRecipeInput
@@ -1811,6 +1982,7 @@ export type RecipeUpdateWithoutIngredientGroupsInput = {
   images?: Prisma.RecipeImageUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUpdateManyWithoutRecipeNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutRecipesNestedInput
   categories?: Prisma.CategoryUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUpdateManyWithoutRecipeNestedInput
@@ -1837,6 +2009,7 @@ export type RecipeUncheckedUpdateWithoutIngredientGroupsInput = {
   images?: Prisma.RecipeImageUncheckedUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUncheckedUpdateManyWithoutRecipeNestedInput
   planBatches?: Prisma.PlanBatchUncheckedUpdateManyWithoutRecipeNestedInput
@@ -1861,6 +2034,7 @@ export type RecipeCreateWithoutInstructionsInput = {
   images?: Prisma.RecipeImageCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceCreateNestedManyWithoutRecipeInput
   user: Prisma.UserCreateNestedOneWithoutRecipesInput
   categories?: Prisma.CategoryCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotCreateNestedManyWithoutRecipeInput
@@ -1887,6 +2061,7 @@ export type RecipeUncheckedCreateWithoutInstructionsInput = {
   images?: Prisma.RecipeImageUncheckedCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutRecipeInput
   planBatches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutRecipeInput
@@ -1927,6 +2102,7 @@ export type RecipeUpdateWithoutInstructionsInput = {
   images?: Prisma.RecipeImageUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUpdateManyWithoutRecipeNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutRecipesNestedInput
   categories?: Prisma.CategoryUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUpdateManyWithoutRecipeNestedInput
@@ -1953,6 +2129,7 @@ export type RecipeUncheckedUpdateWithoutInstructionsInput = {
   images?: Prisma.RecipeImageUncheckedUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUncheckedUpdateManyWithoutRecipeNestedInput
   planBatches?: Prisma.PlanBatchUncheckedUpdateManyWithoutRecipeNestedInput
@@ -1977,6 +2154,7 @@ export type RecipeCreateWithoutImagesInput = {
   instructions?: Prisma.RecipeInstructionCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceCreateNestedManyWithoutRecipeInput
   user: Prisma.UserCreateNestedOneWithoutRecipesInput
   categories?: Prisma.CategoryCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotCreateNestedManyWithoutRecipeInput
@@ -2003,6 +2181,7 @@ export type RecipeUncheckedCreateWithoutImagesInput = {
   instructions?: Prisma.RecipeInstructionUncheckedCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutRecipeInput
   planBatches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutRecipeInput
@@ -2043,6 +2222,7 @@ export type RecipeUpdateWithoutImagesInput = {
   instructions?: Prisma.RecipeInstructionUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUpdateManyWithoutRecipeNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutRecipesNestedInput
   categories?: Prisma.CategoryUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUpdateManyWithoutRecipeNestedInput
@@ -2069,6 +2249,7 @@ export type RecipeUncheckedUpdateWithoutImagesInput = {
   instructions?: Prisma.RecipeInstructionUncheckedUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUncheckedUpdateManyWithoutRecipeNestedInput
   planBatches?: Prisma.PlanBatchUncheckedUpdateManyWithoutRecipeNestedInput
@@ -2094,6 +2275,7 @@ export type RecipeCreateWithoutLogEntryRecipesInput = {
   images?: Prisma.RecipeImageCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceCreateNestedManyWithoutRecipeInput
   user: Prisma.UserCreateNestedOneWithoutRecipesInput
   categories?: Prisma.CategoryCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotCreateNestedManyWithoutRecipeInput
@@ -2120,6 +2302,7 @@ export type RecipeUncheckedCreateWithoutLogEntryRecipesInput = {
   images?: Prisma.RecipeImageUncheckedCreateNestedManyWithoutRecipeInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedCreateNestedManyWithoutRecipeInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedCreateNestedManyWithoutRecipeInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedCreateNestedManyWithoutRecipeInput
   categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutRecipesInput
   planSlots?: Prisma.PlanSlotUncheckedCreateNestedManyWithoutRecipeInput
   planBatches?: Prisma.PlanBatchUncheckedCreateNestedManyWithoutRecipeInput
@@ -2160,6 +2343,7 @@ export type RecipeUpdateWithoutLogEntryRecipesInput = {
   images?: Prisma.RecipeImageUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUpdateManyWithoutRecipeNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutRecipesNestedInput
   categories?: Prisma.CategoryUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUpdateManyWithoutRecipeNestedInput
@@ -2186,6 +2370,7 @@ export type RecipeUncheckedUpdateWithoutLogEntryRecipesInput = {
   images?: Prisma.RecipeImageUncheckedUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUncheckedUpdateManyWithoutRecipeNestedInput
   planBatches?: Prisma.PlanBatchUncheckedUpdateManyWithoutRecipeNestedInput
@@ -2210,6 +2395,7 @@ export type RecipeUpdateWithoutCategoriesInput = {
   images?: Prisma.RecipeImageUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUpdateManyWithoutRecipeNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUpdateManyWithoutRecipeNestedInput
   planBatches?: Prisma.PlanBatchUpdateManyWithoutRecipeNestedInput
@@ -2236,6 +2422,7 @@ export type RecipeUncheckedUpdateWithoutCategoriesInput = {
   images?: Prisma.RecipeImageUncheckedUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedUpdateManyWithoutRecipeNestedInput
   planSlots?: Prisma.PlanSlotUncheckedUpdateManyWithoutRecipeNestedInput
   planBatches?: Prisma.PlanBatchUncheckedUpdateManyWithoutRecipeNestedInput
   alternatives?: Prisma.PlanSlotAlternativeUncheckedUpdateManyWithoutRecipeNestedInput
@@ -2289,6 +2476,7 @@ export type RecipeUpdateWithoutUserInput = {
   images?: Prisma.RecipeImageUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUpdateManyWithoutRecipeNestedInput
   planBatches?: Prisma.PlanBatchUpdateManyWithoutRecipeNestedInput
@@ -2314,6 +2502,7 @@ export type RecipeUncheckedUpdateWithoutUserInput = {
   images?: Prisma.RecipeImageUncheckedUpdateManyWithoutRecipeNestedInput
   audienceMembers?: Prisma.RecipeAudienceMemberUncheckedUpdateManyWithoutRecipeNestedInput
   memberPortions?: Prisma.RecipeMemberPortionUncheckedUpdateManyWithoutRecipeNestedInput
+  memberPreferences?: Prisma.RecipeMemberPreferenceUncheckedUpdateManyWithoutRecipeNestedInput
   categories?: Prisma.CategoryUncheckedUpdateManyWithoutRecipesNestedInput
   planSlots?: Prisma.PlanSlotUncheckedUpdateManyWithoutRecipeNestedInput
   planBatches?: Prisma.PlanBatchUncheckedUpdateManyWithoutRecipeNestedInput
@@ -2347,6 +2536,7 @@ export type RecipeCountOutputType = {
   images: number
   audienceMembers: number
   memberPortions: number
+  memberPreferences: number
   categories: number
   planSlots: number
   planBatches: number
@@ -2361,6 +2551,7 @@ export type RecipeCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions
   images?: boolean | RecipeCountOutputTypeCountImagesArgs
   audienceMembers?: boolean | RecipeCountOutputTypeCountAudienceMembersArgs
   memberPortions?: boolean | RecipeCountOutputTypeCountMemberPortionsArgs
+  memberPreferences?: boolean | RecipeCountOutputTypeCountMemberPreferencesArgs
   categories?: boolean | RecipeCountOutputTypeCountCategoriesArgs
   planSlots?: boolean | RecipeCountOutputTypeCountPlanSlotsArgs
   planBatches?: boolean | RecipeCountOutputTypeCountPlanBatchesArgs
@@ -2423,6 +2614,13 @@ export type RecipeCountOutputTypeCountMemberPortionsArgs<ExtArgs extends runtime
 /**
  * RecipeCountOutputType without action
  */
+export type RecipeCountOutputTypeCountMemberPreferencesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RecipeMemberPreferenceWhereInput
+}
+
+/**
+ * RecipeCountOutputType without action
+ */
 export type RecipeCountOutputTypeCountCategoriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.CategoryWhereInput
 }
@@ -2475,6 +2673,7 @@ export type RecipeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   images?: boolean | Prisma.Recipe$imagesArgs<ExtArgs>
   audienceMembers?: boolean | Prisma.Recipe$audienceMembersArgs<ExtArgs>
   memberPortions?: boolean | Prisma.Recipe$memberPortionsArgs<ExtArgs>
+  memberPreferences?: boolean | Prisma.Recipe$memberPreferencesArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   categories?: boolean | Prisma.Recipe$categoriesArgs<ExtArgs>
   planSlots?: boolean | Prisma.Recipe$planSlotsArgs<ExtArgs>
@@ -2539,6 +2738,7 @@ export type RecipeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   images?: boolean | Prisma.Recipe$imagesArgs<ExtArgs>
   audienceMembers?: boolean | Prisma.Recipe$audienceMembersArgs<ExtArgs>
   memberPortions?: boolean | Prisma.Recipe$memberPortionsArgs<ExtArgs>
+  memberPreferences?: boolean | Prisma.Recipe$memberPreferencesArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   categories?: boolean | Prisma.Recipe$categoriesArgs<ExtArgs>
   planSlots?: boolean | Prisma.Recipe$planSlotsArgs<ExtArgs>
@@ -2563,6 +2763,7 @@ export type $RecipePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     images: Prisma.$RecipeImagePayload<ExtArgs>[]
     audienceMembers: Prisma.$RecipeAudienceMemberPayload<ExtArgs>[]
     memberPortions: Prisma.$RecipeMemberPortionPayload<ExtArgs>[]
+    memberPreferences: Prisma.$RecipeMemberPreferencePayload<ExtArgs>[]
     user: Prisma.$UserPayload<ExtArgs>
     categories: Prisma.$CategoryPayload<ExtArgs>[]
     planSlots: Prisma.$PlanSlotPayload<ExtArgs>[]
@@ -2983,6 +3184,7 @@ export interface Prisma__RecipeClient<T, Null = never, ExtArgs extends runtime.T
   images<T extends Prisma.Recipe$imagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Recipe$imagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecipeImagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   audienceMembers<T extends Prisma.Recipe$audienceMembersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Recipe$audienceMembersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecipeAudienceMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   memberPortions<T extends Prisma.Recipe$memberPortionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Recipe$memberPortionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecipeMemberPortionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  memberPreferences<T extends Prisma.Recipe$memberPreferencesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Recipe$memberPreferencesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecipeMemberPreferencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   categories<T extends Prisma.Recipe$categoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Recipe$categoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CategoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   planSlots<T extends Prisma.Recipe$planSlotsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Recipe$planSlotsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PlanSlotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -3567,6 +3769,30 @@ export type Recipe$memberPortionsArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.RecipeMemberPortionScalarFieldEnum | Prisma.RecipeMemberPortionScalarFieldEnum[]
+}
+
+/**
+ * Recipe.memberPreferences
+ */
+export type Recipe$memberPreferencesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RecipeMemberPreference
+   */
+  select?: Prisma.RecipeMemberPreferenceSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RecipeMemberPreference
+   */
+  omit?: Prisma.RecipeMemberPreferenceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RecipeMemberPreferenceInclude<ExtArgs> | null
+  where?: Prisma.RecipeMemberPreferenceWhereInput
+  orderBy?: Prisma.RecipeMemberPreferenceOrderByWithRelationInput | Prisma.RecipeMemberPreferenceOrderByWithRelationInput[]
+  cursor?: Prisma.RecipeMemberPreferenceWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RecipeMemberPreferenceScalarFieldEnum | Prisma.RecipeMemberPreferenceScalarFieldEnum[]
 }
 
 /**

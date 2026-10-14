@@ -376,10 +376,10 @@ function IngredientsBody(props: PlanSlotIngredientsPanelProps) {
       variant="secondary"
       aria-label={`Batch meal ${props.batchLabel!.index} of ${props.batchLabel!.total}`}
     >
-      <span className="type-caption font-semibold">
-        <strong className="font-bold">{`${props.batchLabel!.index} of ${props.batchLabel!.total}`}</strong>
+      <span>
+        <span>{`${props.batchLabel!.index} of ${props.batchLabel!.total}`}</span>
         {props.batchLabel!.storageCount ? (
-          <span className="font-medium opacity-75">{` · ${props.batchLabel!.storageCount} in storage`}</span>
+          <span className="opacity-75">{` · ${props.batchLabel!.storageCount} in storage`}</span>
         ) : null}
       </span>
     </Badge>

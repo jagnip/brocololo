@@ -43,3 +43,12 @@ export const RecipeIngredientAdjustmentKind = {
 } as const
 
 export type RecipeIngredientAdjustmentKind = (typeof RecipeIngredientAdjustmentKind)[keyof typeof RecipeIngredientAdjustmentKind]
+
+
+export const RecipePreference = {
+  LIKE: 'LIKE',
+  LOVE: 'LOVE',
+  AVOID: 'AVOID'
+} as const
+
+export type RecipePreference = (typeof RecipePreference)[keyof typeof RecipePreference]

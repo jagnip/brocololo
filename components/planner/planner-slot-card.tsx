@@ -430,10 +430,10 @@ export function PlannerSlotCard({
                     onEditBatch();
                   }}
                 >
-                  <span className="type-caption font-semibold">
-                    <strong className="font-bold">{`${batchLabel.index} of ${batchLabel.total}`}</strong>
+                  <span>
+                    <span>{`${batchLabel.index} of ${batchLabel.total}`}</span>
                     {batchLabel.storageCount ? (
-                      <span className="font-medium opacity-75">{` · ${batchLabel.storageCount} in storage`}</span>
+                      <span className="opacity-75">{` · ${batchLabel.storageCount} in storage`}</span>
                     ) : null}
                   </span>
                 </button>
@@ -444,10 +444,10 @@ export function PlannerSlotCard({
                 className="absolute right-3 top-3 z-2 shadow-md"
                 aria-label={`Batch meal ${batchLabel.index} of ${batchLabel.total}${batchLabel.storageCount ? `, ${batchLabel.storageCount} in storage` : ""}`}
               >
-                <span className="type-caption font-semibold">
-                  <strong className="font-bold">{`${batchLabel.index} of ${batchLabel.total}`}</strong>
+                <span>
+                  <span>{`${batchLabel.index} of ${batchLabel.total}`}</span>
                   {batchLabel.storageCount ? (
-                    <span className="font-medium opacity-75">{` · ${batchLabel.storageCount} in storage`}</span>
+                    <span className="opacity-75">{` · ${batchLabel.storageCount} in storage`}</span>
                   ) : null}
                 </span>
               </Badge>

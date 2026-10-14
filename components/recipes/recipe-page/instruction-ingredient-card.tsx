@@ -66,20 +66,20 @@ function formatCompactAmount(
   return `${display.displayAmount}${unitSuffix}`;
 }
 
-/** Tier 2 — semibold chip label (matches ingredient member badges). */
+/** Chip labels and details inherit the shared badge typography. */
 function InstructionIngredientHeader({
   badgeParts,
 }: {
   badgeParts: ReturnType<typeof getInstructionIngredientBadgeParts>;
 }) {
   return (
-    <span className="type-caption font-semibold">
+    <span>
       <span>{badgeParts.ingredientName}</span>
       {badgeParts.amountUnit ? (
-        <span className="pl-0.5 font-medium opacity-75">{` ${badgeParts.amountUnit}`}</span>
+        <span className="pl-0.5 opacity-75">{` ${badgeParts.amountUnit}`}</span>
       ) : null}
       {badgeParts.additionalInfo ? (
-        <span className="font-medium opacity-75">{` · ${badgeParts.additionalInfo}`}</span>
+        <span className="opacity-75">{` · ${badgeParts.additionalInfo}`}</span>
       ) : null}
     </span>
   );
@@ -136,7 +136,7 @@ export function InstructionIngredientCard({
     );
   }
 
-  // Multi-person — grouped secondary chip; header tier 2, people tier 3.
+  // Multi-person shares stay grouped under the ingredient total.
   return (
     <div
       data-slot="badge"
@@ -163,7 +163,7 @@ export function InstructionIngredientCard({
             return (
               <div
                 key={COOK_SESSION_EXTRAS_SHARE_ID}
-                className="type-micro inline-flex items-center gap-x-tight font-medium opacity-75"
+                className="inline-flex items-center gap-x-tight opacity-75"
               >
                 <span
                   className="inline-block size-1.5 shrink-0 rounded-full bg-muted-foreground"
@@ -187,7 +187,7 @@ export function InstructionIngredientCard({
           return (
             <div
               key={share.familyMemberId}
-              className="type-micro inline-flex items-center gap-x-tight font-medium opacity-75"
+              className="inline-flex items-center gap-x-tight opacity-75"
             >
               <span
                 className="inline-block size-1.5 shrink-0 rounded-full"

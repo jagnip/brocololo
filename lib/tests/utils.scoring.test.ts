@@ -16,6 +16,7 @@ function createCtx(
     maxDaysSinceLastUsedCandidate: 30,
     fridgeIngredientIds: [],
     rollingRecipeIds: [],
+    currentAudienceFamilyMemberIds: [],
     ...overrides,
   };
 }
