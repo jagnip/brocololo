@@ -22,6 +22,13 @@ describe("RecipeNutritionPreviewSection", () => {
     expect(screen.getByText("12g protein")).toBeInTheDocument();
     expect(screen.getByText("6g fat")).toBeInTheDocument();
     expect(screen.getByText("22g carbs")).toBeInTheDocument();
+    for (const expectedOrder of [
+      ["100 kcal", "20g carbs", "10g protein", "5g fat"],
+      ["200 kcal", "22g carbs", "12g protein", "6g fat"],
+    ]) {
+      const badges = screen.getByText(expectedOrder[0]).parentElement!.children;
+      expect(Array.from(badges, (badge) => badge.textContent)).toEqual(expectedOrder);
+    }
     expect(
       screen.getByLabelText("Estimated nutrition preview by person"),
     ).toHaveAttribute("aria-live", "polite");

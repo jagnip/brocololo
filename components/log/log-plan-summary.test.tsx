@@ -60,6 +60,24 @@ describe("LogPlanSummary", () => {
 
     expect(screen.getAllByText("450 kcal")).toHaveLength(2);
     expect(screen.getByText("No entries")).toBeInTheDocument();
+
+    const averages = screen.getByRole("region", { name: "Average daily nutrition" });
+    expect(Array.from(averages.querySelectorAll("p"), (element) => element.textContent)).toEqual([
+      "Calories", "450 kcal",
+      "Carbs", "60.0 g",
+      "Protein", "20.0 g",
+      "Fat", "15.0 g",
+    ]);
+
+    const headers = screen.getByText("Date").parentElement!;
+    expect(Array.from(headers.children, (element) => element.textContent)).toEqual([
+      "Date", "Calories", "Carbs", "Protein", "Fat",
+    ]);
+
+    const rows = within(screen.getByRole("list", { name: "Daily nutrition statistics" })).getAllByRole("listitem");
+    expect(Array.from(rows[0]!.querySelectorAll("p"), (element) => element.textContent)).toEqual([
+      "Calories450 kcal", "Carbs60.0 g", "Protein20.0 g", "Fat15.0 g",
+    ]);
   });
 
   it("groups ingredient quantities under their recipe and keeps standalone ingredients separate", () => {

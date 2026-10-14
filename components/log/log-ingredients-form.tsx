@@ -301,12 +301,12 @@ export function LogIngredientsForm({
                 {macros.calories.toFixed(0)} kcal
               </Badge>
               <Badge variant="default">
+                {macros.carbs.toFixed(1)}g carbs
+              </Badge>
+              <Badge variant="default">
                 {macros.proteins.toFixed(1)}g protein
               </Badge>
               <Badge variant="default">{macros.fats.toFixed(1)}g fat</Badge>
-              <Badge variant="default">
-                {macros.carbs.toFixed(1)}g carbs
-              </Badge>
             </div>
           </section>
 
