@@ -629,6 +629,7 @@ export function useRecipePageNutritionSectionData() {
 export function useRecipePageInstructionsSectionData() {
   const {
     recipe,
+    ingredients,
     familyMembers,
     cookingFamilyMemberIds,
     audienceMemberIds,
@@ -648,6 +649,7 @@ export function useRecipePageInstructionsSectionData() {
 
   return {
     instructions: recipe.instructions,
+    ingredients,
     familyMembers: cookingMembers,
     recipeServings: recipe.servings,
     audienceMemberIds,

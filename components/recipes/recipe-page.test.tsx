@@ -722,6 +722,66 @@ describe("RecipePage nutrition integration", () => {
     expectInstructionStepTextToRemainVisible();
   });
 
+  it.each([false, true])("splits instruction replacements with their own people and units (changed unit: %s)", (changedUnit) => {
+    const { recipe } = createRecipeFixture();
+    const pork = createMockIngredient({
+      id: "pork",
+      name: "Pork mince",
+      unitConversions: [createMockIngredientUnit("pork", "unit-grams", 1, "grams")],
+    });
+    const chicken = createMockIngredient({
+      id: "chicken",
+      name: "Chicken mince",
+      unitConversions: [createMockIngredientUnit(
+        "chicken", changedUnit ? "unit-pieces" : "unit-grams", 1,
+        changedUnit ? "pieces" : "grams",
+      )],
+    });
+    const row: RecipeType["ingredients"][number] = {
+      ...createMockRecipeIngredient({
+        id: "ri-pork",
+        ingredientId: pork.id,
+        ingredient: pork,
+        amount: 400,
+        unitId: "unit-grams",
+        unit: createMockUnit({ id: "unit-grams", name: "grams" }),
+      }),
+      memberAdjustments: [{
+        familyMemberId: "family-self",
+        kind: "MODIFY",
+        ingredientId: chicken.id,
+        amount: changedUnit ? 2 : 200,
+        unitId: changedUnit ? "unit-pieces" : "unit-grams",
+        additionalInfo: null,
+      }],
+    };
+    const instruction = {
+      ...recipe.instructions[0],
+      text: "Fry pork or chicken",
+      ingredients: [{
+        instructionId: recipe.instructions[0].id,
+        recipeIngredientId: row.id,
+        recipeIngredient: row,
+      }],
+    };
+    renderRecipePage({
+      ...recipe,
+      memberPortions: [],
+      ingredients: [row],
+      instructions: [instruction],
+    }, [pork, chicken], mockFamilyMembers.map((member) => ({ ...member, portionMultiplier: 1 })));
+
+    const step = screen.getByText("Fry pork or chicken").closest("li")!;
+    const porkCard = within(step).getByText("Pork mince").closest('[data-slot="badge"]')!;
+    const chickenCard = within(step).getByText("Chicken mince").closest('[data-slot="badge"]')!;
+    expect(porkCard).toHaveTextContent("200 grams");
+    expect(within(porkCard as HTMLElement).getByText("N")).toBeInTheDocument();
+    expect(within(porkCard as HTMLElement).queryByText("J")).not.toBeInTheDocument();
+    expect(chickenCard).toHaveTextContent(changedUnit ? "2 pieces" : "200 grams");
+    expect(within(chickenCard as HTMLElement).getByText("J")).toBeInTheDocument();
+    expect(within(chickenCard as HTMLElement).queryByText("N")).not.toBeInTheDocument();
+  });
+
   it("combines global scaling with per-person instruction badges", async () => {
     const { recipe, ingredients } = createRecipeFixture();
     renderRecipePage(recipe, ingredients);
