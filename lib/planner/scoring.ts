@@ -17,8 +17,8 @@ export type ScoringContext = {
 };
 
 const RECIPE_PREFERENCE_SCORES = { LIKE: 0.5, LOVE: 1, AVOID: 0 } as const;
-// Keep the maximum bonus below the 1.5-point first-repeat penalty.
-const RECIPE_PREFERENCE_WEIGHT = 1;
+// Like adds up to 1 point and Love up to 2, below the maximum repeat penalty of 3.
+const RECIPE_PREFERENCE_WEIGHT = 2;
 
 export function isRecipeAvoidedByAudience(
   recipe: Pick<RecipeType, "memberPreferences">,

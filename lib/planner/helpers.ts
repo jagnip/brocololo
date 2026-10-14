@@ -162,7 +162,7 @@ export function markBatchSlots(
 
   for (let i = 1; placed < extraMeals; i++) {
     const futureDay = days[dayIndex + i];
-    if (!futureDay) break; // plan ends, waste remaining meals
+    if (!futureDay) break; // The caller accounts for meals that could not be scheduled.
 
     const futureSlotKey = `${futureDay.toISOString()}-${mealType}`;
     if (batchFilledSlots.has(futureSlotKey)) continue; // slot taken, skip to next day

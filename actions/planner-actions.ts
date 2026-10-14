@@ -80,12 +80,26 @@ export async function generatePlan(
     const remainingRolling = new Map(
       rollingRecipes.map((entry) => [entry.recipeId, entry.meals]),
     );
-    // Reserve the whole draft's rolling allocation before scheduling continuations.
+    // Reserve scheduled and stored rolling meals before scheduling continuations.
     for (const slot of existingByKey.values()) {
       if (slot.recipe && slot.isRolledOver && dayKeys.has(slot.date.toISOString())) {
         remainingRolling.set(
           slot.recipe.id,
           Math.max((remainingRolling.get(slot.recipe.id) ?? 0) - 1, 0),
+        );
+      }
+    }
+    for (const batch of existingBatches) {
+      const hasRetainedRollingSlot = [...existingByKey.values()].some(
+        (slot) => slot.isRolledOver && !slot.alreadyCooked &&
+          slot.batchGroupId === batch.id && slot.recipe?.id === batch.recipeId &&
+          dayKeys.has(slot.date.toISOString()),
+      );
+      if (hasRetainedRollingSlot) {
+        const storedMeals = batch.storageRows.reduce((count, row) => count + row.count, 0);
+        remainingRolling.set(
+          batch.recipeId,
+          Math.max((remainingRolling.get(batch.recipeId) ?? 0) - storedMeals, 0),
         );
       }
     }
@@ -99,7 +113,7 @@ export async function generatePlan(
     >();
     const generatedBatches = new Map<
       string,
-      { recipeId: string }
+      { recipeId: string; storageRows: PlanBatchInput["storageRows"] }
     >();
     const warnings: string[] = [];
     let emptySlotsAttempted = 0;
@@ -226,11 +240,6 @@ export async function generatePlan(
 
         if (batchGroupId) {
           batchGroupFlags.set(batchGroupId, flags);
-          if (winner.isBatchRecipe) {
-            generatedBatches.set(batchGroupId, {
-              recipeId: winner.id,
-            });
-          }
           const previousContinuationCount = batchFilledSlots.size;
           markBatchSlots(
             winner,
@@ -251,10 +260,21 @@ export async function generatePlan(
               reservedSlotKeys,
             },
           );
+          const unplacedMeals = totalMeals - 1 - (batchFilledSlots.size - previousContinuationCount);
+          const storageRows: PlanBatchInput["storageRows"] =
+            winner.isBatchRecipe && !flags.alreadyCooked && unplacedMeals > 0
+              ? [{ count: unplacedMeals, cookingFamilyMemberIds: [...slotAudienceIds] }]
+              : [];
+          if (winner.isBatchRecipe) {
+            generatedBatches.set(batchGroupId, {
+              recipeId: winner.id,
+              storageRows,
+            });
+          }
           if (rollingEntry) {
             remainingRolling.set(
               winner.id,
-              totalMeals - 1 - (batchFilledSlots.size - previousContinuationCount),
+              storageRows.length > 0 ? 0 : unplacedMeals,
             );
           }
         } else if (rollingEntry) {
@@ -286,7 +306,7 @@ export async function generatePlan(
           {
             id,
             recipeId: batch.recipeId,
-            storageRows: [],
+            storageRows: batch.storageRows,
             extraPortions: 0,
           },
         ];

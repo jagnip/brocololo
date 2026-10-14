@@ -66,6 +66,7 @@ export function PeopleSection() {
         {familyMembers.map((member, index) => {
           const name = member.name.trim() || (member.isSelf ? "You" : `Family member ${index}`);
           const row = nutritionRows.find((row) => row.familyMemberId === member.id);
+          if (!row) return null;
           const preference = recipe.memberPreferences.find((row) => row.familyMemberId === member.id)?.preference ?? "NEUTRAL";
           const { label, icon: PreferenceIcon } = preferenceDisplay[preference];
           const isAnchor = calorieTarget?.familyMemberId === member.id;
@@ -80,40 +81,38 @@ export function PeopleSection() {
             >
               <div className="flex flex-wrap items-center justify-between gap-item">
                 <span className="type-body min-w-0 break-words font-medium">{name}</span>
-                <Badge
-                  variant="secondary"
-                  className="shrink-0 text-muted-foreground"
-                  aria-label={`Recipe preference: ${label}`}
-                >
-                  <PreferenceIcon aria-hidden="true" className="size-3" />
-                  {label}
-                </Badge>
+                {preference !== "NEUTRAL" ? (
+                  <Badge
+                    variant="secondary"
+                    className="shrink-0 text-muted-foreground"
+                    aria-label={`Recipe preference: ${label}`}
+                  >
+                    <PreferenceIcon aria-hidden="true" className="size-3" />
+                    {label}
+                  </Badge>
+                ) : null}
               </div>
-              {row ? (
-                  <NutritionPersonSummaryRow
-                    caloriesArea={
-                      <EditableCaloriesField
-                        ariaLabel={caloriesAriaLabel(name)}
-                        value={
-                          isAnchor && calorieTarget ? calorieTarget.calories : null
-                        }
-                        placeholder={isFocused ? "" : row.nutrition.calories.toString()}
-                        onChange={(value) =>
-                          onCaloriesChange(row.familyMemberId, value)
-                        }
-                        onFocus={() =>
-                          setFocusedCaloriesMemberId(row.familyMemberId)
-                        }
-                        onBlur={() => setFocusedCaloriesMemberId(null)}
-                      />
+              <NutritionPersonSummaryRow
+                caloriesArea={
+                  <EditableCaloriesField
+                    ariaLabel={caloriesAriaLabel(name)}
+                    value={
+                      isAnchor && calorieTarget ? calorieTarget.calories : null
                     }
-                    protein={row.nutrition.protein}
-                    fat={row.nutrition.fat}
-                    carbs={row.nutrition.carbs}
+                    placeholder={isFocused ? "" : row.nutrition.calories.toString()}
+                    onChange={(value) =>
+                      onCaloriesChange(row.familyMemberId, value)
+                    }
+                    onFocus={() =>
+                      setFocusedCaloriesMemberId(row.familyMemberId)
+                    }
+                    onBlur={() => setFocusedCaloriesMemberId(null)}
                   />
-              ) : (
-                <p className="type-caption text-muted-foreground">Not included in Cooking For</p>
-              )}
+                }
+                protein={row.nutrition.protein}
+                fat={row.nutrition.fat}
+                carbs={row.nutrition.carbs}
+              />
             </Card>
           );
         })}

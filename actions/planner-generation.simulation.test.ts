@@ -135,7 +135,7 @@ describe("audience recipe preferences", () => {
     ]);
   }
 
-  it("rotates multiple loved solo breakfasts through unused neutral options", async () => {
+  it("prioritizes loved solo breakfasts but rotates to neutral options after two selections", async () => {
     const end = new Date("2026-04-26T00:00:00.000Z");
     setBreakfastCandidates([
       breakfastRecipe("neutral"),
@@ -147,8 +147,8 @@ describe("audience recipe preferences", () => {
     expect(result.type).toBe("success");
     if (result.type !== "success") return;
     const breakfasts = result.plan.filter((slot) => slot.mealType === "BREAKFAST");
-    expect(breakfasts.slice(0, 3).map((slot) => slot.recipe?.id)).toEqual(["love-a", "love-b", "neutral"]);
-    expect(new Set(breakfasts.map((slot) => slot.recipe?.id)).size).toBe(3);
+    expect(breakfasts.slice(0, 4).map((slot) => slot.recipe?.id)).toEqual(["love-a", "love-b", "love-a", "love-b"]);
+    expect(breakfasts[4]?.recipe?.id).toBe("neutral");
   });
 
   it("vetoes Love with any eater's Avoid, including alternatives and rolling", async () => {
@@ -454,7 +454,7 @@ describe("planner generation simulation with default time limits", () => {
       {
         id: dinners[0]!.batchGroupId,
         recipeId: "batch-dinner",
-        storageRows: [],
+        storageRows: [{ count: 2, cookingFamilyMemberIds: simulationAudienceFamilyMemberIds }],
         extraPortions: 0,
       },
     ]);

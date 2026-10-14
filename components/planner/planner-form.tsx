@@ -176,7 +176,10 @@ export function PlannerForm({
     null,
   );
   const [groupAudience, setGroupAudience] = useState<AudienceGroups>(() =>
-    createDefaultAudienceGroups(defaultFamilyMemberIds),
+    createDefaultAudienceGroups(
+      defaultFamilyMemberIds,
+      familyMembers.find((member) => member.isSelf)?.id,
+    ),
   );
   const previousDateRangeRef = useRef<DateRangeValue>(initialPlannerState.dateRange);
   const [pendingRangeRebuild, setPendingRangeRebuild] = useState<{

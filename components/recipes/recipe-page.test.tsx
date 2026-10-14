@@ -386,7 +386,7 @@ function expectNutritionToMatchScaledRecipe(
 }
 
 describe("RecipePage People", () => {
-  it("combines nutrition and all preferences in household order, not saved-row order", () => {
+  it("combines nutrition and non-neutral preferences in household order", () => {
     const { recipe, ingredients } = createRecipeFixture();
     const familyMembers: FamilyMemberRow[] = [
       ...mockFamilyMembers,
@@ -409,24 +409,33 @@ describe("RecipePage People", () => {
     ]);
     for (const [name, preference] of [["Jagoda", "Like"], ["Nelson", "Love"], ["Alex", "Avoid"], ["Sam", "Neutral"]]) {
       const card = within(section).getByRole("group", { name });
-      expect(within(card).getByLabelText(`Recipe preference: ${preference}`)).toBeInTheDocument();
+      if (preference === "Neutral") {
+        expect(within(card).queryByLabelText("Recipe preference: Neutral")).not.toBeInTheDocument();
+      } else {
+        expect(within(card).getByLabelText(`Recipe preference: ${preference}`)).toBeInTheDocument();
+      }
       expect(within(card).getByLabelText(`Calories per portion for ${name}`)).toBeInTheDocument();
       expect(within(card).queryByText("Per serving")).not.toBeInTheDocument();
     }
     expect(screen.queryByRole("region", { name: "Preferences" })).not.toBeInTheDocument();
   });
 
-  it("shows Neutral for every person when no preferences are stored", () => {
+  it("keeps every person's nutrition visible without badges when all are neutral", () => {
     const { recipe, ingredients } = createRecipeFixture();
     renderRecipePage({ ...recipe, memberPreferences: [] }, ingredients);
 
     expect(screen.queryByRole("region", { name: "Preferences" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Preferences" })).not.toBeInTheDocument();
     const section = screen.getByRole("region", { name: "People" });
-    expect(within(section).getAllByLabelText("Recipe preference: Neutral")).toHaveLength(2);
+    expect(within(section).queryByLabelText("Recipe preference: Neutral")).not.toBeInTheDocument();
+    for (const member of mockFamilyMembers) {
+      const card = within(section).getByRole("group", { name: member.name });
+      expect(within(card).getByText(member.name)).toBeInTheDocument();
+      expect(within(card).getByLabelText(`Calories per portion for ${member.name}`)).toBeInTheDocument();
+    }
   });
 
-  it("keeps excluded people and their preference visible without misleading nutrition", async () => {
+  it("hides excluded people's cards and restores nutrition and preference when reselected", async () => {
     const user = userEvent.setup();
     const { recipe, ingredients } = createRecipeFixture();
     renderRecipePage({
@@ -434,11 +443,13 @@ describe("RecipePage People", () => {
       memberPreferences: [{ familyMemberId: "family-member-1", preference: "LOVE" }],
     }, ingredients);
     await user.click(screen.getByRole("button", { name: "Remove Nelson for combination 1" }));
-    const card = within(screen.getByRole("region", { name: "People" })).getByRole("group", { name: "Nelson" });
-    expect(within(card).getByLabelText("Recipe preference: Love")).toBeInTheDocument();
-    expect(within(card).getByText("Not included in Cooking For")).toBeInTheDocument();
-    expect(within(card).queryByLabelText("Calories per portion for Nelson")).not.toBeInTheDocument();
+    const people = screen.getByRole("region", { name: "People" });
+    expect(within(people).queryByRole("group", { name: "Nelson" })).not.toBeInTheDocument();
+    expect(within(people).queryByLabelText("Recipe preference: Love")).not.toBeInTheDocument();
+    expect(within(people).getByRole("group", { name: "Jagoda" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Add Nelson for combination 1" }));
+    const card = within(people).getByRole("group", { name: "Nelson" });
+    expect(within(card).getByLabelText("Recipe preference: Love")).toBeInTheDocument();
     expect(within(card).getByLabelText("Calories per portion for Nelson")).toBeInTheDocument();
     expect(within(card).queryByText("Not included in Cooking For")).not.toBeInTheDocument();
   });

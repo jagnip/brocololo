@@ -42,9 +42,28 @@ describe("recipe preference scoring", () => {
     expect(result.alternatives.map((recipe) => recipe.id)).toEqual(["like", "neutral"]);
   });
 
-  it("prefers a fresh Neutral recipe to an already selected loved recipe", () => {
-    const loved = createMockRecipe({ id: "love", memberPreferences: [{ familyMemberId: "self", preference: "LOVE" }] });
+  it.each([
+    { preference: "LIKE" as const, timesUsed: 1, expected: "neutral" },
+    { preference: "LIKE" as const, timesUsed: 2, expected: "neutral" },
+    { preference: "LOVE" as const, timesUsed: 1, expected: "favorite" },
+    { preference: "LOVE" as const, timesUsed: 2, expected: "neutral" },
+  ])("calibrates the trial bonus against repeat penalties: %j", ({ preference, timesUsed, expected }) => {
+    const favorite = createMockRecipe({
+      id: "favorite",
+      memberPreferences: [{ familyMemberId: "self", preference }],
+    });
     const neutral = createMockRecipe({ id: "neutral" });
-    expect(pickBestCandidate([loved, neutral], { ...ctx, assignedSlots: [{ date: ctx.currentSlot.date, mealType: "BREAKFAST", recipe: loved, alternatives: [], customMeal: null, used: false }] }).winner.id).toBe("neutral");
+    const result = pickBestCandidate([favorite, neutral], {
+      ...ctx,
+      assignedSlots: Array.from({ length: timesUsed }, () => ({
+        date: ctx.currentSlot.date,
+        mealType: "BREAKFAST" as const,
+        recipe: favorite,
+        alternatives: [],
+        customMeal: null,
+        used: false,
+      })),
+    });
+    expect(result.winner.id).toBe(expected);
   });
 });
