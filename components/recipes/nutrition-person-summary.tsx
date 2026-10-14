@@ -73,9 +73,9 @@ export function NutritionPersonSummaryRow({
       {/* Left-aligned: kcal control, then macro badges as readouts. */}
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-tight">
         {caloriesArea}
+        <Badge variant="outline">{carbs}g carbs</Badge>
         <Badge variant="outline">{protein}g protein</Badge>
         <Badge variant="outline">{fat}g fat</Badge>
-        <Badge variant="outline">{carbs}g carbs</Badge>
       </div>
     </div>
   );

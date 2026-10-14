@@ -180,6 +180,15 @@ export function LogRecipeCard({
               isSelected && "border-primary/20 bg-background",
             )}
           >
+            {carbs.toFixed(1)}g carbs
+          </Badge>
+          <Badge
+            variant="outline"
+            className={cn(
+              "px-1 py-0 tabular-nums",
+              isSelected && "border-primary/20 bg-background",
+            )}
+          >
             {proteins.toFixed(1)}g protein
           </Badge>
           <Badge
@@ -190,15 +199,6 @@ export function LogRecipeCard({
             )}
           >
             {fats.toFixed(1)}g fat
-          </Badge>
-          <Badge
-            variant="outline"
-            className={cn(
-              "px-1 py-0 tabular-nums",
-              isSelected && "border-primary/20 bg-background",
-            )}
-          >
-            {carbs.toFixed(1)}g carbs
           </Badge>
         </div>
       </div>
