@@ -90,8 +90,9 @@ export async function generatePlan(
       }
     }
     for (const batch of existingBatches) {
+      // Retained Storage stays allocated even when the cooked toggle hides it.
       const hasRetainedRollingSlot = [...existingByKey.values()].some(
-        (slot) => slot.isRolledOver && !slot.alreadyCooked &&
+        (slot) => slot.isRolledOver &&
           slot.batchGroupId === batch.id && slot.recipe?.id === batch.recipeId &&
           dayKeys.has(slot.date.toISOString()),
       );
