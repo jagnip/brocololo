@@ -1,7 +1,7 @@
 /**
  * One-off production migration: new supermarket aisle taxonomy.
  *
- * 1. Upserts all rows from `INGREDIENT_CATEGORY_ORDER` (by slug).
+ * 1. Upserts all rows from `INGREDIENT_CATEGORY_SEEDS` (by slug).
  * 2. Sets each seed ingredient’s `category_id` from `ingredient-seed-objects.ts` (match by ingredient slug).
  * 3. Moves any remaining ingredients off legacy `IngredientCategory` slugs onto the new taxonomy.
  * 4. Syncs `shopping_list_items.ingredient_category_id` from linked ingredients (via `grocery_ingredients`).
@@ -20,7 +20,7 @@ import slugify from "slugify";
 import { prisma } from "../lib/db/index";
 import { rebuildAllShoppingLayoutPresetCategoryOrders } from "../lib/db/shopping-list";
 import {
-  INGREDIENT_CATEGORY_ORDER,
+  INGREDIENT_CATEGORY_SEEDS,
   type IngredientCategorySeedName,
 } from "./ingredient-categories.seed";
 import { ingredientSeedObjects } from "./ingredient-seed-objects";
@@ -31,27 +31,26 @@ function toSlug(value: string): string {
 
 /** Old `IngredientCategory.slug` values → new aisle (for rows not covered by seed slug updates). */
 const LEGACY_SLUG_TO_TARGET: Record<string, IngredientCategorySeedName> = {
-  produce: "Veg",
+  produce: "Fresh Vegetables",
   "dairy-and-eggs": "Milk & Eggs",
   "dairy-eggs": "Milk & Eggs",
   "dairy-eggs-and-cheese": "Milk & Eggs",
-  "grains-and-pasta": "Pasta, Rice & Beans",
-  "grains-pasta": "Pasta, Rice & Beans",
+  "grains-and-pasta": "Pasta, Rice & Grains",
+  "grains-pasta": "Pasta, Rice & Grains",
   "bread-and-bakery": "Bakery",
   "bread-wraps": "Bakery",
-  legumes: "Tinned Foods & Soups",
-  "nuts-and-seeds": "Snacks & Sweets",
-  "nuts-seeds": "Snacks & Sweets",
-  "oils-and-condiments": "Sauce & Condiments",
-  "oils-condiments": "Sauce & Condiments",
-  "spices-and-herbs": "Spices, Herbs & Seasonings",
-  "spices-herbs": "Spices, Herbs & Seasonings",
-  "canned-and-jarred": "Tinned Foods & Soups",
-  "canned-jarred": "Tinned Foods & Soups",
-  baking: "Baking Items",
-  frozen: "Frozen Foods",
-  sweeteners: "Baking Items",
-  other: "Others",
+  legumes: "Tinned Food & Soups",
+  "nuts-and-seeds": "Nuts, Snacks & Sweets",
+  "nuts-seeds": "Nuts, Snacks & Sweets",
+  "oils-and-condiments": "Sauces & Condiments",
+  "oils-condiments": "Sauces & Condiments",
+  "spices-and-herbs": "Herbs, Spices & Seasonings",
+  "spices-herbs": "Herbs, Spices & Seasonings",
+  "canned-and-jarred": "Tinned Food & Soups",
+  "canned-jarred": "Tinned Food & Soups",
+  baking: "Baking Ingredients",
+  sweeteners: "Baking Ingredients",
+  other: "Other",
 };
 
 /** Only these slugs are removed if still present after moves (avoids deleting user-created aisles). */
@@ -101,8 +100,8 @@ async function main() {
     throw new Error("DATABASE_URL is not set.");
   }
 
-  const allowedSlugs = new Set(
-    INGREDIENT_CATEGORY_ORDER.map((name) => toSlug(name)),
+  const allowedSlugs = new Set<string>(
+    INGREDIENT_CATEGORY_SEEDS.map(({ slug }) => slug),
   );
   const retiredCatalogSlugs = buildRetiredCatalogSlugSet();
   const obsoleteSlugList = [...retiredCatalogSlugs].filter(
@@ -141,7 +140,10 @@ async function main() {
     console.log(
       `Would reassign ${ingredientSeedObjects.length} seed rows by slug (${seedMatchCount} DB rows match those slugs).`,
     );
-    console.log("Would upsert categories:", INGREDIENT_CATEGORY_ORDER.join(", "));
+    console.log(
+      "Would upsert categories:",
+      INGREDIENT_CATEGORY_SEEDS.map(({ name }) => name).join(", "),
+    );
     console.log(
       `Would delete retired categories (slugs): ${obsoleteSlugList.join(", ") || "(none)"}`,
     );
@@ -152,8 +154,7 @@ async function main() {
     async (tx) => {
       // 1) Canonical categories (slug is stable id for upsert).
       const categoryIdByName = new Map<IngredientCategorySeedName, string>();
-      for (const [index, name] of INGREDIENT_CATEGORY_ORDER.entries()) {
-        const slug = toSlug(name);
+      for (const [index, { name, slug }] of INGREDIENT_CATEGORY_SEEDS.entries()) {
         const row = await tx.ingredientCategory.upsert({
           where: { slug },
           create: { name, slug, sortOrder: index },
@@ -204,8 +205,8 @@ async function main() {
         WHERE sli.grocery_ingredient_id = gi.id
       `;
 
-      const othersId = categoryIdByName.get("Others");
-      if (!othersId) throw new Error("Missing Others category");
+      const othersId = categoryIdByName.get("Other");
+      if (!othersId) throw new Error("Missing Other category");
 
       const obsoleteCats =
         obsoleteSlugList.length === 0

@@ -1,7 +1,10 @@
 // Ingredients-only seed data used by reset and seed scripts.
 // Keep this file focused on data so scripts stay small and testable.
 
-import type { IngredientCategorySeedName } from "./ingredient-categories.seed";
+import {
+  INGREDIENT_CATEGORY_SEEDS,
+  type IngredientCategorySeedName,
+} from "./ingredient-categories.seed";
 
 export type IngredientSeedObject = {
   name: string;
@@ -20,8 +23,12 @@ export type IngredientSeedObject = {
   supermarketUrl: string | null;
 };
 
-export const ingredientSeedObjects: IngredientSeedObject[] = [
-  // Veg & fruit (each row uses "Veg" or "Fruit")
+type RawIngredientSeedObject = Omit<IngredientSeedObject, "categoryName"> & {
+  categoryName: string;
+};
+
+const rawIngredientSeedObjects: RawIngredientSeedObject[] = [
+  // Fresh vegetables and fruit
   { name: "Apple", categoryName: "Fruit", nutritionPer100g: { calories: 52, proteins: 0.26, fats: 0.17, carbs: 13.81 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "piece", gramsPerUnit: 180 }], icon: "apple.svg", supermarketUrl: "https://www.continente.pt/produto/maca-pink-lady-continente-7303767.html" },
   { name: "Avocado", categoryName: "Veg", nutritionPer100g: { calories: 160, proteins: 2.0, fats: 14.66, carbs: 8.53 }, units: [{ unitName: "g", gramsPerUnit: 1 }], icon: "avocado.svg", supermarketUrl: "https://www.continente.pt/produto/abacate-hass-continente-2076390.html" },
   { name: "Banana", categoryName: "Fruit", nutritionPer100g: { calories: 89, proteins: 1.09, fats: 0.33, carbs: 22.84 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "piece", gramsPerUnit: 120 }], icon: "banana.svg", supermarketUrl: "https://www.continente.pt/produto/banana-continente-2597619.html" },
@@ -58,7 +65,7 @@ export const ingredientSeedObjects: IngredientSeedObject[] = [
   { name: "White onion", categoryName: "Veg", nutritionPer100g: { calories: 35, proteins: 0.89, fats: 0.13, carbs: 7.68 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "piece", gramsPerUnit: 110 }, { unitName: "tbsp", gramsPerUnit: 10 }, { unitName: "ring", gramsPerUnit: 5 }], icon: "onion.svg", supermarketUrl: "https://www.continente.pt/produto/cebola-continente-4891584.html" },
   { name: "Hokkaido pumpkin", categoryName: "Veg", nutritionPer100g: { calories: 41.99, proteins: 1.25, fats: 0.18, carbs: 10.48 }, units: [{ unitName: "g", gramsPerUnit: 1 }], icon: "pumpkin.svg", supermarketUrl: "https://www.continente.pt/produto/abobora-hokaido-biologica-continente-bio-continente-bio-3865996.html" },
 
-  // Chilled aisles (plant milks are under Beverages in this file)
+  // Chilled aisles (plant milks are under Drinks)
   { name: "Almond milk", categoryName: "Beverages", nutritionPer100g: { calories: 19.3, proteins: 0.66, fats: 1.56, carbs: 0.67 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "ml", gramsPerUnit: 1.03 }], icon: "milk.svg", supermarketUrl: "https://www.continente.pt/produto/bebida-vegetal-amendoa-sem-acucar-continente-equilibrio-8244198.html" },
   { name: "Butter", categoryName: "Cheese, Butter & Cream", nutritionPer100g: { calories: 717, proteins: 0.85, fats: 81.11, carbs: 0.06 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tsp", gramsPerUnit: 4.7 }, { unitName: "tbsp", gramsPerUnit: 14.2 }, { unitName: "cup", gramsPerUnit: 227 }], icon: "butter.svg", supermarketUrl: "https://www.continente.pt/produto/manteiga-com-sal-milhafre-2228159.html" },
   { name: "Cheddar", categoryName: "Cheese, Butter & Cream", nutritionPer100g: { calories: 408, proteins: 23.3, fats: 34.0, carbs: 2.44 }, units: [{ unitName: "g", gramsPerUnit: 1 }], icon: "cheddar.svg", supermarketUrl: "https://www.continente.pt/produto/queijo-emmental-ralado-president-4054579.html" },
@@ -90,7 +97,7 @@ export const ingredientSeedObjects: IngredientSeedObject[] = [
   // Fish & Seafood
   { name: "Ray fish (with skin, bone-in)", categoryName: "Fish & Seafood", nutritionPer100g: { calories: 82, proteins: 17.81, fats: 0.67, carbs: 0.0 }, units: [{ unitName: "g", gramsPerUnit: 1 }], icon: "stingray.svg", supermarketUrl: null },
 
-  // Pasta, Rice & Beans (+ oats under Cereal & Breakfast Foods)
+  // Pasta, rice and grains (+ oats under Cereals & Breakfast)
   { name: "Barley", categoryName: "Pasta, Rice & Beans", nutritionPer100g: { calories: 352, proteins: 9.91, fats: 1.16, carbs: 77.7 }, units: [{ unitName: "g", gramsPerUnit: 1 }], icon: "barley.svg", supermarketUrl: null },
   { name: "Buckwheat", categoryName: "Pasta, Rice & Beans", nutritionPer100g: { calories: 343, proteins: 13.25, fats: 3.4, carbs: 71.5 }, units: [{ unitName: "g", gramsPerUnit: 1 }], icon: "buckwheat.svg", supermarketUrl: "https://www.continente.pt/produto/trigo-sarraceno-seara-2962907.html" },
   { name: "Egg noodles", categoryName: "Pasta, Rice & Beans", nutritionPer100g: { calories: 384, proteins: 14.2, fats: 4.44, carbs: 71.3 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "nest", gramsPerUnit: 60 }], icon: "fettuccine.svg", supermarketUrl: "https://www.continente.pt/produto/massa-noodles-de-ovo-blue-dragon-8041413.html" },
@@ -133,7 +140,7 @@ export const ingredientSeedObjects: IngredientSeedObject[] = [
   { name: "Rapeseed oil", categoryName: "Oils & Dressings", nutritionPer100g: { calories: 884, proteins: 0.0, fats: 100.0, carbs: 0.0 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tsp", gramsPerUnit: 4.5 }, { unitName: "tbsp", gramsPerUnit: 13.5 }, { unitName: "ml", gramsPerUnit: 0.92 }], icon: "oil.svg", supermarketUrl: "https://www.continente.pt/produto/oleo-de-girassol-puro-fula-4403919.html" },
 
   // Spices, Herbs & Seasonings
-  { name: "Almond extract", categoryName: "Spices, Herbs & Seasonings", nutritionPer100g: { calories: 0.0, proteins: 0.0, fats: 0.0, carbs: 0.0 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tsp", gramsPerUnit: 4.2 }], icon: "vanilla-extract.svg", supermarketUrl: "https://www.continente.pt/pesquisa/?q=AROMA+AM%C3%8ANDOA" },
+  { name: "Almond extract", categoryName: "Baking Ingredients", nutritionPer100g: { calories: 0.0, proteins: 0.0, fats: 0.0, carbs: 0.0 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tsp", gramsPerUnit: 4.2 }], icon: "vanilla-extract.svg", supermarketUrl: "https://www.continente.pt/pesquisa/?q=AROMA+AM%C3%8ANDOA" },
   { name: "Basil (dried)", categoryName: "Spices, Herbs & Seasonings", nutritionPer100g: { calories: 233, proteins: 23.0, fats: 4.07, carbs: 47.8 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tsp", gramsPerUnit: 1 }], icon: "basil.svg", supermarketUrl: "https://www.continente.pt/produto/manjericao-folha-em-frasco-margao-5585691.html" },
   { name: "Bay leaf", categoryName: "Spices, Herbs & Seasonings", nutritionPer100g: { calories: 313, proteins: 7.61, fats: 8.36, carbs: 75.0 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "piece", gramsPerUnit: 0.2 }], icon: "bay-leaves.svg", supermarketUrl: "https://www.continente.pt/produto/louro-folha-em-saqueta-continente-6046671.html" },
   { name: "Black pepper", categoryName: "Spices, Herbs & Seasonings", nutritionPer100g: { calories: 251, proteins: 10.4, fats: 3.26, carbs: 64.0 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tsp", gramsPerUnit: 2.3 }, { unitName: "pinch", gramsPerUnit: 0.36 }], icon: "pepper-black.svg", supermarketUrl: "https://www.continente.pt/produto/mistura-de-pimentas-em-grao-em-saqueta-margao-7626343.html" },
@@ -147,14 +154,14 @@ export const ingredientSeedObjects: IngredientSeedObject[] = [
   { name: "Nutmeg", categoryName: "Spices, Herbs & Seasonings", nutritionPer100g: { calories: 525, proteins: 5.84, fats: 36.3, carbs: 49.3 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tsp", gramsPerUnit: 2.2 }], icon: "nutmeg.svg", supermarketUrl: "https://www.continente.pt/produto/noz-moscada-moida-em-frasco-margao-2826908.html" },
   { name: "Oregano (dried)", categoryName: "Spices, Herbs & Seasonings", nutritionPer100g: { calories: 265, proteins: 9.0, fats: 4.28, carbs: 68.9 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tsp", gramsPerUnit: 1 }], icon: "oregano.svg", supermarketUrl: "https://www.continente.pt/produto/oregaos-folha-em-saqueta-continente-6057213.html" },
 
-  // Tinned Foods & Soups (jars / stocks / tomatoes)
+  // Tinned food and soups (jars / stocks / tomatoes)
   { name: "Chicken stock", categoryName: "Tinned Foods & Soups", nutritionPer100g: { calories: 6, proteins: 0.64, fats: 0.21, carbs: 0.44 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "ml", gramsPerUnit: 1 }, { unitName: "l", gramsPerUnit: 1000 }], icon: "canned.svg", supermarketUrl: "https://www.continente.pt/produto/caldo-de-galinha-cubos-continente-6447115.html" },
-  { name: "Cranberry sauce", categoryName: "Tinned Foods & Soups", nutritionPer100g: { calories: 159, proteins: 0.9, fats: 0.15, carbs: 40.4 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tbsp", gramsPerUnit: 17 }], icon: "sauce-jar.svg", supermarketUrl: null },
+  { name: "Cranberry sauce", categoryName: "Sauces & Condiments", nutritionPer100g: { calories: 159, proteins: 0.9, fats: 0.15, carbs: 40.4 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tbsp", gramsPerUnit: 17 }], icon: "sauce-jar.svg", supermarketUrl: null },
   { name: "Passata", categoryName: "Tinned Foods & Soups", nutritionPer100g: { calories: 29.1, proteins: 1.35, fats: 0.38, carbs: 6.33 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tbsp", gramsPerUnit: 15 }, { unitName: "tsp", gramsPerUnit: 5 }], icon: "pasta-sauce.svg", supermarketUrl: "https://www.continente.pt/produto/tomate-para-pizza-mutti-4049455.html" },
   { name: "Tomato puree", categoryName: "Tinned Foods & Soups", nutritionPer100g: { calories: 34.8, proteins: 1.58, fats: 0.27, carbs: 8.04 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tbsp", gramsPerUnit: 16 }, { unitName: "tsp", gramsPerUnit: 5 }], icon: "pasta-sauce.svg", supermarketUrl: "https://www.continente.pt/produto/tomate-concentrado-compal-da-horta-5156834.html" },
   { name: "Tomatoes (tinned, chopped)", categoryName: "Tinned Foods & Soups", nutritionPer100g: { calories: 18, proteins: 0.84, fats: 0.5, carbs: 3.32 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tbsp", gramsPerUnit: 15 }], icon: "tomato.svg", supermarketUrl: "https://www.continente.pt/produto/tomate-em-pedacos-continente-4310776.html" },
 
-  // Baking Items
+  // Baking ingredients
   { name: "Breadcrumbs", categoryName: "Baking Items", nutritionPer100g: { calories: 395, proteins: 13.4, fats: 5.3, carbs: 72.0 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tbsp", gramsPerUnit: 7 }], icon: "bread.svg", supermarketUrl: "https://www.continente.pt/produto/pao-ralado-3854224.html" },
   { name: "Cacao powder", categoryName: "Baking Items", nutritionPer100g: { calories: 228, proteins: 19.6, fats: 13.7, carbs: 57.9 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tbsp", gramsPerUnit: 5 }], icon: "cocoa.svg", supermarketUrl: "https://www.continente.pt/produto/cacau-magro-em-po-continente-equilibrio-2536010.html" },
   { name: "Cake flour", categoryName: "Baking Items", nutritionPer100g: { calories: 362, proteins: 8.2, fats: 0.86, carbs: 78.0 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "kg", gramsPerUnit: 1000 }, { unitName: "cup", gramsPerUnit: 120 }, { unitName: "tbsp", gramsPerUnit: 8 }, { unitName: "tsp", gramsPerUnit: 2.7 }], icon: "flour.svg", supermarketUrl: "https://www.continente.pt/produto/farinha-de-trigo-para-bolos-com-fermento-nacional-nacional-7683654.html" },
@@ -164,18 +171,63 @@ export const ingredientSeedObjects: IngredientSeedObject[] = [
   { name: "Plain flour", categoryName: "Baking Items", nutritionPer100g: { calories: 366, proteins: 10.9, fats: 1.48, carbs: 77.3 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "kg", gramsPerUnit: 1000 }, { unitName: "cup", gramsPerUnit: 120 }, { unitName: "tbsp", gramsPerUnit: 8 }, { unitName: "tsp", gramsPerUnit: 2.7 }], icon: "flour.svg", supermarketUrl: "https://www.continente.pt/produto/farinha-de-trigo-t55-continente-2388667.html" },
   { name: "Potato starch", categoryName: "Baking Items", nutritionPer100g: { calories: 357, proteins: 0.1, fats: 0.1, carbs: 83.1 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tsp", gramsPerUnit: 2.7 }, { unitName: "tbsp", gramsPerUnit: 8.1 }], icon: "potato.svg", supermarketUrl: "https://www.continente.pt/produto/fecula-de-batata-cimarrom-6902535.html" },
 
-  // Frozen Foods
-  { name: "Frozen peas", categoryName: "Frozen Foods", nutritionPer100g: { calories: 53, proteins: 3.4, fats: 0.47, carbs: 11.2 }, units: [{ unitName: "g", gramsPerUnit: 1 }], icon: "peas.svg", supermarketUrl: "https://www.continente.pt/produto/ervilhas-continente-7917955.html" },
-  { name: "Frozen seafood mix", categoryName: "Frozen Foods", nutritionPer100g: { calories: 70, proteins: 12.0, fats: 1.0, carbs: 2.0 }, units: [{ unitName: "g", gramsPerUnit: 1 }], icon: "fish.svg", supermarketUrl: "https://www.continente.pt/produto/cocktail-de-marisco-congelado-continente-continente-7577623.html" },
+  // Frozen aisles
+  { name: "Frozen peas", categoryName: "Frozen Vegetables", nutritionPer100g: { calories: 53, proteins: 3.4, fats: 0.47, carbs: 11.2 }, units: [{ unitName: "g", gramsPerUnit: 1 }], icon: "peas.svg", supermarketUrl: "https://www.continente.pt/produto/ervilhas-continente-7917955.html" },
+  { name: "Frozen seafood mix", categoryName: "Frozen Fish & Seafood", nutritionPer100g: { calories: 70, proteins: 12.0, fats: 1.0, carbs: 2.0 }, units: [{ unitName: "g", gramsPerUnit: 1 }], icon: "fish.svg", supermarketUrl: "https://www.continente.pt/produto/cocktail-de-marisco-congelado-continente-continente-7577623.html" },
 
-  // Sweeteners (mostly Baking Items; tablets / alternatives → Snacks & Sweets)
+  // Sweeteners
   { name: "Brown sugar", categoryName: "Baking Items", nutritionPer100g: { calories: 380, proteins: 0.12, fats: 0.0, carbs: 98.1 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "cup", gramsPerUnit: 200 }, { unitName: "tsp", gramsPerUnit: 4.2 }], icon: "sugar.svg", supermarketUrl: "https://www.continente.pt/produto/acucar-mascavado-continente-7352655.html" },
-  { name: "Erythritol", categoryName: "Snacks & Sweets", nutritionPer100g: { calories: 0.0, proteins: 0.0, fats: 0.0, carbs: 0.0 }, units: [{ unitName: "g", gramsPerUnit: 1 }], icon: "stevia.svg", supermarketUrl: "https://www.amazon.es/s?k=erythritol&crid=1VA3NUBZINY7O&sprefix=erythritol%2Caps%2C95&ref=nb_sb_noss_1" },
+  { name: "Erythritol", categoryName: "Baking Ingredients", nutritionPer100g: { calories: 0.0, proteins: 0.0, fats: 0.0, carbs: 0.0 }, units: [{ unitName: "g", gramsPerUnit: 1 }], icon: "stevia.svg", supermarketUrl: "https://www.amazon.es/s?k=erythritol&crid=1VA3NUBZINY7O&sprefix=erythritol%2Caps%2C95&ref=nb_sb_noss_1" },
   { name: "Honey", categoryName: "Baking Items", nutritionPer100g: { calories: 304, proteins: 0.3, fats: 0.0, carbs: 82.4 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tsp", gramsPerUnit: 7 }, { unitName: "tbsp", gramsPerUnit: 21 }], icon: "honey.svg", supermarketUrl: "https://www.continente.pt/produto/mel-flores-continente-4728172.html" },
   { name: "Pistachio cream", categoryName: "Snacks & Sweets", nutritionPer100g: { calories: 561, proteins: 20.5, fats: 45.0, carbs: 27.7 }, units: [{ unitName: "g", gramsPerUnit: 1 }], icon: "pistachio.svg", supermarketUrl: "https://www.continente.pt/produto/pasta-de-pistacio-continente-equilibrio-8112033.html" },
   { name: "Sugar (powdered)", categoryName: "Baking Items", nutritionPer100g: { calories: 389, proteins: 0.0, fats: 0.0, carbs: 99.8 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tbsp", gramsPerUnit: 8 }], icon: "sugar02.svg", supermarketUrl: "https://www.continente.pt/produto/acucar-em-po-sidul-sidul-6167995.html" },
-  { name: "Sweetener tablets", categoryName: "Snacks & Sweets", nutritionPer100g: { calories: 0.0, proteins: 0.0, fats: 0.0, carbs: 0.0 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tablet", gramsPerUnit: 0.1 }], icon: "stevia.svg", supermarketUrl: "https://www.continente.pt/produto/adocante-100-sticks-canderel-2917206.html" },
+  { name: "Sweetener tablets", categoryName: "Baking Ingredients", nutritionPer100g: { calories: 0.0, proteins: 0.0, fats: 0.0, carbs: 0.0 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "tablet", gramsPerUnit: 0.1 }], icon: "stevia.svg", supermarketUrl: "https://www.continente.pt/produto/adocante-100-sticks-canderel-2917206.html" },
 
-  // Beverages (spirits)
+  // Drinks (spirits)
   { name: "Dark rum", categoryName: "Beverages", nutritionPer100g: { calories: 231, proteins: 0.0, fats: 0.0, carbs: 0.0 }, units: [{ unitName: "g", gramsPerUnit: 1 }, { unitName: "cup", gramsPerUnit: 237 }, { unitName: "tbsp", gramsPerUnit: 14 }], icon: "rum-liquor.svg", supermarketUrl: "https://www.continente.pt/produto/havana-club-rum-anejo-especial-havana-club-8076046.html" },
 ];
+
+// Normalize historical fixture labels while keeping exported seed data canonical.
+const LEGACY_CATEGORY_NAME_ALIASES: Record<
+  string,
+  IngredientCategorySeedName
+> = {
+  Bakery: "Bakery",
+  Veg: "Fresh Vegetables",
+  Fruit: "Fresh Fruit",
+  "Coffee & Tea": "Coffee & Tea",
+  "Pasta, Rice & Beans": "Pasta, Rice & Grains",
+  "Snacks & Sweets": "Nuts, Snacks & Sweets",
+  "Spices, Herbs & Seasonings": "Herbs, Spices & Seasonings",
+  "Tinned Foods & Soups": "Tinned Food & Soups",
+  "Oils & Dressings": "Oils & Vinegars",
+  "Kitchen & Cleaning": "Household & Cleaning",
+  "Personal Care & Health": "Personal Care & Health",
+  "Sauce & Condiments": "Sauces & Condiments",
+  Beverages: "Drinks",
+  "Cereal & Breakfast Foods": "Cereals & Breakfast",
+  "Baking Items": "Baking Ingredients",
+  "Milk & Eggs": "Milk & Eggs",
+  "Yogurt & Chilled Desserts": "Yogurt & Chilled Desserts",
+  "Cheese, Butter & Cream": "Cheese, Butter & Cream",
+  "Meat & Poultry": "Meat & Poultry",
+  "Fish & Seafood": "Fish & Seafood",
+  Others: "Other",
+};
+
+const CANONICAL_CATEGORY_NAMES = new Map<string, IngredientCategorySeedName>(
+  INGREDIENT_CATEGORY_SEEDS.map(({ name }) => [name, name]),
+);
+
+export const ingredientSeedObjects: IngredientSeedObject[] =
+  rawIngredientSeedObjects.map((ingredient) => {
+    const categoryName =
+      CANONICAL_CATEGORY_NAMES.get(ingredient.categoryName) ??
+      LEGACY_CATEGORY_NAME_ALIASES[ingredient.categoryName];
+    if (!categoryName) {
+      throw new Error(
+        `Unknown seed category "${ingredient.categoryName}" for "${ingredient.name}".`,
+      );
+    }
+    return { ...ingredient, categoryName };
+  });
