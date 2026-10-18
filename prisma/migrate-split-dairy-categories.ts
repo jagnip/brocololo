@@ -2,7 +2,7 @@
  * Splits the retired "Dairy, Eggs & Cheese" aisle into:
  *   Milk & Eggs | Yogurt & Chilled Desserts | Cheese, Butter & Cream
  *
- * 1. Upserts the full `INGREDIENT_CATEGORY_ORDER` (with the three new aisles).
+ * 1. Upserts the full `INGREDIENT_CATEGORY_SEEDS` taxonomy.
  * 2. Moves every ingredient still on the old dairy aisle(s) using slug map + heuristics.
  * 3. Reassigns seed ingredients from `ingredient-seed-objects.ts` (by slug).
  * 4. Syncs `shopping_list_items.ingredient_category_id` from linked ingredients.
@@ -19,7 +19,7 @@ import slugify from "slugify";
 import { prisma } from "../lib/db/index";
 import { rebuildAllShoppingLayoutPresetCategoryOrders } from "../lib/db/shopping-list";
 import {
-  INGREDIENT_CATEGORY_ORDER,
+  INGREDIENT_CATEGORY_SEEDS,
   type IngredientCategorySeedName,
 } from "./ingredient-categories.seed";
 import { ingredientSeedObjects } from "./ingredient-seed-objects";
@@ -106,7 +106,10 @@ async function main() {
   }
 
   if (dryRun) {
-    console.log("\nWould upsert categories:", INGREDIENT_CATEGORY_ORDER.join(", "));
+    console.log(
+      "\nWould upsert categories:",
+      INGREDIENT_CATEGORY_SEEDS.map(({ name }) => name).join(", "),
+    );
     console.log("Would delete obsolete slugs:", OLD_DAIRY_CATEGORY_SLUGS.join(", "));
     return;
   }
@@ -115,8 +118,7 @@ async function main() {
     async (tx) => {
       // 1) Full canonical category list (includes the three new dairy aisles).
       const categoryIdByName = new Map<IngredientCategorySeedName, string>();
-      for (const [index, name] of INGREDIENT_CATEGORY_ORDER.entries()) {
-        const slug = toSlug(name);
+      for (const [index, { name, slug }] of INGREDIENT_CATEGORY_SEEDS.entries()) {
         const row = await tx.ingredientCategory.upsert({
           where: { slug },
           create: { name, slug, sortOrder: index },

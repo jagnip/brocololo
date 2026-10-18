@@ -3,8 +3,8 @@
     // Canonical ingredient name (single name only)
     name: "Apple",
 
-    // Must match an `IngredientCategory.name` from `INGREDIENT_CATEGORY_ORDER` in `ingredient-categories.seed.ts`
-    category: "Fruit",
+    // Must match an `IngredientCategory.name` from `INGREDIENT_CATEGORY_SEEDS` in `ingredient-categories.seed.ts`
+    category: "Fresh Fruit",
 
     // Required nutrition fields in your schema (per 100g)
     nutritionPer100g: {

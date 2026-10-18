@@ -1,7 +1,7 @@
 import "dotenv/config";
 import slugify from "slugify";
 import { prisma } from "../lib/db/index";
-import { INGREDIENT_CATEGORY_ORDER } from "./ingredient-categories.seed";
+import { INGREDIENT_CATEGORY_SEEDS } from "./ingredient-categories.seed";
 import { ingredientSeedObjects } from "./ingredient-seed-objects";
 
 function toSlug(value: string): string {
@@ -18,15 +18,15 @@ async function main() {
   await prisma.$transaction(async (tx) => {
     // Create ingredient categories in a stable display order.
     const categoryByName = new Map<string, string>();
-    for (const [index, categoryName] of INGREDIENT_CATEGORY_ORDER.entries()) {
+    for (const [index, categorySeed] of INGREDIENT_CATEGORY_SEEDS.entries()) {
       const category = await tx.ingredientCategory.create({
         data: {
-          name: categoryName,
-          slug: toSlug(categoryName),
+          name: categorySeed.name,
+          slug: categorySeed.slug,
           sortOrder: index,
         },
       });
-      categoryByName.set(categoryName, category.id);
+      categoryByName.set(categorySeed.name, category.id);
     }
 
     // Create only units needed by ingredient seed data.
