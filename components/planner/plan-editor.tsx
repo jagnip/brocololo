@@ -18,6 +18,7 @@ import {
   formatRangeChangeDialogTitle,
 } from "@/lib/planner/planner-range-messages";
 import { getPlanSlotKey, placeRecipeOnPlan } from "@/lib/planner/helpers";
+import { getCustomMealContentKey } from "@/lib/planner/custom-meal-identity";
 import { rearrangePlanSlots } from "@/lib/planner/rearrange-plan-slots";
 import {
   detachMealFromBatch,
@@ -357,10 +358,15 @@ export function PlanEditor({
         if (getPlanSlotKey(slot) !== slotKey) return slot;
 
         if (payload.kind === "custom") {
+          const keepsSameCustom = currentSlot?.customMeal != null &&
+            getCustomMealContentKey(currentSlot.customMeal) === getCustomMealContentKey({
+              name: payload.name,
+              ingredients: payload.ingredients,
+            });
           return {
             ...slot,
             recipe: null,
-            isRolledOver: false,
+            isRolledOver: keepsSameCustom ? (slot.isRolledOver ?? false) : false,
             alreadyCooked: false,
             customMeal: {
               name: payload.name,

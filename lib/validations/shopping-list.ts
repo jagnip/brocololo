@@ -78,7 +78,9 @@ export type SaveShoppingListEditsPayload = z.infer<
 export const groceryGenerationExclusionsSchema = z.object({
   excludedRecipeIds: z.array(z.string().min(1)),
   includedAvailableRecipeIds: z.array(z.string().min(1)).optional(),
-  excludedCustomMealNames: z.array(z.string().min(1)),
+  excludedCustomMealKeys: z.array(z.string().min(1)).optional(),
+  excludedCustomMealNames: z.array(z.string().min(1)).optional(),
+  includedAvailableCustomMealKeys: z.array(z.string().min(1)).optional(),
 });
 
 export type GroceryGenerationExclusionsPayload = z.infer<

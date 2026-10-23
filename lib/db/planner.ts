@@ -12,6 +12,8 @@ import {
   Prisma,
 } from "@/src/generated/client";
 import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
+import { getRollingCustomMealKey } from "@/lib/planner/custom-meal-identity";
+import type { RollingMealType } from "@/lib/validations/planner";
 import { prisma } from "./index";
 
 const recipeInclude = {
@@ -282,13 +284,33 @@ function slotSaveDataToCreateData(s: SlotSaveData) {
 export async function getPlans(userId: string) {
   return prisma.plan.findMany({
     where: { userId },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     select: { id: true, startDate: true, endDate: true },
   });
 }
 
 /** Dedupes within a single RSC request (e.g. layout + page both need the plan list). */
 export const getPlansCached = cache(getPlans);
+
+/** The only plans exposed through the in-product switcher. */
+export async function getRecentPlans(userId: string) {
+  return prisma.plan.findMany({
+    where: { userId },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: 5,
+    select: { id: true, startDate: true, endDate: true },
+  });
+}
+
+export const getRecentPlansCached = cache(getRecentPlans);
+
+/** Ownership check for detail pages, including plans outside the switcher window. */
+export async function getPlanSummaryById(userId: string, planId: string) {
+  return prisma.plan.findFirst({
+    where: { id: planId, userId },
+    select: { id: true, startDate: true, endDate: true },
+  });
+}
 
 /**
  * Returns canonical UTC day keys (YYYY-MM-DD) already owned by plans/logs.
@@ -314,7 +336,7 @@ export async function getOccupiedDateKeysForPlanning(userId: string) {
 export async function getLatestPlanId(userId: string) {
   const plan = await prisma.plan.findFirst({
     where: { userId },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     select: { id: true },
   });
   return plan?.id ?? null;
@@ -333,8 +355,88 @@ export async function deletePlanById(userId: string, planId: string) {
   });
 }
 
-// Returns unused recipes from the most recent plan, grouped by recipeId.
-// meals = unused scheduled slots plus all stored meals; anonymous extras are ignored.
+// Returns unused meals from the four newest plans. Each identity comes from its
+// newest source plan so rolling the same meal forward never inflates its count.
+export async function getUnusedMealsFromRecentPlans(userId: string): Promise<RollingMealType[]> {
+  const recentPlans = await prisma.plan.findMany({
+    where: { userId },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: 4,
+    select: {
+      batches: {
+        select: {
+          recipeId: true,
+          recipe: { select: { excludeFromPlanner: true } },
+          storageRows: { select: { count: true } },
+        },
+      },
+      slots: {
+        where: { used: false },
+        select: {
+          mealType: true,
+          recipeId: true,
+          customName: true,
+          customIngredients: {
+            orderBy: { position: "asc" },
+            select: { ingredientId: true, unitId: true, amount: true },
+          },
+          recipe: { select: { excludeFromPlanner: true } },
+        },
+      },
+    },
+  });
+
+  const seenRecipeIds = new Set<string>();
+  const seenCustomKeys = new Set<string>();
+  const meals: RollingMealType[] = [];
+
+  for (const plan of recentPlans) {
+    const recipeCounts = new Map<string, number>();
+    const customCounts = new Map<string, { mealType: PlannerMealType; customMeal: PlanCustomMeal; meals: number }>();
+
+    for (const slot of plan.slots) {
+      if (slot.recipeId) {
+        if (!slot.recipe?.excludeFromPlanner) {
+          recipeCounts.set(slot.recipeId, (recipeCounts.get(slot.recipeId) ?? 0) + 1);
+        }
+        continue;
+      }
+      if (!slot.customName) continue;
+      const customMeal = { name: slot.customName, ingredients: slot.customIngredients };
+      const key = getRollingCustomMealKey(slot.mealType, customMeal);
+      const existing = customCounts.get(key);
+      if (existing) existing.meals += 1;
+      else customCounts.set(key, { mealType: slot.mealType, customMeal, meals: 1 });
+    }
+
+    for (const batch of plan.batches) {
+      if (batch.recipe.excludeFromPlanner) continue;
+      const storedMeals = batch.storageRows.reduce((sum, row) => sum + row.count, 0);
+      if (storedMeals > 0) {
+        recipeCounts.set(batch.recipeId, (recipeCounts.get(batch.recipeId) ?? 0) + storedMeals);
+      }
+    }
+
+    for (const [recipeId, mealsCount] of recipeCounts) {
+      if (seenRecipeIds.has(recipeId) || mealsCount < 1) continue;
+      seenRecipeIds.add(recipeId);
+      meals.push({ kind: "recipe", recipeId, meals: mealsCount, alreadyCooked: false });
+    }
+    for (const [key, entry] of customCounts) {
+      if (seenCustomKeys.has(key) || entry.meals < 1) continue;
+      seenCustomKeys.add(key);
+      meals.push({ kind: "custom", ...entry });
+    }
+  }
+
+  return meals.toSorted((left, right) => {
+    const leftKey = left.kind === "custom" ? `custom:${getRollingCustomMealKey(left.mealType, left.customMeal)}` : `recipe:${left.recipeId}`;
+    const rightKey = right.kind === "custom" ? `custom:${getRollingCustomMealKey(right.mealType, right.customMeal)}` : `recipe:${right.recipeId}`;
+    return leftKey.localeCompare(rightKey);
+  });
+}
+
+/** @deprecated Use getUnusedMealsFromRecentPlans for recipe and custom rolling entries. */
 export async function getUnusedRecipesFromLatestPlan(userId: string) {
   const latestPlan = await prisma.plan.findFirst({
     where: { userId },
@@ -349,36 +451,23 @@ export async function getUnusedRecipesFromLatestPlan(userId: string) {
       },
       slots: {
         where: { used: false, recipeId: { not: null } },
-        select: {
-          recipeId: true,
-          recipe: { select: { excludeFromPlanner: true } },
-        },
+        select: { recipeId: true, recipe: { select: { excludeFromPlanner: true } } },
       },
     },
   });
-
   if (!latestPlan) return [];
-
   const countsById = new Map<string, number>();
   for (const slot of latestPlan.slots) {
-    if (slot.recipe?.excludeFromPlanner) continue;
-    const id = slot.recipeId!;
-    countsById.set(id, (countsById.get(id) ?? 0) + 1);
+    if (!slot.recipe?.excludeFromPlanner && slot.recipeId) {
+      countsById.set(slot.recipeId, (countsById.get(slot.recipeId) ?? 0) + 1);
+    }
   }
-
   for (const batch of latestPlan.batches) {
     if (batch.recipe.excludeFromPlanner) continue;
     const storedMeals = batch.storageRows.reduce((sum, row) => sum + row.count, 0);
-    if (storedMeals > 0) {
-      countsById.set(batch.recipeId, (countsById.get(batch.recipeId) ?? 0) + storedMeals);
-    }
+    if (storedMeals > 0) countsById.set(batch.recipeId, (countsById.get(batch.recipeId) ?? 0) + storedMeals);
   }
-
-  return Array.from(countsById, ([recipeId, meals]) => ({
-    recipeId,
-    meals,
-    alreadyCooked: false,
-  }));
+  return Array.from(countsById, ([recipeId, meals]) => ({ recipeId, meals, alreadyCooked: false }));
 }
 
 export async function getPlanById(userId: string, planId: string) {

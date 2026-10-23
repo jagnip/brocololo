@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const plannerMealTypeSchema = z.enum(["BREAKFAST", "LUNCH", "DINNER"]);
+
 const dateRangeSchema = z
   .object({
     start: z.string().min(1, "Start date is required"),
@@ -44,28 +46,6 @@ const dayAudienceByMealSchema = z.object({
   dinnerFamilyMemberIds: mealAudienceIdsSchema,
 });
 
-const rollingRecipeSchema = z.object({
-  recipeId: z.string(),
-  meals: z.coerce.number().int().min(1),
-  alreadyCooked: z.boolean().default(false).optional(),
-});
-
-export const plannerCriteriaSchema = z.object({
-  dateRange: dateRangeSchema,
-  dailyAudienceByMeal: z
-    .array(dayAudienceByMealSchema)
-    .min(1, "Select at least one day"),
-  dailyTimeLimits: z.array(dayTimeLimitsSchema).min(1, "Select at least one day"),
-  fridgeIngredientIds: z.array(z.string()).default([]),
-  rollingRecipes: z.array(rollingRecipeSchema).default([]),
-});
-
-export type RollingRecipeType = z.infer<typeof rollingRecipeSchema>;
-export type DayTimeLimitsType = z.infer<typeof dayTimeLimitsSchema>;
-export type DayAudienceByMealType = z.infer<typeof dayAudienceByMealSchema>;
-export type PlannerCriteriaInputType = z.input<typeof plannerCriteriaSchema>;
-export type PlannerCriteriaOutputType = z.infer<typeof plannerCriteriaSchema>;
-
 export const planCustomMealIngredientSchema = z.object({
   ingredientId: z.string().min(1),
   unitId: z.string().min(1).nullable(),
@@ -76,6 +56,43 @@ export const planCustomMealSchema = z.object({
   name: z.string().trim().min(1, "Meal name is required"),
   ingredients: z.array(planCustomMealIngredientSchema).max(200),
 });
+
+const rollingRecipeSchema = z.object({
+  kind: z.literal("recipe").optional(),
+  recipeId: z.string(),
+  meals: z.coerce.number().int().min(1),
+  alreadyCooked: z.boolean().default(false).optional(),
+});
+
+const rollingCustomMealSchema = z.object({
+  kind: z.literal("custom"),
+  mealType: plannerMealTypeSchema,
+  customMeal: planCustomMealSchema,
+  meals: z.coerce.number().int().min(1),
+});
+
+const rollingMealSchema = z.discriminatedUnion("kind", [
+  rollingRecipeSchema,
+  rollingCustomMealSchema,
+]);
+
+export const plannerCriteriaSchema = z.object({
+  dateRange: dateRangeSchema,
+  dailyAudienceByMeal: z
+    .array(dayAudienceByMealSchema)
+    .min(1, "Select at least one day"),
+  dailyTimeLimits: z.array(dayTimeLimitsSchema).min(1, "Select at least one day"),
+  fridgeIngredientIds: z.array(z.string()).default([]),
+  rollingMeals: z.array(rollingMealSchema).default([]),
+});
+
+export type RollingMealType = z.infer<typeof rollingMealSchema>;
+/** Legacy recipe-only rolling entry shape; use RollingMealType for new code. */
+export type RollingRecipeType = z.infer<typeof rollingRecipeSchema>;
+export type DayTimeLimitsType = z.infer<typeof dayTimeLimitsSchema>;
+export type DayAudienceByMealType = z.infer<typeof dayAudienceByMealSchema>;
+export type PlannerCriteriaInputType = z.input<typeof plannerCriteriaSchema>;
+export type PlannerCriteriaOutputType = z.infer<typeof plannerCriteriaSchema>;
 
 export const slotSaveDataSchema = z
   .object({

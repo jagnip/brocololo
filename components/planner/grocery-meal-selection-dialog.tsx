@@ -46,7 +46,7 @@ export function GroceryMealSelectionDialog({
   useEffect(() => {
     if (!open || isLoading) return;
     setSelectedKeys(new Set(meals
-      .filter((meal) => meal.kind !== "recipe" || !meal.alreadyAvailable)
+      .filter((meal) => !meal.alreadyAvailable)
       .map(groceryMealOptionKey)));
   }, [open, isLoading, meals]);
 
@@ -98,8 +98,8 @@ export function GroceryMealSelectionDialog({
                 const key = groceryMealOptionKey(meal);
                 const checkboxId = `${selectionId}-${key}`;
                 const selected = selectedKeys.has(key);
-                const status = meal.kind === "recipe" && meal.alreadyAvailable
-                  ? meal.alreadyCooked ? "Already cooked" : "Rolled over"
+                const status = meal.alreadyAvailable
+                  ? meal.kind === "recipe" && meal.alreadyCooked ? "Already cooked" : "Rolled over"
                   : null;
                 const quantities = [
                   `${meal.occurrenceCount} ${meal.occurrenceCount === 1 ? "meal" : "meals"}`,

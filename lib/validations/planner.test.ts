@@ -16,10 +16,12 @@ describe("rolling and slot flags", () => {
       dateRange: { start: "2026-04-20", end: "2026-04-20" },
       dailyAudienceByMeal: [{ date: "2026-04-20", breakfastFamilyMemberIds: ["member-1"], lunchFamilyMemberIds: ["member-1"], dinnerFamilyMemberIds: ["member-1"] }],
       dailyTimeLimits: [{ date: "2026-04-20", breakfastHandsOnMax: null, lunchHandsOnMax: null, dinnerHandsOnMax: null, breakfastTotalMax: null, lunchTotalMax: null, dinnerTotalMax: null }],
-      rollingRecipes: [{ recipeId: "recipe-1", meals: 2 }],
+      rollingMeals: [{ recipeId: "recipe-1", meals: 2 }],
     };
-    expect(plannerCriteriaSchema.parse(criteria).rollingRecipes[0]?.alreadyCooked).toBe(false);
-    expect(plannerCriteriaSchema.parse({ ...criteria, rollingRecipes: [{ recipeId: "recipe-1", meals: 2, alreadyCooked: true }] }).rollingRecipes[0]?.alreadyCooked).toBe(true);
+    const defaultEntry = plannerCriteriaSchema.parse(criteria).rollingMeals[0];
+    expect(defaultEntry?.kind === "custom" ? undefined : defaultEntry?.alreadyCooked).toBe(false);
+    const cooked = plannerCriteriaSchema.parse({ ...criteria, rollingMeals: [{ recipeId: "recipe-1", meals: 2, alreadyCooked: true }] }).rollingMeals[0];
+    expect(cooked?.kind !== "custom" && cooked?.alreadyCooked).toBe(true);
   });
 
   it("defaults saved slot flags and rejects non-boolean flags", () => {

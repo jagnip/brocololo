@@ -34,6 +34,7 @@ import { useScrollbarOnScroll } from "@/hooks/use-scrollbar-on-scroll";
 import { PlanBatchInput, PlanInputType, PlanSlotMealPayload, SetPlanMealOptions } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
 import { getPlanSlotKey, placeRecipeOnPlan } from "@/lib/planner/helpers";
+import { getCustomMealContentKey } from "@/lib/planner/custom-meal-identity";
 import { rearrangePlanSlots } from "@/lib/planner/rearrange-plan-slots";
 import {
   detachMealFromBatch,
@@ -44,7 +45,7 @@ import {
 import type {
   DayAudienceByMealType,
   DayTimeLimitsType,
-  RollingRecipeType,
+  RollingMealType,
 } from "@/lib/validations/planner";
 import { getDaysInRange, formatDayLabel } from "@/lib/planner/helpers";
 import {
@@ -99,7 +100,7 @@ import {
 type PlannerFormProps = {
   ingredients: IngredientType[];
   recipes: RecipeType[];
-  previousPlanUnusedRecipes: RollingRecipeType[];
+  previousPlanUnusedMeals: RollingMealType[];
   occupiedDateKeys: string[];
   familyMembers: FamilyMemberRow[];
 };
@@ -125,7 +126,7 @@ export function getDailyLimitsForPlanAllDaysToggle(
 export function PlannerForm({
   ingredients,
   recipes,
-  previousPlanUnusedRecipes,
+  previousPlanUnusedMeals,
   occupiedDateKeys,
   familyMembers,
 }: PlannerFormProps) {
@@ -200,10 +201,9 @@ export function PlannerForm({
       dailyAudienceByMeal: [],
       dailyTimeLimits: [],
       fridgeIngredientIds: [],
-      rollingRecipes: previousPlanUnusedRecipes.map((entry) => ({
-        ...entry,
-        alreadyCooked: false,
-      })),
+      rollingMeals: previousPlanUnusedMeals.map((entry) =>
+        entry.kind !== "custom" ? { ...entry, alreadyCooked: false } : entry,
+      ),
     },
   });
 
@@ -226,7 +226,7 @@ export function PlannerForm({
         values.dailyTimeLimits as DayTimeLimitsType[],
         values.fridgeIngredientIds ?? [],
         // Coerced numeric fields are validated by Zod; cast input shape for server action typing.
-        (values.rollingRecipes ?? []) as RollingRecipeType[],
+        (values.rollingMeals ?? []) as RollingMealType[],
         // Pass current draft so filled slots stay put and only empties are filled.
         plan,
         batches,
@@ -450,10 +450,15 @@ export function PlannerForm({
         if (getPlanSlotKey(slot) !== slotKey) return slot;
 
         if (payload.kind === "custom") {
+          const keepsSameCustom = currentSlot?.customMeal != null &&
+            getCustomMealContentKey(currentSlot.customMeal) === getCustomMealContentKey({
+              name: payload.name,
+              ingredients: payload.ingredients,
+            });
           return {
             ...slot,
             recipe: null,
-            isRolledOver: false,
+            isRolledOver: keepsSameCustom ? (slot.isRolledOver ?? false) : false,
             alreadyCooked: false,
             customMeal: {
               name: payload.name,
@@ -1053,20 +1058,25 @@ export function PlannerForm({
                     <div className="min-w-0 py-4">
                       <FormField
                         control={form.control}
-                        name="rollingRecipes"
+                        name="rollingMeals"
                         render={({ field }) => {
                           const selected = (field.value ??
-                            []) as RollingRecipeType[];
+                            []) as RollingMealType[];
                           return (
                             <PlannerRollingRecipesSection
                               control={form.control}
                               selected={selected}
+                              availableCustomMeals={previousPlanUnusedMeals.filter(
+                                (entry) => entry.kind === "custom",
+                              )}
                               onChange={(nextEntries) => {
                                 field.onChange(nextEntries);
                                 const nextPlan = planRef.current.map((slot) => {
                                   if (!slot.isRolledOver || !slot.recipe?.isBatchRecipe) return slot;
-                                  const entry = nextEntries.find((item) => item.recipeId === slot.recipe!.id);
-                                  return entry ? { ...slot, alreadyCooked: entry.alreadyCooked ?? false } : slot;
+                                   const entry = nextEntries.find(
+                                     (item) => item.kind !== "custom" && item.recipeId === slot.recipe!.id,
+                                   );
+                                   return entry && entry.kind !== "custom" ? { ...slot, alreadyCooked: entry.alreadyCooked ?? false } : slot;
                                 });
                                 planRef.current = nextPlan;
                                 setPlan(nextPlan);

@@ -62,10 +62,12 @@ export function PlanDetailTopbarConfig({
       },
       breadcrumbs: [
         { label: surface === "log" ? "Log" : "Meal plan", href: surface === "log" ? ROUTES.logCurrent : ROUTES.planCurrent },
-        {
-          label: planDateRangeLabel,
-          select: { kind: surface, options: planOptions, currentId: planId },
-        },
+        planOptions.length > 1
+          ? {
+              label: planDateRangeLabel,
+              select: { kind: surface, options: planOptions, currentId: planId },
+            }
+          : { label: planDateRangeLabel },
       ],
     }),
     [

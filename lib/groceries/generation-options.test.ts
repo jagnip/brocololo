@@ -51,7 +51,7 @@ describe("grocery quantity selection", () => {
   it("keeps available quantities excluded without explicit opt-in", () => {
     const slots = [recipeSlot, { ...recipeSlot, isRolledOver: true }, { ...recipeSlot, alreadyCooked: true }];
     expect(filterSlotsForGroceryGeneration(slots, {
-      excludedRecipeIds: [], excludedCustomMealNames: [],
+      excludedRecipeIds: [], excludedCustomMealKeys: [],
     })).toEqual([recipeSlot]);
   });
 
@@ -62,7 +62,7 @@ describe("grocery quantity selection", () => {
     const exclusions = exclusionsFromSelectedMealKeys(options, new Set([groceryMealOptionKey(available)]));
     expect(exclusions).toEqual({
       excludedRecipeIds: ["chili"],
-      excludedCustomMealNames: [],
+      excludedCustomMealKeys: [],
       includedAvailableRecipeIds: ["chili"],
     });
     expect(filterSlotsForGroceryGeneration(slots, exclusions)).toEqual(slots.slice(1));

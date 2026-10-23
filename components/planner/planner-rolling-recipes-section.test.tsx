@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
 import { Form } from "@/components/ui/form";
 import { createMockRecipe } from "@/lib/tests/test-helpers";
-import type { PlannerCriteriaInputType, RollingRecipeType } from "@/lib/validations/planner";
+import type { PlannerCriteriaInputType, RollingMealType } from "@/lib/validations/planner";
 import { PlannerRollingRecipesSection } from "./planner-rolling-recipes-section";
 
 vi.mock("@/components/ui/multiselect", () => ({
@@ -31,7 +31,7 @@ const recipes = [
 
 function Harness() {
   const form = useForm<PlannerCriteriaInputType>({ defaultValues: { fridgeIngredientIds: [] } });
-  const [selected, setSelected] = useState<RollingRecipeType[]>([
+  const [selected, setSelected] = useState<RollingMealType[]>([
     { recipeId: "batch", meals: 3, alreadyCooked: false },
     { recipeId: "single", meals: 2, alreadyCooked: false },
   ]);
