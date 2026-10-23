@@ -69,16 +69,27 @@ vi.mock("./plan-slot-meal-dialog", () => ({
     open,
     initialOccasionSlug,
     onCancel,
+    onSave,
   }: {
     open: boolean;
     initialOccasionSlug?: string | null;
     onCancel: () => void;
+    onSave: (payload: unknown) => void;
   }) =>
     open ? (
       <div role="dialog" aria-label="Replace meals">
         <div aria-label="Initial meal occasion">
           {initialOccasionSlug ?? "All occasions"}
         </div>
+        <button
+          type="button"
+          onClick={() => onSave({
+            kind: "recipe",
+            recipe: { ...createRecipe("batch-recipe"), isBatchRecipe: true, plannedMealCount: 4 },
+          })}
+        >
+          Submit batch replacement
+        </button>
         <button type="button" onClick={onCancel}>Cancel replacement</button>
       </div>
     ) : null,
@@ -159,6 +170,25 @@ function renderPlanView(props: Partial<ComponentProps<typeof PlanView>> = {}) {
 }
 
 describe("PlanView bulk replacement meal occasion", () => {
+  it("assigns a group to a single selected batch slot", async () => {
+    const user = userEvent.setup();
+    const onSetMeal = vi.fn();
+    renderPlanView({ onSetMeal });
+
+    await user.click(screen.getByRole("button", { name: "Select BREAKFAST" }));
+    await user.click(screen.getByRole("button", { name: "Replace meals" }));
+    await user.click(screen.getByRole("button", { name: "Submit batch replacement" }));
+
+    expect(onSetMeal).toHaveBeenCalledWith(
+      "2026-03-17T00:00:00.000Z-BREAKFAST",
+      expect.objectContaining({ kind: "recipe" }),
+      expect.objectContaining({
+        expandMultiMeal: false,
+        batchGroupId: expect.any(String),
+      }),
+    );
+  });
+
   it.each([
     ["BREAKFAST", "breakfast"],
     ["LUNCH", "lunch"],

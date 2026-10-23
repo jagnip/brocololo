@@ -1,6 +1,44 @@
 import type { PlanBatchInput, PlanInputType, SlotInputType } from "@/types/planner";
 import { getPlanSlotKey } from "@/lib/planner/helpers";
 
+function getAudienceKey(memberIds: string[]): string {
+  return [...new Set(memberIds)].sort().join(",");
+}
+
+function consumeStorageMeals(
+  storageRows: PlanBatchInput["storageRows"],
+  count: number,
+  preferredAudienceIds: string[],
+): PlanBatchInput["storageRows"] {
+  if (count <= 0) return storageRows;
+
+  const rows = storageRows.map((row) => ({
+    ...row,
+    cookingFamilyMemberIds: [...row.cookingFamilyMemberIds],
+  }));
+  const preferredAudienceKey = getAudienceKey(preferredAudienceIds);
+  const matchingIndexes: number[] = [];
+  const otherIndexes: number[] = [];
+
+  rows.forEach((row, index) => {
+    if (getAudienceKey(row.cookingFamilyMemberIds) === preferredAudienceKey) {
+      matchingIndexes.push(index);
+    } else {
+      otherIndexes.push(index);
+    }
+  });
+
+  let remaining = count;
+  for (const index of [...matchingIndexes, ...otherIndexes]) {
+    if (remaining === 0) break;
+    const consumed = Math.min(rows[index]!.count, remaining);
+    rows[index]!.count -= consumed;
+    remaining -= consumed;
+  }
+
+  return rows.filter((row) => row.count > 0);
+}
+
 export function getBatchScheduledSlots(
   plan: PlanInputType,
   batch: Pick<PlanBatchInput, "id" | "recipeId">,
@@ -51,7 +89,7 @@ export function transferRangeRemovedBatchMeals(params: {
   return pruneBatchesWithoutScheduledMeals(params.nextPlan, params.batches);
 }
 
-/** Keep metadata for scheduled grouping, without storing unplaced meals. */
+/** Create a batch's initial Storage remainder after manual placement. */
 export function ensureBatchForPlacement(params: {
   plan: PlanInputType;
   batches: PlanBatchInput[];
@@ -66,9 +104,21 @@ export function ensureBatchForPlacement(params: {
   if (getBatchScheduledSlots(params.plan, { id: params.batchGroupId, recipeId: params.recipeId }).length === 0) {
     return params.batches;
   }
+  const scheduledCount = getBatchScheduledSlots(params.plan, {
+    id: params.batchGroupId,
+    recipeId: params.recipeId,
+  }).length;
+  const storageCount = Math.max(params.requestedMeals - scheduledCount, 0);
   return [
     ...params.batches.filter((batch) => batch.id !== params.batchGroupId),
-    { id: params.batchGroupId, recipeId: params.recipeId, storageRows: [], extraPortions: 0 },
+    {
+      id: params.batchGroupId,
+      recipeId: params.recipeId,
+      storageRows: storageCount > 0
+        ? [{ count: storageCount, cookingFamilyMemberIds: [...params.cookingFamilyMemberIds] }]
+        : [],
+      extraPortions: 0,
+    },
   ];
 }
 
@@ -83,12 +133,41 @@ export function ensureBatchAfterPlacement(params: {
   const batches = pruneBatchesWithoutScheduledMeals(params.plan, params.batches);
   const slot = params.plan.find((candidate) => getPlanSlotKey(candidate) === params.slotKey);
   if (!slot?.recipe?.isBatchRecipe || !slot.batchGroupId) return batches;
-  return ensureBatchForPlacement({
-    plan: params.plan,
-    batches,
-    batchGroupId: slot.batchGroupId,
-    recipeId: slot.recipe.id,
-    requestedMeals: params.requestedMeals,
-    cookingFamilyMemberIds: slot.cookingFamilyMemberIds ?? params.fallbackFamilyMemberIds,
-  });
+  const cookingFamilyMemberIds = slot.cookingFamilyMemberIds?.length
+    ? slot.cookingFamilyMemberIds
+    : params.fallbackFamilyMemberIds;
+  const batch = batches.find(
+    (candidate) => candidate.id === slot.batchGroupId && candidate.recipeId === slot.recipe!.id,
+  );
+
+  if (!batch) {
+    return ensureBatchForPlacement({
+      plan: params.plan,
+      batches,
+      batchGroupId: slot.batchGroupId,
+      recipeId: slot.recipe.id,
+      requestedMeals: params.requestedMeals,
+      cookingFamilyMemberIds,
+    });
+  }
+
+  const previousScheduledCount = params.previousPlan
+    ? getBatchScheduledSlots(params.previousPlan, batch).length
+    : getBatchScheduledSlots(params.plan, batch).length;
+  const nextScheduledCount = getBatchScheduledSlots(params.plan, batch).length;
+  const newlyScheduledCount = Math.max(nextScheduledCount - previousScheduledCount, 0);
+  if (newlyScheduledCount === 0) return batches;
+
+  return batches.map((candidate) =>
+    candidate.id === batch.id && candidate.recipeId === batch.recipeId
+      ? {
+          ...candidate,
+          storageRows: consumeStorageMeals(
+            candidate.storageRows,
+            newlyScheduledCount,
+            cookingFamilyMemberIds,
+          ),
+        }
+      : candidate,
+  );
 }

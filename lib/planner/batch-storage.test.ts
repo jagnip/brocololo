@@ -66,7 +66,7 @@ describe("batch storage lifecycle", () => {
     ).toEqual([]);
   });
 
-  it("creates empty metadata and counts only scheduled meals", () => {
+  it("stores the manually unselected batch remainder", () => {
     const plan = [slot(19, ["jagoda"]), slot(20, ["jagoda"])];
     const result = ensureBatchAfterPlacement({
       plan,
@@ -75,12 +75,14 @@ describe("batch storage lifecycle", () => {
       requestedMeals: 4,
       fallbackFamilyMemberIds: ["jagoda", "nelson"],
     });
-    expect(result[0]?.storageRows).toEqual([]);
+    expect(result[0]?.storageRows).toEqual([
+      { count: 2, cookingFamilyMemberIds: ["jagoda"] },
+    ]);
     expect(getBatchMealTotal(plan, { ...batch, extraPortions: 8 })).toBe(4);
     expect(getBatchMealTotal(plan.map((slot) => ({ ...slot, alreadyCooked: true })), batch)).toBe(2);
   });
 
-  it("preserves existing storage metadata when another scheduled sibling joins", () => {
+  it("consumes storage when another scheduled sibling joins", () => {
     const previousPlan = [slot(19, ["jagoda"])];
     const result = ensureBatchAfterPlacement({
       previousPlan,
@@ -96,8 +98,45 @@ describe("batch storage lifecycle", () => {
       fallbackFamilyMemberIds: ["jagoda", "nelson"],
     });
     expect(result[0]?.storageRows).toEqual([
-      { count: 3, cookingFamilyMemberIds: ["jagoda"] },
+      { count: 2, cookingFamilyMemberIds: ["jagoda"] },
     ]);
+  });
+
+  it("consumes the matching storage audience before other rows", () => {
+    const previousPlan = [slot(19, ["jagoda"])];
+    const result = ensureBatchAfterPlacement({
+      previousPlan,
+      plan: [...previousPlan, slot(20, ["nelson", "jagoda"])],
+      batches: [{
+        ...batch,
+        storageRows: [
+          { count: 2, cookingFamilyMemberIds: ["jagoda"] },
+          { count: 2, cookingFamilyMemberIds: ["jagoda", "nelson"] },
+        ],
+      }],
+      slotKey: keyFor(20),
+      requestedMeals: 4,
+      fallbackFamilyMemberIds: ["jagoda", "nelson"],
+    });
+
+    expect(result[0]?.storageRows).toEqual([
+      { count: 2, cookingFamilyMemberIds: ["jagoda"] },
+      { count: 1, cookingFamilyMemberIds: ["jagoda", "nelson"] },
+    ]);
+  });
+
+  it("keeps storage unchanged when a same-recipe edit adds no scheduled meal", () => {
+    const plan = [slot(19, ["jagoda"])];
+    const result = ensureBatchAfterPlacement({
+      previousPlan: plan,
+      plan,
+      batches: [batch],
+      slotKey: keyFor(19),
+      requestedMeals: 4,
+      fallbackFamilyMemberIds: ["jagoda", "nelson"],
+    });
+
+    expect(result).toEqual([batch]);
   });
 
   it("never stores range-truncated meals and removes storage-only batches", () => {

@@ -977,7 +977,7 @@ describe("PlanEditor batch group clearing", () => {
     );
   });
 
-  it("expands a manually set multi-meal recipe onto following empty days with a shared batchGroupId", async () => {
+  it("stores the unselected remainder of a manually placed batch", async () => {
     const user = userEvent.setup();
 
     const initialPlan: PlanInputType = [
@@ -1006,17 +1006,22 @@ describe("PlanEditor batch group clearing", () => {
       initialPlan,
       recipes: [],
       ingredientOptions: emptyIngredientOptions,
+      familyMembers: [
+        { id: "j", name: "Jagoda", isSelf: true, sortOrder: 0, portionMultiplier: 1 },
+      ],
     });
 
     await user.click(screen.getByRole("button", { name: "Set batch recipe" }));
 
     expect(screen.getByLabelText("dinner-by-day")).toHaveTextContent(
-      "2026-03-17:batch-recipe,2026-03-18:batch-recipe",
+      "2026-03-17:batch-recipe,2026-03-18:empty",
     );
-    const groups = screen.getByLabelText("batch-groups").textContent ?? "";
-    const [first, second] = groups.split(",");
+    const [first, second] = (screen.getByLabelText("batch-groups").textContent ?? "").split(",");
     expect(first).not.toBe("null");
-    expect(first).toBe(second);
+    expect(second).toBe("null");
+    expect(screen.getByLabelText("batch-storage")).toHaveTextContent(
+      '"storageRows":[{"count":1,"cookingFamilyMemberIds":["j"]}]',
+    );
   });
 });
 

@@ -229,12 +229,11 @@ export function PlanView({
   const handleBulkReplaceSave = async (payload: PlanSlotMealPayload) => {
     if (!onSetMeal) return;
 
-    // A batch recipe across several slots is one cook — share a group id so the
-    // Cards show their chronological batch positions and share a cooking session.
+    // Explicitly selected batch slots are one cook; unselected meals go to Storage.
     const sharedBatchGroupId =
       payload.kind === "recipe" &&
       payload.recipe.isBatchRecipe &&
-      selectedKeys.size > 1
+      (selectedKeys.size > 1 || payload.recipe.plannedMealCount > 1)
         ? crypto.randomUUID()
         : null;
 
