@@ -232,8 +232,8 @@ export function getBatchGroupLabels(
 }
 
 /**
- * Places a recipe on one slot and, when plannedMealCount > 1, fills following
- * empty same-meal slots with a shared batchGroupId — mirrors generatePlan.
+ * Places a recipe on one slot. Non-batch repeats can fill following empty
+ * same-meal slots; batch recipes keep unselected meals in Storage instead.
  *
  * Batch recipes also join an existing same-recipe batch group when one is
  * already on the plan (e.g. adding a 3rd Caprese after generation placed 2).
@@ -257,8 +257,9 @@ export function placeRecipeOnPlan(
   const batchGroupId = sameRecipe
     ? source.batchGroupId ?? null
     : existingGroupId ?? (totalMeals >= 2 ? crypto.randomUUID() : null);
-  // Only auto-fill following days for a fresh multi-meal placement.
-  const shouldExpand = !sameRecipe && !existingGroupId && totalMeals >= 2;
+  // Manual batches stay in explicitly chosen slots; their remainder goes to Storage.
+  const shouldExpand =
+    !recipe.isBatchRecipe && !sameRecipe && !existingGroupId && totalMeals >= 2;
 
   const audienceIds = [...(source.cookingFamilyMemberIds ?? [])];
   const fillKeys = new Set<string>([slotKey]);

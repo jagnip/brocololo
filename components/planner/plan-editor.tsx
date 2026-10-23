@@ -328,7 +328,7 @@ export function PlanEditor({
             )
           : prev;
 
-        // Match create/generate: multi-meal recipes fill following empty days + share a group id.
+        // Batch placement keeps unselected meals in Storage; non-batch repeats can expand.
         if (expandMultiMeal) {
           return placeRecipeOnPlan(withAudience, slotKey, payload.recipe);
         }
@@ -401,11 +401,12 @@ export function PlanEditor({
           fallbackFamilyMemberIds: familyMembers.map((member) => member.id),
         });
     const previousPlan = allSlotsRef.current;
-    allSlotsRef.current = applyPayload(allSlotsRef.current);
+    const nextPlan = applyPayload(previousPlan);
+    allSlotsRef.current = nextPlan;
     if (payload.kind === "recipe") {
       nextBatches = ensureBatchAfterPlacement({
         previousPlan,
-        plan: allSlotsRef.current,
+        plan: nextPlan,
         batches: nextBatches,
         slotKey,
         requestedMeals: payload.recipe.plannedMealCount,
@@ -419,7 +420,12 @@ export function PlanEditor({
     }
     batchesRef.current = nextBatches;
     setBatches(nextBatches);
-    setPlan((prev) => applyPayload(prev));
+    const slotsByKey = new Map(
+      nextPlan.map((slot) => [getPlanSlotKey(slot), slot]),
+    );
+    setPlan((previous) =>
+      previous.map((slot) => slotsByKey.get(getPlanSlotKey(slot)) ?? slot),
+    );
   }, [familyMembers]);
 
   const handleRemove = useCallback((slotKey: string) => {

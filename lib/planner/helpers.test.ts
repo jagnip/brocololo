@@ -312,8 +312,9 @@ describe("placeRecipeOnPlan", () => {
     const next = placeRecipeOnPlan(plan, `${plan[1]!.date.toISOString()}-DINNER`, recipe);
     expect(next[0]).toEqual(plan[0]);
     expect(next[1]?.batchGroupId).not.toBe("existing");
-    expect(next[1]?.batchGroupId).toBe(next[2]?.batchGroupId);
-    expect(next.slice(1).every((slot) => slot.isRolledOver === false && slot.alreadyCooked === false)).toBe(true);
+    expect(next[1]?.recipe).toEqual(recipe);
+    expect(next[2]?.recipe).toBeNull();
+    expect(next[1]).toMatchObject({ isRolledOver: false, alreadyCooked: false });
   });
 
   it("preserves flags and grouping on same-recipe edits without expanding finite rolling meals", () => {
@@ -327,11 +328,12 @@ describe("placeRecipeOnPlan", () => {
     expect(next[0]).toMatchObject({ batchGroupId: "rolling", isRolledOver: true, alreadyCooked: true });
     expect(next[1]?.recipe).toBeNull();
     const replacement = placeRecipeOnPlan(plan, key, { ...recipe, id: "replacement" });
-    expect(replacement.every((slot) => slot.isRolledOver === false && slot.alreadyCooked === false)).toBe(true);
+    expect(replacement[0]).toMatchObject({ isRolledOver: false, alreadyCooked: false });
     expect(replacement[0]?.batchGroupId).not.toBe("rolling");
+    expect(replacement[1]?.recipe).toBeNull();
   });
 
-  it("fills following empty same-meal slots and shares a batchGroupId", () => {
+  it("keeps manually placed batch recipes in the selected slot", () => {
     const recipe = {
       id: "r-batch",
       plannedMealCount: 3,
@@ -347,19 +349,18 @@ describe("placeRecipeOnPlan", () => {
     const slotKey = `${plan[0]!.date.toISOString()}-${PlannerMealType.DINNER}`;
     const next = placeRecipeOnPlan(plan, slotKey, recipe);
 
-    expect(next.every((slot) => slot.recipe?.id === "r-batch")).toBe(true);
-    const groupIds = next.map((slot) => slot.batchGroupId);
-    expect(groupIds[0]).toBeTruthy();
-    expect(groupIds[0]).toBe(groupIds[1]);
-    expect(groupIds[0]).toBe(groupIds[2]);
-    expect(getBatchGroupLabels(next).size).toBe(3);
+    expect(next[0]?.recipe?.id).toBe("r-batch");
+    expect(next[0]?.batchGroupId).toBeTruthy();
+    expect(next[1]?.recipe).toBeNull();
+    expect(next[2]?.recipe).toBeNull();
+    expect(getBatchGroupLabels(next).size).toBe(0);
   });
 
   it("skips occupied following slots while still filling later empty ones", () => {
     const recipe = {
       id: "r-batch",
       plannedMealCount: 3,
-      isBatchRecipe: true,
+      isBatchRecipe: false,
     } as RecipeType;
     const other = { id: "r-other" } as RecipeType;
 
