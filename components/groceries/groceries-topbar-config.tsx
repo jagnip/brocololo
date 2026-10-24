@@ -87,14 +87,16 @@ export function GroceriesTopbarConfig({
         ]
       : [
           { label: "Groceries", href: ROUTES.groceriesCurrent },
-          {
-            label: planDateRangeLabel,
-            select: {
-              kind: "groceries" as const,
-              options: planOptions,
-              currentId: planId,
-            },
-          },
+          planOptions.length > 1
+            ? {
+                label: planDateRangeLabel,
+                select: {
+                  kind: "groceries" as const,
+                  options: planOptions,
+                  currentId: planId,
+                },
+              }
+            : { label: planDateRangeLabel },
         ];
 
     return {

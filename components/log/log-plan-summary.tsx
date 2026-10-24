@@ -43,16 +43,16 @@ export function LogPlanSummary({
       value: formatMacro(summary.dailyAverages.calories, "kcal", hasLoggedDays),
     },
     {
+      label: "Fat",
+      value: formatMacro(summary.dailyAverages.fats, "g", hasLoggedDays),
+    },
+    {
       label: "Carbs",
       value: formatMacro(summary.dailyAverages.carbs, "g", hasLoggedDays),
     },
     {
       label: "Protein",
       value: formatMacro(summary.dailyAverages.proteins, "g", hasLoggedDays),
-    },
-    {
-      label: "Fat",
-      value: formatMacro(summary.dailyAverages.fats, "g", hasLoggedDays),
     },
   ];
 
@@ -96,9 +96,9 @@ export function LogPlanSummary({
           >
             <span>Date</span>
             <span className="text-right">Calories</span>
+            <span className="text-right">Fat</span>
             <span className="text-right">Carbs</span>
             <span className="text-right">Protein</span>
-            <span className="text-right">Fat</span>
           </div>
           <ul aria-label="Daily nutrition statistics">
             {dayStatistics.map((day) => (
@@ -130,16 +130,16 @@ export function LogPlanSummary({
                       {day.calories.toFixed(0)} kcal
                     </p>
                     <p className="text-sm tabular-nums sm:text-right">
+                      <span className="block text-xs text-muted-foreground sm:hidden">Fat</span>
+                      {day.fats.toFixed(1)} g
+                    </p>
+                    <p className="text-sm tabular-nums sm:text-right">
                       <span className="block text-xs text-muted-foreground sm:hidden">Carbs</span>
                       {day.carbs.toFixed(1)} g
                     </p>
                     <p className="text-sm tabular-nums sm:text-right">
                       <span className="block text-xs text-muted-foreground sm:hidden">Protein</span>
                       {day.proteins.toFixed(1)} g
-                    </p>
-                    <p className="text-sm tabular-nums sm:text-right">
-                      <span className="block text-xs text-muted-foreground sm:hidden">Fat</span>
-                      {day.fats.toFixed(1)} g
                     </p>
                   </>
                 ) : (

@@ -54,7 +54,7 @@ describe("saveShoppingListEditsAction", () => {
     vi.mocked(generateShoppingListForPlan).mockResolvedValue({ ok: true, shoppingListId: "list-1" });
     const selection = {
       excludedRecipeIds: ["recipe-1"],
-      excludedCustomMealNames: [],
+      excludedCustomMealKeys: [],
       includedAvailableRecipeIds: ["recipe-1"],
     };
     expect(await generateGroceryListFromPlan("plan-1", selection)).toEqual({ type: "success", shoppingListId: "list-1" });

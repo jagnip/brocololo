@@ -54,7 +54,7 @@ describe("buildGroceryMealOptionsFromSlots", () => {
     ]);
 
     expect(options).toEqual([
-      { kind: "custom", name: "Friday pasta", occurrenceCount: 1 },
+      { kind: "custom", customMealKey: "[\"friday pasta\",[[\"ing-1\",null,null]]]", name: "Friday pasta", occurrenceCount: 1 },
     ]);
   });
 });
@@ -115,7 +115,7 @@ describe("filterSlotsForGroceryGeneration", () => {
   it("excludes all slots for an excluded recipe id", () => {
     const filtered = filterSlotsForGroceryGeneration([stockedSlot, shopSlot], {
       excludedRecipeIds: ["recipe-stocked"],
-      excludedCustomMealNames: [],
+      excludedCustomMealKeys: [],
     });
 
     expect(filtered).toEqual([shopSlot]);
@@ -126,7 +126,7 @@ describe("exclusionsFromSelectedMealKeys", () => {
   it("maps unchecked meals to exclusion lists", () => {
     const meals = [
       { kind: "recipe" as const, recipeId: "r1", name: "Chili", occurrenceCount: 2 },
-      { kind: "custom" as const, name: "Friday pasta", occurrenceCount: 1 },
+      { kind: "custom" as const, customMealKey: "friday-pasta", name: "Friday pasta", occurrenceCount: 1 },
     ];
 
     const exclusions = exclusionsFromSelectedMealKeys(
@@ -136,7 +136,7 @@ describe("exclusionsFromSelectedMealKeys", () => {
 
     expect(exclusions).toEqual({
       excludedRecipeIds: ["r1"],
-      excludedCustomMealNames: [],
+      excludedCustomMealKeys: [],
     });
   });
 });

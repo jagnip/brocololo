@@ -346,7 +346,7 @@ export function PlannerSlotCard({
                   {customMeal.name}
                 </h3>
                 <p className="type-body mt-0.5 text-sm text-muted-foreground">
-                  {mealLabel}
+                  {mealLabel}{slot.isRolledOver ? " · Rolled over" : ""}
                 </p>
               </div>
               <SlotIngredientSummary

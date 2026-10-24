@@ -18,9 +18,6 @@ describe("GroceriesShareDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getActiveShoppingListShareAction).mockResolvedValue({ type: "none" });
-    Object.assign(navigator, {
-      clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
-    });
   });
 
   it("creates a link and shows the url", async () => {
@@ -35,10 +32,13 @@ describe("GroceriesShareDialog", () => {
       <GroceriesShareDialog open planId="plan-1" onOpenChange={() => undefined} />,
     );
 
-    await user.click(screen.getByRole("button", { name: "Create link" }));
+    const createButton = screen.getByRole("button", { name: "Create link" });
+    await waitFor(() => expect(createButton).toBeEnabled());
+    await user.click(createButton);
 
     await waitFor(() => {
       expect(screen.getByDisplayValue("https://app.example.com/share/groceries/tok")).toBeInTheDocument();
     });
   });
+
 });

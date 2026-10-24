@@ -279,7 +279,7 @@ export async function generateShoppingListForPlan(
   planId: string,
   exclusions: GroceryGenerationExclusions = {
     excludedRecipeIds: [],
-    excludedCustomMealNames: [],
+    excludedCustomMealKeys: [],
   },
 ): Promise<
   | { ok: true; shoppingListId: string }

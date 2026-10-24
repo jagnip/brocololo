@@ -57,6 +57,18 @@ export function IngredientNutritionalInfo({
               )}
             </tr>
             <tr>
+              <td className="text-muted-foreground pr-2">Fat</td>
+              <td className="pr-3">{formatIngredientAmount(nutrition.fat, 2)}g</td>
+              {oneSelectedUnitNutrition && (
+                <td className="pr-3">
+                  {formatIngredientAmount(oneSelectedUnitNutrition.fat, 2)}g
+                </td>
+              )}
+              {selectedAmountNutrition && (
+                <td>{formatIngredientAmount(selectedAmountNutrition.fat, 2)}g</td>
+              )}
+            </tr>
+            <tr>
               <td className="text-muted-foreground pr-2">Carbs</td>
               <td className="pr-3">{formatIngredientAmount(nutrition.carbs, 2)}g</td>
               {oneSelectedUnitNutrition && (
@@ -78,18 +90,6 @@ export function IngredientNutritionalInfo({
               )}
               {selectedAmountNutrition && (
                 <td>{formatIngredientAmount(selectedAmountNutrition.protein, 2)}g</td>
-              )}
-            </tr>
-            <tr>
-              <td className="text-muted-foreground pr-2">Fat</td>
-              <td className="pr-3">{formatIngredientAmount(nutrition.fat, 2)}g</td>
-              {oneSelectedUnitNutrition && (
-                <td className="pr-3">
-                  {formatIngredientAmount(oneSelectedUnitNutrition.fat, 2)}g
-                </td>
-              )}
-              {selectedAmountNutrition && (
-                <td>{formatIngredientAmount(selectedAmountNutrition.fat, 2)}g</td>
               )}
             </tr>
           </tbody>

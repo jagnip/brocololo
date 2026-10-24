@@ -18,7 +18,8 @@ import { MEAL_TYPES, ROUTES } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { filterByMealOccasion } from "@/lib/planner/filters";
-import { DayAudienceByMealType, DayTimeLimitsType, RollingRecipeType } from "@/lib/validations/planner";
+import { DayAudienceByMealType, DayTimeLimitsType, RollingMealType } from "@/lib/validations/planner";
+import { getRollingCustomMealKey } from "@/lib/planner/custom-meal-identity";
 import { isRecipeAvoidedByAudience, pickBestCandidate } from "@/lib/planner/scoring";
 import { generateBaselineLogForPlan } from "@/lib/db/planner";
 import { requireUser } from "@/lib/auth/session";
@@ -33,7 +34,7 @@ export async function generatePlan(
   dailyAudienceByMeal: DayAudienceByMealType[],
   allDaysTimeLimits: DayTimeLimitsType[],
   fridgeIngredientIds: string[],
-  rollingRecipes: RollingRecipeType[],
+  rollingMeals: RollingMealType[],
   /** Current draft — filled slots are preserved; only empties are generated. */
   existingPlan: PlanInputType = [],
   existingBatches: PlanBatchInput[] = [],
@@ -60,7 +61,7 @@ export async function generatePlan(
 
     const recipes = await getRecipes(userId, undefined, undefined, false);
 
-    if (recipes.length === 0) {
+    if (recipes.length === 0 && !rollingMeals.some((entry) => entry.kind === "custom")) {
       return { type: "error", message: PLAN_GENERATION_FAILED_MESSAGE };
     }
 
@@ -77,8 +78,13 @@ export async function generatePlan(
 
     const days = getDaysToPlan(start, end);
     const dayKeys = new Set(days.map((day) => day.toISOString()));
+    const rollingRecipes = rollingMeals.filter((entry) => entry.kind !== "custom");
+    const rollingCustomMeals = rollingMeals.filter((entry) => entry.kind === "custom");
     const remainingRolling = new Map(
       rollingRecipes.map((entry) => [entry.recipeId, entry.meals]),
+    );
+    const remainingCustomRolling = new Map(
+      rollingCustomMeals.map((entry) => [getRollingCustomMealKey(entry.mealType, entry.customMeal), entry.meals]),
     );
     // Reserve scheduled and stored rolling meals before scheduling continuations.
     for (const slot of existingByKey.values()) {
@@ -87,6 +93,10 @@ export async function generatePlan(
           slot.recipe.id,
           Math.max((remainingRolling.get(slot.recipe.id) ?? 0) - 1, 0),
         );
+      }
+      if (slot.customMeal && slot.isRolledOver && dayKeys.has(slot.date.toISOString())) {
+        const key = getRollingCustomMealKey(slot.mealType, slot.customMeal);
+        remainingCustomRolling.set(key, Math.max((remainingCustomRolling.get(key) ?? 0) - 1, 0));
       }
     }
     for (const batch of existingBatches) {
@@ -168,6 +178,30 @@ export async function generatePlan(
         }
 
         emptySlotsAttempted += 1;
+
+        const customRollingEntry = rollingCustomMeals.find(
+          (entry) =>
+            entry.mealType === mealType &&
+            (remainingCustomRolling.get(getRollingCustomMealKey(entry.mealType, entry.customMeal)) ?? 0) > 0,
+        );
+        if (customRollingEntry) {
+          const key = getRollingCustomMealKey(customRollingEntry.mealType, customRollingEntry.customMeal);
+          plan.push({
+            date: new Date(day),
+            mealType,
+            recipe: null,
+            customMeal: customRollingEntry.customMeal,
+            alternatives: [],
+            cookingFamilyMemberIds: slotAudienceIds,
+            used: false,
+            batchGroupId: null,
+            isRolledOver: true,
+            alreadyCooked: false,
+          });
+          remainingCustomRolling.set(key, (remainingCustomRolling.get(key) ?? 1) - 1);
+          emptySlotsFilled += 1;
+          continue;
+        }
 
         const handsOnLimit = getMealTimeLimit(dayTimeLimits, mealType, "handsOn");
         const totalLimit = getMealTimeLimit(dayTimeLimits, mealType, "total");
@@ -295,6 +329,12 @@ export async function generatePlan(
         warnings.push(`Could not place "${name}" — no compatible slot available.`);
       }
     }
+    for (const entry of rollingCustomMeals) {
+      const key = getRollingCustomMealKey(entry.mealType, entry.customMeal);
+      if ((remainingCustomRolling.get(key) ?? 0) > 0) {
+        warnings.push(`Could not place "${entry.customMeal.name}" — no compatible slot available.`);
+      }
+    }
 
     const generatedBatchValues: PlanBatchInput[] = [...generatedBatches].flatMap(
       ([id, batch]) => {
@@ -360,7 +400,7 @@ export async function savePlan(
     const parsedBatches = planBatchesSaveSchema.parse(batches);
     const normalizedPlan = plan.map((slot) => ({
       ...slot,
-      isRolledOver: slot.recipe != null && (slot.isRolledOver ?? false),
+       isRolledOver: (slot.recipe != null || slot.customMeal != null) && (slot.isRolledOver ?? false),
       alreadyCooked: slot.recipe != null && (slot.alreadyCooked ?? false),
     }));
     const created = await createPlan(userId, startDate, endDate, normalizedPlan, parsedBatches);
@@ -415,7 +455,7 @@ export async function updateSavedPlan(
     const parsedBatches = planBatchesSaveSchema.parse(batches);
     const parsedSlots = planSlotsSaveSchema.parse(slots).map((slot) => ({
       ...slot,
-      isRolledOver: slot.recipeId != null && slot.isRolledOver,
+       isRolledOver: (slot.recipeId != null || slot.customMeal != null) && slot.isRolledOver,
       alreadyCooked: slot.recipeId != null && slot.alreadyCooked,
     }));
     const result = await updatePlan(

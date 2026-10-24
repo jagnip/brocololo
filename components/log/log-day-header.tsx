@@ -97,9 +97,9 @@ export function LogDayHeader({
           label="Daily nutrition"
           metrics={[
             { label: "Calories", value: `${dayMacros.calories.toFixed(0)} kcal` },
+            { label: "Fat", value: `${dayMacros.fats.toFixed(1)} g` },
             { label: "Carbs", value: `${dayMacros.carbs.toFixed(1)} g` },
             { label: "Protein", value: `${dayMacros.proteins.toFixed(1)} g` },
-            { label: "Fat", value: `${dayMacros.fats.toFixed(1)} g` },
           ]}
         />
       </div>

@@ -84,7 +84,7 @@ describe("GroceryMealSelectionDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "Generate list" }));
     expect(onConfirm).toHaveBeenCalledWith({
       excludedRecipeIds: ["chili"],
-      excludedCustomMealNames: [],
+      excludedCustomMealKeys: [],
     });
   });
 
@@ -102,7 +102,7 @@ describe("GroceryMealSelectionDialog", () => {
     fireEvent.click(option);
     fireEvent.click(screen.getByRole("button", { name: "Generate list" }));
     expect(onConfirm).toHaveBeenCalledWith({
-      excludedRecipeIds: [], excludedCustomMealNames: [], includedAvailableRecipeIds: ["chili"],
+      excludedRecipeIds: [], excludedCustomMealKeys: [], includedAvailableRecipeIds: ["chili"],
     });
   });
 

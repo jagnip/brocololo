@@ -2,7 +2,7 @@ import { getIngredients } from "@/lib/db/ingredients";
 import { getRecipes } from "@/lib/db/recipes";
 import {
   getOccupiedDateKeysForPlanning,
-  getUnusedRecipesFromLatestPlan,
+  getUnusedMealsFromRecentPlans,
 } from "@/lib/db/planner";
 import { PlannerForm } from "./planner-form";
 import { requireUser } from "@/lib/auth/session";
@@ -13,14 +13,14 @@ export default async function PlannerFormContainer() {
   const [
     ingredients,
     recipes,
-    previousPlanUnusedRecipes,
+    previousPlanUnusedMeals,
     occupiedDateKeys,
     familyMembers,
   ] =
     await Promise.all([
       getIngredients(userId),
       getRecipes(userId, undefined, undefined, false),
-      getUnusedRecipesFromLatestPlan(userId),
+      getUnusedMealsFromRecentPlans(userId),
       getOccupiedDateKeysForPlanning(userId),
       ensureSelfFamilyMember(userId),
     ]);
@@ -29,7 +29,7 @@ export default async function PlannerFormContainer() {
     <PlannerForm
       ingredients={ingredients}
       recipes={recipes}
-      previousPlanUnusedRecipes={previousPlanUnusedRecipes}
+      previousPlanUnusedMeals={previousPlanUnusedMeals}
       occupiedDateKeys={occupiedDateKeys}
       familyMembers={familyMembers}
     />

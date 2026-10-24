@@ -327,7 +327,7 @@ export function transformPlanToShoppingListRows(
   slots: PlanSlotData[],
   exclusions: GroceryGenerationExclusions = {
     excludedRecipeIds: [],
-    excludedCustomMealNames: [],
+    excludedCustomMealKeys: [],
   },
 ): ShoppingListGeneratedLine[] {
   const eligibleSlots = filterSlotsForGroceryGeneration(
