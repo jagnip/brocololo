@@ -24,6 +24,7 @@ export type PlanSlotData = {
   recipeId?: string | null;
   batchGroupId?: string | null;
   cookingFamilyMemberIds?: string[];
+  extraPortions?: number;
   isRolledOver?: boolean;
   alreadyCooked?: boolean;
   isStorage?: boolean;

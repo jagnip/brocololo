@@ -108,6 +108,7 @@ export const slotSaveDataSchema = z
     batchGroupId: z.string().min(1).nullable().optional(),
     isRolledOver: z.boolean().default(false),
     alreadyCooked: z.boolean().default(false),
+    extraPortions: z.coerce.number().int().min(0).max(99).default(0),
   })
   .superRefine((slot, ctx) => {
     const hasRecipe = slot.recipeId != null;
@@ -118,6 +119,14 @@ export const slotSaveDataSchema = z
         code: z.ZodIssueCode.custom,
         message: "A slot cannot have both a recipe and a custom meal",
         path: ["customMeal"],
+      });
+    }
+
+    if (!hasRecipe && slot.extraPortions !== 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Extra portions are only available for recipe meals",
+        path: ["extraPortions"],
       });
     }
   });
@@ -136,7 +145,6 @@ export const planBatchSaveSchema = z.object({
   id: z.string().min(1),
   recipeId: z.string().min(1),
   storageRows: z.array(planBatchStorageRowSchema).max(99),
-  extraPortions: z.coerce.number().int().min(0).max(99),
 });
 
 export const planBatchesSaveSchema = z

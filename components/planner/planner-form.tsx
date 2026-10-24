@@ -277,6 +277,7 @@ export function PlannerForm({
         recipe: null,
         isRolledOver: false,
         alreadyCooked: false,
+        extraPortions: 0,
         customMeal: null,
         alternatives: [],
         batchGroupId: null,
@@ -342,7 +343,7 @@ export function PlannerForm({
     const nextPlan = currentPlan.map((slot) => {
       const key = `${slot.date.toISOString()}-${slot.mealType}`;
       if (key !== slotKey) return slot;
-      return { ...slot, recipe: null, customMeal: null, alternatives: [], batchGroupId: null, isRolledOver: false, alreadyCooked: false };
+      return { ...slot, recipe: null, customMeal: null, alternatives: [], batchGroupId: null, isRolledOver: false, alreadyCooked: false, extraPortions: 0 };
     });
     batchesRef.current = nextBatches;
     planRef.current = nextPlan;
@@ -399,7 +400,11 @@ export function PlannerForm({
           : previousPlan;
 
         if (expandMultiMeal) {
-          const nextPlan = placeRecipeOnPlan(withAudience, slotKey, payload.recipe);
+          const nextPlan = placeRecipeOnPlan(withAudience, slotKey, payload.recipe).map((slot) =>
+            getPlanSlotKey(slot) === slotKey
+              ? { ...slot, extraPortions: payload.extraPortions ?? slot.extraPortions ?? 0 }
+              : slot,
+          );
           nextBatches = ensureBatchAfterPlacement({
             previousPlan,
             plan: nextPlan,
@@ -420,6 +425,7 @@ export function PlannerForm({
           return {
             ...slot,
             recipe: payload.recipe,
+            extraPortions: payload.extraPortions ?? slot.extraPortions ?? 0,
             isRolledOver: keepsSameRecipe ? (slot.isRolledOver ?? false) : false,
             alreadyCooked: keepsSameRecipe ? (slot.alreadyCooked ?? false) : false,
             customMeal: null,
@@ -460,6 +466,7 @@ export function PlannerForm({
             recipe: null,
             isRolledOver: keepsSameCustom ? (slot.isRolledOver ?? false) : false,
             alreadyCooked: false,
+            extraPortions: 0,
             customMeal: {
               name: payload.name,
               ingredients: payload.ingredients,
@@ -477,6 +484,7 @@ export function PlannerForm({
           recipe: null,
           isRolledOver: false,
           alreadyCooked: false,
+          extraPortions: 0,
           customMeal: null,
           alternatives: [],
           batchGroupId: null,

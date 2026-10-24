@@ -235,6 +235,48 @@ describe("PlanEditor autosave", () => {
     }, { timeout: 2500 });
   });
 
+  it("autosaves an empty slot with zero extra portions after removing a recipe", async () => {
+    vi.useFakeTimers();
+    const initialPlan: PlanInputType = [{
+      date: new Date("2026-03-17T00:00:00.000Z"),
+      mealType: PlannerMealType.DINNER,
+      recipe: createRecipe("recipe-a"),
+      alternatives: [createRecipe("recipe-b")],
+      customMeal: null,
+      cookingFamilyMemberIds: ["fm-a"],
+      extraPortions: 3,
+      used: true,
+    }];
+    const view = renderPlanEditor({ planId: "plan-1", initialPlan, recipes: [], ingredientOptions: emptyIngredientOptions });
+
+    try {
+      fireEvent.click(screen.getByRole("button", { name: "Remove first" }));
+      expect(screen.getByLabelText("dinner-by-day")).toHaveTextContent("2026-03-17:empty");
+      expect(updateSavedPlan).not.toHaveBeenCalled();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+      });
+
+      expect(updateSavedPlan).toHaveBeenCalledTimes(1);
+      const [planId, slots] = vi.mocked(updateSavedPlan).mock.calls[0];
+      expect(planId).toBe("plan-1");
+      expect(slots).toHaveLength(1);
+      expect(slots[0]).toMatchObject({
+        date: initialPlan[0].date,
+        mealType: PlannerMealType.DINNER,
+        recipeId: null,
+        customMeal: null,
+        alternativeRecipeIds: [],
+        extraPortions: 0,
+        used: false,
+      });
+    } finally {
+      view.unmount();
+      vi.useRealTimers();
+    }
+  });
+
   it("checks and unchecks every matching recipe slot through existing autosave", async () => {
     vi.useFakeTimers();
     const recipe = createRecipe("shared-meal");

@@ -18,6 +18,7 @@ export type PlanSlotMealPayload =
       recipe: RecipeType;
       /** When set, also updates the slot audience in the same operation. */
       cookingFamilyMemberIds?: string[];
+      extraPortions?: number;
     }
   | {
       kind: "custom";
@@ -62,6 +63,8 @@ export type SlotInputType = {
   used: boolean;
   isRolledOver?: boolean;
   alreadyCooked?: boolean;
+  /** Anonymous one-serving portions for this recipe slot. */
+  extraPortions?: number;
   /** Shared id across slots placed together as one multi-meal placement; null when alone. */
   batchGroupId?: string | null;
 };
@@ -78,7 +81,8 @@ export type PlanBatchInput = {
   id: string;
   recipeId: string;
   storageRows: PlanBatchStorageRow[];
-  extraPortions: number;
+  /** @deprecated Legacy client fixture compatibility; ignored on persistence. */
+  extraPortions?: number;
 };
 
 export type PlanBatchSaveData = PlanBatchInput;
@@ -93,5 +97,6 @@ export type SlotSaveData = {
   used: boolean;
   isRolledOver?: boolean;
   alreadyCooked?: boolean;
+  extraPortions?: number;
   batchGroupId?: string | null;
 };

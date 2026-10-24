@@ -82,6 +82,7 @@ function createEmptySlot(day: Date, mealType: PlannerMealType): SlotInputType {
     customMeal: null,
     alternatives: [],
     used: false,
+    extraPortions: 0,
   };
 }
 

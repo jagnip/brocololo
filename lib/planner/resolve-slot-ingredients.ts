@@ -108,6 +108,7 @@ export function resolveRecipeSlotAggregatedIngredients(params: {
   recipe: RecipeSlotResolutionInput;
   cookingFamilyMemberIds?: string[];
   familyMembers: FamilyMemberRef[];
+  extraPortions?: number;
 }): AggregatedIngredientLine[] {
   const memberPortions = params.familyMembers.map((member) => {
     const stored = params.recipe.memberPortions?.find(
@@ -144,7 +145,17 @@ export function resolveRecipeSlotAggregatedIngredients(params: {
     }),
   );
 
-  return aggregateConsumableIngredientLines(consumables);
+  const extraPortions = params.extraPortions ?? 0;
+  const extras = extraPortions > 0 ? params.recipe.ingredients.flatMap((row) => {
+    if (!row.unitId && !row.unit?.id || row.amount == null || row.amount <= 0) return [];
+    const unitId = row.unit?.id ?? row.unitId!;
+    return [{
+      ingredientId: row.ingredientId,
+      unitId,
+      amount: (row.amount / params.recipe.servings) * extraPortions,
+    }];
+  }) : [];
+  return aggregateConsumableIngredientLines([...consumables, ...extras]);
 }
 
 /** Build name lookup from recipe rows (base ingredients only). */
@@ -298,6 +309,7 @@ export function getPlannerSlotIngredientSummary(params: {
   recipe: RecipeType | null;
   customMealIngredients?: PlanCustomMealIngredient[];
   cookingFamilyMemberIds?: string[];
+  extraPortions?: number;
   familyMembers: FamilyMemberRef[];
   ingredientOptions: Array<{
     id: string;
@@ -315,6 +327,7 @@ export function getPlannerSlotIngredientSummary(params: {
     recipe: params.recipe,
     customMealIngredients: params.customMealIngredients,
     cookingFamilyMemberIds: params.cookingFamilyMemberIds,
+    extraPortions: params.extraPortions,
     familyMembers: params.familyMembers,
   });
 
@@ -343,6 +356,7 @@ export function getPlannerSlotIngredientDisplayLines(params: {
   recipe: RecipeType | null;
   customMealIngredients?: PlanCustomMealIngredient[];
   cookingFamilyMemberIds?: string[];
+  extraPortions?: number;
   familyMembers: FamilyMemberRef[];
   ingredientOptions: Array<{
     id: string;
@@ -356,12 +370,12 @@ export function getPlannerSlotIngredientDisplayLines(params: {
     }>;
   }>;
   /**
-   * For batch recipes that span multiple plan days: divide amounts so the
-   * dialog shows one day's share (e.g. 2 → half). Defaults to 1.
+   * For batch recipes that span multiple plan days: divide named eaters' amounts
+   * so the dialog shows one day's share (e.g. 2 → half). Defaults to 1.
    */
   mealPortionCount?: number;
 }): Array<{ key: string; name: string; amountLabel: string }> {
-  const lines = resolvePlannerSlotAggregatedIngredients({
+  const namedLines = resolvePlannerSlotAggregatedIngredients({
     recipe: params.recipe,
     customMealIngredients: params.customMealIngredients,
     cookingFamilyMemberIds: params.cookingFamilyMemberIds,
@@ -386,9 +400,21 @@ export function getPlannerSlotIngredientDisplayLines(params: {
   }
 
   const portionCount = Math.max(1, params.mealPortionCount ?? 1);
+  const extraLines = params.recipe && (params.extraPortions ?? 0) > 0
+    ? resolveRecipeSlotAggregatedIngredients({
+        recipe: recipeTypeToResolutionInput(params.recipe),
+        cookingFamilyMemberIds: [],
+        extraPortions: params.extraPortions,
+        familyMembers: params.familyMembers,
+      })
+    : [];
+  const lines = aggregateConsumableIngredientLines([
+    ...namedLines.map((line) => ({ ...line, amount: line.amount / portionCount })),
+    ...extraLines,
+  ]);
 
   return lines.map((line) => {
-    const amount = line.amount / portionCount;
+    const amount = line.amount;
     const name = getIngredientCatalogLabel(line.ingredientId, catalog);
     const unit = unitsById.get(line.unitId);
     const displayUnit = getUnitDisplayName({
@@ -415,11 +441,13 @@ export function getPlannerSlotIngredientDisplayLines(params: {
 export function getPlannerRecipeDialogIngredientRows(params: {
   recipe: RecipeType;
   cookingFamilyMemberIds?: string[];
+  extraPortions?: number;
   familyMembers: FamilyMemberRef[];
 }): Array<{ ingredientId: string; unitId: string; amount: number }> {
   const lines = resolveRecipeSlotAggregatedIngredients({
     recipe: recipeTypeToResolutionInput(params.recipe),
     cookingFamilyMemberIds: params.cookingFamilyMemberIds,
+    extraPortions: params.extraPortions,
     familyMembers: params.familyMembers,
   });
   return aggregatedLinesToEditableRows(lines);
@@ -430,12 +458,14 @@ export function resolvePlannerSlotAggregatedIngredients(params: {
   recipe: RecipeType | null;
   customMealIngredients?: PlanCustomMealIngredient[];
   cookingFamilyMemberIds?: string[];
+  extraPortions?: number;
   familyMembers: FamilyMemberRef[];
 }): AggregatedIngredientLine[] {
   if (params.recipe) {
     return resolveRecipeSlotAggregatedIngredients({
       recipe: recipeTypeToResolutionInput(params.recipe),
       cookingFamilyMemberIds: params.cookingFamilyMemberIds,
+      extraPortions: params.extraPortions,
       familyMembers: params.familyMembers,
     });
   }
@@ -472,7 +502,7 @@ export function resolveRecipeSlotScaledConsumables(
   });
   const eaters = cookingIds;
 
-  return eaters.flatMap((familyMemberId) =>
+  const memberConsumables = eaters.flatMap((familyMemberId) =>
     resolveRecipeIngredientRowsForMember({
       recipeIngredients: slot.recipe!.ingredients.map((row) => ({
         id: row.id,
@@ -490,6 +520,18 @@ export function resolveRecipeSlotScaledConsumables(
       cookingFamilyMemberIds: cookingIds,
     }),
   );
+  const extraConsumables = (slot.extraPortions ?? 0) > 0
+    ?
+    slot.recipe!.ingredients.flatMap((row) => {
+      if (!row.unit?.id || row.amount == null || row.amount <= 0) return [];
+      return [{
+        ingredientId: row.ingredientId,
+        unitId: row.unit.id,
+        amount: (row.amount / slot.recipe!.servings) * (slot.extraPortions ?? 0),
+      }];
+    })
+    : [];
+  return [...memberConsumables, ...extraConsumables];
 }
 
 /** Build unit catalog from ingredient options (for MODIFY substitute units). */

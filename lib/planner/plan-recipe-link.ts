@@ -96,6 +96,10 @@ export function getRecipeCookingHref(
   const dateKeys = relevantSlots.map((slot) =>
     slot.date.toISOString().slice(0, 10),
   );
-  const cook = encodePlanCookParam(combinations, dateKeys);
+  const extraPortions = relevantSlots.reduce(
+    (total, slot) => total + (slot.extraPortions ?? 0),
+    0,
+  );
+  const cook = encodePlanCookParam(combinations, dateKeys, extraPortions);
   return `${ROUTES.recipe(recipeSlug)}?cook=${encodeURIComponent(cook)}`;
 }

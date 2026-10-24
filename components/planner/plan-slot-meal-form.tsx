@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { QuantityStepper } from "@/components/ui/quantity-stepper";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type {
@@ -39,6 +40,7 @@ export type PlanSlotMealFormProps = {
   initialRows: EditableIngredientRow[];
   /** Defaulted audience ids (empty slot → all members). */
   cookingFamilyMemberIds?: string[];
+  initialExtraPortions?: number;
   familyMembers?: FamilyMemberRow[];
   /** Which tab to open on. */
   defaultTab?: MealDialogTab;
@@ -96,6 +98,7 @@ export function PlanSlotMealForm({
   initialCustomName,
   initialRows,
   cookingFamilyMemberIds = [],
+  initialExtraPortions = 0,
   familyMembers = [],
   defaultTab = "repository",
   initialOccasionSlug = null,
@@ -118,6 +121,7 @@ export function PlanSlotMealForm({
   const [audienceIds, setAudienceIds] = useState<string[]>(
     cookingFamilyMemberIds,
   );
+  const [extraPortions, setExtraPortions] = useState(initialExtraPortions);
 
   // Initial state is seeded from props. Remount via `key` on PlanSlotMealForm
   // (see PlanSlotMealDialog) when the slot/initials change — no sync effect.
@@ -169,6 +173,7 @@ export function PlanSlotMealForm({
     const rowsChanged =
       JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedInitial);
     const recipeChanged = selectedRecipeId !== initialRecipeId;
+    const extrasChanged = extraPortions !== initialExtraPortions;
     const nameChanged = customName.trim() !== initialCustomName.trim();
     const tabImpliesCustom = activeTab === "custom";
     const startedAsCustom = initialRecipeId == null && initialCustomName.trim().length > 0;
@@ -180,6 +185,7 @@ export function PlanSlotMealForm({
         nameChanged ||
         rowsChanged ||
         audienceChanged ||
+        extrasChanged ||
         startedAsRecipe ||
         (startedEmpty && customName.trim().length > 0)
       );
@@ -188,6 +194,7 @@ export function PlanSlotMealForm({
     return (
       recipeChanged ||
       audienceChanged ||
+      extrasChanged ||
       startedAsCustom ||
       (startedEmpty && selectedRecipeId != null)
     );
@@ -197,6 +204,8 @@ export function PlanSlotMealForm({
     customName,
     initialCustomName,
     initialRecipeId,
+    initialExtraPortions,
+    extraPortions,
     initialRows,
     rows,
     selectedRecipeId,
@@ -235,6 +244,7 @@ export function PlanSlotMealForm({
         kind: "recipe",
         recipe: selectedRecipe,
         cookingFamilyMemberIds: audienceIds,
+        extraPortions,
       });
       return;
     }
@@ -278,11 +288,30 @@ export function PlanSlotMealForm({
   };
 
   const whoEats = (
-    <PlanSlotWhoEats
-      familyMembers={familyMembers}
-      value={audienceIds}
-      onChange={setAudienceIds}
-    />
+    <div className="space-y-4">
+      <PlanSlotWhoEats
+        familyMembers={familyMembers}
+        value={audienceIds}
+        onChange={setAudienceIds}
+      />
+      {activeTab === "repository" && selectedRecipe ? (
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Extra portions
+          </span>
+          <QuantityStepper
+            value={extraPortions}
+            onValueChange={(value) => setExtraPortions(value ?? 0)}
+            min={0}
+            max={99}
+            editable={false}
+            ariaLabel="Extra portions"
+            decreaseLabel="Decrease extra portions"
+            increaseLabel="Increase extra portions"
+          />
+        </div>
+      ) : null}
+    </div>
   );
 
   const whoEatsProps = {
@@ -295,6 +324,7 @@ export function PlanSlotMealForm({
     mode: ingredientsMode as "recipe" | "custom" | "empty",
     recipe: selectedRecipe,
     cookingFamilyMemberIds: audienceIds,
+    extraPortions,
     familyMembers,
     ingredientOptions,
     rows,
@@ -377,6 +407,7 @@ export function PlanSlotMealForm({
             {...ingredientsPanelProps}
             collapsibleOnMobile
             whoEats={whoEatsProps}
+            cookingControls={whoEats}
           />
         </div>
       </Tabs>

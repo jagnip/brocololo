@@ -11,13 +11,16 @@ import {
 } from "@/components/ui/dialog";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
 import { SegmentedFilterButton } from "@/components/ui/segmented-filter-button";
+import { QuantityStepper } from "@/components/ui/quantity-stepper";
 import { getFamilyMemberLabel } from "./family-member-multi-select";
 
 type PlannerBulkEditEatersDialogProps = {
   open: boolean;
   familyMembers: FamilyMemberRow[];
+  initialMemberIds?: string[];
+  initialExtraPortions?: number | null;
   onCancel: () => void;
-  onSave: (memberIds: string[]) => void;
+  onSave: ((memberIds: string[]) => void) | ((update: { memberIds: string[]; extraPortions?: number }) => void);
 };
 
 function toggleMemberIds(current: string[], memberId: string): string[] {
@@ -34,6 +37,8 @@ function toggleMemberIds(current: string[], memberId: string): string[] {
 export function PlannerBulkEditEatersDialog({
   open,
   familyMembers,
+  initialMemberIds,
+  initialExtraPortions,
   onCancel,
   onSave,
 }: PlannerBulkEditEatersDialogProps) {
@@ -41,16 +46,18 @@ export function PlannerBulkEditEatersDialog({
     () => familyMembers.map((member) => member.id),
     [familyMembers],
   );
-  const [selectedMemberIds, setSelectedMemberIds] = useState(defaultMemberIds);
+  const resolvedInitialMemberIds = initialMemberIds ?? defaultMemberIds;
+  const [selectedMemberIds, setSelectedMemberIds] = useState(resolvedInitialMemberIds);
+  const [extraPortions, setExtraPortions] = useState<number | null>(initialExtraPortions ?? null);
 
   useEffect(() => {
     if (!open) {
       return;
     }
 
-    // Reset every time the dialog opens so bulk updates start from the agreed default.
-    setSelectedMemberIds(defaultMemberIds);
-  }, [defaultMemberIds, open]);
+    setSelectedMemberIds(resolvedInitialMemberIds);
+    setExtraPortions(initialExtraPortions ?? null);
+  }, [initialExtraPortions, open, resolvedInitialMemberIds]);
 
   const canSave = selectedMemberIds.length > 0;
 
@@ -70,7 +77,7 @@ export function PlannerBulkEditEatersDialog({
         onInteractOutside={(event) => event.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>Edit eaters</DialogTitle>
+          <DialogTitle>Edit portions</DialogTitle>
         </DialogHeader>
 
         <div
@@ -98,6 +105,26 @@ export function PlannerBulkEditEatersDialog({
             );
           })}
         </div>
+        {initialExtraPortions !== undefined ? (
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">Extra portions</p>
+              {initialExtraPortions === null ? (
+                <p className="text-xs text-muted-foreground">Mixed values stay unchanged until adjusted.</p>
+              ) : null}
+            </div>
+            <QuantityStepper
+              value={extraPortions}
+              onValueChange={setExtraPortions}
+              min={0}
+              max={99}
+              editable={false}
+              ariaLabel="Extra portions"
+              decreaseLabel="Decrease extra portions"
+              increaseLabel="Increase extra portions"
+            />
+          </div>
+        ) : null}
 
         <DialogFooter className="gap-2">
           <Button type="button" variant="outline" onClick={onCancel}>
@@ -110,10 +137,17 @@ export function PlannerBulkEditEatersDialog({
               if (!canSave) {
                 return;
               }
-              onSave(selectedMemberIds);
+              if (initialExtraPortions === undefined) {
+                (onSave as (memberIds: string[]) => void)(selectedMemberIds);
+              } else {
+                (onSave as (update: { memberIds: string[]; extraPortions?: number }) => void)({
+                  memberIds: selectedMemberIds,
+                  ...(extraPortions != null ? { extraPortions } : {}),
+                });
+              }
             }}
           >
-            Update eaters
+            {initialExtraPortions === undefined ? "Update eaters" : "Update portions"}
           </Button>
         </DialogFooter>
       </DialogContent>

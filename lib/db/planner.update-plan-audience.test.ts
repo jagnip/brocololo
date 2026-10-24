@@ -227,7 +227,6 @@ describe("updatePlan added-date log entries respect slot audience", () => {
               cookingFamilyMemberIds: ["jagoda", "nelson"],
             },
           ],
-          extraPortions: 1,
         },
       ],
     );
@@ -250,7 +249,6 @@ describe("updatePlan added-date log entries respect slot audience", () => {
               expect.objectContaining({
                 id: "batch-1",
                 recipeId: "recipe-1",
-                extraPortions: 1,
               }),
             ],
           },

@@ -222,6 +222,7 @@ model PlanSlot {
   used         Boolean         @default(false)
   isRolledOver Boolean         @default(false) @map("is_rolled_over")
   alreadyCooked Boolean        @default(false) @map("already_cooked")
+  extraPortions Int            @default(0) @map("extra_portions")
   // Links slots that were placed together as one multi-meal placement (batch or repeat).
   batchGroupId String?         @map("batch_group_id")
 
@@ -254,7 +255,6 @@ model PlanBatch {
   id            String @id
   planId        String @map("plan_id")
   recipeId      String @map("recipe_id")
-  extraPortions Int    @default(0) @map("extra_portions")
 
   plan        Plan                  @relation(fields: [planId], references: [id], onDelete: Cascade)
   recipe      Recipe                @relation(fields: [recipeId], references: [id], onDelete: Cascade)
