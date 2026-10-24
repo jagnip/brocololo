@@ -21,6 +21,8 @@ describe("updatePlan added-date log entries respect slot audience", () => {
   const logEntryUpsert = vi.fn();
   const planSlotAlternativeDeleteMany = vi.fn();
   const planSlotDeleteMany = vi.fn();
+  const planSlotFindMany = vi.fn();
+  const planSlotUpdateMany = vi.fn();
   const planBatchDeleteMany = vi.fn();
   const planAudienceMemberDeleteMany = vi.fn();
   const planUpdate = vi.fn();
@@ -38,7 +40,11 @@ describe("updatePlan added-date log entries respect slot audience", () => {
           upsert: logEntryUpsert,
         },
         planSlotAlternative: { deleteMany: planSlotAlternativeDeleteMany },
-        planSlot: { deleteMany: planSlotDeleteMany },
+        planSlot: {
+          deleteMany: planSlotDeleteMany,
+          findMany: planSlotFindMany,
+          updateMany: planSlotUpdateMany,
+        },
         planBatch: { deleteMany: planBatchDeleteMany },
         planAudienceMember: { deleteMany: planAudienceMemberDeleteMany },
         recipe: { count: recipeCount },
@@ -49,6 +55,8 @@ describe("updatePlan added-date log entries respect slot audience", () => {
 
     planSlotAlternativeDeleteMany.mockResolvedValue({ count: 0 });
     planSlotDeleteMany.mockResolvedValue({ count: 0 });
+    planSlotFindMany.mockResolvedValue([]);
+    planSlotUpdateMany.mockResolvedValue({ count: 0 });
     planBatchDeleteMany.mockResolvedValue({ count: 0 });
     planAudienceMemberDeleteMany.mockResolvedValue({ count: 0 });
     planUpdate.mockResolvedValue({ slots: [] });
@@ -187,6 +195,68 @@ describe("updatePlan added-date log entries respect slot audience", () => {
     expect(
       upsertCreates.some((row) => row.familyMemberId === "fm-b"),
     ).toBe(false);
+  });
+
+  it("marks its fresh source slot used when completing a rolled-over meal", async () => {
+    const slot = {
+      ...makeSlot({
+        date: "2026-03-17",
+        mealType: PlannerMealType.BREAKFAST,
+        cookingFamilyMemberIds: ["fm-a"],
+      }),
+      isRolledOver: true,
+    };
+    planFindFirst.mockResolvedValue({
+      id: "plan-1",
+      createdAt: new Date("2026-03-17T00:00:00.000Z"),
+      log: null,
+      batches: [],
+      slots: [{
+        id: "current-slot",
+        ...slot,
+        used: false,
+        customName: null,
+        customIngredients: [],
+      }],
+    });
+    planSlotFindMany.mockResolvedValue([{
+      id: "source-slot",
+      recipeId: "recipe-1",
+      customName: null,
+    }]);
+
+    await updatePlan("user-1", "plan-1", [{ ...slot, used: true }]);
+
+    expect(planSlotUpdateMany).toHaveBeenCalledWith({
+      where: { id: { in: ["source-slot"] } },
+      data: { used: true },
+    });
+  });
+
+  it("does not cascade completion from fresh meals", async () => {
+    const slot = makeSlot({
+      date: "2026-03-17",
+      mealType: PlannerMealType.BREAKFAST,
+      cookingFamilyMemberIds: ["fm-a"],
+    });
+    planFindFirst.mockResolvedValue({
+      id: "plan-1",
+      createdAt: new Date("2026-03-17T00:00:00.000Z"),
+      log: null,
+      batches: [],
+      slots: [{
+        id: "current-slot",
+        ...slot,
+        used: false,
+        customName: null,
+        customIngredients: [],
+      }],
+    });
+
+    await updatePlan("user-1", "plan-1", [{ ...slot, used: true }]);
+
+    expect(planSlotFindMany).not.toHaveBeenCalled();
+    expect(planSlotUpdateMany).not.toHaveBeenCalled();
   });
 
   it("recreates batch storage independently from recreated slots", async () => {
