@@ -103,13 +103,16 @@ vi.mock("./planner-bulk-edit-eaters-dialog", () => ({
   }: {
     open: boolean;
     onCancel: () => void;
-    onSave: (memberIds: string[]) => void;
+    onSave: (update: string[] | { memberIds: string[]; extraPortions: number }) => void;
   }) =>
     open ? (
       <div>
         <div>Edit eaters dialog</div>
         <button type="button" onClick={() => onSave(["fm-b"])}>
           Submit eaters
+        </button>
+        <button type="button" onClick={() => onSave({ memberIds: ["fm-b"], extraPortions: 3 })}>
+          Submit eaters and extra portions
         </button>
         <button type="button" onClick={onCancel}>
           Cancel edit eaters
@@ -354,6 +357,40 @@ describe("PlanView bulk edit eaters", () => {
     await waitFor(() => {
       expect(screen.queryByLabelText("selected-count")).not.toBeInTheDocument();
     });
+  });
+
+  it("saves extra portions with the new audience for every selected recipe", async () => {
+    const user = userEvent.setup();
+    const onAudienceChange = vi.fn();
+    const onSetMeal = vi.fn();
+    const plan = [
+      createSlot("2026-03-17T00:00:00.000Z", "BREAKFAST", ["fm-a"]),
+      createSlot("2026-03-17T00:00:00.000Z", "LUNCH", ["fm-a"]),
+      createSlot("2026-03-17T00:00:00.000Z", "DINNER", ["fm-a"]),
+    ];
+    renderPlanView({ plan, onAudienceChange, onSetMeal });
+
+    await user.click(screen.getByRole("button", { name: "Select BREAKFAST" }));
+    await user.click(screen.getByRole("button", { name: "Select LUNCH" }));
+    await user.click(screen.getByRole("button", { name: "Edit eaters" }));
+    await user.click(screen.getByRole("button", { name: "Submit eaters and extra portions" }));
+
+    expect(onAudienceChange.mock.calls).toEqual([
+      ["2026-03-17T00:00:00.000Z-BREAKFAST", ["fm-b"]],
+      ["2026-03-17T00:00:00.000Z-LUNCH", ["fm-b"]],
+    ]);
+    expect(onSetMeal.mock.calls).toEqual(plan.slice(0, 2).map((slot) => [
+      `${slot.date.toISOString()}-${slot.mealType}`,
+      {
+        kind: "recipe",
+        recipe: slot.recipe,
+        cookingFamilyMemberIds: ["fm-b"],
+        extraPortions: 3,
+      },
+      { expandMultiMeal: false },
+    ]));
+    expect(screen.queryByText("Edit eaters dialog")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("selected-count")).not.toBeInTheDocument();
   });
 
   it("does not expose bulk edit eaters when audience editing is unavailable", async () => {

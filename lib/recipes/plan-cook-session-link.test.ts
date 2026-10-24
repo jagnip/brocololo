@@ -12,6 +12,11 @@ const N = "member-nelson";
 const HOUSEHOLD = [J, N];
 
 describe("encodePlanCookParam / decodePlanCookParam", () => {
+  it("preserves extra portions aggregated across several planner slots", () => {
+    const combinations = [{ count: 2, memberIds: [J, N] }];
+    expect(decodePlanCookParam(encodePlanCookParam(combinations, [], 120), HOUSEHOLD))
+      .toEqual({ combinations, dateKeys: [], extraPortions: 120 });
+  });
   it("round-trips multi-combination sessions", () => {
     const combinations: CookingCombination[] = [
       { count: 2, memberIds: [J, N] },

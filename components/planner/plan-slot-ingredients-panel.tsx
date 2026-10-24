@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
+import type { ReactNode } from "react";
 import { ChevronDown, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ type PlanSlotIngredientsPanelProps = {
   recipe: RecipeType | null;
   customMealIngredients?: PlanCustomMealIngredient[];
   cookingFamilyMemberIds: string[];
+  extraPortions?: number;
   familyMembers: FamilyMemberRef[];
   ingredientOptions: LogIngredientOption[];
   /** Editable rows — only used in custom mode. */
@@ -57,6 +59,7 @@ type PlanSlotIngredientsPanelProps = {
   onRowsChange: (rows: DialogIngredientRow[]) => void;
   /** When true, wrap the list in a Collapsible for mobile. */
   collapsibleOnMobile?: boolean;
+  cookingControls?: ReactNode;
   /**
    * Live "N of M meals" for a batch cook spanning multiple plan days.
    * When set, amounts are divided by total so the panel shows one day's share.
@@ -90,6 +93,7 @@ function RecipeIngredientList({
   familyMembers,
   ingredientOptions,
   mealPortionCount = 1,
+  extraPortions = 0,
 }: {
   recipe: RecipeType | null;
   customMealIngredients?: PlanCustomMealIngredient[];
@@ -97,6 +101,7 @@ function RecipeIngredientList({
   familyMembers: FamilyMemberRef[];
   ingredientOptions: LogIngredientOption[];
   mealPortionCount?: number;
+  extraPortions?: number;
 }) {
   const lines = useMemo(
     () =>
@@ -107,6 +112,7 @@ function RecipeIngredientList({
         familyMembers,
         ingredientOptions,
         mealPortionCount,
+        extraPortions,
       }),
     [
       cookingFamilyMemberIds,
@@ -114,6 +120,7 @@ function RecipeIngredientList({
       familyMembers,
       ingredientOptions,
       mealPortionCount,
+      extraPortions,
       recipe,
     ],
   );
@@ -402,6 +409,7 @@ function IngredientsBody(props: PlanSlotIngredientsPanelProps) {
           familyMembers={props.familyMembers}
           ingredientOptions={props.ingredientOptions}
           mealPortionCount={mealPortionCount}
+          extraPortions={props.extraPortions}
         />
       ) : null}
 
@@ -456,6 +464,7 @@ export function PlanSlotIngredientsPanel(props: PlanSlotIngredientsPanelProps) {
       cookingFamilyMemberIds: props.cookingFamilyMemberIds,
       familyMembers: props.familyMembers,
       ingredientOptions: props.ingredientOptions,
+      extraPortions: props.extraPortions,
     }).length;
   }, [props]);
 
@@ -482,13 +491,13 @@ export function PlanSlotIngredientsPanel(props: PlanSlotIngredientsPanelProps) {
       </CollapsibleTrigger>
       <CollapsibleContent className="max-h-[40vh] overflow-y-auto border-t px-4 py-3 md:px-6">
         <div className="space-y-4">
-          {props.whoEats != null ? (
+          {props.cookingControls ?? (props.whoEats != null ? (
             <PlanSlotWhoEats
               familyMembers={props.whoEats.familyMembers}
               value={props.whoEats.value}
               onChange={props.whoEats.onChange}
             />
-          ) : null}
+          ) : null)}
           {props.mode !== "empty" ? <IngredientsBody {...props} /> : null}
         </div>
       </CollapsibleContent>

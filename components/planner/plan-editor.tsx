@@ -151,6 +151,7 @@ export function PlanEditor({
       used: s.used,
       isRolledOver: s.isRolledOver ?? false,
       alreadyCooked: s.alreadyCooked ?? false,
+      extraPortions: s.extraPortions ?? 0,
       batchGroupId: s.batchGroupId ?? null,
     }));
 
@@ -331,7 +332,11 @@ export function PlanEditor({
 
         // Batch placement keeps unselected meals in Storage; non-batch repeats can expand.
         if (expandMultiMeal) {
-          return placeRecipeOnPlan(withAudience, slotKey, payload.recipe);
+          return placeRecipeOnPlan(withAudience, slotKey, payload.recipe).map((slot) =>
+            getPlanSlotKey(slot) === slotKey
+              ? { ...slot, extraPortions: payload.extraPortions ?? slot.extraPortions ?? 0 }
+              : slot,
+          );
         }
 
         return withAudience.map((slot) => {
@@ -339,6 +344,7 @@ export function PlanEditor({
           return {
             ...slot,
             recipe: payload.recipe,
+            extraPortions: payload.extraPortions ?? slot.extraPortions ?? 0,
             isRolledOver: slot.recipe?.id === payload.recipe.id ? (slot.isRolledOver ?? false) : false,
             alreadyCooked: slot.recipe?.id === payload.recipe.id ? (slot.alreadyCooked ?? false) : false,
             customMeal: null,
@@ -368,6 +374,7 @@ export function PlanEditor({
             recipe: null,
             isRolledOver: keepsSameCustom ? (slot.isRolledOver ?? false) : false,
             alreadyCooked: false,
+            extraPortions: 0,
             customMeal: {
               name: payload.name,
               ingredients: payload.ingredients,
@@ -385,6 +392,7 @@ export function PlanEditor({
           recipe: null,
           isRolledOver: false,
           alreadyCooked: false,
+          extraPortions: 0,
           customMeal: null,
           alternatives: [],
           batchGroupId: null,
@@ -449,6 +457,8 @@ export function PlanEditor({
         recipe: null,
         isRolledOver: false,
         alreadyCooked: false,
+        extraPortions: 0,
+        used: false,
         customMeal: null,
         alternatives: [],
         batchGroupId: null,
@@ -470,6 +480,8 @@ export function PlanEditor({
           recipe: null,
           isRolledOver: false,
           alreadyCooked: false,
+          extraPortions: 0,
+          used: false,
           customMeal: null,
           alternatives: [],
           batchGroupId: null,

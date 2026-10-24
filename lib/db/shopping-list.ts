@@ -234,6 +234,7 @@ export function slotsToPlanSlotData(
 ): PlanSlotData[] {
   const scheduled = plan.slots.map((s) => ({
     recipeId: s.recipeId,
+    extraPortions: s.extraPortions,
     isRolledOver: s.isRolledOver,
     alreadyCooked: s.alreadyCooked,
     batchGroupId: s.batchGroupId,
@@ -249,7 +250,7 @@ export function slotsToPlanSlotData(
     if (!source?.recipe || source.alreadyCooked) continue;
     for (const row of batch.storageRows) {
       for (let index = 0; index < row.count; index += 1) {
-        stored.push({ ...source, isStorage: true, cookingFamilyMemberIds: row.cookingFamilyMemberIds });
+        stored.push({ ...source, extraPortions: 0, isStorage: true, cookingFamilyMemberIds: row.cookingFamilyMemberIds });
       }
     }
   }

@@ -19,6 +19,7 @@ export function PlanSlotMealDialog({
   initialCustomName,
   defaultTab = "repository",
   cookingFamilyMemberIds = [],
+  initialExtraPortions = 0,
   ...formProps
 }: PlanSlotMealDialogProps) {
   // Remount the form when the dialog opens or the slot/initials change so
@@ -29,6 +30,7 @@ export function PlanSlotMealDialog({
     initialRecipeId ?? "none",
     initialCustomName,
     cookingFamilyMemberIds.join(","),
+    initialExtraPortions,
   ].join("|");
 
   return (
@@ -43,6 +45,7 @@ export function PlanSlotMealDialog({
           initialCustomName={initialCustomName}
           defaultTab={defaultTab}
           cookingFamilyMemberIds={cookingFamilyMemberIds}
+          initialExtraPortions={initialExtraPortions}
           {...formProps}
           onCancel={() => {
             onCancel();

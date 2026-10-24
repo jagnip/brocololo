@@ -55,12 +55,28 @@ function createSlot(recipe: RecipeType): SlotInputType {
 }
 
 describe("PlannerSlotCard batch badge", () => {
+  it("shows household names and anonymous portions without a meal occasion", () => {
+    const recipe = createBatchRecipe();
+    render(<PlannerSlotCard
+      slot={{ ...createSlot(recipe), cookingFamilyMemberIds: ["n", "j"], extraPortions: 4 }}
+      familyMembers={[
+        { id: "j", name: "Jagoda", isSelf: true, sortOrder: 0, portionMultiplier: 1 },
+        { id: "n", name: "Nelson", isSelf: false, sortOrder: 1, portionMultiplier: 1 },
+      ]}
+      recipes={[recipe]}
+      ingredientOptions={[]}
+    />);
+    expect(screen.getByLabelText("Cooking for")).toHaveTextContent("Jagoda \u00b7 Nelson \u00b7 4 extra portions");
+    expect(screen.getByText("New")).toBeInTheDocument();
+    expect(screen.queryByText("Dinner")).not.toBeInTheDocument();
+  });
+
   it.each([
-    [true, true, "Dinner \u00b7 Already cooked"],
-    [true, false, "Dinner \u00b7 Rolled over"],
-    [false, true, "Dinner \u00b7 Already cooked"],
-    [false, false, "Dinner"],
-  ] as const)("shows rolling and cooked statuses in the description (%s, %s)", (isRolledOver, alreadyCooked, description) => {
+    [true, true, "Already cooked"],
+    [true, false, "Rolled over"],
+    [false, true, "Already cooked"],
+    [false, false, "New"],
+  ] as const)("shows one status in the metadata rail (%s, %s)", (isRolledOver, alreadyCooked, description) => {
     const recipe = createBatchRecipe();
     render(
       <PlannerSlotCard
@@ -70,8 +86,8 @@ describe("PlannerSlotCard batch badge", () => {
       />,
     );
     expect(screen.getByText(description)).toBeInTheDocument();
-    expect(screen.queryByText(/^Rolled over$/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/^Already cooked$/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Dinner")).not.toBeInTheDocument();
+    if (alreadyCooked) expect(screen.queryByText("Rolled over")).not.toBeInTheDocument();
   });
 
   it("omits recipe ingredient previews while preserving recipe details and editing", () => {
@@ -93,7 +109,7 @@ describe("PlannerSlotCard batch badge", () => {
     );
 
     expect(screen.getByRole("link", { name: "Bolognese" })).toBeInTheDocument();
-    expect(screen.getByText("Dinner")).toBeInTheDocument();
+    expect(screen.getByText("New")).toBeInTheDocument();
     expect(screen.getByText("25 min")).toBeInTheDocument();
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
     expect(screen.queryByText(/Apple|Milk|Oats|Cinnamon|Egg|Yogurt|and \d+ more/)).not.toBeInTheDocument();

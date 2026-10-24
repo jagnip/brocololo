@@ -191,6 +191,14 @@ export function PlanView({
   const batchLabels = getBatchGroupLabels(plan, batches);
   const bulkReplaceDialogCopy = getBulkEditMealsDialogCopy(selectedCount);
   const canBulkEditEaters = onAudienceChange && familyMembers.length > 0;
+  const selectedSlots = plan.filter((slot) => selectedKeys.has(getPlanSlotKey(slot)));
+  const selectedRecipeSlots = selectedSlots.filter((slot) => slot.recipe != null);
+  const selectedExtraValues = selectedRecipeSlots.map((slot) => slot.extraPortions ?? 0);
+  const bulkInitialExtraPortions = selectedExtraValues.length === 0
+    ? undefined
+    : selectedExtraValues.every((value) => value === selectedExtraValues[0])
+      ? selectedExtraValues[0]!
+      : null;
   const canRearrange = Boolean(onRearrangeSlots);
   const selectedMealTypes = new Set(
     plan
@@ -256,13 +264,25 @@ export function PlanView({
     clearSelection();
   };
 
-  const handleBulkEditEatersSave = (memberIds: string[]) => {
+  const handleBulkEditEatersSave = (update: string[] | { memberIds: string[]; extraPortions?: number }) => {
     if (!onAudienceChange) return;
+    const memberIds = Array.isArray(update) ? update : update.memberIds;
+    const extraPortions = Array.isArray(update) ? undefined : update.extraPortions;
 
     // Apply the same audience to every selected slot for a simple bulk replace flow.
     selectedKeys.forEach((slotKey) => {
       onAudienceChange(slotKey, memberIds);
     });
+    if (extraPortions !== undefined && onSetMeal) {
+      selectedRecipeSlots.forEach((slot) => {
+        onSetMeal(getPlanSlotKey(slot), {
+          kind: "recipe",
+          recipe: slot.recipe!,
+          cookingFamilyMemberIds: memberIds,
+          extraPortions,
+        }, { expandMultiMeal: false });
+      });
+    }
     setIsBulkEditEatersDialogOpen(false);
     clearSelection();
   };
@@ -451,6 +471,7 @@ export function PlanView({
           initialOccasionSlug={bulkInitialOccasionSlug}
           familyMembers={familyMembers}
           cookingFamilyMemberIds={bulkInitialAudienceIds}
+          initialExtraPortions={0}
           isSaving={false}
           onCancel={() => setIsBulkReplaceDialogOpen(false)}
           onSave={handleBulkReplaceSave}
@@ -460,6 +481,8 @@ export function PlanView({
         <PlannerBulkEditEatersDialog
           open={isBulkEditEatersDialogOpen}
           familyMembers={familyMembers}
+          initialMemberIds={bulkInitialAudienceIds}
+          initialExtraPortions={bulkInitialExtraPortions}
           onCancel={() => setIsBulkEditEatersDialogOpen(false)}
           onSave={handleBulkEditEatersSave}
         />
@@ -484,7 +507,6 @@ export function PlanView({
               id: editingBatchId,
               recipeId: firstSlot.recipe.id,
               storageRows: [],
-              extraPortions: 0,
             }}
             onSave={onBatchesChange ? (nextBatch) => onBatchesChange([
               ...batches.filter((batch) => batch.id !== nextBatch.id),

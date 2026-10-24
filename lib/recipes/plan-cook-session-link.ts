@@ -34,7 +34,10 @@ export function encodePlanCookParam(
   ].sort((a, b) => a.localeCompare(b));
 
   const datedBody = uniqueDates.length === 0 ? body : `${uniqueDates.join(",")}|${body}`;
-  return extraPortions > 0 ? `${datedBody}~${Math.min(99, Math.floor(extraPortions))}` : datedBody;
+  // A batch can combine several slots, each with up to 99 anonymous portions.
+  return Number.isSafeInteger(extraPortions) && extraPortions > 0
+    ? `${datedBody}~${extraPortions}`
+    : datedBody;
 }
 
 /**
@@ -65,7 +68,8 @@ export function decodePlanCookParam(
   if (extrasIndex >= 0) {
     const extrasPart = raw.slice(extrasIndex + 1);
     if (!/^\d+$/.test(extrasPart)) return null;
-    extraPortions = Math.max(0, Math.min(99, Number.parseInt(extrasPart, 10)));
+    extraPortions = Number.parseInt(extrasPart, 10);
+    if (!Number.isSafeInteger(extraPortions)) return null;
     raw = raw.slice(0, extrasIndex);
   }
 

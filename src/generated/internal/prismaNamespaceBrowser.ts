@@ -242,6 +242,7 @@ export const PlanSlotScalarFieldEnum = {
   used: 'used',
   isRolledOver: 'isRolledOver',
   alreadyCooked: 'alreadyCooked',
+  extraPortions: 'extraPortions',
   batchGroupId: 'batchGroupId'
 } as const
 
@@ -259,8 +260,7 @@ export type PlanSlotAudienceMemberScalarFieldEnum = (typeof PlanSlotAudienceMemb
 export const PlanBatchScalarFieldEnum = {
   id: 'id',
   planId: 'planId',
-  recipeId: 'recipeId',
-  extraPortions: 'extraPortions'
+  recipeId: 'recipeId'
 } as const
 
 export type PlanBatchScalarFieldEnum = (typeof PlanBatchScalarFieldEnum)[keyof typeof PlanBatchScalarFieldEnum]

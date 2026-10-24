@@ -348,7 +348,6 @@ export async function generatePlan(
             id,
             recipeId: batch.recipeId,
             storageRows: batch.storageRows,
-            extraPortions: 0,
           },
         ];
       },
@@ -402,6 +401,7 @@ export async function savePlan(
       ...slot,
        isRolledOver: (slot.recipe != null || slot.customMeal != null) && (slot.isRolledOver ?? false),
       alreadyCooked: slot.recipe != null && (slot.alreadyCooked ?? false),
+      extraPortions: slot.recipe != null ? slot.extraPortions : 0,
     }));
     const created = await createPlan(userId, startDate, endDate, normalizedPlan, parsedBatches);
     if (created.type === "date_conflict") {
@@ -457,6 +457,7 @@ export async function updateSavedPlan(
       ...slot,
        isRolledOver: (slot.recipeId != null || slot.customMeal != null) && slot.isRolledOver,
       alreadyCooked: slot.recipeId != null && slot.alreadyCooked,
+      extraPortions: slot.recipeId != null ? slot.extraPortions : 0,
     }));
     const result = await updatePlan(
       userId,

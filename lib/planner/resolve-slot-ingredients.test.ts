@@ -383,6 +383,32 @@ describe("getPlannerSlotIngredientDisplayLines", () => {
     ).toEqual([
       { key: "ing-flour-unit-g", name: "Flour", amountLabel: "100 g" },
     ]);
+
+    expect(
+      getPlannerSlotIngredientDisplayLines({
+        recipe,
+        cookingFamilyMemberIds: ["fm-jagoda", "fm-nelson"],
+        familyMembers,
+        ingredientOptions,
+        mealPortionCount: 2,
+        extraPortions: 2,
+      }),
+    ).toEqual([
+      { key: "ing-flour-unit-g", name: "Flour", amountLabel: "300 g" },
+    ]);
+
+    expect(
+      getPlannerSlotIngredientDisplayLines({
+        recipe,
+        cookingFamilyMemberIds: [],
+        familyMembers,
+        ingredientOptions,
+        mealPortionCount: 2,
+        extraPortions: 2,
+      }),
+    ).toEqual([
+      { key: "ing-flour-unit-g", name: "Flour", amountLabel: "200 g" },
+    ]);
   });
 });
 
@@ -451,6 +477,35 @@ function buildGrocerySlot(
 }
 
 describe("planner and groceries parity", () => {
+  it.each([
+    { eater: "fm-nelson", oilAmount: 0 },
+    { eater: "fm-jagoda", oilAmount: 10 },
+  ])("keeps anonymous extras unadjusted for $eater", ({ eater, oilAmount }) => {
+    const slot = buildGrocerySlot({
+      cookingFamilyMemberIds: [eater],
+      extraPortions: 2,
+    });
+    const groceryRows = transformPlanToShoppingListRows([slot]);
+    const plannerLines = resolveRecipeSlotAggregatedIngredients({
+      recipe: slot.recipe!,
+      cookingFamilyMemberIds: slot.cookingFamilyMemberIds,
+      familyMembers,
+      extraPortions: slot.extraPortions,
+    });
+
+    expect(plannerLines).toEqual([
+      { ingredientId: "ing-butter", unitId: "unit-g", amount: 40 },
+      ...(oilAmount > 0
+        ? [{ ingredientId: "ing-olive-oil", unitId: "unit-g", amount: oilAmount }]
+        : []),
+    ]);
+    expect(groceryRows).toHaveLength(oilAmount > 0 ? 2 : 1);
+    expect(groceryRows.find((row) => row.ingredientId === "ing-butter")?.amount).toBe(40);
+    expect(groceryRows.find((row) => row.ingredientId === "ing-olive-oil")?.amount).toBe(
+      oilAmount || undefined,
+    );
+  });
+
   it("matches groceries totals for the same slot audience", () => {
     const slot = buildGrocerySlot();
     const groceryRows = transformPlanToShoppingListRows([slot]);

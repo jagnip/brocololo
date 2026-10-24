@@ -101,9 +101,9 @@ describe("updateSavedPlan", () => {
     const slot = { date: new Date("2026-03-30T00:00:00.000Z"), mealType: "DINNER" as const, recipeId: "recipe-1", customMeal: null, alternativeRecipeIds: [], cookingFamilyMemberIds: ["member-1"], used: false };
     await updateSavedPlan("plan-1", [slot, { ...slot, isRolledOver: true, alreadyCooked: true }, { ...slot, recipeId: null, isRolledOver: true, alreadyCooked: true }]);
     expect(vi.mocked(updatePlan).mock.calls[0]?.[2]).toEqual([
-      { ...slot, isRolledOver: false, alreadyCooked: false },
-      { ...slot, isRolledOver: true, alreadyCooked: true },
-      { ...slot, recipeId: null, isRolledOver: false, alreadyCooked: false },
+      { ...slot, isRolledOver: false, alreadyCooked: false, extraPortions: 0 },
+      { ...slot, isRolledOver: true, alreadyCooked: true, extraPortions: 0 },
+      { ...slot, recipeId: null, isRolledOver: false, alreadyCooked: false, extraPortions: 0 },
     ]);
   });
 
@@ -112,9 +112,9 @@ describe("updateSavedPlan", () => {
     const slot = { date: new Date("2026-03-30T00:00:00.000Z"), mealType: "DINNER" as const, recipe: createMockRecipe(), customMeal: null, alternatives: [], used: false };
     await savePlan([slot, { ...slot, isRolledOver: true, alreadyCooked: true }, { ...slot, recipe: null, isRolledOver: true, alreadyCooked: true }]);
     expect(vi.mocked(createPlan).mock.calls[0]?.[3]).toEqual([
-      { ...slot, isRolledOver: false, alreadyCooked: false },
-      { ...slot, isRolledOver: true, alreadyCooked: true },
-      { ...slot, recipe: null, isRolledOver: false, alreadyCooked: false },
+      { ...slot, isRolledOver: false, alreadyCooked: false, extraPortions: undefined },
+      { ...slot, isRolledOver: true, alreadyCooked: true, extraPortions: undefined },
+      { ...slot, recipe: null, isRolledOver: false, alreadyCooked: false, extraPortions: 0 },
     ]);
   });
 

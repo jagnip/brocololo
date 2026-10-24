@@ -159,7 +159,6 @@ function batchSaveDataToCreateData(batch: PlanBatchSaveData) {
   return {
     id: batch.id,
     recipeId: batch.recipeId,
-    extraPortions: batch.extraPortions,
     storageRows: {
       create: batch.storageRows.map((row, position) => ({
         count: row.count,
@@ -238,6 +237,7 @@ function slotInputToCreateData(s: SlotInputType) {
     used: s.used,
     isRolledOver: s.isRolledOver ?? false,
     alreadyCooked: s.alreadyCooked ?? false,
+    extraPortions: s.recipe ? (s.extraPortions ?? 0) : 0,
     batchGroupId: s.batchGroupId ?? null,
     audienceMembers: buildSlotAudienceCreates(s.cookingFamilyMemberIds),
     customIngredients: hasCustom
@@ -265,6 +265,7 @@ function slotSaveDataToCreateData(s: SlotSaveData) {
     used: s.used,
     isRolledOver: s.isRolledOver ?? false,
     alreadyCooked: s.alreadyCooked ?? false,
+    extraPortions: s.recipeId ? (s.extraPortions ?? 0) : 0,
     batchGroupId: s.batchGroupId ?? null,
     audienceMembers: buildSlotAudienceCreates(s.cookingFamilyMemberIds),
     customIngredients: hasCustom
@@ -518,6 +519,7 @@ export async function getPlanById(userId: string, planId: string) {
     used: slot.used,
     isRolledOver: slot.isRolledOver,
     alreadyCooked: slot.alreadyCooked,
+    extraPortions: slot.extraPortions,
     batchGroupId: slot.batchGroupId,
   }));
 }
@@ -531,7 +533,6 @@ export async function getPlanBatchesById(userId: string, planId: string) {
         select: {
           id: true,
           recipeId: true,
-          extraPortions: true,
           storageRows: {
             orderBy: { position: "asc" },
             select: {
@@ -550,7 +551,6 @@ export async function getPlanBatchesById(userId: string, planId: string) {
   return plan.batches.map((batch) => ({
     id: batch.id,
     recipeId: batch.recipeId,
-    extraPortions: batch.extraPortions,
     storageRows: batch.storageRows.map((row) => ({
       count: row.count,
       cookingFamilyMemberIds: row.audienceMembers.map(
@@ -765,6 +765,7 @@ export async function getPlanForGroceries(userId: string, planId: string) {
     })),
     slots: plan.slots.map((s) => ({
       recipeId: s.recipeId,
+      extraPortions: s.extraPortions,
       isRolledOver: s.isRolledOver,
       alreadyCooked: s.alreadyCooked,
       batchGroupId: s.batchGroupId,

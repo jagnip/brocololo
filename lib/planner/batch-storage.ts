@@ -117,7 +117,6 @@ export function ensureBatchForPlacement(params: {
       storageRows: storageCount > 0
         ? [{ count: storageCount, cookingFamilyMemberIds: [...params.cookingFamilyMemberIds] }]
         : [],
-      extraPortions: 0,
     },
   ];
 }

@@ -156,7 +156,6 @@ describe("generatePlan fill-empty", () => {
       id: scheduled[0]!.batchGroupId,
       recipeId: recipe.id,
       storageRows: [{ count: hasContinuation ? 1 : 2, cookingFamilyMemberIds: [MEMBER_ID] }],
-      extraPortions: 0,
     }]);
     expect([...getBatchGroupLabels(result.plan, result.batches).values()][0]).toEqual({
       index: 1, total: 3, storageCount: hasContinuation ? 1 : 2,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type MouseEvent } from "react";
+import { useState, type MouseEvent } from "react";
 import type { SlotInputType } from "@/types/planner";
 import type { PlanSlotMealPayload } from "@/types/planner";
 import type { RecipeType } from "@/types/recipe";
@@ -20,9 +20,6 @@ import {
   getEditMealDialogCopy,
 } from "@/lib/planner/plan-slot-meal-dialog-copy";
 import { formatShortDayLabel } from "@/lib/planner/helpers";
-import {
-  getPlannerSlotIngredientSummary,
-} from "@/lib/planner/resolve-slot-ingredients";
 import { ROUTES } from "@/lib/constants";
 import { PLANNER_MEAL_TYPE_TO_OCCASION_SLUG } from "@/lib/planner/recipe-picker-filters";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
@@ -32,31 +29,6 @@ import { getSegmentedFilterSurfaceClassName } from "@/components/ui/segmented-fi
 /** Soft selected icon color on accent shell (not white-on-primary). */
 const MEAL_DONE_ICON_CLASS =
   "text-accent-foreground hover:text-accent-foreground [&_svg]:text-accent-foreground";
-
-function SlotIngredientSummary({
-  visibleLines,
-  remainingCount,
-}: {
-  visibleLines: string[];
-  remainingCount: number;
-}) {
-  if (visibleLines.length === 0) {
-    return null;
-  }
-
-  return (
-    <ul className="mt-item space-y-0.5 text-xs text-muted-foreground">
-      {visibleLines.map((line) => (
-        <li key={line} className="truncate" title={line}>
-          {line}
-        </li>
-      ))}
-      {remainingCount > 0 ? (
-        <li className="text-muted-foreground/80">and {remainingCount} more</li>
-      ) : null}
-    </ul>
-  );
-}
 
 type PlannerSlotCardProps = {
   slot: SlotInputType;
@@ -134,28 +106,37 @@ export function PlannerSlotCard({
   const initialOccasionSlug =
     PLANNER_MEAL_TYPE_TO_OCCASION_SLUG[slot.mealType] ?? null;
 
-  const ingredientSummary = useMemo(
-    () =>
-      getPlannerSlotIngredientSummary({
-        recipe: recipe ?? null,
-        customMealIngredients: customMeal?.ingredients,
-        cookingFamilyMemberIds: selectedAudienceIds,
-        familyMembers,
-        ingredientOptions,
-      }),
-    [
-      customMeal?.ingredients,
-      familyMembers,
-      ingredientOptions,
-      recipe,
-      selectedAudienceIds,
-    ],
-  );
-
   const mealDialogAudienceProps = {
     cookingFamilyMemberIds: selectedAudienceIds,
     familyMembers,
+    initialExtraPortions: slot.extraPortions,
   };
+
+  const audienceNames = familyMembers
+    .filter((member) => selectedAudienceIds.includes(member.id))
+    .map((member) => member.name)
+    .join(" \u00b7 ");
+  const audienceText = [
+    audienceNames,
+    recipe && (slot.extraPortions ?? 0) > 0
+      ? `${slot.extraPortions} extra portion${slot.extraPortions === 1 ? "" : "s"}`
+      : "",
+  ].filter(Boolean).join(" \u00b7 ");
+  const audience = (
+    <p className="type-body mt-1 line-clamp-2 break-words" aria-label="Cooking for" title={audienceText}>
+      {audienceText}
+    </p>
+  );
+  const metadataRail = (
+    <div className="flex h-10 shrink-0 items-center justify-between gap-2 bg-muted px-card-x text-xs text-muted-foreground">
+      <span>{recipe && slot.alreadyCooked ? "Already cooked" : slot.isRolledOver ? "Rolled over" : "New"}</span>
+      {recipe ? (
+        <Badge variant="outline" className="shrink-0 tabular-nums">
+          {slot.alreadyCooked ? 10 : recipe.handsOnTime} min
+        </Badge>
+      ) : null}
+    </div>
+  );
 
   const renderSlotActions = (options: {
     canShuffle: boolean;
@@ -211,17 +192,18 @@ export function PlannerSlotCard({
               <Pencil className="h-4 w-4" />
             </Button>
           )}
+        </div>
           {onRemove && (
             <Button
               type="button"
               variant="outline"
               size="icon"
               onClick={onRemove}
+              aria-label="Remove meal"
             >
               <X className="h-4 w-4" />
             </Button>
           )}
-        </div>
       </div>
     );
   };
@@ -269,7 +251,7 @@ export function PlannerSlotCard({
       <>
         <div
           className={cn(
-            "relative flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed border-border bg-card p-0 py-0 shadow-none transition-colors",
+            "relative flex h-88 min-h-0 flex-col gap-0 overflow-hidden rounded-lg border border-dashed border-border bg-card p-0 py-0 shadow-none transition-colors",
             isSelected && "border-2 border-primary",
           )}
           data-planner-selection-card=""
@@ -326,7 +308,7 @@ export function PlannerSlotCard({
       <>
         <Card
           className={cn(
-            "card-interactive relative h-full gap-0 overflow-hidden border-border py-0",
+            "card-interactive relative h-88 gap-0 overflow-hidden border-border py-0",
             slot.used && "opacity-50",
             isSelected && "border-2 border-primary",
           )}
@@ -336,24 +318,19 @@ export function PlannerSlotCard({
           {renderSelectionCheckbox(`Select ${customMeal.name} (${mealLabel})`, {
             elevated: true,
           })}
-          <div className="relative w-full overflow-hidden aspect-2/1 sm:aspect-3/2">
+          <div className="relative h-44 w-full shrink-0 overflow-hidden">
             <RecipeImagePlaceholder showLabel={false} iconSize="lg" />
           </div>
-          <CardHeader className="px-card-x py-card-y">
-            <div className="min-w-0">
+          {metadataRail}
+          <CardHeader className="flex min-h-0 flex-1 flex-col gap-0 px-card-x py-card-y">
+            <div className="flex min-h-0 w-full flex-1 flex-col">
               <div>
                 <h3 className="truncate type-h3" title={customMeal.name}>
                   {customMeal.name}
                 </h3>
-                <p className="type-body mt-0.5 text-sm text-muted-foreground">
-                  {mealLabel}{slot.isRolledOver ? " · Rolled over" : ""}
-                </p>
+                {audience}
               </div>
-              <SlotIngredientSummary
-                visibleLines={ingredientSummary.visibleLines}
-                remainingCount={ingredientSummary.remainingCount}
-              />
-              {renderSlotActions({ canShuffle: false, showChange: canEdit })}
+              <div className="mt-auto">{renderSlotActions({ canShuffle: false, showChange: canEdit })}</div>
             </div>
           </CardHeader>
         </Card>
@@ -393,7 +370,7 @@ export function PlannerSlotCard({
     <>
       <Card
         className={cn(
-          "card-interactive relative h-full gap-0 overflow-hidden border-border py-0",
+          "card-interactive relative h-88 gap-0 overflow-hidden border-border py-0",
           slot.used && "opacity-50",
           isSelected && "border-2 border-primary",
         )}
@@ -403,7 +380,7 @@ export function PlannerSlotCard({
         {renderSelectionCheckbox(`Select ${recipe!.name} (${mealLabel})`, {
           elevated: true,
         })}
-        <div className="relative w-full overflow-hidden aspect-2/1 sm:aspect-3/2">
+        <div className="relative h-44 w-full shrink-0 overflow-hidden">
           {imageUrl ? (
             <Image
               src={imageUrl}
@@ -433,7 +410,7 @@ export function PlannerSlotCard({
                   <span>
                     <span>{`${batchLabel.index} of ${batchLabel.total}`}</span>
                     {batchLabel.storageCount ? (
-                      <span className="opacity-75">{` · ${batchLabel.storageCount} in storage`}</span>
+                      <span className="font-normal opacity-75">{` · ${batchLabel.storageCount} in storage`}</span>
                     ) : null}
                   </span>
                 </button>
@@ -447,15 +424,16 @@ export function PlannerSlotCard({
                 <span>
                   <span>{`${batchLabel.index} of ${batchLabel.total}`}</span>
                   {batchLabel.storageCount ? (
-                    <span className="opacity-75">{` · ${batchLabel.storageCount} in storage`}</span>
+                    <span className="font-normal opacity-75">{` · ${batchLabel.storageCount} in storage`}</span>
                   ) : null}
                 </span>
               </Badge>
             )
           ) : null}
         </div>
-        <CardHeader className="px-card-x py-card-y">
-          <div className="min-w-0">
+        {metadataRail}
+        <CardHeader className="flex min-h-0 flex-1 flex-col gap-0 px-card-x py-card-y">
+          <div className="flex min-h-0 w-full flex-1 flex-col">
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
                 <Link
@@ -466,17 +444,10 @@ export function PlannerSlotCard({
                 >
                   {recipe!.name}
                 </Link>
-                <p className="type-body mt-0.5 text-sm text-muted-foreground">
-                  {mealLabel}
-                  {slot.isRolledOver && !slot.alreadyCooked ? " \u00b7 Rolled over" : ""}
-                  {slot.alreadyCooked ? " \u00b7 Already cooked" : ""}
-                </p>
+                {audience}
               </div>
-              <Badge variant="outline" className="shrink-0">
-                {slot.alreadyCooked ? 10 : recipe!.handsOnTime} min
-              </Badge>
             </div>
-            <div className="mt-item flex flex-wrap items-start gap-2">
+            <div className="mt-item flex min-h-0 flex-wrap items-start gap-2 overflow-auto">
               {fridgeMatchIngredients &&
                 fridgeMatchIngredients.length > 0 &&
                 fridgeMatchIngredients.map((name) => (
@@ -485,10 +456,10 @@ export function PlannerSlotCard({
                   </Badge>
                 ))}
             </div>
-            {renderSlotActions({
+            <div className="mt-auto">{renderSlotActions({
               canShuffle: Boolean(canShuffle),
               showChange: canEdit,
-            })}
+            })}</div>
           </div>
         </CardHeader>
       </Card>

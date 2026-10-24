@@ -129,6 +129,15 @@ describe("buildCookingCombinationsFromSlots", () => {
 });
 
 describe("getRecipeCookingHref", () => {
+  it("sums anonymous portions across batch slots without truncating the total", () => {
+    const recipe = createRecipe("caprese", { isBatchRecipe: true });
+    const slots = [
+      dinnerSlot("2026-03-17T00:00:00.000Z", recipe, { extraPortions: 60 }),
+      dinnerSlot("2026-03-18T00:00:00.000Z", recipe, { extraPortions: 60 }),
+    ];
+    expect(decodeURIComponent(getRecipeCookingHref(recipe.slug, slots, HOUSEHOLD)))
+      .toContain("~120");
+  });
   it("includes storage only when the batch is not already cooked", () => {
     const recipe = createRecipe("caprese", { isBatchRecipe: true });
     const slot = dinnerSlot("2026-03-17T00:00:00.000Z", recipe, { cookingFamilyMemberIds: [J] });

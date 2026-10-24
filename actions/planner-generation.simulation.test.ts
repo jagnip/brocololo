@@ -455,7 +455,6 @@ describe("planner generation simulation with default time limits", () => {
         id: dinners[0]!.batchGroupId,
         recipeId: "batch-dinner",
         storageRows: [{ count: 2, cookingFamilyMemberIds: simulationAudienceFamilyMemberIds }],
-        extraPortions: 0,
       },
     ]);
   });

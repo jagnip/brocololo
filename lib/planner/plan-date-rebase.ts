@@ -70,6 +70,7 @@ export function rebasePlanSlotsByDateRangeDelta(params: {
         customMeal: null,
         alternatives: [],
         used: false,
+        extraPortions: 0,
       });
     }
   }
@@ -89,4 +90,3 @@ export function createEmptyPlanSlotsForDateRange(
     newEndDateKey: endDateKey,
   });
 }
-
