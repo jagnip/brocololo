@@ -372,8 +372,8 @@ export async function getUnusedMealsFromRecentPlans(userId: string): Promise<Rol
         },
       },
       slots: {
-        where: { used: false },
         select: {
+          used: true,
           mealType: true,
           recipeId: true,
           customName: true,
@@ -392,41 +392,77 @@ export async function getUnusedMealsFromRecentPlans(userId: string): Promise<Rol
   const meals: RollingMealType[] = [];
 
   for (const plan of recentPlans) {
-    const recipeCounts = new Map<string, number>();
-    const customCounts = new Map<string, { mealType: PlannerMealType; customMeal: PlanCustomMeal; meals: number }>();
+    const recipeCounts = new Map<
+      string,
+      { unfinishedScheduledMeals: number; storedMeals: number }
+    >();
+    const customCounts = new Map<
+      string,
+      {
+        mealType: PlannerMealType;
+        customMeal: PlanCustomMeal;
+        unfinishedScheduledMeals: number;
+      }
+    >();
 
     for (const slot of plan.slots) {
       if (slot.recipeId) {
-        if (!slot.recipe?.excludeFromPlanner) {
-          recipeCounts.set(slot.recipeId, (recipeCounts.get(slot.recipeId) ?? 0) + 1);
-        }
+        if (slot.recipe?.excludeFromPlanner) continue;
+        const state = recipeCounts.get(slot.recipeId) ?? {
+          unfinishedScheduledMeals: 0,
+          storedMeals: 0,
+        };
+        if (!slot.used) state.unfinishedScheduledMeals += 1;
+        recipeCounts.set(slot.recipeId, state);
         continue;
       }
       if (!slot.customName) continue;
       const customMeal = { name: slot.customName, ingredients: slot.customIngredients };
       const key = getRollingCustomMealKey(slot.mealType, customMeal);
       const existing = customCounts.get(key);
-      if (existing) existing.meals += 1;
-      else customCounts.set(key, { mealType: slot.mealType, customMeal, meals: 1 });
+      if (existing) {
+        if (!slot.used) existing.unfinishedScheduledMeals += 1;
+      } else {
+        customCounts.set(key, {
+          mealType: slot.mealType,
+          customMeal,
+          unfinishedScheduledMeals: slot.used ? 0 : 1,
+        });
+      }
     }
 
     for (const batch of plan.batches) {
       if (batch.recipe.excludeFromPlanner) continue;
       const storedMeals = batch.storageRows.reduce((sum, row) => sum + row.count, 0);
       if (storedMeals > 0) {
-        recipeCounts.set(batch.recipeId, (recipeCounts.get(batch.recipeId) ?? 0) + storedMeals);
+        const state = recipeCounts.get(batch.recipeId) ?? {
+          unfinishedScheduledMeals: 0,
+          storedMeals: 0,
+        };
+        state.storedMeals += storedMeals;
+        recipeCounts.set(batch.recipeId, state);
       }
     }
 
-    for (const [recipeId, mealsCount] of recipeCounts) {
-      if (seenRecipeIds.has(recipeId) || mealsCount < 1) continue;
+    for (const [recipeId, state] of recipeCounts) {
+      if (seenRecipeIds.has(recipeId)) continue;
       seenRecipeIds.add(recipeId);
-      meals.push({ kind: "recipe", recipeId, meals: mealsCount, alreadyCooked: false });
+      const mealsCount = state.unfinishedScheduledMeals + state.storedMeals;
+      if (mealsCount > 0) {
+        meals.push({ kind: "recipe", recipeId, meals: mealsCount, alreadyCooked: false });
+      }
     }
     for (const [key, entry] of customCounts) {
-      if (seenCustomKeys.has(key) || entry.meals < 1) continue;
+      if (seenCustomKeys.has(key)) continue;
       seenCustomKeys.add(key);
-      meals.push({ kind: "custom", ...entry });
+      if (entry.unfinishedScheduledMeals > 0) {
+        meals.push({
+          kind: "custom",
+          mealType: entry.mealType,
+          customMeal: entry.customMeal,
+          meals: entry.unfinishedScheduledMeals,
+        });
+      }
     }
   }
 
@@ -1234,10 +1270,17 @@ export async function updatePlan(
         },
         slots: {
           select: {
+            id: true,
             date: true,
+            mealType: true,
             recipeId: true,
             customName: true,
+            used: true,
+            isRolledOver: true,
             batchGroupId: true,
+            customIngredients: {
+              select: { ingredientId: true, unitId: true, amount: true },
+            },
           },
         },
       },
@@ -1294,6 +1337,65 @@ export async function updatePlan(
         impactedLogMealsCount,
         impactedPlanMealsCount,
       };
+    }
+
+    const existingSlotsByKey = new Map(
+      existingPlan.slots.map((slot) => [
+        `${toDateKey(slot.date)}:${slot.mealType}`,
+        slot,
+      ]),
+    );
+    const newlyCompletedRolledOverSlots = slots.filter((slot) => {
+      const existingSlot = existingSlotsByKey.get(`${toDateKey(slot.date)}:${slot.mealType}`);
+      return slot.used && slot.isRolledOver && existingSlot?.isRolledOver && !existingSlot.used;
+    });
+
+    if (newlyCompletedRolledOverSlots.length > 0) {
+      const recipeIds = newlyCompletedRolledOverSlots.flatMap((slot) =>
+        slot.recipeId ? [slot.recipeId] : [],
+      );
+      const customKeys = new Set(
+        newlyCompletedRolledOverSlots.flatMap((slot) =>
+          slot.customMeal ? [getRollingCustomMealKey(slot.mealType, slot.customMeal)] : [],
+        ),
+      );
+      const priorSlots = await tx.planSlot.findMany({
+        where: {
+          used: false,
+          plan: {
+            userId,
+            OR: [
+              { createdAt: { lt: existingPlan.createdAt } },
+              { createdAt: existingPlan.createdAt, id: { lt: planId } },
+            ],
+          },
+          OR: [
+            ...(recipeIds.length > 0 ? [{ recipeId: { in: recipeIds } }] : []),
+            ...(customKeys.size > 0 ? [{ recipeId: null, customName: { not: null } }] : []),
+          ],
+        },
+        select: {
+          id: true,
+          mealType: true,
+          recipeId: true,
+          customName: true,
+          customIngredients: {
+            select: { ingredientId: true, unitId: true, amount: true },
+          },
+        },
+      });
+      const priorSlotIds = priorSlots.flatMap((slot) => {
+        if (slot.recipeId) return recipeIds.includes(slot.recipeId) ? [slot.id] : [];
+        if (!slot.customName) return [];
+        const customMeal = { name: slot.customName, ingredients: slot.customIngredients };
+        return customKeys.has(getRollingCustomMealKey(slot.mealType, customMeal)) ? [slot.id] : [];
+      });
+      if (priorSlotIds.length > 0) {
+        await tx.planSlot.updateMany({
+          where: { id: { in: priorSlotIds } },
+          data: { used: true },
+        });
+      }
     }
 
     await tx.planSlotAlternative.deleteMany({ where: { planSlot: { planId } } });
