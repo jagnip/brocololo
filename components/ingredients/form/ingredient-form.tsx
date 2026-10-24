@@ -607,6 +607,33 @@ export default function IngredientForm({
           />
           <FormField
             control={form.control}
+            name="fats"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Fats</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01" // Allow entering nutrition values with two decimal places.
+                    // Keep explicit prompt text for blank numeric input.
+                    placeholder="Enter fats"
+                    // Keep controlled input behavior while still allowing an empty state.
+                    value={(field.value as number | undefined) ?? ""}
+                    onChange={(event) =>
+                      handleNutritionChange(field.onChange, event)
+                    }
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
             name="carbs"
             render={({ field }) => (
               <FormItem>
@@ -645,33 +672,6 @@ export default function IngredientForm({
                     step="0.01" // Allow entering nutrition values with two decimal places.
                     // Keep explicit prompt text for blank numeric input.
                     placeholder="Enter proteins"
-                    // Keep controlled input behavior while still allowing an empty state.
-                    value={(field.value as number | undefined) ?? ""}
-                    onChange={(event) =>
-                      handleNutritionChange(field.onChange, event)
-                    }
-                    onBlur={field.onBlur}
-                    name={field.name}
-                    ref={field.ref}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="fats"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Fats</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.01" // Allow entering nutrition values with two decimal places.
-                    // Keep explicit prompt text for blank numeric input.
-                    placeholder="Enter fats"
                     // Keep controlled input behavior while still allowing an empty state.
                     value={(field.value as number | undefined) ?? ""}
                     onChange={(event) =>

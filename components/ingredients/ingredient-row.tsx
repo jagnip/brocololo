@@ -49,13 +49,13 @@ export function IngredientRow({ ingredient, isAdmin }: IngredientRowProps) {
             <Badge variant="outline">{ingredient.calories} kcal</Badge>
           </li>
           <li>
+            <Badge variant="outline">{ingredient.fats}g fat</Badge>
+          </li>
+          <li>
             <Badge variant="outline">{ingredient.carbs}g carbs</Badge>
           </li>
           <li>
             <Badge variant="outline">{ingredient.proteins}g protein</Badge>
-          </li>
-          <li>
-            <Badge variant="outline">{ingredient.fats}g fat</Badge>
           </li>
         </ul>
       </div>
@@ -69,13 +69,13 @@ export function IngredientRow({ ingredient, isAdmin }: IngredientRowProps) {
           <Badge variant="outline">{ingredient.calories} kcal</Badge>
         </li>
         <li>
+          <Badge variant="outline">{ingredient.fats}g fat</Badge>
+        </li>
+        <li>
           <Badge variant="outline">{ingredient.carbs}g carbs</Badge>
         </li>
         <li>
           <Badge variant="outline">{ingredient.proteins}g protein</Badge>
-        </li>
-        <li>
-          <Badge variant="outline">{ingredient.fats}g fat</Badge>
         </li>
       </ul>
 
