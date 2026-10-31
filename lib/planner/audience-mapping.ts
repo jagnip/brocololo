@@ -63,6 +63,7 @@ export function mergeDailyAudienceByDate(
   days: Date[],
   previousDailyAudience: DayAudienceByMealType[],
   fallbackGroups: AudienceGroups,
+  soloMealFamilyMemberId?: string,
 ): DayAudienceByMealType[] {
   const previousByDate = new Map(
     previousDailyAudience.map((entry) => [entry.date, entry]),
@@ -78,7 +79,10 @@ export function mergeDailyAudienceByDate(
       date: dateKey,
       breakfastFamilyMemberIds: [...fallback.breakfastFamilyMemberIds],
       lunchFamilyMemberIds: [...fallback.lunchFamilyMemberIds],
-      dinnerFamilyMemberIds: [...fallback.dinnerFamilyMemberIds],
+      dinnerFamilyMemberIds:
+        soloMealFamilyMemberId && [2, 4].includes(date.getDay())
+          ? [soloMealFamilyMemberId]
+          : [...fallback.dinnerFamilyMemberIds],
     };
   });
 }

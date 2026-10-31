@@ -68,6 +68,52 @@ describe("audience-mapping", () => {
     expect(merged[1]?.breakfastFamilyMemberIds).toEqual(familyIds);
   });
 
+  it("defaults only Tuesday and Thursday dinners to the solo member", () => {
+    const groups = createDefaultAudienceGroups(familyIds, "fm-1");
+    const days = Array.from(
+      { length: 7 },
+      (_, index) => new Date(2026, 6, 6 + index, 12),
+    );
+    const daily = mergeDailyAudienceByDate(days, [], groups, "fm-1");
+
+    expect(daily.map((day) => day.dinnerFamilyMemberIds)).toEqual([
+      familyIds,
+      ["fm-1"],
+      familyIds,
+      ["fm-1"],
+      familyIds,
+      familyIds,
+      familyIds,
+    ]);
+    expect(daily.every((day) => day.breakfastFamilyMemberIds.length === 1)).toBe(true);
+    expect(daily[1]?.lunchFamilyMemberIds).toEqual(["fm-1"]);
+    expect(daily[5]?.lunchFamilyMemberIds).toEqual(familyIds);
+  });
+
+  it("preserves edited solo dinners and defaults newly added dates", () => {
+    const groups = createDefaultAudienceGroups(familyIds, "fm-1");
+    const tuesday = new Date(2026, 6, 7, 12);
+    const thursday = new Date(2026, 6, 9, 12);
+    const previous = mapGroupAudienceToDaily([tuesday], groups);
+    const daily = mergeDailyAudienceByDate(
+      [tuesday, thursday], previous, groups, "fm-1",
+    );
+
+    expect(daily[0]?.dinnerFamilyMemberIds).toEqual(familyIds);
+    expect(daily[1]?.dinnerFamilyMemberIds).toEqual(["fm-1"]);
+  });
+
+  it("keeps dinners shared without a solo member", () => {
+    const groups = createDefaultAudienceGroups(familyIds);
+    const daily = mergeDailyAudienceByDate(
+      [new Date(2026, 6, 7, 12), new Date(2026, 6, 9, 12)], [], groups,
+    );
+
+    expect(daily.map((day) => day.dinnerFamilyMemberIds)).toEqual([
+      familyIds, familyIds,
+    ]);
+  });
+
   it("reads per-meal audience ids from a daily row", () => {
     const row = {
       date: "2026-07-06",
