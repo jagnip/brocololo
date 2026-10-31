@@ -76,6 +76,7 @@ describe("rebasePlanWithMealRescue", () => {
     });
 
     expect(result.relocatedCount).toBe(1);
+    expect(result.relocatedMealNames).toEqual(["recipe-fri"]);
     expect(result.movedMeals).toHaveLength(1);
     expect(result.unallocatableMeals).toHaveLength(0);
 
@@ -104,6 +105,7 @@ describe("rebasePlanWithMealRescue", () => {
     });
 
     expect(result.relocatedCount).toBe(0);
+    expect(result.relocatedMealNames).toEqual([]);
     expect(result.movedMeals).toHaveLength(1);
     expect(result.movedMeals[0]).toMatchObject({
       mealLabel: "recipe-mon",

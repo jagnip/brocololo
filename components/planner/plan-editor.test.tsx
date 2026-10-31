@@ -713,12 +713,13 @@ describe("PlanEditor autosave", () => {
     expect(screen.getByRole("button", { name: "Generate log" })).toBeDisabled();
   });
 
-  it("asks confirmation before dropping out-of-range meals on range shrink", async () => {
+  it.each([false, true])("lists meals before dropping them on range shrink (repeated recipe: %s)", async (repeatedRecipe) => {
     const user = userEvent.setup();
 
     const recipe17 = createRecipe("recipe-17");
     const recipe18 = createRecipe("recipe-18");
     const recipe19 = createRecipe("recipe-19");
+    if (repeatedRecipe) recipe19.name = recipe18.name;
 
     const initialPlan3Days: PlanInputType = [
       {
@@ -758,6 +759,13 @@ describe("PlanEditor autosave", () => {
     expect(
       screen.getByText(/a meal cannot be kept in this range|some meals cannot be kept in this range/i),
     ).toBeInTheDocument();
+    expect(screen.getByText(
+      "2 meals do not fit in the new date range and will be removed if you continue.",
+    )).toBeInTheDocument();
+    const removedMeals = screen.getByRole("list", { name: "Meals to remove" });
+    expect(within(removedMeals).getAllByRole("listitem").map((item) => item.textContent)).toEqual(
+      repeatedRecipe ? ["recipe-18"] : ["recipe-18", "recipe-19"],
+    );
     await user.click(screen.getByRole("button", { name: "Continue" }));
     expect(screen.getByLabelText("dinner-by-day").textContent).toBe(
       "2026-03-18:recipe-17",

@@ -38,4 +38,15 @@ describe("planner-range-messages", () => {
       "We moved 2 meals to open slots. 1 meal still does not fit and will be removed if you continue.",
     );
   });
+
+  it("keeps meal counts in the summary separately from the recipe lists", () => {
+    expect(formatRangeChangeDialogDescription({
+      relocatedCount: 1,
+      unallocatableCount: 2,
+    })).toBe("We moved 1 meal to open slots. 2 meals still do not fit and will be removed if you continue.");
+    expect(formatRangeChangeDialogDescription({
+      relocatedCount: 0,
+      unallocatableCount: 2,
+    })).toBe("2 meals do not fit in the new date range and will be removed if you continue.");
+  });
 });

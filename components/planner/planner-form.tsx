@@ -189,6 +189,8 @@ export function PlannerForm({
     nextPlan: PlanInputType;
     lostMealsCount: number;
     relocatedCount: number;
+    relocatedMealNames: string[];
+    unallocatableMealNames: string[];
   } | null>(null);
   // Clear-all confirmation — only opened when the plan has at least one meal.
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
@@ -685,6 +687,8 @@ export function PlannerForm({
         nextPlan: rescueResult.plan,
         lostMealsCount: rescueResult.unallocatableMeals.length,
         relocatedCount: rescueResult.relocatedCount,
+        relocatedMealNames: rescueResult.relocatedMealNames,
+        unallocatableMealNames: rescueResult.unallocatableMeals.map((meal) => meal.mealLabel),
       });
       return;
     }
@@ -857,13 +861,37 @@ export function PlannerForm({
                 ? formatRangeChangeDialogTitle(pendingRangeRebuild.lostMealsCount)
                 : "Some meals cannot be kept in this range"}
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              {pendingRangeRebuild
+            <AlertDialogDescription asChild>
+              <div className="max-h-80 space-y-3 overflow-y-auto text-left">
+              <p>{pendingRangeRebuild
                 ? formatRangeChangeDialogDescription({
                     relocatedCount: pendingRangeRebuild.relocatedCount,
                     unallocatableCount: pendingRangeRebuild.lostMealsCount,
                   })
-                : "Some meals cannot be kept in the selected date range."}
+                : "Some meals cannot be kept in the selected date range."}</p>
+              {pendingRangeRebuild && (
+                <>
+                  {pendingRangeRebuild.relocatedCount > 0 && (
+                    <div className="space-y-1">
+                      <p>Moved meals:</p>
+                      <ul aria-label="Moved meals" className="list-disc space-y-1 pl-5">
+                        {[...new Set(pendingRangeRebuild.relocatedMealNames)].map((name) => (
+                          <li key={name} className="break-words">{name}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <div className="space-y-1">
+                    <p>Meals to remove:</p>
+                    <ul aria-label="Meals to remove" className="list-disc space-y-1 pl-5">
+                      {[...new Set(pendingRangeRebuild.unallocatableMealNames)].map((name) => (
+                        <li key={name} className="break-words">{name}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </>
+              )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

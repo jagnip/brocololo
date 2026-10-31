@@ -26,6 +26,7 @@ export type MealPositionMove = {
 export type PlanRangeRescueResult = {
   plan: PlanInputType;
   relocatedCount: number;
+  relocatedMealNames: string[];
   movedMeals: MealPositionMove[];
   unallocatableMeals: UnallocatableMeal[];
 };
@@ -270,6 +271,7 @@ export function rebasePlanWithMealRescue(params: {
   }
 
   let relocatedCount = 0;
+  const relocatedMealNames: string[] = [];
   const unallocatableMeals: UnallocatableMeal[] = [];
 
   for (const orphan of sortOrphans(orphans)) {
@@ -307,6 +309,7 @@ export function rebasePlanWithMealRescue(params: {
       orphan.slot.mealType,
     );
     relocatedCount += 1;
+    relocatedMealNames.push(getMealLabel(orphan.slot));
   }
 
   const plan = Array.from(grid.values()).sort((a, b) => {
@@ -321,6 +324,7 @@ export function rebasePlanWithMealRescue(params: {
   return {
     plan,
     relocatedCount,
+    relocatedMealNames,
     movedMeals,
     unallocatableMeals,
   };
