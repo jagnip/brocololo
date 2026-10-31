@@ -543,6 +543,42 @@ describe("PlanEditor autosave", () => {
     });
   });
 
+  it("does not reopen a cancelled meal-edit sync warning until another edit", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.mocked(updateSavedPlan).mockResolvedValue({
+        type: "sync_conflict",
+        impactedDates: ["2026-03-17"],
+        impactedLogMealsCount: 0,
+        impactedPlanMealsCount: 1,
+      });
+      renderPlanEditor({
+        planId: "plan-1",
+        initialPlan: initialPlanForTests(),
+        recipes: [],
+        ingredientOptions: emptyIngredientOptions,
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Shuffle" }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      const dialog = screen.getByRole("alertdialog");
+      expect(within(dialog).getByText("Sync will remove existing meals")).toBeInTheDocument();
+      fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+      expect(updateSavedPlan).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole("button", { name: "Generate log" })).toBeDisabled();
+
+      fireEvent.click(screen.getByRole("button", { name: "Shuffle" }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      expect(updateSavedPlan).toHaveBeenCalledTimes(2);
+      expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("keeps editor dirty when save hits date conflict", async () => {
     const user = userEvent.setup();
     const recipeA = createRecipe("recipe-a");
@@ -585,6 +621,79 @@ describe("PlanEditor autosave", () => {
     await waitFor(() => {
       expect(vi.mocked(updateSavedPlan)).toHaveBeenCalledTimes(2);
     }, { timeout: 2500 });
+  });
+
+  it.each(["Range extend", "Range shrink"])(
+    "syncs an accepted %s without asking for a second confirmation",
+    async (rangeAction) => {
+      vi.useFakeTimers();
+      try {
+        vi.mocked(updateSavedPlan).mockImplementation(async (_id, _data, options) =>
+          options?.forceDestructiveSync
+            ? { type: "success" }
+            : {
+                type: "sync_conflict",
+                impactedDates: ["2026-03-17"],
+                impactedLogMealsCount: 0,
+                impactedPlanMealsCount: 2,
+              },
+        );
+        const initialPlan: PlanInputType = [17, 18, 19].map((day) => ({
+          ...initialPlanForTests()[0],
+          date: new Date(`2026-03-${day}T00:00:00.000Z`),
+        }));
+        renderPlanEditor({
+          planId: "plan-1",
+          initialPlan,
+          recipes: [],
+          ingredientOptions: emptyIngredientOptions,
+        });
+
+        fireEvent.click(screen.getByRole("button", { name: rangeAction }));
+        if (rangeAction === "Range shrink") {
+          expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+          await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+          expect(updateSavedPlan).not.toHaveBeenCalled();
+          fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+        }
+        await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+        expect(updateSavedPlan).toHaveBeenCalledTimes(1);
+        expect(vi.mocked(updateSavedPlan).mock.calls[0][2]).toEqual({
+          forceDestructiveSync: true,
+        });
+        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Generate log" })).toBeEnabled();
+
+        fireEvent.click(screen.getByRole("button", { name: "Remove first" }));
+        await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+        expect(vi.mocked(updateSavedPlan).mock.calls[1][2]).toBeUndefined();
+        expect(screen.getByText("Sync will remove existing meals")).toBeInTheDocument();
+      } finally {
+        vi.useRealTimers();
+      }
+    },
+  );
+
+  it("does not sync a date shrink when the user cancels its confirmation", async () => {
+    vi.useFakeTimers();
+    try {
+      renderPlanEditor({
+        planId: "plan-1",
+        initialPlan: [17, 18, 19].map((day) => ({
+          ...initialPlanForTests()[0],
+          date: new Date(`2026-03-${day}T00:00:00.000Z`),
+        })),
+        recipes: [],
+        ingredientOptions: emptyIngredientOptions,
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Range shrink" }));
+      fireEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "Cancel" }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+      expect(updateSavedPlan).not.toHaveBeenCalled();
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("rebase creates empty slots and marks editor dirty when date range changes", async () => {

@@ -31,7 +31,6 @@ export function PlanDateRangeDialog({
   disabled = false,
 }: PlanDateRangeDialogProps) {
   const [draft, setDraft] = useState<DateRangeValue>(value);
-  const [dialogContent, setDialogContent] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -46,7 +45,7 @@ export function PlanDateRangeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent ref={setDialogContent}>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit dates</DialogTitle>
           <DialogDescription>
@@ -54,11 +53,7 @@ export function PlanDateRangeDialog({
             days and affect tracked meals.
           </DialogDescription>
         </DialogHeader>
-        <WeekPicker
-          value={draft}
-          onChange={setDraft}
-          portalContainer={dialogContent ?? undefined}
-        />
+        <WeekPicker value={draft} onChange={setDraft} />
         <DialogFooter>
           <Button
             type="button"

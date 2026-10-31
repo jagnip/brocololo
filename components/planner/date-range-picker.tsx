@@ -14,7 +14,7 @@ import {
 } from "react-aria-components";
 import { RangeCalendar } from "../ui/calendar-rac";
 import { parseDate } from "@internationalized/date";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { RangeValue } from "react-aria-components";
 import type { CalendarDate } from "@internationalized/date";
 
@@ -26,7 +26,6 @@ type WeekPickerProps = {
   occupiedDateKeys?: string[];
   compact?: boolean;
   className?: string;
-  portalContainer?: Element;
 };
 
 export function getDefaultDateRange(
@@ -89,8 +88,10 @@ export function WeekPicker({
   occupiedDateKeys = [],
   compact = false,
   className,
-  portalContainer,
 }: WeekPickerProps) {
+  const [popoverContainer, setPopoverContainer] = useState<HTMLDivElement | null>(
+    null,
+  );
   //parse the field.value from the form to a RangeValue<CalendarDate>
   const rangeValue: RangeValue<CalendarDate> | undefined =
     value?.start && value?.end
@@ -105,6 +106,7 @@ export function WeekPicker({
 
   return (
     <DateRangePicker
+      ref={setPopoverContainer}
       value={rangeValue}
       isDateUnavailable={(date) => occupiedSet.has(date.toString())}
       onChange={(range) => {
@@ -161,7 +163,8 @@ export function WeekPicker({
         </Button>
       </div>
       <Popover
-        UNSTABLE_portalContainer={portalContainer}
+        // Keep the calendar inside any enclosing modal's pointer and focus boundary.
+        UNSTABLE_portalContainer={popoverContainer ?? undefined}
         // Keep page scrollbar state stable when opening the picker to avoid layout shifts.
         isNonModal
         className="z-50 rounded-lg border border-border bg-background text-popover-foreground shadow-lg shadow-black/5 outline-none data-[entering]:animate-in data-[exiting]:animate-out data-[entering]:fade-in-0 data-[exiting]:fade-out-0 data-[placement=bottom]:slide-in-from-top-2 data-[placement=left]:slide-in-from-right-2 data-[placement=right]:slide-in-from-left-2 data-[placement=top]:slide-in-from-bottom-2"
