@@ -93,6 +93,7 @@ export function PlanEditor({
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [isDirty, setIsDirty] = useState(false);
   const editVersionRef = useRef(0);
+  const approvedDateRangeVersionRef = useRef<number | null>(null);
   const router = useRouter();
   // Router identity from `useRouter()` can change every render in tests; keep push stable for topbar effect deps.
   const routerRef = useRef(router);
@@ -155,7 +156,11 @@ export function PlanEditor({
       batchGroupId: s.batchGroupId ?? null,
     }));
 
-    const result = await updateSavedPlan(planId, saveData, undefined, batches);
+    // Date changes already have Save/Continue consent; do not ask again during sync.
+    const syncOptions = approvedDateRangeVersionRef.current === saveEditVersion
+      ? { forceDestructiveSync: true }
+      : undefined;
+    const result = await updateSavedPlan(planId, saveData, syncOptions, batches);
     if (result.type === "date_conflict") {
       setSaveStatus("idle");
       // Avoid retry-toasts in a loop: wait for a new user edit before autosave retries.
@@ -168,6 +173,8 @@ export function PlanEditor({
     }
     if (result.type === "sync_conflict") {
       setSaveStatus("idle");
+      // Dismissing the warning must not autosave the same edit and reopen it.
+      blockedAutosaveVersionRef.current = saveEditVersion;
       setSyncConflict({
         impactedDates: result.impactedDates,
         impactedLogMealsCount: result.impactedLogMealsCount,
@@ -252,6 +259,7 @@ export function PlanEditor({
       allSlotsRef.current = rescueResult.plan;
 
       editVersionRef.current += 1;
+      approvedDateRangeVersionRef.current = editVersionRef.current;
       setIsDirty(true);
       if (saveStatus !== "saving") {
         setSaveStatus("idle");
@@ -765,6 +773,7 @@ export function PlanEditor({
                 setBatches(nextBatches);
                 allSlotsRef.current = pendingDateRangeChange.nextPlan;
                 editVersionRef.current += 1;
+                approvedDateRangeVersionRef.current = editVersionRef.current;
                 setIsDirty(true);
                 if (saveStatus !== "saving") {
                   setSaveStatus("idle");
