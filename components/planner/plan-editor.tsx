@@ -70,6 +70,8 @@ type PendingDateRangeChange = {
   nextPlan: PlanInputType;
   lostMealsCount: number;
   relocatedCount: number;
+  relocatedMealNames: string[];
+  unallocatableMealNames: string[];
 };
 
 export function PlanEditor({
@@ -235,6 +237,8 @@ export function PlanEditor({
           nextPlan: rescueResult.plan,
           lostMealsCount: rescueResult.unallocatableMeals.length,
           relocatedCount: rescueResult.relocatedCount,
+          relocatedMealNames: rescueResult.relocatedMealNames,
+          unallocatableMealNames: rescueResult.unallocatableMeals.map((meal) => meal.mealLabel),
         });
         return;
       }
@@ -737,13 +741,37 @@ export function PlanEditor({
                 ? formatRangeChangeDialogTitle(pendingDateRangeChange.lostMealsCount)
                 : "Some meals cannot be kept in this range"}
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              {pendingDateRangeChange
+            <AlertDialogDescription asChild>
+              <div className="max-h-80 space-y-3 overflow-y-auto text-left">
+              <p>{pendingDateRangeChange
                 ? formatRangeChangeDialogDescription({
                     relocatedCount: pendingDateRangeChange.relocatedCount,
                     unallocatableCount: pendingDateRangeChange.lostMealsCount,
                   })
-                : "Some meals cannot be kept in the selected date range."}
+                : "Some meals cannot be kept in the selected date range."}</p>
+              {pendingDateRangeChange && (
+                <>
+                  {pendingDateRangeChange.relocatedCount > 0 && (
+                    <div className="space-y-1">
+                      <p>Moved meals:</p>
+                      <ul aria-label="Moved meals" className="list-disc space-y-1 pl-5">
+                        {[...new Set(pendingDateRangeChange.relocatedMealNames)].map((name) => (
+                          <li key={name} className="break-words">{name}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <div className="space-y-1">
+                    <p>Meals to remove:</p>
+                    <ul aria-label="Meals to remove" className="list-disc space-y-1 pl-5">
+                      {[...new Set(pendingDateRangeChange.unallocatableMealNames)].map((name) => (
+                        <li key={name} className="break-words">{name}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </>
+              )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

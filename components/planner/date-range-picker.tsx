@@ -26,6 +26,7 @@ type WeekPickerProps = {
   occupiedDateKeys?: string[];
   compact?: boolean;
   className?: string;
+  portalContainer?: Element;
 };
 
 export function getDefaultDateRange(
@@ -88,6 +89,7 @@ export function WeekPicker({
   occupiedDateKeys = [],
   compact = false,
   className,
+  portalContainer,
 }: WeekPickerProps) {
   //parse the field.value from the form to a RangeValue<CalendarDate>
   const rangeValue: RangeValue<CalendarDate> | undefined =
@@ -159,6 +161,7 @@ export function WeekPicker({
         </Button>
       </div>
       <Popover
+        UNSTABLE_portalContainer={portalContainer}
         // Keep page scrollbar state stable when opening the picker to avoid layout shifts.
         isNonModal
         className="z-50 rounded-lg border border-border bg-background text-popover-foreground shadow-lg shadow-black/5 outline-none data-[entering]:animate-in data-[exiting]:animate-out data-[entering]:fade-in-0 data-[exiting]:fade-out-0 data-[placement=bottom]:slide-in-from-top-2 data-[placement=left]:slide-in-from-right-2 data-[placement=right]:slide-in-from-left-2 data-[placement=top]:slide-in-from-bottom-2"

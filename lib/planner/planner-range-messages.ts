@@ -22,20 +22,19 @@ export function formatRangeChangeDialogDescription(params: {
   unallocatableCount: number;
 }): string {
   const { relocatedCount, unallocatableCount } = params;
+  const remainingLabel = formatMealCountLabel(unallocatableCount);
 
   if (relocatedCount > 0) {
     const movedLabel = formatMealCountLabel(relocatedCount);
     if (unallocatableCount === 1) {
-      return `We moved ${movedLabel} to open slots. 1 meal still does not fit and will be removed if you continue.`;
+      return `We moved ${movedLabel} to open slots. ${remainingLabel} still does not fit and will be removed if you continue.`;
     }
-    const remainingLabel = formatMealCountLabel(unallocatableCount);
     return `We moved ${movedLabel} to open slots. ${remainingLabel} still do not fit and will be removed if you continue.`;
   }
 
   if (unallocatableCount === 1) {
-    return "1 meal does not fit in the new date range and will be removed if you continue.";
+    return `${remainingLabel} does not fit in the new date range and will be removed if you continue.`;
   }
 
-  const remainingLabel = formatMealCountLabel(unallocatableCount);
   return `${remainingLabel} do not fit in the new date range and will be removed if you continue.`;
 }
