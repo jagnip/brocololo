@@ -78,6 +78,9 @@ export async function generatePlan(
 
     const days = getDaysToPlan(start, end);
     const dayKeys = new Set(days.map((day) => day.toISOString()));
+    const plannedRecipeSlots = [...existingByKey.values()].filter(
+      (slot) => slot.recipe !== null && dayKeys.has(slot.date.toISOString()),
+    );
     const rollingRecipes = rollingMeals.filter((entry) => entry.kind !== "custom");
     const rollingCustomMeals = rollingMeals.filter((entry) => entry.kind === "custom");
     const remainingRolling = new Map(
@@ -161,7 +164,7 @@ export async function generatePlan(
         const continuationGroupId = batchSlotGroupIds.get(slotKey) ?? null;
 
         if (batchRecipe) {
-          plan.push({
+          const generatedSlot: (typeof plan)[number] = {
             date: new Date(day),
             mealType,
             recipe: batchRecipe,
@@ -171,7 +174,9 @@ export async function generatePlan(
             used: false,
             batchGroupId: continuationGroupId,
             ...batchGroupFlags.get(continuationGroupId ?? ""),
-          });
+          };
+          plan.push(generatedSlot);
+          plannedRecipeSlots.push(generatedSlot);
           emptySlotsAttempted += 1;
           emptySlotsFilled += 1;
           continue;
@@ -237,6 +242,7 @@ export async function generatePlan(
         const maxDaysSinceLastUsedCandidate = getMaxDaysSinceLastUsedCandidate(candidates, day);
         const ctx = {
           assignedSlots: plan,
+          plannedRecipeSlots,
           currentAudienceFamilyMemberIds: slotAudienceIds,
           currentSlot: { date: day, mealType },
           maxDaysSinceLastUsedCandidate,
@@ -260,7 +266,7 @@ export async function generatePlan(
         const batchGroupId =
           totalMeals >= 2 ? crypto.randomUUID() : null;
 
-        plan.push({
+        const generatedSlot: (typeof plan)[number] = {
           date: new Date(day),
           mealType,
           recipe: winner,
@@ -270,7 +276,9 @@ export async function generatePlan(
           used: false,
           batchGroupId,
           ...flags,
-        });
+        };
+        plan.push(generatedSlot);
+        plannedRecipeSlots.push(generatedSlot);
         emptySlotsFilled += 1;
 
         if (batchGroupId) {

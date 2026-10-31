@@ -9,6 +9,7 @@ import { PROTEIN_TARGETS } from "../constants";
 
 export type ScoringContext = {
   assignedSlots: SlotInputType[];
+  plannedRecipeSlots: SlotInputType[]; // preserved recipe slots plus recipes generated so far
   currentSlot: { date: Date; mealType: PlannerMealType };
   maxDaysSinceLastUsedCandidate: number; // max days since last used recipe in this pool of candidates
   fridgeIngredientIds: string[]; // ingredient IDs the user has in their fridge
@@ -17,8 +18,9 @@ export type ScoringContext = {
 };
 
 const RECIPE_PREFERENCE_SCORES = { LIKE: 0.5, LOVE: 1, AVOID: 0 } as const;
-// Like adds up to 1 point and Love up to 2, below the maximum repeat penalty of 3.
-const RECIPE_PREFERENCE_WEIGHT = 2;
+const RECIPE_PREFERENCE_WEIGHT = 1.75;
+const RECIPE_PREFERENCE_MIX_WEIGHT = 3;
+const RECIPE_PREFERENCE_TARGET = 0.5;
 
 export function isRecipeAvoidedByAudience(
   recipe: Pick<RecipeType, "memberPreferences">,
@@ -26,6 +28,19 @@ export function isRecipeAvoidedByAudience(
 ): boolean {
   return recipe.memberPreferences.some(
     (row) => row.preference === "AVOID" && audienceIds.includes(row.familyMemberId),
+  );
+}
+
+export function isRecipePreferredByAudience(
+  recipe: Pick<RecipeType, "memberPreferences">,
+  audienceIds: string[],
+): boolean {
+  const audience = new Set(audienceIds);
+  if (audience.size === 0) return false;
+  return recipe.memberPreferences.some(
+    (row) =>
+      audience.has(row.familyMemberId) &&
+      (row.preference === "LIKE" || row.preference === "LOVE"),
   );
 }
 
@@ -45,6 +60,37 @@ export function scoreRecipePreferences(
   ) / audienceIds.length;
 }
 
+export function scoreRecipePreferenceMix(
+  recipe: RecipeType,
+  ctx: ScoringContext,
+): number {
+  const comparableSlots = ctx.plannedRecipeSlots.filter(
+    (slot) =>
+      slot.recipe !== null &&
+      slot.mealType === ctx.currentSlot.mealType &&
+      (slot.cookingFamilyMemberIds?.length ?? 0) > 0,
+  );
+  const preferredCount = comparableSlots.filter((slot) =>
+    isRecipePreferredByAudience(slot.recipe!, slot.cookingFamilyMemberIds!),
+  ).length;
+  const targetCount = (comparableSlots.length + 1) * RECIPE_PREFERENCE_TARGET;
+  const preferredDistance = Math.abs(preferredCount + 1 - targetCount);
+  const otherDistance = Math.abs(preferredCount - targetCount);
+  const candidateDistance = isRecipePreferredByAudience(
+    recipe,
+    ctx.currentAudienceFamilyMemberIds,
+  )
+    ? preferredDistance
+    : otherDistance;
+  const alternativeDistance = candidateDistance === preferredDistance
+    ? otherDistance
+    : preferredDistance;
+
+  if (candidateDistance < alternativeDistance) return 1;
+  if (candidateDistance > alternativeDistance) return 0;
+  return 0.5;
+}
+
 type Scorer = {
   name: string;
   fn: (recipe: RecipeType, ctx: ScoringContext) => number;
@@ -57,6 +103,7 @@ const scorers: Scorer[] = [
   // { name: "proteinBalance", fn: scoreProteinBalance, weight: 2 },
   { name: "fridgeIngredients", fn: scoreFridgeIngredients, weight: 3 },
   { name: "rollingRecipe", fn: scoreRollingRecipe, weight: 10 },
+  { name: "recipePreferenceMix", fn: scoreRecipePreferenceMix, weight: RECIPE_PREFERENCE_MIX_WEIGHT },
   { name: "recipePreferences", fn: scoreRecipePreferences, weight: RECIPE_PREFERENCE_WEIGHT },
 ];
 
@@ -70,7 +117,7 @@ export function scoreLastUsed(recipe: RecipeType, ctx: ScoringContext): number {
 
 // Returns raw score for Already in plan
 export function scoreAlreadyInPlan(recipe: RecipeType, ctx: ScoringContext): number {
-  const timesUsed = ctx.assignedSlots.filter(
+  const timesUsed = ctx.plannedRecipeSlots.filter(
     (s) => s.recipe?.id === recipe.id
   ).length;
   if (timesUsed === 0) return 1; // if the recipe has never been used in a plan, return 1

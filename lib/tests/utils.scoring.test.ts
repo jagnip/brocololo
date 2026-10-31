@@ -12,6 +12,7 @@ function createCtx(
 ): ScoringContext {
   return {
     assignedSlots: [],
+    plannedRecipeSlots: [],
     currentSlot: { date: new Date("2026-02-10"), mealType: "DINNER" },
     maxDaysSinceLastUsedCandidate: 30,
     fridgeIngredientIds: [],
@@ -87,7 +88,7 @@ describe("scoreLastUsed", () => {
 describe("scoreAlreadyInPlan", () => {
   it("returns 1 for a recipe not yet in the plan", () => {
     const recipe = createMockRecipe({ id: "recipe-A" });
-    const ctx = createCtx({ assignedSlots: [] });
+    const ctx = createCtx({ plannedRecipeSlots: [] });
 
     expect(scoreAlreadyInPlan(recipe, ctx)).toBe(1);
   });
@@ -95,7 +96,7 @@ describe("scoreAlreadyInPlan", () => {
   it("returns 0.5 for a recipe used once in the plan", () => {
     const recipe = createMockRecipe({ id: "recipe-A" });
     const ctx = createCtx({
-      assignedSlots: [
+      plannedRecipeSlots: [
         {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
@@ -111,7 +112,7 @@ describe("scoreAlreadyInPlan", () => {
   it("returns 0 for a recipe used twice in the plan", () => {
     const recipe = createMockRecipe({ id: "recipe-A" });
     const ctx = createCtx({
-      assignedSlots: [
+      plannedRecipeSlots: [
         {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
@@ -133,7 +134,7 @@ describe("scoreAlreadyInPlan", () => {
   it("returns 0 (not negative) for a recipe used three times", () => {
     const recipe = createMockRecipe({ id: "recipe-A" });
     const ctx = createCtx({
-      assignedSlots: [
+      plannedRecipeSlots: [
         {
           date: new Date("2026-02-08"),
           mealType: "DINNER",
@@ -161,7 +162,7 @@ describe("scoreAlreadyInPlan", () => {
   it("is not affected by other recipes in the plan", () => {
     const recipe = createMockRecipe({ id: "recipe-A" });
     const ctx = createCtx({
-      assignedSlots: [
+      plannedRecipeSlots: [
         {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
@@ -219,7 +220,7 @@ describe("pickBestCandidate", () => {
     });
     const ctx = createCtx({
       maxDaysSinceLastUsedCandidate: 21,
-      assignedSlots: [
+      plannedRecipeSlots: [
         {
           date: new Date("2026-02-09"),
           mealType: "LUNCH",
