@@ -2,7 +2,9 @@
 
 import { Badge } from "../ui/badge";
 import { ImageGallery } from "./image-gallery";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { ROUTES } from "@/lib/constants";
 import { type LogIngredientOption } from "@/components/log/log-ingredients-form";
 import { PageHeader } from "@/components/page-header";
@@ -14,6 +16,11 @@ import { CookingForStripe } from "@/components/recipes/recipe-page/cooking-for-s
 import { NotesSection } from "@/components/recipes/recipe-page/notes-section";
 import { RecipeAddToLogDialogContainer } from "@/components/recipes/recipe-page/add-to-log/add-to-log-dialog-container";
 import { RecipeDeleteDialog } from "@/components/recipes/recipe-delete-dialog";
+import {
+  archiveRecipeAction,
+  unarchiveRecipeAction,
+} from "@/actions/recipe-actions";
+import { MESSAGES } from "@/lib/messages";
 import {
   useRecipePageAddToLogData,
   useRecipePageBaseData,
@@ -34,14 +41,33 @@ export default function RecipePage({
 }: RecipePageProps) {
   const [isAddToLogOpen, setIsAddToLogOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isArchivePending, startArchiveTransition] = useTransition();
+  const router = useRouter();
   const { recipe, ingredients, familyMembers } = useRecipePageBaseData();
   const cookingForData = useRecipePageCookingForData();
   const addToLogData = useRecipePageAddToLogData();
+  const isArchived = recipe.archivedAt !== null;
 
   useEffect(() => {
     setIsAddToLogOpen(false);
     setIsDeleteOpen(false);
   }, [recipe.id]);
+
+  const setArchived = useCallback((archived: boolean) => {
+    startArchiveTransition(async () => {
+      const result = archived
+        ? await archiveRecipeAction(recipe.id)
+        : await unarchiveRecipeAction(recipe.id);
+
+      if (result.type === "error") {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(archived ? MESSAGES.recipe.archived : MESSAGES.recipe.restored);
+      router.refresh();
+    });
+  }, [recipe.id, router]);
 
   const ingredientOptionsForLogDialog = useMemo<LogIngredientOption[]>(
     () =>
@@ -89,15 +115,17 @@ export default function RecipePage({
         },
         { label: recipe.name },
       ],
-      actions: [
-        {
-          id: "add-to-log",
-          label: "Add to log",
-          onClick: () => setIsAddToLogOpen(true),
-          variant: "outline" as const,
-          size: "default" as const,
-        },
-      ],
+      actions: isArchived
+        ? []
+        : [
+            {
+              id: "add-to-log",
+              label: "Add to log",
+              onClick: () => setIsAddToLogOpen(true),
+              variant: "outline" as const,
+              size: "default" as const,
+            },
+          ],
       overflowMenu: {
         ariaLabel: "Recipe actions",
         items: [
@@ -106,16 +134,33 @@ export default function RecipePage({
             label: "Edit recipe",
             href: ROUTES.recipeEdit(recipe.slug),
           },
-          {
-            id: "delete-recipe",
-            label: "Delete recipe",
-            destructive: true,
-            onSelect: () => setIsDeleteOpen(true),
-          },
+          ...(isArchived
+            ? [
+                {
+                  id: "unarchive-recipe",
+                  label: "Unarchive recipe",
+                  disabled: isArchivePending,
+                  onSelect: () => setArchived(false),
+                },
+                {
+                  id: "delete-recipe",
+                  label: "Delete permanently",
+                  destructive: true,
+                  onSelect: () => setIsDeleteOpen(true),
+                },
+              ]
+            : [
+                {
+                  id: "archive-recipe",
+                  label: "Archive recipe",
+                  disabled: isArchivePending,
+                  onSelect: () => setArchived(true),
+                },
+              ]),
         ],
       },
     }),
-    [recipe.name, recipe.slug],
+    [isArchivePending, isArchived, recipe.name, recipe.slug, setArchived],
   );
   return (
     <div className="page-container">
@@ -128,6 +173,7 @@ export default function RecipePage({
         </div>
 
         <div className="order-2 md:order-0 md:col-span-5 flex gap-item flex-wrap">
+          {isArchived ? <Badge variant="secondary">Archived</Badge> : null}
           <Badge variant="outline">Hands-on: {recipe.handsOnTime} min</Badge>
           <Badge variant="outline">Total: {recipe.totalTime} min</Badge>
           {recipeCategoryBadges.mealOccasions.map((category) => (

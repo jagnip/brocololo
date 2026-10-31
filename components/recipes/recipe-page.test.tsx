@@ -31,6 +31,12 @@ vi.mock("@/actions/log-actions", () => ({
   addRecipeToLogAction: vi.fn(),
 }));
 
+vi.mock("@/actions/recipe-actions", () => ({
+  archiveRecipeAction: vi.fn(),
+  unarchiveRecipeAction: vi.fn(),
+  deleteRecipeAction: vi.fn(),
+}));
+
 vi.mock("next/navigation", async (importOriginal) => {
   const actual = await importOriginal<typeof import("next/navigation")>();
   return {
@@ -506,21 +512,34 @@ describe("RecipePage nutrition integration", () => {
     ))).toBeInTheDocument();
   });
 
-  it("opens delete confirmation from recipe actions menu", async () => {
+  it("opens permanent delete confirmation for archived recipes", async () => {
     const { recipe, ingredients } = createRecipeFixture();
     const user = userEvent.setup();
-    renderRecipePage(recipe, ingredients);
+    renderRecipePage({ ...recipe, archivedAt: new Date() }, ingredients);
 
-    await chooseRecipeAction(user, "Delete recipe");
+    await chooseRecipeAction(user, "Delete permanently");
 
     const dialog = screen.getByRole("dialog");
-    expect(within(dialog).getByText("Delete recipe?")).toBeInTheDocument();
+    expect(within(dialog).getByText("Delete recipe permanently?")).toBeInTheDocument();
     expect(
       within(dialog).getByText(recipe.name, { exact: false }),
     ).toBeInTheDocument();
     expect(
-      within(dialog).getByRole("button", { name: "Yes, delete" }),
+      within(dialog).getByRole("button", { name: "Delete permanently" }),
     ).toBeInTheDocument();
+  });
+
+  it("hides Add to log and offers unarchive for archived recipes", async () => {
+    const { recipe, ingredients } = createRecipeFixture();
+    const user = userEvent.setup();
+    renderRecipePage({ ...recipe, archivedAt: new Date() }, ingredients);
+
+    expect(screen.queryByRole("button", { name: "Add to log" })).not.toBeInTheDocument();
+    expect(screen.getByText("Archived")).toBeInTheDocument();
+    const { unarchiveRecipeAction } = await import("@/actions/recipe-actions");
+    vi.mocked(unarchiveRecipeAction).mockResolvedValue({ type: "success" });
+    await chooseRecipeAction(user, "Unarchive recipe");
+    expect(unarchiveRecipeAction).toHaveBeenCalledWith(recipe.id);
   });
 
   // Add-to-log rows use SearchableSelect without inline create; covered in log-day-view tests.

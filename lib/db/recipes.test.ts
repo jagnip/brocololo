@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createRecipe, updateRecipe } from "./recipes";
+import { createRecipe, getRecipes, updateRecipe } from "./recipes";
 import type { CreateRecipePayload } from "../validations/recipe";
 
 vi.mock("./index", () => ({
@@ -12,6 +12,7 @@ vi.mock("./index", () => ({
     },
     recipe: {
       findUniqueOrThrow: vi.fn(),
+      findMany: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -73,7 +74,10 @@ describe("createRecipe category type rules", () => {
   const mockedPrisma = prisma as unknown as {
     category: { findMany: ReturnType<typeof vi.fn> };
     familyMember: { findMany: ReturnType<typeof vi.fn> };
-    recipe: { findUniqueOrThrow: ReturnType<typeof vi.fn> };
+    recipe: {
+      findUniqueOrThrow: ReturnType<typeof vi.fn>;
+      findMany: ReturnType<typeof vi.fn>;
+    };
     $transaction: ReturnType<typeof vi.fn>;
   };
 
@@ -284,5 +288,32 @@ describe("createRecipe category type rules", () => {
       }
       expect(mockedPrisma.$transaction).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("getRecipes archive filtering", () => {
+  const mockedPrisma = prisma as unknown as {
+    recipe: { findMany: ReturnType<typeof vi.fn> };
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedPrisma.recipe.findMany.mockResolvedValue([]);
+  });
+
+  it("loads active recipes by default", async () => {
+    await getRecipes(TEST_USER_ID);
+
+    expect(mockedPrisma.recipe.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ archivedAt: null }),
+    }));
+  });
+
+  it("loads only archived recipes when requested", async () => {
+    await getRecipes(TEST_USER_ID, undefined, undefined, undefined, { archived: true });
+
+    expect(mockedPrisma.recipe.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ archivedAt: { not: null } }),
+    }));
   });
 });

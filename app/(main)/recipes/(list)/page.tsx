@@ -5,6 +5,7 @@ import { RecipeTabsContainer } from "@/components/recipes/tabs-container";
 import { RecipesPageSkeleton } from "@/components/recipes/recipes-page-skeleton";
 import { TopbarConfigController } from "@/components/topbar-config";
 import { ROUTES } from "@/lib/constants";
+import { RecipeViewSwitcher } from "@/components/recipes/tabs";
 
 type RecipesPageSearchParams = {
   occasion?: string;
@@ -12,6 +13,7 @@ type RecipesPageSearchParams = {
   protein?: string;
   type?: string;
   time?: string;
+  view?: string;
 };
 
 type RecipesPageProps = {
@@ -19,7 +21,8 @@ type RecipesPageProps = {
 };
 
 export default async function Page({ searchParams }: RecipesPageProps) {
-  const { occasion, q: search, protein, type, time } = await searchParams;
+  const { occasion, q: search, protein, type, time, view } = await searchParams;
+  const archived = view === "archived";
 
   return (
     <>
@@ -29,6 +32,7 @@ export default async function Page({ searchParams }: RecipesPageProps) {
       <TopbarConfigController
         config={{
           breadcrumbs: [{ label: "My recipes" }],
+          leftContent: <RecipeViewSwitcher />,
           actions: [
             {
               id: "create-recipe",
@@ -50,6 +54,7 @@ export default async function Page({ searchParams }: RecipesPageProps) {
             protein={protein}
             type={type}
             time={time}
+            archived={archived}
           />
         </div>
       </Suspense>

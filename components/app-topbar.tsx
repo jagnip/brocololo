@@ -92,13 +92,16 @@ export function AppTopbar() {
     <header className="z-20 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-4">
       <SidebarTrigger className="shrink-0 lg:hidden" />
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <div className="min-w-0 flex-1 overflow-hidden">
-          {showBreadcrumbSkeleton ? <BreadcrumbRowSkeleton /> : null}
-          {!showBreadcrumbSkeleton && hasBreadcrumbs ? (
-            <Suspense fallback={<BreadcrumbRowSkeleton />}>
-              <TopbarBreadcrumbs items={breadcrumbItems} />
-            </Suspense>
-          ) : null}
+        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+          <div className="min-w-0 overflow-hidden">
+            {showBreadcrumbSkeleton ? <BreadcrumbRowSkeleton /> : null}
+            {!showBreadcrumbSkeleton && hasBreadcrumbs ? (
+              <Suspense fallback={<BreadcrumbRowSkeleton />}>
+                <TopbarBreadcrumbs items={breadcrumbItems} />
+              </Suspense>
+            ) : null}
+          </div>
+          {config?.leftContent ?? null}
         </div>
         <div className="flex shrink-0 items-center justify-end gap-2">
           {shouldShowRecipeTopbarSkeleton ? (

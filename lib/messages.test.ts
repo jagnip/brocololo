@@ -11,6 +11,7 @@ describe("redirect toast helpers", () => {
   it("accepts known redirect toast codes", () => {
     expect(isRedirectToastCode("recipeCreated")).toBe(true);
     expect(isRedirectToastCode("recipeUpdated")).toBe(true);
+    expect(isRedirectToastCode("recipeDeleted")).toBe(true);
     expect(isRedirectToastCode("ingredientCreated")).toBe(true);
     expect(isRedirectToastCode("ingredientUpdated")).toBe(true);
   });

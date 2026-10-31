@@ -339,6 +339,7 @@ model Recipe {
   memberPreferences  RecipeMemberPreference[]
   lastUsedInPlanner  DateTime?               @map("last_used_in_planner")
   excludeFromPlanner Boolean                 @default(false) @map("exclude_from_planner")
+  archivedAt         DateTime?               @map("archived_at")
   // Explicit default of how many meals this recipe should occupy when generated into a plan.
   plannedMealCount   Int                     @default(1) @map("planned_meal_count")
   // Cosmetic flag: when true, planner cards show an "N of M" badge for multi-slot placements.
@@ -354,6 +355,7 @@ model Recipe {
   @@unique([userId, slug])
   @@unique([userId, name])
   @@index([userId])
+  @@index([userId, archivedAt])
   @@index([slug])
   @@map("recipes")
 }

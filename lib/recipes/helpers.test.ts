@@ -13,6 +13,7 @@ const recipe: RecipeType = {
   notes: ["Note"],
   lastUsedInPlanner: null,
   excludeFromPlanner: false,
+  archivedAt: null,
   plannedMealCount: 1,
   isBatchRecipe: false,
   categories: [],
