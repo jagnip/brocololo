@@ -172,14 +172,15 @@ export function PlannerForm({
     weekday: { ...WEEKDAY_TIME_LIMIT_DEFAULTS },
     weekend: { ...WEEKEND_TIME_LIMIT_DEFAULTS },
   });
-  const [audienceMode, setAudienceMode] = useState<AudienceMode>("grouped");
+  const soloMealFamilyMemberId = familyMembers.find((member) => member.isSelf)?.id;
+  const [audienceMode, setAudienceMode] = useState<AudienceMode>("daily");
   const [audienceDraft, setAudienceDraft] = useState<DayAudienceByMealType[] | null>(
     null,
   );
   const [groupAudience, setGroupAudience] = useState<AudienceGroups>(() =>
     createDefaultAudienceGroups(
       defaultFamilyMemberIds,
-      familyMembers.find((member) => member.isSelf)?.id,
+      soloMealFamilyMemberId,
     ),
   );
   const previousDateRangeRef = useRef<DateRangeValue>(initialPlannerState.dateRange);
@@ -755,6 +756,7 @@ export function PlannerForm({
       days,
       previousDaily,
       groupAudience,
+      soloMealFamilyMemberId,
     );
     replaceAudience(mergedDaily);
     setAudienceDraft(mergedDaily);
@@ -765,6 +767,7 @@ export function PlannerForm({
     audienceMode,
     form,
     replaceAudience,
+    soloMealFamilyMemberId,
   ]);
 
   const daysInRange =
