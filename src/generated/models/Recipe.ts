@@ -50,6 +50,7 @@ export type RecipeMinAggregateOutputType = {
   servings: number | null
   lastUsedInPlanner: Date | null
   excludeFromPlanner: boolean | null
+  archivedAt: Date | null
   plannedMealCount: number | null
   isBatchRecipe: boolean | null
 }
@@ -64,6 +65,7 @@ export type RecipeMaxAggregateOutputType = {
   servings: number | null
   lastUsedInPlanner: Date | null
   excludeFromPlanner: boolean | null
+  archivedAt: Date | null
   plannedMealCount: number | null
   isBatchRecipe: boolean | null
 }
@@ -79,6 +81,7 @@ export type RecipeCountAggregateOutputType = {
   servings: number
   lastUsedInPlanner: number
   excludeFromPlanner: number
+  archivedAt: number
   plannedMealCount: number
   isBatchRecipe: number
   _all: number
@@ -109,6 +112,7 @@ export type RecipeMinAggregateInputType = {
   servings?: true
   lastUsedInPlanner?: true
   excludeFromPlanner?: true
+  archivedAt?: true
   plannedMealCount?: true
   isBatchRecipe?: true
 }
@@ -123,6 +127,7 @@ export type RecipeMaxAggregateInputType = {
   servings?: true
   lastUsedInPlanner?: true
   excludeFromPlanner?: true
+  archivedAt?: true
   plannedMealCount?: true
   isBatchRecipe?: true
 }
@@ -138,6 +143,7 @@ export type RecipeCountAggregateInputType = {
   servings?: true
   lastUsedInPlanner?: true
   excludeFromPlanner?: true
+  archivedAt?: true
   plannedMealCount?: true
   isBatchRecipe?: true
   _all?: true
@@ -240,6 +246,7 @@ export type RecipeGroupByOutputType = {
   servings: number
   lastUsedInPlanner: Date | null
   excludeFromPlanner: boolean
+  archivedAt: Date | null
   plannedMealCount: number
   isBatchRecipe: boolean
   _count: RecipeCountAggregateOutputType | null
@@ -278,6 +285,7 @@ export type RecipeWhereInput = {
   servings?: Prisma.IntFilter<"Recipe"> | number
   lastUsedInPlanner?: Prisma.DateTimeNullableFilter<"Recipe"> | Date | string | null
   excludeFromPlanner?: Prisma.BoolFilter<"Recipe"> | boolean
+  archivedAt?: Prisma.DateTimeNullableFilter<"Recipe"> | Date | string | null
   plannedMealCount?: Prisma.IntFilter<"Recipe"> | number
   isBatchRecipe?: Prisma.BoolFilter<"Recipe"> | boolean
   ingredients?: Prisma.RecipeIngredientListRelationFilter
@@ -306,6 +314,7 @@ export type RecipeOrderByWithRelationInput = {
   servings?: Prisma.SortOrder
   lastUsedInPlanner?: Prisma.SortOrderInput | Prisma.SortOrder
   excludeFromPlanner?: Prisma.SortOrder
+  archivedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   plannedMealCount?: Prisma.SortOrder
   isBatchRecipe?: Prisma.SortOrder
   ingredients?: Prisma.RecipeIngredientOrderByRelationAggregateInput
@@ -339,6 +348,7 @@ export type RecipeWhereUniqueInput = Prisma.AtLeast<{
   servings?: Prisma.IntFilter<"Recipe"> | number
   lastUsedInPlanner?: Prisma.DateTimeNullableFilter<"Recipe"> | Date | string | null
   excludeFromPlanner?: Prisma.BoolFilter<"Recipe"> | boolean
+  archivedAt?: Prisma.DateTimeNullableFilter<"Recipe"> | Date | string | null
   plannedMealCount?: Prisma.IntFilter<"Recipe"> | number
   isBatchRecipe?: Prisma.BoolFilter<"Recipe"> | boolean
   ingredients?: Prisma.RecipeIngredientListRelationFilter
@@ -367,6 +377,7 @@ export type RecipeOrderByWithAggregationInput = {
   servings?: Prisma.SortOrder
   lastUsedInPlanner?: Prisma.SortOrderInput | Prisma.SortOrder
   excludeFromPlanner?: Prisma.SortOrder
+  archivedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   plannedMealCount?: Prisma.SortOrder
   isBatchRecipe?: Prisma.SortOrder
   _count?: Prisma.RecipeCountOrderByAggregateInput
@@ -390,6 +401,7 @@ export type RecipeScalarWhereWithAggregatesInput = {
   servings?: Prisma.IntWithAggregatesFilter<"Recipe"> | number
   lastUsedInPlanner?: Prisma.DateTimeNullableWithAggregatesFilter<"Recipe"> | Date | string | null
   excludeFromPlanner?: Prisma.BoolWithAggregatesFilter<"Recipe"> | boolean
+  archivedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Recipe"> | Date | string | null
   plannedMealCount?: Prisma.IntWithAggregatesFilter<"Recipe"> | number
   isBatchRecipe?: Prisma.BoolWithAggregatesFilter<"Recipe"> | boolean
 }
@@ -404,6 +416,7 @@ export type RecipeCreateInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientCreateNestedManyWithoutRecipeInput
@@ -432,6 +445,7 @@ export type RecipeUncheckedCreateInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutRecipeInput
@@ -458,6 +472,7 @@ export type RecipeUpdateInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUpdateManyWithoutRecipeNestedInput
@@ -486,6 +501,7 @@ export type RecipeUncheckedUpdateInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutRecipeNestedInput
@@ -513,6 +529,7 @@ export type RecipeCreateManyInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
 }
@@ -527,6 +544,7 @@ export type RecipeUpdateManyMutationInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
@@ -542,6 +560,7 @@ export type RecipeUncheckedUpdateManyInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
@@ -595,6 +614,7 @@ export type RecipeCountOrderByAggregateInput = {
   servings?: Prisma.SortOrder
   lastUsedInPlanner?: Prisma.SortOrder
   excludeFromPlanner?: Prisma.SortOrder
+  archivedAt?: Prisma.SortOrder
   plannedMealCount?: Prisma.SortOrder
   isBatchRecipe?: Prisma.SortOrder
 }
@@ -616,6 +636,7 @@ export type RecipeMaxOrderByAggregateInput = {
   servings?: Prisma.SortOrder
   lastUsedInPlanner?: Prisma.SortOrder
   excludeFromPlanner?: Prisma.SortOrder
+  archivedAt?: Prisma.SortOrder
   plannedMealCount?: Prisma.SortOrder
   isBatchRecipe?: Prisma.SortOrder
 }
@@ -630,6 +651,7 @@ export type RecipeMinOrderByAggregateInput = {
   servings?: Prisma.SortOrder
   lastUsedInPlanner?: Prisma.SortOrder
   excludeFromPlanner?: Prisma.SortOrder
+  archivedAt?: Prisma.SortOrder
   plannedMealCount?: Prisma.SortOrder
   isBatchRecipe?: Prisma.SortOrder
 }
@@ -898,6 +920,7 @@ export type RecipeCreateWithoutCategoriesInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientCreateNestedManyWithoutRecipeInput
@@ -925,6 +948,7 @@ export type RecipeUncheckedCreateWithoutCategoriesInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutRecipeInput
@@ -975,6 +999,7 @@ export type RecipeScalarWhereInput = {
   servings?: Prisma.IntFilter<"Recipe"> | number
   lastUsedInPlanner?: Prisma.DateTimeNullableFilter<"Recipe"> | Date | string | null
   excludeFromPlanner?: Prisma.BoolFilter<"Recipe"> | boolean
+  archivedAt?: Prisma.DateTimeNullableFilter<"Recipe"> | Date | string | null
   plannedMealCount?: Prisma.IntFilter<"Recipe"> | number
   isBatchRecipe?: Prisma.BoolFilter<"Recipe"> | boolean
 }
@@ -989,6 +1014,7 @@ export type RecipeCreateWithoutUserInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientCreateNestedManyWithoutRecipeInput
@@ -1015,6 +1041,7 @@ export type RecipeUncheckedCreateWithoutUserInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutRecipeInput
@@ -1067,6 +1094,7 @@ export type RecipeCreateWithoutPlanSlotsInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientCreateNestedManyWithoutRecipeInput
@@ -1094,6 +1122,7 @@ export type RecipeUncheckedCreateWithoutPlanSlotsInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutRecipeInput
@@ -1135,6 +1164,7 @@ export type RecipeUpdateWithoutPlanSlotsInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUpdateManyWithoutRecipeNestedInput
@@ -1162,6 +1192,7 @@ export type RecipeUncheckedUpdateWithoutPlanSlotsInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutRecipeNestedInput
@@ -1187,6 +1218,7 @@ export type RecipeCreateWithoutPlanBatchesInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientCreateNestedManyWithoutRecipeInput
@@ -1214,6 +1246,7 @@ export type RecipeUncheckedCreateWithoutPlanBatchesInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutRecipeInput
@@ -1255,6 +1288,7 @@ export type RecipeUpdateWithoutPlanBatchesInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUpdateManyWithoutRecipeNestedInput
@@ -1282,6 +1316,7 @@ export type RecipeUncheckedUpdateWithoutPlanBatchesInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutRecipeNestedInput
@@ -1307,6 +1342,7 @@ export type RecipeCreateWithoutAlternativesInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientCreateNestedManyWithoutRecipeInput
@@ -1334,6 +1370,7 @@ export type RecipeUncheckedCreateWithoutAlternativesInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutRecipeInput
@@ -1375,6 +1412,7 @@ export type RecipeUpdateWithoutAlternativesInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUpdateManyWithoutRecipeNestedInput
@@ -1402,6 +1440,7 @@ export type RecipeUncheckedUpdateWithoutAlternativesInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutRecipeNestedInput
@@ -1427,6 +1466,7 @@ export type RecipeCreateWithoutAudienceMembersInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientCreateNestedManyWithoutRecipeInput
@@ -1454,6 +1494,7 @@ export type RecipeUncheckedCreateWithoutAudienceMembersInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutRecipeInput
@@ -1495,6 +1536,7 @@ export type RecipeUpdateWithoutAudienceMembersInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUpdateManyWithoutRecipeNestedInput
@@ -1522,6 +1564,7 @@ export type RecipeUncheckedUpdateWithoutAudienceMembersInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutRecipeNestedInput
@@ -1547,6 +1590,7 @@ export type RecipeCreateWithoutMemberPreferencesInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientCreateNestedManyWithoutRecipeInput
@@ -1574,6 +1618,7 @@ export type RecipeUncheckedCreateWithoutMemberPreferencesInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutRecipeInput
@@ -1615,6 +1660,7 @@ export type RecipeUpdateWithoutMemberPreferencesInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUpdateManyWithoutRecipeNestedInput
@@ -1642,6 +1688,7 @@ export type RecipeUncheckedUpdateWithoutMemberPreferencesInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutRecipeNestedInput
@@ -1667,6 +1714,7 @@ export type RecipeCreateWithoutMemberPortionsInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientCreateNestedManyWithoutRecipeInput
@@ -1694,6 +1742,7 @@ export type RecipeUncheckedCreateWithoutMemberPortionsInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutRecipeInput
@@ -1735,6 +1784,7 @@ export type RecipeUpdateWithoutMemberPortionsInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUpdateManyWithoutRecipeNestedInput
@@ -1762,6 +1812,7 @@ export type RecipeUncheckedUpdateWithoutMemberPortionsInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutRecipeNestedInput
@@ -1787,6 +1838,7 @@ export type RecipeCreateWithoutIngredientsInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredientGroups?: Prisma.RecipeIngredientGroupCreateNestedManyWithoutRecipeInput
@@ -1814,6 +1866,7 @@ export type RecipeUncheckedCreateWithoutIngredientsInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredientGroups?: Prisma.RecipeIngredientGroupUncheckedCreateNestedManyWithoutRecipeInput
@@ -1855,6 +1908,7 @@ export type RecipeUpdateWithoutIngredientsInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredientGroups?: Prisma.RecipeIngredientGroupUpdateManyWithoutRecipeNestedInput
@@ -1882,6 +1936,7 @@ export type RecipeUncheckedUpdateWithoutIngredientsInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredientGroups?: Prisma.RecipeIngredientGroupUncheckedUpdateManyWithoutRecipeNestedInput
@@ -1907,6 +1962,7 @@ export type RecipeCreateWithoutIngredientGroupsInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientCreateNestedManyWithoutRecipeInput
@@ -1934,6 +1990,7 @@ export type RecipeUncheckedCreateWithoutIngredientGroupsInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutRecipeInput
@@ -1975,6 +2032,7 @@ export type RecipeUpdateWithoutIngredientGroupsInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUpdateManyWithoutRecipeNestedInput
@@ -2002,6 +2060,7 @@ export type RecipeUncheckedUpdateWithoutIngredientGroupsInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutRecipeNestedInput
@@ -2027,6 +2086,7 @@ export type RecipeCreateWithoutInstructionsInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientCreateNestedManyWithoutRecipeInput
@@ -2054,6 +2114,7 @@ export type RecipeUncheckedCreateWithoutInstructionsInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutRecipeInput
@@ -2095,6 +2156,7 @@ export type RecipeUpdateWithoutInstructionsInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUpdateManyWithoutRecipeNestedInput
@@ -2122,6 +2184,7 @@ export type RecipeUncheckedUpdateWithoutInstructionsInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutRecipeNestedInput
@@ -2147,6 +2210,7 @@ export type RecipeCreateWithoutImagesInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientCreateNestedManyWithoutRecipeInput
@@ -2174,6 +2238,7 @@ export type RecipeUncheckedCreateWithoutImagesInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutRecipeInput
@@ -2215,6 +2280,7 @@ export type RecipeUpdateWithoutImagesInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUpdateManyWithoutRecipeNestedInput
@@ -2242,6 +2308,7 @@ export type RecipeUncheckedUpdateWithoutImagesInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutRecipeNestedInput
@@ -2267,6 +2334,7 @@ export type RecipeCreateWithoutLogEntryRecipesInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientCreateNestedManyWithoutRecipeInput
@@ -2294,6 +2362,7 @@ export type RecipeUncheckedCreateWithoutLogEntryRecipesInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
   ingredients?: Prisma.RecipeIngredientUncheckedCreateNestedManyWithoutRecipeInput
@@ -2335,6 +2404,7 @@ export type RecipeUpdateWithoutLogEntryRecipesInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUpdateManyWithoutRecipeNestedInput
@@ -2362,6 +2432,7 @@ export type RecipeUncheckedUpdateWithoutLogEntryRecipesInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutRecipeNestedInput
@@ -2387,6 +2458,7 @@ export type RecipeUpdateWithoutCategoriesInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUpdateManyWithoutRecipeNestedInput
@@ -2414,6 +2486,7 @@ export type RecipeUncheckedUpdateWithoutCategoriesInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutRecipeNestedInput
@@ -2440,6 +2513,7 @@ export type RecipeUncheckedUpdateManyWithoutCategoriesInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
@@ -2454,6 +2528,7 @@ export type RecipeCreateManyUserInput = {
   servings: number
   lastUsedInPlanner?: Date | string | null
   excludeFromPlanner?: boolean
+  archivedAt?: Date | string | null
   plannedMealCount?: number
   isBatchRecipe?: boolean
 }
@@ -2468,6 +2543,7 @@ export type RecipeUpdateWithoutUserInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUpdateManyWithoutRecipeNestedInput
@@ -2494,6 +2570,7 @@ export type RecipeUncheckedUpdateWithoutUserInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   ingredients?: Prisma.RecipeIngredientUncheckedUpdateManyWithoutRecipeNestedInput
@@ -2520,6 +2597,7 @@ export type RecipeUncheckedUpdateManyWithoutUserInput = {
   servings?: Prisma.IntFieldUpdateOperationsInput | number
   lastUsedInPlanner?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   excludeFromPlanner?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   plannedMealCount?: Prisma.IntFieldUpdateOperationsInput | number
   isBatchRecipe?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
@@ -2665,6 +2743,7 @@ export type RecipeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   servings?: boolean
   lastUsedInPlanner?: boolean
   excludeFromPlanner?: boolean
+  archivedAt?: boolean
   plannedMealCount?: boolean
   isBatchRecipe?: boolean
   ingredients?: boolean | Prisma.Recipe$ingredientsArgs<ExtArgs>
@@ -2694,6 +2773,7 @@ export type RecipeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   servings?: boolean
   lastUsedInPlanner?: boolean
   excludeFromPlanner?: boolean
+  archivedAt?: boolean
   plannedMealCount?: boolean
   isBatchRecipe?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -2710,6 +2790,7 @@ export type RecipeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   servings?: boolean
   lastUsedInPlanner?: boolean
   excludeFromPlanner?: boolean
+  archivedAt?: boolean
   plannedMealCount?: boolean
   isBatchRecipe?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -2726,11 +2807,12 @@ export type RecipeSelectScalar = {
   servings?: boolean
   lastUsedInPlanner?: boolean
   excludeFromPlanner?: boolean
+  archivedAt?: boolean
   plannedMealCount?: boolean
   isBatchRecipe?: boolean
 }
 
-export type RecipeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "slug" | "handsOnTime" | "totalTime" | "notes" | "servings" | "lastUsedInPlanner" | "excludeFromPlanner" | "plannedMealCount" | "isBatchRecipe", ExtArgs["result"]["recipe"]>
+export type RecipeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "slug" | "handsOnTime" | "totalTime" | "notes" | "servings" | "lastUsedInPlanner" | "excludeFromPlanner" | "archivedAt" | "plannedMealCount" | "isBatchRecipe", ExtArgs["result"]["recipe"]>
 export type RecipeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   ingredients?: boolean | Prisma.Recipe$ingredientsArgs<ExtArgs>
   ingredientGroups?: boolean | Prisma.Recipe$ingredientGroupsArgs<ExtArgs>
@@ -2782,6 +2864,7 @@ export type $RecipePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     servings: number
     lastUsedInPlanner: Date | null
     excludeFromPlanner: boolean
+    archivedAt: Date | null
     plannedMealCount: number
     isBatchRecipe: boolean
   }, ExtArgs["result"]["recipe"]>
@@ -3230,6 +3313,7 @@ export interface RecipeFieldRefs {
   readonly servings: Prisma.FieldRef<"Recipe", 'Int'>
   readonly lastUsedInPlanner: Prisma.FieldRef<"Recipe", 'DateTime'>
   readonly excludeFromPlanner: Prisma.FieldRef<"Recipe", 'Boolean'>
+  readonly archivedAt: Prisma.FieldRef<"Recipe", 'DateTime'>
   readonly plannedMealCount: Prisma.FieldRef<"Recipe", 'Int'>
   readonly isBatchRecipe: Prisma.FieldRef<"Recipe", 'Boolean'>
 }

@@ -44,10 +44,10 @@ export function RecipeDeleteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete recipe?</DialogTitle>
+          <DialogTitle>Delete recipe permanently?</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete <strong>{recipeName}</strong>? This
-            action cannot be undone.
+            Permanently delete <strong>{recipeName}</strong>? This cannot be undone.
+            Recipes used in plans or logs cannot be deleted.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -65,7 +65,7 @@ export function RecipeDeleteDialog({
             disabled={isDeleting}
             onClick={onConfirmDelete}
           >
-            {isDeleting ? "Deleting..." : "Yes, delete"}
+            {isDeleting ? "Deleting..." : "Delete permanently"}
           </Button>
         </DialogFooter>
       </DialogContent>

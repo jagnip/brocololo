@@ -2,6 +2,9 @@ export const MESSAGES = {
   recipe: {
     created: "Recipe created",
     updated: "Recipe updated",
+    archived: "Recipe archived",
+    restored: "Recipe restored",
+    deleted: "Recipe permanently deleted",
     creating: "Creating recipe...",
     updating: "Updating recipe...",
   },
@@ -35,6 +38,7 @@ export const REDIRECT_TOAST_QUERY_PARAM = "toast";
 export const REDIRECT_TOAST_MESSAGES = {
   recipeCreated: MESSAGES.recipe.created,
   recipeUpdated: MESSAGES.recipe.updated,
+  recipeDeleted: MESSAGES.recipe.deleted,
   ingredientCreated: MESSAGES.ingredient.created,
   ingredientUpdated: MESSAGES.ingredient.updated,
 } as const;

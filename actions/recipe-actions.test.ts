@@ -1,11 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Prisma } from "@/src/generated/client";
 import { ROUTES } from "@/lib/constants";
-import { createRecipe, deleteRecipe, updateRecipe } from "@/lib/db/recipes";
+import {
+  createRecipe,
+  deleteRecipe,
+  setRecipeArchived,
+  updateRecipe,
+} from "@/lib/db/recipes";
 import { redirect } from "next/navigation";
 import {
   createRecipeAction,
   deleteRecipeAction,
+  archiveRecipeAction,
+  unarchiveRecipeAction,
   updateRecipeAction,
 } from "./recipe-actions";
 import { appendRedirectToastToPath } from "@/lib/messages";
@@ -20,7 +27,10 @@ vi.mock("@/lib/db/recipes", () => ({
   createRecipe: vi.fn(),
   updateRecipe: vi.fn(),
   deleteRecipe: vi.fn(),
+  setRecipeArchived: vi.fn(),
 }));
+
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 vi.mock("@/lib/messages", () => ({
   appendRedirectToastToPath: vi.fn((path: string) => path),
@@ -51,7 +61,7 @@ describe("deleteRecipeAction", () => {
     vi.clearAllMocks();
   });
 
-  it("deletes recipe and redirects to recipes list on success", async () => {
+  it("deletes an archived recipe and redirects to its archived list on success", async () => {
     vi.mocked(deleteRecipe).mockResolvedValue({ id: recipeId });
 
     const result = await deleteRecipeAction(recipeId);
@@ -59,7 +69,9 @@ describe("deleteRecipeAction", () => {
     // redirect is terminal; mocked version returns undefined in tests.
     expect(result).toBeUndefined();
     expect(deleteRecipe).toHaveBeenCalledWith("user-test", recipeId);
-    expect(redirect).toHaveBeenCalledWith(ROUTES.recipes);
+    expect(redirect).toHaveBeenCalledWith(
+      appendRedirectToastToPath(`${ROUTES.recipes}?view=archived`, "recipeDeleted"),
+    );
   });
 
   it("returns not-found message for Prisma P2025", async () => {
@@ -84,6 +96,61 @@ describe("deleteRecipeAction", () => {
       message: "Couldn't delete recipe. Try again",
     });
     expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it("returns the archive requirement when deleting an active recipe", async () => {
+    vi.mocked(deleteRecipe).mockRejectedValue(new Error("RECIPE_MUST_BE_ARCHIVED"));
+
+    await expect(deleteRecipeAction(recipeId)).resolves.toEqual({
+      type: "error",
+      message: "Archive this recipe before deleting it",
+    });
+  });
+
+  it("returns the in-use message when deleting a referenced recipe", async () => {
+    vi.mocked(deleteRecipe).mockRejectedValue(new Error("RECIPE_IN_USE"));
+
+    await expect(deleteRecipeAction(recipeId)).resolves.toEqual({
+      type: "error",
+      message: "This recipe is used in a plan or log and can't be permanently deleted",
+    });
+  });
+});
+
+describe("recipe archive actions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("archives an owned recipe and revalidates its list and detail routes", async () => {
+    vi.mocked(setRecipeArchived).mockResolvedValue({
+      id: "recipe-1",
+      slug: "tomato-soup",
+      archivedAt: new Date(),
+    });
+
+    await expect(archiveRecipeAction("recipe-1")).resolves.toEqual({ type: "success" });
+    expect(setRecipeArchived).toHaveBeenCalledWith("user-test", "recipe-1", true);
+  });
+
+  it("unarchives an owned recipe", async () => {
+    vi.mocked(setRecipeArchived).mockResolvedValue({
+      id: "recipe-1",
+      slug: "tomato-soup",
+      archivedAt: null,
+    });
+
+    await expect(unarchiveRecipeAction("recipe-1")).resolves.toEqual({ type: "success" });
+    expect(setRecipeArchived).toHaveBeenCalledWith("user-test", "recipe-1", false);
+  });
+
+  it("returns a not-found message for archive failures", async () => {
+    vi.mocked(setRecipeArchived).mockRejectedValue(new Error("RECIPE_NOT_FOUND"));
+
+    await expect(archiveRecipeAction("recipe-1")).resolves.toEqual({
+      type: "error",
+      message: "Recipe no longer exists",
+    });
   });
 });
 

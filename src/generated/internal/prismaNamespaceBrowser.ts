@@ -317,6 +317,7 @@ export const RecipeScalarFieldEnum = {
   servings: 'servings',
   lastUsedInPlanner: 'lastUsedInPlanner',
   excludeFromPlanner: 'excludeFromPlanner',
+  archivedAt: 'archivedAt',
   plannedMealCount: 'plannedMealCount',
   isBatchRecipe: 'isBatchRecipe'
 } as const

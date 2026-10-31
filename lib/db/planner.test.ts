@@ -19,16 +19,18 @@ describe("previous-plan recipes", () => {
   it("combines unused scheduled meals and all storage by recipe, ignoring extras and excluded recipes", async () => {
     vi.mocked(prisma.plan.findFirst).mockResolvedValue({
       slots: [
-        { recipeId: "r1", recipe: { excludeFromPlanner: false } },
-        { recipeId: "r1", recipe: { excludeFromPlanner: false } },
-        { recipeId: "excluded", recipe: { excludeFromPlanner: true } },
+        { recipeId: "r1", recipe: { excludeFromPlanner: false, archivedAt: null } },
+        { recipeId: "r1", recipe: { excludeFromPlanner: false, archivedAt: null } },
+        { recipeId: "excluded", recipe: { excludeFromPlanner: true, archivedAt: null } },
+        { recipeId: "archived", recipe: { excludeFromPlanner: false, archivedAt: new Date() } },
       ],
       batches: [
-        { recipeId: "r1", recipe: { excludeFromPlanner: false }, extraPortions: 99, storageRows: [{ count: 2 }, { count: 3 }] },
-        { recipeId: "stored-only", recipe: { excludeFromPlanner: false }, storageRows: [{ count: 4 }] },
-        { recipeId: "r1", recipe: { excludeFromPlanner: false }, storageRows: [{ count: 1 }] },
-        { recipeId: "excluded", recipe: { excludeFromPlanner: true }, storageRows: [{ count: 10 }] },
-        { recipeId: "extras-only", recipe: { excludeFromPlanner: false }, extraPortions: 5, storageRows: [] },
+        { recipeId: "r1", recipe: { excludeFromPlanner: false, archivedAt: null }, extraPortions: 99, storageRows: [{ count: 2 }, { count: 3 }] },
+        { recipeId: "stored-only", recipe: { excludeFromPlanner: false, archivedAt: null }, storageRows: [{ count: 4 }] },
+        { recipeId: "r1", recipe: { excludeFromPlanner: false, archivedAt: null }, storageRows: [{ count: 1 }] },
+        { recipeId: "excluded", recipe: { excludeFromPlanner: true, archivedAt: null }, storageRows: [{ count: 10 }] },
+        { recipeId: "archived", recipe: { excludeFromPlanner: false, archivedAt: new Date() }, storageRows: [{ count: 10 }] },
+        { recipeId: "extras-only", recipe: { excludeFromPlanner: false, archivedAt: null }, extraPortions: 5, storageRows: [] },
       ],
     } as never);
     expect(await getUnusedRecipesFromLatestPlan("user-1")).toEqual([

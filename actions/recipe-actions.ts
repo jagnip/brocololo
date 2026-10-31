@@ -1,6 +1,11 @@
 "use server";
 
-import { createRecipe, deleteRecipe, updateRecipe } from "@/lib/db/recipes";
+import {
+  createRecipe,
+  deleteRecipe,
+  setRecipeArchived,
+  updateRecipe,
+} from "@/lib/db/recipes";
 import {
   CreateRecipePayload,
   UpdateRecipePayload,
@@ -11,6 +16,7 @@ import { Prisma } from "@/src/generated/client";
 import { ROUTES } from "@/lib/constants";
 import { appendRedirectToastToPath } from "@/lib/messages";
 import { requireUser } from "@/lib/auth/session";
+import { revalidatePath } from "next/cache";
 
 export const createRecipeAction = async (
 
@@ -93,6 +99,21 @@ export const deleteRecipeAction = async (recipeId: string) => {
   } catch (error) {
     console.error("Error deleting recipe", error);
 
+    if (error instanceof Error) {
+      if (error.message === "RECIPE_NOT_FOUND") {
+        return { type: "error", message: "Recipe no longer exists" };
+      }
+      if (error.message === "RECIPE_MUST_BE_ARCHIVED") {
+        return { type: "error", message: "Archive this recipe before deleting it" };
+      }
+      if (error.message === "RECIPE_IN_USE") {
+        return {
+          type: "error",
+          message: "This recipe is used in a plan or log and can't be permanently deleted",
+        };
+      }
+    }
+
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2025") {
         return {
@@ -108,5 +129,35 @@ export const deleteRecipeAction = async (recipeId: string) => {
     };
   }
 
-  redirect(ROUTES.recipes);
+  redirect(appendRedirectToastToPath(`${ROUTES.recipes}?view=archived`, "recipeDeleted"));
 };
+
+async function setRecipeArchivedAction(recipeId: string, archived: boolean) {
+  const { id: userId } = await requireUser();
+
+  try {
+    const recipe = await setRecipeArchived(userId, recipeId, archived);
+    revalidatePath(ROUTES.recipes);
+    revalidatePath(ROUTES.recipe(recipe.slug));
+    return { type: "success" as const };
+  } catch (error) {
+    console.error(`Error ${archived ? "archiving" : "restoring"} recipe`, error);
+    if (error instanceof Error && error.message === "RECIPE_NOT_FOUND") {
+      return { type: "error" as const, message: "Recipe no longer exists" };
+    }
+    return {
+      type: "error" as const,
+      message: archived
+        ? "Couldn't archive recipe. Try again"
+        : "Couldn't restore recipe. Try again",
+    };
+  }
+}
+
+export async function archiveRecipeAction(recipeId: string) {
+  return setRecipeArchivedAction(recipeId, true);
+}
+
+export async function unarchiveRecipeAction(recipeId: string) {
+  return setRecipeArchivedAction(recipeId, false);
+}

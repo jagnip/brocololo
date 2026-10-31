@@ -100,6 +100,7 @@ Use existing radius tokens and primitive defaults. Cards and dialogs use the exi
 - `PlanCurrentEmpty`: actionable no-plan state reused for Meal Plan, Log, and Groceries.
 - `TopbarConfigController`: contextual breadcrumbs and actions.
 - `PeopleSection`: recipe-detail household preferences and per-serving nutrition, composing `Card`, `NutritionPersonSummaryRow`, `Badge`, and `EditableCaloriesField` with the Meals to shop for card styling.
+- Recipe repository lifecycle: My recipes defaults to Active and exposes an Archived peer view using the existing Tabs primitive while preserving filters. Archiving is immediate and reversible from recipe detail. Archived recipes remain viewable and editable but cannot be selected for new planning or logging. Permanent deletion is only available for archived recipes and is blocked when a plan or log references the recipe.
 
 Reuse these components; compose primitives rather than modifying `components/ui/`. Preserve their hover, focus, disabled, loading, and error patterns. Display saving feedback next to the page task.
 

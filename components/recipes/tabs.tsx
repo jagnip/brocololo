@@ -14,6 +14,7 @@ import {
 import { useScrollDirection } from "./use-scroll-direction";
 import { useOptimistic, useTransition } from "react";
 import { TIME_OPTIONS } from "@/lib/recipes/time-filter-options";
+import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 
 export function RecipeTabs({
   mealOccasionCategories,
@@ -77,7 +78,6 @@ export function RecipeTabs({
   const setType = (nextValue: string | null) =>
     setQueryParam("type", nextValue);
   const setTime = (nextValue: string) => setQueryParam("time", nextValue);
-
   return (
     <div
       data-pending={isPending}
@@ -174,5 +174,43 @@ export function RecipeTabs({
         />
       </div>
     </div>
+  );
+}
+
+export function RecipeViewSwitcher() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const selectedView = searchParams.get("view") === "archived" ? "archived" : "active";
+  const [isPending, startTransition] = useTransition();
+  const [optimisticView, setOptimisticView] = useOptimistic(selectedView);
+
+  function setView(nextValue: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextValue === "archived") {
+      params.set("view", "archived");
+    } else {
+      params.delete("view");
+    }
+
+    setOptimisticView(nextValue);
+    startTransition(() => {
+      const query = params.toString();
+      router.push(query ? `${pathname}?${query}` : pathname);
+    });
+  }
+
+  return (
+    <Tabs
+      value={optimisticView}
+      onValueChange={setView}
+      data-pending={isPending}
+      className="shrink-0"
+    >
+      <TabsList aria-label="Recipe view">
+        <TabsTrigger value="active">Active</TabsTrigger>
+        <TabsTrigger value="archived">Archived</TabsTrigger>
+      </TabsList>
+    </Tabs>
   );
 }

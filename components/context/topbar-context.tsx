@@ -42,6 +42,8 @@ export type TopbarConfig = {
   overflowMenu?: TopbarOverflowMenuConfig;
   /** When set, shown in the app header next to the sidebar trigger (see AppTopbar). */
   breadcrumbs?: BreadcrumbsItem[];
+  /** When set, shown immediately after the breadcrumb trail in the app header. */
+  leftContent?: ReactNode;
   badge?: TopbarBadgeConfig;
   rightContent?: ReactNode;
 };

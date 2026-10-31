@@ -159,6 +159,7 @@ export async function getRecipes(
     proteinSlug?: string;
     typeSlug?: string;
     handsOnTimeMax?: number;
+    archived?: boolean;
   },
 ): Promise<RecipeType[]> {
   // Build category filters as explicit AND conditions so none overwrite each other.
@@ -183,6 +184,7 @@ export async function getRecipes(
   const recipes = await prisma.recipe.findMany({
     where: {
       userId,
+      archivedAt: filters?.archived ? { not: null } : null,
       ...(categoryConditions.length > 0 ? { AND: categoryConditions } : {}),
       ...(filters?.handsOnTimeMax !== undefined
         ? { handsOnTime: { lte: filters.handsOnTimeMax } }
@@ -803,16 +805,52 @@ export async function updateRecipe(
 }
 
 export async function deleteRecipe(userId: string, recipeId: string) {
+  return prisma.$transaction(async (tx) => {
+    const recipe = await tx.recipe.findFirst({
+      where: { id: recipeId, userId },
+      select: {
+        id: true,
+        archivedAt: true,
+        _count: {
+          select: {
+            planSlots: true,
+            planBatches: true,
+            alternatives: true,
+            logEntryRecipes: true,
+          },
+        },
+      },
+    });
+    if (!recipe) throw new Error("RECIPE_NOT_FOUND");
+    if (!recipe.archivedAt) throw new Error("RECIPE_MUST_BE_ARCHIVED");
+
+    const referenceCount = Object.values(recipe._count).reduce(
+      (total, count) => total + count,
+      0,
+    );
+    if (referenceCount > 0) throw new Error("RECIPE_IN_USE");
+
+    return tx.recipe.delete({
+      where: { id: recipeId },
+      select: { id: true },
+    });
+  });
+}
+
+export async function setRecipeArchived(
+  userId: string,
+  recipeId: string,
+  archived: boolean,
+) {
   const owned = await prisma.recipe.findFirst({
     where: { id: recipeId, userId },
     select: { id: true },
   });
-  if (!owned) {
-    throw new Error("RECIPE_NOT_FOUND");
-  }
-  // Hard-delete recipe; related rows are removed by DB cascades.
-  return prisma.recipe.delete({
+  if (!owned) throw new Error("RECIPE_NOT_FOUND");
+
+  return prisma.recipe.update({
     where: { id: recipeId },
-    select: { id: true },
+    data: { archivedAt: archived ? new Date() : null },
+    select: { id: true, slug: true, archivedAt: true },
   });
 }

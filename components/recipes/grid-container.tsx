@@ -8,6 +8,7 @@ export type RecipeGridContainerProps = {
   protein?: string;
   type?: string;
   time?: string;
+  archived?: boolean;
 };
 
 export default async function RecipeGridContainer({
@@ -16,6 +17,7 @@ export default async function RecipeGridContainer({
   protein,
   type,
   time,
+  archived = false,
 }: RecipeGridContainerProps) {
   const { id: userId } = await requireUser();
 
@@ -25,7 +27,14 @@ const handsOnTimeMax = time ? Number(time) : undefined;
     proteinSlug: protein,
     typeSlug: type,
     handsOnTimeMax,
+    archived,
   });
 
-  return <RecipeGrid recipes={recipes} />;
+  return (
+    <RecipeGrid
+      recipes={recipes}
+      archived={archived}
+      hasFilters={Boolean(occasion || search || protein || type || time)}
+    />
+  );
 }

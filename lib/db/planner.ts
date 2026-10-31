@@ -367,7 +367,7 @@ export async function getUnusedMealsFromRecentPlans(userId: string): Promise<Rol
       batches: {
         select: {
           recipeId: true,
-          recipe: { select: { excludeFromPlanner: true } },
+          recipe: { select: { excludeFromPlanner: true, archivedAt: true } },
           storageRows: { select: { count: true } },
         },
       },
@@ -381,7 +381,7 @@ export async function getUnusedMealsFromRecentPlans(userId: string): Promise<Rol
             orderBy: { position: "asc" },
             select: { ingredientId: true, unitId: true, amount: true },
           },
-          recipe: { select: { excludeFromPlanner: true } },
+          recipe: { select: { excludeFromPlanner: true, archivedAt: true } },
         },
       },
     },
@@ -407,7 +407,7 @@ export async function getUnusedMealsFromRecentPlans(userId: string): Promise<Rol
 
     for (const slot of plan.slots) {
       if (slot.recipeId) {
-        if (slot.recipe?.excludeFromPlanner) continue;
+        if (slot.recipe?.excludeFromPlanner || slot.recipe?.archivedAt) continue;
         const state = recipeCounts.get(slot.recipeId) ?? {
           unfinishedScheduledMeals: 0,
           storedMeals: 0,
@@ -432,7 +432,7 @@ export async function getUnusedMealsFromRecentPlans(userId: string): Promise<Rol
     }
 
     for (const batch of plan.batches) {
-      if (batch.recipe.excludeFromPlanner) continue;
+      if (batch.recipe.excludeFromPlanner || batch.recipe.archivedAt) continue;
       const storedMeals = batch.storageRows.reduce((sum, row) => sum + row.count, 0);
       if (storedMeals > 0) {
         const state = recipeCounts.get(batch.recipeId) ?? {
@@ -482,25 +482,28 @@ export async function getUnusedRecipesFromLatestPlan(userId: string) {
       batches: {
         select: {
           recipeId: true,
-          recipe: { select: { excludeFromPlanner: true } },
+          recipe: { select: { excludeFromPlanner: true, archivedAt: true } },
           storageRows: { select: { count: true } },
         },
       },
       slots: {
         where: { used: false, recipeId: { not: null } },
-        select: { recipeId: true, recipe: { select: { excludeFromPlanner: true } } },
+        select: {
+          recipeId: true,
+          recipe: { select: { excludeFromPlanner: true, archivedAt: true } },
+        },
       },
     },
   });
   if (!latestPlan) return [];
   const countsById = new Map<string, number>();
   for (const slot of latestPlan.slots) {
-    if (!slot.recipe?.excludeFromPlanner && slot.recipeId) {
-      countsById.set(slot.recipeId, (countsById.get(slot.recipeId) ?? 0) + 1);
-    }
+    if (slot.recipe?.excludeFromPlanner || slot.recipe?.archivedAt) continue;
+    const id = slot.recipeId!;
+    countsById.set(id, (countsById.get(id) ?? 0) + 1);
   }
   for (const batch of latestPlan.batches) {
-    if (batch.recipe.excludeFromPlanner) continue;
+    if (batch.recipe.excludeFromPlanner || batch.recipe.archivedAt) continue;
     const storedMeals = batch.storageRows.reduce((sum, row) => sum + row.count, 0);
     if (storedMeals > 0) countsById.set(batch.recipeId, (countsById.get(batch.recipeId) ?? 0) + storedMeals);
   }
