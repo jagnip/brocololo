@@ -135,20 +135,72 @@ describe("audience recipe preferences", () => {
     ]);
   }
 
-  it("prioritizes loved solo breakfasts but rotates to neutral options after two selections", async () => {
+  it("keeps roughly half preferred breakfasts and rotates through favorites", async () => {
     const end = new Date("2026-04-26T00:00:00.000Z");
     setBreakfastCandidates([
-      breakfastRecipe("neutral"),
       breakfastRecipe("love-a", [{ familyMemberId: "family-self", preference: "LOVE" }]),
       breakfastRecipe("love-b", [{ familyMemberId: "family-self", preference: "LOVE" }]),
+      breakfastRecipe("love-c", [{ familyMemberId: "family-self", preference: "LOVE" }]),
+      breakfastRecipe("love-d", [{ familyMemberId: "family-self", preference: "LOVE" }]),
+      breakfastRecipe("neutral-a"),
+      breakfastRecipe("neutral-b"),
+      breakfastRecipe("neutral-c"),
+      breakfastRecipe("neutral-d"),
     ]);
     const audience = buildDailyAudienceForSimulation(start, end).map((day) => ({ ...day, breakfastFamilyMemberIds: ["family-self"] }));
     const result = await generatePlan(start, end, audience, buildDailyTimeLimitsFromDefaults(start, end), [], []);
     expect(result.type).toBe("success");
     if (result.type !== "success") return;
     const breakfasts = result.plan.filter((slot) => slot.mealType === "BREAKFAST");
-    expect(breakfasts.slice(0, 4).map((slot) => slot.recipe?.id)).toEqual(["love-a", "love-b", "love-a", "love-b"]);
-    expect(breakfasts[4]?.recipe?.id).toBe("neutral");
+    const favoriteIds = breakfasts
+      .map((slot) => slot.recipe?.id)
+      .filter((id): id is string => id?.startsWith("love-") ?? false);
+
+    expect(breakfasts).toHaveLength(7);
+    expect(favoriteIds).toHaveLength(4);
+    expect(new Set(favoriteIds).size).toBe(4);
+  });
+
+  it("counts a future preserved favorite while filling earlier slots", async () => {
+    const end = new Date("2026-04-22T00:00:00.000Z");
+    const favoriteA = breakfastRecipe("love-a", [{ familyMemberId: "family-self", preference: "LOVE" }]);
+    const favoriteB = breakfastRecipe("love-b", [{ familyMemberId: "family-self", preference: "LOVE" }]);
+    setBreakfastCandidates([favoriteA, favoriteB, breakfastRecipe("neutral")]);
+    const audience = buildDailyAudienceForSimulation(start, end).map((day) => ({ ...day, breakfastFamilyMemberIds: ["family-self"] }));
+    const existingPlan: PlanInputType = [{
+      date: end,
+      mealType: "BREAKFAST",
+      recipe: favoriteA,
+      customMeal: null,
+      alternatives: [],
+      cookingFamilyMemberIds: ["family-self"],
+      used: false,
+    }];
+    const result = await generatePlan(start, end, audience, buildDailyTimeLimitsFromDefaults(start, end), [], [], existingPlan);
+    expect(result.type).toBe("success");
+    if (result.type !== "success") return;
+
+    expect(result.plan.filter((slot) => slot.mealType === "BREAKFAST").map((slot) => slot.recipe?.id)).toEqual([
+      "neutral",
+      "love-b",
+      "love-a",
+    ]);
+  });
+
+  it("counts preferred batch continuations before selecting the next recipe", async () => {
+    const end = new Date("2026-04-22T00:00:00.000Z");
+    const favoriteBatch = breakfastRecipe("love-batch", [{ familyMemberId: "family-self", preference: "LOVE" }]);
+    favoriteBatch.isBatchRecipe = true;
+    favoriteBatch.plannedMealCount = 2;
+    setBreakfastCandidates([favoriteBatch, breakfastRecipe("neutral")]);
+    const audience = buildDailyAudienceForSimulation(start, end).map((day) => ({ ...day, breakfastFamilyMemberIds: ["family-self"] }));
+    const result = await generatePlan(start, end, audience, buildDailyTimeLimitsFromDefaults(start, end), [], []);
+    expect(result.type).toBe("success");
+    if (result.type !== "success") return;
+
+    const breakfasts = result.plan.filter((slot) => slot.mealType === "BREAKFAST");
+    expect(breakfasts.map((slot) => slot.recipe?.id)).toEqual(["love-batch", "love-batch", "neutral"]);
+    expect(breakfasts[0]?.batchGroupId).toBe(breakfasts[1]?.batchGroupId);
   });
 
   it("vetoes Love with any eater's Avoid, including alternatives and rolling", async () => {
