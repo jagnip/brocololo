@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Refrigerator } from "lucide-react";
+import { Pencil, Refrigerator, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { adjustStoredMealLotAction, removeStoredMealQuantityAction } from "@/actions/storage-actions";
 import { Button } from "@/components/ui/button";
@@ -77,16 +77,16 @@ export function StorageList({ lots, familyMembers }: StorageListProps) {
         {lots.map((lot) => {
           const audience = lot.audience.map((member) => member.name).join(", ");
           return (
-            <li key={lot.id} className="flex flex-col gap-comfort rounded-md border border-border bg-card p-nest transition-colors hover:bg-muted/40 focus-within:bg-muted/40 sm:flex-row sm:items-center">
+            <li key={lot.id} className="group/row flex items-center gap-comfort rounded-md border border-border bg-card p-nest transition-colors hover:bg-muted/40 focus-within:bg-muted/40">
               <div className="min-w-0 flex-1">
                 <p className="min-w-0 truncate font-medium" title={lot.recipe.name}>{lot.recipe.name}</p>
                 <p className="mt-tight type-caption text-muted-foreground">
                   {lot.count} {lot.count === 1 ? "meal" : "meals"} · {cookedDateFormatter.format(lot.cookedAt)} · for {audience || "your household"}
                 </p>
               </div>
-              <div className="flex shrink-0 items-center gap-item">
-                <Button type="button" variant="outline" onClick={() => setDialog({ type: "adjust", lot })} aria-label={`Adjust ${lot.recipe.name}`}>Adjust</Button>
-                <Button type="button" variant="outline" onClick={() => setDialog({ type: "remove", lot })} aria-label={`Discard ${lot.recipe.name}`}>Discard</Button>
+              <div className="flex shrink-0 items-center gap-1 opacity-0 pointer-events-none transition-opacity duration-150 max-md:opacity-100 max-md:pointer-events-auto group-hover/row:opacity-100 group-hover/row:pointer-events-auto group-focus-within/row:opacity-100 group-focus-within/row:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto">
+                <Button type="button" variant="outline" size="icon-sm" onClick={() => setDialog({ type: "adjust", lot })} aria-label={`Adjust ${lot.recipe.name}`} title="Adjust meals"><Pencil className="h-4 w-4" /></Button>
+                <Button type="button" variant="outline" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={() => setDialog({ type: "remove", lot })} aria-label={`Discard ${lot.recipe.name}`} title="Discard meals"><Trash2 className="h-4 w-4" /></Button>
               </div>
             </li>
           );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CookingPot } from "lucide-react";
+import { CookingPot, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { adjustRollingMealAction, discardRollingMealQuantityAction } from "@/actions/rolling-meals-actions";
 import { Button } from "@/components/ui/button";
@@ -64,14 +64,14 @@ export function RollingMealsSection({ meals }: { meals: RollingMealQueueRow[] })
       ) : (
         <ul aria-label="Planned meals" className="space-y-item">
           {meals.map((meal) => (
-            <li key={meal.id} className="flex flex-col gap-comfort rounded-md border border-border bg-card p-nest transition-colors hover:bg-muted/40 focus-within:bg-muted/40 sm:flex-row sm:items-center">
+            <li key={meal.id} className="group/row flex items-center gap-comfort rounded-md border border-border bg-card p-nest transition-colors hover:bg-muted/40 focus-within:bg-muted/40">
               <div className="min-w-0 flex-1">
                 <p className="min-w-0 truncate font-medium" title={meal.name}>{meal.name}</p>
                 <p className="mt-tight type-caption text-muted-foreground">{meal.count} {meal.count === 1 ? "meal" : "meals"}</p>
               </div>
-              <div className="flex shrink-0 items-center gap-item">
-                <Button type="button" variant="outline" onClick={() => open("adjust", meal)} aria-label={`Adjust ${meal.name}`}>Adjust</Button>
-                <Button type="button" variant="outline" onClick={() => open("discard", meal)} aria-label={`Discard ${meal.name}`}>Discard</Button>
+              <div className="flex shrink-0 items-center gap-1 opacity-0 pointer-events-none transition-opacity duration-150 max-md:opacity-100 max-md:pointer-events-auto group-hover/row:opacity-100 group-hover/row:pointer-events-auto group-focus-within/row:opacity-100 group-focus-within/row:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto">
+                <Button type="button" variant="outline" size="icon-sm" onClick={() => open("adjust", meal)} aria-label={`Adjust ${meal.name}`} title="Adjust meals"><Pencil className="h-4 w-4" /></Button>
+                <Button type="button" variant="outline" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={() => open("discard", meal)} aria-label={`Discard ${meal.name}`} title="Discard meals"><Trash2 className="h-4 w-4" /></Button>
               </div>
             </li>
           ))}
