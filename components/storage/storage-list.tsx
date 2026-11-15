@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Refrigerator } from "lucide-react";
 import { toast } from "sonner";
 import { adjustStoredMealLotAction, removeStoredMealQuantityAction } from "@/actions/storage-actions";
 import { Button } from "@/components/ui/button";
@@ -62,7 +63,15 @@ export function StorageList({ lots, familyMembers }: StorageListProps) {
     <section aria-labelledby="stored-meals-heading" className="space-y-item">
       <h2 id="stored-meals-heading" className="type-h3">Cooked and stored</h2>
       {lots.length === 0 ? (
-        <p className="type-body text-muted-foreground">No cooked meals in storage.</p>
+        <div role="status" className="flex flex-col items-center justify-center gap-comfort rounded-xl border border-dashed border-border bg-card px-empty-x py-empty-y text-center">
+          <div className="flex size-14 items-center justify-center rounded-full bg-muted text-muted-foreground" aria-hidden="true">
+            <Refrigerator />
+          </div>
+          <div className="space-y-cozy">
+            <p className="type-h3 text-foreground">No cooked meals in storage</p>
+            <p className="max-w-sm type-body-relaxed text-muted-foreground">Cooked meals available for a future plan will appear here</p>
+          </div>
+        </div>
       ) : (
       <ul className="space-y-item" aria-label="Stored meals">
         {lots.map((lot) => {
@@ -158,7 +167,7 @@ function RemoveDialog({ dialog, isPending, onClose, onConfirm }: {
   onClose: () => void;
   onConfirm: (lot: StoredMealLotRow, quantity: number) => void;
 }) {
-  const [quantity, setQuantity] = useState("1");
+  const [quantity, setQuantity] = useState(String(dialog.lot.count));
   const parsedQuantity = Number(quantity);
   const isValid = Number.isInteger(parsedQuantity) && parsedQuantity >= 1 && parsedQuantity <= dialog.lot.count;
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { CookingPot } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { adjustRollingMealAction, discardRollingMealQuantityAction } from "@/actions/rolling-meals-actions";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,7 @@ export function RollingMealsSection({ meals }: { meals: RollingMealQueueRow[] })
 
   function open(type: "adjust" | "discard", meal: RollingMealQueueRow) {
     setSelection({ type, meal });
-    setValue(String(type === "adjust" ? meal.count : 1));
+    setValue(String(meal.count));
     setError("");
   }
 
@@ -50,7 +51,17 @@ export function RollingMealsSection({ meals }: { meals: RollingMealQueueRow[] })
   return (
     <section aria-labelledby="planned-meals-heading" className="space-y-item">
       <h2 id="planned-meals-heading" className="type-h3">Planned, not cooked</h2>
-      {meals.length === 0 ? <p className="type-body text-muted-foreground">No planned meals to roll over.</p> : (
+      {meals.length === 0 ? (
+        <div role="status" className="flex flex-col items-center justify-center gap-comfort rounded-xl border border-dashed border-border bg-card px-empty-x py-empty-y text-center">
+          <div className="flex size-14 items-center justify-center rounded-full bg-muted text-muted-foreground" aria-hidden="true">
+            <CookingPot />
+          </div>
+          <div className="space-y-cozy">
+            <p className="type-h3 text-foreground">No planned meals to roll over</p>
+            <p className="max-w-sm type-body-relaxed text-muted-foreground">Unfinished meals from previous plans will appear here</p>
+          </div>
+        </div>
+      ) : (
         <ul aria-label="Planned meals" className="space-y-item">
           {meals.map((meal) => (
             <li key={meal.id} className="flex flex-col gap-comfort rounded-md border border-border bg-card p-nest transition-colors hover:bg-muted/40 focus-within:bg-muted/40 sm:flex-row sm:items-center">

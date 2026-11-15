@@ -18,7 +18,8 @@ beforeEach(() => vi.resetAllMocks());
 describe("RollingMealsSection", () => {
   it("renders an independent empty section", () => {
     render(<RollingMealsSection meals={[]} />);
-    expect(screen.getByRole("region", { name: "Planned, not cooked" })).toHaveTextContent("No planned meals to roll over.");
+    expect(screen.getByText("No planned meals to roll over")).toBeInTheDocument();
+    expect(screen.getByText("Unfinished meals from previous plans will appear here")).toBeInTheDocument();
   });
 
   it("adjusts the queue entry with its version", async () => {
@@ -41,8 +42,9 @@ describe("RollingMealsSection", () => {
     vi.mocked(discardRollingMealQuantityAction).mockResolvedValue({ type: "conflict" });
     render(<RollingMealsSection meals={meals} />);
     await user.click(screen.getByRole("button", { name: "Discard Soup" }));
+    expect(screen.getByRole("spinbutton", { name: "Meals" })).toHaveValue(2);
     await user.click(screen.getByRole("button", { name: "Discard meals" }));
-    expect(discardRollingMealQuantityAction).toHaveBeenCalledWith({ entryId: "entry", expectedVersion: 2, quantity: 1 });
+    expect(discardRollingMealQuantityAction).toHaveBeenCalledWith({ entryId: "entry", expectedVersion: 2, quantity: 2 });
     expect(await screen.findByRole("alert")).toHaveTextContent("changed elsewhere");
     expect(refresh).toHaveBeenCalled();
   });
