@@ -25,6 +25,7 @@ vi.mock("./plan-view", () => ({
     onRemove,
     onSetMeal,
     onToggleUsed,
+    onRearrangeSlots,
   }: {
     plan: PlanInputType;
     batches?: PlanBatchInput[];
@@ -32,6 +33,7 @@ vi.mock("./plan-view", () => ({
     onRemove?: (slotKey: string) => void;
     onSetMeal?: (slotKey: string, payload: any) => void;
     onToggleUsed?: (slotKey: string) => void;
+    onRearrangeSlots?: (sourceKey: string, targetKey: string) => void;
   }) => {
     const first = plan[0];
     const slotKey = `${first.date.toISOString()}-${first.mealType}`;
@@ -66,6 +68,9 @@ vi.mock("./plan-view", () => ({
         <button type="button" onClick={() => onShuffle?.(slotKey)}>
           Shuffle
         </button>
+        {plan[1] && <button type="button" onClick={() => onRearrangeSlots?.(slotKey, `${plan[1].date.toISOString()}-${plan[1].mealType}`)}>
+          Move first
+        </button>}
         <button type="button" onClick={() => onRemove?.(slotKey)}>
           Remove first
         </button>
@@ -76,6 +81,9 @@ vi.mock("./plan-view", () => ({
           }
         >
           Set batch recipe
+        </button>
+        <button type="button" onClick={() => onSetMeal?.(slotKey, { kind: "custom", name: "Custom", ingredients: [] })}>
+          Set custom meal
         </button>
       </div>
     );
@@ -181,11 +189,78 @@ describe("PlanEditor autosave", () => {
     routerMock.refresh.mockClear();
   });
 
+  it("saves new custom placement IDs and preserves them on same-meal edits", async () => {
+    vi.useFakeTimers();
+    const initialPlan: PlanInputType = [{
+      date: new Date("2026-03-17T00:00:00.000Z"),
+      mealType: PlannerMealType.DINNER,
+      recipe: null,
+      customMeal: null,
+      alternatives: [],
+      used: false,
+    }];
+    const view = renderPlanEditor({ planId: "plan-1", initialPlan, recipes: [], ingredientOptions: emptyIngredientOptions });
+    try {
+      fireEvent.click(screen.getByRole("button", { name: "Set custom meal" }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      const placementId = vi.mocked(updateSavedPlan).mock.calls[0][1][0].placementId;
+      expect(placementId).toMatch(/^[\da-f-]{36}$/i);
+      fireEvent.click(screen.getByRole("button", { name: "Set custom meal" }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      expect(vi.mocked(updateSavedPlan).mock.calls[1][1][0].placementId).toBe(placementId);
+      fireEvent.click(screen.getByRole("button", { name: "Remove first" }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      expect(vi.mocked(updateSavedPlan).mock.calls[2][1][0].placementId).toBeNull();
+    } finally {
+      view.unmount();
+      vi.useRealTimers();
+    }
+  });
+
+  it("retains an autosaved placement when moved and assigns a new ID to a replacement", async () => {
+    vi.useFakeTimers();
+    const empty = {
+      date: new Date("2026-03-17T00:00:00.000Z"),
+      mealType: PlannerMealType.DINNER,
+      recipe: null,
+      customMeal: null,
+      alternatives: [],
+      used: false,
+    };
+    const view = renderPlanEditor({
+      planId: "plan-1",
+      initialVersion: 0,
+      initialPlan: [empty, { ...empty, date: new Date("2026-03-18T00:00:00.000Z") }],
+      recipes: [],
+      ingredientOptions: emptyIngredientOptions,
+    });
+    vi.mocked(updateSavedPlan).mockResolvedValue({ type: "success", version: 1 });
+    try {
+      fireEvent.click(screen.getByRole("button", { name: "Set custom meal" }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      const id = vi.mocked(updateSavedPlan).mock.calls[0][1][0].placementId;
+      expect(id).toMatch(/^[\da-f-]{36}$/i);
+      fireEvent.click(screen.getByRole("button", { name: "Move first" }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      expect(vi.mocked(updateSavedPlan).mock.calls[1][1].map((slot) => slot.placementId)).toEqual([null, id]);
+      fireEvent.click(screen.getByRole("button", { name: "Set batch recipe" }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      const replacementId = vi.mocked(updateSavedPlan).mock.calls[2][1][0].placementId;
+      expect(replacementId).toMatch(/^[\da-f-]{36}$/i);
+      expect(replacementId).not.toBe(id);
+      expect(vi.mocked(updateSavedPlan).mock.calls[2][1][1].placementId).toBe(id);
+    } finally {
+      view.unmount();
+      vi.useRealTimers();
+    }
+  });
+
   it("persists rolling flags and clears them when replacing the recipe", async () => {
     vi.useFakeTimers();
     const initialPlan: PlanInputType = [{
       date: new Date("2026-03-17T00:00:00.000Z"),
       mealType: PlannerMealType.DINNER,
+      placementId: "existing-placement",
       recipe: { ...createRecipe("rolled-meal"), isBatchRecipe: true },
       customMeal: null,
       alternatives: [createRecipe("fresh-meal")],
@@ -198,9 +273,12 @@ describe("PlanEditor autosave", () => {
       fireEvent.click(screen.getByRole("button", { name: "Toggle first cooked" }));
       await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
       expect(vi.mocked(updateSavedPlan).mock.calls[0][1][0]).toMatchObject({ isRolledOver: true, alreadyCooked: true });
+      expect(vi.mocked(updateSavedPlan).mock.calls[0][1][0].placementId).toBe("existing-placement");
       fireEvent.click(screen.getByRole("button", { name: "Shuffle" }));
       await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
       expect(vi.mocked(updateSavedPlan).mock.calls[1][1][0]).toMatchObject({ recipeId: "fresh-meal", isRolledOver: false, alreadyCooked: false });
+      expect(vi.mocked(updateSavedPlan).mock.calls[1][1][0].placementId).toMatch(/^[\da-f-]{36}$/i);
+      expect(vi.mocked(updateSavedPlan).mock.calls[1][1][0].placementId).not.toBe("existing-placement");
     } finally {
       view.unmount();
       vi.useRealTimers();
@@ -352,7 +430,7 @@ describe("PlanEditor autosave", () => {
   });
 
   it.each([
-    { type: "success" as const },
+    { type: "success" as const, version: 1 },
     { type: "error" as const, message: "Save failed" },
     {
       type: "date_conflict" as const,
@@ -630,7 +708,7 @@ describe("PlanEditor autosave", () => {
       try {
         vi.mocked(updateSavedPlan).mockImplementation(async (_id, _data, options) =>
           options?.forceDestructiveSync
-            ? { type: "success" }
+            ? { type: "success", version: 1 }
             : {
                 type: "sync_conflict",
                 impactedDates: ["2026-03-17"],
@@ -660,13 +738,14 @@ describe("PlanEditor autosave", () => {
         expect(updateSavedPlan).toHaveBeenCalledTimes(1);
         expect(vi.mocked(updateSavedPlan).mock.calls[0][2]).toEqual({
           forceDestructiveSync: true,
+          expectedVersion: undefined,
         });
         expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
         expect(screen.getByRole("button", { name: "Generate log" })).toBeEnabled();
 
         fireEvent.click(screen.getByRole("button", { name: "Remove first" }));
         await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
-        expect(vi.mocked(updateSavedPlan).mock.calls[1][2]).toBeUndefined();
+        expect(vi.mocked(updateSavedPlan).mock.calls[1][2]).toEqual({ expectedVersion: 1 });
         expect(screen.getByText("Sync will remove existing meals")).toBeInTheDocument();
       } finally {
         vi.useRealTimers();

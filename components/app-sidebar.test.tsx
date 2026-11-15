@@ -82,4 +82,13 @@ describe("AppSidebar meal plan links", () => {
       "true",
     );
   });
+
+  it("keeps Rolling meals at the storage route and marks it active", () => {
+    navigationState.pathname = ROUTES.storage;
+    renderSidebar();
+
+    expect(screen.getByRole("link", { name: "Rolling meals" })).toHaveAttribute("href", "/storage");
+    expect(screen.getByRole("link", { name: "Rolling meals" })).toHaveAttribute("data-active", "true");
+    expect(screen.getByRole("link", { name: "Meal plan" })).not.toHaveAttribute("data-active", "true");
+  });
 });

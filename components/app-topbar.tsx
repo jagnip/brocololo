@@ -20,6 +20,7 @@ function pathnameExpectsBreadcrumbs(pathname: string): boolean {
   if (pathname === "/ingredients" || pathname.startsWith("/ingredients/"))
     return true;
   if (pathname.startsWith("/plan")) return true;
+  if (pathname.startsWith("/storage")) return true;
   if (pathname.startsWith("/log")) return true;
   if (pathname.startsWith("/groceries")) return true;
   if (pathname === "/settings" || pathname.startsWith("/settings/")) return true;

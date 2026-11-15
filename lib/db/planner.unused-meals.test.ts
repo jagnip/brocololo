@@ -6,6 +6,7 @@ import { prisma } from "./index";
 vi.mock("./index", () => ({
   prisma: {
     plan: { findMany: vi.fn() },
+    storedMealLot: { findMany: vi.fn() },
   },
 }));
 
@@ -62,7 +63,10 @@ function plan(
 }
 
 describe("getUnusedMealsFromRecentPlans", () => {
-  beforeEach(() => vi.resetAllMocks());
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(prisma.storedMealLot.findMany).mockResolvedValue([] as never);
+  });
 
   it("uses completed newer slots as a barrier for older copies", async () => {
     vi.mocked(prisma.plan.findMany).mockResolvedValue([
@@ -83,7 +87,13 @@ describe("getUnusedMealsFromRecentPlans", () => {
     ] as never);
 
     await expect(getUnusedMealsFromRecentPlans("user-1")).resolves.toEqual([
-      { kind: "recipe", recipeId: "soup", meals: 4, alreadyCooked: false },
+      {
+        kind: "recipe",
+        recipeId: "soup",
+        meals: 4,
+        alreadyCooked: false,
+        source: { storedMeals: 3, unfinishedScheduledMeals: 1 },
+      },
     ]);
   });
 
@@ -126,5 +136,23 @@ describe("getUnusedMealsFromRecentPlans", () => {
     }));
     const query = vi.mocked(prisma.plan.findMany).mock.calls[0]?.[0];
     expect(query?.select?.slots).not.toHaveProperty("where");
+  });
+
+  it("adds cooked Storage from any plan to the rolling source", async () => {
+    vi.mocked(prisma.plan.findMany).mockResolvedValue([] as never);
+    vi.mocked(prisma.storedMealLot.findMany).mockResolvedValue([
+      { recipeId: "soup", count: 2 },
+      { recipeId: "soup", count: 1 },
+    ] as never);
+
+    await expect(getUnusedMealsFromRecentPlans("user-1")).resolves.toEqual([
+      {
+        kind: "recipe",
+        recipeId: "soup",
+        meals: 3,
+        alreadyCooked: false,
+        source: { storedMeals: 3, unfinishedScheduledMeals: 0 },
+      },
+    ]);
   });
 });

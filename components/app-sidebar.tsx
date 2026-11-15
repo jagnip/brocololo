@@ -7,6 +7,7 @@ import {
   UtensilsCrossed,
   ShoppingCart,
   Apple,
+  Refrigerator,
   Settings,
   NotebookPen,
 } from "lucide-react";
@@ -36,6 +37,7 @@ export function AppSidebar() {
   const isRecipes = pathname.startsWith(ROUTES.recipes);
   const isIngredients = pathname.startsWith(ROUTES.ingredients);
   const isPlan = pathname.startsWith(ROUTES.plan);
+  const isStorage = pathname.startsWith(ROUTES.storage);
   const isLog = pathname.startsWith(ROUTES.log);
   const isGroceries = pathname.startsWith(ROUTES.groceries);
   const isSettings = pathname.startsWith(ROUTES.settings);
@@ -77,6 +79,14 @@ export function AppSidebar() {
                 >
                   <UtensilsCrossed />
                   <span>Meal plan</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={isStorage} tooltip="Rolling meals">
+                <Link href={ROUTES.storage} onClick={closeMobileSidebar}>
+                  <Refrigerator />
+                  <span>Rolling meals</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

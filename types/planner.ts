@@ -12,6 +12,8 @@ export type PlanCustomMeal = {
   ingredients: PlanCustomMealIngredient[];
 };
 
+export type RollingQueueClaim = { id: string; version: number; mealType?: PlannerMealType };
+
 export type PlanSlotMealPayload =
   | {
       kind: "recipe";
@@ -54,6 +56,9 @@ export type DayMealsType = {
 export type SlotInputType = {
   /** Present when loaded from DB; absent during create-plan generation before save. */
   id?: string;
+  /** Identity of the meal placement, independent of its calendar slot. */
+  placementId?: string | null;
+  rollingQueueClaim?: RollingQueueClaim | null;
   date: Date;
   mealType: PlannerMealType;
   recipe: RecipeType | null;
@@ -81,13 +86,26 @@ export type PlanBatchInput = {
   id: string;
   recipeId: string;
   storageRows: PlanBatchStorageRow[];
+  rollingQueueClaim?: RollingQueueClaim | null;
   /** @deprecated Legacy client fixture compatibility; ignored on persistence. */
   extraPortions?: number;
 };
 
 export type PlanBatchSaveData = PlanBatchInput;
 
+/** Future Storage transfer claim; placementId must survive slot replacement and retries. */
+export type StoredMealPlacementClaim = {
+  placementId: string;
+  lotId: string;
+  expectedLotVersion: number;
+  recipeId: string;
+  date: Date;
+  mealType: PlannerMealType;
+};
+
 export type SlotSaveData = {
+  placementId?: string | null;
+  rollingQueueClaim?: RollingQueueClaim | null;
   date: Date;
   mealType: PlannerMealType;
   recipeId: string | null;

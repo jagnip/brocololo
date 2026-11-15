@@ -110,6 +110,11 @@ export type PlanSlotAudienceMember = Prisma.PlanSlotAudienceMemberModel
  */
 export type PlanBatch = Prisma.PlanBatchModel
 /**
+ * Model PlanBatchRemainderResolution
+ * 
+ */
+export type PlanBatchRemainderResolution = Prisma.PlanBatchRemainderResolutionModel
+/**
  * Model PlanBatchStorageRow
  * 
  */
@@ -134,6 +139,36 @@ export type PlanSlotAlternative = Prisma.PlanSlotAlternativeModel
  * 
  */
 export type Recipe = Prisma.RecipeModel
+/**
+ * Model RollingQueueState
+ * 
+ */
+export type RollingQueueState = Prisma.RollingQueueStateModel
+/**
+ * Model RollingCapturedPlan
+ * 
+ */
+export type RollingCapturedPlan = Prisma.RollingCapturedPlanModel
+/**
+ * Model RollingMealEntry
+ * 
+ */
+export type RollingMealEntry = Prisma.RollingMealEntryModel
+/**
+ * Model StoredMealLot
+ * 
+ */
+export type StoredMealLot = Prisma.StoredMealLotModel
+/**
+ * Model StoredMealLotAudienceMember
+ * 
+ */
+export type StoredMealLotAudienceMember = Prisma.StoredMealLotAudienceMemberModel
+/**
+ * Model StoredMealEvent
+ * 
+ */
+export type StoredMealEvent = Prisma.StoredMealEventModel
 /**
  * Model RecipeAudienceMember
  * 

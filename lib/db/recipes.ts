@@ -505,6 +505,21 @@ export async function updateRecipe(
       throw new Error("RECIPE_NOT_FOUND");
     }
 
+    if (owned.isBatchRecipe && !recipeData.isBatchRecipe) {
+      const plans = await tx.plan.findMany({
+        where: { userId, OR: [{ slots: { some: { recipeId } } }, { batches: { some: { recipeId } } }] },
+        select: { id: true, version: true },
+        orderBy: { id: "asc" },
+      });
+      for (const plan of plans) {
+        const claimed = await tx.plan.updateMany({
+          where: { id: plan.id, userId, version: plan.version },
+          data: { version: { increment: 1 } },
+        });
+        if (claimed.count !== 1) throw new Error("PLAN_VERSION_CONFLICT");
+      }
+    }
+
     await tx.recipe.update({
       where: { id: recipeId },
       data: {
@@ -801,6 +816,7 @@ export async function updateRecipe(
     // TODO: Reduce in-transaction sequential work and lower this again.
     maxWait: 10000,
     timeout: 30000,
+    isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
   });
 }
 

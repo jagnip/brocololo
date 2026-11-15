@@ -80,7 +80,7 @@ describe("planner-actions collisions", () => {
         cookingFamilyMemberIds: ["member-1"],
         used: false,
       },
-    ]);
+    ], { expectedVersion: 0 });
 
     expect(result).toEqual({
       type: "date_conflict",
@@ -96,10 +96,23 @@ describe("updateSavedPlan", () => {
     vi.clearAllMocks();
   });
 
+  it("rejects missing versions before writing", async () => {
+    const slot = { date: new Date("2026-03-30T00:00:00.000Z"), mealType: "DINNER" as const, recipeId: null, customMeal: null, alternativeRecipeIds: [], cookingFamilyMemberIds: [], used: false };
+    expect(await updateSavedPlan("plan-1", [slot])).toEqual({ type: "error", message: "Invalid plan version. Reload the plan before saving." });
+    expect(updatePlan).not.toHaveBeenCalled();
+  });
+
+  it("forwards version conflicts without revalidation", async () => {
+    vi.mocked(updatePlan).mockResolvedValueOnce({ type: "version_conflict" });
+    const slot = { date: new Date("2026-03-30T00:00:00.000Z"), mealType: "DINNER" as const, recipeId: null, customMeal: null, alternativeRecipeIds: [], cookingFamilyMemberIds: ["member-1"], used: false };
+    expect(await updateSavedPlan("plan-1", [slot], { expectedVersion: 2 })).toEqual({ type: "version_conflict" });
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
   it("parses, preserves and defaults saved flags before calling the DB", async () => {
-    vi.mocked(updatePlan).mockResolvedValue({} as never);
+    vi.mocked(updatePlan).mockResolvedValue({ type: "success", version: 1 });
     const slot = { date: new Date("2026-03-30T00:00:00.000Z"), mealType: "DINNER" as const, recipeId: "recipe-1", customMeal: null, alternativeRecipeIds: [], cookingFamilyMemberIds: ["member-1"], used: false };
-    await updateSavedPlan("plan-1", [slot, { ...slot, isRolledOver: true, alreadyCooked: true }, { ...slot, recipeId: null, isRolledOver: true, alreadyCooked: true }]);
+    await updateSavedPlan("plan-1", [slot, { ...slot, isRolledOver: true, alreadyCooked: true }, { ...slot, recipeId: null, isRolledOver: true, alreadyCooked: true }], { expectedVersion: 0 });
     expect(vi.mocked(updatePlan).mock.calls[0]?.[2]).toEqual([
       { ...slot, isRolledOver: false, alreadyCooked: false, extraPortions: 0 },
       { ...slot, isRolledOver: true, alreadyCooked: true, extraPortions: 0 },
@@ -119,7 +132,7 @@ describe("updateSavedPlan", () => {
   });
 
   it("revalidates root on success", async () => {
-    vi.mocked(updatePlan).mockResolvedValue({} as never);
+    vi.mocked(updatePlan).mockResolvedValue({ type: "success", version: 1 });
 
     const result = await updateSavedPlan("plan-1", [
       {
@@ -131,9 +144,9 @@ describe("updateSavedPlan", () => {
         cookingFamilyMemberIds: ["member-1"],
         used: false,
       },
-    ]);
+    ], { expectedVersion: 0 });
 
-    expect(result).toEqual({ type: "success" });
+    expect(result).toEqual({ type: "success", version: 1 });
     expect(revalidatePath).toHaveBeenCalledWith("/");
   });
 
@@ -150,7 +163,7 @@ describe("updateSavedPlan", () => {
         cookingFamilyMemberIds: ["member-1"],
         used: false,
       },
-    ]);
+    ], { expectedVersion: 0 });
 
     expect(result).toEqual({ type: "error", message: "Failed to update plan." });
   });

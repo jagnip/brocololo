@@ -65,11 +65,18 @@ export const ModelName = {
   PlanSlot: 'PlanSlot',
   PlanSlotAudienceMember: 'PlanSlotAudienceMember',
   PlanBatch: 'PlanBatch',
+  PlanBatchRemainderResolution: 'PlanBatchRemainderResolution',
   PlanBatchStorageRow: 'PlanBatchStorageRow',
   PlanBatchStorageRowAudienceMember: 'PlanBatchStorageRowAudienceMember',
   PlanSlotCustomIngredient: 'PlanSlotCustomIngredient',
   PlanSlotAlternative: 'PlanSlotAlternative',
   Recipe: 'Recipe',
+  RollingQueueState: 'RollingQueueState',
+  RollingCapturedPlan: 'RollingCapturedPlan',
+  RollingMealEntry: 'RollingMealEntry',
+  StoredMealLot: 'StoredMealLot',
+  StoredMealLotAudienceMember: 'StoredMealLotAudienceMember',
+  StoredMealEvent: 'StoredMealEvent',
   RecipeAudienceMember: 'RecipeAudienceMember',
   RecipeMemberPreference: 'RecipeMemberPreference',
   RecipeMemberPortion: 'RecipeMemberPortion',
@@ -146,7 +153,8 @@ export const PlanScalarFieldEnum = {
   userId: 'userId',
   startDate: 'startDate',
   endDate: 'endDate',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  version: 'version'
 } as const
 
 export type PlanScalarFieldEnum = (typeof PlanScalarFieldEnum)[keyof typeof PlanScalarFieldEnum]
@@ -235,6 +243,7 @@ export type ShoppingListItemScalarFieldEnum = (typeof ShoppingListItemScalarFiel
 export const PlanSlotScalarFieldEnum = {
   id: 'id',
   planId: 'planId',
+  placementId: 'placementId',
   date: 'date',
   mealType: 'mealType',
   recipeId: 'recipeId',
@@ -264,6 +273,14 @@ export const PlanBatchScalarFieldEnum = {
 } as const
 
 export type PlanBatchScalarFieldEnum = (typeof PlanBatchScalarFieldEnum)[keyof typeof PlanBatchScalarFieldEnum]
+
+
+export const PlanBatchRemainderResolutionScalarFieldEnum = {
+  planId: 'planId',
+  batchId: 'batchId'
+} as const
+
+export type PlanBatchRemainderResolutionScalarFieldEnum = (typeof PlanBatchRemainderResolutionScalarFieldEnum)[keyof typeof PlanBatchRemainderResolutionScalarFieldEnum]
 
 
 export const PlanBatchStorageRowScalarFieldEnum = {
@@ -323,6 +340,80 @@ export const RecipeScalarFieldEnum = {
 } as const
 
 export type RecipeScalarFieldEnum = (typeof RecipeScalarFieldEnum)[keyof typeof RecipeScalarFieldEnum]
+
+
+export const RollingQueueStateScalarFieldEnum = {
+  userId: 'userId'
+} as const
+
+export type RollingQueueStateScalarFieldEnum = (typeof RollingQueueStateScalarFieldEnum)[keyof typeof RollingQueueStateScalarFieldEnum]
+
+
+export const RollingCapturedPlanScalarFieldEnum = {
+  planId: 'planId',
+  userId: 'userId'
+} as const
+
+export type RollingCapturedPlanScalarFieldEnum = (typeof RollingCapturedPlanScalarFieldEnum)[keyof typeof RollingCapturedPlanScalarFieldEnum]
+
+
+export const RollingMealEntryScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  identity: 'identity',
+  recipeId: 'recipeId',
+  mealType: 'mealType',
+  customMeal: 'customMeal',
+  count: 'count',
+  version: 'version'
+} as const
+
+export type RollingMealEntryScalarFieldEnum = (typeof RollingMealEntryScalarFieldEnum)[keyof typeof RollingMealEntryScalarFieldEnum]
+
+
+export const StoredMealLotScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  recipeId: 'recipeId',
+  sourcePlanId: 'sourcePlanId',
+  sourcePlanBatchId: 'sourcePlanBatchId',
+  count: 'count',
+  version: 'version',
+  cookedAt: 'cookedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type StoredMealLotScalarFieldEnum = (typeof StoredMealLotScalarFieldEnum)[keyof typeof StoredMealLotScalarFieldEnum]
+
+
+export const StoredMealLotAudienceMemberScalarFieldEnum = {
+  lotId: 'lotId',
+  familyMemberId: 'familyMemberId'
+} as const
+
+export type StoredMealLotAudienceMemberScalarFieldEnum = (typeof StoredMealLotAudienceMemberScalarFieldEnum)[keyof typeof StoredMealLotAudienceMemberScalarFieldEnum]
+
+
+export const StoredMealEventScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  lotId: 'lotId',
+  recipeId: 'recipeId',
+  recipeName: 'recipeName',
+  type: 'type',
+  quantity: 'quantity',
+  previousCount: 'previousCount',
+  nextCount: 'nextCount',
+  placementId: 'placementId',
+  sourceLotId: 'sourceLotId',
+  destinationPlanId: 'destinationPlanId',
+  destinationDate: 'destinationDate',
+  destinationMeal: 'destinationMeal',
+  createdAt: 'createdAt'
+} as const
+
+export type StoredMealEventScalarFieldEnum = (typeof StoredMealEventScalarFieldEnum)[keyof typeof StoredMealEventScalarFieldEnum]
 
 
 export const RecipeAudienceMemberScalarFieldEnum = {
@@ -560,6 +651,14 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const NullableJsonNullValueInput = {
+  DbNull: 'DbNull',
+  JsonNull: 'JsonNull'
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
@@ -574,4 +673,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: 'DbNull',
+  JsonNull: 'JsonNull',
+  AnyNull: 'AnyNull'
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

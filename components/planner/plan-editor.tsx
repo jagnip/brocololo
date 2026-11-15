@@ -44,6 +44,7 @@ import type { FamilyMemberRow } from "@/lib/db/family-members";
 type PlanEditorProps = {
   planId: string;
   initialPlan: PlanInputType;
+  initialVersion?: number;
   initialBatches?: PlanBatchInput[];
   recipes: RecipeType[];
   ingredientOptions: LogIngredientOption[];
@@ -58,6 +59,7 @@ type PlanEditorProps = {
 
 type SaveStatus = "idle" | "saving";
 type SyncConflictState = {
+  editVersion: number;
   impactedDates: string[];
   impactedLogMealsCount: number;
   impactedPlanMealsCount: number;
@@ -77,6 +79,7 @@ type PendingDateRangeChange = {
 export function PlanEditor({
   planId,
   initialPlan,
+  initialVersion,
   initialBatches = [],
   recipes,
   ingredientOptions,
@@ -95,6 +98,8 @@ export function PlanEditor({
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [isDirty, setIsDirty] = useState(false);
   const editVersionRef = useRef(0);
+  const planVersionRef = useRef(initialVersion);
+  const stalePlanRef = useRef(false);
   const approvedDateRangeVersionRef = useRef<number | null>(null);
   const router = useRouter();
   // Router identity from `useRouter()` can change every render in tests; keep push stable for topbar effect deps.
@@ -135,13 +140,14 @@ export function PlanEditor({
   );
 
   const handleSave = useCallback(async () => {
-    if (!isDirty) return;
+    if (!isDirty || stalePlanRef.current) return;
     if (saveStatus === "saving") return;
 
     const saveEditVersion = editVersionRef.current;
     setSaveStatus("saving");
 
     const saveData: SlotSaveData[] = plan.map((s) => ({
+      placementId: s.placementId ?? null,
       date: new Date(s.date),
       mealType: s.mealType,
       recipeId: s.recipe?.id ?? null,
@@ -159,10 +165,17 @@ export function PlanEditor({
     }));
 
     // Date changes already have Save/Continue consent; do not ask again during sync.
-    const syncOptions = approvedDateRangeVersionRef.current === saveEditVersion
-      ? { forceDestructiveSync: true }
-      : undefined;
+    const syncOptions = {
+      expectedVersion: planVersionRef.current,
+      ...(approvedDateRangeVersionRef.current === saveEditVersion ? { forceDestructiveSync: true } : {}),
+    };
     const result = await updateSavedPlan(planId, saveData, syncOptions, batches);
+    if (result.type === "version_conflict") {
+      stalePlanRef.current = true;
+      setSaveStatus("idle");
+      toast.error("This plan changed elsewhere. Reload to continue; your unsaved changes will be lost.");
+      return;
+    }
     if (result.type === "date_conflict") {
       setSaveStatus("idle");
       // Avoid retry-toasts in a loop: wait for a new user edit before autosave retries.
@@ -178,6 +191,7 @@ export function PlanEditor({
       // Dismissing the warning must not autosave the same edit and reopen it.
       blockedAutosaveVersionRef.current = saveEditVersion;
       setSyncConflict({
+        editVersion: saveEditVersion,
         impactedDates: result.impactedDates,
         impactedLogMealsCount: result.impactedLogMealsCount,
         impactedPlanMealsCount: result.impactedPlanMealsCount,
@@ -193,6 +207,7 @@ export function PlanEditor({
       return;
     }
 
+    planVersionRef.current = result.version;
     setSaveStatus("idle");
     if (saveEditVersion === editVersionRef.current) {
       blockedAutosaveVersionRef.current = null;
@@ -205,7 +220,7 @@ export function PlanEditor({
 
   useEffect(() => {
     // Debounced autosave reuses the existing save pipeline and conflict handling.
-    if (!isDirty || saveStatus === "saving" || syncConflict != null) {
+    if (!isDirty || saveStatus === "saving" || syncConflict != null || stalePlanRef.current) {
       return;
     }
     // If latest attempt failed, wait for a new edit before retrying.
@@ -281,6 +296,7 @@ export function PlanEditor({
   }
 
   const handleShuffle = useCallback((slotKey: string) => {
+    const placementId = crypto.randomUUID();
     const nextBatches = detachMealFromBatch({
       plan: allSlotsRef.current,
       batches: batchesRef.current,
@@ -295,6 +311,7 @@ export function PlanEditor({
       const [nextRecipe, ...restAlternatives] = slot.alternatives;
       return {
         ...slot,
+        placementId,
         recipe: nextRecipe,
         isRolledOver: false,
         alreadyCooked: false,
@@ -311,6 +328,7 @@ export function PlanEditor({
         const [nextRecipe, ...restAlternatives] = slot.alternatives;
         return {
           ...slot,
+          placementId,
           recipe: nextRecipe,
           isRolledOver: false,
           alreadyCooked: false,
@@ -355,6 +373,7 @@ export function PlanEditor({
           if (getPlanSlotKey(slot) !== slotKey) return slot;
           return {
             ...slot,
+            placementId: slot.recipe?.id === payload.recipe.id ? (slot.placementId ?? crypto.randomUUID()) : crypto.randomUUID(),
             recipe: payload.recipe,
             extraPortions: payload.extraPortions ?? slot.extraPortions ?? 0,
             isRolledOver: slot.recipe?.id === payload.recipe.id ? (slot.isRolledOver ?? false) : false,
@@ -383,6 +402,7 @@ export function PlanEditor({
             });
           return {
             ...slot,
+            placementId: keepsSameCustom ? (slot.placementId ?? crypto.randomUUID()) : crypto.randomUUID(),
             recipe: null,
             isRolledOver: keepsSameCustom ? (slot.isRolledOver ?? false) : false,
             alreadyCooked: false,
@@ -401,6 +421,7 @@ export function PlanEditor({
 
         return {
           ...slot,
+          placementId: null,
           recipe: null,
           isRolledOver: false,
           alreadyCooked: false,
@@ -466,6 +487,7 @@ export function PlanEditor({
       if (key !== slotKey) return slot;
       return {
         ...slot,
+        placementId: null,
         recipe: null,
         isRolledOver: false,
         alreadyCooked: false,
@@ -489,6 +511,7 @@ export function PlanEditor({
         if (key !== slotKey) return slot;
         return {
           ...slot,
+          placementId: null,
           recipe: null,
           isRolledOver: false,
           alreadyCooked: false,
@@ -695,9 +718,16 @@ export function PlanEditor({
                   const forcedResult = await updateSavedPlan(
                     planId,
                     syncConflict.saveData,
-                    { forceDestructiveSync: true },
+                    { forceDestructiveSync: true, expectedVersion: planVersionRef.current },
                     syncConflict.batchData,
                   );
+                  if (forcedResult.type === "version_conflict") {
+                    stalePlanRef.current = true;
+                    setSyncConflict(null);
+                    setSaveStatus("idle");
+                    toast.error("This plan changed elsewhere. Reload to continue; your unsaved changes will be lost.");
+                    return;
+                  }
                   if (forcedResult.type === "error") {
                     toast.error(forcedResult.message);
                     setSaveStatus("idle");
@@ -712,6 +742,7 @@ export function PlanEditor({
                   }
                   if (forcedResult.type === "sync_conflict") {
                     setSyncConflict({
+                      editVersion: syncConflict.editVersion,
                       impactedDates: forcedResult.impactedDates,
                       impactedLogMealsCount: forcedResult.impactedLogMealsCount,
                       impactedPlanMealsCount: forcedResult.impactedPlanMealsCount,
@@ -722,9 +753,12 @@ export function PlanEditor({
                     return;
                   }
                   setSyncConflict(null);
+                  planVersionRef.current = forcedResult.version;
                   setSaveStatus("idle");
-                  setIsDirty(false);
-                  allSlotsRef.current = plan;
+                  if (syncConflict.editVersion === editVersionRef.current) {
+                    setIsDirty(false);
+                    allSlotsRef.current = plan;
+                  }
                 })();
               }}
             >

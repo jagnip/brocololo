@@ -32,7 +32,12 @@ const recipes = [
 function Harness() {
   const form = useForm<PlannerCriteriaInputType>({ defaultValues: { fridgeIngredientIds: [] } });
   const [selected, setSelected] = useState<RollingMealType[]>([
-    { recipeId: "batch", meals: 3, alreadyCooked: false },
+    {
+      recipeId: "batch",
+      meals: 3,
+      alreadyCooked: false,
+      source: { storedMeals: 2, unfinishedScheduledMeals: 1 },
+    },
     { recipeId: "single", meals: 2, alreadyCooked: false },
   ]);
   return (
@@ -57,6 +62,7 @@ describe("PlannerRollingRecipesSection", () => {
     expect(screen.queryByText(/Unused meals from your previous plan/)).not.toBeInTheDocument();
     expect(screen.queryByText("10 min prep")).not.toBeInTheDocument();
     expect(screen.getByRole("spinbutton", { name: "Rolling meals for Salad" })).toHaveValue(2);
+    expect(screen.getByText("2 in storage / 1 not cooked")).toBeInTheDocument();
     const checkbox = screen.getByRole("checkbox", { name: "Already cooked Soup" });
     expect(checkbox).not.toBeChecked();
     expect(screen.queryByRole("checkbox", { name: "Already cooked Salad" })).not.toBeInTheDocument();

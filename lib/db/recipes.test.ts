@@ -158,6 +158,22 @@ describe("createRecipe category type rules", () => {
     });
   });
 
+  it("aborts batch demotion when an affected plan has changed", async () => {
+    mockedPrisma.category.findMany.mockResolvedValue([
+      { id: "meal-breakfast-id", slug: "breakfast", type: "MEAL_OCCASION" },
+    ]);
+    const updateMany = vi.fn().mockResolvedValue({ count: 0 });
+    mockedPrisma.$transaction.mockImplementationOnce(async (callback: (tx: unknown) => Promise<unknown>) =>
+      callback({
+        recipe: { findFirst: vi.fn().mockResolvedValue({ id: "recipe-id", isBatchRecipe: true }), update: recipeUpdate },
+        plan: { findMany: vi.fn().mockResolvedValue([{ id: "plan", version: 7 }]), updateMany },
+      }),
+    );
+    await expect(updateRecipe(TEST_USER_ID, "recipe-id", baseCreateRecipeInput())).rejects.toThrow("PLAN_VERSION_CONFLICT");
+    expect(updateMany).toHaveBeenCalledWith({ where: { id: "plan", userId: TEST_USER_ID, version: 7 }, data: { version: { increment: 1 } } });
+    expect(recipeUpdate).not.toHaveBeenCalled();
+  });
+
   it("allows breakfast recipes with protein category", async () => {
     mockedPrisma.category.findMany.mockResolvedValue([
       {

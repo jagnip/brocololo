@@ -254,14 +254,40 @@ describe("generatePlan fill-empty", () => {
     vi.mocked(getRecipes).mockResolvedValue([recipe]);
     const audience = buildAudience(start, start);
     audience[0]!.breakfastFamilyMemberIds = memberIds;
-    const result = await generatePlan(start, start, audience, buildTimeLimits(start, start), [], [{ recipeId: recipe.id, meals: 2 }]);
+    const rollingQueueClaim = { id: "queue", version: 3 };
+    const result = await generatePlan(start, start, audience, buildTimeLimits(start, start), [], [{ recipeId: recipe.id, meals: 2, rollingQueueClaim }]);
     expect(result.type).toBe("success");
     if (result.type !== "success") return;
     const rollingSlots = result.plan.filter((slot) => slot.isRolledOver);
     expect(rollingSlots).toHaveLength(1);
     const batch = result.batches.find((batch) => batch.id === rollingSlots[0]?.batchGroupId);
+    expect(rollingSlots[0]?.rollingQueueClaim).toEqual(rollingQueueClaim);
+    expect(batch?.rollingQueueClaim).toEqual(rollingQueueClaim);
     expect(batch?.storageRows).toEqual([{ count: 1, cookingFamilyMemberIds: memberIds }]);
     expect(result.warnings.some((warning) => warning.startsWith("Could not place"))).toBe(false);
+  });
+
+  it.each([
+    { storedMeals: 2, days: 1, expectedRemainder: 0, warning: true },
+    { storedMeals: 1, days: 2, expectedRemainder: 1, warning: false },
+  ])("does not turn unscheduled stored meals into batch remainder: $storedMeals stored, $days slots", async ({ storedMeals, days, expectedRemainder, warning }) => {
+    const start = new Date("2026-04-20T00:00:00.000Z");
+    const end = new Date(start.getTime() + (days - 1) * 86400000);
+    const recipe = createMockRecipe({
+      id: "mixed", isBatchRecipe: true, plannedMealCount: 3, handsOnTime: 10, totalTime: 10,
+      categories: [createMockCategory({ slug: "dinner", type: "MEAL_OCCASION" })],
+    });
+    vi.mocked(getRecipes).mockResolvedValue([recipe]);
+    const claim = { id: "queue", version: 2 };
+    const result = await generatePlan(start, end, buildAudience(start, end), buildTimeLimits(start, end), [], [{
+      recipeId: recipe.id, meals: storedMeals + 2, rollingQueueClaim: claim,
+      source: { storedMeals, unfinishedScheduledMeals: 2 },
+    }]);
+    expect(result.type).toBe("success");
+    if (result.type !== "success") return;
+    expect(result.plan.filter((slot) => slot.isRolledOver)).toHaveLength(days);
+    expect(result.batches[0]?.storageRows.reduce((sum, row) => sum + row.count, 0)).toBe(expectedRemainder);
+    expect(result.warnings.some((message) => message.startsWith("Could not place"))).toBe(warning);
   });
 
   it.each([true, false])("allocates rolling counts once across meal occasions (batch=%s)", async (isBatchRecipe) => {

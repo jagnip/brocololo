@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { getPlanBatchesById, getPlanById } from "@/lib/db/planner";
+import { getPlanById } from "@/lib/db/planner";
+import { getSavedPlanEditorData } from "@/lib/db/saved-plan-editor";
 import { getRecipes } from "@/lib/db/recipes";
 import { getLogByPlanId } from "@/lib/db/logs";
 import { getPlannerPoolItemsForPlan } from "@/lib/db/planner";
@@ -49,8 +50,7 @@ export async function PlannerLogCombinedPage({
   const initialTab = tab === "log" ? "log" : "plan";
 
   const [
-    planSlots,
-    planBatches,
+    savedPlan,
     plannerRecipes,
     allRecipes,
     ingredients,
@@ -58,8 +58,7 @@ export async function PlannerLogCombinedPage({
     familyMembers,
   ] =
     await Promise.all([
-      getPlanById(userId, planId),
-      getPlanBatchesById(userId, planId),
+      getSavedPlanEditorData(userId, planId),
       initialTab === "plan" ? getRecipes(userId, undefined, undefined, false) : Promise.resolve([]),
       initialTab === "log" ? getRecipes(userId) : Promise.resolve([]),
       getIngredients(userId),
@@ -67,7 +66,8 @@ export async function PlannerLogCombinedPage({
       ensureSelfFamilyMember(userId),
     ]);
 
-  if (!planSlots || !planBatches) notFound();
+  if (!savedPlan) notFound();
+  const { slots: planSlots, batches: planBatches, version: planVersion } = savedPlan;
 
   // Track tab person selector: union of everyone included on any planned meal.
   const planAudienceIds = [
@@ -209,6 +209,7 @@ export async function PlannerLogCombinedPage({
       initialDateRange={initialDateRange}
       initialSelectedDayKey={initialSelectedDayKey}
       initialPlan={planSlots}
+      initialVersion={planVersion}
       initialBatches={planBatches}
       plannerRecipes={plannerRecipes}
       ingredientOptions={ingredientOptions}
