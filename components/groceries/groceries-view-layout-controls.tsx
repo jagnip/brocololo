@@ -9,6 +9,7 @@ import {
   shouldShowLayoutSwitcher,
   type GroceriesLayoutSwitcherPreset,
 } from "@/components/groceries/groceries-layout-switcher";
+import { Label } from "@/components/ui/label";
 
 type GroceriesViewLayoutControlsProps = {
   planId: string;
@@ -68,12 +69,15 @@ export function GroceriesViewLayoutControls({
   }
 
   return (
-    <GroceriesLayoutSwitcher
-      presets={presets}
-      activePresetId={safePresetId}
-      onPresetChange={onPresetChange}
-      onAddLayout={onAddLayout}
-      disabled={isSwitchPending || isLayoutPending || presets.length === 0}
-    />
+    <div className="flex flex-wrap items-center gap-2">
+      <Label htmlFor="grocery-layout-switcher">Layout</Label>
+      <GroceriesLayoutSwitcher
+        presets={presets}
+        activePresetId={safePresetId}
+        onPresetChange={onPresetChange}
+        onAddLayout={onAddLayout}
+        disabled={isSwitchPending || isLayoutPending || presets.length === 0}
+      />
+    </div>
   );
 }

@@ -10,6 +10,7 @@ import {
   Refrigerator,
   Settings,
   NotebookPen,
+  List,
 } from "lucide-react";
 import { SidebarUserMenu } from "@/components/sidebar-user-menu";
 import {
@@ -40,6 +41,7 @@ export function AppSidebar() {
   const isStorage = pathname.startsWith(ROUTES.storage);
   const isLog = pathname.startsWith(ROUTES.log);
   const isGroceries = pathname.startsWith(ROUTES.groceries);
+  const isSavedLists = pathname === ROUTES.savedLists;
   const isSettings = pathname.startsWith(ROUTES.settings);
 
   return (
@@ -120,6 +122,14 @@ export function AppSidebar() {
                 <Link href={ROUTES.groceriesCurrent} onClick={closeMobileSidebar}>
                   <ShoppingCart />
                   <span>Groceries</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={isSavedLists} tooltip="List library">
+                <Link href={ROUTES.savedLists} onClick={closeMobileSidebar}>
+                  <List />
+                  <span>List library</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

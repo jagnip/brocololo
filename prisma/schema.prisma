@@ -56,6 +56,8 @@ model User {
   rollingMealEntries           RollingMealEntry[]
   rollingQueueState            RollingQueueState?
   rollingCapturedPlans         RollingCapturedPlan[]
+  activeShoppingLayoutPresetId String? @map("active_shopping_layout_preset_id")
+  activeShoppingLayoutPreset   ShoppingLayoutPreset? @relation("user_active_shopping_layout_preset", fields: [activeShoppingLayoutPresetId], references: [id], onDelete: SetNull)
 
   @@map("users")
 }
@@ -148,6 +150,7 @@ model ShoppingLayoutPreset {
 
   categoryOrders     ShoppingLayoutPresetCategory[]
   listsUsingAsActive ShoppingList[]
+  usersUsingAsActive User[] @relation("user_active_shopping_layout_preset")
 
   @@map("shopping_layout_presets")
 }

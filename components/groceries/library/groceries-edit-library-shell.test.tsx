@@ -11,7 +11,6 @@ vi.mock("@/hooks/use-is-lg", () => ({
 const baseProps = {
   collapsed: false,
   onCollapsedChange: vi.fn(),
-  planId: "plan-1",
   lists: [],
   ingredients: [],
   categories: [],

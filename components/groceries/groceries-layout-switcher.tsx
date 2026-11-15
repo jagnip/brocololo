@@ -59,6 +59,7 @@ export function GroceriesLayoutSwitcher({
         allowInlineClear={false}
       >
         <SelectTrigger
+          id="grocery-layout-switcher"
           className="w-full min-w-0 sm:w-44"
           aria-label="Supermarket layout"
         >

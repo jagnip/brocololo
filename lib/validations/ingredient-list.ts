@@ -13,32 +13,25 @@ const trimmedRequiredName = z
 
 const cuid = z.string().min(1);
 
-// `planId` is carried purely so the action layer can re-validate the
-// groceries edit page that is currently open. Library data itself is global.
 export const createIngredientListSchema = z.object({
-  planId: cuid,
   name: trimmedRequiredName,
 });
 
 export const renameIngredientListSchema = z.object({
-  planId: cuid,
   listId: cuid,
   name: trimmedRequiredName,
 });
 
 export const deleteIngredientListSchema = z.object({
-  planId: cuid,
   listId: cuid,
 });
 
 export const addIngredientToListSchema = z.object({
-  planId: cuid,
   listId: cuid,
   ingredientId: cuid,
 });
 
 export const removeIngredientFromListSchema = z.object({
-  planId: cuid,
   listId: cuid,
   ingredientId: cuid,
 });
