@@ -1,4 +1,6 @@
 import { cache } from "react";
+import { randomUUID } from "node:crypto";
+import { allocateStoredMeals } from "@/lib/planner/allocate-stored-meals";
 import {
   PlanBatchSaveData,
   PlanCustomMeal,
@@ -15,6 +17,7 @@ import { getRecipeDisplayImageUrl } from "@/lib/recipes/image";
 import { getRollingCustomMealKey } from "@/lib/planner/custom-meal-identity";
 import type { RollingMealType } from "@/lib/validations/planner";
 import { prisma } from "./index";
+import { captureUncapturedPlansForRollingTx } from "./rolling-meals";
 
 const recipeInclude = {
   categories: {
@@ -232,6 +235,7 @@ function slotInputToCreateData(s: SlotInputType) {
   return {
     date: s.date,
     mealType: s.mealType,
+    placementId: s.recipe || hasCustom ? (s.placementId ?? null) : null,
     recipeId: hasCustom ? null : (s.recipe?.id ?? null),
     customName: hasCustom ? customMeal.name : null,
     used: s.used,
@@ -260,6 +264,7 @@ function slotSaveDataToCreateData(s: SlotSaveData) {
   return {
     date: s.date,
     mealType: s.mealType,
+    placementId: s.recipeId || hasCustom ? (s.placementId ?? null) : null,
     recipeId: hasCustom ? null : s.recipeId,
     customName: hasCustom ? s.customMeal!.name : null,
     used: s.used,
@@ -280,6 +285,93 @@ function slotSaveDataToCreateData(s: SlotSaveData) {
           })),
         },
   };
+}
+
+async function transferStoredMealsTx(tx: Prisma.TransactionClient, userId: string, planId: string, slots: SlotSaveData[]) {
+  const transferred = new Set<string>();
+  const candidates = slots.filter((slot) => slot.recipeId && slot.placementId && !slot.used);
+  if (candidates.length === 0) return transferred;
+  const recipeIds = [...new Set(candidates.map((slot) => slot.recipeId!))];
+  const lots = await tx.storedMealLot.findMany({
+    where: { userId, recipeId: { in: recipeIds }, count: { gt: 0 } },
+    include: { audienceMembers: true, recipe: { select: { name: true } } },
+  });
+  for (const recipeId of recipeIds) {
+    const recipeSlots = candidates.filter((slot) => slot.recipeId === recipeId);
+    const recipeLots = lots.filter((lot) => lot.recipeId === recipeId);
+    const allocations = allocateStoredMeals(recipeLots.map((lot) => ({
+      id: lot.id, count: lot.count, cookedAt: lot.cookedAt,
+      cookingFamilyMemberIds: lot.audienceMembers.map((member) => member.familyMemberId),
+    })), recipeSlots);
+    for (const [index, lotId] of allocations.entries()) {
+      if (!lotId) continue;
+      const lot = recipeLots.find((candidate) => candidate.id === lotId)!;
+      const slot = recipeSlots[index]!;
+      const previousCount = lot.count;
+      const where = { id: lot.id, userId, version: lot.version, count: previousCount };
+      const changed = previousCount === 1
+        ? await tx.storedMealLot.deleteMany({ where })
+        : await tx.storedMealLot.updateMany({ where, data: { count: { decrement: 1 }, version: { increment: 1 } } });
+      if (changed.count !== 1) throw new Error("STORED_MEAL_CONFLICT");
+      await tx.storedMealEvent.create({ data: {
+        userId, lotId: previousCount === 1 ? null : lot.id, sourceLotId: lot.id,
+        recipeId, recipeName: lot.recipe.name, type: "TRANSFERRED", quantity: 1,
+        previousCount, nextCount: previousCount - 1, placementId: slot.placementId,
+        destinationPlanId: planId, destinationDate: slot.date, destinationMeal: slot.mealType,
+      } });
+      lot.count--;
+      lot.version++;
+      slot.alreadyCooked = true;
+      slot.batchGroupId = null;
+      transferred.add(slot.placementId!);
+    }
+  }
+  return transferred;
+}
+
+async function consumeRollingMealsTx(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  slots: SlotSaveData[],
+  batches: PlanBatchSaveData[],
+  transferred: Set<string>,
+  resolvedBatchIds: string[],
+) {
+  const claims = new Map<string, { version: number; identity: string; count: number }>();
+  function add(claim: { id: string; version: number }, identity: string, count: number) {
+    if (typeof claim.id !== "string" || !claim.id || !Number.isSafeInteger(claim.version) || claim.version < 0 || claim.version >= 2147483647) throw new Error("ROLLING_MEAL_CONFLICT");
+    const previous = claims.get(claim.id);
+    if (previous && (previous.version !== claim.version || previous.identity !== identity)) throw new Error("ROLLING_MEAL_CONFLICT");
+    claims.set(claim.id, { version: claim.version, identity, count: (previous?.count ?? 0) + count });
+  }
+  for (const slot of slots) {
+    if (!slot.rollingQueueClaim) continue;
+    const identity = slot.recipeId && !slot.customMeal ? `recipe:${slot.recipeId}` :
+      slot.customMeal && !slot.recipeId ? `custom:${getRollingCustomMealKey(slot.rollingQueueClaim.mealType ?? slot.mealType, slot.customMeal)}` : null;
+    if (!identity || !slot.isRolledOver) throw new Error("ROLLING_MEAL_CONFLICT");
+    add(slot.rollingQueueClaim, identity, transferred.has(slot.placementId ?? "") ? 0 : 1);
+  }
+  for (const batch of batches) {
+    if (!batch.rollingQueueClaim || resolvedBatchIds.includes(batch.id)) continue;
+    if (!slots.some((slot) => slot.batchGroupId === batch.id && slot.recipeId === batch.recipeId &&
+      slot.rollingQueueClaim?.id === batch.rollingQueueClaim!.id && slot.rollingQueueClaim.version === batch.rollingQueueClaim!.version)) {
+      throw new Error("ROLLING_MEAL_CONFLICT");
+    }
+    add(batch.rollingQueueClaim, `recipe:${batch.recipeId}`, batch.storageRows.reduce((sum, row) => sum + row.count, 0));
+  }
+  if (claims.size === 0) return;
+  // Serialize with queue capture, which takes the same per-user lock.
+  await tx.$queryRaw`SELECT id FROM users WHERE id = ${userId} FOR UPDATE`;
+  for (const [id, claim] of [...claims].sort(([a], [b]) => a.localeCompare(b))) {
+    const entry = await tx.rollingMealEntry.findFirst({ where: { id, userId }, select: { id: true, version: true, identity: true, count: true } });
+    if (!entry || entry.version !== claim.version || entry.identity !== claim.identity || entry.count < claim.count) throw new Error("ROLLING_MEAL_CONFLICT");
+    if (claim.count === 0) continue;
+    const where = { id, userId, version: claim.version, count: entry.count, identity: claim.identity };
+    const changed = entry.count === claim.count
+      ? await tx.rollingMealEntry.deleteMany({ where })
+      : await tx.rollingMealEntry.updateMany({ where, data: { count: { decrement: claim.count }, version: { increment: 1 } } });
+    if (changed.count !== 1) throw new Error("ROLLING_MEAL_CONFLICT");
+  }
 }
 
 export async function getPlans(userId: string) {
@@ -359,33 +451,42 @@ export async function deletePlanById(userId: string, planId: string) {
 // Returns unused meals from the four newest plans. Each identity comes from its
 // newest source plan so rolling the same meal forward never inflates its count.
 export async function getUnusedMealsFromRecentPlans(userId: string): Promise<RollingMealType[]> {
-  const recentPlans = await prisma.plan.findMany({
-    where: { userId },
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    take: 4,
-    select: {
-      batches: {
-        select: {
-          recipeId: true,
-          recipe: { select: { excludeFromPlanner: true, archivedAt: true } },
-          storageRows: { select: { count: true } },
-        },
-      },
-      slots: {
-        select: {
-          used: true,
-          mealType: true,
-          recipeId: true,
-          customName: true,
-          customIngredients: {
-            orderBy: { position: "asc" },
-            select: { ingredientId: true, unitId: true, amount: true },
+  const [recentPlans, storedLots] = await Promise.all([
+    prisma.plan.findMany({
+      where: { userId },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: 4,
+      select: {
+        batches: {
+          select: {
+            recipeId: true,
+            recipe: { select: { excludeFromPlanner: true, archivedAt: true } },
+            storageRows: { select: { count: true } },
           },
-          recipe: { select: { excludeFromPlanner: true, archivedAt: true } },
+        },
+        slots: {
+          select: {
+            used: true,
+            mealType: true,
+            recipeId: true,
+            customName: true,
+            customIngredients: {
+              orderBy: { position: "asc" },
+              select: { ingredientId: true, unitId: true, amount: true },
+            },
+            recipe: { select: { excludeFromPlanner: true, archivedAt: true } },
+          },
         },
       },
-    },
-  });
+    }),
+    prisma.storedMealLot.findMany({
+      where: {
+        userId,
+        recipe: { excludeFromPlanner: false, archivedAt: null },
+      },
+      select: { recipeId: true, count: true },
+    }),
+  ]);
 
   const seenRecipeIds = new Set<string>();
   const seenCustomKeys = new Set<string>();
@@ -449,7 +550,16 @@ export async function getUnusedMealsFromRecentPlans(userId: string): Promise<Rol
       seenRecipeIds.add(recipeId);
       const mealsCount = state.unfinishedScheduledMeals + state.storedMeals;
       if (mealsCount > 0) {
-        meals.push({ kind: "recipe", recipeId, meals: mealsCount, alreadyCooked: false });
+        meals.push({
+          kind: "recipe",
+          recipeId,
+          meals: mealsCount,
+          alreadyCooked: false,
+          source: {
+            storedMeals: state.storedMeals,
+            unfinishedScheduledMeals: state.unfinishedScheduledMeals,
+          },
+        });
       }
     }
     for (const [key, entry] of customCounts) {
@@ -464,6 +574,39 @@ export async function getUnusedMealsFromRecentPlans(userId: string): Promise<Rol
         });
       }
     }
+  }
+
+  const storedMealsByRecipeId = new Map<string, number>();
+  for (const lot of storedLots) {
+    storedMealsByRecipeId.set(
+      lot.recipeId,
+      (storedMealsByRecipeId.get(lot.recipeId) ?? 0) + lot.count,
+    );
+  }
+  for (const [recipeId, storedMeals] of storedMealsByRecipeId) {
+    const existingIndex = meals.findIndex(
+      (entry) => entry.kind !== "custom" && entry.recipeId === recipeId,
+    );
+    if (existingIndex === -1) {
+      meals.push({
+        kind: "recipe",
+        recipeId,
+        meals: storedMeals,
+        alreadyCooked: false,
+        source: { storedMeals, unfinishedScheduledMeals: 0 },
+      });
+      continue;
+    }
+    const existing = meals[existingIndex]!;
+    if (existing.kind === "custom") continue;
+    meals[existingIndex] = {
+      ...existing,
+      meals: existing.meals + storedMeals,
+      source: {
+        storedMeals: (existing.source?.storedMeals ?? 0) + storedMeals,
+        unfinishedScheduledMeals: existing.source?.unfinishedScheduledMeals ?? 0,
+      },
+    };
   }
 
   return meals.toSorted((left, right) => {
@@ -547,6 +690,7 @@ export async function getPlanById(userId: string, planId: string) {
 
   return plan.slots.map((slot) => ({
     id: slot.id,
+    placementId: slot.placementId,
     date: slot.date,
     mealType: slot.mealType,
     recipe: slot.recipe,
@@ -870,8 +1014,24 @@ export async function createPlan(
       batches,
     });
 
+    const planId = randomUUID();
+    const placements: SlotSaveData[] = slots.map((slot) => ({
+      ...slot, placementId: slot.recipe || slot.customMeal ? (slot.placementId ?? randomUUID()) : null,
+      recipeId: slot.customMeal ? null : (slot.recipe?.id ?? null),
+      alternativeRecipeIds: slot.alternatives.map((recipe) => recipe.id),
+      cookingFamilyMemberIds: slot.cookingFamilyMemberIds ?? [],
+    }));
+    const transferred = await transferStoredMealsTx(tx, userId, planId, placements);
+    const resolvedBatchIds = batches.filter((batch) => {
+      const indices = slots.flatMap((slot, index) => slot.batchGroupId === batch.id && slot.recipe?.id === batch.recipeId ? [index] : []);
+      return indices.length > 0 && indices.every((index) => placements[index]!.alreadyCooked && !placements[index]!.batchGroupId);
+    }).map((batch) => batch.id);
+    await consumeRollingMealsTx(tx, userId, placements, batches, transferred, resolvedBatchIds);
+    await tx.$queryRaw`SELECT id FROM users WHERE id = ${userId} FOR UPDATE`;
+    await captureUncapturedPlansForRollingTx(tx, userId);
     const createdPlan = await tx.plan.create({
       data: {
+        id: planId,
         userId,
         startDate,
         endDate,
@@ -888,10 +1048,19 @@ export async function createPlan(
           ].map((familyMemberId) => ({ familyMemberId })),
         },
         slots: {
-          create: slots.map((s) => slotInputToCreateData(s)),
+          create: slots.map((s, index) => slotInputToCreateData({
+            ...s, placementId: placements[index]!.placementId,
+            alreadyCooked: placements[index]!.alreadyCooked,
+            batchGroupId: placements[index]!.batchGroupId,
+          })),
+        },
+        resolvedBatchRemainders: {
+          create: resolvedBatchIds.map((batchId) => ({ batchId })),
         },
         batches: {
-          create: batches.map(batchSaveDataToCreateData),
+          create: batches.map((batch) => batchSaveDataToCreateData(
+            resolvedBatchIds.includes(batch.id) ? { ...batch, storageRows: [] } : batch,
+          )),
         },
       },
       include: { slots: true },
@@ -905,7 +1074,7 @@ export async function createPlan(
 
   if (uniqueRecipeIds.length > 0) {
     await prisma.recipe.updateMany({
-      where: { id: { in: uniqueRecipeIds } },
+      where: { userId, id: { in: uniqueRecipeIds } },
       data: { lastUsedInPlanner: now },
     });
   }
@@ -1223,7 +1392,8 @@ type PlanSyncImpact = {
 };
 
 export type UpdatePlanResult =
-  | { type: "success" }
+  | { type: "success"; version: number }
+  | { type: "version_conflict" }
   | {
       type: "date_conflict";
       dates: string[];
@@ -1233,6 +1403,7 @@ export type UpdatePlanResult =
   | ({ type: "sync_conflict" } & PlanSyncImpact);
 
 type UpdatePlanOptions = {
+  expectedVersion?: number;
   // Force applying a destructive sync after explicit user confirmation.
   forceDestructiveSync?: boolean;
 };
@@ -1248,6 +1419,10 @@ export async function updatePlan(
   options: UpdatePlanOptions = {},
   batches: PlanBatchSaveData[] = [],
 ): Promise<UpdatePlanResult> {
+  if (!Number.isSafeInteger(options.expectedVersion) || options.expectedVersion! < 0 || options.expectedVersion! >= 2147483647) {
+    throw new Error("INVALID_PLAN_VERSION");
+  }
+  const expectedVersion = options.expectedVersion!;
   const now = new Date();
   const uniqueRecipeIds = [
     ...new Set(slots.filter((s) => s.recipeId).map((s) => s.recipeId!)),
@@ -1260,12 +1435,19 @@ export async function updatePlan(
   const forceDestructiveSync = options.forceDestructiveSync ?? false;
 
   const result = await prisma.$transaction(async (tx) => {
+    const claimed = await tx.plan.updateMany({
+      where: { id: planId, userId, version: expectedVersion },
+      data: { version: { increment: 1 } },
+    });
+    if (claimed.count !== 1) return { type: "version_conflict" as const };
     const existingPlan = await tx.plan.findFirst({
       where: { id: planId, userId },
       include: {
         log: { select: { id: true } },
+        resolvedBatchRemainders: { select: { batchId: true } },
         batches: {
           include: {
+            recipe: { select: { name: true } },
             storageRows: {
               include: { audienceMembers: { select: { familyMemberId: true } } },
             },
@@ -1274,11 +1456,13 @@ export async function updatePlan(
         slots: {
           select: {
             id: true,
+            placementId: true,
             date: true,
             mealType: true,
             recipeId: true,
             customName: true,
             used: true,
+            alreadyCooked: true,
             isRolledOver: true,
             batchGroupId: true,
             customIngredients: {
@@ -1305,6 +1489,7 @@ export async function updatePlan(
       excludePlanId: planId,
     });
     if (dateCollision.dates.length > 0) {
+      await tx.plan.update({ where: { id: planId }, data: { version: expectedVersion } });
       return {
         type: "date_conflict" as const,
         dates: dateCollision.dates,
@@ -1334,6 +1519,7 @@ export async function updatePlan(
     }
 
     if ((impactedPlanMealsCount > 0 || impactedLogMealsCount > 0) && !forceDestructiveSync) {
+      await tx.plan.update({ where: { id: planId }, data: { version: expectedVersion } });
       return {
         type: "sync_conflict" as const,
         impactedDates: removedDateKeys,
@@ -1342,64 +1528,105 @@ export async function updatePlan(
       };
     }
 
-    const existingSlotsByKey = new Map(
-      existingPlan.slots.map((slot) => [
-        `${toDateKey(slot.date)}:${slot.mealType}`,
-        slot,
-      ]),
-    );
-    const newlyCompletedRolledOverSlots = slots.filter((slot) => {
-      const existingSlot = existingSlotsByKey.get(`${toDateKey(slot.date)}:${slot.mealType}`);
-      return slot.used && slot.isRolledOver && existingSlot?.isRolledOver && !existingSlot.used;
+    const matchedIds = new Set<string>();
+    const incomingPlacementIds = slots.flatMap((slot) => slot.placementId ? [slot.placementId] : []);
+    if (new Set(incomingPlacementIds).size !== incomingPlacementIds.length) throw new Error("DUPLICATE_PLACEMENT_ID");
+    const existingById = new Map(existingPlan.slots.filter((slot) => slot.placementId).map((slot) => [slot.placementId!, slot]));
+    const resolvedSlots = slots.map((slot) => {
+      const sameMeal = (existing: typeof existingPlan.slots[number]) =>
+        slot.recipeId ? existing.recipeId === slot.recipeId && !slot.customMeal :
+          !!slot.customMeal && !existing.recipeId && existing.customName === slot.customMeal.name;
+      let existing = slot.placementId ? existingById.get(slot.placementId) : undefined;
+      if (existing && !sameMeal(existing)) throw new Error("PLACEMENT_ID_MEAL_MISMATCH");
+      if (!existing && !slot.placementId) {
+        existing = existingPlan.slots.find((candidate) =>
+          !matchedIds.has(candidate.placementId ?? candidate.id) &&
+          toDateKey(candidate.date) === toDateKey(slot.date) && candidate.mealType === slot.mealType && sameMeal(candidate));
+      }
+      if (existing) matchedIds.add(existing.placementId ?? existing.id);
+      return {
+        ...slot,
+        placementId: slot.recipeId || slot.customMeal ? (slot.placementId ?? existing?.placementId ?? randomUUID()) : null,
+        alreadyCooked: existing?.alreadyCooked || slot.alreadyCooked,
+        batchGroupId: existing?.alreadyCooked && !existing.batchGroupId ? null : slot.batchGroupId,
+        isNewPlacement: !existing,
+      };
     });
+    await transferStoredMealsTx(tx, userId, planId, resolvedSlots.filter((slot) => slot.isNewPlacement));
 
-    if (newlyCompletedRolledOverSlots.length > 0) {
-      const recipeIds = newlyCompletedRolledOverSlots.flatMap((slot) =>
-        slot.recipeId ? [slot.recipeId] : [],
-      );
-      const customKeys = new Set(
-        newlyCompletedRolledOverSlots.flatMap((slot) =>
-          slot.customMeal ? [getRollingCustomMealKey(slot.mealType, slot.customMeal)] : [],
-        ),
-      );
-      const priorSlots = await tx.planSlot.findMany({
-        where: {
-          used: false,
-          plan: {
+    // Convert only after all conflict returns, which otherwise commit the transaction.
+    const resolvedBatchIds = new Set((existingPlan.resolvedBatchRemainders ?? []).map((resolution) => resolution.batchId));
+    const allStoredBatchIds = new Set(batches.filter((batch) => {
+      const indices = slots.flatMap((slot, index) => slot.batchGroupId === batch.id && slot.recipeId === batch.recipeId ? [index] : []);
+      return indices.length > 0 && indices.every((index) => resolvedSlots[index]!.alreadyCooked && !resolvedSlots[index]!.batchGroupId);
+    }).map((batch) => batch.id));
+    for (const batch of existingPlan.batches) {
+      const indices = slots.flatMap((slot, index) => slot.batchGroupId === batch.id && slot.recipeId === batch.recipeId ? [index] : []);
+      if (indices.length > 0 && indices.every((index) => resolvedSlots[index]!.alreadyCooked && !resolvedSlots[index]!.batchGroupId)) allStoredBatchIds.add(batch.id);
+    }
+    const convertedBatchIds = new Set(
+      existingPlan.batches.flatMap((batch) => {
+        if (resolvedBatchIds.has(batch.id) || allStoredBatchIds.has(batch.id)) return [];
+        if (batch.storageRows.length === 0 && !batches.some((incoming) => incoming.id === batch.id && incoming.storageRows.length > 0)) return [];
+        const incomingSlots = resolvedSlots.filter(
+          (slot) => slot.batchGroupId === batch.id && slot.recipeId === batch.recipeId,
+        );
+        const existingSlots = existingPlan.slots.filter(
+          (slot) => slot.batchGroupId === batch.id && slot.recipeId === batch.recipeId,
+        );
+        return incomingSlots.length > 0 &&
+          incomingSlots.every((slot) => slot.used) &&
+          existingSlots.some((slot) => !slot.used)
+          ? [batch.id]
+          : [];
+      }),
+    );
+    for (const batch of existingPlan.batches) {
+      if (!convertedBatchIds.has(batch.id)) continue;
+      const incomingBatch = batches.find((incoming) => incoming.id === batch.id && incoming.recipeId === batch.recipeId);
+      const rows = incomingBatch
+        ? incomingBatch.storageRows.map((row) => ({ count: row.count, memberIds: row.cookingFamilyMemberIds }))
+        : batch.storageRows.map((row) => ({ count: row.count, memberIds: row.audienceMembers.map((member) => member.familyMemberId) }));
+      for (const row of rows) {
+        if (row.count < 1) continue;
+        const lot = await tx.storedMealLot.create({
+          data: {
             userId,
-            OR: [
-              { createdAt: { lt: existingPlan.createdAt } },
-              { createdAt: existingPlan.createdAt, id: { lt: planId } },
-            ],
+            recipeId: batch.recipeId,
+            sourcePlanId: planId,
+            sourcePlanBatchId: batch.id,
+            count: row.count,
+            audienceMembers: {
+              create: [...new Set(row.memberIds)].map((familyMemberId) => ({ familyMemberId })),
+            },
           },
-          OR: [
-            ...(recipeIds.length > 0 ? [{ recipeId: { in: recipeIds } }] : []),
-            ...(customKeys.size > 0 ? [{ recipeId: null, customName: { not: null } }] : []),
-          ],
-        },
-        select: {
-          id: true,
-          mealType: true,
-          recipeId: true,
-          customName: true,
-          customIngredients: {
-            select: { ingredientId: true, unitId: true, amount: true },
+        });
+        await tx.storedMealEvent.create({
+          data: {
+            userId,
+            lotId: lot.id,
+            recipeId: batch.recipeId,
+            recipeName: batch.recipe.name,
+            type: "CREATED",
+            quantity: row.count,
+            nextCount: row.count,
           },
-        },
-      });
-      const priorSlotIds = priorSlots.flatMap((slot) => {
-        if (slot.recipeId) return recipeIds.includes(slot.recipeId) ? [slot.id] : [];
-        if (!slot.customName) return [];
-        const customMeal = { name: slot.customName, ingredients: slot.customIngredients };
-        return customKeys.has(getRollingCustomMealKey(slot.mealType, customMeal)) ? [slot.id] : [];
-      });
-      if (priorSlotIds.length > 0) {
-        await tx.planSlot.updateMany({
-          where: { id: { in: priorSlotIds } },
-          data: { used: true },
         });
       }
     }
+    const newlyResolvedBatchIds = [...new Set([...convertedBatchIds, ...allStoredBatchIds])].filter((id) => !resolvedBatchIds.has(id));
+    if (newlyResolvedBatchIds.length > 0) {
+      await tx.planBatchRemainderResolution.createMany({ data: newlyResolvedBatchIds.map((batchId) => ({ planId, batchId })), skipDuplicates: true });
+    }
+    for (const id of newlyResolvedBatchIds) resolvedBatchIds.add(id);
+    const batchesForSave = [
+      ...batches.map((batch) =>
+        resolvedBatchIds.has(batch.id) ? { ...batch, storageRows: [] } : batch,
+      ),
+      ...existingPlan.batches
+        .filter((batch) => resolvedBatchIds.has(batch.id) && !batches.some((incoming) => incoming.id === batch.id))
+        .map((batch) => ({ id: batch.id, recipeId: batch.recipeId, storageRows: [] })),
+    ];
 
     await tx.planSlotAlternative.deleteMany({ where: { planSlot: { planId } } });
     await tx.planSlot.deleteMany({ where: { planId } });
@@ -1410,12 +1637,12 @@ export async function updatePlan(
         slot.batchGroupId === batch.id && slot.recipeId === batch.recipeId,
       ) || !existingPlan.slots.some((slot) =>
         slot.batchGroupId === batch.id && slot.recipeId === batch.recipeId,
-      )) && !batches.some((incoming) =>
+      )) && !batchesForSave.some((incoming) =>
         incoming.id === batch.id,
       ),
     );
     const preservedBatchIds = preservedBatches.map((batch) => batch.id);
-    const batchesToCreate = batches.filter((batch) => !preservedBatchIds.includes(batch.id));
+    const batchesToCreate = batchesForSave.filter((batch) => !preservedBatchIds.includes(batch.id));
     await tx.planBatch.deleteMany({
       where: { planId, id: { notIn: preservedBatchIds } },
     });
@@ -1423,7 +1650,7 @@ export async function updatePlan(
     const planAudienceIds = [
       ...new Set([
         ...slots.flatMap((slot) => slot.cookingFamilyMemberIds ?? []),
-        ...batches.flatMap((batch) =>
+        ...batchesForSave.flatMap((batch) =>
           batch.storageRows.flatMap((row) => row.cookingFamilyMemberIds),
         ),
         ...preservedBatches.flatMap((batch) =>
@@ -1445,7 +1672,7 @@ export async function updatePlan(
           create: planAudienceIds.map((familyMemberId) => ({ familyMemberId })),
         },
         slots: {
-          create: slots.map((s) => slotSaveDataToCreateData(s)),
+          create: resolvedSlots.map((s) => slotSaveDataToCreateData(s)),
         },
         batches: {
           create: batchesToCreate.map(batchSaveDataToCreateData),
@@ -1521,16 +1748,16 @@ export async function updatePlan(
       }
     }
 
-    return { type: "success" as const };
+    return { type: "success" as const, version: expectedVersion + 1 };
   }, { timeout: 15000 });
 
-  if (result.type === "sync_conflict") {
+  if (result.type !== "success") {
     return result;
   }
 
   if (uniqueRecipeIds.length > 0) {
     await prisma.recipe.updateMany({
-      where: { id: { in: uniqueRecipeIds } },
+      where: { userId, id: { in: uniqueRecipeIds } },
       data: { lastUsedInPlanner: now },
     });
   }

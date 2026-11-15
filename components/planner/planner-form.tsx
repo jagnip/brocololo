@@ -33,7 +33,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useScrollbarOnScroll } from "@/hooks/use-scrollbar-on-scroll";
 import { PlanBatchInput, PlanInputType, PlanSlotMealPayload, SetPlanMealOptions } from "@/types/planner";
 import { generatePlan, savePlan } from "@/actions/planner-actions";
-import { getPlanSlotKey, placeRecipeOnPlan } from "@/lib/planner/helpers";
+import { ensurePlanPlacementIds, getPlanSlotKey, placeRecipeOnPlan } from "@/lib/planner/helpers";
 import { getCustomMealContentKey } from "@/lib/planner/custom-meal-identity";
 import { rearrangePlanSlots } from "@/lib/planner/rearrange-plan-slots";
 import {
@@ -78,6 +78,8 @@ import {
   type TimeLimitGroups,
 } from "@/lib/planner/time-limit-mapping";
 import type { FamilyMemberRow } from "@/lib/db/family-members";
+import type { StoredMealLotRow } from "@/lib/db/storage";
+import { previewStoredMeals } from "@/lib/planner/preview-stored-meals";
 import { ingredientsToLogIngredientOptions } from "@/lib/ingredients/to-log-ingredient-options";
 import { createEmptyPlanSlotsForDateRange } from "@/lib/planner/plan-date-rebase";
 import { rebasePlanWithMealRescue } from "@/lib/planner/plan-range-rescue";
@@ -103,6 +105,7 @@ type PlannerFormProps = {
   previousPlanUnusedMeals: RollingMealType[];
   occupiedDateKeys: string[];
   familyMembers: FamilyMemberRow[];
+  storedMealLots: StoredMealLotRow[];
 };
 
 type TimeLimitsMode = "grouped" | "daily";
@@ -129,6 +132,7 @@ export function PlannerForm({
   previousPlanUnusedMeals,
   occupiedDateKeys,
   familyMembers,
+  storedMealLots,
 }: PlannerFormProps) {
   const defaultFamilyMemberIds = useMemo(
     () => familyMembers.map((member) => member.id),
@@ -246,7 +250,9 @@ export function PlannerForm({
         result.warnings.forEach((w) => toast.warning(w));
       }
 
-      setPlan(result.plan);
+      const generatedPlan = ensurePlanPlacementIds(result.plan);
+      planRef.current = generatedPlan;
+      setPlan(generatedPlan);
       setBatches(result.batches);
       batchesRef.current = result.batches;
       setLastGenerationError(null);
@@ -273,9 +279,10 @@ export function PlannerForm({
 
   /** Clear meals only — keep dates, audience, time limits, rolling, fridge. */
   function clearPlanMeals() {
-    setPlan((prev) =>
-      prev.map((slot) => ({
+    const nextPlan = planRef.current.map((slot) => ({
         ...slot,
+        placementId: null,
+        rollingQueueClaim: null,
         recipe: null,
         isRolledOver: false,
         alreadyCooked: false,
@@ -283,8 +290,9 @@ export function PlannerForm({
         customMeal: null,
         alternatives: [],
         batchGroupId: null,
-      })),
-    );
+      }));
+    planRef.current = nextPlan;
+    setPlan(nextPlan);
     setBatches([]);
     batchesRef.current = [];
     setLastGenerationError(null);
@@ -321,6 +329,8 @@ export function PlannerForm({
       const [nextRecipe, ...restAlternatives] = slot.alternatives;
       return {
         ...slot,
+        placementId: crypto.randomUUID(),
+        rollingQueueClaim: null,
         recipe: nextRecipe,
         isRolledOver: false,
         alreadyCooked: false,
@@ -345,7 +355,7 @@ export function PlannerForm({
     const nextPlan = currentPlan.map((slot) => {
       const key = `${slot.date.toISOString()}-${slot.mealType}`;
       if (key !== slotKey) return slot;
-      return { ...slot, recipe: null, customMeal: null, alternatives: [], batchGroupId: null, isRolledOver: false, alreadyCooked: false, extraPortions: 0 };
+      return { ...slot, placementId: null, rollingQueueClaim: null, recipe: null, customMeal: null, alternatives: [], batchGroupId: null, isRolledOver: false, alreadyCooked: false, extraPortions: 0 };
     });
     batchesRef.current = nextBatches;
     planRef.current = nextPlan;
@@ -356,10 +366,9 @@ export function PlannerForm({
   // Slot↔slot DnD on the create-plan preview (same semantics as plan editor).
   const handleRearrangeSlots = useCallback(
     (sourceKey: string, targetKey: string) => {
-      setPlan((prev) => {
-        if (!prev) return prev;
-        return rearrangePlanSlots(prev, sourceKey, targetKey);
-      });
+      const nextPlan = rearrangePlanSlots(planRef.current, sourceKey, targetKey);
+      planRef.current = nextPlan;
+      setPlan(nextPlan);
     },
     [],
   );
@@ -426,6 +435,8 @@ export function PlannerForm({
           if (getPlanSlotKey(slot) !== slotKey) return slot;
           return {
             ...slot,
+            placementId: keepsSameRecipe ? (slot.placementId ?? crypto.randomUUID()) : crypto.randomUUID(),
+            rollingQueueClaim: keepsSameRecipe ? slot.rollingQueueClaim : null,
             recipe: payload.recipe,
             extraPortions: payload.extraPortions ?? slot.extraPortions ?? 0,
             isRolledOver: keepsSameRecipe ? (slot.isRolledOver ?? false) : false,
@@ -465,6 +476,8 @@ export function PlannerForm({
             });
           return {
             ...slot,
+            placementId: keepsSameCustom ? (slot.placementId ?? crypto.randomUUID()) : crypto.randomUUID(),
+            rollingQueueClaim: keepsSameCustom ? slot.rollingQueueClaim : null,
             recipe: null,
             isRolledOver: keepsSameCustom ? (slot.isRolledOver ?? false) : false,
             alreadyCooked: false,
@@ -483,6 +496,8 @@ export function PlannerForm({
 
         return {
           ...slot,
+          placementId: null,
+          rollingQueueClaim: null,
           recipe: null,
           isRolledOver: false,
           alreadyCooked: false,
@@ -502,25 +517,31 @@ export function PlannerForm({
   );
 
   const handleAudienceChange = useCallback((slotKey: string, memberIds: string[]) => {
-    setPlan((prev) => {
-      if (!prev) return prev;
-      return prev.map((slot) => {
+    const nextPlan = planRef.current.map((slot) => {
         const key = `${slot.date.toISOString()}-${slot.mealType}`;
         if (key !== slotKey) return slot;
         return { ...slot, cookingFamilyMemberIds: memberIds };
-      });
     });
+    planRef.current = nextPlan;
+    setPlan(nextPlan);
   }, []);
 
   async function handleSavePlan(plan: PlanInputType) {
+    const normalizedPlan = ensurePlanPlacementIds(plan);
+    planRef.current = normalizedPlan;
+    setPlan(normalizedPlan);
     setIsSaving(true);
     try {
-      const result = await savePlan(plan, batches);
+      const result = await savePlan(normalizedPlan, batches);
       if (result.type === "date_conflict") {
         // Hard-block collisions so one plan/log owner exists per date globally.
         toast.error(
           `Cannot save plan. Date conflict: ${result.dates.join(", ")}`,
         );
+        return;
+      }
+      if (result.type === "rolling_conflict") {
+        toast.error("Rolling meals changed. Reload the planner before saving.");
         return;
       }
       if (result.type === "error") {
@@ -1102,6 +1123,7 @@ export function PlannerForm({
                             <PlannerRollingRecipesSection
                               control={form.control}
                               selected={selected}
+                              availableRollingMeals={previousPlanUnusedMeals}
                               availableCustomMeals={previousPlanUnusedMeals.filter(
                                 (entry) => entry.kind === "custom",
                               )}
@@ -1197,7 +1219,7 @@ export function PlannerForm({
             </div>
             <PlannerPlanColumn
               mode={planColumnMode}
-              plan={generatedPlan}
+              plan={generatedPlan ? previewStoredMeals(generatedPlan, storedMealLots) : null}
               batches={batches}
               lastGenerationError={lastGenerationError}
               fridgeIngredientIds={fridgeIngredientIds}

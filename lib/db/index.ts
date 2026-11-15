@@ -11,7 +11,7 @@ const pool = new Pool({
 const adapter = new PrismaPg(pool);
 
 function createPrismaClient() {
-  return new PrismaClient({ adapter });
+  return new PrismaClient({ adapter, transactionOptions: { timeout: 30000 } });
 }
 
 const existingPrisma = globalForPrisma.prisma;

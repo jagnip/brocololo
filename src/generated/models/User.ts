@@ -181,6 +181,11 @@ export type UserWhereInput = {
   ingredients?: Prisma.IngredientListRelationFilter
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationListRelationFilter
   shoppingListSharesCreated?: Prisma.ShoppingListShareListRelationFilter
+  storedMealLots?: Prisma.StoredMealLotListRelationFilter
+  storedMealEvents?: Prisma.StoredMealEventListRelationFilter
+  rollingMealEntries?: Prisma.RollingMealEntryListRelationFilter
+  rollingQueueState?: Prisma.XOR<Prisma.RollingQueueStateNullableScalarRelationFilter, Prisma.RollingQueueStateWhereInput> | null
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -195,6 +200,11 @@ export type UserOrderByWithRelationInput = {
   ingredients?: Prisma.IngredientOrderByRelationAggregateInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationOrderByRelationAggregateInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareOrderByRelationAggregateInput
+  storedMealLots?: Prisma.StoredMealLotOrderByRelationAggregateInput
+  storedMealEvents?: Prisma.StoredMealEventOrderByRelationAggregateInput
+  rollingMealEntries?: Prisma.RollingMealEntryOrderByRelationAggregateInput
+  rollingQueueState?: Prisma.RollingQueueStateOrderByWithRelationInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -212,6 +222,11 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   ingredients?: Prisma.IngredientListRelationFilter
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationListRelationFilter
   shoppingListSharesCreated?: Prisma.ShoppingListShareListRelationFilter
+  storedMealLots?: Prisma.StoredMealLotListRelationFilter
+  storedMealEvents?: Prisma.StoredMealEventListRelationFilter
+  rollingMealEntries?: Prisma.RollingMealEntryListRelationFilter
+  rollingQueueState?: Prisma.XOR<Prisma.RollingQueueStateNullableScalarRelationFilter, Prisma.RollingQueueStateWhereInput> | null
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanListRelationFilter
 }, "id" | "clerkId">
 
 export type UserOrderByWithAggregationInput = {
@@ -246,6 +261,11 @@ export type UserCreateInput = {
   ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationCreateNestedManyWithoutUserInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -260,6 +280,11 @@ export type UserUncheckedCreateInput = {
   ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedCreateNestedManyWithoutUserInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -274,6 +299,11 @@ export type UserUpdateInput = {
   ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUpdateManyWithoutUserNestedInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -288,6 +318,11 @@ export type UserUncheckedUpdateInput = {
   ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedUpdateManyWithoutUserNestedInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -406,6 +441,76 @@ export type UserUpdateOneRequiredWithoutRecipesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutRecipesInput, Prisma.UserUpdateWithoutRecipesInput>, Prisma.UserUncheckedUpdateWithoutRecipesInput>
 }
 
+export type UserCreateNestedOneWithoutRollingQueueStateInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRollingQueueStateInput, Prisma.UserUncheckedCreateWithoutRollingQueueStateInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRollingQueueStateInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutRollingQueueStateNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRollingQueueStateInput, Prisma.UserUncheckedCreateWithoutRollingQueueStateInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRollingQueueStateInput
+  upsert?: Prisma.UserUpsertWithoutRollingQueueStateInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutRollingQueueStateInput, Prisma.UserUpdateWithoutRollingQueueStateInput>, Prisma.UserUncheckedUpdateWithoutRollingQueueStateInput>
+}
+
+export type UserCreateNestedOneWithoutRollingCapturedPlansInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRollingCapturedPlansInput, Prisma.UserUncheckedCreateWithoutRollingCapturedPlansInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRollingCapturedPlansInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutRollingCapturedPlansNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRollingCapturedPlansInput, Prisma.UserUncheckedCreateWithoutRollingCapturedPlansInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRollingCapturedPlansInput
+  upsert?: Prisma.UserUpsertWithoutRollingCapturedPlansInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutRollingCapturedPlansInput, Prisma.UserUpdateWithoutRollingCapturedPlansInput>, Prisma.UserUncheckedUpdateWithoutRollingCapturedPlansInput>
+}
+
+export type UserCreateNestedOneWithoutRollingMealEntriesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRollingMealEntriesInput, Prisma.UserUncheckedCreateWithoutRollingMealEntriesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRollingMealEntriesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutRollingMealEntriesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRollingMealEntriesInput, Prisma.UserUncheckedCreateWithoutRollingMealEntriesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRollingMealEntriesInput
+  upsert?: Prisma.UserUpsertWithoutRollingMealEntriesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutRollingMealEntriesInput, Prisma.UserUpdateWithoutRollingMealEntriesInput>, Prisma.UserUncheckedUpdateWithoutRollingMealEntriesInput>
+}
+
+export type UserCreateNestedOneWithoutStoredMealLotsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutStoredMealLotsInput, Prisma.UserUncheckedCreateWithoutStoredMealLotsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutStoredMealLotsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutStoredMealLotsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutStoredMealLotsInput, Prisma.UserUncheckedCreateWithoutStoredMealLotsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutStoredMealLotsInput
+  upsert?: Prisma.UserUpsertWithoutStoredMealLotsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutStoredMealLotsInput, Prisma.UserUpdateWithoutStoredMealLotsInput>, Prisma.UserUncheckedUpdateWithoutStoredMealLotsInput>
+}
+
+export type UserCreateNestedOneWithoutStoredMealEventsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutStoredMealEventsInput, Prisma.UserUncheckedCreateWithoutStoredMealEventsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutStoredMealEventsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutStoredMealEventsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutStoredMealEventsInput, Prisma.UserUncheckedCreateWithoutStoredMealEventsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutStoredMealEventsInput
+  upsert?: Prisma.UserUpsertWithoutStoredMealEventsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutStoredMealEventsInput, Prisma.UserUpdateWithoutStoredMealEventsInput>, Prisma.UserUncheckedUpdateWithoutStoredMealEventsInput>
+}
+
 export type UserCreateNestedOneWithoutIngredientsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutIngredientsInput, Prisma.UserUncheckedCreateWithoutIngredientsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutIngredientsInput
@@ -461,6 +566,11 @@ export type UserCreateWithoutFamilyMembersInput = {
   ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationCreateNestedManyWithoutUserInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFamilyMembersInput = {
@@ -474,6 +584,11 @@ export type UserUncheckedCreateWithoutFamilyMembersInput = {
   ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedCreateNestedManyWithoutUserInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFamilyMembersInput = {
@@ -503,6 +618,11 @@ export type UserUpdateWithoutFamilyMembersInput = {
   ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUpdateManyWithoutUserNestedInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFamilyMembersInput = {
@@ -516,6 +636,11 @@ export type UserUncheckedUpdateWithoutFamilyMembersInput = {
   ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedUpdateManyWithoutUserNestedInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutPlansInput = {
@@ -529,6 +654,11 @@ export type UserCreateWithoutPlansInput = {
   ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationCreateNestedManyWithoutUserInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPlansInput = {
@@ -542,6 +672,11 @@ export type UserUncheckedCreateWithoutPlansInput = {
   ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedCreateNestedManyWithoutUserInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPlansInput = {
@@ -571,6 +706,11 @@ export type UserUpdateWithoutPlansInput = {
   ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUpdateManyWithoutUserNestedInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPlansInput = {
@@ -584,6 +724,11 @@ export type UserUncheckedUpdateWithoutPlansInput = {
   ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedUpdateManyWithoutUserNestedInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutShoppingListSharesCreatedInput = {
@@ -597,6 +742,11 @@ export type UserCreateWithoutShoppingListSharesCreatedInput = {
   ingredientLists?: Prisma.IngredientListCreateNestedManyWithoutUserInput
   ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationCreateNestedManyWithoutUserInput
+  storedMealLots?: Prisma.StoredMealLotCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutShoppingListSharesCreatedInput = {
@@ -610,6 +760,11 @@ export type UserUncheckedCreateWithoutShoppingListSharesCreatedInput = {
   ingredientLists?: Prisma.IngredientListUncheckedCreateNestedManyWithoutUserInput
   ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedCreateNestedManyWithoutUserInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutShoppingListSharesCreatedInput = {
@@ -639,6 +794,11 @@ export type UserUpdateWithoutShoppingListSharesCreatedInput = {
   ingredientLists?: Prisma.IngredientListUpdateManyWithoutUserNestedInput
   ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUpdateManyWithoutUserNestedInput
+  storedMealLots?: Prisma.StoredMealLotUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutShoppingListSharesCreatedInput = {
@@ -652,6 +812,11 @@ export type UserUncheckedUpdateWithoutShoppingListSharesCreatedInput = {
   ingredientLists?: Prisma.IngredientListUncheckedUpdateManyWithoutUserNestedInput
   ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedUpdateManyWithoutUserNestedInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutRecipesInput = {
@@ -665,6 +830,11 @@ export type UserCreateWithoutRecipesInput = {
   ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationCreateNestedManyWithoutUserInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutRecipesInput = {
@@ -678,6 +848,11 @@ export type UserUncheckedCreateWithoutRecipesInput = {
   ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedCreateNestedManyWithoutUserInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutRecipesInput = {
@@ -707,6 +882,11 @@ export type UserUpdateWithoutRecipesInput = {
   ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUpdateManyWithoutUserNestedInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRecipesInput = {
@@ -720,6 +900,451 @@ export type UserUncheckedUpdateWithoutRecipesInput = {
   ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedUpdateManyWithoutUserNestedInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutRollingQueueStateInput = {
+  id?: string
+  clerkId: string
+  email?: string | null
+  createdAt?: Date | string
+  familyMembers?: Prisma.FamilyMemberCreateNestedManyWithoutUserInput
+  recipes?: Prisma.RecipeCreateNestedManyWithoutUserInput
+  plans?: Prisma.PlanCreateNestedManyWithoutUserInput
+  ingredientLists?: Prisma.IngredientListCreateNestedManyWithoutUserInput
+  ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryCreateNestedManyWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutRollingQueueStateInput = {
+  id?: string
+  clerkId: string
+  email?: string | null
+  createdAt?: Date | string
+  familyMembers?: Prisma.FamilyMemberUncheckedCreateNestedManyWithoutUserInput
+  recipes?: Prisma.RecipeUncheckedCreateNestedManyWithoutUserInput
+  plans?: Prisma.PlanUncheckedCreateNestedManyWithoutUserInput
+  ingredientLists?: Prisma.IngredientListUncheckedCreateNestedManyWithoutUserInput
+  ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedCreateNestedManyWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutRollingQueueStateInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutRollingQueueStateInput, Prisma.UserUncheckedCreateWithoutRollingQueueStateInput>
+}
+
+export type UserUpsertWithoutRollingQueueStateInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutRollingQueueStateInput, Prisma.UserUncheckedUpdateWithoutRollingQueueStateInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutRollingQueueStateInput, Prisma.UserUncheckedCreateWithoutRollingQueueStateInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutRollingQueueStateInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutRollingQueueStateInput, Prisma.UserUncheckedUpdateWithoutRollingQueueStateInput>
+}
+
+export type UserUpdateWithoutRollingQueueStateInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  clerkId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  familyMembers?: Prisma.FamilyMemberUpdateManyWithoutUserNestedInput
+  recipes?: Prisma.RecipeUpdateManyWithoutUserNestedInput
+  plans?: Prisma.PlanUpdateManyWithoutUserNestedInput
+  ingredientLists?: Prisma.IngredientListUpdateManyWithoutUserNestedInput
+  ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUpdateManyWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutRollingQueueStateInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  clerkId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  familyMembers?: Prisma.FamilyMemberUncheckedUpdateManyWithoutUserNestedInput
+  recipes?: Prisma.RecipeUncheckedUpdateManyWithoutUserNestedInput
+  plans?: Prisma.PlanUncheckedUpdateManyWithoutUserNestedInput
+  ingredientLists?: Prisma.IngredientListUncheckedUpdateManyWithoutUserNestedInput
+  ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedUpdateManyWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutRollingCapturedPlansInput = {
+  id?: string
+  clerkId: string
+  email?: string | null
+  createdAt?: Date | string
+  familyMembers?: Prisma.FamilyMemberCreateNestedManyWithoutUserInput
+  recipes?: Prisma.RecipeCreateNestedManyWithoutUserInput
+  plans?: Prisma.PlanCreateNestedManyWithoutUserInput
+  ingredientLists?: Prisma.IngredientListCreateNestedManyWithoutUserInput
+  ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateCreateNestedOneWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutRollingCapturedPlansInput = {
+  id?: string
+  clerkId: string
+  email?: string | null
+  createdAt?: Date | string
+  familyMembers?: Prisma.FamilyMemberUncheckedCreateNestedManyWithoutUserInput
+  recipes?: Prisma.RecipeUncheckedCreateNestedManyWithoutUserInput
+  plans?: Prisma.PlanUncheckedCreateNestedManyWithoutUserInput
+  ingredientLists?: Prisma.IngredientListUncheckedCreateNestedManyWithoutUserInput
+  ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedCreateNestedOneWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutRollingCapturedPlansInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutRollingCapturedPlansInput, Prisma.UserUncheckedCreateWithoutRollingCapturedPlansInput>
+}
+
+export type UserUpsertWithoutRollingCapturedPlansInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutRollingCapturedPlansInput, Prisma.UserUncheckedUpdateWithoutRollingCapturedPlansInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutRollingCapturedPlansInput, Prisma.UserUncheckedCreateWithoutRollingCapturedPlansInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutRollingCapturedPlansInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutRollingCapturedPlansInput, Prisma.UserUncheckedUpdateWithoutRollingCapturedPlansInput>
+}
+
+export type UserUpdateWithoutRollingCapturedPlansInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  clerkId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  familyMembers?: Prisma.FamilyMemberUpdateManyWithoutUserNestedInput
+  recipes?: Prisma.RecipeUpdateManyWithoutUserNestedInput
+  plans?: Prisma.PlanUpdateManyWithoutUserNestedInput
+  ingredientLists?: Prisma.IngredientListUpdateManyWithoutUserNestedInput
+  ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUpdateOneWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutRollingCapturedPlansInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  clerkId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  familyMembers?: Prisma.FamilyMemberUncheckedUpdateManyWithoutUserNestedInput
+  recipes?: Prisma.RecipeUncheckedUpdateManyWithoutUserNestedInput
+  plans?: Prisma.PlanUncheckedUpdateManyWithoutUserNestedInput
+  ingredientLists?: Prisma.IngredientListUncheckedUpdateManyWithoutUserNestedInput
+  ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedUpdateOneWithoutUserNestedInput
+}
+
+export type UserCreateWithoutRollingMealEntriesInput = {
+  id?: string
+  clerkId: string
+  email?: string | null
+  createdAt?: Date | string
+  familyMembers?: Prisma.FamilyMemberCreateNestedManyWithoutUserInput
+  recipes?: Prisma.RecipeCreateNestedManyWithoutUserInput
+  plans?: Prisma.PlanCreateNestedManyWithoutUserInput
+  ingredientLists?: Prisma.IngredientListCreateNestedManyWithoutUserInput
+  ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutRollingMealEntriesInput = {
+  id?: string
+  clerkId: string
+  email?: string | null
+  createdAt?: Date | string
+  familyMembers?: Prisma.FamilyMemberUncheckedCreateNestedManyWithoutUserInput
+  recipes?: Prisma.RecipeUncheckedCreateNestedManyWithoutUserInput
+  plans?: Prisma.PlanUncheckedCreateNestedManyWithoutUserInput
+  ingredientLists?: Prisma.IngredientListUncheckedCreateNestedManyWithoutUserInput
+  ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutRollingMealEntriesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutRollingMealEntriesInput, Prisma.UserUncheckedCreateWithoutRollingMealEntriesInput>
+}
+
+export type UserUpsertWithoutRollingMealEntriesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutRollingMealEntriesInput, Prisma.UserUncheckedUpdateWithoutRollingMealEntriesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutRollingMealEntriesInput, Prisma.UserUncheckedCreateWithoutRollingMealEntriesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutRollingMealEntriesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutRollingMealEntriesInput, Prisma.UserUncheckedUpdateWithoutRollingMealEntriesInput>
+}
+
+export type UserUpdateWithoutRollingMealEntriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  clerkId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  familyMembers?: Prisma.FamilyMemberUpdateManyWithoutUserNestedInput
+  recipes?: Prisma.RecipeUpdateManyWithoutUserNestedInput
+  plans?: Prisma.PlanUpdateManyWithoutUserNestedInput
+  ingredientLists?: Prisma.IngredientListUpdateManyWithoutUserNestedInput
+  ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutRollingMealEntriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  clerkId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  familyMembers?: Prisma.FamilyMemberUncheckedUpdateManyWithoutUserNestedInput
+  recipes?: Prisma.RecipeUncheckedUpdateManyWithoutUserNestedInput
+  plans?: Prisma.PlanUncheckedUpdateManyWithoutUserNestedInput
+  ingredientLists?: Prisma.IngredientListUncheckedUpdateManyWithoutUserNestedInput
+  ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutStoredMealLotsInput = {
+  id?: string
+  clerkId: string
+  email?: string | null
+  createdAt?: Date | string
+  familyMembers?: Prisma.FamilyMemberCreateNestedManyWithoutUserInput
+  recipes?: Prisma.RecipeCreateNestedManyWithoutUserInput
+  plans?: Prisma.PlanCreateNestedManyWithoutUserInput
+  ingredientLists?: Prisma.IngredientListCreateNestedManyWithoutUserInput
+  ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
+  storedMealEvents?: Prisma.StoredMealEventCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutStoredMealLotsInput = {
+  id?: string
+  clerkId: string
+  email?: string | null
+  createdAt?: Date | string
+  familyMembers?: Prisma.FamilyMemberUncheckedCreateNestedManyWithoutUserInput
+  recipes?: Prisma.RecipeUncheckedCreateNestedManyWithoutUserInput
+  plans?: Prisma.PlanUncheckedCreateNestedManyWithoutUserInput
+  ingredientLists?: Prisma.IngredientListUncheckedCreateNestedManyWithoutUserInput
+  ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutStoredMealLotsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutStoredMealLotsInput, Prisma.UserUncheckedCreateWithoutStoredMealLotsInput>
+}
+
+export type UserUpsertWithoutStoredMealLotsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutStoredMealLotsInput, Prisma.UserUncheckedUpdateWithoutStoredMealLotsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutStoredMealLotsInput, Prisma.UserUncheckedCreateWithoutStoredMealLotsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutStoredMealLotsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutStoredMealLotsInput, Prisma.UserUncheckedUpdateWithoutStoredMealLotsInput>
+}
+
+export type UserUpdateWithoutStoredMealLotsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  clerkId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  familyMembers?: Prisma.FamilyMemberUpdateManyWithoutUserNestedInput
+  recipes?: Prisma.RecipeUpdateManyWithoutUserNestedInput
+  plans?: Prisma.PlanUpdateManyWithoutUserNestedInput
+  ingredientLists?: Prisma.IngredientListUpdateManyWithoutUserNestedInput
+  ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutStoredMealLotsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  clerkId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  familyMembers?: Prisma.FamilyMemberUncheckedUpdateManyWithoutUserNestedInput
+  recipes?: Prisma.RecipeUncheckedUpdateManyWithoutUserNestedInput
+  plans?: Prisma.PlanUncheckedUpdateManyWithoutUserNestedInput
+  ingredientLists?: Prisma.IngredientListUncheckedUpdateManyWithoutUserNestedInput
+  ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutStoredMealEventsInput = {
+  id?: string
+  clerkId: string
+  email?: string | null
+  createdAt?: Date | string
+  familyMembers?: Prisma.FamilyMemberCreateNestedManyWithoutUserInput
+  recipes?: Prisma.RecipeCreateNestedManyWithoutUserInput
+  plans?: Prisma.PlanCreateNestedManyWithoutUserInput
+  ingredientLists?: Prisma.IngredientListCreateNestedManyWithoutUserInput
+  ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutStoredMealEventsInput = {
+  id?: string
+  clerkId: string
+  email?: string | null
+  createdAt?: Date | string
+  familyMembers?: Prisma.FamilyMemberUncheckedCreateNestedManyWithoutUserInput
+  recipes?: Prisma.RecipeUncheckedCreateNestedManyWithoutUserInput
+  plans?: Prisma.PlanUncheckedCreateNestedManyWithoutUserInput
+  ingredientLists?: Prisma.IngredientListUncheckedCreateNestedManyWithoutUserInput
+  ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedCreateNestedManyWithoutUserInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutStoredMealEventsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutStoredMealEventsInput, Prisma.UserUncheckedCreateWithoutStoredMealEventsInput>
+}
+
+export type UserUpsertWithoutStoredMealEventsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutStoredMealEventsInput, Prisma.UserUncheckedUpdateWithoutStoredMealEventsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutStoredMealEventsInput, Prisma.UserUncheckedCreateWithoutStoredMealEventsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutStoredMealEventsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutStoredMealEventsInput, Prisma.UserUncheckedUpdateWithoutStoredMealEventsInput>
+}
+
+export type UserUpdateWithoutStoredMealEventsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  clerkId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  familyMembers?: Prisma.FamilyMemberUpdateManyWithoutUserNestedInput
+  recipes?: Prisma.RecipeUpdateManyWithoutUserNestedInput
+  plans?: Prisma.PlanUpdateManyWithoutUserNestedInput
+  ingredientLists?: Prisma.IngredientListUpdateManyWithoutUserNestedInput
+  ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutStoredMealEventsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  clerkId?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  familyMembers?: Prisma.FamilyMemberUncheckedUpdateManyWithoutUserNestedInput
+  recipes?: Prisma.RecipeUncheckedUpdateManyWithoutUserNestedInput
+  plans?: Prisma.PlanUncheckedUpdateManyWithoutUserNestedInput
+  ingredientLists?: Prisma.IngredientListUncheckedUpdateManyWithoutUserNestedInput
+  ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
+  ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedUpdateManyWithoutUserNestedInput
+  shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutIngredientsInput = {
@@ -733,6 +1358,11 @@ export type UserCreateWithoutIngredientsInput = {
   ingredientLists?: Prisma.IngredientListCreateNestedManyWithoutUserInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationCreateNestedManyWithoutUserInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutIngredientsInput = {
@@ -746,6 +1376,11 @@ export type UserUncheckedCreateWithoutIngredientsInput = {
   ingredientLists?: Prisma.IngredientListUncheckedCreateNestedManyWithoutUserInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedCreateNestedManyWithoutUserInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutIngredientsInput = {
@@ -775,6 +1410,11 @@ export type UserUpdateWithoutIngredientsInput = {
   ingredientLists?: Prisma.IngredientListUpdateManyWithoutUserNestedInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUpdateManyWithoutUserNestedInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutIngredientsInput = {
@@ -788,6 +1428,11 @@ export type UserUncheckedUpdateWithoutIngredientsInput = {
   ingredientLists?: Prisma.IngredientListUncheckedUpdateManyWithoutUserNestedInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedUpdateManyWithoutUserNestedInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutIngredientUserCustomizationsInput = {
@@ -801,6 +1446,11 @@ export type UserCreateWithoutIngredientUserCustomizationsInput = {
   ingredientLists?: Prisma.IngredientListCreateNestedManyWithoutUserInput
   ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutIngredientUserCustomizationsInput = {
@@ -814,6 +1464,11 @@ export type UserUncheckedCreateWithoutIngredientUserCustomizationsInput = {
   ingredientLists?: Prisma.IngredientListUncheckedCreateNestedManyWithoutUserInput
   ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutIngredientUserCustomizationsInput = {
@@ -843,6 +1498,11 @@ export type UserUpdateWithoutIngredientUserCustomizationsInput = {
   ingredientLists?: Prisma.IngredientListUpdateManyWithoutUserNestedInput
   ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutIngredientUserCustomizationsInput = {
@@ -856,6 +1516,11 @@ export type UserUncheckedUpdateWithoutIngredientUserCustomizationsInput = {
   ingredientLists?: Prisma.IngredientListUncheckedUpdateManyWithoutUserNestedInput
   ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutIngredientListsInput = {
@@ -869,6 +1534,11 @@ export type UserCreateWithoutIngredientListsInput = {
   ingredients?: Prisma.IngredientCreateNestedManyWithoutUserInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationCreateNestedManyWithoutUserInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutIngredientListsInput = {
@@ -882,6 +1552,11 @@ export type UserUncheckedCreateWithoutIngredientListsInput = {
   ingredients?: Prisma.IngredientUncheckedCreateNestedManyWithoutUserInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedCreateNestedManyWithoutUserInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedCreateNestedManyWithoutCreatedByInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedCreateNestedManyWithoutUserInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedCreateNestedManyWithoutUserInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedCreateNestedManyWithoutUserInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedCreateNestedOneWithoutUserInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutIngredientListsInput = {
@@ -911,6 +1586,11 @@ export type UserUpdateWithoutIngredientListsInput = {
   ingredients?: Prisma.IngredientUpdateManyWithoutUserNestedInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUpdateManyWithoutUserNestedInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutIngredientListsInput = {
@@ -924,6 +1604,11 @@ export type UserUncheckedUpdateWithoutIngredientListsInput = {
   ingredients?: Prisma.IngredientUncheckedUpdateManyWithoutUserNestedInput
   ingredientUserCustomizations?: Prisma.IngredientUserCustomizationUncheckedUpdateManyWithoutUserNestedInput
   shoppingListSharesCreated?: Prisma.ShoppingListShareUncheckedUpdateManyWithoutCreatedByNestedInput
+  storedMealLots?: Prisma.StoredMealLotUncheckedUpdateManyWithoutUserNestedInput
+  storedMealEvents?: Prisma.StoredMealEventUncheckedUpdateManyWithoutUserNestedInput
+  rollingMealEntries?: Prisma.RollingMealEntryUncheckedUpdateManyWithoutUserNestedInput
+  rollingQueueState?: Prisma.RollingQueueStateUncheckedUpdateOneWithoutUserNestedInput
+  rollingCapturedPlans?: Prisma.RollingCapturedPlanUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -939,6 +1624,10 @@ export type UserCountOutputType = {
   ingredients: number
   ingredientUserCustomizations: number
   shoppingListSharesCreated: number
+  storedMealLots: number
+  storedMealEvents: number
+  rollingMealEntries: number
+  rollingCapturedPlans: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -949,6 +1638,10 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   ingredients?: boolean | UserCountOutputTypeCountIngredientsArgs
   ingredientUserCustomizations?: boolean | UserCountOutputTypeCountIngredientUserCustomizationsArgs
   shoppingListSharesCreated?: boolean | UserCountOutputTypeCountShoppingListSharesCreatedArgs
+  storedMealLots?: boolean | UserCountOutputTypeCountStoredMealLotsArgs
+  storedMealEvents?: boolean | UserCountOutputTypeCountStoredMealEventsArgs
+  rollingMealEntries?: boolean | UserCountOutputTypeCountRollingMealEntriesArgs
+  rollingCapturedPlans?: boolean | UserCountOutputTypeCountRollingCapturedPlansArgs
 }
 
 /**
@@ -1010,6 +1703,34 @@ export type UserCountOutputTypeCountShoppingListSharesCreatedArgs<ExtArgs extend
   where?: Prisma.ShoppingListShareWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountStoredMealLotsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.StoredMealLotWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountStoredMealEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.StoredMealEventWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountRollingMealEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RollingMealEntryWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountRollingCapturedPlansArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RollingCapturedPlanWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1023,6 +1744,11 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   ingredients?: boolean | Prisma.User$ingredientsArgs<ExtArgs>
   ingredientUserCustomizations?: boolean | Prisma.User$ingredientUserCustomizationsArgs<ExtArgs>
   shoppingListSharesCreated?: boolean | Prisma.User$shoppingListSharesCreatedArgs<ExtArgs>
+  storedMealLots?: boolean | Prisma.User$storedMealLotsArgs<ExtArgs>
+  storedMealEvents?: boolean | Prisma.User$storedMealEventsArgs<ExtArgs>
+  rollingMealEntries?: boolean | Prisma.User$rollingMealEntriesArgs<ExtArgs>
+  rollingQueueState?: boolean | Prisma.User$rollingQueueStateArgs<ExtArgs>
+  rollingCapturedPlans?: boolean | Prisma.User$rollingCapturedPlansArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1056,6 +1782,11 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   ingredients?: boolean | Prisma.User$ingredientsArgs<ExtArgs>
   ingredientUserCustomizations?: boolean | Prisma.User$ingredientUserCustomizationsArgs<ExtArgs>
   shoppingListSharesCreated?: boolean | Prisma.User$shoppingListSharesCreatedArgs<ExtArgs>
+  storedMealLots?: boolean | Prisma.User$storedMealLotsArgs<ExtArgs>
+  storedMealEvents?: boolean | Prisma.User$storedMealEventsArgs<ExtArgs>
+  rollingMealEntries?: boolean | Prisma.User$rollingMealEntriesArgs<ExtArgs>
+  rollingQueueState?: boolean | Prisma.User$rollingQueueStateArgs<ExtArgs>
+  rollingCapturedPlans?: boolean | Prisma.User$rollingCapturedPlansArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1071,6 +1802,11 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     ingredients: Prisma.$IngredientPayload<ExtArgs>[]
     ingredientUserCustomizations: Prisma.$IngredientUserCustomizationPayload<ExtArgs>[]
     shoppingListSharesCreated: Prisma.$ShoppingListSharePayload<ExtArgs>[]
+    storedMealLots: Prisma.$StoredMealLotPayload<ExtArgs>[]
+    storedMealEvents: Prisma.$StoredMealEventPayload<ExtArgs>[]
+    rollingMealEntries: Prisma.$RollingMealEntryPayload<ExtArgs>[]
+    rollingQueueState: Prisma.$RollingQueueStatePayload<ExtArgs> | null
+    rollingCapturedPlans: Prisma.$RollingCapturedPlanPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1478,6 +2214,11 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   ingredients<T extends Prisma.User$ingredientsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ingredientsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IngredientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ingredientUserCustomizations<T extends Prisma.User$ingredientUserCustomizationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ingredientUserCustomizationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$IngredientUserCustomizationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   shoppingListSharesCreated<T extends Prisma.User$shoppingListSharesCreatedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$shoppingListSharesCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShoppingListSharePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  storedMealLots<T extends Prisma.User$storedMealLotsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$storedMealLotsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StoredMealLotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  storedMealEvents<T extends Prisma.User$storedMealEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$storedMealEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StoredMealEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  rollingMealEntries<T extends Prisma.User$rollingMealEntriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$rollingMealEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RollingMealEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  rollingQueueState<T extends Prisma.User$rollingQueueStateArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$rollingQueueStateArgs<ExtArgs>>): Prisma.Prisma__RollingQueueStateClient<runtime.Types.Result.GetResult<Prisma.$RollingQueueStatePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  rollingCapturedPlans<T extends Prisma.User$rollingCapturedPlansArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$rollingCapturedPlansArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RollingCapturedPlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2064,6 +2805,121 @@ export type User$shoppingListSharesCreatedArgs<ExtArgs extends runtime.Types.Ext
   take?: number
   skip?: number
   distinct?: Prisma.ShoppingListShareScalarFieldEnum | Prisma.ShoppingListShareScalarFieldEnum[]
+}
+
+/**
+ * User.storedMealLots
+ */
+export type User$storedMealLotsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the StoredMealLot
+   */
+  select?: Prisma.StoredMealLotSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the StoredMealLot
+   */
+  omit?: Prisma.StoredMealLotOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StoredMealLotInclude<ExtArgs> | null
+  where?: Prisma.StoredMealLotWhereInput
+  orderBy?: Prisma.StoredMealLotOrderByWithRelationInput | Prisma.StoredMealLotOrderByWithRelationInput[]
+  cursor?: Prisma.StoredMealLotWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.StoredMealLotScalarFieldEnum | Prisma.StoredMealLotScalarFieldEnum[]
+}
+
+/**
+ * User.storedMealEvents
+ */
+export type User$storedMealEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the StoredMealEvent
+   */
+  select?: Prisma.StoredMealEventSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the StoredMealEvent
+   */
+  omit?: Prisma.StoredMealEventOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.StoredMealEventInclude<ExtArgs> | null
+  where?: Prisma.StoredMealEventWhereInput
+  orderBy?: Prisma.StoredMealEventOrderByWithRelationInput | Prisma.StoredMealEventOrderByWithRelationInput[]
+  cursor?: Prisma.StoredMealEventWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.StoredMealEventScalarFieldEnum | Prisma.StoredMealEventScalarFieldEnum[]
+}
+
+/**
+ * User.rollingMealEntries
+ */
+export type User$rollingMealEntriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RollingMealEntry
+   */
+  select?: Prisma.RollingMealEntrySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RollingMealEntry
+   */
+  omit?: Prisma.RollingMealEntryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RollingMealEntryInclude<ExtArgs> | null
+  where?: Prisma.RollingMealEntryWhereInput
+  orderBy?: Prisma.RollingMealEntryOrderByWithRelationInput | Prisma.RollingMealEntryOrderByWithRelationInput[]
+  cursor?: Prisma.RollingMealEntryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RollingMealEntryScalarFieldEnum | Prisma.RollingMealEntryScalarFieldEnum[]
+}
+
+/**
+ * User.rollingQueueState
+ */
+export type User$rollingQueueStateArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RollingQueueState
+   */
+  select?: Prisma.RollingQueueStateSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RollingQueueState
+   */
+  omit?: Prisma.RollingQueueStateOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RollingQueueStateInclude<ExtArgs> | null
+  where?: Prisma.RollingQueueStateWhereInput
+}
+
+/**
+ * User.rollingCapturedPlans
+ */
+export type User$rollingCapturedPlansArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RollingCapturedPlan
+   */
+  select?: Prisma.RollingCapturedPlanSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RollingCapturedPlan
+   */
+  omit?: Prisma.RollingCapturedPlanOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RollingCapturedPlanInclude<ExtArgs> | null
+  where?: Prisma.RollingCapturedPlanWhereInput
+  orderBy?: Prisma.RollingCapturedPlanOrderByWithRelationInput | Prisma.RollingCapturedPlanOrderByWithRelationInput[]
+  cursor?: Prisma.RollingCapturedPlanWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RollingCapturedPlanScalarFieldEnum | Prisma.RollingCapturedPlanScalarFieldEnum[]
 }
 
 /**

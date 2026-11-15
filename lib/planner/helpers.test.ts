@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PlannerMealType } from "@/src/generated/enums";
 import {
+  ensurePlanPlacementIds,
   getBatchGroupLabels,
   getOrderedPlanSlots,
   getPlannerMealCount,
@@ -10,6 +11,32 @@ import {
 import type { RecipeType } from "@/types/recipe";
 import type { PlanInputType } from "@/types/planner";
 import type { DayTimeLimitsType } from "@/lib/validations/planner";
+
+describe("ensurePlanPlacementIds", () => {
+  it("assigns distinct IDs to generated meals and remains idempotent", () => {
+    const empty = {
+      date: new Date("2026-03-17T00:00:00.000Z"),
+      mealType: PlannerMealType.DINNER,
+      recipe: null,
+      customMeal: null,
+      alternatives: [],
+      used: false,
+    };
+    const plan: PlanInputType = [
+      { ...empty, recipe: { id: "recipe" } as RecipeType },
+      { ...empty, customMeal: { name: "Meal", ingredients: [] } },
+      { ...empty, placementId: "stale" },
+      { ...empty, recipe: { id: "existing" } as RecipeType, placementId: "existing-id" },
+    ];
+    const assigned = ensurePlanPlacementIds(plan);
+    expect(assigned[0].placementId).toMatch(/^[\da-f-]{36}$/i);
+    expect(assigned[1].placementId).toMatch(/^[\da-f-]{36}$/i);
+    expect(assigned[0].placementId).not.toBe(assigned[1].placementId);
+    expect(assigned[2].placementId).toBeNull();
+    expect(assigned[3].placementId).toBe("existing-id");
+    expect(ensurePlanPlacementIds(assigned)).toEqual(assigned);
+  });
+});
 
 describe("getPlannerMealCount", () => {
   it("returns the recipe's explicit plannedMealCount", () => {
@@ -320,16 +347,19 @@ describe("placeRecipeOnPlan", () => {
   it("preserves flags and grouping on same-recipe edits without expanding finite rolling meals", () => {
     const recipe = { id: "r-batch", plannedMealCount: 3, isBatchRecipe: true } as RecipeType;
     const plan: PlanInputType = [
-      { ...emptyDinner("2026-03-17T00:00:00.000Z"), recipe, batchGroupId: "rolling", isRolledOver: true, alreadyCooked: true },
+      { ...emptyDinner("2026-03-17T00:00:00.000Z"), recipe, placementId: "existing-placement", batchGroupId: "rolling", isRolledOver: true, alreadyCooked: true },
       emptyDinner("2026-03-18T00:00:00.000Z"),
     ];
     const key = `${plan[0]!.date.toISOString()}-DINNER`;
     const next = placeRecipeOnPlan(plan, key, { ...recipe, name: "Updated" });
     expect(next[0]).toMatchObject({ batchGroupId: "rolling", isRolledOver: true, alreadyCooked: true });
+    expect(next[0]?.placementId).toBe("existing-placement");
     expect(next[1]?.recipe).toBeNull();
     const replacement = placeRecipeOnPlan(plan, key, { ...recipe, id: "replacement" });
     expect(replacement[0]).toMatchObject({ isRolledOver: false, alreadyCooked: false });
     expect(replacement[0]?.batchGroupId).not.toBe("rolling");
+    expect(replacement[0]?.placementId).not.toBe("existing-placement");
+    expect(replacement[0]?.placementId).toMatch(/^[\da-f-]{36}$/i);
     expect(replacement[1]?.recipe).toBeNull();
   });
 
@@ -384,6 +414,9 @@ describe("placeRecipeOnPlan", () => {
     expect(next[0]!.batchGroupId).toBe(next[2]!.batchGroupId);
     expect(next[0]!.batchGroupId).toBe(next[3]!.batchGroupId);
     expect(next[1]!.batchGroupId).toBeNull();
+    const placementIds = [next[0]!.placementId, next[2]!.placementId, next[3]!.placementId];
+    expect(new Set(placementIds).size).toBe(3);
+    placementIds.forEach((id) => expect(id).toMatch(/^[\da-f-]{36}$/i));
   });
 
   it("does not create a group for single-meal recipes", () => {

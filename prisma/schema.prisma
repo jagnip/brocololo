@@ -44,40 +44,46 @@ model User {
   email     String?
   createdAt DateTime @default(now()) @map("created_at")
 
-  familyMembers             FamilyMember[]
-  recipes                   Recipe[]
-  plans                     Plan[]
+  familyMembers                FamilyMember[]
+  recipes                      Recipe[]
+  plans                        Plan[]
   ingredientLists              IngredientList[]
   ingredients                  Ingredient[]
   ingredientUserCustomizations IngredientUserCustomization[]
   shoppingListSharesCreated    ShoppingListShare[]
+  storedMealLots               StoredMealLot[]
+  storedMealEvents             StoredMealEvent[]
+  rollingMealEntries           RollingMealEntry[]
+  rollingQueueState            RollingQueueState?
+  rollingCapturedPlans         RollingCapturedPlan[]
 
   @@map("users")
 }
 
 // Named family members for log/planner portion splits — not Clerk accounts.
 model FamilyMember {
-  id        String  @id @default(cuid())
-  userId    String  @map("user_id")
-  name      String
-  isSelf    Boolean @default(false) @map("is_self")
-  sortOrder Int     @map("sort_order")
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  name              String
+  isSelf            Boolean @default(false) @map("is_self")
+  sortOrder         Int     @map("sort_order")
   /**
    * Household default portion multiplier (1× = one base per-meal share).
    * Intentional permanent behavior — not legacy / not pending removal.
    */
-  portionMultiplier Float @default(1) @map("portion_multiplier")
+  portionMultiplier Float   @default(1) @map("portion_multiplier")
 
-  user                      User                           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  logEntries                LogEntry[]
-  planAudienceMemberships     PlanAudienceMember[]
-  planSlotAudienceMemberships PlanSlotAudienceMember[]
-  planBatchStorageMemberships PlanBatchStorageRowAudienceMember[]
-  recipeAudienceMemberships           RecipeAudienceMember[]
-  recipeMemberPortions                RecipeMemberPortion[]
-  recipePreferences                   RecipeMemberPreference[]
-  recipeIngredientTargets             RecipeIngredientMemberTarget[]
-  recipeIngredientMemberAdjustments   RecipeIngredientMemberAdjustment[]
+  user                              User                                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logEntries                        LogEntry[]
+  planAudienceMemberships           PlanAudienceMember[]
+  planSlotAudienceMemberships       PlanSlotAudienceMember[]
+  planBatchStorageMemberships       PlanBatchStorageRowAudienceMember[]
+  storedMealLotMemberships          StoredMealLotAudienceMember[]
+  recipeAudienceMemberships         RecipeAudienceMember[]
+  recipeMemberPortions              RecipeMemberPortion[]
+  recipePreferences                 RecipeMemberPreference[]
+  recipeIngredientTargets           RecipeIngredientMemberTarget[]
+  recipeIngredientMemberAdjustments RecipeIngredientMemberAdjustment[]
 
   @@index([userId, sortOrder])
   @@map("family_members")
@@ -89,16 +95,20 @@ enum RecipeIngredientAdjustmentKind {
 }
 
 model Plan {
-  id              String               @id @default(cuid())
-  userId          String               @map("user_id")
-  startDate       DateTime             @map("start_date")
-  endDate         DateTime             @map("end_date")
-  createdAt       DateTime             @default(now()) @map("created_at")
-  slots           PlanSlot[]
-  batches         PlanBatch[]
-  audienceMembers PlanAudienceMember[]
-  log             Log?
-  shoppingList    ShoppingList?
+  id                    String               @id @default(cuid())
+  userId                String               @map("user_id")
+  startDate             DateTime             @map("start_date")
+  endDate               DateTime             @map("end_date")
+  createdAt             DateTime             @default(now()) @map("created_at")
+  version               Int                  @default(0)
+  slots                 PlanSlot[]
+  batches               PlanBatch[]
+  resolvedBatchRemainders PlanBatchRemainderResolution[]
+  audienceMembers       PlanAudienceMember[]
+  log                   Log?
+  shoppingList          ShoppingList?
+  sourcedStoredMealLots StoredMealLot[]      @relation("stored_meal_lot_source_plan")
+  rollingCapture        RollingCapturedPlan?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -213,18 +223,19 @@ model ShoppingListItem {
 }
 
 model PlanSlot {
-  id           String          @id @default(cuid())
-  planId       String          @map("plan_id")
-  date         DateTime        @db.Date
-  mealType     PlannerMealType @map("meal_type")
-  recipeId     String?         @map("recipe_id")
-  customName   String?         @map("custom_name")
-  used         Boolean         @default(false)
-  isRolledOver Boolean         @default(false) @map("is_rolled_over")
-  alreadyCooked Boolean        @default(false) @map("already_cooked")
-  extraPortions Int            @default(0) @map("extra_portions")
+  id            String          @id @default(cuid())
+  planId        String          @map("plan_id")
+  placementId   String?         @map("placement_id")
+  date          DateTime        @db.Date
+  mealType      PlannerMealType @map("meal_type")
+  recipeId      String?         @map("recipe_id")
+  customName    String?         @map("custom_name")
+  used          Boolean         @default(false)
+  isRolledOver  Boolean         @default(false) @map("is_rolled_over")
+  alreadyCooked Boolean         @default(false) @map("already_cooked")
+  extraPortions Int             @default(0) @map("extra_portions")
   // Links slots that were placed together as one multi-meal placement (batch or repeat).
-  batchGroupId String?         @map("batch_group_id")
+  batchGroupId  String?         @map("batch_group_id")
 
   plan              Plan                       @relation(fields: [planId], references: [id], onDelete: Cascade)
   recipe            Recipe?                    @relation("recipe_plan_slots", fields: [recipeId], references: [id], onDelete: Cascade)
@@ -234,6 +245,7 @@ model PlanSlot {
   logEntryRecipes   LogEntryRecipe[]
 
   @@index([planId])
+  @@unique([planId, placementId])
   @@index([recipeId])
   @@index([batchGroupId])
   @@map("plan_slots")
@@ -252,9 +264,9 @@ model PlanSlotAudienceMember {
 }
 
 model PlanBatch {
-  id            String @id
-  planId        String @map("plan_id")
-  recipeId      String @map("recipe_id")
+  id       String @id
+  planId   String @map("plan_id")
+  recipeId String @map("recipe_id")
 
   plan        Plan                  @relation(fields: [planId], references: [id], onDelete: Cascade)
   recipe      Recipe                @relation(fields: [recipeId], references: [id], onDelete: Cascade)
@@ -263,6 +275,17 @@ model PlanBatch {
   @@index([planId])
   @@index([recipeId])
   @@map("plan_batches")
+}
+
+// Survives batch recreation and lot deletion, preventing stale remainder saves.
+model PlanBatchRemainderResolution {
+  planId  String @map("plan_id")
+  batchId String @map("batch_id")
+
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@id([planId, batchId])
+  @@map("plan_batch_remainder_resolutions")
 }
 
 model PlanBatchStorageRow {
@@ -282,8 +305,8 @@ model PlanBatchStorageRowAudienceMember {
   storageRowId   String @map("storage_row_id")
   familyMemberId String @map("family_member_id")
 
-  storageRow  PlanBatchStorageRow @relation(fields: [storageRowId], references: [id], onDelete: Cascade)
-  familyMember FamilyMember       @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+  storageRow   PlanBatchStorageRow @relation(fields: [storageRowId], references: [id], onDelete: Cascade)
+  familyMember FamilyMember        @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
 
   @@id([storageRowId, familyMemberId])
   @@index([familyMemberId])
@@ -322,12 +345,12 @@ model PlanSlotAlternative {
 }
 
 model Recipe {
-  id                 String                  @id @default(cuid())
-  userId             String                  @map("user_id")
+  id                 String                   @id @default(cuid())
+  userId             String                   @map("user_id")
   name               String
   slug               String
-  handsOnTime        Int                     @map("hands_on_time")
-  totalTime          Int                     @map("total_time")
+  handsOnTime        Int                      @map("hands_on_time")
+  totalTime          Int                      @map("total_time")
   notes              String[]
   servings           Int
   ingredients        RecipeIngredient[]
@@ -337,20 +360,23 @@ model Recipe {
   audienceMembers    RecipeAudienceMember[]
   memberPortions     RecipeMemberPortion[]
   memberPreferences  RecipeMemberPreference[]
-  lastUsedInPlanner  DateTime?               @map("last_used_in_planner")
-  excludeFromPlanner Boolean                 @default(false) @map("exclude_from_planner")
-  archivedAt         DateTime?               @map("archived_at")
+  lastUsedInPlanner  DateTime?                @map("last_used_in_planner")
+  excludeFromPlanner Boolean                  @default(false) @map("exclude_from_planner")
+  archivedAt         DateTime?                @map("archived_at")
   // Explicit default of how many meals this recipe should occupy when generated into a plan.
-  plannedMealCount   Int                     @default(1) @map("planned_meal_count")
+  plannedMealCount   Int                      @default(1) @map("planned_meal_count")
   // Cosmetic flag: when true, planner cards show an "N of M" badge for multi-slot placements.
-  isBatchRecipe      Boolean                 @default(false) @map("is_batch_recipe")
+  isBatchRecipe      Boolean                  @default(false) @map("is_batch_recipe")
 
-  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  categories      Category[]            @relation("category_recipes")
-  planSlots       PlanSlot[]            @relation("recipe_plan_slots")
-  planBatches     PlanBatch[]
-  alternatives    PlanSlotAlternative[] @relation("recipe_alternatives")
-  logEntryRecipes LogEntryRecipe[]
+  user             User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categories       Category[]            @relation("category_recipes")
+  planSlots        PlanSlot[]            @relation("recipe_plan_slots")
+  planBatches      PlanBatch[]
+  alternatives     PlanSlotAlternative[] @relation("recipe_alternatives")
+  logEntryRecipes  LogEntryRecipe[]
+  storedMealLots   StoredMealLot[]
+  storedMealEvents StoredMealEvent[]
+  rollingMealEntries RollingMealEntry[]
 
   @@unique([userId, slug])
   @@unique([userId, name])
@@ -358,6 +384,110 @@ model Recipe {
   @@index([userId, archivedAt])
   @@index([slug])
   @@map("recipes")
+}
+
+model RollingQueueState {
+  userId String @id @map("user_id")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("rolling_queue_states")
+}
+
+model RollingCapturedPlan {
+  planId String @id @map("plan_id")
+  userId String @map("user_id")
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+  @@map("rolling_captured_plans")
+}
+
+model RollingMealEntry {
+  id String @id @default(cuid())
+  userId String @map("user_id")
+  identity String
+  recipeId String? @map("recipe_id")
+  mealType PlannerMealType? @map("meal_type")
+  customMeal Json? @map("custom_meal")
+  count Int
+  version Int @default(1)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe Recipe? @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  @@unique([userId, identity])
+  @@index([recipeId])
+  @@map("rolling_meal_entries")
+}
+
+enum StoredMealEventType {
+  CREATED
+  ADJUSTED
+  USED
+  DISCARDED
+  TRANSFERRED
+}
+
+// Cooked food that physically exists. Unlike PlanBatchStorageRow, lots outlive
+// their source plan and are managed independently from plan autosaves.
+model StoredMealLot {
+  id                String   @id @default(cuid())
+  userId            String   @map("user_id")
+  recipeId          String   @map("recipe_id")
+  sourcePlanId      String?  @map("source_plan_id")
+  sourcePlanBatchId String?  @map("source_plan_batch_id")
+  count             Int
+  version           Int      @default(1)
+  cookedAt          DateTime @default(now()) @map("cooked_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user            User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe          Recipe                        @relation(fields: [recipeId], references: [id], onDelete: Restrict)
+  sourcePlan      Plan?                         @relation("stored_meal_lot_source_plan", fields: [sourcePlanId], references: [id], onDelete: SetNull)
+  audienceMembers StoredMealLotAudienceMember[]
+  events          StoredMealEvent[]
+
+  @@index([userId, cookedAt])
+  @@index([userId, recipeId])
+  @@index([sourcePlanId])
+  @@map("stored_meal_lots")
+}
+
+model StoredMealLotAudienceMember {
+  lotId          String @map("lot_id")
+  familyMemberId String @map("family_member_id")
+
+  lot          StoredMealLot @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  familyMember FamilyMember  @relation(fields: [familyMemberId], references: [id], onDelete: Restrict)
+
+  @@id([lotId, familyMemberId])
+  @@index([familyMemberId])
+  @@map("stored_meal_lot_audience_members")
+}
+
+model StoredMealEvent {
+  id            String              @id @default(cuid())
+  userId        String              @map("user_id")
+  lotId         String?             @map("lot_id")
+  recipeId      String              @map("recipe_id")
+  recipeName    String              @map("recipe_name")
+  type          StoredMealEventType
+  quantity      Int
+  previousCount Int?                @map("previous_count")
+  nextCount     Int?                @map("next_count")
+  // Snapshots survive both lot and destination plan deletion.
+  placementId   String?             @unique @map("placement_id")
+  sourceLotId   String?             @map("source_lot_id")
+  destinationPlanId String?         @map("destination_plan_id")
+  destinationDate DateTime?         @map("destination_date")
+  destinationMeal PlannerMealType?   @map("destination_meal")
+  createdAt     DateTime            @default(now()) @map("created_at")
+
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lot    StoredMealLot? @relation(fields: [lotId], references: [id], onDelete: SetNull)
+  recipe Recipe         @relation(fields: [recipeId], references: [id], onDelete: Restrict)
+
+  @@index([userId, createdAt])
+  @@index([lotId])
+  @@map("stored_meal_events")
 }
 
 model RecipeAudienceMember {
@@ -420,17 +550,17 @@ model Ingredient {
   categoryId     String  @map("category_id")
   defaultUnitId  String? @map("default_unit_id")
 
-  user                       User?                         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category                   IngredientCategory            @relation(fields: [categoryId], references: [id])
-  defaultUnit                Unit?                         @relation("ingredient_default_unit", fields: [defaultUnitId], references: [id], onDelete: Restrict)
-  recipes                    RecipeIngredient[]
+  user                              User?                              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category                          IngredientCategory                 @relation(fields: [categoryId], references: [id])
+  defaultUnit                       Unit?                              @relation("ingredient_default_unit", fields: [defaultUnitId], references: [id], onDelete: Restrict)
+  recipes                           RecipeIngredient[]
   recipeIngredientMemberAdjustments RecipeIngredientMemberAdjustment[]
-  unitConversions            IngredientUnit[]
-  logIngredients             LogIngredient[]
-  planSlotCustomIngredients  PlanSlotCustomIngredient[]
-  groceryIngredient          GroceryIngredient?
-  ingredientLists            IngredientListItem[]
-  userCustomizations         IngredientUserCustomization[]
+  unitConversions                   IngredientUnit[]
+  logIngredients                    LogIngredient[]
+  planSlotCustomIngredients         PlanSlotCustomIngredient[]
+  groceryIngredient                 GroceryIngredient?
+  ingredientLists                   IngredientListItem[]
+  userCustomizations                IngredientUserCustomization[]
 
   @@index([userId])
   @@index([slug])
@@ -441,9 +571,9 @@ model Ingredient {
 
 // Per-user shopping overrides for global catalog ingredients (userId null on ingredient).
 model IngredientUserCustomization {
-  id             String  @id @default(cuid())
-  userId         String  @map("user_id")
-  ingredientId   String  @map("ingredient_id")
+  id               String  @id @default(cuid())
+  userId           String  @map("user_id")
+  ingredientId     String  @map("ingredient_id")
   supermarketUrl   String? @map("supermarket_url")
   additionalInfo   String? @map("additional_info")
   substitutionNote String? @map("substitution_note")
@@ -462,13 +592,13 @@ model Unit {
   // Optional plural label supports irregular forms (e.g. piece -> pieces).
   namePlural String? @map("name_plural")
 
-  ingredientUnits       IngredientUnit[]
-  defaultForIngredients Ingredient[]       @relation("ingredient_default_unit")
-  recipeIngredients     RecipeIngredient[]
+  ingredientUnits                   IngredientUnit[]
+  defaultForIngredients             Ingredient[]                       @relation("ingredient_default_unit")
+  recipeIngredients                 RecipeIngredient[]
   recipeIngredientMemberAdjustments RecipeIngredientMemberAdjustment[]
-  logIngredients        LogIngredient[]
-  planSlotCustomIngredients PlanSlotCustomIngredient[]
-  shoppingListItems     ShoppingListItem[]
+  logIngredients                    LogIngredient[]
+  planSlotCustomIngredients         PlanSlotCustomIngredient[]
+  shoppingListItems                 ShoppingListItem[]
 
   @@map("units")
 }
@@ -497,10 +627,10 @@ model RecipeIngredient {
   appliesToEveryone Boolean @default(true) @map("applies_to_everyone")
   additionalInfo    String? @map("additional_info")
 
-  recipe            Recipe                              @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  group             RecipeIngredientGroup?            @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  ingredient        Ingredient                          @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
-  unit              Unit?                               @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  recipe            Recipe                             @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  group             RecipeIngredientGroup?             @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  ingredient        Ingredient                         @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+  unit              Unit?                              @relation(fields: [unitId], references: [id], onDelete: Restrict)
   instructionsLinks RecipeInstructionIngredient[]
   memberTargets     RecipeIngredientMemberTarget[]
   memberAdjustments RecipeIngredientMemberAdjustment[]

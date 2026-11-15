@@ -398,11 +398,18 @@ export const ModelName = {
   PlanSlot: 'PlanSlot',
   PlanSlotAudienceMember: 'PlanSlotAudienceMember',
   PlanBatch: 'PlanBatch',
+  PlanBatchRemainderResolution: 'PlanBatchRemainderResolution',
   PlanBatchStorageRow: 'PlanBatchStorageRow',
   PlanBatchStorageRowAudienceMember: 'PlanBatchStorageRowAudienceMember',
   PlanSlotCustomIngredient: 'PlanSlotCustomIngredient',
   PlanSlotAlternative: 'PlanSlotAlternative',
   Recipe: 'Recipe',
+  RollingQueueState: 'RollingQueueState',
+  RollingCapturedPlan: 'RollingCapturedPlan',
+  RollingMealEntry: 'RollingMealEntry',
+  StoredMealLot: 'StoredMealLot',
+  StoredMealLotAudienceMember: 'StoredMealLotAudienceMember',
+  StoredMealEvent: 'StoredMealEvent',
   RecipeAudienceMember: 'RecipeAudienceMember',
   RecipeMemberPreference: 'RecipeMemberPreference',
   RecipeMemberPortion: 'RecipeMemberPortion',
@@ -439,7 +446,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "category" | "user" | "familyMember" | "plan" | "planAudienceMember" | "groceryIngredient" | "shoppingLayoutPreset" | "shoppingLayoutPresetCategory" | "shoppingList" | "shoppingListShare" | "shoppingListItem" | "planSlot" | "planSlotAudienceMember" | "planBatch" | "planBatchStorageRow" | "planBatchStorageRowAudienceMember" | "planSlotCustomIngredient" | "planSlotAlternative" | "recipe" | "recipeAudienceMember" | "recipeMemberPreference" | "recipeMemberPortion" | "ingredient" | "ingredientUserCustomization" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientMemberTarget" | "recipeIngredientMemberAdjustment" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage" | "log" | "logEntry" | "logEntryRecipe" | "logIngredient" | "ingredientList" | "ingredientListItem"
+    modelProps: "category" | "user" | "familyMember" | "plan" | "planAudienceMember" | "groceryIngredient" | "shoppingLayoutPreset" | "shoppingLayoutPresetCategory" | "shoppingList" | "shoppingListShare" | "shoppingListItem" | "planSlot" | "planSlotAudienceMember" | "planBatch" | "planBatchRemainderResolution" | "planBatchStorageRow" | "planBatchStorageRowAudienceMember" | "planSlotCustomIngredient" | "planSlotAlternative" | "recipe" | "rollingQueueState" | "rollingCapturedPlan" | "rollingMealEntry" | "storedMealLot" | "storedMealLotAudienceMember" | "storedMealEvent" | "recipeAudienceMember" | "recipeMemberPreference" | "recipeMemberPortion" | "ingredient" | "ingredientUserCustomization" | "unit" | "ingredientUnit" | "recipeIngredient" | "recipeIngredientMemberTarget" | "recipeIngredientMemberAdjustment" | "recipeIngredientGroup" | "recipeInstruction" | "recipeInstructionIngredient" | "ingredientCategory" | "recipeImage" | "log" | "logEntry" | "logEntryRecipe" | "logIngredient" | "ingredientList" | "ingredientListItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1479,6 +1486,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    PlanBatchRemainderResolution: {
+      payload: Prisma.$PlanBatchRemainderResolutionPayload<ExtArgs>
+      fields: Prisma.PlanBatchRemainderResolutionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PlanBatchRemainderResolutionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchRemainderResolutionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PlanBatchRemainderResolutionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchRemainderResolutionPayload>
+        }
+        findFirst: {
+          args: Prisma.PlanBatchRemainderResolutionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchRemainderResolutionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PlanBatchRemainderResolutionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchRemainderResolutionPayload>
+        }
+        findMany: {
+          args: Prisma.PlanBatchRemainderResolutionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchRemainderResolutionPayload>[]
+        }
+        create: {
+          args: Prisma.PlanBatchRemainderResolutionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchRemainderResolutionPayload>
+        }
+        createMany: {
+          args: Prisma.PlanBatchRemainderResolutionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PlanBatchRemainderResolutionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchRemainderResolutionPayload>[]
+        }
+        delete: {
+          args: Prisma.PlanBatchRemainderResolutionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchRemainderResolutionPayload>
+        }
+        update: {
+          args: Prisma.PlanBatchRemainderResolutionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchRemainderResolutionPayload>
+        }
+        deleteMany: {
+          args: Prisma.PlanBatchRemainderResolutionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PlanBatchRemainderResolutionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PlanBatchRemainderResolutionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchRemainderResolutionPayload>[]
+        }
+        upsert: {
+          args: Prisma.PlanBatchRemainderResolutionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PlanBatchRemainderResolutionPayload>
+        }
+        aggregate: {
+          args: Prisma.PlanBatchRemainderResolutionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePlanBatchRemainderResolution>
+        }
+        groupBy: {
+          args: Prisma.PlanBatchRemainderResolutionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlanBatchRemainderResolutionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PlanBatchRemainderResolutionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PlanBatchRemainderResolutionCountAggregateOutputType> | number
+        }
+      }
+    }
     PlanBatchStorageRow: {
       payload: Prisma.$PlanBatchStorageRowPayload<ExtArgs>
       fields: Prisma.PlanBatchStorageRowFieldRefs
@@ -1846,6 +1927,450 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.RecipeCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.RecipeCountAggregateOutputType> | number
+        }
+      }
+    }
+    RollingQueueState: {
+      payload: Prisma.$RollingQueueStatePayload<ExtArgs>
+      fields: Prisma.RollingQueueStateFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RollingQueueStateFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingQueueStatePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RollingQueueStateFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingQueueStatePayload>
+        }
+        findFirst: {
+          args: Prisma.RollingQueueStateFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingQueueStatePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RollingQueueStateFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingQueueStatePayload>
+        }
+        findMany: {
+          args: Prisma.RollingQueueStateFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingQueueStatePayload>[]
+        }
+        create: {
+          args: Prisma.RollingQueueStateCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingQueueStatePayload>
+        }
+        createMany: {
+          args: Prisma.RollingQueueStateCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RollingQueueStateCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingQueueStatePayload>[]
+        }
+        delete: {
+          args: Prisma.RollingQueueStateDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingQueueStatePayload>
+        }
+        update: {
+          args: Prisma.RollingQueueStateUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingQueueStatePayload>
+        }
+        deleteMany: {
+          args: Prisma.RollingQueueStateDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RollingQueueStateUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RollingQueueStateUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingQueueStatePayload>[]
+        }
+        upsert: {
+          args: Prisma.RollingQueueStateUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingQueueStatePayload>
+        }
+        aggregate: {
+          args: Prisma.RollingQueueStateAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRollingQueueState>
+        }
+        groupBy: {
+          args: Prisma.RollingQueueStateGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RollingQueueStateGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RollingQueueStateCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RollingQueueStateCountAggregateOutputType> | number
+        }
+      }
+    }
+    RollingCapturedPlan: {
+      payload: Prisma.$RollingCapturedPlanPayload<ExtArgs>
+      fields: Prisma.RollingCapturedPlanFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RollingCapturedPlanFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingCapturedPlanPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RollingCapturedPlanFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingCapturedPlanPayload>
+        }
+        findFirst: {
+          args: Prisma.RollingCapturedPlanFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingCapturedPlanPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RollingCapturedPlanFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingCapturedPlanPayload>
+        }
+        findMany: {
+          args: Prisma.RollingCapturedPlanFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingCapturedPlanPayload>[]
+        }
+        create: {
+          args: Prisma.RollingCapturedPlanCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingCapturedPlanPayload>
+        }
+        createMany: {
+          args: Prisma.RollingCapturedPlanCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RollingCapturedPlanCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingCapturedPlanPayload>[]
+        }
+        delete: {
+          args: Prisma.RollingCapturedPlanDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingCapturedPlanPayload>
+        }
+        update: {
+          args: Prisma.RollingCapturedPlanUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingCapturedPlanPayload>
+        }
+        deleteMany: {
+          args: Prisma.RollingCapturedPlanDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RollingCapturedPlanUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RollingCapturedPlanUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingCapturedPlanPayload>[]
+        }
+        upsert: {
+          args: Prisma.RollingCapturedPlanUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingCapturedPlanPayload>
+        }
+        aggregate: {
+          args: Prisma.RollingCapturedPlanAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRollingCapturedPlan>
+        }
+        groupBy: {
+          args: Prisma.RollingCapturedPlanGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RollingCapturedPlanGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RollingCapturedPlanCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RollingCapturedPlanCountAggregateOutputType> | number
+        }
+      }
+    }
+    RollingMealEntry: {
+      payload: Prisma.$RollingMealEntryPayload<ExtArgs>
+      fields: Prisma.RollingMealEntryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RollingMealEntryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingMealEntryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RollingMealEntryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingMealEntryPayload>
+        }
+        findFirst: {
+          args: Prisma.RollingMealEntryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingMealEntryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RollingMealEntryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingMealEntryPayload>
+        }
+        findMany: {
+          args: Prisma.RollingMealEntryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingMealEntryPayload>[]
+        }
+        create: {
+          args: Prisma.RollingMealEntryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingMealEntryPayload>
+        }
+        createMany: {
+          args: Prisma.RollingMealEntryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RollingMealEntryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingMealEntryPayload>[]
+        }
+        delete: {
+          args: Prisma.RollingMealEntryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingMealEntryPayload>
+        }
+        update: {
+          args: Prisma.RollingMealEntryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingMealEntryPayload>
+        }
+        deleteMany: {
+          args: Prisma.RollingMealEntryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RollingMealEntryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RollingMealEntryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingMealEntryPayload>[]
+        }
+        upsert: {
+          args: Prisma.RollingMealEntryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RollingMealEntryPayload>
+        }
+        aggregate: {
+          args: Prisma.RollingMealEntryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRollingMealEntry>
+        }
+        groupBy: {
+          args: Prisma.RollingMealEntryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RollingMealEntryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RollingMealEntryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RollingMealEntryCountAggregateOutputType> | number
+        }
+      }
+    }
+    StoredMealLot: {
+      payload: Prisma.$StoredMealLotPayload<ExtArgs>
+      fields: Prisma.StoredMealLotFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.StoredMealLotFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.StoredMealLotFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotPayload>
+        }
+        findFirst: {
+          args: Prisma.StoredMealLotFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.StoredMealLotFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotPayload>
+        }
+        findMany: {
+          args: Prisma.StoredMealLotFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotPayload>[]
+        }
+        create: {
+          args: Prisma.StoredMealLotCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotPayload>
+        }
+        createMany: {
+          args: Prisma.StoredMealLotCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.StoredMealLotCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotPayload>[]
+        }
+        delete: {
+          args: Prisma.StoredMealLotDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotPayload>
+        }
+        update: {
+          args: Prisma.StoredMealLotUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotPayload>
+        }
+        deleteMany: {
+          args: Prisma.StoredMealLotDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.StoredMealLotUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.StoredMealLotUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotPayload>[]
+        }
+        upsert: {
+          args: Prisma.StoredMealLotUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotPayload>
+        }
+        aggregate: {
+          args: Prisma.StoredMealLotAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateStoredMealLot>
+        }
+        groupBy: {
+          args: Prisma.StoredMealLotGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StoredMealLotGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.StoredMealLotCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StoredMealLotCountAggregateOutputType> | number
+        }
+      }
+    }
+    StoredMealLotAudienceMember: {
+      payload: Prisma.$StoredMealLotAudienceMemberPayload<ExtArgs>
+      fields: Prisma.StoredMealLotAudienceMemberFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.StoredMealLotAudienceMemberFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotAudienceMemberPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.StoredMealLotAudienceMemberFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotAudienceMemberPayload>
+        }
+        findFirst: {
+          args: Prisma.StoredMealLotAudienceMemberFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotAudienceMemberPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.StoredMealLotAudienceMemberFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotAudienceMemberPayload>
+        }
+        findMany: {
+          args: Prisma.StoredMealLotAudienceMemberFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotAudienceMemberPayload>[]
+        }
+        create: {
+          args: Prisma.StoredMealLotAudienceMemberCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotAudienceMemberPayload>
+        }
+        createMany: {
+          args: Prisma.StoredMealLotAudienceMemberCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.StoredMealLotAudienceMemberCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotAudienceMemberPayload>[]
+        }
+        delete: {
+          args: Prisma.StoredMealLotAudienceMemberDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotAudienceMemberPayload>
+        }
+        update: {
+          args: Prisma.StoredMealLotAudienceMemberUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotAudienceMemberPayload>
+        }
+        deleteMany: {
+          args: Prisma.StoredMealLotAudienceMemberDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.StoredMealLotAudienceMemberUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.StoredMealLotAudienceMemberUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotAudienceMemberPayload>[]
+        }
+        upsert: {
+          args: Prisma.StoredMealLotAudienceMemberUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealLotAudienceMemberPayload>
+        }
+        aggregate: {
+          args: Prisma.StoredMealLotAudienceMemberAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateStoredMealLotAudienceMember>
+        }
+        groupBy: {
+          args: Prisma.StoredMealLotAudienceMemberGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StoredMealLotAudienceMemberGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.StoredMealLotAudienceMemberCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StoredMealLotAudienceMemberCountAggregateOutputType> | number
+        }
+      }
+    }
+    StoredMealEvent: {
+      payload: Prisma.$StoredMealEventPayload<ExtArgs>
+      fields: Prisma.StoredMealEventFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.StoredMealEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealEventPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.StoredMealEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealEventPayload>
+        }
+        findFirst: {
+          args: Prisma.StoredMealEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealEventPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.StoredMealEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealEventPayload>
+        }
+        findMany: {
+          args: Prisma.StoredMealEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealEventPayload>[]
+        }
+        create: {
+          args: Prisma.StoredMealEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealEventPayload>
+        }
+        createMany: {
+          args: Prisma.StoredMealEventCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.StoredMealEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealEventPayload>[]
+        }
+        delete: {
+          args: Prisma.StoredMealEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealEventPayload>
+        }
+        update: {
+          args: Prisma.StoredMealEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealEventPayload>
+        }
+        deleteMany: {
+          args: Prisma.StoredMealEventDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.StoredMealEventUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.StoredMealEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealEventPayload>[]
+        }
+        upsert: {
+          args: Prisma.StoredMealEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoredMealEventPayload>
+        }
+        aggregate: {
+          args: Prisma.StoredMealEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateStoredMealEvent>
+        }
+        groupBy: {
+          args: Prisma.StoredMealEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StoredMealEventGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.StoredMealEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StoredMealEventCountAggregateOutputType> | number
         }
       }
     }
@@ -3479,7 +4004,8 @@ export const PlanScalarFieldEnum = {
   userId: 'userId',
   startDate: 'startDate',
   endDate: 'endDate',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  version: 'version'
 } as const
 
 export type PlanScalarFieldEnum = (typeof PlanScalarFieldEnum)[keyof typeof PlanScalarFieldEnum]
@@ -3568,6 +4094,7 @@ export type ShoppingListItemScalarFieldEnum = (typeof ShoppingListItemScalarFiel
 export const PlanSlotScalarFieldEnum = {
   id: 'id',
   planId: 'planId',
+  placementId: 'placementId',
   date: 'date',
   mealType: 'mealType',
   recipeId: 'recipeId',
@@ -3597,6 +4124,14 @@ export const PlanBatchScalarFieldEnum = {
 } as const
 
 export type PlanBatchScalarFieldEnum = (typeof PlanBatchScalarFieldEnum)[keyof typeof PlanBatchScalarFieldEnum]
+
+
+export const PlanBatchRemainderResolutionScalarFieldEnum = {
+  planId: 'planId',
+  batchId: 'batchId'
+} as const
+
+export type PlanBatchRemainderResolutionScalarFieldEnum = (typeof PlanBatchRemainderResolutionScalarFieldEnum)[keyof typeof PlanBatchRemainderResolutionScalarFieldEnum]
 
 
 export const PlanBatchStorageRowScalarFieldEnum = {
@@ -3656,6 +4191,80 @@ export const RecipeScalarFieldEnum = {
 } as const
 
 export type RecipeScalarFieldEnum = (typeof RecipeScalarFieldEnum)[keyof typeof RecipeScalarFieldEnum]
+
+
+export const RollingQueueStateScalarFieldEnum = {
+  userId: 'userId'
+} as const
+
+export type RollingQueueStateScalarFieldEnum = (typeof RollingQueueStateScalarFieldEnum)[keyof typeof RollingQueueStateScalarFieldEnum]
+
+
+export const RollingCapturedPlanScalarFieldEnum = {
+  planId: 'planId',
+  userId: 'userId'
+} as const
+
+export type RollingCapturedPlanScalarFieldEnum = (typeof RollingCapturedPlanScalarFieldEnum)[keyof typeof RollingCapturedPlanScalarFieldEnum]
+
+
+export const RollingMealEntryScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  identity: 'identity',
+  recipeId: 'recipeId',
+  mealType: 'mealType',
+  customMeal: 'customMeal',
+  count: 'count',
+  version: 'version'
+} as const
+
+export type RollingMealEntryScalarFieldEnum = (typeof RollingMealEntryScalarFieldEnum)[keyof typeof RollingMealEntryScalarFieldEnum]
+
+
+export const StoredMealLotScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  recipeId: 'recipeId',
+  sourcePlanId: 'sourcePlanId',
+  sourcePlanBatchId: 'sourcePlanBatchId',
+  count: 'count',
+  version: 'version',
+  cookedAt: 'cookedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type StoredMealLotScalarFieldEnum = (typeof StoredMealLotScalarFieldEnum)[keyof typeof StoredMealLotScalarFieldEnum]
+
+
+export const StoredMealLotAudienceMemberScalarFieldEnum = {
+  lotId: 'lotId',
+  familyMemberId: 'familyMemberId'
+} as const
+
+export type StoredMealLotAudienceMemberScalarFieldEnum = (typeof StoredMealLotAudienceMemberScalarFieldEnum)[keyof typeof StoredMealLotAudienceMemberScalarFieldEnum]
+
+
+export const StoredMealEventScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  lotId: 'lotId',
+  recipeId: 'recipeId',
+  recipeName: 'recipeName',
+  type: 'type',
+  quantity: 'quantity',
+  previousCount: 'previousCount',
+  nextCount: 'nextCount',
+  placementId: 'placementId',
+  sourceLotId: 'sourceLotId',
+  destinationPlanId: 'destinationPlanId',
+  destinationDate: 'destinationDate',
+  destinationMeal: 'destinationMeal',
+  createdAt: 'createdAt'
+} as const
+
+export type StoredMealEventScalarFieldEnum = (typeof StoredMealEventScalarFieldEnum)[keyof typeof StoredMealEventScalarFieldEnum]
 
 
 export const RecipeAudienceMemberScalarFieldEnum = {
@@ -3893,6 +4502,14 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
@@ -3907,6 +4524,15 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
 
@@ -4003,6 +4629,34 @@ export type EnumPlannerMealTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$
  * Reference to a field of type 'PlannerMealType[]'
  */
 export type ListEnumPlannerMealTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlannerMealType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+/**
+ * Reference to a field of type 'StoredMealEventType'
+ */
+export type EnumStoredMealEventTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'StoredMealEventType'>
+    
+
+
+/**
+ * Reference to a field of type 'StoredMealEventType[]'
+ */
+export type ListEnumStoredMealEventTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'StoredMealEventType[]'>
     
 
 
@@ -4156,11 +4810,18 @@ export type GlobalOmitConfig = {
   planSlot?: Prisma.PlanSlotOmit
   planSlotAudienceMember?: Prisma.PlanSlotAudienceMemberOmit
   planBatch?: Prisma.PlanBatchOmit
+  planBatchRemainderResolution?: Prisma.PlanBatchRemainderResolutionOmit
   planBatchStorageRow?: Prisma.PlanBatchStorageRowOmit
   planBatchStorageRowAudienceMember?: Prisma.PlanBatchStorageRowAudienceMemberOmit
   planSlotCustomIngredient?: Prisma.PlanSlotCustomIngredientOmit
   planSlotAlternative?: Prisma.PlanSlotAlternativeOmit
   recipe?: Prisma.RecipeOmit
+  rollingQueueState?: Prisma.RollingQueueStateOmit
+  rollingCapturedPlan?: Prisma.RollingCapturedPlanOmit
+  rollingMealEntry?: Prisma.RollingMealEntryOmit
+  storedMealLot?: Prisma.StoredMealLotOmit
+  storedMealLotAudienceMember?: Prisma.StoredMealLotAudienceMemberOmit
+  storedMealEvent?: Prisma.StoredMealEventOmit
   recipeAudienceMember?: Prisma.RecipeAudienceMemberOmit
   recipeMemberPreference?: Prisma.RecipeMemberPreferenceOmit
   recipeMemberPortion?: Prisma.RecipeMemberPortionOmit

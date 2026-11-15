@@ -45,6 +45,7 @@ describe("rearrangePlanSlots", () => {
     const pasta = createRecipe("pasta");
     const source = slot(DAY_A, PlannerMealType.LUNCH, {
       id: "slot-a-lunch",
+      placementId: "placement-pasta",
       recipe: pasta,
       cookingFamilyMemberIds: ["fm-1"],
       used: true,
@@ -75,6 +76,7 @@ describe("rearrangePlanSlots", () => {
 
     // Meal traveled; source cleared.
     expect(nextSource.recipe).toBeNull();
+    expect(nextSource.placementId).toBeNull();
     expect(nextSource.customMeal).toBeNull();
     expect(nextSource.alternatives).toEqual([]);
     expect(nextSource.cookingFamilyMemberIds).toEqual([]);
@@ -84,6 +86,7 @@ describe("rearrangePlanSlots", () => {
     expect(nextSource.alreadyCooked).toBe(false);
 
     expect(nextTarget.recipe).toBe(pasta);
+    expect(nextTarget.placementId).toBe("placement-pasta");
     expect(nextTarget.cookingFamilyMemberIds).toEqual(["fm-1"]);
     expect(nextTarget.used).toBe(true);
     expect(nextTarget.batchGroupId).toBe("batch-1");
@@ -97,6 +100,7 @@ describe("rearrangePlanSlots", () => {
     const salad = createRecipe("salad");
     const source = slot(DAY_A, PlannerMealType.BREAKFAST, {
       id: "a",
+      placementId: "placement-pasta",
       recipe: pasta,
       cookingFamilyMemberIds: ["fm-1"],
       used: true,
@@ -106,6 +110,7 @@ describe("rearrangePlanSlots", () => {
     });
     const target = slot(DAY_B, PlannerMealType.LUNCH, {
       id: "b",
+      placementId: "placement-salad",
       recipe: salad,
       cookingFamilyMemberIds: ["fm-2"],
       used: false,
@@ -127,6 +132,7 @@ describe("rearrangePlanSlots", () => {
     expect(nextB.mealType).toBe(PlannerMealType.LUNCH);
 
     expect(nextA.recipe).toBe(salad);
+    expect(nextA.placementId).toBe("placement-salad");
     expect(nextA.isRolledOver).toBe(false);
     expect(nextA.alreadyCooked).toBe(false);
     expect(nextA.cookingFamilyMemberIds).toEqual(["fm-2"]);
@@ -135,6 +141,7 @@ describe("rearrangePlanSlots", () => {
     expect(nextA.alternatives).toHaveLength(1);
 
     expect(nextB.recipe).toBe(pasta);
+    expect(nextB.placementId).toBe("placement-pasta");
     expect(nextB.isRolledOver).toBe(true);
     expect(nextB.alreadyCooked).toBe(true);
     expect(nextB.cookingFamilyMemberIds).toEqual(["fm-1"]);

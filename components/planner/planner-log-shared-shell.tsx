@@ -50,6 +50,7 @@ type PlannerLogShellProps = {
   /** Default Track day (today or nearest plan day). */
   initialSelectedDayKey: string;
   initialPlan: PlanInputType;
+  initialVersion?: number;
   initialBatches?: PlanBatchInput[];
   plannerRecipes: RecipeType[];
   ingredientOptions: LogIngredientOption[];
@@ -76,6 +77,7 @@ export function PlannerLogSharedShell({
   initialDateRange,
   initialSelectedDayKey,
   initialPlan,
+  initialVersion,
   initialBatches = [],
   plannerRecipes,
   ingredientOptions,
@@ -321,6 +323,7 @@ export function PlannerLogSharedShell({
         <PlanEditor
           planId={planId}
           initialPlan={initialPlan}
+          initialVersion={initialVersion}
           initialBatches={initialBatches}
           recipes={plannerRecipes}
           ingredientOptions={ingredientOptions}

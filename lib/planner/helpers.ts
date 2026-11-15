@@ -72,6 +72,16 @@ export function getPlanSlotKey(slot: SlotInputType): string {
   return `${slot.date.toISOString()}-${slot.mealType}`;
 }
 
+/** Assign identities once when generated meals enter the editable draft. */
+export function ensurePlanPlacementIds(plan: PlanInputType): PlanInputType {
+  return plan.map((slot) => {
+    if (!slot.recipe && !slot.customMeal) {
+      return slot.placementId == null ? slot : { ...slot, placementId: null };
+    }
+    return slot.placementId ? slot : { ...slot, placementId: crypto.randomUUID() };
+  });
+}
+
 export function getOrderedPlanSlots(plan: PlanInputType): SlotInputType[] {
   // Stable ordering powers deterministic range selection behavior.
   return [...plan].sort((a, b) => {
@@ -308,6 +318,8 @@ export function placeRecipeOnPlan(
 
     return {
       ...slot,
+      placementId: key === slotKey && sameRecipe ? (slot.placementId ?? crypto.randomUUID()) : crypto.randomUUID(),
+      rollingQueueClaim: key === slotKey && sameRecipe ? source.rollingQueueClaim : null,
       recipe,
       customMeal: null,
       alternatives:

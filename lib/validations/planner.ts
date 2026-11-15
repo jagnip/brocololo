@@ -57,11 +57,22 @@ export const planCustomMealSchema = z.object({
   ingredients: z.array(planCustomMealIngredientSchema).max(200),
 });
 
+const rollingQueueClaimSchema = z.object({
+  id: z.string().min(1),
+  version: z.number().int().min(0).max(2147483646),
+  mealType: plannerMealTypeSchema.optional(),
+});
+
 const rollingRecipeSchema = z.object({
   kind: z.literal("recipe").optional(),
   recipeId: z.string(),
   meals: z.coerce.number().int().min(1),
+  rollingQueueClaim: rollingQueueClaimSchema.optional(),
   alreadyCooked: z.boolean().default(false).optional(),
+  source: z.object({
+    storedMeals: z.coerce.number().int().min(0),
+    unfinishedScheduledMeals: z.coerce.number().int().min(0),
+  }).optional(),
 });
 
 const rollingCustomMealSchema = z.object({
@@ -69,6 +80,7 @@ const rollingCustomMealSchema = z.object({
   mealType: plannerMealTypeSchema,
   customMeal: planCustomMealSchema,
   meals: z.coerce.number().int().min(1),
+  rollingQueueClaim: rollingQueueClaimSchema.optional(),
 });
 
 const rollingMealSchema = z.discriminatedUnion("kind", [
@@ -96,6 +108,8 @@ export type PlannerCriteriaOutputType = z.infer<typeof plannerCriteriaSchema>;
 
 export const slotSaveDataSchema = z
   .object({
+    placementId: z.string().min(1).nullable().optional(),
+    rollingQueueClaim: rollingQueueClaimSchema.nullable().optional(),
     date: z.coerce.date(),
     mealType: z.enum(["BREAKFAST", "LUNCH", "DINNER"]),
     recipeId: z.string().min(1).nullable(),
@@ -131,7 +145,46 @@ export const slotSaveDataSchema = z
     }
   });
 
-export const planSlotsSaveSchema = z.array(slotSaveDataSchema).min(1);
+export const planSlotsSaveSchema = z.array(slotSaveDataSchema).min(1).superRefine((slots, ctx) => {
+  const seen = new Set<string>();
+  slots.forEach((slot, index) => {
+    if (!slot.placementId) return;
+    if (seen.has(slot.placementId)) {
+      ctx.addIssue({ code: "custom", message: "Placement ids must be unique", path: [index, "placementId"] });
+    }
+    seen.add(slot.placementId);
+  });
+});
+
+// This contract is not accepted by save paths until placement identities are persisted.
+export const storedMealPlacementClaimsSchema = z.array(z.object({
+  placementId: z.string().min(1),
+  lotId: z.string().min(1),
+  expectedLotVersion: z.number().int().min(0).max(2147483646),
+  recipeId: z.string().min(1),
+  date: z.coerce.date(),
+  mealType: plannerMealTypeSchema,
+})).superRefine((claims, ctx) => {
+  const placementIds = new Set<string>();
+  const destinations = new Set<string>();
+  const lots = new Map<string, { version: number; recipeId: string }>();
+  claims.forEach((claim, index) => {
+    const destination = `${claim.date.toISOString().slice(0, 10)}:${claim.mealType}`;
+    if (placementIds.has(claim.placementId)) {
+      ctx.addIssue({ code: "custom", message: "Placement ids must be unique", path: [index, "placementId"] });
+    }
+    if (destinations.has(destination)) {
+      ctx.addIssue({ code: "custom", message: "Placement destinations must be unique", path: [index, "date"] });
+    }
+    const lot = lots.get(claim.lotId);
+    if (lot && (lot.version !== claim.expectedLotVersion || lot.recipeId !== claim.recipeId)) {
+      ctx.addIssue({ code: "custom", message: "Claims for a lot must share its version and recipe", path: [index, "lotId"] });
+    }
+    lots.set(claim.lotId, { version: claim.expectedLotVersion, recipeId: claim.recipeId });
+    placementIds.add(claim.placementId);
+    destinations.add(destination);
+  });
+});
 
 export const planBatchStorageRowSchema = z.object({
   count: z.coerce.number().int().min(1).max(99),
@@ -145,6 +198,7 @@ export const planBatchSaveSchema = z.object({
   id: z.string().min(1),
   recipeId: z.string().min(1),
   storageRows: z.array(planBatchStorageRowSchema).max(99),
+  rollingQueueClaim: rollingQueueClaimSchema.nullable().optional(),
 });
 
 export const planBatchesSaveSchema = z

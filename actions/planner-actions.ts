@@ -86,11 +86,17 @@ export async function generatePlan(
     const remainingRolling = new Map(
       rollingRecipes.map((entry) => [entry.recipeId, entry.meals]),
     );
+    const remainingStored = new Map(
+      rollingRecipes.flatMap((entry) => entry.source ? [[entry.recipeId, entry.source.storedMeals] as const] : []),
+    );
     const remainingCustomRolling = new Map(
       rollingCustomMeals.map((entry) => [getRollingCustomMealKey(entry.mealType, entry.customMeal), entry.meals]),
     );
     // Reserve scheduled and stored rolling meals before scheduling continuations.
     for (const slot of existingByKey.values()) {
+      if (slot.recipe && !slot.used && dayKeys.has(slot.date.toISOString()) && remainingStored.has(slot.recipe.id)) {
+        remainingStored.set(slot.recipe.id, Math.max((remainingStored.get(slot.recipe.id) ?? 0) - 1, 0));
+      }
       if (slot.recipe && slot.isRolledOver && dayKeys.has(slot.date.toISOString())) {
         remainingRolling.set(
           slot.recipe.id,
@@ -98,7 +104,7 @@ export async function generatePlan(
         );
       }
       if (slot.customMeal && slot.isRolledOver && dayKeys.has(slot.date.toISOString())) {
-        const key = getRollingCustomMealKey(slot.mealType, slot.customMeal);
+        const key = getRollingCustomMealKey(slot.rollingQueueClaim?.mealType ?? slot.mealType, slot.customMeal);
         remainingCustomRolling.set(key, Math.max((remainingCustomRolling.get(key) ?? 0) - 1, 0));
       }
     }
@@ -123,11 +129,11 @@ export async function generatePlan(
     const batchSlotGroupIds = new Map<string, string>();
     const batchGroupFlags = new Map<
       string,
-      { isRolledOver: boolean; alreadyCooked: boolean }
+      { isRolledOver: boolean; alreadyCooked: boolean; rollingQueueClaim?: { id: string; version: number } }
     >();
     const generatedBatches = new Map<
       string,
-      { recipeId: string; storageRows: PlanBatchInput["storageRows"] }
+      { recipeId: string; storageRows: PlanBatchInput["storageRows"]; rollingQueueClaim?: { id: string; version: number } }
     >();
     const warnings: string[] = [];
     let emptySlotsAttempted = 0;
@@ -202,6 +208,7 @@ export async function generatePlan(
             batchGroupId: null,
             isRolledOver: true,
             alreadyCooked: false,
+            rollingQueueClaim: customRollingEntry.rollingQueueClaim,
           });
           remainingCustomRolling.set(key, (remainingCustomRolling.get(key) ?? 1) - 1);
           emptySlotsFilled += 1;
@@ -260,6 +267,7 @@ export async function generatePlan(
         const flags = {
           isRolledOver: !!rollingEntry,
           alreadyCooked: !!rollingEntry?.alreadyCooked && winner.isBatchRecipe,
+          rollingQueueClaim: rollingEntry?.rollingQueueClaim,
         };
         const totalMeals = overrideMeals ?? getPlannerMealCount(winner);
         // Multi-meal placements share a group id so badges can recount after edits.
@@ -304,23 +312,37 @@ export async function generatePlan(
             },
           );
           const unplacedMeals = totalMeals - 1 - (batchFilledSlots.size - previousContinuationCount);
+          const scheduledMeals = totalMeals - unplacedMeals;
+          const storedAvailable = rollingEntry ? remainingStored.get(winner.id) : undefined;
+          const queueRemainder = storedAvailable === undefined
+            ? unplacedMeals
+            : scheduledMeals > storedAvailable
+              ? unplacedMeals
+              : 0;
+          if (storedAvailable !== undefined) {
+            remainingStored.set(winner.id, Math.max(0, storedAvailable - scheduledMeals));
+          }
           const storageRows: PlanBatchInput["storageRows"] =
-            winner.isBatchRecipe && !flags.alreadyCooked && unplacedMeals > 0
-              ? [{ count: unplacedMeals, cookingFamilyMemberIds: [...slotAudienceIds] }]
+            winner.isBatchRecipe && !flags.alreadyCooked && queueRemainder > 0
+              ? [{ count: queueRemainder, cookingFamilyMemberIds: [...slotAudienceIds] }]
               : [];
           if (winner.isBatchRecipe) {
             generatedBatches.set(batchGroupId, {
               recipeId: winner.id,
               storageRows,
+              rollingQueueClaim: rollingEntry?.rollingQueueClaim,
             });
           }
           if (rollingEntry) {
             remainingRolling.set(
               winner.id,
-              storageRows.length > 0 ? 0 : unplacedMeals,
+              unplacedMeals - queueRemainder * Number(storageRows.length > 0),
             );
           }
         } else if (rollingEntry) {
+          if (remainingStored.has(winner.id)) {
+            remainingStored.set(winner.id, Math.max(0, (remainingStored.get(winner.id) ?? 0) - 1));
+          }
           remainingRolling.set(winner.id, 0);
         }
       }
@@ -356,6 +378,7 @@ export async function generatePlan(
             id,
             recipeId: batch.recipeId,
             storageRows: batch.storageRows,
+            rollingQueueClaim: batch.rollingQueueClaim,
           },
         ];
       },
@@ -385,6 +408,7 @@ export async function savePlan(
   batches: PlanBatchInput[] = [],
 ): Promise<
   | { type: "success"; planId: string }
+  | { type: "rolling_conflict" }
   | {
       type: "date_conflict";
       dates: string[];
@@ -425,6 +449,9 @@ export async function savePlan(
       });
     }
   } catch (error) {
+    if (error instanceof Error && (error.message === "ROLLING_MEAL_CONFLICT" || error.message === "STORED_MEAL_CONFLICT")) {
+      return { type: "rolling_conflict" };
+    }
     console.error("Error saving plan", error);
     return { type: "error", message: "Failed to save plan." };
   }
@@ -436,10 +463,11 @@ export async function savePlan(
 export async function updateSavedPlan(
   planId: string,
   slots: SlotSaveData[],
-  options?: { forceDestructiveSync?: boolean },
+  options?: { forceDestructiveSync?: boolean; expectedVersion?: number },
   batches: PlanBatchInput[] = [],
 ): Promise<
-  | { type: "success" }
+  | { type: "success"; version: number }
+  | { type: "version_conflict" }
   | {
       type: "date_conflict";
       dates: string[];
@@ -457,7 +485,11 @@ export async function updateSavedPlan(
   if (slots.length === 0) {
     return { type: "error", message: "No meals in plan." };
   }
+  if (!Number.isSafeInteger(options?.expectedVersion) || options!.expectedVersion! < 0 || options!.expectedVersion! >= 2147483647) {
+    return { type: "error", message: "Invalid plan version. Reload the plan before saving." };
+  }
 
+  let version: number;
   try {
     const { id: userId } = await requireUser();
     const parsedBatches = planBatchesSaveSchema.parse(batches);
@@ -480,6 +512,8 @@ export async function updateSavedPlan(
     if (result.type === "sync_conflict") {
       return result;
     }
+    if (result.type === "version_conflict") return result;
+    version = result.version;
   } catch (error) {
     console.error("Error updating plan", error);
     return { type: "error", message: "Failed to update plan." };
@@ -488,7 +522,7 @@ export async function updateSavedPlan(
   revalidatePath(ROUTES.planView(planId));
   revalidatePath(ROUTES.logPlanView(planId));
   revalidatePath("/");
-  return { type: "success" };
+  return { type: "success", version };
 }
 
 export async function generateLogFromPlan(

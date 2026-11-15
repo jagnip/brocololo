@@ -28,11 +28,25 @@ function rollingMealLabel(entry: RollingMealType, recipes: RecipeType[]): string
   return recipes.find((recipe) => recipe.id === entry.recipeId)?.name ?? entry.recipeId;
 }
 
+function rollingMealSourceLabel(entry: RollingMealType): string | null {
+  if (entry.kind === "custom" || !entry.source) return null;
+  const parts = [
+    entry.source.storedMeals > 0
+      ? `${entry.source.storedMeals} in storage`
+      : null,
+    entry.source.unfinishedScheduledMeals > 0
+      ? `${entry.source.unfinishedScheduledMeals} not cooked`
+      : null,
+  ].filter((part): part is string => part !== null);
+  return parts.length > 0 ? parts.join(" / ") : null;
+}
+
 type PlannerRollingRecipesSectionProps = {
   control: Control<PlannerCriteriaInputType>;
   selected: RollingMealType[];
   onChange: (next: RollingMealType[]) => void;
   availableCustomMeals?: Extract<RollingMealType, { kind: "custom" }>[];
+  availableRollingMeals?: RollingMealType[];
   ingredients: IngredientType[];
   recipes: RecipeType[];
   onInvalidStateChange?: (hasInvalid: boolean) => void;
@@ -43,6 +57,7 @@ export function PlannerRollingRecipesSection({
   selected,
   onChange,
   availableCustomMeals = [],
+  availableRollingMeals = [],
   ingredients,
   recipes,
   onInvalidStateChange,
@@ -87,8 +102,10 @@ export function PlannerRollingRecipesSection({
                Object.entries(current).filter(([id]) => selectedIds.has(id)),
              ));
              const updated = options.flatMap((option) => {
-               const existing = selected.find((entry) => rollingMealOptionKey(entry) === option.value);
-               if (existing) return existing;
+                const existing = selected.find((entry) => rollingMealOptionKey(entry) === option.value);
+                if (existing) return existing;
+                const available = availableRollingMeals.find((entry) => rollingMealOptionKey(entry) === option.value);
+                if (available) return available;
                const recipeId = option.value.startsWith("recipe:")
                  ? option.value.slice("recipe:".length)
                  : option.value.startsWith("custom:") ? null : option.value;
@@ -121,13 +138,17 @@ export function PlannerRollingRecipesSection({
       {selected
         .map((entry) => {
            const key = rollingMealOptionKey(entry);
-           const recipe = entry.kind !== "custom" ? recipes.find((candidate) => candidate.id === entry.recipeId) : null;
-           const label = rollingMealLabel(entry, recipes);
-           if (entry.kind !== "custom" && !recipe) return null;
-           return (
-            <div key={key} className="space-y-2 py-3">
-               <div className="flex min-w-0 items-center gap-2">
-               <span className="min-w-0 flex-1 truncate text-sm">{label}</span>
+            const recipe = entry.kind !== "custom" ? recipes.find((candidate) => candidate.id === entry.recipeId) : null;
+            const label = rollingMealLabel(entry, recipes);
+            const sourceLabel = rollingMealSourceLabel(entry);
+            if (entry.kind !== "custom" && !recipe) return null;
+            return (
+             <div key={key} className="space-y-2 py-3">
+                <div className="flex min-w-0 items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <span className="block truncate text-sm">{label}</span>
+                  {sourceLabel ? <span className="block type-caption text-muted-foreground">{sourceLabel}</span> : null}
+                </div>
               <Input
                 type="number"
                  min={1}

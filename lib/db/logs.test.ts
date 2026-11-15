@@ -2,6 +2,8 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { LogMealType } from "@/src/generated/client";
 import {
   ensureSnackLogEntriesForMember,
+  appendNextLogDay,
+  removeLogDay,
   findLogContainingDate,
   type LogListEntry,
 } from "./logs";
@@ -12,6 +14,7 @@ vi.mock("./index", () => ({
       findMany: vi.fn(),
       upsert: vi.fn(),
     },
+    $transaction: vi.fn(),
   },
 }));
 
@@ -63,6 +66,43 @@ describe("findLogContainingDate", () => {
 
     expect(startBoundary?.id).toBe("active");
     expect(endBoundary?.id).toBe("active");
+  });
+});
+
+describe("log day plan versions", () => {
+  it("claims the observed version before appending slots and rejects stale claims", async () => {
+    const updateMany = vi.fn().mockResolvedValueOnce({ count: 1 }).mockResolvedValueOnce({ count: 0 });
+    const createMany = vi.fn();
+    const tx = {
+      log: { findFirst: vi.fn().mockResolvedValue({ id: "log", plan: { id: "plan", endDate: new Date("2026-03-17"), version: 2 } }) },
+      logEntry: { findFirst: vi.fn().mockResolvedValue(null), findMany: vi.fn().mockResolvedValue([]) },
+      plan: { updateMany, update: vi.fn() },
+      planSlot: { createMany },
+      familyMember: { findMany: vi.fn().mockResolvedValue([]) },
+    };
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      (callback as (tx: unknown) => Promise<unknown>)(tx),
+    );
+    await appendNextLogDay({ userId: "user", logId: "log" });
+    expect(updateMany).toHaveBeenCalledWith({ where: { id: "plan", userId: "user", version: 2 }, data: { version: { increment: 1 } } });
+    expect(updateMany.mock.invocationCallOrder[0]).toBeLessThan(createMany.mock.invocationCallOrder[0]);
+    await expect(appendNextLogDay({ userId: "user", logId: "log" })).rejects.toThrow("PLAN_VERSION_CONFLICT");
+    expect(createMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not delete a day when the plan version changed", async () => {
+    const deleteMany = vi.fn();
+    const tx = {
+      log: { findFirst: vi.fn().mockResolvedValue({ planId: "plan", plan: { version: 3 } }) },
+      logEntry: { findMany: vi.fn().mockResolvedValueOnce([{ date: new Date("2026-03-17") }, { date: new Date("2026-03-18") }]).mockResolvedValueOnce([]), deleteMany },
+      planSlot: { count: vi.fn().mockResolvedValue(0), deleteMany: vi.fn() },
+      plan: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
+    };
+    vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
+      (callback as (tx: unknown) => Promise<unknown>)(tx),
+    );
+    await expect(removeLogDay({ userId: "user", logId: "log", dateKey: "2026-03-17" })).rejects.toThrow("PLAN_VERSION_CONFLICT");
+    expect(deleteMany).not.toHaveBeenCalled();
   });
 });
 

@@ -253,6 +253,7 @@ export async function appendNextLogDay(input: { userId: string; logId: string })
           select: {
             id: true,
             endDate: true,
+            version: true,
           },
         },
       },
@@ -293,6 +294,12 @@ export async function appendNextLogDay(input: { userId: string; logId: string })
         conflictingPlanIds: dateCollision.conflictingPlanIds,
       };
     }
+
+    const claimed = await tx.plan.updateMany({
+      where: { id: log.plan.id, userId: input.userId, version: log.plan.version },
+      data: { version: { increment: 1 } },
+    });
+    if (claimed.count !== 1) throw new Error("PLAN_VERSION_CONFLICT");
 
     const logMealTypes = [
       LogMealType.BREAKFAST,
@@ -372,7 +379,7 @@ export async function removeLogDay(input: {
   return prisma.$transaction(async (tx) => {
     const logWithPlan = await tx.log.findFirst({
       where: { id: input.logId, plan: { userId: input.userId } },
-      select: { planId: true },
+      select: { planId: true, plan: { select: { version: true } } },
     });
     if (!logWithPlan) {
       throw new Error("LOG_NOT_FOUND");
@@ -421,6 +428,12 @@ export async function removeLogDay(input: {
         impactedPlanMealsCount,
       };
     }
+
+    const claimed = await tx.plan.updateMany({
+      where: { id: logWithPlanId, userId: input.userId, version: logWithPlan.plan.version },
+      data: { version: { increment: 1 } },
+    });
+    if (claimed.count !== 1) throw new Error("PLAN_VERSION_CONFLICT");
 
     await tx.logEntry.deleteMany({
       where: {

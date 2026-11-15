@@ -45,6 +45,17 @@ export const RecipeIngredientAdjustmentKind = {
 export type RecipeIngredientAdjustmentKind = (typeof RecipeIngredientAdjustmentKind)[keyof typeof RecipeIngredientAdjustmentKind]
 
 
+export const StoredMealEventType = {
+  CREATED: 'CREATED',
+  ADJUSTED: 'ADJUSTED',
+  USED: 'USED',
+  DISCARDED: 'DISCARDED',
+  TRANSFERRED: 'TRANSFERRED'
+} as const
+
+export type StoredMealEventType = (typeof StoredMealEventType)[keyof typeof StoredMealEventType]
+
+
 export const RecipePreference = {
   LIKE: 'LIKE',
   LOVE: 'LOVE',

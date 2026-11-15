@@ -4,6 +4,8 @@ import { getPlanSlotKey } from "@/lib/planner/helpers";
 /** Meal fields that travel with the meal (not date / mealType / id). */
 type MovableMeal = Pick<
   SlotInputType,
+  | "placementId"
+  | "rollingQueueClaim"
   | "recipe"
   | "customMeal"
   | "alternatives"
@@ -21,6 +23,8 @@ function isSlotEmpty(slot: SlotInputType): boolean {
 
 function getMovableMeal(slot: SlotInputType): MovableMeal {
   return {
+    placementId: slot.placementId,
+    rollingQueueClaim: slot.rollingQueueClaim,
     recipe: slot.recipe,
     customMeal: slot.customMeal,
     alternatives: slot.alternatives,
@@ -37,6 +41,8 @@ function getMovableMeal(slot: SlotInputType): MovableMeal {
 function clearMeal(slot: SlotInputType): SlotInputType {
   return {
     ...slot,
+    placementId: null,
+    rollingQueueClaim: null,
     recipe: null,
     customMeal: null,
     alternatives: [],
@@ -52,6 +58,8 @@ function clearMeal(slot: SlotInputType): SlotInputType {
 function applyMeal(slot: SlotInputType, meal: MovableMeal): SlotInputType {
   return {
     ...slot,
+    placementId: meal.placementId ?? null,
+    rollingQueueClaim: meal.rollingQueueClaim,
     recipe: meal.recipe,
     customMeal: meal.customMeal,
     alternatives: meal.alternatives,

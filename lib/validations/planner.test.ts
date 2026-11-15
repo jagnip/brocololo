@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { planBatchesSaveSchema, plannerCriteriaSchema, slotSaveDataSchema } from "./planner";
+import { planBatchesSaveSchema, plannerCriteriaSchema, planSlotsSaveSchema, slotSaveDataSchema, storedMealPlacementClaimsSchema } from "./planner";
 
 const validBatch = {
   id: "batch-1",
@@ -29,6 +29,50 @@ describe("rolling and slot flags", () => {
     expect(slotSaveDataSchema.parse(slot)).toMatchObject({ isRolledOver: false, alreadyCooked: false });
     expect(slotSaveDataSchema.parse({ ...slot, isRolledOver: true, alreadyCooked: true })).toMatchObject({ isRolledOver: true, alreadyCooked: true });
     expect(slotSaveDataSchema.safeParse({ ...slot, alreadyCooked: "true" }).success).toBe(false);
+  });
+
+  it("preserves optional placement identities and rejects duplicates", () => {
+    const slot = { date: "2026-04-20", mealType: "DINNER", recipeId: "recipe-1", customMeal: null, alternativeRecipeIds: [], cookingFamilyMemberIds: ["member-1"], used: false };
+    expect(slotSaveDataSchema.parse({ ...slot, placementId: "placement-1" }).placementId).toBe("placement-1");
+    expect(slotSaveDataSchema.safeParse({ ...slot, placementId: "" }).success).toBe(false);
+    expect(planSlotsSaveSchema.safeParse([{ ...slot, placementId: "placement-1" }, { ...slot, placementId: "placement-1" }]).success).toBe(false);
+    expect(planSlotsSaveSchema.safeParse([{ ...slot, placementId: null }, slot]).success).toBe(true);
+  });
+});
+
+describe("stored meal placement claim groundwork", () => {
+  const claim = {
+    placementId: "placement-1", lotId: "lot-1", expectedLotVersion: 1,
+    recipeId: "recipe-1", date: "2026-04-20", mealType: "DINNER",
+  };
+
+  it("accepts distinct destinations even when they draw from the same lot", () => {
+    const result = storedMealPlacementClaimsSchema.parse([
+      claim, { ...claim, placementId: "placement-2", mealType: "LUNCH" },
+    ]);
+    expect(result).toHaveLength(2);
+    expect(result[0].date).toEqual(new Date("2026-04-20"));
+  });
+
+  it("rejects duplicate placement identities and duplicate destination slots", () => {
+    expect(storedMealPlacementClaimsSchema.safeParse([claim, { ...claim, mealType: "LUNCH" }]).success).toBe(false);
+    expect(storedMealPlacementClaimsSchema.safeParse([claim, { ...claim, placementId: "placement-2", date: "2026-04-20T12:00:00Z" }]).success).toBe(false);
+  });
+
+  it("rejects invalid lot versions and missing identities", () => {
+    for (const expectedLotVersion of [-1, 0.5, 2147483647]) {
+      expect(storedMealPlacementClaimsSchema.safeParse([{ ...claim, expectedLotVersion }]).success).toBe(false);
+    }
+    expect(storedMealPlacementClaimsSchema.safeParse([{ ...claim, placementId: "" }]).success).toBe(false);
+  });
+
+  it("rejects inconsistent snapshots for the same lot", () => {
+    for (const change of [{ expectedLotVersion: 2 }, { recipeId: "other" }]) {
+      expect(storedMealPlacementClaimsSchema.safeParse([
+        claim,
+        { ...claim, ...change, placementId: "placement-2", mealType: "LUNCH" },
+      ]).success).toBe(false);
+    }
   });
 });
 
