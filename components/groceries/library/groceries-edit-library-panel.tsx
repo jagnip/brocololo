@@ -48,21 +48,18 @@ import { GroceriesEditLibraryListDialog } from "@/components/groceries/library/g
 import { GroceriesEditLibraryRow } from "@/components/groceries/library/groceries-edit-library-row";
 import { cn } from "@/lib/utils";
 
-export type GroceriesEditLibraryPanelChrome = "sidebar" | "embedded";
+export type GroceriesEditLibraryPanelChrome = "sidebar" | "embedded" | "page";
 
-// The panel needs `planId` purely so the server actions can revalidate the
-// groceries edit page that's currently open. Library data itself is global.
 export type GroceriesEditLibraryPanelProps = {
-  planId: string;
   lists: IngredientListWithItems[];
   ingredients: GroceriesEditIngredientOption[];
   categories: GroceriesEditCategoryOption[];
-  onAddIngredientToGroceries: (ingredientId: string) => void;
-  onEditIngredientRequested: (ingredientId: string) => void;
+  onAddIngredientToGroceries?: (ingredientId: string) => void;
+  onEditIngredientRequested?: (ingredientId: string) => void;
   className?: string;
   /** When false, the shell owns the Lists title / create button (accordion header). */
   showHeader?: boolean;
-  /** Sidebar chrome includes card border; embedded is used inside the shell card. */
+  /** Page chrome renders grocery-style category sections; embedded is used inside the editor shell. */
   chrome?: GroceriesEditLibraryPanelChrome;
   /** Shell wires the accordion create button to open the create-list dialog. */
   createListOpenerRef?: RefObject<(() => void) | null>;
@@ -82,7 +79,6 @@ function buildOptimisticState(lists: IngredientListWithItems[]): OptimisticByLis
 }
 
 export function GroceriesEditLibraryPanel({
-  planId,
   lists,
   ingredients,
   categories,
@@ -197,7 +193,7 @@ export function GroceriesEditLibraryPanel({
 
   const handleCreateList = useCallback(
     async (name: string) => {
-      const result = await createIngredientListAction({ planId, name });
+      const result = await createIngredientListAction({ name });
       if (result.type === "error") {
         toast.error(result.message);
         return;
@@ -209,14 +205,13 @@ export function GroceriesEditLibraryPanel({
       // handled by the props-sync useEffect once the new list arrives.
       setActiveListId(result.listId);
     },
-    [planId],
+    [],
   );
 
   const handleRenameList = useCallback(
     async (name: string) => {
       if (!activeList) return;
       const result = await renameIngredientListAction({
-        planId,
         listId: activeList.id,
         name,
       });
@@ -227,7 +222,7 @@ export function GroceriesEditLibraryPanel({
       toast.success(`Renamed list to "${name}".`);
       setRenameDialogOpen(false);
     },
-    [planId, activeList],
+    [activeList],
   );
 
   const handleDeleteList = useCallback(() => {
@@ -235,7 +230,6 @@ export function GroceriesEditLibraryPanel({
     const deletedName = activeList.name;
     startTransition(async () => {
       const result = await deleteIngredientListAction({
-        planId,
         listId: activeList.id,
       });
       if (result.type === "error") {
@@ -245,7 +239,7 @@ export function GroceriesEditLibraryPanel({
       toast.success(`Deleted list "${deletedName}".`);
       setDeleteDialogOpen(false);
     });
-  }, [planId, activeList, startTransition]);
+  }, [activeList, startTransition]);
 
   const handleAddIngredientToList = useCallback(
     (ingredientId: string) => {
@@ -262,7 +256,6 @@ export function GroceriesEditLibraryPanel({
 
       startTransition(async () => {
         const result = await addIngredientToListAction({
-          planId,
           listId,
           ingredientId,
         });
@@ -278,7 +271,7 @@ export function GroceriesEditLibraryPanel({
         }
       });
     },
-    [planId, activeList, startTransition],
+    [activeList, startTransition],
   );
 
   const handleRemoveIngredientFromList = useCallback(
@@ -296,7 +289,6 @@ export function GroceriesEditLibraryPanel({
 
       startTransition(async () => {
         const result = await removeIngredientFromListAction({
-          planId,
           listId,
           ingredientId,
         });
@@ -312,15 +304,16 @@ export function GroceriesEditLibraryPanel({
         }
       });
     },
-    [planId, activeList, startTransition],
+    [activeList, startTransition],
   );
 
   // ---------- rendering ----------
 
   const panelLabel = "Ingredient lists library";
+  const isPageChrome = chrome === "page";
   const panelBody = (
-    <div className="flex flex-col gap-4">
-        {showHeader ? (
+    <div className={cn("flex flex-col gap-4", !isPageChrome && "lg:min-h-0 lg:flex-1")}>
+        {showHeader && !isPageChrome ? (
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold tracking-tight">Lists</h2>
             <Button
@@ -363,7 +356,7 @@ export function GroceriesEditLibraryPanel({
                 onValueChange={(value) => setActiveListId(value)}
                 allowInlineClear={false}
               >
-                <SelectTrigger className="min-w-0 flex-1">
+                <SelectTrigger className="min-w-0 flex-1 lg:w-96 lg:flex-none">
                   <SelectValue placeholder="Select a list" />
                 </SelectTrigger>
                 <SelectContent>
@@ -396,20 +389,33 @@ export function GroceriesEditLibraryPanel({
               >
                 <Trash2 className="h-4 w-4" aria-hidden />
               </Button>
+              {isPageChrome ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 shrink-0"
+                  aria-label="Create new list"
+                  onClick={() => setCreateDialogOpen(true)}
+                >
+                  <Plus className="h-4 w-4" aria-hidden />
+                </Button>
+              ) : null}
             </div>
 
             {/* Search-to-add ingredient combobox. Pulls from the entire
                 ingredients DB (passed in by the page) and dispatches an
                 add-to-list server action when a user picks one. */}
             <SearchableSelect
+              className="lg:w-96"
               options={ingredientSearchOptions}
               value={null}
               onValueChange={(nextIngredientId) => {
                 if (!nextIngredientId) return;
                 handleAddIngredientToList(nextIngredientId);
               }}
-              placeholder="Search ingredients..."
-              searchPlaceholder="Search ingredients..."
+              placeholder="Add ingredients..."
+              searchPlaceholder="Search"
               emptyLabel="No ingredient found."
               allowClear={false}
               disabled={!activeList}
@@ -426,26 +432,41 @@ export function GroceriesEditLibraryPanel({
             />
 
             {/* Body: ingredients in the active list, grouped by category. */}
+            <div
+              className={cn(
+                !isPageChrome &&
+                  "lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain lg:[scrollbar-gutter:stable]",
+              )}
+              data-testid="ingredient-list-items"
+            >
             {groupedActiveItems.length === 0 ? (
               <p className="text-xs text-muted-foreground">
                 Add ingredients from the search above to populate this list.
               </p>
             ) : (
-              <div className="space-y-4">
+              <div className={cn(isPageChrome ? "space-y-8" : "space-y-4")}>
                 {groupedActiveItems.map((section) => (
-                  <div key={section.categoryId} className="space-y-1">
-                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <section key={section.categoryId} className={cn(isPageChrome ? "space-y-3" : "space-y-1")}>
+                    <h3 className={cn(
+                      "text-xs font-semibold uppercase tracking-wide text-muted-foreground",
+                      isPageChrome && "text-base normal-case tracking-tight text-foreground",
+                    )}>
                       {section.categoryName}
                     </h3>
-                    <ul className="divide-y divide-border">
+                    <ul className={cn(isPageChrome ? "space-y-1" : "divide-y divide-border")}>
                       {section.items.map((ingredient) => (
-                        <li key={ingredient.id}>
+                        <li
+                          key={ingredient.id}
+                          className={cn(isPageChrome && "group/row rounded-lg border bg-card px-3")}
+                        >
                           <GroceriesEditLibraryRow
                             ingredientId={ingredient.id}
                             ingredientSlug={ingredient.slug}
                             ingredientName={ingredient.name}
                             ingredientSupermarketUrl={ingredient.supermarketUrl}
                             ingredientDescriptor={ingredient.descriptor}
+                            ingredientIcon={ingredient.icon}
+                            pageVariant={isPageChrome}
                             onAddToGroceries={onAddIngredientToGroceries}
                             onEditIngredientRequested={onEditIngredientRequested}
                             onRemoveFromList={handleRemoveIngredientFromList}
@@ -453,10 +474,11 @@ export function GroceriesEditLibraryPanel({
                         </li>
                       ))}
                     </ul>
-                  </div>
+                  </section>
                 ))}
               </div>
             )}
+            </div>
           </>
         )}
     </div>
@@ -511,6 +533,18 @@ export function GroceriesEditLibraryPanel({
   );
 
   if (chrome === "embedded") {
+    return (
+      <div
+        className={cn("min-w-0 lg:flex lg:h-full lg:min-h-0 lg:flex-col", className)}
+        aria-label={panelLabel}
+      >
+        {panelBody}
+        {panelDialogs}
+      </div>
+    );
+  }
+
+  if (chrome === "page") {
     return (
       <div className={cn("min-w-0", className)} aria-label={panelLabel}>
         {panelBody}

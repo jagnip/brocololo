@@ -18,9 +18,8 @@ import {
   renameIngredientListSchema,
 } from "@/lib/validations/ingredient-list";
 
-function revalidateGroceriesPaths(planId: string) {
-  revalidatePath(ROUTES.groceries);
-  revalidatePath(ROUTES.groceriesEdit(planId));
+function revalidateIngredientLists() {
+  revalidatePath(ROUTES.groceries, "layout");
 }
 
 export async function createIngredientListAction(input: unknown): Promise<
@@ -39,7 +38,7 @@ export async function createIngredientListAction(input: unknown): Promise<
   try {
     const { id: userId } = await requireUser();
     const list = await createIngredientList({ userId, name: parsed.data.name });
-    revalidateGroceriesPaths(parsed.data.planId);
+    revalidateIngredientLists();
     return { type: "success", listId: list.id };
   } catch {
     return { type: "error", message: "Could not create list. Try again." };
@@ -65,7 +64,7 @@ export async function renameIngredientListAction(input: unknown): Promise<
       id: parsed.data.listId,
       name: parsed.data.name,
     });
-    revalidateGroceriesPaths(parsed.data.planId);
+    revalidateIngredientLists();
     return { type: "success" };
   } catch {
     return { type: "error", message: "Could not rename list. Try again." };
@@ -86,7 +85,7 @@ export async function deleteIngredientListAction(input: unknown): Promise<
   try {
     const { id: userId } = await requireUser();
     await deleteIngredientList({ userId, id: parsed.data.listId });
-    revalidateGroceriesPaths(parsed.data.planId);
+    revalidateIngredientLists();
     return { type: "success" };
   } catch {
     return { type: "error", message: "Could not delete list. Try again." };
@@ -111,7 +110,7 @@ export async function addIngredientToListAction(input: unknown): Promise<
       listId: parsed.data.listId,
       ingredientId: parsed.data.ingredientId,
     });
-    revalidateGroceriesPaths(parsed.data.planId);
+    revalidateIngredientLists();
     return { type: "success" };
   } catch {
     return {
@@ -139,7 +138,7 @@ export async function removeIngredientFromListAction(input: unknown): Promise<
       listId: parsed.data.listId,
       ingredientId: parsed.data.ingredientId,
     });
-    revalidateGroceriesPaths(parsed.data.planId);
+    revalidateIngredientLists();
     return { type: "success" };
   } catch {
     return {

@@ -832,9 +832,9 @@ export async function saveShoppingLayoutPreset(input: {
       })),
     });
 
-    await tx.shoppingList.update({
-      where: { id: list.id },
-      data: { activeLayoutPresetId: preset.id },
+    await tx.user.update({
+      where: { id: input.userId },
+      data: { activeShoppingLayoutPresetId: preset.id },
     });
 
     return { planId: list.planId, presetId: preset.id };

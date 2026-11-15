@@ -168,6 +168,7 @@ export type ShoppingLayoutPresetWhereInput = {
   isBuiltIn?: Prisma.BoolFilter<"ShoppingLayoutPreset"> | boolean
   categoryOrders?: Prisma.ShoppingLayoutPresetCategoryListRelationFilter
   listsUsingAsActive?: Prisma.ShoppingListListRelationFilter
+  usersUsingAsActive?: Prisma.UserListRelationFilter
 }
 
 export type ShoppingLayoutPresetOrderByWithRelationInput = {
@@ -176,6 +177,7 @@ export type ShoppingLayoutPresetOrderByWithRelationInput = {
   isBuiltIn?: Prisma.SortOrder
   categoryOrders?: Prisma.ShoppingLayoutPresetCategoryOrderByRelationAggregateInput
   listsUsingAsActive?: Prisma.ShoppingListOrderByRelationAggregateInput
+  usersUsingAsActive?: Prisma.UserOrderByRelationAggregateInput
 }
 
 export type ShoppingLayoutPresetWhereUniqueInput = Prisma.AtLeast<{
@@ -187,6 +189,7 @@ export type ShoppingLayoutPresetWhereUniqueInput = Prisma.AtLeast<{
   isBuiltIn?: Prisma.BoolFilter<"ShoppingLayoutPreset"> | boolean
   categoryOrders?: Prisma.ShoppingLayoutPresetCategoryListRelationFilter
   listsUsingAsActive?: Prisma.ShoppingListListRelationFilter
+  usersUsingAsActive?: Prisma.UserListRelationFilter
 }, "id">
 
 export type ShoppingLayoutPresetOrderByWithAggregationInput = {
@@ -213,6 +216,7 @@ export type ShoppingLayoutPresetCreateInput = {
   isBuiltIn?: boolean
   categoryOrders?: Prisma.ShoppingLayoutPresetCategoryCreateNestedManyWithoutPresetInput
   listsUsingAsActive?: Prisma.ShoppingListCreateNestedManyWithoutActiveLayoutPresetInput
+  usersUsingAsActive?: Prisma.UserCreateNestedManyWithoutActiveShoppingLayoutPresetInput
 }
 
 export type ShoppingLayoutPresetUncheckedCreateInput = {
@@ -221,6 +225,7 @@ export type ShoppingLayoutPresetUncheckedCreateInput = {
   isBuiltIn?: boolean
   categoryOrders?: Prisma.ShoppingLayoutPresetCategoryUncheckedCreateNestedManyWithoutPresetInput
   listsUsingAsActive?: Prisma.ShoppingListUncheckedCreateNestedManyWithoutActiveLayoutPresetInput
+  usersUsingAsActive?: Prisma.UserUncheckedCreateNestedManyWithoutActiveShoppingLayoutPresetInput
 }
 
 export type ShoppingLayoutPresetUpdateInput = {
@@ -229,6 +234,7 @@ export type ShoppingLayoutPresetUpdateInput = {
   isBuiltIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   categoryOrders?: Prisma.ShoppingLayoutPresetCategoryUpdateManyWithoutPresetNestedInput
   listsUsingAsActive?: Prisma.ShoppingListUpdateManyWithoutActiveLayoutPresetNestedInput
+  usersUsingAsActive?: Prisma.UserUpdateManyWithoutActiveShoppingLayoutPresetNestedInput
 }
 
 export type ShoppingLayoutPresetUncheckedUpdateInput = {
@@ -237,6 +243,7 @@ export type ShoppingLayoutPresetUncheckedUpdateInput = {
   isBuiltIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   categoryOrders?: Prisma.ShoppingLayoutPresetCategoryUncheckedUpdateManyWithoutPresetNestedInput
   listsUsingAsActive?: Prisma.ShoppingListUncheckedUpdateManyWithoutActiveLayoutPresetNestedInput
+  usersUsingAsActive?: Prisma.UserUncheckedUpdateManyWithoutActiveShoppingLayoutPresetNestedInput
 }
 
 export type ShoppingLayoutPresetCreateManyInput = {
@@ -255,6 +262,11 @@ export type ShoppingLayoutPresetUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isBuiltIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+}
+
+export type ShoppingLayoutPresetNullableScalarRelationFilter = {
+  is?: Prisma.ShoppingLayoutPresetWhereInput | null
+  isNot?: Prisma.ShoppingLayoutPresetWhereInput | null
 }
 
 export type ShoppingLayoutPresetCountOrderByAggregateInput = {
@@ -280,9 +292,20 @@ export type ShoppingLayoutPresetScalarRelationFilter = {
   isNot?: Prisma.ShoppingLayoutPresetWhereInput
 }
 
-export type ShoppingLayoutPresetNullableScalarRelationFilter = {
-  is?: Prisma.ShoppingLayoutPresetWhereInput | null
-  isNot?: Prisma.ShoppingLayoutPresetWhereInput | null
+export type ShoppingLayoutPresetCreateNestedOneWithoutUsersUsingAsActiveInput = {
+  create?: Prisma.XOR<Prisma.ShoppingLayoutPresetCreateWithoutUsersUsingAsActiveInput, Prisma.ShoppingLayoutPresetUncheckedCreateWithoutUsersUsingAsActiveInput>
+  connectOrCreate?: Prisma.ShoppingLayoutPresetCreateOrConnectWithoutUsersUsingAsActiveInput
+  connect?: Prisma.ShoppingLayoutPresetWhereUniqueInput
+}
+
+export type ShoppingLayoutPresetUpdateOneWithoutUsersUsingAsActiveNestedInput = {
+  create?: Prisma.XOR<Prisma.ShoppingLayoutPresetCreateWithoutUsersUsingAsActiveInput, Prisma.ShoppingLayoutPresetUncheckedCreateWithoutUsersUsingAsActiveInput>
+  connectOrCreate?: Prisma.ShoppingLayoutPresetCreateOrConnectWithoutUsersUsingAsActiveInput
+  upsert?: Prisma.ShoppingLayoutPresetUpsertWithoutUsersUsingAsActiveInput
+  disconnect?: Prisma.ShoppingLayoutPresetWhereInput | boolean
+  delete?: Prisma.ShoppingLayoutPresetWhereInput | boolean
+  connect?: Prisma.ShoppingLayoutPresetWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ShoppingLayoutPresetUpdateToOneWithWhereWithoutUsersUsingAsActiveInput, Prisma.ShoppingLayoutPresetUpdateWithoutUsersUsingAsActiveInput>, Prisma.ShoppingLayoutPresetUncheckedUpdateWithoutUsersUsingAsActiveInput>
 }
 
 export type ShoppingLayoutPresetCreateNestedOneWithoutCategoryOrdersInput = {
@@ -315,11 +338,60 @@ export type ShoppingLayoutPresetUpdateOneWithoutListsUsingAsActiveNestedInput = 
   update?: Prisma.XOR<Prisma.XOR<Prisma.ShoppingLayoutPresetUpdateToOneWithWhereWithoutListsUsingAsActiveInput, Prisma.ShoppingLayoutPresetUpdateWithoutListsUsingAsActiveInput>, Prisma.ShoppingLayoutPresetUncheckedUpdateWithoutListsUsingAsActiveInput>
 }
 
+export type ShoppingLayoutPresetCreateWithoutUsersUsingAsActiveInput = {
+  id?: string
+  name: string
+  isBuiltIn?: boolean
+  categoryOrders?: Prisma.ShoppingLayoutPresetCategoryCreateNestedManyWithoutPresetInput
+  listsUsingAsActive?: Prisma.ShoppingListCreateNestedManyWithoutActiveLayoutPresetInput
+}
+
+export type ShoppingLayoutPresetUncheckedCreateWithoutUsersUsingAsActiveInput = {
+  id?: string
+  name: string
+  isBuiltIn?: boolean
+  categoryOrders?: Prisma.ShoppingLayoutPresetCategoryUncheckedCreateNestedManyWithoutPresetInput
+  listsUsingAsActive?: Prisma.ShoppingListUncheckedCreateNestedManyWithoutActiveLayoutPresetInput
+}
+
+export type ShoppingLayoutPresetCreateOrConnectWithoutUsersUsingAsActiveInput = {
+  where: Prisma.ShoppingLayoutPresetWhereUniqueInput
+  create: Prisma.XOR<Prisma.ShoppingLayoutPresetCreateWithoutUsersUsingAsActiveInput, Prisma.ShoppingLayoutPresetUncheckedCreateWithoutUsersUsingAsActiveInput>
+}
+
+export type ShoppingLayoutPresetUpsertWithoutUsersUsingAsActiveInput = {
+  update: Prisma.XOR<Prisma.ShoppingLayoutPresetUpdateWithoutUsersUsingAsActiveInput, Prisma.ShoppingLayoutPresetUncheckedUpdateWithoutUsersUsingAsActiveInput>
+  create: Prisma.XOR<Prisma.ShoppingLayoutPresetCreateWithoutUsersUsingAsActiveInput, Prisma.ShoppingLayoutPresetUncheckedCreateWithoutUsersUsingAsActiveInput>
+  where?: Prisma.ShoppingLayoutPresetWhereInput
+}
+
+export type ShoppingLayoutPresetUpdateToOneWithWhereWithoutUsersUsingAsActiveInput = {
+  where?: Prisma.ShoppingLayoutPresetWhereInput
+  data: Prisma.XOR<Prisma.ShoppingLayoutPresetUpdateWithoutUsersUsingAsActiveInput, Prisma.ShoppingLayoutPresetUncheckedUpdateWithoutUsersUsingAsActiveInput>
+}
+
+export type ShoppingLayoutPresetUpdateWithoutUsersUsingAsActiveInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  isBuiltIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  categoryOrders?: Prisma.ShoppingLayoutPresetCategoryUpdateManyWithoutPresetNestedInput
+  listsUsingAsActive?: Prisma.ShoppingListUpdateManyWithoutActiveLayoutPresetNestedInput
+}
+
+export type ShoppingLayoutPresetUncheckedUpdateWithoutUsersUsingAsActiveInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  isBuiltIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  categoryOrders?: Prisma.ShoppingLayoutPresetCategoryUncheckedUpdateManyWithoutPresetNestedInput
+  listsUsingAsActive?: Prisma.ShoppingListUncheckedUpdateManyWithoutActiveLayoutPresetNestedInput
+}
+
 export type ShoppingLayoutPresetCreateWithoutCategoryOrdersInput = {
   id?: string
   name: string
   isBuiltIn?: boolean
   listsUsingAsActive?: Prisma.ShoppingListCreateNestedManyWithoutActiveLayoutPresetInput
+  usersUsingAsActive?: Prisma.UserCreateNestedManyWithoutActiveShoppingLayoutPresetInput
 }
 
 export type ShoppingLayoutPresetUncheckedCreateWithoutCategoryOrdersInput = {
@@ -327,6 +399,7 @@ export type ShoppingLayoutPresetUncheckedCreateWithoutCategoryOrdersInput = {
   name: string
   isBuiltIn?: boolean
   listsUsingAsActive?: Prisma.ShoppingListUncheckedCreateNestedManyWithoutActiveLayoutPresetInput
+  usersUsingAsActive?: Prisma.UserUncheckedCreateNestedManyWithoutActiveShoppingLayoutPresetInput
 }
 
 export type ShoppingLayoutPresetCreateOrConnectWithoutCategoryOrdersInput = {
@@ -350,6 +423,7 @@ export type ShoppingLayoutPresetUpdateWithoutCategoryOrdersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isBuiltIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   listsUsingAsActive?: Prisma.ShoppingListUpdateManyWithoutActiveLayoutPresetNestedInput
+  usersUsingAsActive?: Prisma.UserUpdateManyWithoutActiveShoppingLayoutPresetNestedInput
 }
 
 export type ShoppingLayoutPresetUncheckedUpdateWithoutCategoryOrdersInput = {
@@ -357,6 +431,7 @@ export type ShoppingLayoutPresetUncheckedUpdateWithoutCategoryOrdersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isBuiltIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   listsUsingAsActive?: Prisma.ShoppingListUncheckedUpdateManyWithoutActiveLayoutPresetNestedInput
+  usersUsingAsActive?: Prisma.UserUncheckedUpdateManyWithoutActiveShoppingLayoutPresetNestedInput
 }
 
 export type ShoppingLayoutPresetCreateWithoutListsUsingAsActiveInput = {
@@ -364,6 +439,7 @@ export type ShoppingLayoutPresetCreateWithoutListsUsingAsActiveInput = {
   name: string
   isBuiltIn?: boolean
   categoryOrders?: Prisma.ShoppingLayoutPresetCategoryCreateNestedManyWithoutPresetInput
+  usersUsingAsActive?: Prisma.UserCreateNestedManyWithoutActiveShoppingLayoutPresetInput
 }
 
 export type ShoppingLayoutPresetUncheckedCreateWithoutListsUsingAsActiveInput = {
@@ -371,6 +447,7 @@ export type ShoppingLayoutPresetUncheckedCreateWithoutListsUsingAsActiveInput = 
   name: string
   isBuiltIn?: boolean
   categoryOrders?: Prisma.ShoppingLayoutPresetCategoryUncheckedCreateNestedManyWithoutPresetInput
+  usersUsingAsActive?: Prisma.UserUncheckedCreateNestedManyWithoutActiveShoppingLayoutPresetInput
 }
 
 export type ShoppingLayoutPresetCreateOrConnectWithoutListsUsingAsActiveInput = {
@@ -394,6 +471,7 @@ export type ShoppingLayoutPresetUpdateWithoutListsUsingAsActiveInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isBuiltIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   categoryOrders?: Prisma.ShoppingLayoutPresetCategoryUpdateManyWithoutPresetNestedInput
+  usersUsingAsActive?: Prisma.UserUpdateManyWithoutActiveShoppingLayoutPresetNestedInput
 }
 
 export type ShoppingLayoutPresetUncheckedUpdateWithoutListsUsingAsActiveInput = {
@@ -401,6 +479,7 @@ export type ShoppingLayoutPresetUncheckedUpdateWithoutListsUsingAsActiveInput = 
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isBuiltIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   categoryOrders?: Prisma.ShoppingLayoutPresetCategoryUncheckedUpdateManyWithoutPresetNestedInput
+  usersUsingAsActive?: Prisma.UserUncheckedUpdateManyWithoutActiveShoppingLayoutPresetNestedInput
 }
 
 
@@ -411,11 +490,13 @@ export type ShoppingLayoutPresetUncheckedUpdateWithoutListsUsingAsActiveInput = 
 export type ShoppingLayoutPresetCountOutputType = {
   categoryOrders: number
   listsUsingAsActive: number
+  usersUsingAsActive: number
 }
 
 export type ShoppingLayoutPresetCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   categoryOrders?: boolean | ShoppingLayoutPresetCountOutputTypeCountCategoryOrdersArgs
   listsUsingAsActive?: boolean | ShoppingLayoutPresetCountOutputTypeCountListsUsingAsActiveArgs
+  usersUsingAsActive?: boolean | ShoppingLayoutPresetCountOutputTypeCountUsersUsingAsActiveArgs
 }
 
 /**
@@ -442,6 +523,13 @@ export type ShoppingLayoutPresetCountOutputTypeCountListsUsingAsActiveArgs<ExtAr
   where?: Prisma.ShoppingListWhereInput
 }
 
+/**
+ * ShoppingLayoutPresetCountOutputType without action
+ */
+export type ShoppingLayoutPresetCountOutputTypeCountUsersUsingAsActiveArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserWhereInput
+}
+
 
 export type ShoppingLayoutPresetSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -449,6 +537,7 @@ export type ShoppingLayoutPresetSelect<ExtArgs extends runtime.Types.Extensions.
   isBuiltIn?: boolean
   categoryOrders?: boolean | Prisma.ShoppingLayoutPreset$categoryOrdersArgs<ExtArgs>
   listsUsingAsActive?: boolean | Prisma.ShoppingLayoutPreset$listsUsingAsActiveArgs<ExtArgs>
+  usersUsingAsActive?: boolean | Prisma.ShoppingLayoutPreset$usersUsingAsActiveArgs<ExtArgs>
   _count?: boolean | Prisma.ShoppingLayoutPresetCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["shoppingLayoutPreset"]>
 
@@ -474,6 +563,7 @@ export type ShoppingLayoutPresetOmit<ExtArgs extends runtime.Types.Extensions.In
 export type ShoppingLayoutPresetInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   categoryOrders?: boolean | Prisma.ShoppingLayoutPreset$categoryOrdersArgs<ExtArgs>
   listsUsingAsActive?: boolean | Prisma.ShoppingLayoutPreset$listsUsingAsActiveArgs<ExtArgs>
+  usersUsingAsActive?: boolean | Prisma.ShoppingLayoutPreset$usersUsingAsActiveArgs<ExtArgs>
   _count?: boolean | Prisma.ShoppingLayoutPresetCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ShoppingLayoutPresetIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -484,6 +574,7 @@ export type $ShoppingLayoutPresetPayload<ExtArgs extends runtime.Types.Extension
   objects: {
     categoryOrders: Prisma.$ShoppingLayoutPresetCategoryPayload<ExtArgs>[]
     listsUsingAsActive: Prisma.$ShoppingListPayload<ExtArgs>[]
+    usersUsingAsActive: Prisma.$UserPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -885,6 +976,7 @@ export interface Prisma__ShoppingLayoutPresetClient<T, Null = never, ExtArgs ext
   readonly [Symbol.toStringTag]: "PrismaPromise"
   categoryOrders<T extends Prisma.ShoppingLayoutPreset$categoryOrdersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShoppingLayoutPreset$categoryOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShoppingLayoutPresetCategoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   listsUsingAsActive<T extends Prisma.ShoppingLayoutPreset$listsUsingAsActiveArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShoppingLayoutPreset$listsUsingAsActiveArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShoppingListPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  usersUsingAsActive<T extends Prisma.ShoppingLayoutPreset$usersUsingAsActiveArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShoppingLayoutPreset$usersUsingAsActiveArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1350,6 +1442,30 @@ export type ShoppingLayoutPreset$listsUsingAsActiveArgs<ExtArgs extends runtime.
   take?: number
   skip?: number
   distinct?: Prisma.ShoppingListScalarFieldEnum | Prisma.ShoppingListScalarFieldEnum[]
+}
+
+/**
+ * ShoppingLayoutPreset.usersUsingAsActive
+ */
+export type ShoppingLayoutPreset$usersUsingAsActiveArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+  orderBy?: Prisma.UserOrderByWithRelationInput | Prisma.UserOrderByWithRelationInput[]
+  cursor?: Prisma.UserWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserScalarFieldEnum | Prisma.UserScalarFieldEnum[]
 }
 
 /**

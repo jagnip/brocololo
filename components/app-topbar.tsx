@@ -56,7 +56,7 @@ export function AppTopbar() {
   );
   const isPlanCreateRoute = pathname === "/plan/create";
   const isGroceriesPlanDetailRoute =
-    /^\/groceries\/(?!current$)[^/]+$/.test(pathname);
+    /^\/groceries\/(?!current$|lists$)[^/]+$/.test(pathname);
   const isGroceriesPlanEditRoute = /^\/groceries\/[^/]+\/edit$/.test(pathname);
   const shouldShowRecipeTopbarSkeleton = isRecipeDetailRoute && !config;
   const shouldShowRecipesIndexTopbarSkeleton = isRecipesIndexRoute && !config;

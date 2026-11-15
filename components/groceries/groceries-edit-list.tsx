@@ -790,7 +790,6 @@ export function GroceriesEditList({
           className="order-1 lg:order-0 lg:col-start-2 lg:row-start-1"
           collapsed={isLibraryCollapsed}
           onCollapsedChange={setIsLibraryCollapsed}
-          planId={list.plan.id}
           lists={ingredientLists}
           ingredients={localIngredients}
           categories={categories}

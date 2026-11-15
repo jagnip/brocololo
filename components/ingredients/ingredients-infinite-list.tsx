@@ -132,8 +132,8 @@ export function IngredientsInfiniteList({
       {/* Pulse only the rendered rows during route transitions (search/category change). */}
       {/* The sentinel + aria-live spinner stay outside so infinite-scroll loads don't double-pulse. */}
       <div className="group-has-[[data-pending='true']]:animate-pulse">
-        {/* Each row is now its own bordered card; space them with `gap-item` instead of dividers. */}
-        <ul className="flex flex-col gap-item">
+        {/* Match Grocery list's compact card rhythm. */}
+        <ul className="flex flex-col gap-tight">
           {items.map((ingredient) => (
             <IngredientRow
               key={ingredient.id}

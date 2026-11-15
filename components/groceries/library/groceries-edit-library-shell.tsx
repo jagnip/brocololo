@@ -125,15 +125,15 @@ export function GroceriesEditLibraryShell({
       <div
         className={cn(
           "flex min-h-0 flex-col",
-          !collapsed &&
-            "xl:sticky xl:top-16 xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto",
+            !collapsed &&
+             "lg:sticky lg:top-16 lg:h-[calc(100dvh-8.5rem)] lg:max-h-[calc(100dvh-8.5rem)] lg:overflow-hidden",
           className,
         )}
       >
         <div
           className={cn(
             "flex min-h-0 flex-col",
-            !collapsed && "rounded-xl border bg-card",
+            !collapsed && "h-full min-h-0 rounded-xl border bg-card lg:overflow-hidden",
           )}
         >
           <LibraryShellHeader
@@ -147,7 +147,7 @@ export function GroceriesEditLibraryShell({
               />
             }
           />
-          {!collapsed ? <div className="px-4 pb-4 pt-4">{panel}</div> : null}
+          {!collapsed ? <div className="flex min-h-0 flex-1 flex-col px-4 pb-4 pt-4">{panel}</div> : null}
         </div>
       </div>
     );

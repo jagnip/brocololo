@@ -1,5 +1,6 @@
 import { Prisma } from "@/src/generated/client";
 import { prisma } from "@/lib/db/index";
+import { ingredientVisibilityWhere } from "@/lib/db/ingredient-visibility";
 
 const ingredientListInclude = {
   items: {
@@ -52,6 +53,7 @@ export async function renameIngredientList(input: {
   if (!owned) {
     throw new Error("INGREDIENT_LIST_NOT_FOUND");
   }
+
   return prisma.ingredientList.update({
     where: { id: input.id },
     data: { name: input.name },
@@ -67,6 +69,7 @@ export async function deleteIngredientList(input: { userId: string; id: string }
   if (!owned) {
     throw new Error("INGREDIENT_LIST_NOT_FOUND");
   }
+
   return prisma.ingredientList.delete({
     where: { id: input.id },
     select: { id: true },
@@ -84,6 +87,14 @@ export async function addIngredientToList(input: {
   });
   if (!owned) {
     throw new Error("INGREDIENT_LIST_NOT_FOUND");
+  }
+
+  const ingredient = await prisma.ingredient.findFirst({
+    where: { id: input.ingredientId, ...ingredientVisibilityWhere(input.userId) },
+    select: { id: true },
+  });
+  if (!ingredient) {
+    throw new Error("INGREDIENT_NOT_FOUND");
   }
 
   try {

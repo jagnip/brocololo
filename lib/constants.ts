@@ -35,6 +35,7 @@ export const ROUTES = {
   planView: (planId: string) => `/plan/${planId}`,
   storage: "/storage",
   groceries: "/groceries",
+  savedLists: "/saved-lists",
   /** Left nav “Groceries” — opens today’s plan list (or latest), like Plan → current. */
   groceriesCurrent: "/groceries/current",
   groceriesView: (planId: string) => `/groceries/${planId}`,
