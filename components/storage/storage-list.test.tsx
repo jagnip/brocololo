@@ -27,7 +27,8 @@ beforeEach(() => {
 describe("StorageList", () => {
   it("renders an independent empty cooked section", () => {
     render(<StorageList lots={[]} familyMembers={[member]} />);
-    expect(screen.getByRole("region", { name: "Cooked and stored" })).toHaveTextContent("No cooked meals in storage.");
+    expect(screen.getByText("No cooked meals in storage")).toBeInTheDocument();
+    expect(screen.getByText("Cooked meals available for a future plan will appear here")).toBeInTheDocument();
   });
 
   it("offers direct Adjust and Discard actions with concise metadata", () => {
@@ -69,6 +70,7 @@ describe("StorageList", () => {
     await user.click(screen.getByRole("button", { name: "Discard Soup" }));
     const dialog = await screen.findByRole("dialog", { name: "Discard Soup" });
     const input = within(dialog).getByRole("spinbutton", { name: "Meals" });
+    expect(input).toHaveValue(3);
     await user.clear(input);
     await user.type(input, "2");
     await user.click(within(dialog).getByRole("button", { name: "Discard meals" }));
