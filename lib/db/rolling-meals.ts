@@ -36,6 +36,26 @@ function toRow(entry: Entry): RollingMealQueueRow {
   return { ...common, kind: "custom", mealType: entry.mealType!, customMeal, name: customMeal.name };
 }
 
+const unassignedPending = { state: "PENDING", eligible: true, currentPlanId: null } as const;
+const storageEntrySelect = {
+  ...entrySelect,
+  _count: { select: { units: { where: { state: "PENDING" } } } },
+  units: { where: unassignedPending, orderBy: [{ createdAt: "asc" as const }, { id: "asc" as const }], select: { id: true } },
+} satisfies Prisma.RollingMealEntrySelect;
+
+export type PlannedStorageRow = RollingMealQueueRow & { unassignedCount: number };
+
+export async function listPlannedStorageMeals(userId: string): Promise<PlannedStorageRow[]> {
+  return prisma.$transaction(async (tx) => {
+    await lifecycleReady(tx, userId, false);
+    const entries = await tx.rollingMealEntry.findMany({
+      where: { userId, units: { some: { state: "PENDING" } } },
+      orderBy: { identity: "asc" }, select: storageEntrySelect,
+    });
+    return entries.map((entry) => ({ ...toRow({ ...entry, count: entry._count.units }), unassignedCount: entry.units.length }));
+  }, { isolationLevel: "RepeatableRead" });
+}
+
 async function lifecycleReady(tx: Prisma.TransactionClient, userId: string, initialize: boolean) {
   const state = await tx.rollingQueueState.findUnique({ where: { userId } });
   if (state?.lifecycleVersion === 1) return;
@@ -446,25 +466,25 @@ export async function verifyRollingBatchAssignmentsTx(
 async function changeCount(userId: string, input: AdjustRollingMealInput | DiscardRollingMealQuantityInput) {
   return lockedTransaction(userId, async (tx) => {
     await ensureRollingLifecycleTx(tx, userId);
-    const existing = await tx.rollingMealEntry.findFirst({ where: { id: input.entryId, userId }, select: entrySelect });
+    const existing = await tx.rollingMealEntry.findFirst({ where: { id: input.entryId, userId }, select: storageEntrySelect });
     if (!existing) return { type: "not_found" as const };
     if (existing.version !== input.expectedVersion) return { type: "conflict" as const };
-    const count = "count" in input ? input.count : existing.count - input.quantity;
+    const unassigned = existing.units.length;
+    const count = "count" in input ? input.count : unassigned - input.quantity;
     if (!Number.isSafeInteger(count) || count < 0) return { type: "conflict" as const };
-    const delta = count - existing.count;
+    const delta = count - unassigned;
     if (delta < 0) {
-      const candidates = await tx.rollingMealUnit.findMany({
-        where: { entryId: existing.id, state: "PENDING", eligible: true, currentPlanId: null },
-        orderBy: [{ createdAt: "asc" }, { id: "asc" }], take: -delta,
-      });
-      if (candidates.length !== -delta) return { type: "conflict" as const };
-      await tx.rollingMealUnit.updateMany({ where: { id: { in: candidates.map(({ id }) => id) } },
+      const candidates = existing.units.slice(0, -delta);
+      await tx.rollingMealUnit.updateMany({ where: { ...unassignedPending, id: { in: candidates.map(({ id }) => id) } },
         data: { state: "DISCARDED", completedAt: new Date() } });
     } else if (delta > 0) {
       await tx.rollingMealUnit.createMany({ data: Array.from({ length: delta }, () => ({ entryId: existing.id, eligible: true })) });
     }
     if (delta !== 0) await refreshEntries(tx, [existing.id]);
-    return { type: "success" as const, entry: count === 0 ? null : toRow({ ...existing, count, version: existing.version + (delta === 0 ? 0 : 1) }) };
+    const total = existing._count.units + delta;
+    return { type: "success" as const, entry: total === 0 ? null : {
+      ...toRow({ ...existing, count: total, version: existing.version + (delta === 0 ? 0 : 1) }), unassignedCount: count,
+    } };
   });
 }
 

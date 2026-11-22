@@ -2,7 +2,7 @@ import { ensureSelfFamilyMember } from "@/lib/db/family-members";
 import { listStoredMealLots } from "@/lib/db/storage";
 import { requireUser } from "@/lib/auth/session";
 import { StorageList } from "./storage-list";
-import { listRollingMealQueue } from "@/lib/db/rolling-meals";
+import { listPlannedStorageMeals } from "@/lib/db/rolling-meals";
 import { RollingMealsSection } from "./rolling-meals-section";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -11,7 +11,7 @@ export async function StoragePageContainer() {
   const [lots, familyMembers, rollingMeals] = await Promise.all([
     listStoredMealLots(userId),
     ensureSelfFamilyMember(userId),
-    listRollingMealQueue(userId).catch((error: unknown) => {
+    listPlannedStorageMeals(userId).catch((error: unknown) => {
       if (error instanceof Error && (error.message === "ROLLING_MIGRATION_REQUIRED" || ("code" in error && error.code === "ROLLING_MIGRATION_REQUIRED"))) return null;
       throw error;
     }),

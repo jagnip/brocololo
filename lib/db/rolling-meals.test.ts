@@ -4,7 +4,7 @@ import { prisma } from "./index";
 import {
   adjustRollingMeal, deleteRollingPlanTx, discardRollingMealQuantity,
   ensureRollingLifecycleTx, listRollingMealQueue, RollingMigrationRequiredError, syncRollingPlanTx,
-  reconcileRollingBatchRemaindersTx, verifyRollingBatchAssignmentsTx,
+  listPlannedStorageMeals, reconcileRollingBatchRemaindersTx, verifyRollingBatchAssignmentsTx,
   type RollingPlanBatch, type RollingPlanSlot,
 } from "./rolling-meals";
 
@@ -22,6 +22,9 @@ let plans: { id: string; userId: string; startDate: Date; endDate: Date; resolve
 let state: { userId: string; lifecycleVersion: number } | null;
 let sequence: number;
 const copy = <T>(value: T): T => structuredClone(value);
+function matchesUnit(unit: RollingMealUnit, where: Record<string, unknown> = {}) {
+  return Object.entries(where).every(([key, value]) => unit[key as keyof RollingMealUnit] === value);
+}
 const tx = {
   $queryRaw: vi.fn(),
   rollingQueueState: {
@@ -35,14 +38,19 @@ const tx = {
   },
   recipe: { findFirst: vi.fn(async ({ where }) => where.userId === "u" && where.id === "r" ? { id: "r" } : null) },
   rollingMealEntry: {
-    findFirst: vi.fn(async ({ where }) => {
+    findFirst: vi.fn(async ({ where, select }) => {
       const group = groups.find((entry) => entry.userId === where.userId && (!where.id || entry.id === where.id));
-      return group ? { ...copy(group), recipe: group.recipeId ? { name: "Pancake" } : null } : null;
+      const owned = units.filter((unit) => unit.entryId === group?.id);
+      return group ? { ...copy(group), recipe: group.recipeId ? { name: "Pancake" } : null,
+        units: owned.filter((unit) => matchesUnit(unit, select.units?.where)),
+        _count: { units: owned.filter((unit) => matchesUnit(unit, select._count?.select.units.where)).length },
+      } : null;
     }),
-    findMany: vi.fn(async ({ where, select }) => groups.filter((entry) => entry.userId === where.userId).map((entry) => ({
-      ...copy(entry), units: copy(units.filter((unit) => unit.entryId === entry.id)),
+    findMany: vi.fn(async ({ where, select }) => groups.filter((entry) => entry.userId === where.userId &&
+      (!where.units || units.some((unit) => unit.entryId === entry.id && matchesUnit(unit, where.units.some)))).map((entry) => ({
+      ...copy(entry), units: copy(units.filter((unit) => unit.entryId === entry.id && matchesUnit(unit, select?.units?.where))),
       recipe: entry.recipeId ? { name: "Pancake" } : null,
-      _count: { units: units.filter((unit) => unit.entryId === entry.id && unit.state === "PENDING" &&
+      _count: { units: units.filter((unit) => unit.entryId === entry.id && unit.state === select?._count.select.units.where.state &&
         (!select?._count.select.units.where.eligible || unit.eligible) &&
         (!select?._count.select.units.where.OR || unit.currentPlanId === null ||
           select._count.select.units.where.OR[1].currentPlanId.in.includes(unit.currentPlanId))).length },
@@ -107,6 +115,19 @@ beforeEach(() => {
 });
 
 describe("lifecycle guard and reads", () => {
+  it("shows the planner total but adjusts only unassigned meals, not slots or batch remainders", async () => {
+    await sync("p1", [slot("a", { batchGroupId: "b" }), slot("released"), slot("done", { used: true })], [batch(1)]);
+    await sync("p1", [slot("a", { batchGroupId: "b" }), slot("done", { used: true })], [batch(1)]);
+    await sync("p2", [slot("fresh")], [], { create: true });
+    const assigned = copy(units.filter((unit) => unit.currentPlanId));
+    const input = { entryId: token().id, expectedVersion: token().version };
+    await expect(listPlannedStorageMeals("u")).resolves.toMatchObject([{ count: 4, unassignedCount: 1 }]);
+    await expect(discardRollingMealQuantity("u", { ...input, quantity: 2 })).resolves.toEqual({ type: "conflict" });
+    await expect(adjustRollingMeal("u", { ...input, count: 3 })).resolves.toMatchObject({ entry: { count: 6, unassignedCount: 3 } });
+    await expect(adjustRollingMeal("u", { ...input, count: 0 })).resolves.toEqual({ type: "conflict" });
+    await expect(adjustRollingMeal("u", { ...input, expectedVersion: token().version, count: 0 })).resolves.toMatchObject({ entry: { count: 3, unassignedCount: 0 } });
+    expect(units.filter((unit) => unit.currentPlanId)).toEqual(assigned);
+  });
   it("blocks legacy state, plans without state, and legacy entries", async () => {
     state = { userId: "u", lifecycleVersion: 0 };
     await expect(ensureRollingLifecycleTx(client, "u")).rejects.toBeInstanceOf(RollingMigrationRequiredError);
