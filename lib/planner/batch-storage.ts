@@ -98,22 +98,26 @@ export function ensureBatchForPlacement(params: {
   requestedMeals: number;
   cookingFamilyMemberIds: string[];
 }): PlanBatchInput[] {
+  const scheduled = getBatchScheduledSlots(params.plan, { id: params.batchGroupId, recipeId: params.recipeId });
+  const rollingQueueClaim = scheduled.find((slot) => slot.rollingQueueClaim && !slot.alreadyCooked)?.rollingQueueClaim;
   if (params.batches.some((batch) => batch.id === params.batchGroupId && batch.recipeId === params.recipeId)) {
+    return params.batches.map((batch) =>
+      batch.id === params.batchGroupId && batch.recipeId === params.recipeId && !batch.rollingQueueClaim && rollingQueueClaim
+        ? { ...batch, rollingQueueClaim }
+        : batch,
+    );
+  }
+  if (scheduled.length === 0) {
     return params.batches;
   }
-  if (getBatchScheduledSlots(params.plan, { id: params.batchGroupId, recipeId: params.recipeId }).length === 0) {
-    return params.batches;
-  }
-  const scheduledCount = getBatchScheduledSlots(params.plan, {
-    id: params.batchGroupId,
-    recipeId: params.recipeId,
-  }).length;
+  const scheduledCount = scheduled.length;
   const storageCount = Math.max(params.requestedMeals - scheduledCount, 0);
   return [
     ...params.batches.filter((batch) => batch.id !== params.batchGroupId),
     {
       id: params.batchGroupId,
       recipeId: params.recipeId,
+      ...(rollingQueueClaim ? { rollingQueueClaim } : {}),
       storageRows: storageCount > 0
         ? [{ count: storageCount, cookingFamilyMemberIds: [...params.cookingFamilyMemberIds] }]
         : [],
@@ -129,26 +133,24 @@ export function ensureBatchAfterPlacement(params: {
   requestedMeals: number;
   fallbackFamilyMemberIds: string[];
 }): PlanBatchInput[] {
-  const batches = pruneBatchesWithoutScheduledMeals(params.plan, params.batches);
+  const retainedBatches = pruneBatchesWithoutScheduledMeals(params.plan, params.batches);
   const slot = params.plan.find((candidate) => getPlanSlotKey(candidate) === params.slotKey);
-  if (!slot?.recipe?.isBatchRecipe || !slot.batchGroupId) return batches;
+  if (!slot?.recipe?.isBatchRecipe || !slot.batchGroupId) return retainedBatches;
   const cookingFamilyMemberIds = slot.cookingFamilyMemberIds?.length
     ? slot.cookingFamilyMemberIds
     : params.fallbackFamilyMemberIds;
+  const batches = ensureBatchForPlacement({
+    plan: params.plan,
+    batches: retainedBatches,
+    batchGroupId: slot.batchGroupId,
+    recipeId: slot.recipe.id,
+    requestedMeals: params.requestedMeals,
+    cookingFamilyMemberIds,
+  });
   const batch = batches.find(
     (candidate) => candidate.id === slot.batchGroupId && candidate.recipeId === slot.recipe!.id,
   );
-
-  if (!batch) {
-    return ensureBatchForPlacement({
-      plan: params.plan,
-      batches,
-      batchGroupId: slot.batchGroupId,
-      recipeId: slot.recipe.id,
-      requestedMeals: params.requestedMeals,
-      cookingFamilyMemberIds,
-    });
-  }
+  if (!batch || !retainedBatches.some((candidate) => candidate.id === batch.id)) return batches;
 
   const previousScheduledCount = params.previousPlan
     ? getBatchScheduledSlots(params.previousPlan, batch).length

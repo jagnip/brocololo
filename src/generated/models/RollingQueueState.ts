@@ -20,34 +20,58 @@ export type RollingQueueStateModel = runtime.Types.Result.DefaultSelection<Prism
 
 export type AggregateRollingQueueState = {
   _count: RollingQueueStateCountAggregateOutputType | null
+  _avg: RollingQueueStateAvgAggregateOutputType | null
+  _sum: RollingQueueStateSumAggregateOutputType | null
   _min: RollingQueueStateMinAggregateOutputType | null
   _max: RollingQueueStateMaxAggregateOutputType | null
 }
 
+export type RollingQueueStateAvgAggregateOutputType = {
+  lifecycleVersion: number | null
+}
+
+export type RollingQueueStateSumAggregateOutputType = {
+  lifecycleVersion: number | null
+}
+
 export type RollingQueueStateMinAggregateOutputType = {
   userId: string | null
+  lifecycleVersion: number | null
 }
 
 export type RollingQueueStateMaxAggregateOutputType = {
   userId: string | null
+  lifecycleVersion: number | null
 }
 
 export type RollingQueueStateCountAggregateOutputType = {
   userId: number
+  lifecycleVersion: number
   _all: number
 }
 
 
+export type RollingQueueStateAvgAggregateInputType = {
+  lifecycleVersion?: true
+}
+
+export type RollingQueueStateSumAggregateInputType = {
+  lifecycleVersion?: true
+}
+
 export type RollingQueueStateMinAggregateInputType = {
   userId?: true
+  lifecycleVersion?: true
 }
 
 export type RollingQueueStateMaxAggregateInputType = {
   userId?: true
+  lifecycleVersion?: true
 }
 
 export type RollingQueueStateCountAggregateInputType = {
   userId?: true
+  lifecycleVersion?: true
   _all?: true
 }
 
@@ -89,6 +113,18 @@ export type RollingQueueStateAggregateArgs<ExtArgs extends runtime.Types.Extensi
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: RollingQueueStateAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: RollingQueueStateSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: RollingQueueStateMinAggregateInputType
@@ -119,13 +155,18 @@ export type RollingQueueStateGroupByArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   _count?: RollingQueueStateCountAggregateInputType | true
+  _avg?: RollingQueueStateAvgAggregateInputType
+  _sum?: RollingQueueStateSumAggregateInputType
   _min?: RollingQueueStateMinAggregateInputType
   _max?: RollingQueueStateMaxAggregateInputType
 }
 
 export type RollingQueueStateGroupByOutputType = {
   userId: string
+  lifecycleVersion: number
   _count: RollingQueueStateCountAggregateOutputType | null
+  _avg: RollingQueueStateAvgAggregateOutputType | null
+  _sum: RollingQueueStateSumAggregateOutputType | null
   _min: RollingQueueStateMinAggregateOutputType | null
   _max: RollingQueueStateMaxAggregateOutputType | null
 }
@@ -150,11 +191,13 @@ export type RollingQueueStateWhereInput = {
   OR?: Prisma.RollingQueueStateWhereInput[]
   NOT?: Prisma.RollingQueueStateWhereInput | Prisma.RollingQueueStateWhereInput[]
   userId?: Prisma.StringFilter<"RollingQueueState"> | string
+  lifecycleVersion?: Prisma.IntFilter<"RollingQueueState"> | number
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
 export type RollingQueueStateOrderByWithRelationInput = {
   userId?: Prisma.SortOrder
+  lifecycleVersion?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
 }
 
@@ -163,14 +206,18 @@ export type RollingQueueStateWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.RollingQueueStateWhereInput | Prisma.RollingQueueStateWhereInput[]
   OR?: Prisma.RollingQueueStateWhereInput[]
   NOT?: Prisma.RollingQueueStateWhereInput | Prisma.RollingQueueStateWhereInput[]
+  lifecycleVersion?: Prisma.IntFilter<"RollingQueueState"> | number
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "userId">
 
 export type RollingQueueStateOrderByWithAggregationInput = {
   userId?: Prisma.SortOrder
+  lifecycleVersion?: Prisma.SortOrder
   _count?: Prisma.RollingQueueStateCountOrderByAggregateInput
+  _avg?: Prisma.RollingQueueStateAvgOrderByAggregateInput
   _max?: Prisma.RollingQueueStateMaxOrderByAggregateInput
   _min?: Prisma.RollingQueueStateMinOrderByAggregateInput
+  _sum?: Prisma.RollingQueueStateSumOrderByAggregateInput
 }
 
 export type RollingQueueStateScalarWhereWithAggregatesInput = {
@@ -178,34 +225,41 @@ export type RollingQueueStateScalarWhereWithAggregatesInput = {
   OR?: Prisma.RollingQueueStateScalarWhereWithAggregatesInput[]
   NOT?: Prisma.RollingQueueStateScalarWhereWithAggregatesInput | Prisma.RollingQueueStateScalarWhereWithAggregatesInput[]
   userId?: Prisma.StringWithAggregatesFilter<"RollingQueueState"> | string
+  lifecycleVersion?: Prisma.IntWithAggregatesFilter<"RollingQueueState"> | number
 }
 
 export type RollingQueueStateCreateInput = {
+  lifecycleVersion?: number
   user: Prisma.UserCreateNestedOneWithoutRollingQueueStateInput
 }
 
 export type RollingQueueStateUncheckedCreateInput = {
   userId: string
+  lifecycleVersion?: number
 }
 
 export type RollingQueueStateUpdateInput = {
+  lifecycleVersion?: Prisma.IntFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutRollingQueueStateNestedInput
 }
 
 export type RollingQueueStateUncheckedUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  lifecycleVersion?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type RollingQueueStateCreateManyInput = {
   userId: string
+  lifecycleVersion?: number
 }
 
 export type RollingQueueStateUpdateManyMutationInput = {
-
+  lifecycleVersion?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type RollingQueueStateUncheckedUpdateManyInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  lifecycleVersion?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type RollingQueueStateNullableScalarRelationFilter = {
@@ -215,14 +269,25 @@ export type RollingQueueStateNullableScalarRelationFilter = {
 
 export type RollingQueueStateCountOrderByAggregateInput = {
   userId?: Prisma.SortOrder
+  lifecycleVersion?: Prisma.SortOrder
+}
+
+export type RollingQueueStateAvgOrderByAggregateInput = {
+  lifecycleVersion?: Prisma.SortOrder
 }
 
 export type RollingQueueStateMaxOrderByAggregateInput = {
   userId?: Prisma.SortOrder
+  lifecycleVersion?: Prisma.SortOrder
 }
 
 export type RollingQueueStateMinOrderByAggregateInput = {
   userId?: Prisma.SortOrder
+  lifecycleVersion?: Prisma.SortOrder
+}
+
+export type RollingQueueStateSumOrderByAggregateInput = {
+  lifecycleVersion?: Prisma.SortOrder
 }
 
 export type RollingQueueStateCreateNestedOneWithoutUserInput = {
@@ -258,11 +323,11 @@ export type RollingQueueStateUncheckedUpdateOneWithoutUserNestedInput = {
 }
 
 export type RollingQueueStateCreateWithoutUserInput = {
-
+  lifecycleVersion?: number
 }
 
 export type RollingQueueStateUncheckedCreateWithoutUserInput = {
-
+  lifecycleVersion?: number
 }
 
 export type RollingQueueStateCreateOrConnectWithoutUserInput = {
@@ -282,35 +347,39 @@ export type RollingQueueStateUpdateToOneWithWhereWithoutUserInput = {
 }
 
 export type RollingQueueStateUpdateWithoutUserInput = {
-
+  lifecycleVersion?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type RollingQueueStateUncheckedUpdateWithoutUserInput = {
-
+  lifecycleVersion?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 
 
 export type RollingQueueStateSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   userId?: boolean
+  lifecycleVersion?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["rollingQueueState"]>
 
 export type RollingQueueStateSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   userId?: boolean
+  lifecycleVersion?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["rollingQueueState"]>
 
 export type RollingQueueStateSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   userId?: boolean
+  lifecycleVersion?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["rollingQueueState"]>
 
 export type RollingQueueStateSelectScalar = {
   userId?: boolean
+  lifecycleVersion?: boolean
 }
 
-export type RollingQueueStateOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"userId", ExtArgs["result"]["rollingQueueState"]>
+export type RollingQueueStateOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"userId" | "lifecycleVersion", ExtArgs["result"]["rollingQueueState"]>
 export type RollingQueueStateInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -328,6 +397,7 @@ export type $RollingQueueStatePayload<ExtArgs extends runtime.Types.Extensions.I
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     userId: string
+    lifecycleVersion: number
   }, ExtArgs["result"]["rollingQueueState"]>
   composites: {}
 }
@@ -753,6 +823,7 @@ export interface Prisma__RollingQueueStateClient<T, Null = never, ExtArgs extend
  */
 export interface RollingQueueStateFieldRefs {
   readonly userId: Prisma.FieldRef<"RollingQueueState", 'String'>
+  readonly lifecycleVersion: Prisma.FieldRef<"RollingQueueState", 'Int'>
 }
     
 

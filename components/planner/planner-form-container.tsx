@@ -9,6 +9,7 @@ import { ensureSelfFamilyMember } from "@/lib/db/family-members";
 import { listStoredMealLots } from "@/lib/db/storage";
 import { listRollingMealQueue } from "@/lib/db/rolling-meals";
 import type { RollingMealType } from "@/lib/validations/planner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default async function PlannerFormContainer() {
   const { id: userId } = await requireUser();
@@ -23,11 +24,21 @@ export default async function PlannerFormContainer() {
     await Promise.all([
       getIngredients(userId),
       getRecipes(userId, undefined, undefined, false),
-      listRollingMealQueue(userId),
+      listRollingMealQueue(userId, { includeCurrent: true }).catch((error: unknown) => {
+        if (error instanceof Error && (error.message === "ROLLING_MIGRATION_REQUIRED" || ("code" in error && error.code === "ROLLING_MIGRATION_REQUIRED"))) return null;
+        throw error;
+      }),
       getOccupiedDateKeysForPlanning(userId),
       ensureSelfFamilyMember(userId),
       listStoredMealLots(userId),
     ]);
+
+  if (queue === null) return (
+    <Alert>
+      <AlertTitle>Rolling meals need migration</AlertTitle>
+      <AlertDescription>Planning is paused until your existing meals have been reviewed and migrated. Contact support, then reload this page.</AlertDescription>
+    </Alert>
+  );
 
   const storedCounts = new Map<string, number>();
   for (const lot of storedMealLots) {

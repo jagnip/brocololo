@@ -331,6 +331,23 @@ export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
   _max?: Prisma.NestedJsonNullableFilter<$PrismaModel>
 }
 
+export type EnumRollingMealUnitStateFilter<$PrismaModel = never> = {
+  equals?: $Enums.RollingMealUnitState | Prisma.EnumRollingMealUnitStateFieldRefInput<$PrismaModel>
+  in?: $Enums.RollingMealUnitState[] | Prisma.ListEnumRollingMealUnitStateFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RollingMealUnitState[] | Prisma.ListEnumRollingMealUnitStateFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRollingMealUnitStateFilter<$PrismaModel> | $Enums.RollingMealUnitState
+}
+
+export type EnumRollingMealUnitStateWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RollingMealUnitState | Prisma.EnumRollingMealUnitStateFieldRefInput<$PrismaModel>
+  in?: $Enums.RollingMealUnitState[] | Prisma.ListEnumRollingMealUnitStateFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RollingMealUnitState[] | Prisma.ListEnumRollingMealUnitStateFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRollingMealUnitStateWithAggregatesFilter<$PrismaModel> | $Enums.RollingMealUnitState
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRollingMealUnitStateFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRollingMealUnitStateFilter<$PrismaModel>
+}
+
 export type EnumStoredMealEventTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.StoredMealEventType | Prisma.EnumStoredMealEventTypeFieldRefInput<$PrismaModel>
   in?: $Enums.StoredMealEventType[] | Prisma.ListEnumStoredMealEventTypeFieldRefInput<$PrismaModel>
@@ -716,6 +733,23 @@ export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
   gt?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
   gte?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel>
   not?: runtime.InputJsonValue | Prisma.JsonFieldRefInput<$PrismaModel> | Prisma.JsonNullValueFilter
+}
+
+export type NestedEnumRollingMealUnitStateFilter<$PrismaModel = never> = {
+  equals?: $Enums.RollingMealUnitState | Prisma.EnumRollingMealUnitStateFieldRefInput<$PrismaModel>
+  in?: $Enums.RollingMealUnitState[] | Prisma.ListEnumRollingMealUnitStateFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RollingMealUnitState[] | Prisma.ListEnumRollingMealUnitStateFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRollingMealUnitStateFilter<$PrismaModel> | $Enums.RollingMealUnitState
+}
+
+export type NestedEnumRollingMealUnitStateWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RollingMealUnitState | Prisma.EnumRollingMealUnitStateFieldRefInput<$PrismaModel>
+  in?: $Enums.RollingMealUnitState[] | Prisma.ListEnumRollingMealUnitStateFieldRefInput<$PrismaModel>
+  notIn?: $Enums.RollingMealUnitState[] | Prisma.ListEnumRollingMealUnitStateFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumRollingMealUnitStateWithAggregatesFilter<$PrismaModel> | $Enums.RollingMealUnitState
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRollingMealUnitStateFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRollingMealUnitStateFilter<$PrismaModel>
 }
 
 export type NestedEnumStoredMealEventTypeFilter<$PrismaModel = never> = {

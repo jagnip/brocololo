@@ -9,12 +9,12 @@ export function previewStoredMeals(
 ): PlanInputType {
   const result = [...plan];
   const recipeIds = new Set(plan.flatMap((slot) =>
-    slot.recipe && slot.placementId && !slot.used ? [slot.recipe.id] : [],
+    slot.recipe && slot.placementId && !slot.used && !slot.rollingQueueClaim ? [slot.recipe.id] : [],
   ));
 
   for (const recipeId of recipeIds) {
     const indices = plan.flatMap((slot, index) =>
-      slot.recipe?.id === recipeId && slot.placementId && !slot.used ? [index] : [],
+      slot.recipe?.id === recipeId && slot.placementId && !slot.used && !slot.rollingQueueClaim ? [index] : [],
     );
     const allocations = allocateStoredMeals(
       lots.filter((lot) => lot.recipe.id === recipeId).map((lot) => ({

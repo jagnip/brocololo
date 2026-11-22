@@ -833,6 +833,8 @@ export async function deleteRecipe(userId: string, recipeId: string) {
             planBatches: true,
             alternatives: true,
             logEntryRecipes: true,
+            rollingMealEntries: true,
+            storedMealLots: true,
           },
         },
       },

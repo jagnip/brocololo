@@ -36,6 +36,7 @@ import { generatePlan, savePlan } from "@/actions/planner-actions";
 import { ensurePlanPlacementIds, getPlanSlotKey, placeRecipeOnPlan } from "@/lib/planner/helpers";
 import { getCustomMealContentKey } from "@/lib/planner/custom-meal-identity";
 import { rearrangePlanSlots } from "@/lib/planner/rearrange-plan-slots";
+import { applyRollingCookedToggles, type RollingCookedDraftBackup } from "@/lib/planner/apply-rolling-cooked-toggles";
 import {
   detachMealFromBatch,
   ensureBatchAfterPlacement,
@@ -149,6 +150,7 @@ export function PlannerForm({
   const planRef = useRef<PlanInputType>(initialPlannerState.plan);
   const [batches, setBatches] = useState<PlanBatchInput[]>([]);
   const batchesRef = useRef<PlanBatchInput[]>([]);
+  const rollingCookedBackupRef = useRef<RollingCookedDraftBackup>({ placements: new Map(), batches: new Map() });
   const [lastGenerationError, setLastGenerationError] = useState<string | null>(
     null,
   );
@@ -296,6 +298,7 @@ export function PlannerForm({
     setPlan(nextPlan);
     setBatches([]);
     batchesRef.current = [];
+    rollingCookedBackupRef.current = { placements: new Map(), batches: new Map() };
     setLastGenerationError(null);
     toast.success(MESSAGES.planner.cleared);
   }
@@ -549,6 +552,7 @@ export function PlannerForm({
         toast.error(result.message);
         return;
       }
+      rollingCookedBackupRef.current = { placements: new Map(), batches: new Map() };
       toast.success(MESSAGES.planner.saved);
     } finally {
       setIsSaving(false);
@@ -1131,16 +1135,19 @@ export function PlannerForm({
                                 (entry) => entry.kind === "custom",
                               )}
                               onChange={(nextEntries) => {
+                                const next = applyRollingCookedToggles(
+                                  planRef.current,
+                                  batchesRef.current,
+                                  selected,
+                                  nextEntries,
+                                  rollingCookedBackupRef.current,
+                                );
+                                rollingCookedBackupRef.current = next.backup;
                                 field.onChange(nextEntries);
-                                const nextPlan = planRef.current.map((slot) => {
-                                  if (!slot.isRolledOver || !slot.recipe?.isBatchRecipe) return slot;
-                                   const entry = nextEntries.find(
-                                     (item) => item.kind !== "custom" && item.recipeId === slot.recipe!.id,
-                                   );
-                                   return entry && entry.kind !== "custom" ? { ...slot, alreadyCooked: entry.alreadyCooked ?? false } : slot;
-                                });
-                                planRef.current = nextPlan;
-                                setPlan(nextPlan);
+                                planRef.current = next.plan;
+                                batchesRef.current = next.batches;
+                                setPlan(next.plan);
+                                setBatches(next.batches);
                               }}
                               ingredients={ingredients}
                               recipes={recipes}

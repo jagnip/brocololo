@@ -45,6 +45,16 @@ export const RecipeIngredientAdjustmentKind = {
 export type RecipeIngredientAdjustmentKind = (typeof RecipeIngredientAdjustmentKind)[keyof typeof RecipeIngredientAdjustmentKind]
 
 
+export const RollingMealUnitState = {
+  PENDING: 'PENDING',
+  COMPLETED: 'COMPLETED',
+  CONVERTED: 'CONVERTED',
+  DISCARDED: 'DISCARDED'
+} as const
+
+export type RollingMealUnitState = (typeof RollingMealUnitState)[keyof typeof RollingMealUnitState]
+
+
 export const StoredMealEventType = {
   CREATED: 'CREATED',
   ADJUSTED: 'ADJUSTED',

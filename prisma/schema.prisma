@@ -391,6 +391,7 @@ model Recipe {
 
 model RollingQueueState {
   userId String @id @map("user_id")
+  lifecycleVersion Int @default(0) @map("lifecycle_version")
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@map("rolling_queue_states")
 }
@@ -415,9 +416,51 @@ model RollingMealEntry {
   version Int @default(1)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   recipe Recipe? @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  units RollingMealUnit[]
   @@unique([userId, identity])
   @@index([recipeId])
   @@map("rolling_meal_entries")
+}
+
+enum RollingMealUnitState {
+  PENDING
+  COMPLETED
+  CONVERTED
+  DISCARDED
+}
+
+// Plan and placement IDs are snapshots: deleting a plan must not erase lineage.
+model RollingMealUnit {
+  id String @id @default(cuid())
+  entryId String @map("entry_id")
+  state RollingMealUnitState @default(PENDING)
+  eligible Boolean @default(false)
+  currentPlanId String? @map("current_plan_id")
+  placementId String? @map("placement_id")
+  batchId String? @map("batch_id")
+  sourcePlanId String? @map("source_plan_id")
+  sourcePlacementId String? @map("source_placement_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  completedAt DateTime? @map("completed_at")
+  entry RollingMealEntry @relation(fields: [entryId], references: [id], onDelete: Restrict)
+  placements RollingMealPlacement[]
+
+  @@unique([currentPlanId, placementId])
+  @@index([entryId, state, eligible])
+  @@index([currentPlanId, batchId])
+  @@map("rolling_meal_units")
+}
+
+model RollingMealPlacement {
+  planId String @map("plan_id")
+  placementId String @map("placement_id")
+  unitId String @map("unit_id")
+  batchId String? @map("batch_id")
+  unit RollingMealUnit @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
+  @@id([planId, placementId])
+  @@index([unitId])
+  @@map("rolling_meal_placements")
 }
 
 enum StoredMealEventType {
