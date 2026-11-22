@@ -7,23 +7,24 @@ import { adjustRollingMealAction, discardRollingMealQuantityAction } from "@/act
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import type { RollingMealQueueRow } from "@/lib/db/rolling-meals";
+import type { PlannedStorageRow } from "@/lib/db/rolling-meals";
 
-export function RollingMealsSection({ meals }: { meals: RollingMealQueueRow[] }) {
+export function RollingMealsSection({ meals }: { meals: PlannedStorageRow[] }) {
   const router = useRouter();
-  const [selection, setSelection] = useState<{ type: "adjust" | "discard"; meal: RollingMealQueueRow } | null>(null);
+  const [selection, setSelection] = useState<{ type: "adjust" | "discard"; meal: PlannedStorageRow } | null>(null);
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
 
-  function open(type: "adjust" | "discard", meal: RollingMealQueueRow) {
+  function open(type: "adjust" | "discard", meal: PlannedStorageRow) {
     setSelection({ type, meal });
-    setValue(String(meal.count));
+    setValue(String(type === "discard" ? Math.min(99, meal.unassignedCount) : meal.unassignedCount));
     setError("");
   }
 
   const count = Number(value);
-  const valid = selection !== null && value.trim() !== "" && Number.isInteger(count) && count >= (selection.type === "adjust" ? 0 : 1) && count <= (selection.type === "adjust" ? 99 : selection.meal.count);
+  const max = selection?.type === "discard" ? Math.min(99, selection.meal.unassignedCount) : 99;
+  const valid = selection !== null && value.trim() !== "" && Number.isInteger(count) && count >= (selection.type === "adjust" ? 0 : 1) && count <= max;
 
   function save() {
     if (!selection || !valid) return;
@@ -57,8 +58,8 @@ export function RollingMealsSection({ meals }: { meals: RollingMealQueueRow[] })
             <CookingPot />
           </div>
           <div className="space-y-cozy">
-            <p className="type-h3 text-foreground">No planned meals to roll over</p>
-            <p className="max-w-sm type-body-relaxed text-muted-foreground">Unfinished meals from previous plans will appear here</p>
+            <p className="type-h3 text-foreground">No pending meals</p>
+            <p className="max-w-sm type-body-relaxed text-muted-foreground">Meals you still need to cook will appear here.</p>
           </div>
         </div>
       ) : (
@@ -67,12 +68,12 @@ export function RollingMealsSection({ meals }: { meals: RollingMealQueueRow[] })
             <li key={meal.id} className="group/row flex items-center gap-comfort rounded-md border border-border bg-card p-nest transition-colors hover:bg-muted/40 focus-within:bg-muted/40">
               <div className="min-w-0 flex-1">
                 <p className="min-w-0 truncate font-medium" title={meal.name}>{meal.name}</p>
-                <p className="mt-tight type-caption text-muted-foreground">{meal.count} {meal.count === 1 ? "meal" : "meals"}</p>
+                <p className="mt-tight type-caption text-muted-foreground">{meal.count} {meal.count === 1 ? "meal" : "meals"} · {meal.count - meal.unassignedCount} in plans · {meal.unassignedCount} unassigned</p>
               </div>
-              <div className="flex shrink-0 items-center gap-1 opacity-0 pointer-events-none transition-opacity duration-150 max-md:opacity-100 max-md:pointer-events-auto group-hover/row:opacity-100 group-hover/row:pointer-events-auto group-focus-within/row:opacity-100 group-focus-within/row:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto">
+              {meal.unassignedCount > 0 ? <div className="flex shrink-0 items-center gap-1 opacity-0 pointer-events-none transition-opacity duration-150 max-md:opacity-100 max-md:pointer-events-auto group-hover/row:opacity-100 group-hover/row:pointer-events-auto group-focus-within/row:opacity-100 group-focus-within/row:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto">
                 <Button type="button" variant="outline" size="icon-sm" onClick={() => open("adjust", meal)} aria-label={`Adjust ${meal.name}`} title="Adjust meals"><Pencil className="h-4 w-4" /></Button>
                 <Button type="button" variant="outline" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={() => open("discard", meal)} aria-label={`Discard ${meal.name}`} title="Discard meals"><Trash2 className="h-4 w-4" /></Button>
-              </div>
+              </div> : null}
             </li>
           ))}
         </ul>
@@ -82,11 +83,11 @@ export function RollingMealsSection({ meals }: { meals: RollingMealQueueRow[] })
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{selection.type === "adjust" ? "Adjust" : "Discard"} {selection.meal.name}</DialogTitle>
-              <DialogDescription>{selection.type === "adjust" ? "Adjust the number of planned meals available." : "Remove planned meals from the rolling queue."}</DialogDescription>
+              <DialogDescription>Only unassigned meals can be changed here. Meals in plans are not affected.</DialogDescription>
             </DialogHeader>
             <label className="grid gap-tight text-sm font-medium">
-              {selection.type === "adjust" ? "Meals available" : "Meals"}
-              <Input type="number" min={selection.type === "adjust" ? 0 : 1} max={selection.type === "adjust" ? 99 : selection.meal.count} value={value} onChange={(event) => setValue(event.target.value)} disabled={pending} />
+              Unassigned meals
+              <Input type="number" min={selection.type === "adjust" ? 0 : 1} max={max} value={value} onChange={(event) => setValue(event.target.value)} disabled={pending} />
             </label>
             {error ? <p role="alert" className="type-body text-destructive">{error}</p> : null}
             <DialogFooter>
