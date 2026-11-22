@@ -5,6 +5,7 @@ import type { PlanBatchInput, PlanInputType } from "@/types/planner";
 import {
   detachMealFromBatch,
   ensureBatchAfterPlacement,
+  ensureBatchForPlacement,
   getBatchMealTotal,
   transferRangeRemovedBatchMeals,
 } from "./batch-storage";
@@ -40,6 +41,28 @@ const batch: PlanBatchInput = {
 };
 
 describe("batch storage lifecycle", () => {
+  it("propagates an explicit group member's claim to its remainder metadata", () => {
+    const rollingQueueClaim = { id: "queue", version: 4 };
+    const plan = [{ ...slot(19, ["jagoda"]), rollingQueueClaim, isRolledOver: true }];
+    const result = ensureBatchAfterPlacement({ plan, batches: [], slotKey: keyFor(19), requestedMeals: 3, fallbackFamilyMemberIds: ["jagoda"] });
+    expect(result[0]).toMatchObject({ rollingQueueClaim, storageRows: [{ count: 2 }] });
+    const repaired = ensureBatchAfterPlacement({ previousPlan: plan, plan, batches: [batch], slotKey: keyFor(19), requestedMeals: 3, fallbackFamilyMemberIds: ["jagoda"] });
+    expect(repaired[0]?.rollingQueueClaim).toEqual(rollingQueueClaim);
+  });
+
+  it("does not inherit claims from another group of the same recipe or from cooked slots", () => {
+    const rollingQueueClaim = { id: "queue", version: 4 };
+    const plan = [
+      { ...slot(19, ["jagoda"], "claimed"), rollingQueueClaim, isRolledOver: true },
+      slot(20, ["jagoda"], "fresh"),
+      { ...slot(21, ["jagoda"], "cooked"), rollingQueueClaim, alreadyCooked: true },
+    ];
+    for (const batchGroupId of ["fresh", "cooked"]) {
+      const result = ensureBatchForPlacement({ plan, batches: [], batchGroupId, recipeId: recipe.id, requestedMeals: 3, cookingFamilyMemberIds: ["jagoda"] });
+      expect(result[0]?.rollingQueueClaim).toBeUndefined();
+    }
+  });
+
   it("does not move removed scheduled meals into storage while siblings remain", () => {
     const plan: PlanInputType = [
       slot(19, ["jagoda"]),

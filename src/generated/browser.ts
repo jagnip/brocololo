@@ -133,6 +133,16 @@ export type RollingCapturedPlan = Prisma.RollingCapturedPlanModel
  */
 export type RollingMealEntry = Prisma.RollingMealEntryModel
 /**
+ * Model RollingMealUnit
+ * 
+ */
+export type RollingMealUnit = Prisma.RollingMealUnitModel
+/**
+ * Model RollingMealPlacement
+ * 
+ */
+export type RollingMealPlacement = Prisma.RollingMealPlacementModel
+/**
  * Model StoredMealLot
  * 
  */

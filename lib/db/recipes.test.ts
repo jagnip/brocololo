@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createRecipe, getRecipes, updateRecipe } from "./recipes";
+import { createRecipe, deleteRecipe, getRecipes, updateRecipe } from "./recipes";
 import type { CreateRecipePayload } from "../validations/recipe";
 
 vi.mock("./index", () => ({
@@ -67,6 +67,21 @@ function baseCreateRecipeInput() {
 }
 
 const TEST_USER_ID = "user-test";
+
+describe("recipe inventory references", () => {
+  it.each(["rollingMealEntries", "storedMealLots"])("blocks deletion with %s instead of cascading into durable history", async (relation) => {
+    const remove = vi.fn();
+    const findFirst = vi.fn().mockResolvedValue({ id: "recipe-id", archivedAt: new Date(), _count: { [relation]: 1 } });
+    vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
+      (callback as (tx: unknown) => Promise<unknown>)({ recipe: { findFirst, delete: remove } }),
+    );
+    await expect(deleteRecipe(TEST_USER_ID, "recipe-id")).rejects.toThrow("RECIPE_IN_USE");
+    expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      select: expect.objectContaining({ _count: { select: expect.objectContaining({ [relation]: true }) } }),
+    }));
+    expect(remove).not.toHaveBeenCalled();
+  });
+});
 
 describe("createRecipe category type rules", () => {
   const recipeCreate = vi.fn();

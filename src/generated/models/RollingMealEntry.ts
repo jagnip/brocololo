@@ -242,6 +242,7 @@ export type RollingMealEntryWhereInput = {
   version?: Prisma.IntFilter<"RollingMealEntry"> | number
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   recipe?: Prisma.XOR<Prisma.RecipeNullableScalarRelationFilter, Prisma.RecipeWhereInput> | null
+  units?: Prisma.RollingMealUnitListRelationFilter
 }
 
 export type RollingMealEntryOrderByWithRelationInput = {
@@ -255,6 +256,7 @@ export type RollingMealEntryOrderByWithRelationInput = {
   version?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   recipe?: Prisma.RecipeOrderByWithRelationInput
+  units?: Prisma.RollingMealUnitOrderByRelationAggregateInput
 }
 
 export type RollingMealEntryWhereUniqueInput = Prisma.AtLeast<{
@@ -272,6 +274,7 @@ export type RollingMealEntryWhereUniqueInput = Prisma.AtLeast<{
   version?: Prisma.IntFilter<"RollingMealEntry"> | number
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   recipe?: Prisma.XOR<Prisma.RecipeNullableScalarRelationFilter, Prisma.RecipeWhereInput> | null
+  units?: Prisma.RollingMealUnitListRelationFilter
 }, "id" | "userId_identity">
 
 export type RollingMealEntryOrderByWithAggregationInput = {
@@ -313,6 +316,7 @@ export type RollingMealEntryCreateInput = {
   version?: number
   user: Prisma.UserCreateNestedOneWithoutRollingMealEntriesInput
   recipe?: Prisma.RecipeCreateNestedOneWithoutRollingMealEntriesInput
+  units?: Prisma.RollingMealUnitCreateNestedManyWithoutEntryInput
 }
 
 export type RollingMealEntryUncheckedCreateInput = {
@@ -324,6 +328,7 @@ export type RollingMealEntryUncheckedCreateInput = {
   customMeal?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   count: number
   version?: number
+  units?: Prisma.RollingMealUnitUncheckedCreateNestedManyWithoutEntryInput
 }
 
 export type RollingMealEntryUpdateInput = {
@@ -335,6 +340,7 @@ export type RollingMealEntryUpdateInput = {
   version?: Prisma.IntFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutRollingMealEntriesNestedInput
   recipe?: Prisma.RecipeUpdateOneWithoutRollingMealEntriesNestedInput
+  units?: Prisma.RollingMealUnitUpdateManyWithoutEntryNestedInput
 }
 
 export type RollingMealEntryUncheckedUpdateInput = {
@@ -346,6 +352,7 @@ export type RollingMealEntryUncheckedUpdateInput = {
   customMeal?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   count?: Prisma.IntFieldUpdateOperationsInput | number
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  units?: Prisma.RollingMealUnitUncheckedUpdateManyWithoutEntryNestedInput
 }
 
 export type RollingMealEntryCreateManyInput = {
@@ -433,6 +440,11 @@ export type RollingMealEntryMinOrderByAggregateInput = {
 export type RollingMealEntrySumOrderByAggregateInput = {
   count?: Prisma.SortOrder
   version?: Prisma.SortOrder
+}
+
+export type RollingMealEntryScalarRelationFilter = {
+  is?: Prisma.RollingMealEntryWhereInput
+  isNot?: Prisma.RollingMealEntryWhereInput
 }
 
 export type RollingMealEntryCreateNestedManyWithoutUserInput = {
@@ -523,6 +535,20 @@ export type NullableEnumPlannerMealTypeFieldUpdateOperationsInput = {
   set?: $Enums.PlannerMealType | null
 }
 
+export type RollingMealEntryCreateNestedOneWithoutUnitsInput = {
+  create?: Prisma.XOR<Prisma.RollingMealEntryCreateWithoutUnitsInput, Prisma.RollingMealEntryUncheckedCreateWithoutUnitsInput>
+  connectOrCreate?: Prisma.RollingMealEntryCreateOrConnectWithoutUnitsInput
+  connect?: Prisma.RollingMealEntryWhereUniqueInput
+}
+
+export type RollingMealEntryUpdateOneRequiredWithoutUnitsNestedInput = {
+  create?: Prisma.XOR<Prisma.RollingMealEntryCreateWithoutUnitsInput, Prisma.RollingMealEntryUncheckedCreateWithoutUnitsInput>
+  connectOrCreate?: Prisma.RollingMealEntryCreateOrConnectWithoutUnitsInput
+  upsert?: Prisma.RollingMealEntryUpsertWithoutUnitsInput
+  connect?: Prisma.RollingMealEntryWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.RollingMealEntryUpdateToOneWithWhereWithoutUnitsInput, Prisma.RollingMealEntryUpdateWithoutUnitsInput>, Prisma.RollingMealEntryUncheckedUpdateWithoutUnitsInput>
+}
+
 export type RollingMealEntryCreateWithoutUserInput = {
   id?: string
   identity: string
@@ -531,6 +557,7 @@ export type RollingMealEntryCreateWithoutUserInput = {
   count: number
   version?: number
   recipe?: Prisma.RecipeCreateNestedOneWithoutRollingMealEntriesInput
+  units?: Prisma.RollingMealUnitCreateNestedManyWithoutEntryInput
 }
 
 export type RollingMealEntryUncheckedCreateWithoutUserInput = {
@@ -541,6 +568,7 @@ export type RollingMealEntryUncheckedCreateWithoutUserInput = {
   customMeal?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   count: number
   version?: number
+  units?: Prisma.RollingMealUnitUncheckedCreateNestedManyWithoutEntryInput
 }
 
 export type RollingMealEntryCreateOrConnectWithoutUserInput = {
@@ -591,6 +619,7 @@ export type RollingMealEntryCreateWithoutRecipeInput = {
   count: number
   version?: number
   user: Prisma.UserCreateNestedOneWithoutRollingMealEntriesInput
+  units?: Prisma.RollingMealUnitCreateNestedManyWithoutEntryInput
 }
 
 export type RollingMealEntryUncheckedCreateWithoutRecipeInput = {
@@ -601,6 +630,7 @@ export type RollingMealEntryUncheckedCreateWithoutRecipeInput = {
   customMeal?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   count: number
   version?: number
+  units?: Prisma.RollingMealUnitUncheckedCreateNestedManyWithoutEntryInput
 }
 
 export type RollingMealEntryCreateOrConnectWithoutRecipeInput = {
@@ -629,6 +659,66 @@ export type RollingMealEntryUpdateManyWithWhereWithoutRecipeInput = {
   data: Prisma.XOR<Prisma.RollingMealEntryUpdateManyMutationInput, Prisma.RollingMealEntryUncheckedUpdateManyWithoutRecipeInput>
 }
 
+export type RollingMealEntryCreateWithoutUnitsInput = {
+  id?: string
+  identity: string
+  mealType?: $Enums.PlannerMealType | null
+  customMeal?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  count: number
+  version?: number
+  user: Prisma.UserCreateNestedOneWithoutRollingMealEntriesInput
+  recipe?: Prisma.RecipeCreateNestedOneWithoutRollingMealEntriesInput
+}
+
+export type RollingMealEntryUncheckedCreateWithoutUnitsInput = {
+  id?: string
+  userId: string
+  identity: string
+  recipeId?: string | null
+  mealType?: $Enums.PlannerMealType | null
+  customMeal?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  count: number
+  version?: number
+}
+
+export type RollingMealEntryCreateOrConnectWithoutUnitsInput = {
+  where: Prisma.RollingMealEntryWhereUniqueInput
+  create: Prisma.XOR<Prisma.RollingMealEntryCreateWithoutUnitsInput, Prisma.RollingMealEntryUncheckedCreateWithoutUnitsInput>
+}
+
+export type RollingMealEntryUpsertWithoutUnitsInput = {
+  update: Prisma.XOR<Prisma.RollingMealEntryUpdateWithoutUnitsInput, Prisma.RollingMealEntryUncheckedUpdateWithoutUnitsInput>
+  create: Prisma.XOR<Prisma.RollingMealEntryCreateWithoutUnitsInput, Prisma.RollingMealEntryUncheckedCreateWithoutUnitsInput>
+  where?: Prisma.RollingMealEntryWhereInput
+}
+
+export type RollingMealEntryUpdateToOneWithWhereWithoutUnitsInput = {
+  where?: Prisma.RollingMealEntryWhereInput
+  data: Prisma.XOR<Prisma.RollingMealEntryUpdateWithoutUnitsInput, Prisma.RollingMealEntryUncheckedUpdateWithoutUnitsInput>
+}
+
+export type RollingMealEntryUpdateWithoutUnitsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  identity?: Prisma.StringFieldUpdateOperationsInput | string
+  mealType?: Prisma.NullableEnumPlannerMealTypeFieldUpdateOperationsInput | $Enums.PlannerMealType | null
+  customMeal?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  count?: Prisma.IntFieldUpdateOperationsInput | number
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+  user?: Prisma.UserUpdateOneRequiredWithoutRollingMealEntriesNestedInput
+  recipe?: Prisma.RecipeUpdateOneWithoutRollingMealEntriesNestedInput
+}
+
+export type RollingMealEntryUncheckedUpdateWithoutUnitsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  identity?: Prisma.StringFieldUpdateOperationsInput | string
+  recipeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mealType?: Prisma.NullableEnumPlannerMealTypeFieldUpdateOperationsInput | $Enums.PlannerMealType | null
+  customMeal?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  count?: Prisma.IntFieldUpdateOperationsInput | number
+  version?: Prisma.IntFieldUpdateOperationsInput | number
+}
+
 export type RollingMealEntryCreateManyUserInput = {
   id?: string
   identity: string
@@ -647,6 +737,7 @@ export type RollingMealEntryUpdateWithoutUserInput = {
   count?: Prisma.IntFieldUpdateOperationsInput | number
   version?: Prisma.IntFieldUpdateOperationsInput | number
   recipe?: Prisma.RecipeUpdateOneWithoutRollingMealEntriesNestedInput
+  units?: Prisma.RollingMealUnitUpdateManyWithoutEntryNestedInput
 }
 
 export type RollingMealEntryUncheckedUpdateWithoutUserInput = {
@@ -657,6 +748,7 @@ export type RollingMealEntryUncheckedUpdateWithoutUserInput = {
   customMeal?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   count?: Prisma.IntFieldUpdateOperationsInput | number
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  units?: Prisma.RollingMealUnitUncheckedUpdateManyWithoutEntryNestedInput
 }
 
 export type RollingMealEntryUncheckedUpdateManyWithoutUserInput = {
@@ -687,6 +779,7 @@ export type RollingMealEntryUpdateWithoutRecipeInput = {
   count?: Prisma.IntFieldUpdateOperationsInput | number
   version?: Prisma.IntFieldUpdateOperationsInput | number
   user?: Prisma.UserUpdateOneRequiredWithoutRollingMealEntriesNestedInput
+  units?: Prisma.RollingMealUnitUpdateManyWithoutEntryNestedInput
 }
 
 export type RollingMealEntryUncheckedUpdateWithoutRecipeInput = {
@@ -697,6 +790,7 @@ export type RollingMealEntryUncheckedUpdateWithoutRecipeInput = {
   customMeal?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   count?: Prisma.IntFieldUpdateOperationsInput | number
   version?: Prisma.IntFieldUpdateOperationsInput | number
+  units?: Prisma.RollingMealUnitUncheckedUpdateManyWithoutEntryNestedInput
 }
 
 export type RollingMealEntryUncheckedUpdateManyWithoutRecipeInput = {
@@ -710,6 +804,35 @@ export type RollingMealEntryUncheckedUpdateManyWithoutRecipeInput = {
 }
 
 
+/**
+ * Count Type RollingMealEntryCountOutputType
+ */
+
+export type RollingMealEntryCountOutputType = {
+  units: number
+}
+
+export type RollingMealEntryCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  units?: boolean | RollingMealEntryCountOutputTypeCountUnitsArgs
+}
+
+/**
+ * RollingMealEntryCountOutputType without action
+ */
+export type RollingMealEntryCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RollingMealEntryCountOutputType
+   */
+  select?: Prisma.RollingMealEntryCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * RollingMealEntryCountOutputType without action
+ */
+export type RollingMealEntryCountOutputTypeCountUnitsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RollingMealUnitWhereInput
+}
+
 
 export type RollingMealEntrySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -722,6 +845,8 @@ export type RollingMealEntrySelect<ExtArgs extends runtime.Types.Extensions.Inte
   version?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   recipe?: boolean | Prisma.RollingMealEntry$recipeArgs<ExtArgs>
+  units?: boolean | Prisma.RollingMealEntry$unitsArgs<ExtArgs>
+  _count?: boolean | Prisma.RollingMealEntryCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["rollingMealEntry"]>
 
 export type RollingMealEntrySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -765,6 +890,8 @@ export type RollingMealEntryOmit<ExtArgs extends runtime.Types.Extensions.Intern
 export type RollingMealEntryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   recipe?: boolean | Prisma.RollingMealEntry$recipeArgs<ExtArgs>
+  units?: boolean | Prisma.RollingMealEntry$unitsArgs<ExtArgs>
+  _count?: boolean | Prisma.RollingMealEntryCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type RollingMealEntryIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -780,6 +907,7 @@ export type $RollingMealEntryPayload<ExtArgs extends runtime.Types.Extensions.In
   objects: {
     user: Prisma.$UserPayload<ExtArgs>
     recipe: Prisma.$RecipePayload<ExtArgs> | null
+    units: Prisma.$RollingMealUnitPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1186,6 +1314,7 @@ export interface Prisma__RollingMealEntryClient<T, Null = never, ExtArgs extends
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   recipe<T extends Prisma.RollingMealEntry$recipeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RollingMealEntry$recipeArgs<ExtArgs>>): Prisma.Prisma__RecipeClient<runtime.Types.Result.GetResult<Prisma.$RecipePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  units<T extends Prisma.RollingMealEntry$unitsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RollingMealEntry$unitsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RollingMealUnitPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1635,6 +1764,30 @@ export type RollingMealEntry$recipeArgs<ExtArgs extends runtime.Types.Extensions
    */
   include?: Prisma.RecipeInclude<ExtArgs> | null
   where?: Prisma.RecipeWhereInput
+}
+
+/**
+ * RollingMealEntry.units
+ */
+export type RollingMealEntry$unitsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RollingMealUnit
+   */
+  select?: Prisma.RollingMealUnitSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RollingMealUnit
+   */
+  omit?: Prisma.RollingMealUnitOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RollingMealUnitInclude<ExtArgs> | null
+  where?: Prisma.RollingMealUnitWhereInput
+  orderBy?: Prisma.RollingMealUnitOrderByWithRelationInput | Prisma.RollingMealUnitOrderByWithRelationInput[]
+  cursor?: Prisma.RollingMealUnitWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RollingMealUnitScalarFieldEnum | Prisma.RollingMealUnitScalarFieldEnum[]
 }
 
 /**

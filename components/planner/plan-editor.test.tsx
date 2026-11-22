@@ -62,6 +62,7 @@ vi.mock("./plan-view", () => ({
         <div aria-label="batch-groups">{batchGroups}</div>
         <div aria-label="batch-storage">{JSON.stringify(batches)}</div>
         <div aria-label="slot-used">{plan.map((slot) => String(slot.used)).join(",")}</div>
+        <div aria-label="slot-claims">{JSON.stringify(plan.map((slot) => slot.rollingQueueClaim ?? null))}</div>
         <button type="button" onClick={() => onToggleUsed?.(slotKey)}>
           Toggle first cooked
         </button>
@@ -188,6 +189,36 @@ describe("PlanEditor autosave", () => {
     routerMock.push.mockClear();
     routerMock.refresh.mockClear();
   });
+
+  it.each(["Shuffle", "Set batch recipe", "Set custom meal", "Remove first"])(
+    "clears a stale claim on %s without serializing it on autosave",
+    async (action) => {
+      vi.useFakeTimers();
+      const initialPlan: PlanInputType = [{
+        date: new Date("2026-03-17T00:00:00.000Z"),
+        mealType: PlannerMealType.DINNER,
+        placementId: "original",
+        recipe: createRecipe("original"),
+        customMeal: null,
+        alternatives: [createRecipe("alternative")],
+        used: false,
+        isRolledOver: true,
+        rollingQueueClaim: { id: "consumed", version: 1 },
+      }];
+      const view = renderPlanEditor({ planId: "plan-1", initialPlan, recipes: [], ingredientOptions: emptyIngredientOptions });
+      try {
+        fireEvent.click(screen.getByRole("button", { name: action }));
+        expect(screen.getByLabelText("slot-claims")).toHaveTextContent("[null]");
+        await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+        const saved = vi.mocked(updateSavedPlan).mock.calls[0][1][0];
+        expect(saved).not.toHaveProperty("rollingQueueClaim");
+        expect(saved.placementId).not.toBe("original");
+      } finally {
+        view.unmount();
+        vi.useRealTimers();
+      }
+    },
+  );
 
   it("saves new custom placement IDs and preserves them on same-meal edits", async () => {
     vi.useFakeTimers();

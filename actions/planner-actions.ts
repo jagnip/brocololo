@@ -24,9 +24,24 @@ import { isRecipeAvoidedByAudience, pickBestCandidate } from "@/lib/planner/scor
 import { generateBaselineLogForPlan } from "@/lib/db/planner";
 import { requireUser } from "@/lib/auth/session";
 import { MESSAGES } from "@/lib/messages";
-import { planBatchesSaveSchema, planSlotsSaveSchema } from "@/lib/validations/planner";
+import { planBatchesSaveSchema, planSlotsSaveSchema, plannerCriteriaSchema } from "@/lib/validations/planner";
+import { listRollingMealQueue } from "@/lib/db/rolling-meals";
+import type { RollingQueueClaim } from "@/types/planner";
 
 const PLAN_GENERATION_FAILED_MESSAGE = MESSAGES.planner.generationFailedMessage;
+
+function rollingErrorMessage(error: unknown): string | undefined {
+  const code = error instanceof Error ? ("code" in error ? error.code : error.message) : undefined;
+  if (code === "ROLLING_MIGRATION_REQUIRED") {
+    return "Rolling meals need a reviewed migration before planning can continue. Contact support, then reload this page.";
+  }
+  if (code === "ROLLING_BATCH_REMAINDER_REQUIRED") {
+    return "This rolling batch still has uncooked meals in Storage. Reload the plan and carry its remaining meals together before saving.";
+  }
+  if (["ROLLING_QUEUE_CONFLICT", "ROLLING_MEAL_CONFLICT", "STORED_MEAL_CONFLICT"].includes(String(code))) {
+    return "These rolling meals changed elsewhere. Reload the page and regenerate the plan before saving.";
+  }
+}
 
 export async function generatePlan(
   start: Date,
@@ -44,6 +59,7 @@ export async function generatePlan(
 > {
   try {
     const { id: userId } = await requireUser();
+    rollingMeals = plannerCriteriaSchema.shape.rollingMeals.parse(rollingMeals);
     const familyMembers = await listFamilyMembers(userId);
     const ownedFamilyMemberIds = new Set(familyMembers.map((member) => member.id));
 
@@ -81,46 +97,97 @@ export async function generatePlan(
     const plannedRecipeSlots = [...existingByKey.values()].filter(
       (slot) => slot.recipe !== null && dayKeys.has(slot.date.toISOString()),
     );
-    const rollingRecipes = rollingMeals.filter((entry) => entry.kind !== "custom");
-    const rollingCustomMeals = rollingMeals.filter((entry) => entry.kind === "custom");
-    const remainingRolling = new Map(
-      rollingRecipes.map((entry) => [entry.recipeId, entry.meals]),
-    );
-    const remainingStored = new Map(
-      rollingRecipes.flatMap((entry) => entry.source ? [[entry.recipeId, entry.source.storedMeals] as const] : []),
-    );
-    const remainingCustomRolling = new Map(
-      rollingCustomMeals.map((entry) => [getRollingCustomMealKey(entry.mealType, entry.customMeal), entry.meals]),
-    );
-    // Reserve scheduled and stored rolling meals before scheduling continuations.
-    for (const slot of existingByKey.values()) {
-      if (slot.recipe && !slot.used && dayKeys.has(slot.date.toISOString()) && remainingStored.has(slot.recipe.id)) {
-        remainingStored.set(slot.recipe.id, Math.max((remainingStored.get(slot.recipe.id) ?? 0) - 1, 0));
+    // Claims move existing units. Never let an edited total turn fresh excess into a claim.
+    const retainedSlots = [...existingByKey.values()].filter((slot) => dayKeys.has(slot.date.toISOString()));
+    const retainedBatches = existingBatches.filter((batch) => retainedSlots.some((slot) => slot.batchGroupId === batch.id && slot.recipe?.id === batch.recipeId));
+    // Broad rows validate tokens only; new moves use strictly preceding-plan quantities.
+    const [queue, allPending] = [...rollingMeals, ...retainedSlots, ...retainedBatches].some((entry) => entry.rollingQueueClaim)
+      ? await Promise.all([
+        listRollingMealQueue(userId, { includeCurrent: true, beforeDate: start }),
+        listRollingMealQueue(userId, { includeCurrent: true }),
+      ])
+      : [[], []];
+    const reservedClaims = new Map<string, number>();
+    const persistedClaims = new Map<string, number>();
+    for (const item of [...retainedSlots, ...retainedBatches]) {
+      const token = item.rollingQueueClaim;
+      if (!token) continue;
+      const quantity = "storageRows" in item ? item.storageRows.reduce((sum, row) => sum + row.count, 0) : 1;
+      const persisted = "storageRows" in item
+        ? retainedSlots.some((slot) => slot.id && slot.batchGroupId === item.id && slot.recipe?.id === item.recipeId)
+        : !!item.id;
+      // Persisted lineage is reconciled on save, not reclaimed from preceding plans.
+      if (persisted) {
+        persistedClaims.set(token.id, (persistedClaims.get(token.id) ?? 0) + quantity);
+        continue;
       }
-      if (slot.recipe && slot.isRolledOver && dayKeys.has(slot.date.toISOString())) {
-        remainingRolling.set(
-          slot.recipe.id,
-          Math.max((remainingRolling.get(slot.recipe.id) ?? 0) - 1, 0),
-        );
+      const source = queue.find((row) => row.id === token.id);
+      const sameIdentity = "storageRows" in item
+        ? source?.kind === "recipe" && source.recipeId === item.recipeId
+        : item.recipe
+          ? source?.kind === "recipe" && source.recipeId === item.recipe.id
+          : item.customMeal && source?.kind === "custom" && getRollingCustomMealKey(source.mealType, source.customMeal) === getRollingCustomMealKey(token.mealType ?? item.mealType, item.customMeal);
+      const count = (reservedClaims.get(token.id) ?? 0) + quantity;
+      if (!sameIdentity || source?.version !== token.version || count > source.count || ("alreadyCooked" in item && item.alreadyCooked)) {
+        throw new Error("ROLLING_QUEUE_CONFLICT");
       }
-      if (slot.customMeal && slot.isRolledOver && dayKeys.has(slot.date.toISOString())) {
-        const key = getRollingCustomMealKey(slot.rollingQueueClaim?.mealType ?? slot.mealType, slot.customMeal);
-        remainingCustomRolling.set(key, Math.max((remainingCustomRolling.get(key) ?? 0) - 1, 0));
-      }
+      reservedClaims.set(token.id, count);
     }
-    for (const batch of existingBatches) {
-      // Retained Storage stays allocated even when the cooked toggle hides it.
-      const hasRetainedRollingSlot = [...existingByKey.values()].some(
-        (slot) => slot.isRolledOver &&
-          slot.batchGroupId === batch.id && slot.recipe?.id === batch.recipeId &&
-          dayKeys.has(slot.date.toISOString()),
-      );
-      if (hasRetainedRollingSlot) {
-        const storedMeals = batch.storageRows.reduce((count, row) => count + row.count, 0);
-        remainingRolling.set(
-          batch.recipeId,
-          Math.max((remainingRolling.get(batch.recipeId) ?? 0) - storedMeals, 0),
-        );
+    const budgets: {
+      entry: RollingMealType;
+      remaining: number;
+      isRolledOver: boolean;
+      alreadyCooked: boolean;
+      rollingQueueClaim?: RollingQueueClaim;
+    }[] = [];
+    const claimedIds = new Set<string>();
+    for (const entry of rollingMeals) {
+      const manualCooked = entry.kind !== "custom" && !!entry.alreadyCooked;
+      const token = manualCooked ? undefined : entry.rollingQueueClaim;
+      const source = token ? queue.find((row) => row.id === token.id) : undefined;
+      if (token) {
+        const pending = allPending.find((row) => row.id === token.id);
+        const sameIdentity = entry.kind === "custom"
+          ? pending?.kind === "custom" && getRollingCustomMealKey(pending.mealType, pending.customMeal) === getRollingCustomMealKey(entry.mealType, entry.customMeal)
+          : pending?.kind === "recipe" && pending.recipeId === entry.recipeId;
+        if (!sameIdentity || pending?.version !== token.version || claimedIds.has(token.id)) {
+          throw new Error("ROLLING_QUEUE_CONFLICT");
+        }
+        claimedIds.add(token.id);
+      }
+      const cooked = entry.kind === "custom" ? 0 : manualCooked
+        ? entry.meals : Math.min(entry.meals, entry.source?.storedMeals ?? 0);
+      const uncooked = manualCooked ? 0 : Math.min(entry.meals - cooked, (source?.count ?? 0) + (token ? persistedClaims.get(token.id) ?? 0 : 0));
+      const fresh = entry.meals - cooked - uncooked;
+      if (cooked > 0) budgets.push({ entry, remaining: cooked, isRolledOver: true, alreadyCooked: true });
+      if (uncooked > 0) budgets.push({ entry, remaining: uncooked, isRolledOver: true, alreadyCooked: false, rollingQueueClaim: token });
+      if (fresh > 0) budgets.push({ entry, remaining: fresh, isRolledOver: false, alreadyCooked: false });
+    }
+    const recipeBudgets = budgets.filter((budget) => budget.entry.kind !== "custom");
+    const customBudgets = budgets.filter((budget) => budget.entry.kind === "custom");
+    const reserve = (slot: (typeof existingPlan)[number], count: number, claim = slot.rollingQueueClaim) => {
+      const matching = budgets.filter((candidate) => {
+        const entry = candidate.entry;
+        return entry.kind === "custom"
+          ? slot.customMeal && getRollingCustomMealKey(entry.mealType, entry.customMeal) === getRollingCustomMealKey(claim?.mealType ?? slot.mealType, slot.customMeal)
+          : slot.recipe?.id === entry.recipeId;
+      });
+      const preferred = matching.find((candidate) => claim
+          ? candidate.rollingQueueClaim?.id === claim.id
+          : !candidate.rollingQueueClaim && candidate.alreadyCooked === !!slot.alreadyCooked);
+      // A reduced total still includes retained placements, even across source boundaries.
+      for (const budget of [preferred, ...matching.filter((candidate) => candidate !== preferred)]) {
+        if (!budget) continue;
+        const reserved = Math.min(count, budget.remaining);
+        budget.remaining -= reserved;
+        count -= reserved;
+      }
+    };
+    for (const slot of retainedSlots) reserve(slot, 1);
+    for (const batch of retainedBatches) {
+      const slot = retainedSlots.find((candidate) => candidate.batchGroupId === batch.id && candidate.recipe?.id === batch.recipeId);
+      if (slot && (!slot.alreadyCooked || batch.rollingQueueClaim)) {
+        reserve(slot, batch.storageRows.reduce((sum, row) => sum + row.count, 0), batch.rollingQueueClaim);
       }
     }
     const plan: PlanInputType = [];
@@ -190,27 +257,24 @@ export async function generatePlan(
 
         emptySlotsAttempted += 1;
 
-        const customRollingEntry = rollingCustomMeals.find(
-          (entry) =>
-            entry.mealType === mealType &&
-            (remainingCustomRolling.get(getRollingCustomMealKey(entry.mealType, entry.customMeal)) ?? 0) > 0,
+        const customBudget = customBudgets.find(
+          (budget) => budget.entry.kind === "custom" && budget.entry.mealType === mealType && budget.remaining > 0,
         );
-        if (customRollingEntry) {
-          const key = getRollingCustomMealKey(customRollingEntry.mealType, customRollingEntry.customMeal);
+        if (customBudget && customBudget.entry.kind === "custom") {
           plan.push({
             date: new Date(day),
             mealType,
             recipe: null,
-            customMeal: customRollingEntry.customMeal,
+            customMeal: customBudget.entry.customMeal,
             alternatives: [],
             cookingFamilyMemberIds: slotAudienceIds,
             used: false,
             batchGroupId: null,
-            isRolledOver: true,
+            isRolledOver: customBudget.isRolledOver,
             alreadyCooked: false,
-            rollingQueueClaim: customRollingEntry.rollingQueueClaim,
+            rollingQueueClaim: customBudget.rollingQueueClaim,
           });
-          remainingCustomRolling.set(key, (remainingCustomRolling.get(key) ?? 1) - 1);
+          customBudget.remaining -= 1;
           emptySlotsFilled += 1;
           continue;
         }
@@ -221,8 +285,7 @@ export async function generatePlan(
           if (isRecipeAvoidedByAudience(recipe, slotAudienceIds)) return false;
           const effectiveRecipe = getEffectivePlannerRecipe(
             recipe,
-            (remainingRolling.get(recipe.id) ?? 0) > 0 &&
-              rollingRecipes.some((entry) => entry.recipeId === recipe.id && entry.alreadyCooked),
+            !!recipeBudgets.find((budget) => budget.entry.kind !== "custom" && budget.entry.recipeId === recipe.id && budget.remaining > 0)?.alreadyCooked,
           );
           return (handsOnLimit === null || effectiveRecipe.handsOnTime <= handsOnLimit) &&
             (totalLimit === null || effectiveRecipe.totalTime <= totalLimit);
@@ -254,20 +317,18 @@ export async function generatePlan(
           currentSlot: { date: day, mealType },
           maxDaysSinceLastUsedCandidate,
           fridgeIngredientIds,
-          rollingRecipeIds: rollingRecipes
-            .filter((r) => (remainingRolling.get(r.recipeId) ?? 0) > 0)
-            .map((r) => r.recipeId),
+          rollingRecipeIds: recipeBudgets.flatMap((budget) => budget.entry.kind !== "custom" && budget.remaining > 0 ? [budget.entry.recipeId] : []),
         };
         const { winner, alternatives } = pickBestCandidate(candidates, ctx);
 
-        const rollingEntry = rollingRecipes.find(
-          (r) => r.recipeId === winner.id && (remainingRolling.get(r.recipeId) ?? 0) > 0,
+        const budget = recipeBudgets.find(
+          (candidate) => candidate.entry.kind !== "custom" && candidate.entry.recipeId === winner.id && candidate.remaining > 0,
         );
-        const overrideMeals = rollingEntry ? remainingRolling.get(winner.id) : undefined;
+        const overrideMeals = budget?.remaining;
         const flags = {
-          isRolledOver: !!rollingEntry,
-          alreadyCooked: !!rollingEntry?.alreadyCooked && winner.isBatchRecipe,
-          rollingQueueClaim: rollingEntry?.rollingQueueClaim,
+          isRolledOver: budget?.isRolledOver ?? false,
+          alreadyCooked: budget?.alreadyCooked ?? false,
+          rollingQueueClaim: budget?.rollingQueueClaim,
         };
         const totalMeals = overrideMeals ?? getPlannerMealCount(winner);
         // Multi-meal placements share a group id so badges can recount after edits.
@@ -312,38 +373,20 @@ export async function generatePlan(
             },
           );
           const unplacedMeals = totalMeals - 1 - (batchFilledSlots.size - previousContinuationCount);
-          const scheduledMeals = totalMeals - unplacedMeals;
-          const storedAvailable = rollingEntry ? remainingStored.get(winner.id) : undefined;
-          const queueRemainder = storedAvailable === undefined
-            ? unplacedMeals
-            : scheduledMeals > storedAvailable
-              ? unplacedMeals
-              : 0;
-          if (storedAvailable !== undefined) {
-            remainingStored.set(winner.id, Math.max(0, storedAvailable - scheduledMeals));
-          }
           const storageRows: PlanBatchInput["storageRows"] =
-            winner.isBatchRecipe && !flags.alreadyCooked && queueRemainder > 0
-              ? [{ count: queueRemainder, cookingFamilyMemberIds: [...slotAudienceIds] }]
+            winner.isBatchRecipe && !flags.alreadyCooked && unplacedMeals > 0
+              ? [{ count: unplacedMeals, cookingFamilyMemberIds: [...slotAudienceIds] }]
               : [];
           if (winner.isBatchRecipe) {
             generatedBatches.set(batchGroupId, {
               recipeId: winner.id,
               storageRows,
-              rollingQueueClaim: rollingEntry?.rollingQueueClaim,
+              rollingQueueClaim: flags.rollingQueueClaim,
             });
           }
-          if (rollingEntry) {
-            remainingRolling.set(
-              winner.id,
-              unplacedMeals - queueRemainder * Number(storageRows.length > 0),
-            );
-          }
-        } else if (rollingEntry) {
-          if (remainingStored.has(winner.id)) {
-            remainingStored.set(winner.id, Math.max(0, (remainingStored.get(winner.id) ?? 0) - 1));
-          }
-          remainingRolling.set(winner.id, 0);
+          if (budget) budget.remaining = storageRows.length > 0 ? 0 : unplacedMeals;
+        } else if (budget) {
+          budget.remaining -= 1;
         }
       }
     }
@@ -353,17 +396,11 @@ export async function generatePlan(
       return { type: "error", message: PLAN_GENERATION_FAILED_MESSAGE };
     }
 
-    for (const r of rollingRecipes) {
-      if ((remainingRolling.get(r.recipeId) ?? 0) > 0) {
-        const name = recipes.find((rec) => rec.id === r.recipeId)?.name ?? r.recipeId;
-        warnings.push(`Could not place "${name}" — no compatible slot available.`);
-      }
-    }
-    for (const entry of rollingCustomMeals) {
-      const key = getRollingCustomMealKey(entry.mealType, entry.customMeal);
-      if ((remainingCustomRolling.get(key) ?? 0) > 0) {
-        warnings.push(`Could not place "${entry.customMeal.name}" — no compatible slot available.`);
-      }
+    for (const budget of budgets) {
+      if (budget.remaining <= 0) continue;
+      const entry = budget.entry;
+      const name = entry.kind === "custom" ? entry.customMeal.name : recipes.find((recipe) => recipe.id === entry.recipeId)?.name ?? entry.recipeId;
+      warnings.push(`Could not place "${name}" — no compatible slot available.`);
     }
 
     const generatedBatchValues: PlanBatchInput[] = [...generatedBatches].flatMap(
@@ -399,7 +436,7 @@ export async function generatePlan(
     return { type: "success", plan, batches, warnings };
   } catch (error) {
     console.error("Error generating plan", error);
-    return { type: "error", message: "Failed to generate plan." };
+    return { type: "error", message: rollingErrorMessage(error) ?? "Failed to generate plan." };
   }
 }
 
@@ -449,14 +486,18 @@ export async function savePlan(
       });
     }
   } catch (error) {
-    if (error instanceof Error && (error.message === "ROLLING_MEAL_CONFLICT" || error.message === "STORED_MEAL_CONFLICT")) {
+    if (error instanceof Error && ["ROLLING_MEAL_CONFLICT", "ROLLING_QUEUE_CONFLICT", "STORED_MEAL_CONFLICT"].includes(error.message)) {
       return { type: "rolling_conflict" };
     }
+    const message = rollingErrorMessage(error);
+    if (message) return { type: "error", message };
     console.error("Error saving plan", error);
     return { type: "error", message: "Failed to save plan." };
   }
 
   revalidatePath("/"); // refreshes sidebar data
+  revalidatePath(ROUTES.storage);
+  revalidatePath(ROUTES.planCreate);
   redirect(ROUTES.planView(planId));
 }
 
@@ -516,11 +557,13 @@ export async function updateSavedPlan(
     version = result.version;
   } catch (error) {
     console.error("Error updating plan", error);
-    return { type: "error", message: "Failed to update plan." };
+    return { type: "error", message: rollingErrorMessage(error) ?? "Failed to update plan." };
   }
 
   revalidatePath(ROUTES.planView(planId));
   revalidatePath(ROUTES.logPlanView(planId));
+  revalidatePath(ROUTES.storage);
+  revalidatePath(ROUTES.planCreate);
   revalidatePath("/");
   return { type: "success", version };
 }
@@ -557,10 +600,12 @@ export async function deletePlanAction(
     await deletePlanById(userId, planId);
   } catch (error) {
     console.error("Error deleting plan", error);
-    return { type: "error", message: "Failed to delete plan." };
+    return { type: "error", message: rollingErrorMessage(error) ?? "Failed to delete plan." };
   }
 
   revalidatePath(ROUTES.planCurrent);
+  revalidatePath(ROUTES.storage);
+  revalidatePath(ROUTES.planCreate);
   revalidatePath(ROUTES.planView(planId));
   revalidatePath(ROUTES.logPlanView(planId));
   revalidatePath(ROUTES.logCurrent);

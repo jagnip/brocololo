@@ -312,6 +312,7 @@ export function PlanEditor({
       return {
         ...slot,
         placementId,
+        rollingQueueClaim: null,
         recipe: nextRecipe,
         isRolledOver: false,
         alreadyCooked: false,
@@ -329,6 +330,7 @@ export function PlanEditor({
         return {
           ...slot,
           placementId,
+          rollingQueueClaim: null,
           recipe: nextRecipe,
           isRolledOver: false,
           alreadyCooked: false,
@@ -374,6 +376,7 @@ export function PlanEditor({
           return {
             ...slot,
             placementId: slot.recipe?.id === payload.recipe.id ? (slot.placementId ?? crypto.randomUUID()) : crypto.randomUUID(),
+            rollingQueueClaim: slot.recipe?.id === payload.recipe.id ? slot.rollingQueueClaim : null,
             recipe: payload.recipe,
             extraPortions: payload.extraPortions ?? slot.extraPortions ?? 0,
             isRolledOver: slot.recipe?.id === payload.recipe.id ? (slot.isRolledOver ?? false) : false,
@@ -403,6 +406,7 @@ export function PlanEditor({
           return {
             ...slot,
             placementId: keepsSameCustom ? (slot.placementId ?? crypto.randomUUID()) : crypto.randomUUID(),
+            rollingQueueClaim: keepsSameCustom ? slot.rollingQueueClaim : null,
             recipe: null,
             isRolledOver: keepsSameCustom ? (slot.isRolledOver ?? false) : false,
             alreadyCooked: false,
@@ -422,6 +426,7 @@ export function PlanEditor({
         return {
           ...slot,
           placementId: null,
+          rollingQueueClaim: null,
           recipe: null,
           isRolledOver: false,
           alreadyCooked: false,
@@ -488,6 +493,7 @@ export function PlanEditor({
       return {
         ...slot,
         placementId: null,
+        rollingQueueClaim: null,
         recipe: null,
         isRolledOver: false,
         alreadyCooked: false,
@@ -512,6 +518,7 @@ export function PlanEditor({
         return {
           ...slot,
           placementId: null,
+          rollingQueueClaim: null,
           recipe: null,
           isRolledOver: false,
           alreadyCooked: false,

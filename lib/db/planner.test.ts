@@ -1,12 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PlannerMealType } from "@/src/generated/client";
 import type { SlotInputType } from "@/types/planner";
-import { createPlan, getPlanById, getPlanForGroceries, getUnusedRecipesFromLatestPlan } from "./planner";
+import { createPlan, deletePlanById, getPlanById, getPlanForGroceries, getUnusedRecipesFromLatestPlan } from "./planner";
 import { prisma } from "./index";
-import { getRollingCustomMealKey } from "@/lib/planner/custom-meal-identity";
-import { captureUncapturedPlansForRollingTx } from "./rolling-meals";
+import { deleteRollingPlanTx, ensureRollingLifecycleTx, syncRollingPlanTx } from "./rolling-meals";
 
-vi.mock("./rolling-meals", () => ({ captureUncapturedPlansForRollingTx: vi.fn() }));
+vi.mock("./rolling-meals", () => ({
+  ensureRollingLifecycleTx: vi.fn(), syncRollingPlanTx: vi.fn(),
+  reconcileRollingBatchRemaindersTx: vi.fn(async (_tx, _userId, _planId, batches) => batches),
+  verifyRollingBatchAssignmentsTx: vi.fn(), deleteRollingPlanTx: vi.fn(),
+}));
 
 vi.mock("./index", () => ({
   prisma: {
@@ -18,6 +21,37 @@ vi.mock("./index", () => ({
 }));
 
 beforeEach(() => vi.resetAllMocks());
+
+describe("plan deletion lifecycle", () => {
+  it("cleans up lifecycle before deleting the owned plan in the locked transaction", async () => {
+    const lock = vi.fn();
+    const findFirst = vi.fn().mockResolvedValue({ id: "plan-1" });
+    const remove = vi.fn();
+    const tx = { $queryRaw: lock, plan: { findFirst, delete: remove } };
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      (callback as (tx: unknown) => Promise<unknown>)(tx),
+    );
+    await deletePlanById("user-1", "plan-1");
+    expect(findFirst).toHaveBeenCalledWith({ where: { id: "plan-1", userId: "user-1" }, select: { id: true } });
+    expect(deleteRollingPlanTx).toHaveBeenCalledExactlyOnceWith(tx, "user-1", "plan-1");
+    expect(lock.mock.invocationCallOrder[0]).toBeLessThan(findFirst.mock.invocationCallOrder[0]!);
+    expect(findFirst.mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(deleteRollingPlanTx).mock.invocationCallOrder[0]!);
+    expect(vi.mocked(deleteRollingPlanTx).mock.invocationCallOrder[0]).toBeLessThan(remove.mock.invocationCallOrder[0]!);
+    expect(remove).toHaveBeenCalledWith({ where: { id: "plan-1" } });
+  });
+
+  it.each(["ownership", "lifecycle"])("does not delete when %s validation fails", async (failure) => {
+    const remove = vi.fn();
+    const tx = { $queryRaw: vi.fn(), plan: { findFirst: vi.fn().mockResolvedValue(failure === "ownership" ? null : { id: "plan-1" }), delete: remove } };
+    if (failure === "lifecycle") vi.mocked(deleteRollingPlanTx).mockRejectedValueOnce(new Error("ROLLING_QUEUE_CONFLICT"));
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      (callback as (tx: unknown) => Promise<unknown>)(tx),
+    );
+    await expect(deletePlanById("user-1", "plan-1")).rejects.toThrow(failure === "ownership" ? "PLAN_NOT_FOUND" : "ROLLING_QUEUE_CONFLICT");
+    expect(remove).not.toHaveBeenCalled();
+    if (failure === "ownership") expect(deleteRollingPlanTx).not.toHaveBeenCalled();
+  });
+});
 
 describe("previous-plan recipes", () => {
   it("combines unused scheduled meals and all storage by recipe, ignoring extras and excluded recipes", async () => {
@@ -57,36 +91,46 @@ describe("previous-plan recipes", () => {
 });
 
 describe("slot metadata persistence", () => {
-  it("consumes a custom queue entry using its original meal type after moving the placement", async () => {
+  it("syncs a moved custom claim with its original meal type after creating the plan under the user lock", async () => {
     const customMeal = { name: "Leftovers", ingredients: [] };
-    const remove = vi.fn().mockResolvedValue({ count: 1 });
+    const lock = vi.fn();
+    const create = vi.fn().mockImplementation(async ({ data }) => ({ id: data.id }));
+    const tx = {
+      $queryRaw: lock, logEntry: { findMany: vi.fn().mockResolvedValue([]) },
+      plan: { create },
+    };
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
-      (callback as (tx: unknown) => Promise<unknown>)({
-        $queryRaw: vi.fn(), logEntry: { findMany: vi.fn().mockResolvedValue([]) },
-        plan: { create: vi.fn().mockResolvedValue({ id: "plan-1" }) },
-        rollingMealEntry: { findFirst: vi.fn().mockResolvedValue({ count: 1, version: 1, identity: `custom:${getRollingCustomMealKey(PlannerMealType.LUNCH, customMeal)}` }), deleteMany: remove },
-      }),
+      (callback as (tx: unknown) => Promise<unknown>)(tx),
     );
     const slot: SlotInputType = { date: new Date("2026-10-12T00:00:00.000Z"), mealType: PlannerMealType.DINNER,
       recipe: null, customMeal, alternatives: [], used: false, isRolledOver: true,
       rollingQueueClaim: { id: "queue", version: 1, mealType: PlannerMealType.LUNCH } };
     await createPlan("user-1", slot.date, slot.date, [slot]);
-    expect(remove).toHaveBeenCalledOnce();
+    const planId = create.mock.calls[0]![0].data.id;
+    expect(ensureRollingLifecycleTx).toHaveBeenCalledExactlyOnceWith(tx, "user-1");
+    expect(lock.mock.calls[0]![0].join("?")).toBe("SELECT id FROM users WHERE id = ? FOR UPDATE");
+    expect(lock.mock.calls[0]![1]).toBe("user-1");
+    expect(lock.mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(ensureRollingLifecycleTx).mock.invocationCallOrder[0]!);
+    expect(vi.mocked(ensureRollingLifecycleTx).mock.invocationCallOrder[0]).toBeLessThan(create.mock.invocationCallOrder[0]!);
+    expect(syncRollingPlanTx).toHaveBeenCalledExactlyOnceWith(tx, "user-1", planId, [expect.objectContaining({
+      mealType: PlannerMealType.DINNER, customMeal, rollingQueueClaim: slot.rollingQueueClaim,
+      placementId: expect.any(String),
+    })], [], { create: true, startDate: slot.date, convertedBatchIds: [], resolvedBatchIds: [] });
+    expect(create.mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(syncRollingPlanTx).mock.invocationCallOrder[0]!);
   });
 
-  it("consumes only non-transferred placements and batch remainder from the versioned queue", async () => {
-    const update = vi.fn().mockResolvedValue({ count: 1 });
+  it("passes explicit rolling claims to lifecycle sync instead of substituting cooked lots", async () => {
     const create = vi.fn().mockResolvedValue({ id: "plan-1" });
     const lotDelete = vi.fn().mockResolvedValue({ count: 1 });
+    const findLots = vi.fn().mockResolvedValue([{ id: "lot", recipeId: "batch-recipe", count: 1, version: 1, cookedAt: new Date(), audienceMembers: [], recipe: { name: "Soup" } }]);
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
       (callback as (tx: unknown) => Promise<unknown>)({
         $queryRaw: vi.fn(),
         logEntry: { findMany: vi.fn().mockResolvedValue([]) },
         plan: { create }, recipe: { count: vi.fn().mockResolvedValue(1) },
         familyMember: { count: vi.fn().mockResolvedValue(0) },
-        storedMealLot: { findMany: vi.fn().mockResolvedValue([{ id: "lot", recipeId: "batch-recipe", count: 1, version: 1, cookedAt: new Date(), audienceMembers: [], recipe: { name: "Soup" } }]), deleteMany: lotDelete },
+        storedMealLot: { findMany: findLots, deleteMany: lotDelete },
         storedMealEvent: { create: vi.fn() },
-        rollingMealEntry: { findFirst: vi.fn().mockResolvedValue({ id: "queue", version: 2, count: 5, identity: "recipe:batch-recipe" }), updateMany: update },
       }),
     );
     const slot: SlotInputType = { date: new Date("2026-10-12T00:00:00.000Z"), mealType: PlannerMealType.DINNER,
@@ -95,35 +139,34 @@ describe("slot metadata persistence", () => {
     await createPlan("user-1", slot.date, slot.date, [slot, { ...slot, mealType: PlannerMealType.LUNCH, placementId: "second" }], [
       { id: "batch", recipeId: "batch-recipe", rollingQueueClaim: slot.rollingQueueClaim, storageRows: [{ count: 2, cookingFamilyMemberIds: [] }] },
     ]);
-    expect(lotDelete).toHaveBeenCalledOnce();
-    expect(update).toHaveBeenCalledWith({ where: { id: "queue", userId: "user-1", version: 2, count: 5, identity: "recipe:batch-recipe" }, data: { count: { decrement: 3 }, version: { increment: 1 } } });
+    expect(findLots).not.toHaveBeenCalled();
+    expect(lotDelete).not.toHaveBeenCalled();
     expect(create).toHaveBeenCalledOnce();
-    expect(update.mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(captureUncapturedPlansForRollingTx).mock.invocationCallOrder[0]!);
-    expect(vi.mocked(captureUncapturedPlansForRollingTx).mock.invocationCallOrder[0]).toBeLessThan(create.mock.invocationCallOrder[0]!);
+    expect(syncRollingPlanTx).toHaveBeenCalledWith(expect.anything(), "user-1", expect.any(String), [
+      expect.objectContaining({ placementId: "first", rollingQueueClaim: slot.rollingQueueClaim, batchGroupId: "batch" }),
+      expect.objectContaining({ placementId: "second", rollingQueueClaim: slot.rollingQueueClaim, batchGroupId: "batch" }),
+    ], [expect.objectContaining({ rollingQueueClaim: slot.rollingQueueClaim, storageRows: [{ count: 2, cookingFamilyMemberIds: [] }] })],
+    expect.objectContaining({ resolvedBatchIds: [] }));
   });
 
-  it.each([
-    { version: 3, count: 1, identity: "recipe:r" },
-    { version: 2, count: 0, identity: "recipe:r" },
-    { version: 2, count: 1, identity: "recipe:other" },
-  ])("rejects stale, exhausted or mismatched queue entries", async (entry) => {
-    const create = vi.fn();
+  it("propagates lifecycle claim failure out of the create transaction", async () => {
+    const create = vi.fn().mockResolvedValue({ id: "plan-1" });
+    vi.mocked(syncRollingPlanTx).mockRejectedValueOnce(new Error("ROLLING_QUEUE_CONFLICT"));
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
       (callback as (tx: unknown) => Promise<unknown>)({
         $queryRaw: vi.fn(), logEntry: { findMany: vi.fn().mockResolvedValue([]) }, plan: { create },
         storedMealLot: { findMany: vi.fn().mockResolvedValue([]) },
-        rollingMealEntry: { findFirst: vi.fn().mockResolvedValue(entry) },
       }),
     );
     const slot: SlotInputType = { date: new Date("2026-10-12T00:00:00.000Z"), mealType: PlannerMealType.DINNER,
       recipe: { id: "r" } as SlotInputType["recipe"], customMeal: null, alternatives: [], used: false,
       isRolledOver: true, rollingQueueClaim: { id: "queue", version: 2 } };
-    await expect(createPlan("user-1", slot.date, slot.date, [slot])).rejects.toThrow("ROLLING_MEAL_CONFLICT");
-    expect(create).not.toHaveBeenCalled();
-    expect(captureUncapturedPlansForRollingTx).not.toHaveBeenCalled();
+    await expect(createPlan("user-1", slot.date, slot.date, [slot])).rejects.toThrow("ROLLING_QUEUE_CONFLICT");
+    expect(create).toHaveBeenCalledOnce();
+    expect(prisma.recipe.updateMany).not.toHaveBeenCalled();
   });
 
-  it("does not capture plans when the date conflicts", async () => {
+  it("does not initialize or sync lifecycle when the date conflicts", async () => {
     const date = new Date("2026-10-12T00:00:00.000Z");
     const create = vi.fn();
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
@@ -134,7 +177,8 @@ describe("slot metadata persistence", () => {
     );
     const slot: SlotInputType = { date, mealType: PlannerMealType.DINNER, recipe: null, customMeal: null, alternatives: [], used: false };
     expect((await createPlan("user-1", date, date, [slot])).type).toBe("date_conflict");
-    expect(captureUncapturedPlansForRollingTx).not.toHaveBeenCalled();
+    expect(ensureRollingLifecycleTx).not.toHaveBeenCalled();
+    expect(syncRollingPlanTx).not.toHaveBeenCalled();
     expect(create).not.toHaveBeenCalled();
   });
 
@@ -166,6 +210,9 @@ describe("slot metadata persistence", () => {
     expect(data.resolvedBatchRemainders.create).toEqual([{ batchId: "batch-1" }]);
     expect(data.batches.create[0].storageRows.create).toEqual([]);
     expect(eventCreate.mock.calls[0]![0].data.placementId).toBe("client-id");
+    expect(syncRollingPlanTx).toHaveBeenCalledWith(expect.anything(), "user-1", expect.any(String), [
+      expect.objectContaining({ placementId: "client-id", alreadyCooked: true, batchGroupId: null }),
+    ], expect.any(Array), { create: true, startDate: slot.date, convertedBatchIds: [], resolvedBatchIds: ["batch-1"] });
   });
 
   it("keeps a partially transferred batch and its remainder", async () => {
@@ -202,6 +249,10 @@ describe("slot metadata persistence", () => {
     expect(data.resolvedBatchRemainders.create).toEqual([]);
     expect(data.batches.create[0].storageRows.create).toHaveLength(1);
     expect(eventCreate).toHaveBeenCalledTimes(1);
+    expect(syncRollingPlanTx).toHaveBeenCalledWith(expect.anything(), "user-1", expect.any(String), [
+      expect.objectContaining({ placementId: "first", alreadyCooked: true, batchGroupId: null }),
+      expect.objectContaining({ placementId: "second", alreadyCooked: false, batchGroupId: "batch-1" }),
+    ], expect.any(Array), { create: true, startDate: slot.date, convertedBatchIds: [], resolvedBatchIds: [] });
   });
 
   it.each([true, undefined])("creates both flags with input %j, defaulting omitted values to false", async (flag) => {

@@ -2,6 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LogMealType, PlannerMealType } from "@/src/generated/client";
 import { updatePlan } from "./planner";
 import type { SlotSaveData } from "@/types/planner";
+import { ensureRollingLifecycleTx, reconcileRollingBatchRemaindersTx, syncRollingPlanTx, verifyRollingBatchAssignmentsTx } from "./rolling-meals";
+
+vi.mock("./rolling-meals", () => ({
+  ensureRollingLifecycleTx: vi.fn(), syncRollingPlanTx: vi.fn(),
+  reconcileRollingBatchRemaindersTx: vi.fn(),
+  verifyRollingBatchAssignmentsTx: vi.fn(), deleteRollingPlanTx: vi.fn(),
+}));
 
 vi.mock("./index", () => ({
   prisma: {
@@ -35,11 +42,14 @@ describe("updatePlan added-date log entries respect slot audience", () => {
   const storedMealLotDeleteMany = vi.fn();
   const storedMealEventCreate = vi.fn();
   const remainderResolutionCreateMany = vi.fn();
+  const lock = vi.fn();
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
+    vi.mocked(reconcileRollingBatchRemaindersTx).mockImplementation(async (_tx, _userId, _planId, batches) => [...batches]);
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
       (callback as (tx: unknown) => Promise<unknown>)({
+        $queryRaw: lock,
         plan: { findFirst: planFindFirst, update: planUpdate, updateMany: planUpdateMany },
         logEntry: {
           findMany: logEntryFindMany,
@@ -113,6 +123,107 @@ describe("updatePlan added-date log entries respect slot audience", () => {
     }));
     expect(storedMealLotCreate).not.toHaveBeenCalled();
     expect(storedMealEventCreate).not.toHaveBeenCalled();
+    expect(lock.mock.calls[0]![0].join("?")).toBe("SELECT id FROM users WHERE id = ? FOR UPDATE");
+    expect(lock.mock.calls[0]![1]).toBe("user-1");
+    expect(lock.mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(ensureRollingLifecycleTx).mock.invocationCallOrder[0]!);
+    expect(vi.mocked(ensureRollingLifecycleTx).mock.invocationCallOrder[0]).toBeLessThan(planUpdateMany.mock.invocationCallOrder[0]!);
+    expect(vi.mocked(syncRollingPlanTx).mock.invocationCallOrder[0]).toBeLessThan(planSlotAlternativeDeleteMany.mock.invocationCallOrder[0]!);
+    expect(vi.mocked(syncRollingPlanTx).mock.invocationCallOrder[0]).toBeLessThan(planSlotDeleteMany.mock.invocationCallOrder[0]!);
+  });
+
+  it("syncs completion with converted/resolved batches and the unrelated preserved remainder", async () => {
+    const slot = { ...makeSlot({ date: "2026-03-17", mealType: PlannerMealType.DINNER, cookingFamilyMemberIds: [] }), placementId: "scheduled", batchGroupId: "batch-1" };
+    planFindFirst.mockResolvedValue({
+      id: "plan-1", log: null, slots: [slot], resolvedBatchRemainders: [{ batchId: "previously-resolved" }],
+      batches: [
+        { id: "batch-1", recipeId: "recipe-1", recipe: { name: "Soup" }, storageRows: [{ count: 2, audienceMembers: [] }] },
+        { id: "preserved", recipeId: "recipe-2", storageRows: [{ count: 3, audienceMembers: [{ familyMemberId: "fm-b" }] }] },
+      ],
+    });
+    await updatePlan("user-1", "plan-1", [{ ...slot, used: true }], { expectedVersion: 0 });
+    const tx = vi.mocked(syncRollingPlanTx).mock.calls[0]![0];
+    expect(verifyRollingBatchAssignmentsTx).toHaveBeenCalledExactlyOnceWith(tx, "user-1", "plan-1", ["batch-1"]);
+    expect(vi.mocked(verifyRollingBatchAssignmentsTx).mock.invocationCallOrder[0]).toBeLessThan(storedMealLotCreate.mock.invocationCallOrder[0]!);
+    expect(syncRollingPlanTx).toHaveBeenCalledExactlyOnceWith(tx, "user-1", "plan-1", [expect.objectContaining({ placementId: "scheduled", used: true })], [
+      { id: "batch-1", recipeId: "recipe-1", storageRows: [{ count: 2, cookingFamilyMemberIds: [] }] },
+      { id: "preserved", recipeId: "recipe-2", storageRows: [{ count: 3, cookingFamilyMemberIds: ["fm-b"] }] },
+    ], { startDate: slot.date, convertedBatchIds: ["batch-1"], resolvedBatchIds: ["previously-resolved", "batch-1"] });
+    expect(vi.mocked(reconcileRollingBatchRemaindersTx).mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(syncRollingPlanTx).mock.invocationCallOrder[0]!);
+    expect(vi.mocked(verifyRollingBatchAssignmentsTx).mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(syncRollingPlanTx).mock.invocationCallOrder[0]!);
+    expect(vi.mocked(syncRollingPlanTx).mock.invocationCallOrder[0]).toBeLessThan(storedMealLotCreate.mock.invocationCallOrder[0]!);
+    expect(vi.mocked(syncRollingPlanTx).mock.invocationCallOrder[0]).toBeLessThan(remainderResolutionCreateMany.mock.invocationCallOrder[0]!);
+    expect(vi.mocked(syncRollingPlanTx).mock.invocationCallOrder[0]).toBeLessThan(planBatchDeleteMany.mock.invocationCallOrder[0]!);
+  });
+
+  it.each(["assignments", "sync"])("rejects the outer transaction on %s failure without destructive writes", async (failure) => {
+    const slot = { ...makeSlot({ date: "2026-03-17", mealType: PlannerMealType.DINNER, cookingFamilyMemberIds: [] }), placementId: "scheduled", batchGroupId: "batch-1" };
+    planFindFirst.mockResolvedValue({ id: "plan-1", log: null, slots: [slot], batches: [
+      { id: "batch-1", recipeId: "recipe-1", recipe: { name: "Soup" }, storageRows: [{ count: 2, audienceMembers: [] }] },
+    ] });
+    const error = new Error("ROLLING_QUEUE_CONFLICT");
+    vi.mocked(failure === "sync" ? syncRollingPlanTx : verifyRollingBatchAssignmentsTx).mockRejectedValueOnce(error);
+    const committed = vi.fn();
+    const rolledBack = vi.fn();
+    const execute = vi.mocked(prisma.$transaction).getMockImplementation()!;
+    // Model only the transaction boundary; PostgreSQL owns actual write rollback.
+    vi.mocked(prisma.$transaction).mockImplementationOnce(async (...args) => {
+      try {
+        const result = await execute(...args);
+        committed();
+        return result;
+      } catch (caught) {
+        rolledBack(caught);
+        throw caught;
+      }
+    });
+    await expect(updatePlan("user-1", "plan-1", [{ ...slot, used: true }], { expectedVersion: 0 })).rejects.toBe(error);
+    expect(rolledBack).toHaveBeenCalledExactlyOnceWith(error);
+    expect(committed).not.toHaveBeenCalled();
+    expect(storedMealLotCreate).not.toHaveBeenCalled();
+    expect(storedMealEventCreate).not.toHaveBeenCalled();
+    expect(remainderResolutionCreateMany).not.toHaveBeenCalled();
+    expect(planSlotAlternativeDeleteMany).not.toHaveBeenCalled();
+    expect(planSlotDeleteMany).not.toHaveBeenCalled();
+    expect(planBatchDeleteMany).not.toHaveBeenCalled();
+    expect(planUpdate).not.toHaveBeenCalled();
+    expect(prisma.recipe.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("does not substitute stored lots for a new explicit rolling claim on update", async () => {
+    planFindFirst.mockResolvedValue({ id: "plan-1", log: null, batches: [], slots: [] });
+    storedMealLotFindMany.mockResolvedValue([{ id: "lot", recipeId: "recipe-1", count: 1, version: 1, cookedAt: new Date(), audienceMembers: [], recipe: { name: "Soup" } }]);
+    const slot = { ...makeSlot({ date: "2026-03-17", mealType: PlannerMealType.DINNER, cookingFamilyMemberIds: [] }), placementId: "claimed", isRolledOver: true, rollingQueueClaim: { id: "entry", version: 2 } };
+    await updatePlan("user-1", "plan-1", [slot], { expectedVersion: 0 });
+    expect(storedMealLotFindMany).not.toHaveBeenCalled();
+    expect(storedMealEventCreate).not.toHaveBeenCalled();
+    expect(syncRollingPlanTx).toHaveBeenCalledWith(expect.anything(), "user-1", "plan-1", [expect.objectContaining({ rollingQueueClaim: slot.rollingQueueClaim, placementId: "claimed" })], [], { startDate: slot.date, convertedBatchIds: [], resolvedBatchIds: [] });
+  });
+
+  it.each([false, true])("reuses normalized remainder for sync and persistence with completion %j", async (used) => {
+    familyMemberCount.mockResolvedValue(0);
+    const slot = { ...makeSlot({ date: "2026-03-17", mealType: PlannerMealType.DINNER, cookingFamilyMemberIds: [] }), placementId: "source", batchGroupId: "batch-1" };
+    const batch = { id: "batch-1", recipeId: "recipe-1", storageRows: [{ count: 2, cookingFamilyMemberIds: [] }] };
+    const normalized = [{ ...batch, storageRows: [{ count: 1, cookingFamilyMemberIds: [] }] }];
+    planFindFirst.mockResolvedValue({
+      id: "plan-1", log: null, slots: [slot], batches: [{
+        id: batch.id, recipeId: batch.recipeId, recipe: { name: "Soup" },
+        storageRows: [{ count: 2, audienceMembers: [] }],
+      }],
+    });
+    vi.mocked(reconcileRollingBatchRemaindersTx).mockResolvedValueOnce(normalized);
+    await updatePlan("user-1", "plan-1", [{ ...slot, used }], { expectedVersion: 0 }, [batch]);
+    const tx = vi.mocked(syncRollingPlanTx).mock.calls[0]![0];
+    expect(reconcileRollingBatchRemaindersTx).toHaveBeenCalledExactlyOnceWith(tx, "user-1", "plan-1", [batch], [batch]);
+    expect(syncRollingPlanTx).toHaveBeenCalledWith(tx, "user-1", "plan-1", [expect.objectContaining({ used })], normalized, {
+      startDate: slot.date, convertedBatchIds: used ? [batch.id] : [], resolvedBatchIds: used ? [batch.id] : [],
+    });
+    const saved = planUpdate.mock.calls.at(-1)![0].data.batches.create[0];
+    expect(saved.storageRows.create).toEqual(used ? [] : [expect.objectContaining({ count: 1 })]);
+    if (used) {
+      expect(storedMealLotCreate).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ data: expect.objectContaining({ count: 1 }) }));
+    } else {
+      expect(storedMealLotCreate).not.toHaveBeenCalled();
+    }
   });
 
   it("transfers exact-audience lots before older mismatches and preserves the transfer on autosave", async () => {

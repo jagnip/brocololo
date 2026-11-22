@@ -74,6 +74,8 @@ export const ModelName = {
   RollingQueueState: 'RollingQueueState',
   RollingCapturedPlan: 'RollingCapturedPlan',
   RollingMealEntry: 'RollingMealEntry',
+  RollingMealUnit: 'RollingMealUnit',
+  RollingMealPlacement: 'RollingMealPlacement',
   StoredMealLot: 'StoredMealLot',
   StoredMealLotAudienceMember: 'StoredMealLotAudienceMember',
   StoredMealEvent: 'StoredMealEvent',
@@ -344,7 +346,8 @@ export type RecipeScalarFieldEnum = (typeof RecipeScalarFieldEnum)[keyof typeof 
 
 
 export const RollingQueueStateScalarFieldEnum = {
-  userId: 'userId'
+  userId: 'userId',
+  lifecycleVersion: 'lifecycleVersion'
 } as const
 
 export type RollingQueueStateScalarFieldEnum = (typeof RollingQueueStateScalarFieldEnum)[keyof typeof RollingQueueStateScalarFieldEnum]
@@ -370,6 +373,33 @@ export const RollingMealEntryScalarFieldEnum = {
 } as const
 
 export type RollingMealEntryScalarFieldEnum = (typeof RollingMealEntryScalarFieldEnum)[keyof typeof RollingMealEntryScalarFieldEnum]
+
+
+export const RollingMealUnitScalarFieldEnum = {
+  id: 'id',
+  entryId: 'entryId',
+  state: 'state',
+  eligible: 'eligible',
+  currentPlanId: 'currentPlanId',
+  placementId: 'placementId',
+  batchId: 'batchId',
+  sourcePlanId: 'sourcePlanId',
+  sourcePlacementId: 'sourcePlacementId',
+  createdAt: 'createdAt',
+  completedAt: 'completedAt'
+} as const
+
+export type RollingMealUnitScalarFieldEnum = (typeof RollingMealUnitScalarFieldEnum)[keyof typeof RollingMealUnitScalarFieldEnum]
+
+
+export const RollingMealPlacementScalarFieldEnum = {
+  planId: 'planId',
+  placementId: 'placementId',
+  unitId: 'unitId',
+  batchId: 'batchId'
+} as const
+
+export type RollingMealPlacementScalarFieldEnum = (typeof RollingMealPlacementScalarFieldEnum)[keyof typeof RollingMealPlacementScalarFieldEnum]
 
 
 export const StoredMealLotScalarFieldEnum = {

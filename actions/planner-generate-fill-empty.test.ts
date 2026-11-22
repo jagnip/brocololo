@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { generatePlan } from "./planner-actions";
 import { getRecipes } from "@/lib/db/recipes";
 import { listFamilyMembers } from "@/lib/db/family-members";
+import { listRollingMealQueue } from "@/lib/db/rolling-meals";
 import { getBatchGroupLabels, getDaysInRange } from "@/lib/planner/helpers";
 import {
   createDefaultAudienceGroups,
@@ -20,6 +21,10 @@ vi.mock("@/lib/db/family-members", () => ({
   listFamilyMembers: vi.fn(),
 }));
 
+vi.mock("@/lib/db/rolling-meals", () => ({
+  listRollingMealQueue: vi.fn(),
+}));
+
 vi.mock("@/lib/auth/session", () => ({
   requireUser: vi.fn().mockResolvedValue({ id: "user-1", clerkId: "clerk-1" }),
 }));
@@ -33,6 +38,13 @@ vi.mock("next/navigation", () => ({
 }));
 
 const MEMBER_ID = "member-1";
+
+function mockRollingQueue(recipeId: string, count: number, claim = { id: "queue", version: 1 }) {
+  vi.mocked(listRollingMealQueue).mockResolvedValue([
+    { kind: "recipe", recipeId, name: recipeId, count, ...claim },
+  ]);
+  return claim;
+}
 
 function buildAudience(start: Date, end: Date) {
   return mapGroupAudienceToDaily(
@@ -121,6 +133,7 @@ function setupRecipeLibrary() {
 describe("generatePlan fill-empty", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(listRollingMealQueue).mockResolvedValue([]);
     setupRecipeLibrary();
   });
 
@@ -168,7 +181,7 @@ describe("generatePlan fill-empty", () => {
     expect(regenerated.batches).toEqual(result.batches);
   });
 
-  it.each([false, true])("accounts for unplaced rolling batch meals without Storage for alreadyCooked=%s", async (alreadyCooked) => {
+  it.each([false, true])("stores only uncooked unplaced rolling batch meals for alreadyCooked=%s", async (alreadyCooked) => {
     const start = new Date("2026-04-20T00:00:00.000Z");
     const end = new Date("2026-04-21T00:00:00.000Z");
     const recipe = createMockRecipe({
@@ -180,10 +193,14 @@ describe("generatePlan fill-empty", () => {
       categories: [createMockCategory({ slug: "dinner", type: "MEAL_OCCASION" })],
     });
     vi.mocked(getRecipes).mockResolvedValue([recipe]);
-    const result = await generatePlan(start, end, buildAudience(start, end), buildTimeLimits(start, end), [], [{ recipeId: recipe.id, meals: 3, alreadyCooked }]);
+    const rollingQueueClaim = alreadyCooked ? undefined : mockRollingQueue(recipe.id, 3);
+    const result = await generatePlan(start, end, buildAudience(start, end), buildTimeLimits(start, end), [], [{ recipeId: recipe.id, meals: 3, alreadyCooked, rollingQueueClaim }]);
     expect(result.type).toBe("success");
     if (result.type !== "success") return;
     expect(result.plan.filter((slot) => slot.isRolledOver)).toHaveLength(2);
+    expect(result.plan.filter((slot) => slot.isRolledOver).every((slot) => slot.alreadyCooked === alreadyCooked)).toBe(true);
+    expect(result.plan.filter((slot) => slot.rollingQueueClaim)).toHaveLength(alreadyCooked ? 0 : 2);
+    expect(result.batches[0]?.rollingQueueClaim).toEqual(rollingQueueClaim);
     expect(result.batches[0]?.storageRows).toEqual(alreadyCooked ? [] : [{ count: 1, cookingFamilyMemberIds: [MEMBER_ID] }]);
     expect(result.warnings.some((warning) => warning.startsWith("Could not place"))).toBe(alreadyCooked);
   });
@@ -203,7 +220,7 @@ describe("generatePlan fill-empty", () => {
     expect(result.batches).toEqual([]);
   });
 
-  it.each([false, true])("reserves rolling Storage during regeneration and range extension after setting alreadyCooked=%s", async (alreadyCooked) => {
+  it.each([false, true])("reserves retained uncooked Storage during regeneration and range extension with selection alreadyCooked=%s", async (alreadyCooked) => {
     const start = new Date("2026-04-20T00:00:00.000Z");
     const end = new Date("2026-04-21T00:00:00.000Z");
     const recipe = createMockRecipe({
@@ -216,15 +233,16 @@ describe("generatePlan fill-empty", () => {
     });
     const library = await getRecipes("user-1");
     vi.mocked(getRecipes).mockResolvedValue([recipe]);
-    const rollingRecipes = [{ recipeId: recipe.id, meals: 3 }];
+    const rollingQueueClaim = mockRollingQueue(recipe.id, 3);
+    const rollingRecipes = [{ recipeId: recipe.id, meals: 3, rollingQueueClaim }];
     const result = await generatePlan(start, end, buildAudience(start, end), buildTimeLimits(start, end), [], rollingRecipes);
     expect(result.type).toBe("success");
     if (result.type !== "success") return;
     const originalBatch = result.batches[0]!;
+    expect(originalBatch.rollingQueueClaim).toEqual(rollingQueueClaim);
     expect(originalBatch.storageRows).toEqual([{ count: 1, cookingFamilyMemberIds: [MEMBER_ID] }]);
-    const retainedPlan = result.plan.map((slot) => slot.isRolledOver
-      ? { ...slot, alreadyCooked }
-      : slot);
+    // Changing the selection does not reclassify retained uncooked allocations.
+    const retainedPlan = result.plan;
     const updatedRollingRecipes = rollingRecipes.map((entry) => ({ ...entry, alreadyCooked }));
     vi.mocked(getRecipes).mockResolvedValue([...library, recipe]);
     for (const nextEnd of [end, new Date("2026-04-22T00:00:00.000Z")]) {
@@ -232,6 +250,8 @@ describe("generatePlan fill-empty", () => {
       expect(regenerated.type).toBe("success");
       if (regenerated.type !== "success") continue;
       expect(regenerated.plan.filter((slot) => slot.isRolledOver)).toHaveLength(2);
+      expect(regenerated.plan.filter((slot) => slot.rollingQueueClaim)).toHaveLength(2);
+      expect(regenerated.plan.filter((slot) => slot.rollingQueueClaim).every((slot) => !slot.alreadyCooked)).toBe(true);
       expect(regenerated.batches.find((batch) => batch.id === originalBatch.id)).toEqual(originalBatch);
       expect(regenerated.warnings.some((warning) => warning.startsWith("Could not place"))).toBe(false);
     }
@@ -255,6 +275,7 @@ describe("generatePlan fill-empty", () => {
     const audience = buildAudience(start, start);
     audience[0]!.breakfastFamilyMemberIds = memberIds;
     const rollingQueueClaim = { id: "queue", version: 3 };
+    mockRollingQueue(recipe.id, 2, rollingQueueClaim);
     const result = await generatePlan(start, start, audience, buildTimeLimits(start, start), [], [{ recipeId: recipe.id, meals: 2, rollingQueueClaim }]);
     expect(result.type).toBe("success");
     if (result.type !== "success") return;
@@ -279,6 +300,7 @@ describe("generatePlan fill-empty", () => {
     });
     vi.mocked(getRecipes).mockResolvedValue([recipe]);
     const claim = { id: "queue", version: 2 };
+    mockRollingQueue(recipe.id, 2, claim);
     const result = await generatePlan(start, end, buildAudience(start, end), buildTimeLimits(start, end), [], [{
       recipeId: recipe.id, meals: storedMeals + 2, rollingQueueClaim: claim,
       source: { storedMeals, unfinishedScheduledMeals: 2 },
@@ -286,7 +308,21 @@ describe("generatePlan fill-empty", () => {
     expect(result.type).toBe("success");
     if (result.type !== "success") return;
     expect(result.plan.filter((slot) => slot.isRolledOver)).toHaveLength(days);
+    const cookedSlots = result.plan.filter((slot) => slot.alreadyCooked);
+    const uncookedSlots = result.plan.filter((slot) => slot.rollingQueueClaim);
+    expect(cookedSlots).toHaveLength(Math.min(storedMeals, days));
+    expect(cookedSlots.every((slot) => !slot.rollingQueueClaim)).toBe(true);
+    expect(uncookedSlots).toHaveLength(Math.max(days - storedMeals, 0));
+    expect(uncookedSlots.every((slot) => !slot.alreadyCooked && slot.rollingQueueClaim?.id === claim.id)).toBe(true);
     expect(result.batches[0]?.storageRows.reduce((sum, row) => sum + row.count, 0)).toBe(expectedRemainder);
+    const uncookedBatch = result.batches.find((batch) => batch.rollingQueueClaim);
+    if (uncookedSlots.length > 0) {
+      expect(uncookedBatch?.rollingQueueClaim).toEqual(claim);
+      expect(uncookedSlots.length + (uncookedBatch?.storageRows.reduce((sum, row) => sum + row.count, 0) ?? 0)).toBe(2);
+      expect(cookedSlots.every((slot) => slot.batchGroupId !== uncookedBatch?.id)).toBe(true);
+    } else {
+      expect(uncookedBatch).toBeUndefined();
+    }
     expect(result.warnings.some((message) => message.startsWith("Could not place"))).toBe(warning);
   });
 
@@ -302,10 +338,12 @@ describe("generatePlan fill-empty", () => {
       categories: ["breakfast", "lunch", "dinner"].map((slug) => createMockCategory({ slug, type: "MEAL_OCCASION" })),
     });
     vi.mocked(getRecipes).mockResolvedValue([recipe]);
-    const result = await generatePlan(start, end, buildAudience(start, end), buildTimeLimits(start, end), [], [{ recipeId: recipe.id, meals: 2 }]);
+    const rollingQueueClaim = mockRollingQueue(recipe.id, 2);
+    const result = await generatePlan(start, end, buildAudience(start, end), buildTimeLimits(start, end), [], [{ recipeId: recipe.id, meals: 2, rollingQueueClaim }]);
     expect(result.type).toBe("success");
     if (result.type !== "success") return;
     expect(result.plan.filter((slot) => slot.isRolledOver)).toHaveLength(2);
+    expect(result.plan.filter((slot) => slot.rollingQueueClaim)).toHaveLength(2);
     expect(result.plan.filter((slot) => slot.isRolledOver === false)).toHaveLength(7);
     expect(result.plan.every((slot) => slot.alreadyCooked === false)).toBe(true);
     const rolledBatchIds = new Set(result.plan.filter((slot) => slot.isRolledOver).map((slot) => slot.batchGroupId));

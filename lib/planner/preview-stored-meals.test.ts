@@ -27,6 +27,17 @@ const lot = (id: string, audience: string[], count = 1): StoredMealLotRow => ({
 });
 
 describe("previewStoredMeals", () => {
+  it("never substitutes cooked inventory for an explicit uncooked move claim", () => {
+    const claimed = slot("uncooked", ["alice"], { rollingQueueClaim: { id: "queue", version: 2 }, isRolledOver: true });
+    const cooked = slot("cooked", ["alice"], { alreadyCooked: true });
+    const preview = previewStoredMeals([claimed, cooked], [lot("old", ["alice"])]);
+    expect(preview[0]).toBe(claimed);
+    expect(preview[0].alreadyCooked).toBeUndefined();
+    expect(preview[0].batchGroupId).toBe("batch");
+    expect(preview[1]).toMatchObject({ alreadyCooked: true, batchGroupId: null });
+    expect(claimed.rollingQueueClaim).toEqual({ id: "queue", version: 2 });
+  });
+
   it("prioritizes matching audiences before oldest fallback without changing the draft", () => {
     const plan = [slot("a", ["other"]), slot("b", ["alice"]), slot("c", ["other"])];
     const preview = previewStoredMeals(plan, [lot("new", ["alice"]), lot("old", ["other"])]);
