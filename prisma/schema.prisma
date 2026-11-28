@@ -427,6 +427,7 @@ enum RollingMealUnitState {
   COMPLETED
   CONVERTED
   DISCARDED
+  STOPPED
 }
 
 // Plan and placement IDs are snapshots: deleting a plan must not erase lineage.

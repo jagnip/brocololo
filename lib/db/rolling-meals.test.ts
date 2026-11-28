@@ -50,10 +50,10 @@ const tx = {
       (!where.units || units.some((unit) => unit.entryId === entry.id && matchesUnit(unit, where.units.some)))).map((entry) => ({
       ...copy(entry), units: copy(units.filter((unit) => unit.entryId === entry.id && matchesUnit(unit, select?.units?.where))),
       recipe: entry.recipeId ? { name: "Pancake" } : null,
-      _count: { units: units.filter((unit) => unit.entryId === entry.id && unit.state === select?._count.select.units.where.state &&
-        (!select?._count.select.units.where.eligible || unit.eligible) &&
-        (!select?._count.select.units.where.OR || unit.currentPlanId === null ||
-          select._count.select.units.where.OR[1].currentPlanId.in.includes(unit.currentPlanId))).length },
+      _count: { units: select?._count ? units.filter((unit) => unit.entryId === entry.id && unit.state === select._count.select.units.where.state &&
+        (!select._count.select.units.where.eligible || unit.eligible) &&
+        (!select._count.select.units.where.OR || unit.currentPlanId === null ||
+          select._count.select.units.where.OR[1].currentPlanId.in.includes(unit.currentPlanId))).length : 0 },
     }))),
     create: vi.fn(async ({ data }) => {
       const entry = { id: `e${++sequence}`, version: 1, recipeId: null, mealType: null, customMeal: null, ...data };
@@ -121,7 +121,7 @@ describe("lifecycle guard and reads", () => {
     await sync("p2", [slot("fresh")], [], { create: true });
     const assigned = copy(units.filter((unit) => unit.currentPlanId));
     const input = { entryId: token().id, expectedVersion: token().version };
-    await expect(listPlannedStorageMeals("u")).resolves.toMatchObject([{ count: 4, unassignedCount: 1 }]);
+    await expect(listPlannedStorageMeals("u")).resolves.toMatchObject({ latest: [{ count: 2, unassignedCount: 0 }], earlier: [{ count: 1, unassignedCount: 0 }], unscheduled: [{ count: 1, unassignedCount: 1 }] });
     await expect(discardRollingMealQuantity("u", { ...input, quantity: 2 })).resolves.toEqual({ type: "conflict" });
     await expect(adjustRollingMeal("u", { ...input, count: 3 })).resolves.toMatchObject({ entry: { count: 6, unassignedCount: 3 } });
     await expect(adjustRollingMeal("u", { ...input, count: 0 })).resolves.toEqual({ type: "conflict" });
@@ -221,6 +221,31 @@ describe("durable assignments", () => {
     await expect(sync("p2", [slot("b", { alreadyCooked: true, rollingQueueClaim: token() })])).rejects.toThrow("ROLLING_QUEUE_CONFLICT");
     await expect(sync("p2", [slot("b", { recipeId: "foreign", rollingQueueClaim: token() })])).rejects.toThrow("ROLLING_INVALID_IDENTITY");
     await expect(sync("foreign-plan", [])).rejects.toThrow("ROLLING_PLAN_NOT_FOUND");
+    expect(units).toHaveLength(1);
+  });
+
+  it("saves a new draft with an older claim when enough eligible portions still exist", async () => {
+    await sync("p1", [slot("a"), slot("b")]);
+    const claim = token();
+    const remainingId = units.find((unit) => unit.placementId === "b")!.id;
+    await sync("p1", [slot("a", { used: true }), slot("b")]);
+    expect(token().version).toBeGreaterThan(claim.version);
+
+    await sync("p2", [slot("destination", { rollingQueueClaim: claim })], [], { create: true });
+
+    expect(pending()).toHaveLength(1);
+    expect(pending()[0]).toMatchObject({ id: remainingId, currentPlanId: "p2" });
+    expect(units.find((unit) => unit.placementId === "a")?.state).toBe("COMPLETED");
+  });
+
+  it("still rejects an older claim when its last portion has been completed", async () => {
+    await sync("p1", [slot("a")]);
+    const claim = token();
+    await sync("p1", [slot("a", { used: true })]);
+
+    await expect(sync("p2", [slot("destination", { rollingQueueClaim: claim })], [], { create: true }))
+      .rejects.toThrow("ROLLING_QUEUE_CONFLICT");
+    expect(pending()).toHaveLength(0);
     expect(units).toHaveLength(1);
   });
 

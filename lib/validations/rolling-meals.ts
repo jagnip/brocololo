@@ -17,3 +17,10 @@ export const discardRollingMealQuantitySchema = z.object({
 
 export type AdjustRollingMealInput = z.infer<typeof adjustRollingMealSchema>;
 export type DiscardRollingMealQuantityInput = z.infer<typeof discardRollingMealQuantitySchema>;
+
+export const stopRollingMealsSchema = z.object({
+  ...identity,
+  unitIds: z.array(z.string().min(1)).min(1).max(99).refine((ids) => new Set(ids).size === ids.length, "Duplicate portions are not allowed"),
+});
+
+export type StopRollingMealsInput = z.infer<typeof stopRollingMealsSchema>;

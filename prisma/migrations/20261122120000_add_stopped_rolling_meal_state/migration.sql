@@ -1,0 +1,1 @@
+ALTER TYPE "RollingMealUnitState" ADD VALUE 'STOPPED';

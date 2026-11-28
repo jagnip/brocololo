@@ -7,7 +7,7 @@ vi.mock("@/lib/auth/session", () => ({ requireUser: vi.fn().mockResolvedValue({ 
 vi.mock("@/lib/db/family-members", () => ({ ensureSelfFamilyMember: vi.fn().mockResolvedValue([]) }));
 vi.mock("@/lib/db/storage", () => ({ listStoredMealLots: vi.fn().mockResolvedValue([]) }));
 vi.mock("@/lib/db/rolling-meals", () => ({
-  listPlannedStorageMeals: vi.fn().mockResolvedValue([]),
+  listPlannedStorageMeals: vi.fn().mockResolvedValue({ latestPlan: null, latest: [], earlier: [], unscheduled: [] }),
 }));
 vi.mock("./storage-list", () => ({ StorageList: () => null }));
 vi.mock("./rolling-meals-section", () => ({ RollingMealsSection: () => null }));
@@ -15,7 +15,7 @@ vi.mock("./rolling-meals-section", () => ({ RollingMealsSection: () => null }));
 describe("StoragePageContainer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(listPlannedStorageMeals).mockResolvedValue([]);
+    vi.mocked(listPlannedStorageMeals).mockResolvedValue({ latestPlan: null, latest: [], earlier: [], unscheduled: [] });
   });
 
   it("reads all pending meals without initializing or capturing the queue", async () => {

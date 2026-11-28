@@ -49,7 +49,8 @@ export const RollingMealUnitState = {
   PENDING: 'PENDING',
   COMPLETED: 'COMPLETED',
   CONVERTED: 'CONVERTED',
-  DISCARDED: 'DISCARDED'
+  DISCARDED: 'DISCARDED',
+  STOPPED: 'STOPPED'
 } as const
 
 export type RollingMealUnitState = (typeof RollingMealUnitState)[keyof typeof RollingMealUnitState]
