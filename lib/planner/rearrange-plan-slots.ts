@@ -1,7 +1,7 @@
 import type { PlanInputType, SlotInputType } from "@/types/planner";
 import { getPlanSlotKey } from "@/lib/planner/helpers";
 
-/** Meal fields that travel with the meal (not date / mealType / id). */
+/** Meal fields that travel with the meal; audience remains owned by its calendar slot. */
 type MovableMeal = Pick<
   SlotInputType,
   | "placementId"
@@ -9,7 +9,6 @@ type MovableMeal = Pick<
   | "recipe"
   | "customMeal"
   | "alternatives"
-  | "cookingFamilyMemberIds"
   | "used"
   | "batchGroupId"
   | "isRolledOver"
@@ -28,7 +27,6 @@ function getMovableMeal(slot: SlotInputType): MovableMeal {
     recipe: slot.recipe,
     customMeal: slot.customMeal,
     alternatives: slot.alternatives,
-    cookingFamilyMemberIds: slot.cookingFamilyMemberIds,
     used: slot.used,
     batchGroupId: slot.batchGroupId,
     isRolledOver: slot.isRolledOver ?? false,
@@ -46,7 +44,6 @@ function clearMeal(slot: SlotInputType): SlotInputType {
     recipe: null,
     customMeal: null,
     alternatives: [],
-    cookingFamilyMemberIds: [],
     used: false,
     batchGroupId: null,
     isRolledOver: false,
@@ -63,7 +60,6 @@ function applyMeal(slot: SlotInputType, meal: MovableMeal): SlotInputType {
     recipe: meal.recipe,
     customMeal: meal.customMeal,
     alternatives: meal.alternatives,
-    cookingFamilyMemberIds: meal.cookingFamilyMemberIds,
     used: meal.used,
     batchGroupId: meal.batchGroupId ?? null,
     isRolledOver: meal.isRolledOver ?? false,
