@@ -17,7 +17,7 @@ describe("RollingMealsSection", () => {
   it("shows latest-plan portions without misleading assignment totals", () => {
     render(<RollingMealsSection meals={meals} />);
     expect(screen.getByText("From your latest plan · Nov 23 - Nov 29")).toBeInTheDocument();
-    expect(screen.getByText("2 portions")).toBeInTheDocument();
+    expect(screen.getByText("2 meals")).toBeInTheDocument();
     expect(screen.queryByText(/unassigned|in plans/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Stop rolling" })).toBeInTheDocument();
   });

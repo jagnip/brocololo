@@ -70,7 +70,7 @@ export function RollingMealsSection({ meals }: { meals: PlannedStorageMeals }) {
     </div> : groups.filter((group) => group.rows.length > 0).map((group) => <div key={group.key} className="space-y-item">
       <h3 className="type-body font-medium text-foreground">{group.title}</h3>
       <ul aria-label={group.title} className="space-y-item">{group.rows.map((meal) => <li key={`${group.key}:${meal.id}`} className="flex items-center gap-comfort rounded-md border border-border bg-card p-nest">
-        <div className="min-w-0 flex-1"><p className="min-w-0 truncate font-medium" title={meal.name}>{meal.name}</p><p className="mt-tight type-caption text-muted-foreground">{meal.count} {meal.count === 1 ? "portion" : "portions"}</p></div>
+        <div className="min-w-0 flex-1"><p className="min-w-0 truncate font-medium" title={meal.name}>{meal.name}</p><p className="mt-tight type-caption text-muted-foreground">{meal.count} {meal.count === 1 ? "meal" : "meals"}</p></div>
         <div className="flex shrink-0 items-center gap-tight">
           {meal.unassignedCount > 0 ? <Button type="button" variant="outline" size="icon-sm" onClick={() => open("adjust", meal)} aria-label={`Adjust ${meal.name}`} title="Adjust unassigned portions"><Pencil className="h-4 w-4" /></Button> : null}
           <Button type="button" variant="outline" onClick={() => open("stop", meal)}>Stop rolling</Button>
