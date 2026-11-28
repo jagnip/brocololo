@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/db/index";
 import { getRollingCustomMealKey } from "@/lib/planner/custom-meal-identity";
-import type { AdjustRollingMealInput, DiscardRollingMealQuantityInput } from "@/lib/validations/rolling-meals";
+import type { AdjustRollingMealInput, DiscardRollingMealQuantityInput, StopRollingMealsInput } from "@/lib/validations/rolling-meals";
 import type { Prisma, RollingMealUnit } from "@/src/generated/client";
 import type { PlannerMealType } from "@/src/generated/enums";
 import type { PlanCustomMeal, RollingQueueClaim } from "@/types/planner";
@@ -43,16 +43,38 @@ const storageEntrySelect = {
   units: { where: unassignedPending, orderBy: [{ createdAt: "asc" as const }, { id: "asc" as const }], select: { id: true } },
 } satisfies Prisma.RollingMealEntrySelect;
 
-export type PlannedStorageRow = RollingMealQueueRow & { unassignedCount: number };
+export type PlannedStorageRow = RollingMealQueueRow & { unassignedCount: number; unitIds: string[] };
+export type PlannedStorageMeals = {
+  latestPlan: { id: string; startDate: Date; endDate: Date } | null;
+  latest: PlannedStorageRow[];
+  earlier: PlannedStorageRow[];
+  unscheduled: PlannedStorageRow[];
+};
 
-export async function listPlannedStorageMeals(userId: string): Promise<PlannedStorageRow[]> {
+export async function listPlannedStorageMeals(userId: string): Promise<PlannedStorageMeals> {
   return prisma.$transaction(async (tx) => {
     await lifecycleReady(tx, userId, false);
+    const latestPlan = await tx.plan.findFirst({ where: { userId }, orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      select: { id: true, startDate: true, endDate: true } });
     const entries = await tx.rollingMealEntry.findMany({
       where: { userId, units: { some: { state: "PENDING" } } },
-      orderBy: { identity: "asc" }, select: storageEntrySelect,
+      orderBy: { identity: "asc" }, select: { ...entrySelect, units: { where: { state: "PENDING" }, orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        select: { id: true, currentPlanId: true } } },
     });
-    return entries.map((entry) => ({ ...toRow({ ...entry, count: entry._count.units }), unassignedCount: entry.units.length }));
+    const result: PlannedStorageMeals = { latestPlan, latest: [], earlier: [], unscheduled: [] };
+    for (const entry of entries) {
+      const partitions = {
+        latest: entry.units.filter((unit) => unit.currentPlanId === latestPlan?.id),
+        earlier: entry.units.filter((unit) => unit.currentPlanId !== null && unit.currentPlanId !== latestPlan?.id),
+        unscheduled: entry.units.filter((unit) => unit.currentPlanId === null),
+      };
+      for (const [group, units] of Object.entries(partitions) as Array<[keyof Omit<PlannedStorageMeals, "latestPlan">, typeof entry.units]>) {
+        if (!units.length) continue;
+        result[group].push({ ...toRow({ ...entry, count: units.length }), unassignedCount: group === "unscheduled" ? units.length : 0,
+          unitIds: units.map((unit) => unit.id) });
+      }
+    }
+    return result;
   }, { isolationLevel: "RepeatableRead" });
 }
 
@@ -257,7 +279,10 @@ export async function syncRollingPlanTx(
 
   function claim(entryId: string, token: RollingQueueClaim): RollingMealUnit {
     const entry = entries.find((candidate) => candidate.id === token.id);
-    if (!entry || entry.id !== entryId || entry.version !== token.version ||
+    // New drafts claim a quantity, not specific units. Recheck supply under the
+    // user lock instead of rejecting an older count when enough portions remain.
+    const canRebase = options.create && token.version >= 1 && !!entry && token.version < entry.version;
+    if (!entry || entry.id !== entryId || (entry.version !== token.version && !canRebase) ||
         (claimedVersions.has(token.id) && claimedVersions.get(token.id) !== token.version)) {
       throw new Error("ROLLING_QUEUE_CONFLICT");
     }
@@ -365,7 +390,7 @@ export async function syncRollingPlanTx(
       throw new Error("ROLLING_INVALID_QUANTITY");
     }
     const entry = await group(batch.recipeId);
-    const pool = units.filter((unit) => unit.entryId === entry.id && unit.currentPlanId === planId &&
+    const pool = units.filter((unit) => unit.entryId === entry.id && unit.state === "PENDING" && unit.currentPlanId === planId &&
       unit.batchId === batch.id && unit.placementId === null);
     const history = mappings.filter((mapping) => mapping.batchId === batch.id && mapping.placementId.startsWith("rolling-remainder:"));
     if (persistedResolved.has(batch.id) || (resolved.has(batch.id) && !converted.has(batch.id))) {
@@ -374,8 +399,6 @@ export async function syncRollingPlanTx(
       }
       continue;
     }
-    // Terminal remainder records are barriers, even if a stale client resends rows.
-    if (pool.some((unit) => unit.state !== "PENDING")) continue;
     const historical = history.some((mapping) => {
       const unit = units.find((candidate) => candidate.id === mapping.unitId);
       return !unit || unit.currentPlanId !== planId || unit.batchId !== batch.id;
@@ -494,4 +517,41 @@ export async function adjustRollingMeal(userId: string, input: AdjustRollingMeal
 
 export async function discardRollingMealQuantity(userId: string, input: DiscardRollingMealQuantityInput) {
   return changeCount(userId, input);
+}
+
+export async function stopRollingMeals(userId: string, input: StopRollingMealsInput) {
+  return lockedTransaction(userId, async (tx) => {
+    await ensureRollingLifecycleTx(tx, userId);
+    const entry = await tx.rollingMealEntry.findFirst({ where: { id: input.entryId, userId }, select: { id: true, version: true } });
+    if (!entry) return { type: "not_found" as const };
+    if (entry.version !== input.expectedVersion) return { type: "conflict" as const };
+    const units = await tx.rollingMealUnit.findMany({ where: { id: { in: input.unitIds }, entryId: entry.id, state: "PENDING" },
+      select: { id: true, currentPlanId: true, placementId: true, batchId: true } });
+    if (units.length !== input.unitIds.length) return { type: "conflict" as const };
+    const stoppedRemainders = new Map<string, { planId: string; count: number }>();
+    for (const unit of units) if (unit.currentPlanId && unit.batchId && unit.placementId === null) {
+      const key = `${unit.currentPlanId}:${unit.batchId}`;
+      const current = stoppedRemainders.get(key);
+      stoppedRemainders.set(key, { planId: unit.currentPlanId, count: (current?.count ?? 0) + 1 });
+    }
+    for (const [key, remainder] of stoppedRemainders) {
+      const batchId = key.slice(remainder.planId.length + 1);
+      const rows = await tx.planBatchStorageRow.findMany({ where: { planBatch: { id: batchId, planId: remainder.planId } },
+        orderBy: [{ position: "desc" }, { id: "desc" }], select: { id: true, count: true } });
+      let remaining = remainder.count;
+      for (const row of rows) {
+        if (!remaining) break;
+        const next = row.count - Math.min(row.count, remaining);
+        remaining -= row.count - next;
+        if (next) await tx.planBatchStorageRow.update({ where: { id: row.id }, data: { count: next } });
+        else await tx.planBatchStorageRow.delete({ where: { id: row.id } });
+      }
+      if (remaining) return { type: "conflict" as const };
+      await tx.plan.update({ where: { id: remainder.planId }, data: { version: { increment: 1 } } });
+    }
+    await tx.rollingMealUnit.updateMany({ where: { id: { in: input.unitIds }, entryId: entry.id, state: "PENDING" },
+      data: { state: "STOPPED", eligible: false, completedAt: new Date() } });
+    await refreshEntries(tx, [entry.id]);
+    return { type: "success" as const };
+  });
 }

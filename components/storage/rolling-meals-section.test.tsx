@@ -1,63 +1,52 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { adjustRollingMealAction, discardRollingMealQuantityAction } from "@/actions/rolling-meals-actions";
+import { adjustRollingMealAction, stopRollingMealsAction } from "@/actions/rolling-meals-actions";
 import { RollingMealsSection } from "./rolling-meals-section";
 
 const refresh = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
-vi.mock("@/actions/rolling-meals-actions", () => ({
-  adjustRollingMealAction: vi.fn(),
-  discardRollingMealQuantityAction: vi.fn(),
-}));
+vi.mock("@/actions/rolling-meals-actions", () => ({ adjustRollingMealAction: vi.fn(), stopRollingMealsAction: vi.fn() }));
 
-const meals = [{ id: "entry", version: 2, kind: "recipe" as const, recipeId: "soup", name: "Soup", count: 5, unassignedCount: 2 }];
+const meal = { id: "entry", version: 2, kind: "recipe" as const, recipeId: "soup", name: "Soup", count: 2, unassignedCount: 0, unitIds: ["one", "two"] };
+const meals = { latestPlan: { id: "plan", startDate: new Date("2026-11-23"), endDate: new Date("2026-11-29") }, latest: [meal], earlier: [], unscheduled: [] };
 
 beforeEach(() => vi.resetAllMocks());
 
 describe("RollingMealsSection", () => {
-  it("renders an independent empty section", () => {
-    render(<RollingMealsSection meals={[]} />);
+  it("shows latest-plan portions without misleading assignment totals", () => {
+    render(<RollingMealsSection meals={meals} />);
+    expect(screen.getByText("From your latest plan · Nov 23 - Nov 29")).toBeInTheDocument();
+    expect(screen.getByText("2 portions")).toBeInTheDocument();
+    expect(screen.queryByText(/unassigned|in plans/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Stop rolling" })).toBeInTheDocument();
+  });
+
+  it("hides empty groups and shows the empty state when no portions remain", () => {
+    const { rerender } = render(<RollingMealsSection meals={meals} />);
+    expect(screen.queryByText("From earlier plans")).not.toBeInTheDocument();
+    rerender(<RollingMealsSection meals={{ latestPlan: null, latest: [], earlier: [], unscheduled: [] }} />);
     expect(screen.getByRole("status")).toHaveTextContent("No pending meals");
   });
 
-  it("shows plan-only meals without storage actions", () => {
-    render(<RollingMealsSection meals={[{ ...meals[0], unassignedCount: 0 }]} />);
-    expect(screen.getByText("5 meals · 5 in plans · 0 unassigned")).toBeInTheDocument();
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  it("stops only selected portions", async () => {
+    const user = userEvent.setup();
+    vi.mocked(stopRollingMealsAction).mockResolvedValue({ type: "success" });
+    render(<RollingMealsSection meals={meals} />);
+    await user.click(screen.getByRole("button", { name: "Stop rolling" }));
+    const dialog = screen.getByRole("dialog", { name: "Stop rolling Soup?" });
+    await user.click(within(dialog).getByRole("checkbox", { name: "Portion 2" }));
+    await user.click(within(dialog).getByRole("button", { name: "Stop rolling" }));
+    expect(stopRollingMealsAction).toHaveBeenCalledWith({ entryId: "entry", expectedVersion: 2, unitIds: ["one"] });
+    expect(refresh).toHaveBeenCalled();
   });
 
-  it("adjusts the queue entry with its version", async () => {
+  it("keeps adjust limited to not-in-a-plan portions", async () => {
     const user = userEvent.setup();
     vi.mocked(adjustRollingMealAction).mockResolvedValue({ type: "success", entry: null });
-    render(<RollingMealsSection meals={meals} />);
-    expect(screen.getByText("5 meals · 3 in plans · 2 unassigned")).toBeInTheDocument();
+    render(<RollingMealsSection meals={{ ...meals, latest: [], unscheduled: [{ ...meal, count: 1, unassignedCount: 1, unitIds: ["one"] }] }} />);
     await user.click(screen.getByRole("button", { name: "Adjust Soup" }));
-    const dialog = screen.getByRole("dialog", { name: "Adjust Soup" });
-    const input = within(dialog).getByRole("spinbutton", { name: "Unassigned meals" });
-    expect(input).toHaveValue(2);
-    await user.clear(input);
-    await user.type(input, "3");
-    await user.click(within(dialog).getByRole("button", { name: "Save" }));
-    expect(adjustRollingMealAction).toHaveBeenCalledWith({ entryId: "entry", expectedVersion: 2, count: 3 });
-    expect(refresh).toHaveBeenCalled();
-  });
-
-  it("discards only the selected quantity and reports conflicts", async () => {
-    const user = userEvent.setup();
-    vi.mocked(discardRollingMealQuantityAction).mockResolvedValue({ type: "conflict" });
-    render(<RollingMealsSection meals={meals} />);
-    await user.click(screen.getByRole("button", { name: "Discard Soup" }));
-    const input = screen.getByRole("spinbutton", { name: "Unassigned meals" });
-    expect(input).toHaveValue(2);
-    await user.clear(input);
-    await user.type(input, "3");
-    expect(screen.getByRole("button", { name: "Discard meals" })).toBeDisabled();
-    await user.clear(input);
-    await user.type(input, "2");
-    await user.click(screen.getByRole("button", { name: "Discard meals" }));
-    expect(discardRollingMealQuantityAction).toHaveBeenCalledWith({ entryId: "entry", expectedVersion: 2, quantity: 2 });
-    expect(await screen.findByRole("alert")).toHaveTextContent("changed elsewhere");
-    expect(refresh).toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(adjustRollingMealAction).toHaveBeenCalledWith({ entryId: "entry", expectedVersion: 2, count: 1 });
   });
 });
