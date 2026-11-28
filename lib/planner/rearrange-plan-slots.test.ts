@@ -56,6 +56,7 @@ describe("rearrangePlanSlots", () => {
     });
     const target = slot(DAY_B, PlannerMealType.DINNER, {
       id: "slot-b-dinner",
+      cookingFamilyMemberIds: ["fm-2"],
     });
     const plan: PlanInputType = [source, target];
 
@@ -79,7 +80,7 @@ describe("rearrangePlanSlots", () => {
     expect(nextSource.placementId).toBeNull();
     expect(nextSource.customMeal).toBeNull();
     expect(nextSource.alternatives).toEqual([]);
-    expect(nextSource.cookingFamilyMemberIds).toEqual([]);
+    expect(nextSource.cookingFamilyMemberIds).toEqual(["fm-1"]);
     expect(nextSource.used).toBe(false);
     expect(nextSource.batchGroupId).toBeNull();
     expect(nextSource.isRolledOver).toBe(false);
@@ -87,7 +88,7 @@ describe("rearrangePlanSlots", () => {
 
     expect(nextTarget.recipe).toBe(pasta);
     expect(nextTarget.placementId).toBe("placement-pasta");
-    expect(nextTarget.cookingFamilyMemberIds).toEqual(["fm-1"]);
+    expect(nextTarget.cookingFamilyMemberIds).toEqual(["fm-2"]);
     expect(nextTarget.used).toBe(true);
     expect(nextTarget.batchGroupId).toBe("batch-1");
     expect(nextTarget.isRolledOver).toBe(true);
@@ -135,7 +136,7 @@ describe("rearrangePlanSlots", () => {
     expect(nextA.placementId).toBe("placement-salad");
     expect(nextA.isRolledOver).toBe(false);
     expect(nextA.alreadyCooked).toBe(false);
-    expect(nextA.cookingFamilyMemberIds).toEqual(["fm-2"]);
+    expect(nextA.cookingFamilyMemberIds).toEqual(["fm-1"]);
     expect(nextA.used).toBe(false);
     expect(nextA.batchGroupId).toBe("g-salad");
     expect(nextA.alternatives).toHaveLength(1);
@@ -144,7 +145,7 @@ describe("rearrangePlanSlots", () => {
     expect(nextB.placementId).toBe("placement-pasta");
     expect(nextB.isRolledOver).toBe(true);
     expect(nextB.alreadyCooked).toBe(true);
-    expect(nextB.cookingFamilyMemberIds).toEqual(["fm-1"]);
+    expect(nextB.cookingFamilyMemberIds).toEqual(["fm-2"]);
     expect(nextB.used).toBe(true);
     expect(nextB.batchGroupId).toBe("g-pasta");
   });
@@ -158,7 +159,10 @@ describe("rearrangePlanSlots", () => {
       },
       cookingFamilyMemberIds: ["fm-1"],
     });
-    const target = slot(DAY_B, PlannerMealType.BREAKFAST, { id: "empty" });
+    const target = slot(DAY_B, PlannerMealType.BREAKFAST, {
+      id: "empty",
+      cookingFamilyMemberIds: ["fm-2"],
+    });
     const plan: PlanInputType = [source, target];
 
     const next = rearrangePlanSlots(
@@ -167,10 +171,15 @@ describe("rearrangePlanSlots", () => {
       getPlanSlotKey(target),
     );
 
-    expect(next.find((s) => s.id === "custom-src")!.customMeal).toBeNull();
-    expect(next.find((s) => s.id === "empty")!.customMeal?.name).toBe(
+    const nextSource = next.find((s) => s.id === "custom-src")!;
+    const nextTarget = next.find((s) => s.id === "empty")!;
+
+    expect(nextSource.customMeal).toBeNull();
+    expect(nextSource.cookingFamilyMemberIds).toEqual(["fm-1"]);
+    expect(nextTarget.customMeal?.name).toBe(
       "Leftovers",
     );
+    expect(nextTarget.cookingFamilyMemberIds).toEqual(["fm-2"]);
   });
 
   it("returns the same plan when source and target keys match", () => {
